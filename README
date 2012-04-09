@@ -1,7 +1,7 @@
-This is my work in progress C compiler.  There are very few _good_ qc
+This is my work in progress Quake C compiler. There are very few _good_ QC
 compilers out there on the internet that can be used in the opensource
 community.  There are a lot of mediocre compilers, but no one wants those.
-This is the solution for that, for once a proper quake c compiler that is
+This is the solution for that, for once a proper Quake C compiler that is
 capable of doing proper optimization.  The design so far of this compiler
 is basic, because it doesn't actually compile code yet.
 
