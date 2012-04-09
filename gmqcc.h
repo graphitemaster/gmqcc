@@ -20,8 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef DPQCC_HDR
-#define DPQCC_HDR
+#ifndef GMQCC_HDR
+#define GMQCC_HDR
 #include <stdio.h>
 
 /* The types supported by the language */
@@ -155,23 +155,30 @@ struct lex_file {
 #define TOKEN_CONTINUE 5
 #define TOKEN_RETURN   6
 #define TOKEN_GOTO     7
-#define TOKEN_FOR      8
+#define TOKEN_FOR      8   // extension
+#define TOKEN_INT      9   // extension
+#define TOKEN_BOOL     10  // extension
+#define TOKEN_VOID     11
+#define TOKEN_STRING   12
+#define TOKEN_FLOAT    13
+#define TOKEN_VECTOR   14
+#define TOKEN_ENTITY   15
 
 /*
  * Lexer state constants, these are numbers for where exactly in
  * the lexing the lexer is at. Or where it decided to stop if a lexer
  * error occurs.
  */
-#define LEX_COMMENT  128 /* higher than ascii */
-#define LEX_CHRLIT   129
-#define LEX_STRLIT   130
-#define LEX_IDENT    131
-#define LEX_DO       132
-#define LEX_ELSE     133
-#define LEX_IF       134
-#define LEX_WHILE    135
-#define LEX_INCLUDE  136
-#define LEX_DEFINE   137
+#define LEX_COMMENT    128 /* higher than ascii */
+#define LEX_CHRLIT     129
+#define LEX_STRLIT     130
+#define LEX_IDENT      131
+#define LEX_DO         132
+#define LEX_ELSE       133
+#define LEX_IF         134
+#define LEX_WHILE      135
+#define LEX_INCLUDE    136
+#define LEX_DEFINE     137
 
 int              lex_token(struct lex_file *);
 void             lex_reset(struct lex_file *);

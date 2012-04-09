@@ -30,7 +30,16 @@
 static const char *const lex_keywords[] = {
 	"do",    "else",     "if",     "while",
 	"break", "continue", "return", "goto",
-	"for"
+	"for",
+	
+	/* types */
+	"int",
+	"bool",
+	"void",
+	"string",
+	"float",
+	"vector",
+	"entity"
 };
 
 struct lex_file *lex_open(const char *name) {

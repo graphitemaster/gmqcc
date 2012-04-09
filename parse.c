@@ -22,6 +22,7 @@
  */
 #include <limits.h>
 #include "gmqcc.h"
+
 int parse(struct lex_file *file) {
 	int     token = 0;
 	while ((token = lex_token(file)) != ERROR_LEX && file->length >= 0) {
