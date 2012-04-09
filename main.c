@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <sys/stat.h>
 #include "gmqcc.h"
 
 int usage(const char *name) {
@@ -32,7 +31,6 @@ int usage(const char *name) {
 }
 
 int main(int argc, char **argv) {
-	struct      stat chk;
 	const char *ofile = NULL;
 	const char *ifile = NULL;
 	int i;
@@ -58,11 +56,14 @@ int main(int argc, char **argv) {
 	printf("ifile: %s\n", ifile);
 	printf("ofile: %s\n", ofile);
 	
-	/* we check here for file existance, not in the lexer */
-	if (stat(ifile, &chk) != 0)
-		return error(ERROR_COMPILER, "source file `%s` not found\n", ifile);
+	/* Open file */
+	FILE *fp = fopen(ifile, "r");
+	if  (!fp) {
+		fclose(fp);
+		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
+	}
 	
-	struct lex_file *lex = lex_open(ifile);
+	struct lex_file *lex = lex_open(fp);
 	lex_debug(lex);
 	parse    (lex);
 	lex_close(lex);

@@ -39,13 +39,13 @@ static const char *const lex_keywords[] = {
 	"string",
 	"float",
 	"vector",
-	"entity"
+	"entity",
 };
 
-struct lex_file *lex_open(const char *name) {
+struct lex_file *lex_open(FILE *fp) {
 	struct lex_file *lex = mem_a(sizeof(struct lex_file));
 	if (lex) {
-		lex->file = fopen(name, "r");
+		lex->file = fp;
 		fseek(lex->file, 0, SEEK_END);
 		lex->length = ftell(lex->file);
 		lex->size   = lex->length; /* copy, this is never changed */
@@ -244,7 +244,7 @@ static int lex_skipcmt(struct lex_file *file) {
 		lex_addch(ch, file);
 		while ((ch = lex_getch(file)) != '*') {
 			if (ch == EOF)
-				return error(ERROR_LEX, "malformatted comment"," ");
+				return error(ERROR_LEX, "malformatted comment", " ");
 			else
 				lex_addch(ch, file);
 		}
@@ -276,7 +276,7 @@ int lex_token(struct lex_file *file) {
 	/* valid identifier */
 	if (ch > 0 && (ch == '_' || isalpha(ch))) {
 		lex_clear(file);
-		while (ch > 0 && (isalpha(ch) || isdigit(ch) || ch == '_')) {
+		while (ch > 0 && (isalpha(ch) || ch == '_')) {
 			lex_addch(ch, file);
 			ch = lex_getsource(file);
 		}

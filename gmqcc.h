@@ -173,27 +173,24 @@ struct lex_file {
 #define LEX_CHRLIT     129
 #define LEX_STRLIT     130
 #define LEX_IDENT      131
-#define LEX_DO         132
-#define LEX_ELSE       133
-#define LEX_IF         134
-#define LEX_WHILE      135
-#define LEX_INCLUDE    136
-#define LEX_DEFINE     137
 
 int              lex_token(struct lex_file *);
 void             lex_reset(struct lex_file *);
 int              lex_debug(struct lex_file *);
 int              lex_close(struct lex_file *);
-struct lex_file *lex_open (const char *);
+struct lex_file *lex_open (FILE *);
 
 /* errors */
 #define ERROR_LEX      (SHRT_MAX+0)
 #define ERROR_PARSE    (SHRT_MAX+1)
 #define ERROR_INTERNAL (SHRT_MAX+2)
 #define ERROR_COMPILER (SHRT_MAX+3)
+#define ERROR_PREPRO   (SHRT_MAX+4)
 int error(int, const char *, ...);
 
 /* parse.c */
 int parse(struct lex_file *);
+/* cpp.c */
+int cpp  (struct lex_file *);
 
 #endif

@@ -25,7 +25,11 @@
 
 int parse(struct lex_file *file) {
 	int     token = 0;
-	while ((token = lex_token(file)) != ERROR_LEX && file->length >= 0) {
+	while ((token = lex_token(file)) != ERROR_LEX      && \
+		    token                    != ERROR_COMPILER && \
+		    token                    != ERROR_INTERNAL && \
+		    token                    != ERROR_PARSE    && \
+		    token                    != ERROR_PREPRO   && file->length >= 0) {
 		switch (token) {
 			case TOKEN_IF:
 				token = lex_token(file);
@@ -35,6 +39,10 @@ int parse(struct lex_file *file) {
 				if (token != '(')
 					error(ERROR_PARSE, "Expected `(` after if\n", "");
 				break;
+			
+			/* TODO: Preprocessor */
+			case '#':
+				token = cpp(file);
 		}
 	}
 	lex_reset(file);

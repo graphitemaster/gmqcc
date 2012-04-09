@@ -55,7 +55,8 @@ static const char *const error_list[] = {
 	"Parsing Error:",
 	"Lexing Error:",
 	"Internal Error:",
-	"Compilation Error:"
+	"Compilation Error:",
+	"Preprocessor Error:"
 };
 
 int error(int status, const char *msg, ...) {
