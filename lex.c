@@ -164,8 +164,10 @@ static int lex_get(struct lex_file *file) {
 	while (isspace(ch) && ch != '\n')
 		ch = lex_getch(file);
 		
-	if (ch == '\n')
+	if (ch == '\n') {
+		file->line ++;
 		return ch;
+	}
 		
 	lex_unget(ch, file);
 	return ' ';
@@ -290,6 +292,12 @@ int lex_token(struct lex_file *file) {
 		for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
 			if (!strncmp(file->lastok, lex_keywords[it], sizeof(lex_keywords[it])))
 				return it;
+				
+		/* try the hashtable for typedefs? */
+		if (typedef_find(file->lastok))
+			for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
+				if (!strncmp(typedef_find(file->lastok)->name, lex_keywords[it], sizeof(lex_keywords[it])))
+					return it;
 				
 		return LEX_IDENT;
 	}

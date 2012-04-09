@@ -140,6 +140,7 @@ struct lex_file {
 	int   current;
 	int   length;
 	int   size;
+	long  line;         /* Line the lexer is on                     */
 	char  lastok[8192]; /* No token shall ever be bigger than this! */
 };
 
@@ -196,5 +197,13 @@ struct parsenode {
 
 /* cpp.c */
 int cpp  (struct lex_file *);
+
+/* typedef.c */
+typedef struct typedef_node_t {
+	struct typedef_node_t *next;
+	char                  *name; /* name of actual type */
+} typedef_node;
+void          typedef_init();
+typedef_node *typedef_find(const char *);
 
 #endif

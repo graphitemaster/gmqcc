@@ -1,6 +1,6 @@
 CC     = gcc
 CFLAGS = -O3 -Wall
-OBJ    = main.o lex.o error.o parse.o cpp.o
+OBJ    = main.o lex.o error.o parse.o cpp.o typedef.o
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
@@ -9,4 +9,4 @@ gmqcc: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 	
 clean:
-	rm -f *.o dpqcc
+	rm -f *.o gmqcc

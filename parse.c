@@ -208,6 +208,12 @@ int parse(struct lex_file *file) {
 				PARSE_TREE_ADD(PARSE_TYPE_FOR);
 				break;
 				
+			case LEX_IDENT:
+				token = lex_token(file);
+				printf("FOO: %s\n", file->lastok);
+				break;
+				
+				
 			case TOKEN_DO:        PARSE_TODO(PARSE_TYPE_DO);
 			case TOKEN_WHILE:     PARSE_TODO(PARSE_TYPE_WHILE);
 			case TOKEN_BREAK:     PARSE_TODO(PARSE_TYPE_BREAK);
@@ -243,17 +249,16 @@ int parse(struct lex_file *file) {
 				if (token == '&') { /* && */
 					token = lex_token(file);
 					PARSE_TREE_ADD(PARSE_TYPE_LAND);
-					goto end;
+					break;
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_BAND);
-				printf("--> BITWISE AND\n");
 				break;
 			case '|':               /* |  */
 				token = lex_token(file);
 				if (token == '|') { /* || */
 					token = lex_token(file);
 					PARSE_TREE_ADD(PARSE_TYPE_LOR);
-					goto end;
+					break;
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_BOR);
 				break;
@@ -262,7 +267,7 @@ int parse(struct lex_file *file) {
 				if (token == '=') { /* != */
 					token = lex_token(file);
 					PARSE_TREE_ADD(PARSE_TYPE_LNEQ);
-					goto end;
+					break;
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_LNOT);
 				break;
@@ -271,7 +276,7 @@ int parse(struct lex_file *file) {
 				if (token == '=') { /* <= */
 					token = lex_token(file);
 					PARSE_TREE_ADD(PARSE_TYPE_LTEQ);
-					goto end;
+					break;
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_LT);
 				break;
@@ -280,7 +285,7 @@ int parse(struct lex_file *file) {
 				if (token == '=') { /* >= */
 					token = lex_token(file);
 					PARSE_TREE_ADD(PARSE_TYPE_GTEQ);
-					goto end;
+					break;
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_GT);
 				break;
@@ -289,7 +294,7 @@ int parse(struct lex_file *file) {
 				if (token == '=') { /* == */
 					token = lex_token(file);
 					PARSE_TREE_ADD(PARSE_TYPE_EQEQ);
-					goto end;
+					break;
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_EQUAL);
 				break;
@@ -322,7 +327,6 @@ int parse(struct lex_file *file) {
 				PARSE_TREE_ADD(PARSE_TYPE_RBS);
 				break;
 		}
-		end:;
 	}
 	parse_debug(parseroot);
 	lex_reset(file);
