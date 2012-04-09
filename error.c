@@ -42,7 +42,10 @@
 static const int error_color[] = {
 	CON_RED,
 	CON_CYAN,
-	CON_MAGENTA
+	CON_MAGENTA,
+	CON_BLUE,
+	CON_BROWN,
+	CON_WHITE
 };
 #endif
 int error_total = 0;
@@ -51,7 +54,8 @@ int error_max   = 10;
 static const char *const error_list[] = {
 	"Parsing Error:",
 	"Lexing Error:",
-	"Internal Error:"
+	"Internal Error:",
+	"Compilation Error:"
 };
 
 int error(int status, const char *msg, ...) {

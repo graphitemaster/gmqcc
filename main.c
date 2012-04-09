@@ -20,15 +20,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include "gmqcc.h"
 
+int usage(const char *name) {
+	printf("Usage: %s -f infile -o outfile\n", name);
+	return 0;
+}
+
 int main(int argc, char **argv) {
-	if (argc <= 1) {
-		printf("Usage: %s infile.qc outfile\n", *argv);
-		return -1;
+	struct      stat chk;
+	const char *ofile = NULL;
+	const char *ifile = NULL;
+	int i;
+	if (argc <= 2)
+		return usage(*argv);
+		
+	for (i=0; i<argc; i++) {
+		if (argc != i + 1) {
+			switch(argv[i][0]) {
+				case '-':
+					switch(argv[i][1]) {
+						case 'f': ifile = argv[i+1]; break;
+						case 'o': ofile = argv[i+1]; break;
+					}
+					break;
+			}
+		}
 	}
 	
-	struct lex_file *lex = lex_open(argv[1]);
+	if (!ofile || !ifile)
+		return usage(*argv);
+	
+	printf("ifile: %s\n", ifile);
+	printf("ofile: %s\n", ofile);
+	
+	/* we check here for file existance, not in the lexer */
+	if (stat(ifile, &chk) != 0)
+		return error(ERROR_COMPILER, "source file `%s` not found\n", ifile);
+	
+	struct lex_file *lex = lex_open(ifile);
 	lex_debug(lex);
 	parse    (lex);
 	lex_close(lex);
