@@ -23,6 +23,19 @@
 #include <limits.h>
 #include "gmqcc.h"
 
+
+static const char *const parse_punct[] = {
+	"&&", "||", "<=", ">=", "==", "!=", ";", ",", "!", "*",
+	"/" , "(" , "-" , "+" , "=" , "[" , "]", "{", "}", "...",
+	"." , "<" , ">" , "#" , "&" , "|" , "$", "@", ":", NULL
+	/* 
+	 * $,@,: are extensions:
+	 * $ is a shorter `self`, so instead of self.frags, $.frags
+	 * @ is a constructor
+	 * : is compiler builtin functions
+	 */
+};
+
 int parse(struct lex_file *file) {
 	int     token = 0;
 	while ((token = lex_token(file)) != ERROR_LEX      && \
@@ -42,10 +55,89 @@ int parse(struct lex_file *file) {
 			
 			/* TODO: Preprocessor */
 			case '#':
-				token = cpp(file);
+				token = lex_token(file);
+				token = lex_token(file);
+				token = lex_token(file);
+				token = lex_token(file);
+				token = lex_token(file);
+				token = lex_token(file);
+				break;
+				
+			/* PUNCTUATION PARSING BEGINS */
+			case '&':               /* &  */
+				token = lex_token(file);
+				if (token == '&') { /* && */
+					token = lex_token(file);
+					printf("--> LOGICAL AND\n");
+					goto end;
+				}
+				printf("--> BITWISE AND\n");
+				break;
+			case '|':               /* |  */
+				token = lex_token(file);
+				if (token == '|') { /* || */
+					token = lex_token(file);
+					printf("--> LOGICAL OR\n");
+					goto end;
+				}
+				printf("--> BITWISE OR\n");
+				break;
+			case '!':
+				token = lex_token(file);
+				if (token == '=') { /* != */
+					token = lex_token(file);
+					printf("--> LOGICAL NOT EQUAL\n");
+					goto end;
+				}
+				printf("--> LOGICAL NOT\n");
+				break;
+			case '<':               /* <  */
+				token = lex_token(file);
+				if (token == '=') { /* <= */
+					token = lex_token(file);
+					printf("--> LESS THAN OR EQUALL\n");
+					goto end;
+				}
+				printf("--> LESS THAN\n");
+				break;
+			case '>':               /* >  */
+				token = lex_token(file);
+				if (token == '=') { /* >= */
+					token = lex_token(file);
+					printf("--> GREATER THAN OR EQUAL\n");
+					goto end;
+				}
+				printf("--> GREATER THAN\n");
+				break;
+			case '=':
+				token = lex_token(file);
+				if (token == '=') { /* == */
+					token = lex_token(file);
+					printf("--> COMPARISION \n");
+					goto end;
+				}
+				printf("--> ASSIGNMENT\n");
+				break;
+			case ';':
+				token = lex_token(file);
+				printf("--> FINISHED STATMENT\n");
+				break;
+			case '-':
+				token = lex_token(file);
+				printf("--> SUBTRACTION EXPRESSION\n");
+				break;
+			case '+':
+				token = lex_token(file);
+				printf("--> ASSIGNMENT EXPRRESSION\n");
+				break;
 		}
+		end:;
 	}
 	lex_reset(file);
+	
+	//	"&&", "||", "<=", ">=", "==", "!=", ";", ",", "!", "*",
+	//"/" , "(" , "-" , "+" , "=" , "[" , "]", "{", "}", "...",
+	//"." , "<" , ">" , "#" , "&" , "|" , "$", "@", ":", NULL
 	
 	return 1;
 }	

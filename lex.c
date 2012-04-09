@@ -349,6 +349,7 @@ int lex_debug(struct lex_file *file) {
 	while ((token = lex_token(file)) != ERROR_LEX && file->length >= 0)
 		if (token == LEX_IDENT)
 			printf("%s ", file->lastok);
+	fputc('\n', stdout);
 	lex_reset(file);
 	return 1;
 }

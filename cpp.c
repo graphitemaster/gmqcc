@@ -6,5 +6,5 @@
  * which is what we parse for the preprocessor here.
  */
 int cpp(struct lex_file *file) {
-	/* TODO ... */
+	/* no return */
 }

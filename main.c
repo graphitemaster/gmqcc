@@ -61,12 +61,11 @@ int main(int argc, char **argv) {
 	if  (!fp) {
 		fclose(fp);
 		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
+	} else {
+		struct lex_file *lex = lex_open(fp);
+		lex_debug(lex);
+		parse    (lex);
+		lex_close(lex);
 	}
-	
-	struct lex_file *lex = lex_open(fp);
-	lex_debug(lex);
-	parse    (lex);
-	lex_close(lex);
-	
 	return 0;
 }
