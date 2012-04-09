@@ -71,7 +71,7 @@ void typedef_init() {
  *	in the creation of the content, though an attribution to the author
  *	is not necessary.
  * 
- *	Paul Hsieh exposition license
+ *  Paul Hsieh exposition license
  *
  *	The content of all text, figures, tables and displayed layout is
  *	copyrighted by its author and owner Paul Hsieh unless specifically
@@ -96,9 +96,9 @@ void typedef_init() {
  * Unalligned loads are faster if we can do them, otherwise fall back
  * to safer version below.
  */
-#	define load16(D) (*((const uint16_t*)(D)))
+#   define load16(D) (*((const uint16_t*)(D)))
 #else
-#	define load16(D) ((((uint32_t)(((const uint8_t*)(D))[1])) << 8) + \
+#   define load16(D) ((((uint32_t)(((const uint8_t*)(D))[1])) << 8) + \
                         (uint32_t)(((const uint8_t*)(D))[0]))
 #endif
 unsigned int inline typedef_hash(const char *data) {
