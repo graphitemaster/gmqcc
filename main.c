@@ -34,10 +34,11 @@ int main(int argc, char **argv) {
 	const char *ofile = NULL;
 	const char *ifile = NULL;
 	int i;
-	if (argc <= 2)
+	if (argc <= 2) {
 		return usage(*argv);
+	}
 		
-	for (i=0; i<argc; i++) {
+	for (i=0; i < argc; i++) {
 		if (argc != i + 1) {
 			switch(argv[i][0]) {
 				case '-':
@@ -50,8 +51,9 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	if (!ofile || !ifile)
+	if (!ofile || !ifile) {
 		return usage(*argv);
+	}
 	
 	printf("ifile: %s\n", ifile);
 	printf("ofile: %s\n", ofile);

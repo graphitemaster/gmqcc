@@ -157,12 +157,11 @@ struct lex_file {
 #define TOKEN_GOTO     7
 #define TOKEN_FOR      8   // extension
 #define TOKEN_INT      9   // extension
-#define TOKEN_BOOL     10  // extension
-#define TOKEN_VOID     11
-#define TOKEN_STRING   12
-#define TOKEN_FLOAT    13
-#define TOKEN_VECTOR   14
-#define TOKEN_ENTITY   15
+#define TOKEN_VOID     10
+#define TOKEN_STRING   11
+#define TOKEN_FLOAT    12
+#define TOKEN_VECTOR   13
+#define TOKEN_ENTITY   14
 
 /*
  * Lexer state constants, these are numbers for where exactly in
@@ -190,6 +189,11 @@ int error(int, const char *, ...);
 
 /* parse.c */
 int parse(struct lex_file *);
+struct parsenode {
+	struct parsenode *next;
+	int               type; /* some token */
+};
+
 /* cpp.c */
 int cpp  (struct lex_file *);
 

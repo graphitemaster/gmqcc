@@ -27,6 +27,10 @@
 #include <string.h>
 #include "gmqcc.h"
 
+/*
+ * Keywords are multichar, punctuation lexing is a bit more complicated
+ * than keyword lexing.
+ */
 static const char *const lex_keywords[] = {
 	"do",    "else",     "if",     "while",
 	"break", "continue", "return", "goto",
@@ -34,7 +38,6 @@ static const char *const lex_keywords[] = {
 	
 	/* types */
 	"int",
-	"bool",
 	"void",
 	"string",
 	"float",
