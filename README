@@ -1,0 +1,41 @@
+This is my work in progress C compiler.  There are very few _good_ qc
+compilers out there on the internet that can be used in the opensource
+community.  There are a lot of mediocre compilers, but no one wants those.
+This is the solution for that, for once a proper quake c compiler that is
+capable of doing proper optimization.  The design so far of this compiler
+is basic, because it doesn't actually compile code yet.
+
+gmqcc.h
+	This is the common header with all definitions, structures, and
+	constants for everything.
+
+error.c
+	This is the error subsystem, this handles the output of good detailed
+	error messages (not currently, but will), with colors and such.
+	
+lex.c
+	This is the lexer, a very small basic step-seek lexer that can be easily
+	changed to add new tokens, very retargetable.
+	
+main.c
+	This is the core compiler entry, handles switches (will) to toggle on
+	and off certian compiler features.
+	
+parse.c
+	This is the parser which goes over all tokens and generates a parse tree
+	(not currently, but will) and check for syntax correctness.
+	
+README
+	This is the file you're currently reading
+	
+Makefile
+	The makefile, when sources are added you should add them to the SRC=
+	line otherwise the build will not pick it up.  Trivial stuff, small
+	easy to manage makefile, no need to complicate it.
+	Some targets:
+		#make gmqcc
+			Builds gmqcc, creating a gmqcc binary file in the current
+			directory as the makefile.
+			
+		#make clean
+			Cleans the build files left behind by a previous build
