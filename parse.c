@@ -103,42 +103,45 @@ void parse_debug(struct parsenode *tree) {
 		}
 			
 		switch (tree->type) {
-			case PARSE_TYPE_ADD:       STORE("ADD    \n");
-			case PARSE_TYPE_BAND:      STORE("BITAND \n");
-			case PARSE_TYPE_BOR:       STORE("BITOR  \n");
-			case PARSE_TYPE_BREAK:     STORE("BREAK  \n");
-			case PARSE_TYPE_COMMA:     STORE("SEPERATOR\n");
-			case PARSE_TYPE_CONTINUE:  STORE("CONTINUE\n");
-			case PARSE_TYPE_DIVIDE:    STORE("DIVIDE\n");
-			case PARSE_TYPE_EQUAL:     STORE("ASSIGNMENT\n");
-			case PARSE_TYPE_GOTO:      STORE("GOTO\n");
-			case PARSE_TYPE_DOT:       STORE("DOT\n");
+			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n");
+			case PARSE_TYPE_BAND:      STORE("OPERATOR:  BITAND \n");
+			case PARSE_TYPE_BOR:       STORE("OPERATOR:  BITOR  \n");
+			case PARSE_TYPE_COMMA:     STORE("OPERATOR:  SEPERATOR\n");
+			case PARSE_TYPE_DOT:       STORE("OPERATOR:  DOT\n");
+			case PARSE_TYPE_DIVIDE:    STORE("OPERATOR:  DIVIDE\n");
+			case PARSE_TYPE_EQUAL:     STORE("OPERATOR:  ASSIGNMENT\n");
+			
+			case PARSE_TYPE_BREAK:     STORE("STATEMENT: BREAK  \n");
+			case PARSE_TYPE_CONTINUE:  STORE("STATEMENT: CONTINUE\n");
+			case PARSE_TYPE_GOTO:      STORE("STATEMENT: GOTO\n");
 
 
-			case PARSE_TYPE_ELIP:      STORE("DECLTYPE: VALIST\n");
-			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE: ENTITY\n");
-			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE: FLOAT\n");
+			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n");
+			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE:  ENTITY\n");
+			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE:  FLOAT\n");
 			
-			case PARSE_TYPE_GT:        STORE("TEST:     GREATER THAN\n");
-			case PARSE_TYPE_LT:        STORE("TEST:     LESS THAN\n");
-			case PARSE_TYPE_GTEQ:      STORE("TEST:     GREATER THAN OR EQUAL\n");
-			case PARSE_TYPE_LTEQ:      STORE("TEST:     LESS THAN OR EQUAL\n");
-			case PARSE_TYPE_LNEQ:      STORE("TEST:     NOT EQUAL\n");
-			case PARSE_TYPE_EQEQ:      STORE("TEST:     EQUAL-EQUAL\n");
+			case PARSE_TYPE_GT:        STORE("TEST:      GREATER THAN\n");
+			case PARSE_TYPE_LT:        STORE("TEST:      LESS THAN\n");
+			case PARSE_TYPE_GTEQ:      STORE("TEST:      GREATER THAN OR EQUAL\n");
+			case PARSE_TYPE_LTEQ:      STORE("TEST:      LESS THAN OR EQUAL\n");
+			case PARSE_TYPE_LNEQ:      STORE("TEST:      NOT EQUAL\n");
+			case PARSE_TYPE_EQEQ:      STORE("TEST:      EQUAL-EQUAL\n");
 			
-			case PARSE_TYPE_LBS:       break;
-			case PARSE_TYPE_RBS:       break;
+			case PARSE_TYPE_LBS:       STORE("BLOCK:     BEG\n");
+			case PARSE_TYPE_RBS:       STORE("BLOCK:     END\n");
 			
-			case PARSE_TYPE_LAND:      STORE("LOGICAL:  AND\n");
-			case PARSE_TYPE_LNOT:      STORE("LOGICAL:  NOT\n");
-			case PARSE_TYPE_LOR:       STORE("LOGICAL:  OR\n");
-			case PARSE_TYPE_LPARTH:    STORE("PARTH:    END\n");
-			case PARSE_TYPE_RPARTH:    STORE("PARTH:    BEG\n");
+			case PARSE_TYPE_LAND:      STORE("LOGICAL:   AND\n");
+			case PARSE_TYPE_LNOT:      STORE("LOGICAL:   NOT\n");
+			case PARSE_TYPE_LOR:       STORE("LOGICAL:   OR\n");
 			
-			case PARSE_TYPE_FOR:       STORE("LOOP:     FOR\n");
-			case PARSE_TYPE_DO:        STORE("LOOP:     DO\n");
-			case PARSE_TYPE_ELSE:      STORE("BLOCK:    ELSE\n");
-			case PARSE_TYPE_IF:        STORE("BLOCK:    IF\n");
+			case PARSE_TYPE_LPARTH:    STORE("PARTH:     BEG\n");
+			case PARSE_TYPE_RPARTH:    STORE("PARTH:     END\n");
+			
+			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n");
+			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n");
+			
+			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n");
+			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n");
 		}
 		tree = tree->next;
 	}
