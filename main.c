@@ -25,40 +25,12 @@
 #include <limits.h>
 #include "gmqcc.h"
 
-int usage(const char *name) {
-	printf("Usage: %s -f infile -o outfile\n", name);
-	return 0;
-}
 int main(int argc, char **argv) {
-	const char *ofile = NULL;
-	const char *ifile = NULL;
-	int i;
-	if (argc <= 2) {
-		return usage(*argv);
-	}
-		
-	for (i=0; i < argc; i++) {
-		if (argc != i + 1) {
-			switch(argv[i][0]) {
-				case '-':
-					switch(argv[i][1]) {
-						case 'f': ifile = argv[i+1]; break;
-						case 'o': ofile = argv[i+1]; break;
-					}
-					break;
-			}
-		}
-	}
+	argc--;
+	argv++;
 	
-	if (!ofile || !ifile) {
-		return usage(*argv);
-	}
+	const char *ifile = argv[0];
 	
-	printf("ifile: %s\n", ifile);
-	printf("ofile: %s\n", ofile);
-	
-	
-	/* Open file */
 	FILE *fp = fopen(ifile, "r");
 	if  (!fp) {
 		fclose(fp);
@@ -69,8 +41,8 @@ int main(int argc, char **argv) {
 			fclose(fp);
 			return 0;
 		}
-		parse_tree(lex); /* generate parse tree */
-		lex_close (lex); /* cleanup  lexer      */
+		parse_tree(lex);
+		lex_close (lex);
 	}
 	return 0;
 }
