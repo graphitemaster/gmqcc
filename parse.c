@@ -92,12 +92,34 @@
 	"." , "<" , ">" , "&" , "|" , 
 #endif
 
-#define STORE(X) {     \
-	printf(X);         \
-	break;             \
+#define STORE(X) {       \
+	int total = fill;    \
+	while (total-->0) {  \
+		putchar(' ');    \
+	}                    \
+	printf(X);           \
+	break;               \
+}
+#define STORE1(X) {      \
+	int total = fill;    \
+	while (total-->0) {  \
+		putchar(' ');    \
+	}                    \
+	fill += 4;           \
+	break;               \
+}
+#define STORE2(X) {      \
+	fill -= 4;           \
+	int total = fill;    \
+	while (total-->0) {  \
+		putchar(' ');    \
+	}                    \
+	printf(X);           \
+	break;               \
 }
 
 void parse_debug(struct parsenode *tree) {
+	int fill = 0;
 	while (tree) {	
 		switch (tree->type) {
 			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n");
@@ -144,7 +166,7 @@ void parse_debug(struct parsenode *tree) {
 			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n");
 			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n");
 			
-			case PARSE_TYPE_IDENT:     STORE("IDENT:     ???\n");
+			//case PARSE_TYPE_IDENT:     STORE("IDENT:     ???\n");
 		}
 		tree = tree->next;
 	}
@@ -200,26 +222,26 @@ int parse(struct lex_file *file) {
 		    token                    != ERROR_PREPRO   && file->length >= 0) {
 		switch (token) {
 			case TOKEN_IF:
-				token = lex_token(file);
+				//token = lex_token(file);
 				while ((token == ' ' || token == '\n') && file->length >= 0)
 					token = lex_token(file);
 					
 				//if (token != '(')
 				//	error(ERROR_PARSE, "Expected `(` after if\n", "");
-					
+				
 				PARSE_TREE_ADD(PARSE_TYPE_IF);
 				break;
 			case TOKEN_ELSE:
-				//token = lex_token(file);
+				token = lex_token(file);
 				//while ((token == ' ' || token == '\n') && file->length >= 0)
 				//	token = lex_token(file);
 					
 				PARSE_TREE_ADD(PARSE_TYPE_ELSE);
 				break;
 			case TOKEN_FOR:
-				//token = lex_token(file);
-				//while ((token == ' ' || token == '\n') && file->length >= 0)
-				//	token = lex_token(file);
+				token = lex_token(file);
+				while ((token == ' ' || token == '\n') && file->length >= 0)
+					token = lex_token(file);
 					
 				//PARSE_TREE_ADD(PARSE_TYPE_FOR);
 				PARSE_TODO(PARSE_TYPE_FOR);
