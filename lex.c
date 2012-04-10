@@ -286,9 +286,9 @@ int lex_token(struct lex_file *file) {
 		#define TEST_TYPE(X)                                 \
 		    do {                                             \
 		        if (!strncmp(X, "float",  sizeof("float")))  \
-			        return TOKEN_FLOAT;                      \
+		            return TOKEN_FLOAT;                      \
 		        if (!strncmp(X, "vector", sizeof("vector"))) \
-			        return TOKEN_VECTOR;                     \
+		            return TOKEN_VECTOR;                     \
 		        if (!strncmp(X, "string", sizeof("string"))) \
 		    	    return TOKEN_STRING;                     \
 		        if (!strncmp(X, "entity", sizeof("entity"))) \
