@@ -157,12 +157,13 @@ struct lex_file {
 #define TOKEN_RETURN   6
 #define TOKEN_GOTO     7
 #define TOKEN_FOR      8   // extension
-#define TOKEN_INT      9   // extension
-#define TOKEN_VOID     10
-#define TOKEN_STRING   11
-#define TOKEN_FLOAT    12
-#define TOKEN_VECTOR   13
-#define TOKEN_ENTITY   14
+#define TOKEN_TYPEDEF  9   // extension
+#define TOKEN_INT      10  // extension
+#define TOKEN_VOID     11
+#define TOKEN_STRING   12
+#define TOKEN_FLOAT    13
+#define TOKEN_VECTOR   14
+#define TOKEN_ENTITY   15
 
 /*
  * Lexer state constants, these are numbers for where exactly in
@@ -200,10 +201,11 @@ int cpp  (struct lex_file *);
 
 /* typedef.c */
 typedef struct typedef_node_t {
-	struct typedef_node_t *next;
-	char                  *name; /* name of actual type */
+	char      *name; /* name of actual type */
 } typedef_node;
+
 void          typedef_init();
 typedef_node *typedef_find(const char *);
+int           typedef_add (const char *, const char *);
 
 #endif

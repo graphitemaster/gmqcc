@@ -34,7 +34,7 @@
 static const char *const lex_keywords[] = {
 	"do",    "else",     "if",     "while",
 	"break", "continue", "return", "goto",
-	"for",
+	"for",   "typedef",
 	
 	/* types */
 	"int",

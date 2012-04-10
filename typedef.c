@@ -22,6 +22,7 @@
  */
 #include <string.h>
 #include <stdint.h> /* replace if stdint.h doesn't exist! */
+#include <limits.h>
 #include "gmqcc.h"
 
 /*
@@ -158,3 +159,34 @@ typedef_node *typedef_find(const char *s) {
 	typedef_node *find = typedef_table[hash];
 	return find;
 }
+
+int typedef_add(const char *from, const char *to) {
+	unsigned int  hash = typedef_hash(to);
+	typedef_node *find = typedef_table[hash];
+	if (find)
+		return error(ERROR_PARSE, "typedef for %s already exists\n", to);
+	
+	/* check if the type exists first */
+	if (strncmp(from, "void",   sizeof("void"))   == 0 ||
+		strncmp(from, "string", sizeof("string")) == 0 ||
+		strncmp(from, "float",  sizeof("float"))  == 0 ||
+		strncmp(from, "vector", sizeof("vector")) == 0 ||
+		strncmp(from, "entity", sizeof("entity")) == 0) {
+		
+		typedef_table[hash]       = mem_a(sizeof(typedef_node));
+		typedef_table[hash]->name = strdup(from);
+		return -100;
+	} else {
+		/* search the typedefs for it (typedef-a-typedef?) */
+		typedef_node *find = typedef_table[typedef_hash(from)];
+		if (find) {
+			typedef_table[hash]       = mem_a(sizeof(typedef_node));
+			typedef_table[hash]->name = strdup(find->name);
+			return -100;
+		}
+	}
+	return error(ERROR_PARSE, "cannot typedef %s (not a type)\n", from);
+}
+	
+		
+		

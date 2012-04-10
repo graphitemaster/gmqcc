@@ -22,6 +22,7 @@
  */
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gmqcc.h"
 
 /*
@@ -212,6 +213,22 @@ int parse(struct lex_file *file) {
 				token = lex_token(file);
 				printf("FOO: %s\n", file->lastok);
 				break;
+				
+			case TOKEN_TYPEDEF: {
+				char *f = NULL;
+				char *t = NULL;
+				token = lex_token(file); 
+				token = lex_token(file); f = strdup(file->lastok);
+				token = lex_token(file); 
+				token = lex_token(file); t = strdup(file->lastok);
+				
+				typedef_add(f, t);
+				
+				/* free new strings */
+				mem_d(f);
+				mem_d(t);
+				break;
+			}
 				
 				
 			case TOKEN_DO:        PARSE_TODO(PARSE_TYPE_DO);
