@@ -137,7 +137,6 @@ struct lex_file {
 	int   current;
 	int   length;
 	int   size;
-	long  line;         /* Line the lexer is on                     */
 	char  lastok[8192]; /* No token shall ever be bigger than this! */
 };
 

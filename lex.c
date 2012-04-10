@@ -39,16 +39,17 @@ static const char *const lex_keywords[] = {
 
 struct lex_file *lex_open(FILE *fp) {
 	struct lex_file *lex = mem_a(sizeof(struct lex_file));
-	if (lex) {
-		lex->file = fp;
-		fseek(lex->file, 0, SEEK_END);
-		lex->length = ftell(lex->file);
-		lex->size   = lex->length; /* copy, this is never changed */
-		fseek(lex->file, 0, SEEK_SET);
-		lex->last = 0;
+	if (!lex || !fp)
+		return NULL;
 		
-		memset(lex->peek, 0, sizeof(lex->peek));
-	}
+	lex->file = fp;
+	fseek(lex->file, 0, SEEK_END);
+	lex->length = ftell(lex->file);
+	lex->size   = lex->length; /* copy, this is never changed */
+	fseek(lex->file, 0, SEEK_SET);
+	lex->last = 0;
+	
+	memset(lex->peek, 0, sizeof(lex->peek));
 	return lex;
 }
 
@@ -236,7 +237,7 @@ static int lex_skipcmt(struct lex_file *file) {
 		lex_addch(ch, file);
 		while ((ch = lex_getch(file)) != '*') {
 			if (ch == EOF)
-				return error(ERROR_LEX, "malformatted comment at line %d", file->line);
+				return error(ERROR_LEX, "malformatted comment at line", "");
 			else
 				lex_addch(ch, file);
 		}
