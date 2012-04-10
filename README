@@ -30,6 +30,10 @@ typedef.c
 	complicated than it sounds.  This handles all typedefs, and even recrusive
 	typedefs.
 	
+alloc.c
+	This is just an allocator for the compiler, it's used for debugging reasons
+	only.
+	
 README
 	This is the file you're currently reading
 	

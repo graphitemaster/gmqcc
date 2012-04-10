@@ -98,13 +98,7 @@
 }
 
 void parse_debug(struct parsenode *tree) {
-	while (tree && tree->next != NULL) {
-		/* skip blanks */
-		if (tree->type == 0) {
-			tree = tree->next;
-			continue;
-		}
-			
+	while (tree) {	
 		switch (tree->type) {
 			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n");
 			case PARSE_TYPE_BAND:      STORE("OPERATOR:  BITAND \n");
@@ -162,10 +156,13 @@ void parse_debug(struct parsenode *tree) {
  * like syntax check for legal use -- like it should as it's a TODO item
  * which is not implemented
  */
-#define PARSE_TODO(X) {       \
-	token = lex_token(file);  \
-	PARSE_TREE_ADD(X);        \
-	break;                    \
+#define PARSE_TODO(X) {          \
+	token = lex_token(file);     \
+	while (token != '\n') {      \
+		token = lex_token(file); \
+	}                            \
+	PARSE_TREE_ADD(X);           \
+	break;                       \
 }
 
 void parse_clear(struct parsenode *tree) {
@@ -191,7 +188,8 @@ int parse(struct lex_file *file) {
 		parseroot = mem_a(sizeof(struct parsenode));
 		if (!parseroot)
 			return error(ERROR_INTERNAL, "Ran out of memory", " ");
-		parsetree = parseroot;
+		parsetree       = parseroot;
+		parsetree->type = -1; /* not a valid type -- root element */
 	}
 	
 	int     token = 0;
@@ -203,8 +201,8 @@ int parse(struct lex_file *file) {
 		switch (token) {
 			case TOKEN_IF:
 				token = lex_token(file);
-				//while ((token == ' ' || token == '\n') && file->length >= 0)
-				//	token = lex_token(file);
+				while ((token == ' ' || token == '\n') && file->length >= 0)
+					token = lex_token(file);
 					
 				//if (token != '(')
 				//	error(ERROR_PARSE, "Expected `(` after if\n", "");
@@ -212,18 +210,19 @@ int parse(struct lex_file *file) {
 				PARSE_TREE_ADD(PARSE_TYPE_IF);
 				break;
 			case TOKEN_ELSE:
-				token = lex_token(file);
+				//token = lex_token(file);
 				//while ((token == ' ' || token == '\n') && file->length >= 0)
 				//	token = lex_token(file);
 					
 				PARSE_TREE_ADD(PARSE_TYPE_ELSE);
 				break;
 			case TOKEN_FOR:
-				token = lex_token(file);
+				//token = lex_token(file);
 				//while ((token == ' ' || token == '\n') && file->length >= 0)
 				//	token = lex_token(file);
 					
-				PARSE_TREE_ADD(PARSE_TYPE_FOR);
+				//PARSE_TREE_ADD(PARSE_TYPE_FOR);
+				PARSE_TODO(PARSE_TYPE_FOR);
 				break;
 			
 			/*
@@ -279,6 +278,11 @@ int parse(struct lex_file *file) {
 				/* skip all tokens to end of directive */
 				while (token != '\n')
 					token = lex_token(file);
+				break;
+				
+			case '.':
+				token = lex_token(file);
+				PARSE_TREE_ADD(PARSE_TYPE_DOT);
 				break;
 				
 			case '(':

@@ -37,7 +37,6 @@ static const char *const lex_keywords[] = {
 	"for",   "typedef",
 	
 	/* types */
-	"int",
 	"void",
 	"string",
 	"float",
