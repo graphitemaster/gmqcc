@@ -62,6 +62,8 @@ int main(int argc, char **argv) {
 	
 	/* Open file */
 	FILE *fp = fopen(ifile, "r");
+	
+	/* run the preprocessor */
 	if  (!fp) {
 		fclose(fp);
 		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);

@@ -38,7 +38,7 @@
 #define PARSE_TYPE_CONTINUE 5
 #define PARSE_TYPE_RETURN   6
 #define PARSE_TYPE_GOTO     7
-#define PARSE_TYPE_FOR      8   // extension
+#define PARSE_TYPE_FOR      8
 #define PARSE_TYPE_VOID     9
 #define PARSE_TYPE_STRING   10
 #define PARSE_TYPE_FLOAT    11
@@ -59,15 +59,15 @@
 #define PARSE_TYPE_MINUS    26
 #define PARSE_TYPE_ADD      27
 #define PARSE_TYPE_EQUAL    28
-#define PARSE_TYPE_LBS      29 // left  bracket scope
-#define PARSE_TYPE_RBS      30 // right bracket scope
-#define PARSE_TYPE_ELIP     31 // ...
+#define PARSE_TYPE_LBS      29
+#define PARSE_TYPE_RBS      30
+#define PARSE_TYPE_ELIP     31
 #define PARSE_TYPE_DOT      32
 #define PARSE_TYPE_LT       33
 #define PARSE_TYPE_GT       34
 #define PARSE_TYPE_BAND     35
 #define PARSE_TYPE_BOR      36
-#define PARSE_TYPE_DONE     37 // finished statement
+#define PARSE_TYPE_DONE     37
 
 /*
  * Adds a parse type to the parse tree, this is where all the hard
@@ -81,11 +81,15 @@
 		parsetree             = parsetree->next;                 \
 	} while (0)
 
-static const char *const parse_punct[] = {
+/*
+ * These are all the punctuation handled in the parser, these don't
+ * need tokens, they're already tokens.
+ */
+#if 0
 	"&&", "||", "<=", ">=", "==", "!=", ";", ",", "!", "*",
 	"/" , "(" , ")" , "-" , "+" , "=" , "[" , "]", "{", "}", "...",
-	"." , "<" , ">" , "&" , "|" , NULL
-};
+	"." , "<" , ">" , "&" , "|" , 
+#endif
 
 #define STORE(X) {     \
 	printf(X);         \
@@ -175,7 +179,6 @@ int parse(struct lex_file *file) {
 		if (!parseroot)
 			return error(ERROR_INTERNAL, "Ran out of memory", " ");
 		parsetree = parseroot;
-		parsetree = parseroot;
 	}
 	
 	int     token = 0;
@@ -255,6 +258,20 @@ int parse(struct lex_file *file) {
 			 * of the ascii table which doesn't conflict with our other tokens
 			 * which are higer than the ascii table.)
 			 */
+			case '#':
+				/*
+				 * Skip the preprocessor for now:  We'll implement our own
+				 * eventually.  For now we need to make sure directives are
+				 * not accidently tokenized.
+				 */
+				token = lex_token(file);
+				token = lex_token(file);
+				
+				/* skip all tokens to end of directive */
+				while (token != '\n')
+					token = lex_token(file);
+				break;
+				
 			case '&':               /* &  */
 				token = lex_token(file);
 				if (token == '&') { /* && */
