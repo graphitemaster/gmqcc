@@ -39,39 +39,37 @@
 #define PARSE_TYPE_RETURN   6
 #define PARSE_TYPE_GOTO     7
 #define PARSE_TYPE_FOR      8   // extension
-#define PARSE_TYPE_INT      9   // extension
-#define PARSE_TYPE_BOOL     10  // extension
-#define PARSE_TYPE_VOID     11
-#define PARSE_TYPE_STRING   12
-#define PARSE_TYPE_FLOAT    13
-#define PARSE_TYPE_VECTOR   14
-#define PARSE_TYPE_ENTITY   15
-#define PARSE_TYPE_LAND     16
-#define PARSE_TYPE_LOR      17
-#define PARSE_TYPE_LTEQ     18
-#define PARSE_TYPE_GTEQ     19
-#define PARSE_TYPE_EQEQ     20
-#define PARSE_TYPE_LNEQ     21
-#define PARSE_TYPE_COMMA    22
-#define PARSE_TYPE_LNOT     23
-#define PARSE_TYPE_STAR     24
-#define PARSE_TYPE_DIVIDE   25
-#define PARSE_TYPE_LPARTH   26
-#define PARSE_TYPE_RPARTH   27
-#define PARSE_TYPE_MINUS    28
-#define PARSE_TYPE_ADD      29
-#define PARSE_TYPE_EQUAL    30
-#define PARSE_TYPE_LSS      31 // left subscript
-#define PARSE_TYPE_RSS      32
-#define PARSE_TYPE_LBS      33 // left  bracket scope
-#define PARSE_TYPE_RBS      34 // right bracket scope
-#define PARSE_TYPE_ELIP     35 // ...
-#define PARSE_TYPE_DOT      36
-#define PARSE_TYPE_LT       37
-#define PARSE_TYPE_GT       38
-#define PARSE_TYPE_BAND     39
-#define PARSE_TYPE_BOR      40
-#define PARSE_TYPE_DONE     41 // finished statement
+#define PARSE_TYPE_VOID     9
+#define PARSE_TYPE_STRING   10
+#define PARSE_TYPE_FLOAT    11
+#define PARSE_TYPE_VECTOR   12
+#define PARSE_TYPE_ENTITY   13
+#define PARSE_TYPE_LAND     14
+#define PARSE_TYPE_LOR      15
+#define PARSE_TYPE_LTEQ     16
+#define PARSE_TYPE_GTEQ     17
+#define PARSE_TYPE_EQEQ     18
+#define PARSE_TYPE_LNEQ     19
+#define PARSE_TYPE_COMMA    20
+#define PARSE_TYPE_LNOT     21
+#define PARSE_TYPE_STAR     22
+#define PARSE_TYPE_DIVIDE   23
+#define PARSE_TYPE_LPARTH   24
+#define PARSE_TYPE_RPARTH   25
+#define PARSE_TYPE_MINUS    26
+#define PARSE_TYPE_ADD      27
+#define PARSE_TYPE_EQUAL    28
+#define PARSE_TYPE_LSS      29 // left subscript
+#define PARSE_TYPE_RSS      30
+#define PARSE_TYPE_LBS      31 // left  bracket scope
+#define PARSE_TYPE_RBS      32 // right bracket scope
+#define PARSE_TYPE_ELIP     33 // ...
+#define PARSE_TYPE_DOT      34
+#define PARSE_TYPE_LT       35
+#define PARSE_TYPE_GT       36
+#define PARSE_TYPE_BAND     37
+#define PARSE_TYPE_BOR      38
+#define PARSE_TYPE_DONE     39 // finished statement
 
 /*
  * Adds a parse type to the parse tree, this is where all the hard
@@ -119,9 +117,7 @@ void parse_debug(struct parsenode *tree) {
 
 			case PARSE_TYPE_ELIP:      STORE("DECLTYPE: VALIST\n");
 			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE: ENTITY\n");
-			case PARSE_TYPE_INT:       STORE("DECLTYPE: INT\n");
 			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE: FLOAT\n");
-			case PARSE_TYPE_BOOL:      STORE("DECLTYPE: BOOL\n");
 			
 			case PARSE_TYPE_GT:        STORE("TEST:     GREATER THAN\n");
 			case PARSE_TYPE_LT:        STORE("TEST:     LESS THAN\n");
@@ -237,22 +233,11 @@ int parse(struct lex_file *file) {
 			case TOKEN_CONTINUE:  PARSE_TODO(PARSE_TYPE_CONTINUE);
 			case TOKEN_RETURN:    PARSE_TODO(PARSE_TYPE_RETURN);
 			case TOKEN_GOTO:      PARSE_TODO(PARSE_TYPE_GOTO);
-			case TOKEN_INT:       PARSE_TODO(PARSE_TYPE_INT);
 			case TOKEN_VOID:      PARSE_TODO(PARSE_TYPE_VOID);
 			case TOKEN_STRING:    PARSE_TODO(PARSE_TYPE_STRING);
 			case TOKEN_FLOAT:     PARSE_TODO(PARSE_TYPE_FLOAT);
 			case TOKEN_VECTOR:    PARSE_TODO(PARSE_TYPE_VECTOR);
 			case TOKEN_ENTITY:    PARSE_TODO(PARSE_TYPE_ENTITY);
-			
-			/* TODO: Preprocessor */
-			case '#':
-				token = lex_token(file);
-				token = lex_token(file);
-				token = lex_token(file);
-				token = lex_token(file);
-				token = lex_token(file);
-				token = lex_token(file);
-				break;
 				
 			/*
 			 * From here down is all language punctuation:  There is no

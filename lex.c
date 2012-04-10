@@ -249,7 +249,7 @@ static int lex_skipcmt(struct lex_file *file) {
 		lex_addch(ch, file);
 		while ((ch = lex_getch(file)) != '*') {
 			if (ch == EOF)
-				return error(ERROR_LEX, "malformatted comment", " ");
+				return error(ERROR_LEX, "malformatted comment at line %d", file->line);
 			else
 				lex_addch(ch, file);
 		}

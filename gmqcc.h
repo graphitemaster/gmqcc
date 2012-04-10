@@ -196,9 +196,6 @@ struct parsenode {
 	int               type; /* some token */
 };
 
-/* cpp.c */
-int cpp  (struct lex_file *);
-
 /* typedef.c */
 typedef struct typedef_node_t {
 	char      *name; /* name of actual type */
