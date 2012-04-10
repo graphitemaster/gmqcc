@@ -68,6 +68,7 @@
 #define PARSE_TYPE_BAND     35
 #define PARSE_TYPE_BOR      36
 #define PARSE_TYPE_DONE     37
+#define PARSE_TYPE_IDENT    38
 
 /*
  * Adds a parse type to the parse tree, this is where all the hard
@@ -119,10 +120,12 @@ void parse_debug(struct parsenode *tree) {
 			case PARSE_TYPE_RETURN:    STORE("STATEMENT: RETURN\n");
 			case PARSE_TYPE_DONE:      STORE("STATEMENT: DONE\n");
 
-
+			case PARSE_TYPE_VOID:      STORE("DECLTYPE:  VOID\n");
+			case PARSE_TYPE_STRING:    STORE("DECLTYPE:  STRING\n");
 			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n");
 			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE:  ENTITY\n");
 			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE:  FLOAT\n");
+			case PARSE_TYPE_VECTOR:    STORE("DECLTYPE:  VECTOR\n");
 			
 			case PARSE_TYPE_GT:        STORE("TEST:      GREATER THAN\n");
 			case PARSE_TYPE_LT:        STORE("TEST:      LESS THAN\n");
@@ -147,7 +150,7 @@ void parse_debug(struct parsenode *tree) {
 			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n");
 			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n");
 			
-
+			case PARSE_TYPE_IDENT:     STORE("IDENT:     ???\n");
 		}
 		tree = tree->next;
 	}
@@ -190,31 +193,27 @@ int parse(struct lex_file *file) {
 		switch (token) {
 			case TOKEN_IF:
 				token = lex_token(file);
-				while ((token == ' ' || token == '\n') && file->length >= 0)
-					token = lex_token(file);
+				//while ((token == ' ' || token == '\n') && file->length >= 0)
+				//	token = lex_token(file);
 					
-				if (token != '(')
-					error(ERROR_PARSE, "Expected `(` after if\n", "");
+				//if (token != '(')
+				//	error(ERROR_PARSE, "Expected `(` after if\n", "");
 					
 				PARSE_TREE_ADD(PARSE_TYPE_IF);
 				break;
 			case TOKEN_ELSE:
 				token = lex_token(file);
-				while ((token == ' ' || token == '\n') && file->length >= 0)
-					token = lex_token(file);
+				//while ((token == ' ' || token == '\n') && file->length >= 0)
+				//	token = lex_token(file);
 					
 				PARSE_TREE_ADD(PARSE_TYPE_ELSE);
 				break;
 			case TOKEN_FOR:
 				token = lex_token(file);
-				while ((token == ' ' || token == '\n') && file->length >= 0)
-					token = lex_token(file);
+				//while ((token == ' ' || token == '\n') && file->length >= 0)
+				//	token = lex_token(file);
 					
 				PARSE_TREE_ADD(PARSE_TYPE_FOR);
-				break;
-				
-			case LEX_IDENT:
-				token = lex_token(file);
 				break;
 			
 			/*
@@ -270,6 +269,15 @@ int parse(struct lex_file *file) {
 				/* skip all tokens to end of directive */
 				while (token != '\n')
 					token = lex_token(file);
+				break;
+				
+			case '(':
+				token = lex_token(file);
+				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
+				break;
+			case ')':
+				token = lex_token(file);
+				PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
 				break;
 				
 			case '&':               /* &  */
@@ -338,14 +346,6 @@ int parse(struct lex_file *file) {
 				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_ADD);
 				break;
-			case '(':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
-				break;
-			case ')':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
-				break;
 			case '{':
 				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_LBS);
@@ -353,6 +353,17 @@ int parse(struct lex_file *file) {
 			case '}':
 				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_RBS);
+				break;
+				
+			/*
+			 * TODO: Fix lexer to spit out ( ) as tokens, it seems the
+			 * using '(' or ')' in parser doesn't work properly unless
+			 * there are spaces before them to allow the lexer to properly
+			 * seperate identifiers. -- otherwise it eats all of it.
+			 */
+			case LEX_IDENT:
+				token = lex_token(file);
+				PARSE_TREE_ADD(PARSE_TYPE_IDENT);
 				break;
 		}
 	}

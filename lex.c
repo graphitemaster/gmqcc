@@ -295,7 +295,8 @@ int lex_token(struct lex_file *file) {
 			for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
 				if (!strncmp(typedef_find(file->lastok)->name, lex_keywords[it], sizeof(lex_keywords[it])))
 					return it;
-				
+		
+			
 		return LEX_IDENT;
 	}
 	return ch;

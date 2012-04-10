@@ -25,13 +25,10 @@
 #include <limits.h>
 #include "gmqcc.h"
 
-//typedef int foo;
-
 int usage(const char *name) {
 	printf("Usage: %s -f infile -o outfile\n", name);
 	return 0;
 }
-
 int main(int argc, char **argv) {
 	const char *ofile = NULL;
 	const char *ifile = NULL;
@@ -60,10 +57,9 @@ int main(int argc, char **argv) {
 	printf("ifile: %s\n", ifile);
 	printf("ofile: %s\n", ofile);
 	
+	
 	/* Open file */
 	FILE *fp = fopen(ifile, "r");
-	
-	/* run the preprocessor */
 	if  (!fp) {
 		fclose(fp);
 		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
