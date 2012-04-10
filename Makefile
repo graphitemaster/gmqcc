@@ -4,7 +4,8 @@ OBJ    = main.o    \
          lex.o     \
          error.o   \
          parse.o   \
-         typedef.o
+         typedef.o \
+         alloc.o
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)

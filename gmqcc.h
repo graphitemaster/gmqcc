@@ -121,9 +121,6 @@
 #define INSTR_BITAND    59
 #define INSTR_BITOR     60
 
-#define mem_a(x) malloc(x)
-#define mem_d(x) free  (x)
-
 /*
  * This is the smallest lexer I've ever wrote: and I must say, it's quite
  * more nicer than those large bulky complex parsers that most people write
@@ -204,4 +201,14 @@ void          typedef_init();
 typedef_node *typedef_find(const char *);
 int           typedef_add (const char *, const char *);
 
+/* alloc.c */
+void *memory_a(unsigned int, unsigned int, const char *);
+void  memory_d(void       *, unsigned int, const char *);
+#ifdef NOTRACK
+#	define mem_a(x) malloc(x)
+#	define mem_d(x) free  (x)
+#else
+#	define mem_a(x) memory_a((x), __LINE__, __FILE__)
+#	define mem_d(x) memory_d((x), __LINE__, __FILE__)
+#endif
 #endif

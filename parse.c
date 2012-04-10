@@ -168,6 +168,16 @@ void parse_debug(struct parsenode *tree) {
 	break;                    \
 }
 
+void parse_clear(struct parsenode *tree) {
+	if (!tree) return;
+	struct parsenode *temp = NULL;
+	while (tree != NULL) {
+		temp = tree;
+		tree = tree->next;
+		mem_d (temp);
+	}
+}
+
 int parse(struct lex_file *file) {
 	struct parsenode *parsetree = NULL;
 	struct parsenode *parseroot = NULL;
@@ -369,6 +379,7 @@ int parse(struct lex_file *file) {
 	}
 	parse_debug(parseroot);
 	lex_reset(file);
+	parse_clear(parseroot);
 	
 	return 1;
 }	
