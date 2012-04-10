@@ -1,0 +1,12 @@
+there are 3 accessible memory zones -
+globals:
+  array of 32bit ints/floats, mixed, LE,
+entities:
+  structure is up to the engine but the fields are a linear array
+  of mixed ints/floats, there are globals referring to the offsets
+  of these in the entity struct so there are ADDRESS and STOREP and
+  LOAD instructions that use globals containing field offsets.
+strings:
+  a static array in the progs.dat, with file parsing creating
+  additional constants, and some engine fields are mapped by 
+  address as well to unique string offsets

@@ -25,6 +25,7 @@
 #include <limits.h>
 #include "gmqcc.h"
 static typedef_node *typedef_table[1024];
+
 void typedef_init() {
 	int i;
 	for(i = 0; i < sizeof(typedef_table)/sizeof(*typedef_table); i++)
@@ -56,14 +57,18 @@ typedef_node *typedef_find(const char *s) {
 
 void typedef_clear() {
 	int i;
-	for(i = 1024; i > 0; i--)
-		if(typedef_table[i])
+	for(i = 1024; i > 0; i--) {
+		if(typedef_table[i]) {
+			mem_d(typedef_table[i]->name);
 			mem_d(typedef_table[i]);
+		}
+	}
 }
 
 int typedef_add(const char *from, const char *to) {
 	unsigned int  hash = typedef_hash(to);
 	typedef_node *find = typedef_table[hash];
+	
 	if (find)
 		return error(ERROR_PARSE, "typedef for %s already exists or conflicts\n", to);
 	
@@ -82,7 +87,7 @@ int typedef_add(const char *from, const char *to) {
 		typedef_node *find = typedef_table[typedef_hash(from)];
 		if (find) {
 			typedef_table[hash]       = mem_a(sizeof(typedef_node));
-			typedef_table[hash]->name = strdup(find->name);
+			typedef_table[hash]->name = util_strdup(find->name);
 			return -100;
 		}
 	}
