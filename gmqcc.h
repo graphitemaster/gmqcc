@@ -24,7 +24,109 @@
 #define GMQCC_HDR
 #include <stdio.h>
 
-/* The types supported by the language */
+//===================================================================
+//============================ lex.c ================================
+//===================================================================
+struct lex_file {
+	FILE *file;
+	char  peek  [5];
+	char  lastok[8192];
+	
+	int   last;
+	int   current;
+	int   length;
+	int   size;
+};
+
+/*
+ * It's important that this table never exceed 32 keywords, the ascii
+ * table starts at 33 (and we don't want conflicts)
+ */
+#define TOKEN_DO       0
+#define TOKEN_ELSE     1
+#define TOKEN_IF       2
+#define TOKEN_WHILE    3
+#define TOKEN_BREAK    4
+#define TOKEN_CONTINUE 5
+#define TOKEN_RETURN   6
+#define TOKEN_GOTO     7
+#define TOKEN_FOR      8   // extension
+#define TOKEN_TYPEDEF  9   // extension
+
+// ensure the token types are out of the
+// bounds of anyothers that may conflict.
+#define TOKEN_FLOAT    110
+#define TOKEN_VECTOR   111
+#define TOKEN_STRING   112
+#define TOKEN_ENTITY   113
+#define TOKEN_VOID     114
+
+/*
+ * Lexer state constants, these are numbers for where exactly in
+ * the lexing the lexer is at. Or where it decided to stop if a lexer
+ * error occurs.  These numbers must be > where the ascii-table ends
+ * and > the last type token which is TOKEN_VOID
+ */
+#define LEX_COMMENT    1128 
+#define LEX_CHRLIT     1129
+#define LEX_STRLIT     1130
+#define LEX_IDENT      1131
+
+int              lex_token(struct lex_file *);
+void             lex_reset(struct lex_file *);
+void             lex_close(struct lex_file *);
+struct lex_file *lex_open (FILE *);
+
+//===================================================================
+//========================== error.c ================================
+//===================================================================
+#define ERROR_LEX      (SHRT_MAX+0)
+#define ERROR_PARSE    (SHRT_MAX+1)
+#define ERROR_INTERNAL (SHRT_MAX+2)
+#define ERROR_COMPILER (SHRT_MAX+3)
+#define ERROR_PREPRO   (SHRT_MAX+4)
+int error(int, const char *, ...);
+
+//===================================================================
+//========================== parse.c ================================
+//===================================================================
+int parse_tree(struct lex_file *);
+struct parsenode {
+	struct parsenode *next;
+	int               type; /* some token */
+};
+
+//===================================================================
+//========================== typedef.c ==============================
+//===================================================================
+typedef struct typedef_node_t {
+	char      *name;
+} typedef_node;
+
+void          typedef_init();
+void          typedef_clear();
+typedef_node *typedef_find(const char *);
+int           typedef_add (const char *, const char *);
+
+
+//===================================================================
+//=========================== util.c ================================
+//===================================================================
+void *util_memory_a(unsigned int, unsigned int, const char *);
+void  util_memory_d(void       *, unsigned int, const char *);
+char *util_strdup  (const char *);
+
+#ifdef NOTRACK
+#	define mem_a(x) malloc(x)
+#	define mem_d(x) free  (x)
+#else
+#	define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
+#	define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
+#endif
+
+//===================================================================
+//=========================== code.c ================================
+//===================================================================
 #define TYPE_VOID     0
 #define TYPE_STRING   1
 #define TYPE_FLOAT    2
@@ -34,33 +136,17 @@
 #define TYPE_FUNCTION 6
 #define TYPE_POINTER  7
 
-/*
- * there are 3 accessible memory zones -
- * globals
- *     array of 32bit ints/floats, mixed, LE,
- * entities
- *     structure is up to the engine but the fields are a linear array
- *     of mixed ints/floats, there are globals referring to the offsets
- *     of these in the entity struct so there are ADDRESS and STOREP and
- *     LOAD instructions that use globals containing field offsets.
- * strings
- *     a static array in the progs.dat, with file parsing creating
- *     additional constants, and some engine fields are mapped by 
- *     address as well to unique string offsets
- */
- 
 /* 
  * Instructions 
  * These are the external instructions supported by the interperter
- * this is what things compile to (from the C code). This is not internal
- * instructions for support like int, and such (which are translated)
+ * this is what things compile to (from the C code).
  */
 #define INSTR_DONE      0
 // math
-#define INSTR_MUL_F     1 /* multiplication float         */
-#define INSTR_MUL_V     2 /* multiplication vector        */
-#define INSTR_MUL_FV    3 /* multiplication float->vector */
-#define INSTR_MUL_VF    4 /* multiplication vector->float */
+#define INSTR_MUL_F     1
+#define INSTR_MUL_V     2
+#define INSTR_MUL_FV    3
+#define INSTR_MUL_VF    4
 #define INSTR_DIV_F     5
 #define INSTR_ADD_F     6
 #define INSTR_ADD_V     7
@@ -120,98 +206,4 @@
 #define INSTR_OR        57
 #define INSTR_BITAND    59
 #define INSTR_BITOR     60
-
-/*
- * This is the smallest lexer I've ever wrote: and I must say, it's quite
- * more nicer than those large bulky complex parsers that most people write
- * which has some sort of a complex state.
- */
-struct lex_file {
-	/*
-	 * This is a simple state for lexing, no need to be complex for qc
-	 * code.  It's trivial stuff.
-	 */
-	FILE *file;
-	char  peek[5]; /* extend for depthier peeks */
-	int   last;
-	int   current;
-	int   length;
-	int   size;
-	char  lastok[8192]; /* No token shall ever be bigger than this! */
-};
-
-/*
- * It's important that this table never exceed 32 keywords, the ascii
- * table starts at 33 (and we don't want conflicts)
- */
-#define TOKEN_DO       0
-#define TOKEN_ELSE     1
-#define TOKEN_IF       2
-#define TOKEN_WHILE    3
-#define TOKEN_BREAK    4
-#define TOKEN_CONTINUE 5
-#define TOKEN_RETURN   6
-#define TOKEN_GOTO     7
-#define TOKEN_FOR      8   // extension
-#define TOKEN_TYPEDEF  9   // extension
-
-// ensure the token types are out of the
-// bounds of anyothers that may conflict.
-#define TOKEN_FLOAT    110
-#define TOKEN_VECTOR   111
-#define TOKEN_STRING   112
-#define TOKEN_ENTITY   113
-#define TOKEN_VOID     114
-
-/*
- * Lexer state constants, these are numbers for where exactly in
- * the lexing the lexer is at. Or where it decided to stop if a lexer
- * error occurs.  These numbers must be > where the ascii-table ends
- * and > the last type token which is TOKEN_VOID
- */
-#define LEX_COMMENT    1128 
-#define LEX_CHRLIT     1129
-#define LEX_STRLIT     1130
-#define LEX_IDENT      1131
-
-int              lex_token(struct lex_file *);
-void             lex_reset(struct lex_file *);
-void             lex_close(struct lex_file *);
-struct lex_file *lex_open (FILE *);
-
-/* errors */
-#define ERROR_LEX      (SHRT_MAX+0)
-#define ERROR_PARSE    (SHRT_MAX+1)
-#define ERROR_INTERNAL (SHRT_MAX+2)
-#define ERROR_COMPILER (SHRT_MAX+3)
-#define ERROR_PREPRO   (SHRT_MAX+4)
-int error(int, const char *, ...);
-
-/* parse.c */
-int parse_tree(struct lex_file *);
-struct parsenode {
-	struct parsenode *next;
-	int               type; /* some token */
-};
-
-/* typedef.c */
-typedef struct typedef_node_t {
-	char      *name; /* name of actual type */
-} typedef_node;
-
-void          typedef_init();
-void          typedef_clear();
-typedef_node *typedef_find(const char *);
-int           typedef_add (const char *, const char *);
-
-/* alloc.c */
-void *memory_a(unsigned int, unsigned int, const char *);
-void  memory_d(void       *, unsigned int, const char *);
-#ifdef NOTRACK
-#	define mem_a(x) malloc(x)
-#	define mem_d(x) free  (x)
-#else
-#	define mem_a(x) memory_a((x), __LINE__, __FILE__)
-#	define mem_d(x) memory_d((x), __LINE__, __FILE__)
-#endif
 #endif

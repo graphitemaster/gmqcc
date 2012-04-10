@@ -293,7 +293,7 @@ int lex_token(struct lex_file *file) {
 		        if (!strncmp(X, "entity", sizeof("entity"))) \
 		    	    return TOKEN_ENTITY;                     \
 		        if (!strncmp(X, "void"  , sizeof("void")))   \
-			        return TOKEN_VOID;                       \
+		            return TOKEN_VOID;                       \
 		    } while(0)
 		
 		TEST_TYPE(file->lastok);

@@ -30,9 +30,9 @@ typedef.c
 	complicated than it sounds.  This handles all typedefs, and even recrusive
 	typedefs.
 	
-alloc.c
-	This is just an allocator for the compiler, it's used for debugging reasons
-	only.
+util.c
+	These are utilities for the compiler, some things in here include a
+	allocator used for debugging, and some string functions.
 	
 README
 	This is the file you're currently reading

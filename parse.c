@@ -83,7 +83,7 @@
 	} while (0)
 
 /*
- * These are all the punctuation handled in the parser, these don't
+ * This is all the punctuation handled in the parser, these don't
  * need tokens, they're already tokens.
  */
 #if 0
@@ -158,13 +158,13 @@ void parse_debug(struct parsenode *tree) {
  * and everything will fail.
  */
 #define PARSE_PERFORM(X,C) {     \
-	token = lex_token(file);     \
-	{ C }                        \
-	while (token != '\n') {      \
-		token = lex_token(file); \
-	}                            \
-	PARSE_TREE_ADD(X);           \
-	break;                       \
+    token = lex_token(file);     \
+    { C }                        \
+    while (token != '\n') {      \
+	    token = lex_token(file); \
+    }                            \
+    PARSE_TREE_ADD(X);           \
+    break;                       \
 }
 
 void parse_clear(struct parsenode *tree) {
@@ -230,17 +230,17 @@ int parse_tree(struct lex_file *file) {
 			 * the tokens accordingly here.
 			 */
 			case TOKEN_TYPEDEF: {
-				char *f = NULL;
-				char *t = NULL;
+				char *f,*t;
+				
 				token = lex_token(file); 
-				token = lex_token(file); f = strdup(file->lastok);
+				token = lex_token(file); f = util_strdup(file->lastok);
 				token = lex_token(file); 
-				token = lex_token(file); t = strdup(file->lastok);
+				token = lex_token(file); t = util_strdup(file->lastok);
 				
 				typedef_add(f, t);
 				
-				free(f);
-				free(t);
+				mem_d(f);
+				mem_d(t);
 				
 				while (token != '\n')
 					token = lex_token(file);
@@ -254,8 +254,6 @@ int parse_tree(struct lex_file *file) {
 			case TOKEN_RETURN:
 				PARSE_TREE_ADD(PARSE_TYPE_RETURN);
 				break;
-				//PARSE_PERFORM(PARSE_TYPE_RETURN,  {});
-			
 				
 			case TOKEN_DO:        PARSE_PERFORM(PARSE_TYPE_DO,      {});
 			case TOKEN_WHILE:     PARSE_PERFORM(PARSE_TYPE_WHILE,   {});
@@ -293,7 +291,6 @@ int parse_tree(struct lex_file *file) {
 				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_DOT);
 				break;
-				
 			case '(':
 				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
@@ -303,7 +300,7 @@ int parse_tree(struct lex_file *file) {
 				PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
 				break;
 				
-			case '&':               /* &  */
+			case '&':				/* &  */
 				token = lex_token(file);
 				if (token == '&') { /* && */
 					token = lex_token(file);
@@ -312,7 +309,7 @@ int parse_tree(struct lex_file *file) {
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_BAND);
 				break;
-			case '|':               /* |  */
+			case '|':				/* |  */
 				token = lex_token(file);
 				if (token == '|') { /* || */
 					token = lex_token(file);
@@ -321,7 +318,7 @@ int parse_tree(struct lex_file *file) {
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_BOR);
 				break;
-			case '!':
+			case '!':				/* !  */
 				token = lex_token(file);
 				if (token == '=') { /* != */
 					token = lex_token(file);
@@ -330,7 +327,7 @@ int parse_tree(struct lex_file *file) {
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_LNOT);
 				break;
-			case '<':               /* <  */
+			case '<':				/* <  */
 				token = lex_token(file);
 				if (token == '=') { /* <= */
 					token = lex_token(file);
@@ -339,7 +336,7 @@ int parse_tree(struct lex_file *file) {
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_LT);
 				break;
-			case '>':               /* >  */
+			case '>':				/* >  */
 				token = lex_token(file);
 				if (token == '=') { /* >= */
 					token = lex_token(file);
@@ -348,7 +345,7 @@ int parse_tree(struct lex_file *file) {
 				}
 				PARSE_TREE_ADD(PARSE_TYPE_GT);
 				break;
-			case '=':
+			case '=':				/* =  */
 				token = lex_token(file);
 				if (token == '=') { /* == */
 					token = lex_token(file);
