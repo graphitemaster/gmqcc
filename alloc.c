@@ -52,15 +52,3 @@ void memory_d(void *ptrn, unsigned int line, const char *file) {
 	printf("[MEM] released:   %08u (bytes) at %s:%u\n", info->byte, file, line);
 	free(data);
 }
-
-/*
- * Ensure the macros are not already defined otherwise the memory
- * tracker will fail.  I hate trying to fix macro bugs, this should
- * help stop any of that from occuring.
- */
-#ifdef mem_a
-#undef mem_a
-#endif
-#ifdef mem_d
-#undef mem_d
-#endif

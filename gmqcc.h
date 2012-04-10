@@ -155,21 +155,23 @@ struct lex_file {
 #define TOKEN_GOTO     7
 #define TOKEN_FOR      8   // extension
 #define TOKEN_TYPEDEF  9   // extension
-#define TOKEN_VOID     10
-#define TOKEN_STRING   11
-#define TOKEN_FLOAT    12
-#define TOKEN_VECTOR   13
-#define TOKEN_ENTITY   14
+
+
+#define TOKEN_FLOAT    110
+#define TOKEN_VECTOR   111
+#define TOKEN_STRING   112
+#define TOKEN_ENTITY   113
+#define TOKEN_VOID     114
 
 /*
  * Lexer state constants, these are numbers for where exactly in
  * the lexing the lexer is at. Or where it decided to stop if a lexer
  * error occurs.
  */
-#define LEX_COMMENT    128 /* higher than ascii */
-#define LEX_CHRLIT     129
-#define LEX_STRLIT     130
-#define LEX_IDENT      131
+#define LEX_COMMENT    1128 /* higher than ascii */
+#define LEX_CHRLIT     1129
+#define LEX_STRLIT     1130
+#define LEX_IDENT      1131
 
 int              lex_token(struct lex_file *);
 void             lex_reset(struct lex_file *);
@@ -197,6 +199,7 @@ typedef struct typedef_node_t {
 } typedef_node;
 
 void          typedef_init();
+void          typedef_clear();
 typedef_node *typedef_find(const char *);
 int           typedef_add (const char *, const char *);
 

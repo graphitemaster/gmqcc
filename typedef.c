@@ -160,6 +160,13 @@ typedef_node *typedef_find(const char *s) {
 	return find;
 }
 
+void typedef_clear() {
+	int i;
+	for(i = 1024; i > 0; i--)
+		if(typedef_table[i])
+			mem_d(typedef_table[i]);
+}
+
 int typedef_add(const char *from, const char *to) {
 	unsigned int  hash = typedef_hash(to);
 	typedef_node *find = typedef_table[hash];
@@ -167,11 +174,11 @@ int typedef_add(const char *from, const char *to) {
 		return error(ERROR_PARSE, "typedef for %s already exists\n", to);
 	
 	/* check if the type exists first */
-	if (strncmp(from, "void",   sizeof("void"))   == 0 ||
-	    strncmp(from, "string", sizeof("string")) == 0 ||
-	    strncmp(from, "float",  sizeof("float"))  == 0 ||
+	if (strncmp(from, "float",  sizeof("float"))  == 0 ||
 	    strncmp(from, "vector", sizeof("vector")) == 0 ||
-	    strncmp(from, "entity", sizeof("entity")) == 0) {
+	    strncmp(from, "string", sizeof("string")) == 0 ||
+	    strncmp(from, "entity", sizeof("entity")) == 0 ||
+	    strncmp(from, "void",   sizeof("void"))   == 0) {
 		
 		typedef_table[hash]       = mem_a(sizeof(typedef_node));
 		typedef_table[hash]->name = strdup(from);

@@ -92,34 +92,12 @@
 	"." , "<" , ">" , "&" , "|" , 
 #endif
 
-#define STORE(X) {       \
-	int total = fill;    \
-	while (total-->0) {  \
-		putchar(' ');    \
-	}                    \
-	printf(X);           \
-	break;               \
-}
-#define STORE1(X) {      \
-	int total = fill;    \
-	while (total-->0) {  \
-		putchar(' ');    \
-	}                    \
-	fill += 4;           \
-	break;               \
-}
-#define STORE2(X) {      \
-	fill -= 4;           \
-	int total = fill;    \
-	while (total-->0) {  \
-		putchar(' ');    \
-	}                    \
-	printf(X);           \
-	break;               \
+#define STORE(X) {  \
+	printf(X);      \
+	break;          \
 }
 
 void parse_debug(struct parsenode *tree) {
-	int fill = 0;
 	while (tree) {	
 		switch (tree->type) {
 			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n");
@@ -195,6 +173,9 @@ void parse_clear(struct parsenode *tree) {
 		tree = tree->next;
 		mem_d (temp);
 	}
+	
+	/* free any potential typedefs */
+	typedef_clear();
 }
 
 int parse(struct lex_file *file) {
@@ -263,8 +244,13 @@ int parse(struct lex_file *file) {
 				typedef_add(f, t);
 				
 				/* free stdup strings */
-				mem_d(f);
-				mem_d(t);
+				//mem_d(f);
+				//mem_d(t);
+				free(f);
+				free(t);
+				
+				while (token != '\n')
+					token = lex_token(file);
 				break;
 			}
 				

@@ -34,14 +34,7 @@
 static const char *const lex_keywords[] = {
 	"do",    "else",     "if",     "while",
 	"break", "continue", "return", "goto",
-	"for",   "typedef",
-	
-	/* types */
-	"void",
-	"string",
-	"float",
-	"vector",
-	"entity",
+	"for",   "typedef"
 };
 
 struct lex_file *lex_open(FILE *fp) {
@@ -289,12 +282,26 @@ int lex_token(struct lex_file *file) {
 			if (!strncmp(file->lastok, lex_keywords[it], sizeof(lex_keywords[it])))
 				return it;
 				
+		/* try a type? */
+		#define TEST_TYPE(X)                                 \
+		    do {                                             \
+		        if (!strncmp(X, "float",  sizeof("float")))  \
+			        return TOKEN_FLOAT;                      \
+		        if (!strncmp(X, "vector", sizeof("vector"))) \
+			        return TOKEN_VECTOR;                     \
+		        if (!strncmp(X, "string", sizeof("string"))) \
+		    	    return TOKEN_STRING;                     \
+		        if (!strncmp(X, "entity", sizeof("entity"))) \
+		    	    return TOKEN_ENTITY;                     \
+		        if (!strncmp(X, "void"  , sizeof("void")))   \
+			        return TOKEN_VOID;                       \
+		    } while(0)
+		
+		TEST_TYPE(file->lastok);
+		
 		/* try the hashtable for typedefs? */
 		if (typedef_find(file->lastok))
-			for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
-				if (!strncmp(typedef_find(file->lastok)->name, lex_keywords[it], sizeof(lex_keywords[it])))
-					return it;
-		
+			TEST_TYPE(typedef_find(file->lastok)->name);
 			
 		return LEX_IDENT;
 	}
