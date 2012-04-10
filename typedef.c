@@ -168,10 +168,10 @@ int typedef_add(const char *from, const char *to) {
 	
 	/* check if the type exists first */
 	if (strncmp(from, "void",   sizeof("void"))   == 0 ||
-		strncmp(from, "string", sizeof("string")) == 0 ||
-		strncmp(from, "float",  sizeof("float"))  == 0 ||
-		strncmp(from, "vector", sizeof("vector")) == 0 ||
-		strncmp(from, "entity", sizeof("entity")) == 0) {
+	    strncmp(from, "string", sizeof("string")) == 0 ||
+	    strncmp(from, "float",  sizeof("float"))  == 0 ||
+	    strncmp(from, "vector", sizeof("vector")) == 0 ||
+	    strncmp(from, "entity", sizeof("entity")) == 0) {
 		
 		typedef_table[hash]       = mem_a(sizeof(typedef_node));
 		typedef_table[hash]->name = strdup(from);
