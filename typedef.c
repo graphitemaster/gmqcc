@@ -185,5 +185,5 @@ int typedef_add(const char *from, const char *to) {
 			return -100;
 		}
 	}
-	return error(ERROR_PARSE, "cannot typedef %s (not a type)\n", from);
+	return error(ERROR_PARSE, "cannot typedef `%s` (not a type)\n", from);
 }

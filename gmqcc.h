@@ -146,7 +146,7 @@ struct lex_file {
 
 /*
  * It's important that this table never exceed 32 keywords, the ascii
- * table starts at 33 (which we need)
+ * table starts at 33 (and we don't want conflicts)
  */
 #define TOKEN_DO       0
 #define TOKEN_ELSE     1
@@ -177,7 +177,6 @@ struct lex_file {
 
 int              lex_token(struct lex_file *);
 void             lex_reset(struct lex_file *);
-int              lex_debug(struct lex_file *);
 int              lex_close(struct lex_file *);
 struct lex_file *lex_open (FILE *);
 

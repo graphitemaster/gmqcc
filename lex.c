@@ -164,11 +164,8 @@ static int lex_get(struct lex_file *file) {
 	while (isspace(ch) && ch != '\n')
 		ch = lex_getch(file);
 		
-	if (ch == '\n') {
-		file->line ++;
+	if (ch == '\n')
 		return ch;
-	}
-		
 	lex_unget(ch, file);
 	return ' ';
 }
@@ -312,55 +309,4 @@ void lex_reset(struct lex_file *file) {
 	
 	memset(file->peek,   0, sizeof(file->peek  ));
 	memset(file->lastok, 0, sizeof(file->lastok));
-}
-
-int lex_debug(struct lex_file *file) {
-	int list_do       = 0;
-	int list_else     = 0;
-	int list_if       = 0;
-	int list_while    = 0;
-	int list_break    = 0;
-	int list_continue = 0;
-	int list_return   = 0;
-	int list_goto     = 0;
-	int list_for      = 0;
-	int token         = 0;
-	printf("===========================\nTOKENS:   \n===========================\n");
-	while ((token = lex_token(file)) != ERROR_LEX && file->length >= 0) {
-		if (token != -1) {
-			switch (token) {
-				case 0: list_do      ++; break;
-				case 1: list_else    ++; break;
-				case 2: list_if      ++; break;
-				case 3: list_while   ++; break;
-				case 4: list_break   ++; break;
-				case 5: list_continue++; break;
-				case 6: list_return  ++; break;
-				case 7: list_goto    ++; break;
-				case 8: list_for     ++; break;
-			}
-		}
-		if (token >= 33 && token <= 126)
-			putchar(token);
-	}
-	printf("\n===========================\nBRANCHES \n===========================\n");
-	printf("\t if       % 8d\n", list_if);
-	printf("\t else     % 8d\n", list_else);
-	printf("===========================\nLOOPS      \n===========================\n");
-	printf("\t for      % 8d\n", list_for);
-	printf("\t while    % 8d\n", list_while);
-	printf("\t do       % 8d\n", list_do);
-	printf("===========================\nSTATEMENTS \n===========================\n");
-	printf("\t break    % 8d\n", list_break);
-	printf("\t continue % 8d\n", list_continue);
-	printf("\t return   % 8d\n", list_return);
-	printf("\t goto     % 8d\n", list_goto);
-	printf("===========================\nIDENTIFIERS\n===========================\n");
-	lex_reset(file);
-	while ((token = lex_token(file)) != ERROR_LEX && file->length >= 0)
-		if (token == LEX_IDENT)
-			printf("%s ", file->lastok);
-	fputc('\n', stdout);
-	lex_reset(file);
-	return 1;
 }

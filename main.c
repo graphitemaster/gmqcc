@@ -25,6 +25,8 @@
 #include <limits.h>
 #include "gmqcc.h"
 
+//typedef int foo;
+
 int usage(const char *name) {
 	printf("Usage: %s -f infile -o outfile\n", name);
 	return 0;
@@ -65,7 +67,6 @@ int main(int argc, char **argv) {
 		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
 	} else {
 		struct lex_file *lex = lex_open(fp);
-		lex_debug(lex);
 		parse    (lex);
 		lex_close(lex);
 	}

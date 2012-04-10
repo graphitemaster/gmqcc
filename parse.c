@@ -59,17 +59,15 @@
 #define PARSE_TYPE_MINUS    26
 #define PARSE_TYPE_ADD      27
 #define PARSE_TYPE_EQUAL    28
-#define PARSE_TYPE_LSS      29 // left subscript
-#define PARSE_TYPE_RSS      30
-#define PARSE_TYPE_LBS      31 // left  bracket scope
-#define PARSE_TYPE_RBS      32 // right bracket scope
-#define PARSE_TYPE_ELIP     33 // ...
-#define PARSE_TYPE_DOT      34
-#define PARSE_TYPE_LT       35
-#define PARSE_TYPE_GT       36
-#define PARSE_TYPE_BAND     37
-#define PARSE_TYPE_BOR      38
-#define PARSE_TYPE_DONE     39 // finished statement
+#define PARSE_TYPE_LBS      29 // left  bracket scope
+#define PARSE_TYPE_RBS      30 // right bracket scope
+#define PARSE_TYPE_ELIP     31 // ...
+#define PARSE_TYPE_DOT      32
+#define PARSE_TYPE_LT       33
+#define PARSE_TYPE_GT       34
+#define PARSE_TYPE_BAND     35
+#define PARSE_TYPE_BOR      36
+#define PARSE_TYPE_DONE     37 // finished statement
 
 /*
  * Adds a parse type to the parse tree, this is where all the hard
@@ -114,6 +112,8 @@ void parse_debug(struct parsenode *tree) {
 			case PARSE_TYPE_BREAK:     STORE("STATEMENT: BREAK  \n");
 			case PARSE_TYPE_CONTINUE:  STORE("STATEMENT: CONTINUE\n");
 			case PARSE_TYPE_GOTO:      STORE("STATEMENT: GOTO\n");
+			case PARSE_TYPE_RETURN:    STORE("STATEMENT: RETURN\n");
+			case PARSE_TYPE_DONE:      STORE("STATEMENT: DONE\n");
 
 
 			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n");
@@ -129,6 +129,8 @@ void parse_debug(struct parsenode *tree) {
 			
 			case PARSE_TYPE_LBS:       STORE("BLOCK:     BEG\n");
 			case PARSE_TYPE_RBS:       STORE("BLOCK:     END\n");
+			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n");
+			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n");
 			
 			case PARSE_TYPE_LAND:      STORE("LOGICAL:   AND\n");
 			case PARSE_TYPE_LNOT:      STORE("LOGICAL:   NOT\n");
@@ -137,11 +139,11 @@ void parse_debug(struct parsenode *tree) {
 			case PARSE_TYPE_LPARTH:    STORE("PARTH:     BEG\n");
 			case PARSE_TYPE_RPARTH:    STORE("PARTH:     END\n");
 			
+			case PARSE_TYPE_WHILE:     STORE("LOOP:      WHILE\n");
 			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n");
 			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n");
 			
-			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n");
-			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n");
+
 		}
 		tree = tree->next;
 	}
@@ -210,9 +212,13 @@ int parse(struct lex_file *file) {
 				
 			case LEX_IDENT:
 				token = lex_token(file);
-				printf("FOO: %s\n", file->lastok);
 				break;
-				
+			
+			/*
+			 * This is a quick and easy way to do typedefs at parse time
+			 * all power is in typedef_add(), in typedef.c.  We handle 
+			 * the tokens accordingly here.
+			 */
 			case TOKEN_TYPEDEF: {
 				char *f = NULL;
 				char *t = NULL;
@@ -223,7 +229,7 @@ int parse(struct lex_file *file) {
 				
 				typedef_add(f, t);
 				
-				/* free new strings */
+				/* free stdup strings */
 				mem_d(f);
 				mem_d(t);
 				break;
@@ -247,7 +253,7 @@ int parse(struct lex_file *file) {
 			 * need to actual create tokens from these because they're already
 			 * tokenized as these individual tokens (which are in a special area
 			 * of the ascii table which doesn't conflict with our other tokens
-			 * which are higer than the ascii table.
+			 * which are higer than the ascii table.)
 			 */
 			case '&':               /* &  */
 				token = lex_token(file);
