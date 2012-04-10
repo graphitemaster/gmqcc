@@ -23,7 +23,7 @@ main.c
 	
 parse.c
 	This is the parser which goes over all tokens and generates a parse tree
-	(not currently, but will) and check for syntax correctness.
+	and check for syntax correctness.
 	
 typedef.c
 	This is the typedef system, this is a seperate file because it's a lot more
