@@ -156,7 +156,8 @@ struct lex_file {
 #define TOKEN_FOR      8   // extension
 #define TOKEN_TYPEDEF  9   // extension
 
-
+// ensure the token types are out of the
+// bounds of anyothers that may conflict.
 #define TOKEN_FLOAT    110
 #define TOKEN_VECTOR   111
 #define TOKEN_STRING   112
@@ -166,16 +167,17 @@ struct lex_file {
 /*
  * Lexer state constants, these are numbers for where exactly in
  * the lexing the lexer is at. Or where it decided to stop if a lexer
- * error occurs.
+ * error occurs.  These numbers must be > where the ascii-table ends
+ * and > the last type token which is TOKEN_VOID
  */
-#define LEX_COMMENT    1128 /* higher than ascii */
+#define LEX_COMMENT    1128 
 #define LEX_CHRLIT     1129
 #define LEX_STRLIT     1130
 #define LEX_IDENT      1131
 
 int              lex_token(struct lex_file *);
 void             lex_reset(struct lex_file *);
-int              lex_close(struct lex_file *);
+void             lex_close(struct lex_file *);
 struct lex_file *lex_open (FILE *);
 
 /* errors */
@@ -187,7 +189,7 @@ struct lex_file *lex_open (FILE *);
 int error(int, const char *, ...);
 
 /* parse.c */
-int parse(struct lex_file *);
+int parse_tree(struct lex_file *);
 struct parsenode {
 	struct parsenode *next;
 	int               type; /* some token */

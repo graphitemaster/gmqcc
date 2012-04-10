@@ -52,13 +52,11 @@ struct lex_file *lex_open(FILE *fp) {
 	return lex;
 }
 
-int lex_close(struct lex_file *file) {
-	int ret = -1;
-	if (file) {
-		ret = fclose(file->file);
-		mem_d(file);
-	}
-	return ret;
+void lex_close(struct lex_file *file) {
+	if (!file) return;
+	
+	fclose(file->file); /* may already be closed */
+	mem_d(file);
 }
 
 static void lex_addch(int ch, struct lex_file *file) {

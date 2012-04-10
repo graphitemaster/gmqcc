@@ -65,8 +65,8 @@ int main(int argc, char **argv) {
 		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
 	} else {
 		struct lex_file *lex = lex_open(fp);
-		parse    (lex);
-		lex_close(lex);
+		parse_tree(lex); /* generate parse tree */
+		lex_close (lex); /* cleanup  lexer      */
 	}
 	return 0;
 }
