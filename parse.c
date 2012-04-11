@@ -71,12 +71,6 @@
 #define PARSE_TYPE_DONE     37
 #define PARSE_TYPE_IDENT    38
 
-int parse[PARSE_TYPE_IDENT] = {
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0
-};
-
 /*
  * Adds a parse type to the parse tree, this is where all the hard
  * work actually begins.
@@ -88,16 +82,6 @@ int parse[PARSE_TYPE_IDENT] = {
 		parsetree->next->type = (X);                             \
 		parsetree             = parsetree->next;                 \
 	} while (0)
-
-#define PARSE_TREE_CHK(X,Y,Z)                                        \
-	do { \
-		if(parse[X]) { \
-			error(ERROR_PARSE, "Expected %c for %c\n", Y, Z); \
-			exit (1); \
-		} \
-	} while (0)
-	
-#define PARSE_TREE_PUT(X) do { parse[X] = 1; } while (0)
 
 /*
  * This is all the punctuation handled in the parser, these don't
@@ -231,8 +215,6 @@ int parse_tree(struct lex_file *file) {
 					error(ERROR_PARSE, "Expected `(` on if statement:\n");
 				PARSE_TREE_ADD(PARSE_TYPE_IF);
 				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
-				PARSE_TREE_CHK(PARSE_TYPE_LPARTH, ')', '(');
-				PARSE_TREE_PUT(PARSE_TYPE_LPARTH);
 				break;
 			case TOKEN_ELSE:
 				token = lex_token(file);
@@ -280,17 +262,6 @@ int parse_tree(struct lex_file *file) {
 				PARSE_TREE_ADD(PARSE_TYPE_CONTINUE);
 				break;
 			
-			/*
-			 * DO loops work like so:
-			 * __do_loop_beg:
-			 * IFNOT __do_loop_beg#
-			 * 	GOTO __do_loop_end
-			 * INSTR1
-			 * INSTR2
-			 * ......
-			 * GOTO __do_loop_beg
-			 */
-			
 			case TOKEN_DO:        PARSE_PERFORM(PARSE_TYPE_DO,      {});
 			case TOKEN_WHILE:     PARSE_PERFORM(PARSE_TYPE_WHILE,   {});
 			case TOKEN_BREAK:     PARSE_PERFORM(PARSE_TYPE_BREAK,   {});
@@ -311,9 +282,8 @@ int parse_tree(struct lex_file *file) {
 			case '#':
 				token = lex_token(file); /* skip '#' */
 				while (isspace(token)) {
-					if (token == '\n') {
+					if (token == '\n')
 						return error(ERROR_PARSE, "Expected valid preprocessor directive after `#` %s\n");
-					}
 					token = lex_token(file); /* try again */
 				}
 				/*
@@ -321,22 +291,16 @@ int parse_tree(struct lex_file *file) {
 				 * directives so far are #include.
 				 */
 				if (strncmp(file->lastok, "include", sizeof("include")) == 0) {
-					//lex_include("file");
 					/*
-					 * We need to compose a name till we find either a
-					 * '"',> or a <, (for includes), if we hit a '\n' then
-					 * clearly the person miswrote the include.
+					 * We only suport include " ", not <> like in C (why?)
+					 * because the latter is silly.
 					 */
 					while (*file->lastok != '"' && token != '\n')
 						token = lex_token(file);
-						
-					if (token == '\n')
-						return error(ERROR_PARSE, "Invalid use of include preprocessor directive: wanted #include \"file.h\"\n");
-						
 					
-					//lex_token(file);
-					//lex_token(file);
-					printf("include: %s\n", file->lastok);
+					/* we handle lexing at that point now */
+					if (token == '\n')
+						return error(ERROR_PARSE, "%d: Invalid use of include preprocessor directive: wanted #include \"file.h\"\n", file->line);
 				}
 			
 				/* skip all tokens to end of directive */
@@ -345,18 +309,12 @@ int parse_tree(struct lex_file *file) {
 				break;
 				
 			case '.':
-				//token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_DOT);
 				break;
 			case '(':
-				//token = lex_token(file);
-				PARSE_TREE_PUT(PARSE_TYPE_LPARTH);
 				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
 				break;
 			case ')':
-				//token = lex_token(file);
-				parse[PARSE_TYPE_LPARTH] = 0;
-				PARSE_TREE_PUT(PARSE_TYPE_RPARTH);
 				PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
 				break;
 				

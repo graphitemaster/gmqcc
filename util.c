@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "gmqcc.h"
  
 struct memblock_t {
@@ -78,4 +79,11 @@ char *util_strdup(const char *s) {
 	}
 	
 	return ptr;
+}
+
+void util_debug(const char *ms, ...) {
+	va_list  va;
+	va_start(va, ms);
+	vprintf (ms, va);
+	va_end  (va);
 }

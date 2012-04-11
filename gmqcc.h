@@ -32,6 +32,7 @@ struct lex_file {
 	char  peek  [5];
 	char  lastok[8192];
 	
+	int   line;
 	int   last;
 	int   current;
 	int   length;

@@ -138,10 +138,16 @@ static int lex_digraph(struct lex_file *file, int first) {
 
 static int lex_getch(struct lex_file *file) {
 	int ch = lex_inget(file);
-	if (ch == '?')
-		return lex_trigraph(file);
-	if (ch == '<' || ch == ':' || ch == '%')
-		return lex_digraph (file, ch);
+	
+	switch (ch) {
+		case '?' :
+			return lex_trigraph(file);
+		case '<' :
+		case ':' :
+		case '%' :
+			return lex_digraph (file, ch);
+		case '\n': file->line ++;
+	}
 		
 	return ch;
 }
@@ -150,7 +156,7 @@ static int lex_get(struct lex_file *file) {
 	int ch;
 	if (!isspace(ch = lex_getch(file)))
 		return ch;
-	
+		
 	/* skip over all spaces */
 	while (isspace(ch) && ch != '\n')
 		ch = lex_getch(file);
@@ -258,7 +264,8 @@ static int lex_getsource(struct lex_file *file) {
 		case '\'': return lex_skipchr(file);
 		case '"':  return lex_skipstr(file);
 		case '/':  return lex_skipcmt(file);
-		default:   return ch;
+		default:
+			return ch;
 	}
 }
 
