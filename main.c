@@ -44,5 +44,7 @@ int main(int argc, char **argv) {
 		parse_tree(lex);
 		lex_close (lex);
 	}
+	
+	code_write();
 	return 0;
 }

@@ -75,15 +75,16 @@ typedef struct {
  * var and field use the same structure.  But lets not use the same
  * name just for safety reasons?  (still castable ...).
  */
-typedef prog_section_both prog_section_var;
+typedef prog_section_both prog_section_def;
 typedef prog_section_both prog_section_field;
 
 typedef struct {
 	int32_t   entry;      /* in statement table for instructions  */
-	uint32_t  args;       /* What is this?                        */
+	uint32_t  firstlocal; /* First local in local table           */
 	uint32_t  locals;     /* Total ints of params + locals        */
-	uint32_t  profile;    /* What is this?                        */
+	uint32_t  profile;    /* Always zero (engine uses this)       */
 	uint32_t  name;       /* name of function in string table     */
+	uint32_t  file;       /* file of the source file              */
 	uint32_t  nargs;      /* number of arguments                  */
 	uint8_t   argsize[8]; /* size of arguments (keep 8 always?)   */
 } prog_section_function;
@@ -97,7 +98,7 @@ typedef struct {
 	uint32_t     version;      /* Program version (6)     */
 	uint32_t     crc16;        /* What is this?           */
 	prog_section statements;   /* prog_section_statement  */
-	prog_section vars;         /* prog_section_var        */
+	prog_section defs;         /* prog_section_def        */
 	prog_section fields;       /* prog_section_field      */
 	prog_section functions;    /* prog_section_function   */
 	prog_section strings;      /* What is this?           */
@@ -129,7 +130,7 @@ typedef struct {
  * code_functions_allocated  -- size of the array allocated
  * code_functions_add(T)     -- add element (returns -1 on error)
  * 
- * code_globals_data         -- raw prog_section_var array
+ * code_globals_data         -- raw prog_section_def array
  * code_globals_elements     -- number of elements
  * code_globals_allocated    -- size of the array allocated
  * code_globals_add(T)       -- add element (returns -1 on error)
@@ -140,55 +141,90 @@ typedef struct {
  * code_strings_add(T)       -- add element (returns -1 on error)
  */
 VECTOR_MAKE(prog_section_statement, code_statements);
-VECTOR_MAKE(prog_section_var,       code_vars      );
+VECTOR_MAKE(prog_section_def,       code_defs      );
 VECTOR_MAKE(prog_section_field,     code_fields    );
 VECTOR_MAKE(prog_section_function,  code_functions );
-VECTOR_MAKE(prog_section_var,       code_globals   );
-VECTOR_MAKE(char*,                  code_strings   );
+VECTOR_MAKE(int,                    code_globals   );
+VECTOR_MAKE(char,                   code_strings   );
 
 /* program header */
 prog_header code_header;
 void code_write() {
 	
 	/* Add test program */
-	code_strings_add(NULL);           /* from my understanding str 0 = NULL (always!) */
-	code_strings_add("test program"); /* whoo a test program :3                       */
-	code_statements_add((prog_section_statement){INSTR_ADD_F, 1, 2, OFS_RETURN});
-	code_statements_add((prog_section_statement){INSTR_DONE,  0, 0, 0});
-	code_functions_add ((prog_section_function) {
-		.entry   = 0,
-		.args    = 0,
-		.locals  = 0,
-		.profile = 0,
-		.name    = 1, /*0 in string table is NULL always */
-		.nargs   = 0, /* CALL0 (no args) */
-		.argsize = (uint8_t*){0,0,0,0,0,0,0,0}
-	});
+	code_strings_add('\0');
+	
+		const char *X;
+		size_t size = sizeof(X);
+		size_t iter = 0;
+	
+	#define FOO(Y) \
+		X = Y; \
+		size = sizeof(Y); \
+		for (iter=0; iter < size; iter++) { \
+			code_strings_add(X[iter]);    \
+		}
+		
+	FOO("m_init");
+	FOO("print");
+	FOO("hello world\n");
+	FOO("m_keydown");
+	FOO("m_draw");
+	FOO("m_toggle");
+	FOO("m_shutdown");
+	
+	int i;
+	for (i=0; i<28; i++)
+		code_globals_add(0); /* 28 empty */
+	
+	code_globals_add(1);  /* m_init */
+	code_globals_add(2);  /* print  */
+	code_globals_add(14); /* hello world in string table */
+	
+	/* now the defs */
+	code_defs_add((prog_section_def){.type=TYPE_VOID,    .offset=28/*globals[28]*/, .name=1 }); /* m_init */
+	code_defs_add((prog_section_def){.type=TYPE_FUNCTION,.offset=29/*globals[29]*/, .name=8 }); /* print  */
+	code_defs_add((prog_section_def){.type=TYPE_STRING,  .offset=30/*globals[30]*/, .name=14}); /*hello_world*/
+	
+	code_functions_add((prog_section_function){0,  0, 0, 0, .name=0, 0, 0, {0}}); /* NULL */
+	code_functions_add((prog_section_function){1,  0, 0, 0, .name=1, 0, 0, {0}}); /* m_init */
+	code_functions_add((prog_section_function){-2, 0, 0, 0, .name=8, 0, 0, {0}}); /* print  */
+	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13,        0,0, {0}}); /* m_keydown */
+	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10,     0,0, {0}});
+	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7,   0,0, {0}});
+	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7+9, 0,0, {0}});
+	
+	code_statements_add((prog_section_statement){0, 0, 0, 0}); /* NULL */
+	code_statements_add((prog_section_statement){INSTR_STORE_F, 30/*30 is hello_world */, OFS_PARM0, 0});
+	code_statements_add((prog_section_statement){INSTR_CALL1,   29/*29 is print       */, 0,         0});
+	code_statements_add((prog_section_statement){INSTR_RETURN,  0,                        0,         0});
 	
 	code_header.version    = 6;
 	code_header.crc16      = 0; /* TODO: */
-	code_header.statements = (prog_section){sizeof(prog_header),                                                          code_statements_elements };
-	code_header.vars       = (prog_section){sizeof(prog_header)+sizeof(prog_section_statement)*code_statements_elements,  code_vars_elements       };
-	code_header.fields     = (prog_section){sizeof(prog_header)+sizeof(prog_section_var)      *code_vars_elements,        code_fields_elements     };
-	code_header.functions  = (prog_section){sizeof(prog_header)+sizeof(prog_section_field)    *code_fields_elements,      code_functions_elements  };
-	code_header.globals    = (prog_section){sizeof(prog_header)+sizeof(prog_section_function) *code_functions_elements,   code_globals_elements    };
-	/* how, I think I don't have strings figured out yet :| */
+	code_header.statements = (prog_section){sizeof(prog_header), code_statements_elements };
+	code_header.defs       = (prog_section){code_header.statements.offset + sizeof(prog_section_statement)*code_statements_elements,  code_defs_elements       };
+	code_header.fields     = (prog_section){code_header.defs.offset       + sizeof(prog_section_def)      *code_defs_elements,        code_fields_elements     };
+	code_header.functions  = (prog_section){code_header.fields.offset     + sizeof(prog_section_field)    *code_fields_elements,      code_functions_elements  };
+	code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements    };
+	code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_strings_elements    };
 	code_header.entfield   = 0; /* TODO: */
 	
-	#if 0 /* is this right? */
+
+	FILE *fp = fopen("program.dat", "wb");
 	fwrite(&code_header,         1, sizeof(prog_header), fp);
 	fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
-	fwrite(code_vars_data,       1, sizeof(prog_section_var)      *code_vars_elements,       fp);
+	fwrite(code_defs_data,       1, sizeof(prog_section_def)      *code_defs_elements,       fp);
 	fwrite(code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
 	fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
-	fwrite(code_globals_data,    1, sizeof(prog_section_var)      *code_globals_elements,    fp);
-	fwrite(
-	#endif
+	fwrite(code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
+	fwrite(code_strings_data,    1, 1                             *code_strings_elements,    fp);
 	
 	free(code_statements_data);
-	free(code_vars_data);
+	free(code_defs_data);
 	free(code_fields_data);
 	free(code_functions_data);
 	free(code_globals_data);
 	free(code_strings_data);
+	
+	fclose(fp);
 }

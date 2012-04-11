@@ -178,69 +178,84 @@ char *util_strdup  (const char *);
  * These are the external instructions supported by the interperter
  * this is what things compile to (from the C code).
  */
-#define INSTR_DONE      0
-// math
-#define INSTR_MUL_F     1
-#define INSTR_MUL_V     2
-#define INSTR_MUL_FV    3
-#define INSTR_MUL_VF    4
-#define INSTR_DIV_F     5
-#define INSTR_ADD_F     6
-#define INSTR_ADD_V     7
-#define INSTR_SUB_F     8
-#define INSTR_SUB_V     9
-// compare
-#define INSTR_EQ_F      10
-#define INSTR_EQ_V      11
-#define INSTR_EQ_S      12
-#define INSTR_EQ_E      13
-#define INSTR_EQ_FNC    14
-#define INSTR_NE_F      15
-#define INSTR_NE_V      16
-#define INSTR_NE_S      17
-#define INSTR_NE_E      18
-#define INSTR_NE_FNC    19
-// multi compare
-#define INSTR_LE        20
-#define INSTR_GE        21
-#define INSTR_LT        22
-#define INSTR_GT        23
-// load and store
-#define INSTR_LOAD_F    24
-#define INSTR_LOAD_V    25
-#define INSTR_LOAD_S    26
-#define INSTR_LOAD_ENT  27
-#define INSTR_LOAD_FLD  28
-#define INSTR_LOAD_FNC  29
-#define INSTR_STORE_F   31
-#define INSTR_STORE_V   32
-#define INSTR_STORE_S   33
-#define INSTR_STORE_ENT 34
-#define INSTR_STORE_FLD 35
-#define INSTR_STORE_FNC 36
-// others
-#define INSTR_ADDRESS   30
-#define INSTR_RETURN    37
-#define INSTR_NOT_F     38
-#define INSTR_NOT_V     39
-#define INSTR_NOT_S     40
-#define INSTR_NOT_ENT   41
-#define INSTR_NOT_FNC   42
-#define INSTR_IF        43
-#define INSTR_IFNOT     44
-#define INSTR_CALL0     45
-#define INSTR_CALL1     46
-#define INSTR_CALL2     47
-#define INSTR_CALL3     48
-#define INSTR_CALL4     49
-#define INSTR_CALL5     50
-#define INSTR_CALL6     51
-#define INSTR_CALL7     52
-#define INSTR_CALL8     53
-#define INSTR_STATE     54
-#define INSTR_GOTO      55
-#define INSTR_AND       56
-#define INSTR_OR        57
-#define INSTR_BITAND    59
-#define INSTR_BITOR     60
+enum {
+	INSTR_DONE,
+	INSTR_MUL_F,
+	INSTR_MUL_V,
+	INSTR_MUL_FV,
+	INSTR_MUL_VF,
+	INSTR_DIV_F,
+	INSTR_ADD_F,
+	INSTR_ADD_V,
+	INSTR_SUB_F,
+	INSTR_SUB_V,
+	
+	INSTR_EQ_F,
+	INSTR_EQ_V,
+	INSTR_EQ_S,
+	INSTR_EQ_E,
+	INSTR_EQ_FNC,
+	
+	INSTR_NE_F,
+	INSTR_NE_V,
+	INSTR_NE_S,
+	INSTR_NE_E,
+	INSTR_NE_FNC,
+	
+	INSTR_LE,
+	INSTR_GE,
+	INSTR_LT,
+	INSTR_GT,
+
+	INSTR_LOAD_F,
+	INSTR_LOAD_V,
+	INSTR_LOAD_S,
+	INSTR_LOAD_ENT,
+	INSTR_LOAD_FLD,
+	INSTR_LOAD_FNC,
+
+	INSTR_ADDRESS,
+
+	INSTR_STORE_F,
+	INSTR_STORE_V,
+	INSTR_STORE_S,
+	INSTR_STORE_ENT,
+	INSTR_STORE_FLD,
+	INSTR_STORE_FNC,
+
+	INSTR_STOREP_F,
+	INSTR_STOREP_V,
+	INSTR_STOREP_S,
+	INSTR_STOREP_ENT,
+	INSTR_STOREP_FLD,
+	INSTR_STOREP_FNC,
+
+	INSTR_RETURN,
+	INSTR_NOT_F,
+	INSTR_NOT_V,
+	INSTR_NOT_S,
+	INSTR_NOT_ENT,
+	INSTR_NOT_FNC,
+	INSTR_IF,
+	INSTR_IFNOT,
+	INSTR_CALL0,
+	INSTR_CALL1,
+	INSTR_CALL2,
+	INSTR_CALL3,
+	INSTR_CALL4,
+	INSTR_CALL5,
+	INSTR_CALL6,
+	INSTR_CALL7,
+	INSTR_CALL8,
+	INSTR_STATE,
+	INSTR_GOTO,
+	INSTR_AND,
+	INSTR_OR,
+	
+	INSTR_BITAND,
+	INSTR_BITOR
+};
+
+
+void code_write();
 #endif
