@@ -125,26 +125,26 @@ char *util_strdup  (const char *);
 #endif
 
 #define VECTOR_MAKE(T,N)                                                 \
-	T*     N##_data      = NULL;                                         \
-	long   N##_elements  = 0;                                            \
-	long   N##_allocated = 0;                                            \
-	int    N##_add(T element) {                                          \
-		if (N##_elements == N##_allocated) {                             \
-			if (N##_allocated == 0) {                                    \
-				N##_allocated = 12;                                      \
-			} else {                                                     \
-				N##_allocated *= 2;                                      \
-			}                                                            \
-			void *temp = realloc(N##_data, (N##_allocated * sizeof(T))); \
-			if  (!temp) {                                                \
-				free(temp);                                              \
-				return -1;                                               \
-			}                                                            \
-			N##_data = (T*)temp;                                         \
-		}                                                                \
-		N##_data[N##_elements] = element;                                \
-		return   N##_elements++;                                         \
-	}
+    T*     N##_data      = NULL;                                         \
+    long   N##_elements  = 0;                                            \
+    long   N##_allocated = 0;                                            \
+    int    N##_add(T element) {                                          \
+        if (N##_elements == N##_allocated) {                             \
+            if (N##_allocated == 0) {                                    \
+                N##_allocated = 12;                                      \
+            } else {                                                     \
+                N##_allocated *= 2;                                      \
+            }                                                            \
+            void *temp = realloc(N##_data, (N##_allocated * sizeof(T))); \
+            if  (!temp) {                                                \
+                free(temp);                                              \
+                return -1;                                               \
+            }                                                            \
+            N##_data = (T*)temp;                                         \
+        }                                                                \
+        N##_data[N##_elements] = element;                                \
+        return   N##_elements++;                                         \
+    }
 
 //===================================================================
 //=========================== code.c ================================
