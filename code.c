@@ -149,6 +149,22 @@ VECTOR_MAKE(char*,                  code_strings   );
 /* program header */
 prog_header code_header;
 void code_write() {
+	
+	/* Add test program */
+	code_strings_add(NULL);           /* from my understanding str 0 = NULL (always!) */
+	code_strings_add("test program"); /* whoo a test program :3                       */
+	code_statements_add((prog_section_statement){INSTR_ADD_F, 1, 2, OFS_RETURN});
+	code_statements_add((prog_section_statement){INSTR_DONE,  0, 0, 0});
+	code_functions_add ((prog_section_function) {
+		.entry   = 0,
+		.args    = 0,
+		.locals  = 0,
+		.profile = 0,
+		.name    = 1, /*0 in string table is NULL always */
+		.nargs   = 0, /* CALL0 (no args) */
+		.argsize = (uint8_t*){0,0,0,0,0,0,0,0}
+	});
+	
 	code_header.version    = 6;
 	code_header.crc16      = 0; /* TODO: */
 	code_header.statements = (prog_section){sizeof(prog_header),                                                          code_statements_elements };
@@ -166,6 +182,7 @@ void code_write() {
 	fwrite(code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
 	fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
 	fwrite(code_globals_data,    1, sizeof(prog_section_var)      *code_globals_elements,    fp);
+	fwrite(
 	#endif
 	
 	free(code_statements_data);
