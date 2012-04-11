@@ -167,4 +167,11 @@ void code_write() {
 	fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
 	fwrite(code_globals_data,    1, sizeof(prog_section_var)      *code_globals_elements,    fp);
 	#endif
+	
+	free(code_statements_data);
+	free(code_vars_data);
+	free(code_fields_data);
+	free(code_functions_data);
+	free(code_globals_data);
+	free(code_strings_data);
 }
