@@ -5,7 +5,8 @@ OBJ    = main.o    \
          error.o   \
          parse.o   \
          typedef.o \
-         util.o
+         util.o    \
+         code.o
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)

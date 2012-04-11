@@ -70,6 +70,12 @@
 #define PARSE_TYPE_DONE     37
 #define PARSE_TYPE_IDENT    38
 
+int parse[PARSE_TYPE_IDENT] = {
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0
+};
+
 /*
  * Adds a parse type to the parse tree, this is where all the hard
  * work actually begins.
@@ -81,6 +87,16 @@
 		parsetree->next->type = (X);                             \
 		parsetree             = parsetree->next;                 \
 	} while (0)
+
+#define PARSE_TREE_CHK(X,Y,Z)                                        \
+	do { \
+		if(parse[X]) { \
+			error(ERROR_PARSE, "Expected %c for %c\n", Y, Z); \
+			exit (1); \
+		} \
+	} while (0)
+	
+#define PARSE_TREE_PUT(X) do { parse[X] = 1; } while (0)
 
 /*
  * This is all the punctuation handled in the parser, these don't
@@ -209,9 +225,13 @@ int parse_tree(struct lex_file *file) {
 		    token                    != ERROR_PREPRO   && file->length >= 0) {
 		switch (token) {
 			case TOKEN_IF:
-				while ((token == ' ' || token == '\n') && file->length >= 0)
-					token = lex_token(file);
+				token = lex_token(file);
+				if (token != '(')
+					error(ERROR_PARSE, "Expected `(` on if statement:\n");
 				PARSE_TREE_ADD(PARSE_TYPE_IF);
+				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
+				PARSE_TREE_CHK(PARSE_TYPE_LPARTH, ')', '(');
+				PARSE_TREE_PUT(PARSE_TYPE_LPARTH);
 				break;
 			case TOKEN_ELSE:
 				token = lex_token(file);
@@ -252,13 +272,16 @@ int parse_tree(struct lex_file *file) {
 			 * the actual parse tree check.
 			 */
 			case TOKEN_RETURN:
+				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_RETURN);
+				break;
+			case TOKEN_CONTINUE:
+				PARSE_TREE_ADD(PARSE_TYPE_CONTINUE);
 				break;
 				
 			case TOKEN_DO:        PARSE_PERFORM(PARSE_TYPE_DO,      {});
 			case TOKEN_WHILE:     PARSE_PERFORM(PARSE_TYPE_WHILE,   {});
 			case TOKEN_BREAK:     PARSE_PERFORM(PARSE_TYPE_BREAK,   {});
-			case TOKEN_CONTINUE:  PARSE_PERFORM(PARSE_TYPE_CONTINUE,{});
 			case TOKEN_GOTO:      PARSE_PERFORM(PARSE_TYPE_GOTO,    {});
 			case TOKEN_VOID:      PARSE_PERFORM(PARSE_TYPE_VOID,    {});
 			case TOKEN_STRING:    PARSE_PERFORM(PARSE_TYPE_STRING,  {});
@@ -288,15 +311,18 @@ int parse_tree(struct lex_file *file) {
 				break;
 				
 			case '.':
-				token = lex_token(file);
+				//token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_DOT);
 				break;
 			case '(':
-				token = lex_token(file);
+				//token = lex_token(file);
+				PARSE_TREE_PUT(PARSE_TYPE_LPARTH);
 				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
 				break;
 			case ')':
-				token = lex_token(file);
+				//token = lex_token(file);
+				parse[PARSE_TYPE_LPARTH] = 0;
+				PARSE_TREE_PUT(PARSE_TYPE_RPARTH);
 				PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
 				break;
 				
