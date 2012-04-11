@@ -36,11 +36,13 @@ int main(int argc, char **argv) {
 		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
 	} else {
 		struct lex_file *lex = lex_open(fp);
+		lex->name = util_strdup(ifile);
 		if (!lex) {
 			fclose(fp);
 			return 0;
 		}
 		parse_tree(lex);
+		mem_d(lex->name);
 		lex_close (lex);
 	}
 	

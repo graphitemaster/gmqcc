@@ -48,6 +48,7 @@ struct lex_file *lex_open(FILE *fp) {
 	lex->size   = lex->length; /* copy, this is never changed */
 	fseek(lex->file, 0, SEEK_SET);
 	lex->last = 0;
+	lex->line = 1;
 	
 	memset(lex->peek, 0, sizeof(lex->peek));
 	return lex;
@@ -276,7 +277,7 @@ int lex_token(struct lex_file *file) {
 	/* valid identifier */
 	if (ch > 0 && (ch == '_' || isalpha(ch))) {
 		lex_clear(file);
-		while (ch > 0 && (isalpha(ch) || ch == '_')) {
+		while (ch > 0 && ch != ' ' && ch != '(' && ch != '\n') {
 			lex_addch(ch, file);
 			ch = lex_getsource(file);
 		}

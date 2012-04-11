@@ -1,12 +1,12 @@
-CC     = gcc
-CFLAGS = -O3 -Wall
-OBJ    = main.o    \
-         lex.o     \
-         error.o   \
-         parse.o   \
-         typedef.o \
-         util.o    \
-         code.o
+CC      = gcc
+CFLAGS += -Wall
+OBJ     = main.o    \
+          lex.o     \
+          error.o   \
+          parse.o   \
+          typedef.o \
+          util.o    \
+          code.o
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)

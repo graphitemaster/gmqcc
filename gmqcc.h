@@ -28,15 +28,18 @@
 //============================ lex.c ================================
 //===================================================================
 struct lex_file {
-	FILE *file;
-	char  peek  [5];
+	FILE *file;        /* file handler */
+	char *name;        /* name of file */
+	char  peek  [5];  
 	char  lastok[8192];
 	
-	int   line;
-	int   last;
-	int   current;
-	int   length;
-	int   size;
+	
+	int   last;    /* last token                   */
+	int   current; /* current token                */
+	
+	int   length;  /* bytes left to parse          */
+	int   size;    /* never changes (size of file) */
+	int   line;    /* what line are we on?         */
 };
 
 /*

@@ -93,59 +93,63 @@
 	"." , "<" , ">" , "&" , "|" , 
 #endif
 
-#define STORE(X) {  \
-	printf(X);      \
-	break;          \
+#define STORE(X,C) {  \
+    long f = fill;    \
+    while(f--) {      \
+      putchar(' ');   \
+    }                 \
+    fill C;           \
+	printf(X);        \
+	break;            \
 }
 
 void parse_debug(struct parsenode *tree) {
+	long fill = 0;
 	while (tree) {	
 		switch (tree->type) {
-			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n");
-			case PARSE_TYPE_BAND:      STORE("OPERATOR:  BITAND \n");
-			case PARSE_TYPE_BOR:       STORE("OPERATOR:  BITOR  \n");
-			case PARSE_TYPE_COMMA:     STORE("OPERATOR:  SEPERATOR\n");
-			case PARSE_TYPE_DOT:       STORE("OPERATOR:  DOT\n");
-			case PARSE_TYPE_DIVIDE:    STORE("OPERATOR:  DIVIDE\n");
-			case PARSE_TYPE_EQUAL:     STORE("OPERATOR:  ASSIGNMENT\n");
+			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n", -=0);
+			case PARSE_TYPE_BAND:      STORE("OPERATOR:  BITAND \n",-=0);
+			case PARSE_TYPE_BOR:       STORE("OPERATOR:  BITOR  \n",-=0);
+			case PARSE_TYPE_COMMA:     STORE("OPERATOR:  SEPERATOR\n",-=0);
+			case PARSE_TYPE_DOT:       STORE("OPERATOR:  DOT\n",-=0);
+			case PARSE_TYPE_DIVIDE:    STORE("OPERATOR:  DIVIDE\n",-=0);
+			case PARSE_TYPE_EQUAL:     STORE("OPERATOR:  ASSIGNMENT\n",-=0);
 			
-			case PARSE_TYPE_BREAK:     STORE("STATEMENT: BREAK  \n");
-			case PARSE_TYPE_CONTINUE:  STORE("STATEMENT: CONTINUE\n");
-			case PARSE_TYPE_GOTO:      STORE("STATEMENT: GOTO\n");
-			case PARSE_TYPE_RETURN:    STORE("STATEMENT: RETURN\n");
-			case PARSE_TYPE_DONE:      STORE("STATEMENT: DONE\n");
+			case PARSE_TYPE_BREAK:     STORE("STATEMENT: BREAK  \n",-=0);
+			case PARSE_TYPE_CONTINUE:  STORE("STATEMENT: CONTINUE\n",-=0);
+			case PARSE_TYPE_GOTO:      STORE("STATEMENT: GOTO\n",-=0);
+			case PARSE_TYPE_RETURN:    STORE("STATEMENT: RETURN\n",-=0);
+			case PARSE_TYPE_DONE:      STORE("STATEMENT: DONE\n",-=0);
 
-			case PARSE_TYPE_VOID:      STORE("DECLTYPE:  VOID\n");
-			case PARSE_TYPE_STRING:    STORE("DECLTYPE:  STRING\n");
-			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n");
-			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE:  ENTITY\n");
-			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE:  FLOAT\n");
-			case PARSE_TYPE_VECTOR:    STORE("DECLTYPE:  VECTOR\n");
+			case PARSE_TYPE_VOID:      STORE("DECLTYPE:  VOID\n",-=0);
+			case PARSE_TYPE_STRING:    STORE("DECLTYPE:  STRING\n",-=0);
+			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n",-=0);
+			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE:  ENTITY\n",-=0);
+			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE:  FLOAT\n",-=0);
+			case PARSE_TYPE_VECTOR:    STORE("DECLTYPE:  VECTOR\n",-=0);
 			
-			case PARSE_TYPE_GT:        STORE("TEST:      GREATER THAN\n");
-			case PARSE_TYPE_LT:        STORE("TEST:      LESS THAN\n");
-			case PARSE_TYPE_GTEQ:      STORE("TEST:      GREATER THAN OR EQUAL\n");
-			case PARSE_TYPE_LTEQ:      STORE("TEST:      LESS THAN OR EQUAL\n");
-			case PARSE_TYPE_LNEQ:      STORE("TEST:      NOT EQUAL\n");
-			case PARSE_TYPE_EQEQ:      STORE("TEST:      EQUAL-EQUAL\n");
+			case PARSE_TYPE_GT:        STORE("TEST:      GREATER THAN\n",-=0);
+			case PARSE_TYPE_LT:        STORE("TEST:      LESS THAN\n",-=0);
+			case PARSE_TYPE_GTEQ:      STORE("TEST:      GREATER THAN OR EQUAL\n",-=0);
+			case PARSE_TYPE_LTEQ:      STORE("TEST:      LESS THAN OR EQUAL\n",-=0);
+			case PARSE_TYPE_LNEQ:      STORE("TEST:      NOT EQUAL\n",-=0);
+			case PARSE_TYPE_EQEQ:      STORE("TEST:      EQUAL-EQUAL\n",-=0);
 			
-			case PARSE_TYPE_LBS:       STORE("BLOCK:     BEG\n");
-			case PARSE_TYPE_RBS:       STORE("BLOCK:     END\n");
-			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n");
-			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n");
+			case PARSE_TYPE_LBS:       STORE("BLOCK:     BEG\n",+=4);
+			case PARSE_TYPE_RBS:       STORE("BLOCK:     END\n",-=4);
+			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n",+=0);
+			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n",+=0);
 			
-			case PARSE_TYPE_LAND:      STORE("LOGICAL:   AND\n");
-			case PARSE_TYPE_LNOT:      STORE("LOGICAL:   NOT\n");
-			case PARSE_TYPE_LOR:       STORE("LOGICAL:   OR\n");
+			case PARSE_TYPE_LAND:      STORE("LOGICAL:   AND\n",-=0);
+			case PARSE_TYPE_LNOT:      STORE("LOGICAL:   NOT\n",-=0);
+			case PARSE_TYPE_LOR:       STORE("LOGICAL:   OR\n",-=0);
 			
-			case PARSE_TYPE_LPARTH:    STORE("PARTH:     BEG\n");
-			case PARSE_TYPE_RPARTH:    STORE("PARTH:     END\n");
+			case PARSE_TYPE_LPARTH:    STORE("PARTH:     BEG\n",-=0);
+			case PARSE_TYPE_RPARTH:    STORE("PARTH:     END\n",-=0);
 			
-			case PARSE_TYPE_WHILE:     STORE("LOOP:      WHILE\n");
-			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n");
-			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n");
-			
-			//case PARSE_TYPE_IDENT:     STORE("IDENT:     ???\n");
+			case PARSE_TYPE_WHILE:     STORE("LOOP:      WHILE\n",-=0);
+			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n",-=0);
+			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n",-=0);
 		}
 		tree = tree->next;
 	}
@@ -181,6 +185,23 @@ void parse_clear(struct parsenode *tree) {
 	typedef_clear();
 }
 
+const char *STRING_(char ch) {
+	if (ch == ' ')
+		return "<space>";
+	if (ch == '\n')
+		return "<newline>";
+	if (ch == '\0')
+		return "<null>";
+		
+	return &ch;
+}
+
+#define TOKEN_SKIPWHITE()        \
+	token = lex_token(file);     \
+	while (token == ' ') {       \
+		token = lex_token(file); \
+	}
+
 /*
  * Generates a parse tree out of the lexees generated by the lexer.  This
  * is where the tree is built.  This is where valid check is performed.
@@ -210,9 +231,9 @@ int parse_tree(struct lex_file *file) {
 		    token                    != ERROR_PREPRO   && file->length >= 0) {
 		switch (token) {
 			case TOKEN_IF:
-				token = lex_token(file);
+				TOKEN_SKIPWHITE();
 				if (token != '(')
-					error(ERROR_PARSE, "Expected `(` on if statement:\n");
+					error(ERROR_PARSE, "%s:%d Expected `(` after `if` for if statement\n", file->name, file->line);
 				PARSE_TREE_ADD(PARSE_TYPE_IF);
 				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
 				break;
@@ -221,7 +242,6 @@ int parse_tree(struct lex_file *file) {
 				PARSE_TREE_ADD(PARSE_TYPE_ELSE);
 				break;
 			case TOKEN_FOR:
-				//token = lex_token(file);
 				while ((token == ' ' || token == '\n') && file->length >= 0)
 					token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_FOR);
@@ -267,10 +287,70 @@ int parse_tree(struct lex_file *file) {
 			case TOKEN_BREAK:     PARSE_PERFORM(PARSE_TYPE_BREAK,   {});
 			case TOKEN_GOTO:      PARSE_PERFORM(PARSE_TYPE_GOTO,    {});
 			case TOKEN_VOID:      PARSE_PERFORM(PARSE_TYPE_VOID,    {});
-			case TOKEN_STRING:    PARSE_PERFORM(PARSE_TYPE_STRING,  {});
-			case TOKEN_FLOAT:     PARSE_PERFORM(PARSE_TYPE_FLOAT,   {});
-			case TOKEN_VECTOR:    PARSE_PERFORM(PARSE_TYPE_VECTOR,  {});
-			case TOKEN_ENTITY:    PARSE_PERFORM(PARSE_TYPE_ENTITY,  {});
+			
+			case TOKEN_STRING:    PARSE_TREE_ADD(PARSE_TYPE_STRING);
+			case TOKEN_VECTOR:    PARSE_TREE_ADD(PARSE_TYPE_VECTOR);
+			case TOKEN_ENTITY:    PARSE_TREE_ADD(PARSE_TYPE_ENTITY);
+			case TOKEN_FLOAT:     PARSE_TREE_ADD(PARSE_TYPE_FLOAT);
+			/* fall into this for all types */
+			{
+				char *name = NULL;
+				TOKEN_SKIPWHITE();
+				name  = util_strdup(file->lastok);
+				//token = lex_token  (file);
+				
+				/* is it NOT a definition? */
+				if (token != ';') {
+					while (token == ' ')
+						token = lex_token(file);
+					
+					/* it's a function? */
+					if (token == '(') {
+						/*
+						 * Now I essentially have to do a ton of parsing for
+						 * function definition.
+						 */
+						PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
+						token = lex_token(file);
+						while (token != '\n' && token != ')') {
+							switch (token) {
+								case TOKEN_VOID:    PARSE_TREE_ADD(PARSE_TYPE_VOID);   break;
+								case TOKEN_STRING:  PARSE_TREE_ADD(PARSE_TYPE_STRING); break;
+								case TOKEN_ENTITY:  PARSE_TREE_ADD(PARSE_TYPE_ENTITY); break;
+								case TOKEN_FLOAT:   PARSE_TREE_ADD(PARSE_TYPE_FLOAT);  break;
+								/*
+								 * TODO:  Need to parse function pointers:  I have no clue how
+								 * I'm actually going to pull that off, it's going to be hard
+								 * since you can have a function pointer-pointer-pointer ....
+								 */
+							}
+						}
+						/* just a definition */
+						if (token == ')') {
+							/*
+							 * I like to put my { on the same line as the ) for
+							 * functions, ifs, elses, so we must support that!.
+							 */
+							PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
+							token = lex_token(file);
+							token = lex_token(file);
+							if(token == '{')
+								PARSE_TREE_ADD(PARSE_TYPE_LBS);
+						}
+						else if (token == '\n')
+							error(ERROR_COMPILER, "%s:%d Expecting `;` after function definition %s\n", file->name, file->line, name);
+							 
+					} else if (token == '=') {
+						PARSE_TREE_ADD(PARSE_TYPE_EQUAL);
+					} else {
+						error(ERROR_COMPILER, "%s:%d Invalid decltype: expected `(` [function], or `=` [constant] for %s\n", file->name, file->line, name);
+					} 
+				} else {
+					/* definition */
+					printf("FOUND DEFINITION\n");
+				}
+				mem_d(name);
+			}
 				
 			/*
 			 * From here down is all language punctuation:  There is no
@@ -281,11 +361,11 @@ int parse_tree(struct lex_file *file) {
 			 */
 			case '#':
 				token = lex_token(file); /* skip '#' */
-				while (isspace(token)) {
-					if (token == '\n')
-						return error(ERROR_PARSE, "Expected valid preprocessor directive after `#` %s\n");
-					token = lex_token(file); /* try again */
-				}
+				//while (isspace(token)) {
+				//	if (token == '\n')
+				//		return error(ERROR_PARSE, "Expected valid preprocessor directive after `#` %s\n");
+				//	token = lex_token(file); /* try again */
+				//}
 				/*
 				 * If we make it here we found a directive, the supported
 				 * directives so far are #include.

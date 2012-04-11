@@ -146,18 +146,29 @@ VECTOR_MAKE(prog_section_field,     code_fields    );
 VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_strings   );
+static uint16_t code_crc16  = 0;
+prog_header     code_header ={0};
 
-/* program header */
-prog_header code_header;
-void code_write() {
-	
-	#if 0
-	/* Add test program */
-	code_strings_add('\0');
-	
-		const char *X;
-		size_t size = sizeof(X);
-		size_t iter = 0;
+void code_init() {
+	/*
+	 * The way progs.dat is suppose to work is odd, there needs to be
+	 * some null (empty) statements, functions, and 28 globals
+	 */
+	prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
+	prog_section_statement empty_statement = {0,{0},{0},{0}};
+	int i;
+	for(i = 0; i < 28; i++)
+		code_globals_add(0);
+		
+	code_strings_add   ('\0');
+	code_functions_add (empty_function);
+	code_statements_add(empty_statement);
+}
+
+void code_test() {
+	const char *X;
+	size_t size = sizeof(X);
+	size_t iter = 0;
 	
 	#define FOO(Y) \
 		X = Y; \
@@ -174,10 +185,6 @@ void code_write() {
 	FOO("m_toggle");
 	FOO("m_shutdown");
 	
-	int i;
-	for (i=0; i<28; i++)
-		code_globals_add(0); /* 28 empty */
-	
 	code_globals_add(1);  /* m_init */
 	code_globals_add(2);  /* print  */
 	code_globals_add(14); /* hello world in string table */
@@ -187,7 +194,6 @@ void code_write() {
 	code_defs_add((prog_section_def){.type=TYPE_FUNCTION,.offset=29/*globals[29]*/, .name=8 }); /* print  */
 	code_defs_add((prog_section_def){.type=TYPE_STRING,  .offset=30/*globals[30]*/, .name=14}); /*hello_world*/
 	
-	code_functions_add((prog_section_function){0,  0, 0, 0, .name=0, 0, 0, {0}}); /* NULL */
 	code_functions_add((prog_section_function){1,  0, 0, 0, .name=1, 0, 0, {0}}); /* m_init */
 	code_functions_add((prog_section_function){-4, 0, 0, 0, .name=8, 0, 0, {0}}); /* print  */
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13,        0,0, {0}}); /* m_keydown */
@@ -195,10 +201,9 @@ void code_write() {
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7,   0,0, {0}});
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7+9, 0,0, {0}});
 	
-	code_statements_add((prog_section_statement){0, 0, 0, 0}); /* NULL */
-	code_statements_add((prog_section_statement){INSTR_STORE_F, 30/*30 is hello_world */, OFS_PARM0, 0});
-	code_statements_add((prog_section_statement){INSTR_CALL1,   29/*29 is print       */, 0,         0});
-	code_statements_add((prog_section_statement){INSTR_RETURN,  0,                        0,         0});
+	code_statements_add((prog_section_statement){INSTR_STORE_F, {30}/*30 is hello_world */, {OFS_PARM0}, {0}});
+	code_statements_add((prog_section_statement){INSTR_CALL1,   {29}/*29 is print       */, {0},         {0}});
+	code_statements_add((prog_section_statement){INSTR_RETURN,  {0},                        {0},         {0}});
 	
 	code_header.version    = 6;
 	code_header.crc16      = 0; /* TODO: */
@@ -209,10 +214,13 @@ void code_write() {
 	code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements    };
 	code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_strings_elements    };
 	code_header.entfield   = 0; /* TODO: */
-	#endif
+}
 
-
-	/* write out everything one SHOT! */
+/* program header */
+void code_write() {
+	code_init();
+	code_test();
+	
 	FILE *fp = fopen("program.dat", "wb");
 	fwrite(&code_header,         1, sizeof(prog_header), fp);
 	fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
