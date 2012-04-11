@@ -80,7 +80,7 @@ int typedef_add(const char *from, const char *to) {
 	    strncmp(from, "void",   sizeof("void"))   == 0) {
 		
 		typedef_table[hash]       = mem_a(sizeof(typedef_node));
-		typedef_table[hash]->name = strdup(from);
+		typedef_table[hash]->name = util_strdup(from);
 		return -100;
 	} else {
 		/* search the typedefs for it (typedef-a-typedef?) */

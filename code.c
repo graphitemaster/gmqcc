@@ -151,6 +151,7 @@ VECTOR_MAKE(char,                   code_strings   );
 prog_header code_header;
 void code_write() {
 	
+	#if 0
 	/* Add test program */
 	code_strings_add('\0');
 	
@@ -188,7 +189,7 @@ void code_write() {
 	
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=0, 0, 0, {0}}); /* NULL */
 	code_functions_add((prog_section_function){1,  0, 0, 0, .name=1, 0, 0, {0}}); /* m_init */
-	code_functions_add((prog_section_function){-2, 0, 0, 0, .name=8, 0, 0, {0}}); /* print  */
+	code_functions_add((prog_section_function){-4, 0, 0, 0, .name=8, 0, 0, {0}}); /* print  */
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13,        0,0, {0}}); /* m_keydown */
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10,     0,0, {0}});
 	code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7,   0,0, {0}});
@@ -208,8 +209,10 @@ void code_write() {
 	code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements    };
 	code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_strings_elements    };
 	code_header.entfield   = 0; /* TODO: */
-	
+	#endif
 
+
+	/* write out everything one SHOT! */
 	FILE *fp = fopen("program.dat", "wb");
 	fwrite(&code_header,         1, sizeof(prog_header), fp);
 	fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);

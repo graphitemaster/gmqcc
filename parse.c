@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "gmqcc.h"
 
 /*
@@ -278,7 +279,18 @@ int parse_tree(struct lex_file *file) {
 			case TOKEN_CONTINUE:
 				PARSE_TREE_ADD(PARSE_TYPE_CONTINUE);
 				break;
-				
+			
+			/*
+			 * DO loops work like so:
+			 * __do_loop_beg:
+			 * IFNOT __do_loop_beg#
+			 * 	GOTO __do_loop_end
+			 * INSTR1
+			 * INSTR2
+			 * ......
+			 * GOTO __do_loop_beg
+			 */
+			
 			case TOKEN_DO:        PARSE_PERFORM(PARSE_TYPE_DO,      {});
 			case TOKEN_WHILE:     PARSE_PERFORM(PARSE_TYPE_WHILE,   {});
 			case TOKEN_BREAK:     PARSE_PERFORM(PARSE_TYPE_BREAK,   {});
@@ -297,14 +309,36 @@ int parse_tree(struct lex_file *file) {
 			 * which are higer than the ascii table.)
 			 */
 			case '#':
+				token = lex_token(file); /* skip '#' */
+				while (isspace(token)) {
+					if (token == '\n') {
+						return error(ERROR_PARSE, "Expected valid preprocessor directive after `#` %s\n");
+					}
+					token = lex_token(file); /* try again */
+				}
 				/*
-				 * Skip the preprocessor for now:  We'll implement our own
-				 * eventually.  For now we need to make sure directives are
-				 * not accidently tokenized.
+				 * If we make it here we found a directive, the supported
+				 * directives so far are #include.
 				 */
-				token = lex_token(file);
-				token = lex_token(file);
-				
+				if (strncmp(file->lastok, "include", sizeof("include")) == 0) {
+					//lex_include("file");
+					/*
+					 * We need to compose a name till we find either a
+					 * '"',> or a <, (for includes), if we hit a '\n' then
+					 * clearly the person miswrote the include.
+					 */
+					while (*file->lastok != '"' && token != '\n')
+						token = lex_token(file);
+						
+					if (token == '\n')
+						return error(ERROR_PARSE, "Invalid use of include preprocessor directive: wanted #include \"file.h\"\n");
+						
+					
+					//lex_token(file);
+					//lex_token(file);
+					printf("include: %s\n", file->lastok);
+				}
+			
 				/* skip all tokens to end of directive */
 				while (token != '\n')
 					token = lex_token(file);

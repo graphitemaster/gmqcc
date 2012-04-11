@@ -302,6 +302,7 @@ int lex_token(struct lex_file *file) {
 		if (typedef_find(file->lastok))
 			TEST_TYPE(typedef_find(file->lastok)->name);
 			
+		#undef TEST_TYPE
 		return LEX_IDENT;
 	}
 	return ch;
