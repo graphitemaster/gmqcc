@@ -277,7 +277,7 @@ int lex_token(struct lex_file *file) {
 	/* valid identifier */
 	if (ch > 0 && (ch == '_' || isalpha(ch))) {
 		lex_clear(file);
-		while (ch > 0 && ch != ' ' && ch != '(' && ch != '\n') {
+		while (ch > 0 && ch != ' ' && ch != '(' && ch != '\n' && ch != ';') {
 			lex_addch(ch, file);
 			ch = lex_getsource(file);
 		}

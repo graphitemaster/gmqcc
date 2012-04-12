@@ -262,11 +262,18 @@ int parse_tree(struct lex_file *file) {
 				
 				typedef_add(f, t);
 				
+				printf("TYPEDEF %s as %s\n", f, t);
+				
 				mem_d(f);
 				mem_d(t);
 				
-				while (token != '\n')
-					token = lex_token(file);
+				//while (token != '\n')
+				token = lex_token(file);
+				if (token != ';')
+					error(ERROR_PARSE, "%s:%d Expected `;` on typedef\n", file->name, file->line);
+					
+				token = lex_token(file);
+				printf("TOK: %c\n", token);
 				break;
 			}
 			
@@ -288,16 +295,17 @@ int parse_tree(struct lex_file *file) {
 			case TOKEN_GOTO:      PARSE_PERFORM(PARSE_TYPE_GOTO,    {});
 			case TOKEN_VOID:      PARSE_PERFORM(PARSE_TYPE_VOID,    {});
 			
-			case TOKEN_STRING:    PARSE_TREE_ADD(PARSE_TYPE_STRING);
-			case TOKEN_VECTOR:    PARSE_TREE_ADD(PARSE_TYPE_VECTOR);
-			case TOKEN_ENTITY:    PARSE_TREE_ADD(PARSE_TYPE_ENTITY);
-			case TOKEN_FLOAT:     PARSE_TREE_ADD(PARSE_TYPE_FLOAT);
+			case TOKEN_STRING:    PARSE_TREE_ADD(PARSE_TYPE_STRING); goto fall;
+			case TOKEN_VECTOR:    PARSE_TREE_ADD(PARSE_TYPE_VECTOR); goto fall;
+			case TOKEN_ENTITY:    PARSE_TREE_ADD(PARSE_TYPE_ENTITY); goto fall;
+			case TOKEN_FLOAT:     PARSE_TREE_ADD(PARSE_TYPE_FLOAT);  goto fall;
 			/* fall into this for all types */
 			{
+			fall:;
 				char *name = NULL;
 				TOKEN_SKIPWHITE();
 				name  = util_strdup(file->lastok);
-				//token = lex_token  (file);
+				token = lex_token  (file);
 				
 				/* is it NOT a definition? */
 				if (token != ';') {
@@ -343,7 +351,7 @@ int parse_tree(struct lex_file *file) {
 					} else if (token == '=') {
 						PARSE_TREE_ADD(PARSE_TYPE_EQUAL);
 					} else {
-						error(ERROR_COMPILER, "%s:%d Invalid decltype: expected `(` [function], or `=` [constant] for %s\n", file->name, file->line, name);
+						error(ERROR_COMPILER, "%s:%d Invalid decltype: expected `(` [function], or `=` [constant], or `;` [definition] for %s\n", file->name, file->line, name);
 					} 
 				} else {
 					/* definition */
@@ -361,11 +369,6 @@ int parse_tree(struct lex_file *file) {
 			 */
 			case '#':
 				token = lex_token(file); /* skip '#' */
-				//while (isspace(token)) {
-				//	if (token == '\n')
-				//		return error(ERROR_PARSE, "Expected valid preprocessor directive after `#` %s\n");
-				//	token = lex_token(file); /* try again */
-				//}
 				/*
 				 * If we make it here we found a directive, the supported
 				 * directives so far are #include.
