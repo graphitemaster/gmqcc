@@ -230,30 +230,9 @@ int parse_tree(struct lex_file *file) {
 		    token                    != ERROR_PARSE    && \
 		    token                    != ERROR_PREPRO   && file->length >= 0) {
 		switch (token) {
-			case TOKEN_IF:
-				TOKEN_SKIPWHITE();
-				if (token != '(')
-					error(ERROR_PARSE, "%s:%d Expected `(` after `if` for if statement\n", file->name, file->line);
-				PARSE_TREE_ADD(PARSE_TYPE_IF);
-				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
-				break;
-			case TOKEN_ELSE:
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_ELSE);
-				break;
-			case TOKEN_FOR:
-				while ((token == ' ' || token == '\n') && file->length >= 0)
-					token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_FOR);
-				break;
-			
-			/*
-			 * This is a quick and easy way to do typedefs at parse time
-			 * all power is in typedef_add(), in typedef.c.  We handle 
-			 * the tokens accordingly here.
-			 */
 			case TOKEN_TYPEDEF: {
-				char *f,*t;
+				char *f; /* from */
+				char *t; /* to   */
 				
 				token = lex_token(file); 
 				token = lex_token(file); f = util_strdup(file->lastok);
@@ -261,101 +240,192 @@ int parse_tree(struct lex_file *file) {
 				token = lex_token(file); t = util_strdup(file->lastok);
 				
 				typedef_add(f, t);
-				
-				printf("TYPEDEF %s as %s\n", f, t);
-				
 				mem_d(f);
 				mem_d(t);
 				
-				//while (token != '\n')
 				token = lex_token(file);
+				if (token == ' ')
+					token = lex_token(file);
+					
 				if (token != ';')
 					error(ERROR_PARSE, "%s:%d Expected `;` on typedef\n", file->name, file->line);
 					
 				token = lex_token(file);
-				printf("TOK: %c\n", token);
 				break;
 			}
 			
-			/*
-			 * Returns are addable as-is, statement checking is during
-			 * the actual parse tree check.
-			 */
-			case TOKEN_RETURN:
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_RETURN);
-				break;
-			case TOKEN_CONTINUE:
-				PARSE_TREE_ADD(PARSE_TYPE_CONTINUE);
-				break;
-			
-			case TOKEN_DO:        PARSE_PERFORM(PARSE_TYPE_DO,      {});
-			case TOKEN_WHILE:     PARSE_PERFORM(PARSE_TYPE_WHILE,   {});
-			case TOKEN_BREAK:     PARSE_PERFORM(PARSE_TYPE_BREAK,   {});
-			case TOKEN_GOTO:      PARSE_PERFORM(PARSE_TYPE_GOTO,    {});
-			case TOKEN_VOID:      PARSE_PERFORM(PARSE_TYPE_VOID,    {});
-			
+			case TOKEN_VOID:      PARSE_TREE_ADD(PARSE_TYPE_VOID);   goto fall;
 			case TOKEN_STRING:    PARSE_TREE_ADD(PARSE_TYPE_STRING); goto fall;
 			case TOKEN_VECTOR:    PARSE_TREE_ADD(PARSE_TYPE_VECTOR); goto fall;
 			case TOKEN_ENTITY:    PARSE_TREE_ADD(PARSE_TYPE_ENTITY); goto fall;
 			case TOKEN_FLOAT:     PARSE_TREE_ADD(PARSE_TYPE_FLOAT);  goto fall;
-			/* fall into this for all types */
 			{
 			fall:;
 				char *name = NULL;
-				TOKEN_SKIPWHITE();
-				name  = util_strdup(file->lastok);
-				token = lex_token  (file);
+				int   type = token; /* story copy */
 				
-				/* is it NOT a definition? */
-				if (token != ';') {
-					while (token == ' ')
+				/* skip over space */
+				token = lex_token(file);
+				if (token == ' ')
+					token = lex_token(file);
+				
+				/* save name */
+				name = util_strdup(file->lastok);
+				
+				/* skip spaces */
+				token = lex_token(file);
+				if (token == ' ')
+					token = lex_token(file);
+					
+				if (token == ';') {
+					printf("definition\n");
+				} else if (token == '=') {
+					token = lex_token(file);
+					if (token == ' ')
 						token = lex_token(file);
 					
-					/* it's a function? */
-					if (token == '(') {
-						/*
-						 * Now I essentially have to do a ton of parsing for
-						 * function definition.
-						 */
-						PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
-						token = lex_token(file);
-						while (token != '\n' && token != ')') {
-							switch (token) {
-								case TOKEN_VOID:    PARSE_TREE_ADD(PARSE_TYPE_VOID);   break;
-								case TOKEN_STRING:  PARSE_TREE_ADD(PARSE_TYPE_STRING); break;
-								case TOKEN_ENTITY:  PARSE_TREE_ADD(PARSE_TYPE_ENTITY); break;
-								case TOKEN_FLOAT:   PARSE_TREE_ADD(PARSE_TYPE_FLOAT);  break;
-								/*
-								 * TODO:  Need to parse function pointers:  I have no clue how
-								 * I'm actually going to pull that off, it's going to be hard
-								 * since you can have a function pointer-pointer-pointer ....
-								 */
-							}
-						}
-						/* just a definition */
-						if (token == ')') {
+					/* strings are in file->lastok */
+					switch (type) {
+						case TOKEN_VOID:   return error(ERROR_PARSE, "%s:%d Cannot assign value to type void\n", file->name, file->line);
+						case TOKEN_STRING:
+							if (*file->lastok != '"')
+								error(ERROR_PARSE, "%s:%d Expected a '\"' for string constant\n", file->name, file->line);
+							break;
+						case TOKEN_VECTOR: {
+							float compile_calc_x = 0;
+							float compile_calc_y = 0;
+							float compile_calc_z = 0;
+							int   compile_calc_d = 0; /* dot? */
+							
+							char  compile_data[1024];
+							char *compile_eval = compile_data;
+							
+							if (token != '{')
+								error(ERROR_PARSE, "%s:%d Expected initializer list `{`,`}` for vector constant\n", file->name, file->line);	
+								
+							token = lex_token(file);
+							if (token == ' ')
+								token = lex_token(file);
+							
 							/*
-							 * I like to put my { on the same line as the ) for
-							 * functions, ifs, elses, so we must support that!.
+							 * we support .7623, unlike anyother QuakeC
+							 * compiler.  Does that make us better :-).
 							 */
-							PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
+							if (token == '.')
+								compile_calc_d = 1;
+							if (!isdigit(token) && !compile_calc_d)
+								error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric\n", file->name, file->line);
+							
+							/*
+							 * Read in constant data, will be in float format
+							 * which means we use atof.
+							 */
+							while (isdigit(token) || token == '.') {
+								*compile_eval++ = token;
+								token           = lex_token(file);
+								if (token == '.' && compile_calc_d) {
+									error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric.\n", file->name, file->line);
+								} else if (token == '.' && !compile_calc_d) {
+									compile_calc_d = 1;
+								}
+							}
+							if (token == ' ')
+								token = lex_token(file);
+								
+							if (token != ',' && token != ' ')
+								error(ERROR_PARSE, "%s:%d invalid constant initializer element for vector (missing spaces, or comma delimited list?)\n", file->name, file->line);
+							compile_calc_x = atof(compile_data);
+							compile_calc_d = 0;
+							memset(compile_data, 0, sizeof(compile_data));
+							compile_eval   = &compile_data[0];
+							
 							token = lex_token(file);
+							if (token == ' ')
+								token = lex_token(file);
+								
+							if (token == '.')
+								compile_calc_d = 1;
+							if (!isdigit(token) && !compile_calc_d)
+								error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric\n", file->name, file->line);
+							
+							/*
+							 * Read in constant data, will be in float format
+							 * which means we use atof.
+							 */
+							while (isdigit(token) || token == '.') {
+								*compile_eval++ = token;
+								token           = lex_token(file);
+								if (token == '.' && compile_calc_d) {
+									error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric.\n", file->name, file->line);
+								} else if (token == '.' && !compile_calc_d) {
+									compile_calc_d = 1;
+								}
+							}
+							if (token == ' ')
+								token = lex_token(file);
+								
+							if (token != ',' && token != ' ')
+								error(ERROR_PARSE, "%s:%d invalid constant initializer element for vector (missing spaces, or comma delimited list?)\n", file->name, file->line);
+							compile_calc_y = atof(compile_data);
+							compile_calc_d = 0;
+							memset(compile_data, 0, sizeof(compile_data));
+							compile_eval   = &compile_data[0];
+							
 							token = lex_token(file);
-							if(token == '{')
-								PARSE_TREE_ADD(PARSE_TYPE_LBS);
+							if (token == ' ')
+								token = lex_token(file);
+								
+							if (token == '.')
+								compile_calc_d = 1;
+								
+							if (!isdigit(token) && !compile_calc_d)
+								error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric\n", file->name, file->line);
+							
+							/*
+							 * Read in constant data, will be in float format
+							 * which means we use atof.
+							 */
+							while (isdigit(token) || token == '.') {
+								*compile_eval++ = token;
+								token           = lex_token(file);
+								if (token == '.' && compile_calc_d) {
+									error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric.\n", file->name, file->line);
+								} else if (token == '.' && !compile_calc_d) {
+									compile_calc_d = 1;
+								}
+							}
+							if (token == ' ')
+								token = lex_token(file);
+								
+							if (token != '}')
+								error(ERROR_PARSE, "%s:%d Expected `}` on end of constant initialization for vector\n", file->name, file->line);
+							
+							compile_calc_z = atof(compile_data);
+							
+							/*
+							 * Check for the semi-colon... This is insane
+							 * the amount of parsing here that is.
+							 */
+							token = lex_token(file);
+							if (token == ' ')
+								token = lex_token(file);
+							if (token != ';')
+								error(ERROR_PARSE, "%s:%d Expected `;` on end of constant initialization for vector\n", file->name, file->line);
+							
+							//printf("VEC_X: %f\n", compile_calc_x);
+							//printf("VEC_Y: %f\n", compile_calc_y);
+							//printf("VEC_X: %f\n", compile_calc_z);
+							break;
 						}
-						else if (token == '\n')
-							error(ERROR_COMPILER, "%s:%d Expecting `;` after function definition %s\n", file->name, file->line, name);
-							 
-					} else if (token == '=') {
-						PARSE_TREE_ADD(PARSE_TYPE_EQUAL);
-					} else {
-						error(ERROR_COMPILER, "%s:%d Invalid decltype: expected `(` [function], or `=` [constant], or `;` [definition] for %s\n", file->name, file->line, name);
-					} 
-				} else {
-					/* definition */
-					printf("FOUND DEFINITION\n");
+							
+						case TOKEN_ENTITY:
+						case TOKEN_FLOAT:
+							if (!isdigit(token))
+								error(ERROR_PARSE, "%s:%d Expected numeric constant for float constant\n");
+							break;
+					}
+				} else if (token == '(') {
+					printf("FUNCTION ??\n");
 				}
 				mem_d(name);
 			}
@@ -391,97 +461,6 @@ int parse_tree(struct lex_file *file) {
 					token = lex_token(file);
 				break;
 				
-			case '.':
-				PARSE_TREE_ADD(PARSE_TYPE_DOT);
-				break;
-			case '(':
-				PARSE_TREE_ADD(PARSE_TYPE_LPARTH);
-				break;
-			case ')':
-				PARSE_TREE_ADD(PARSE_TYPE_RPARTH);
-				break;
-				
-			case '&':				/* &  */
-				token = lex_token(file);
-				if (token == '&') { /* && */
-					token = lex_token(file);
-					PARSE_TREE_ADD(PARSE_TYPE_LAND);
-					break;
-				}
-				PARSE_TREE_ADD(PARSE_TYPE_BAND);
-				break;
-			case '|':				/* |  */
-				token = lex_token(file);
-				if (token == '|') { /* || */
-					token = lex_token(file);
-					PARSE_TREE_ADD(PARSE_TYPE_LOR);
-					break;
-				}
-				PARSE_TREE_ADD(PARSE_TYPE_BOR);
-				break;
-			case '!':				/* !  */
-				token = lex_token(file);
-				if (token == '=') { /* != */
-					token = lex_token(file);
-					PARSE_TREE_ADD(PARSE_TYPE_LNEQ);
-					break;
-				}
-				PARSE_TREE_ADD(PARSE_TYPE_LNOT);
-				break;
-			case '<':				/* <  */
-				token = lex_token(file);
-				if (token == '=') { /* <= */
-					token = lex_token(file);
-					PARSE_TREE_ADD(PARSE_TYPE_LTEQ);
-					break;
-				}
-				PARSE_TREE_ADD(PARSE_TYPE_LT);
-				break;
-			case '>':				/* >  */
-				token = lex_token(file);
-				if (token == '=') { /* >= */
-					token = lex_token(file);
-					PARSE_TREE_ADD(PARSE_TYPE_GTEQ);
-					break;
-				}
-				PARSE_TREE_ADD(PARSE_TYPE_GT);
-				break;
-			case '=':				/* =  */
-				token = lex_token(file);
-				if (token == '=') { /* == */
-					token = lex_token(file);
-					PARSE_TREE_ADD(PARSE_TYPE_EQEQ);
-					break;
-				}
-				PARSE_TREE_ADD(PARSE_TYPE_EQUAL);
-				break;
-			case ';':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_DONE);
-				break;
-			case '-':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_MINUS);
-				break;
-			case '+':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_ADD);
-				break;
-			case '{':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_LBS);
-				break;
-			case '}':
-				token = lex_token(file);
-				PARSE_TREE_ADD(PARSE_TYPE_RBS);
-				break;
-				
-			/*
-			 * TODO: Fix lexer to spit out ( ) as tokens, it seems the
-			 * using '(' or ')' in parser doesn't work properly unless
-			 * there are spaces before them to allow the lexer to properly
-			 * seperate identifiers. -- otherwise it eats all of it.
-			 */
 			case LEX_IDENT:
 				token = lex_token(file);
 				PARSE_TREE_ADD(PARSE_TYPE_IDENT);

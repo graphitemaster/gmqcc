@@ -48,7 +48,7 @@ struct lex_file *lex_open(FILE *fp) {
 	lex->size   = lex->length; /* copy, this is never changed */
 	fseek(lex->file, 0, SEEK_SET);
 	lex->last = 0;
-	lex->line = 1;
+	lex->line = 0;
 	
 	memset(lex->peek, 0, sizeof(lex->peek));
 	return lex;
@@ -139,15 +139,20 @@ static int lex_digraph(struct lex_file *file, int first) {
 
 static int lex_getch(struct lex_file *file) {
 	int ch = lex_inget(file);
-	
+
+	static int str = 0;
 	switch (ch) {
 		case '?' :
 			return lex_trigraph(file);
 		case '<' :
 		case ':' :
 		case '%' :
-			return lex_digraph (file, ch);
-		case '\n': file->line ++;
+		case '"' : str = !str; if (str) { file->line ++; }
+			return lex_digraph(file, ch);
+			
+		case '\n':
+			if (!str)
+				file->line++;
 	}
 		
 	return ch;
@@ -277,7 +282,14 @@ int lex_token(struct lex_file *file) {
 	/* valid identifier */
 	if (ch > 0 && (ch == '_' || isalpha(ch))) {
 		lex_clear(file);
-		while (ch > 0 && ch != ' ' && ch != '(' && ch != '\n' && ch != ';') {
+		
+		/*
+		 * Yes this is dirty, but there is no other _sane_ easy
+		 * way to do it, this is what I call defensive programming
+		 * if something breaks, add more defense :-)
+		 */
+		while (ch >   0   && ch != ' ' && ch != '(' &&
+		       ch != '\n' && ch != ';' && ch != ')') {
 			lex_addch(ch, file);
 			ch = lex_getsource(file);
 		}

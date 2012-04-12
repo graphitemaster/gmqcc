@@ -146,7 +146,6 @@ VECTOR_MAKE(prog_section_field,     code_fields    );
 VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_strings   );
-static uint16_t code_crc16  = 0;
 prog_header     code_header ={0};
 
 void code_init() {
