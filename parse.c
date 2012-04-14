@@ -313,25 +313,20 @@ int parse_tree(struct lex_file *file) {
 							/*
 							 * This parses a single vector element: x,y & z.  This will handle all the
 							 * complicated mechanics of a vector, and can be extended as well.  This
-							 * is a rather large macro, and is #undef after it's use below.
+							 * is a rather large macro, and is #undef'd after it's use below.
 							 */
 							#define PARSE_VEC_ELEMENT(NAME, BIT)                                                                                                                                   \
 							    token = lex_token(file);                                                                                                                                           \
-							    if (token == ' ') {                                                                                                                                                \
+							    if (token == ' ')                                                                                                                                                  \
 							        token = lex_token(file);                                                                                                                                       \
-							    }                                                                                                                                                                  \
-							    if (token == '.') {                                                                                                                                                \
+							    if (token == '.')                                                                                                                                                  \
 							        compile_calc_d = 1;                                                                                                                                            \
-							    }                                                                                                                                                                  \
-							    if (!isdigit(token) && !compile_calc_d && token != '+' && token != '-')  {                                                                                         \
+							    if (!isdigit(token) && !compile_calc_d && token != '+' && token != '-')                                                                                            \
 							        error(ERROR_PARSE,"%s:%d Invalid constant initializer element %c for vector, must be numeric\n", file->name, file->line, NAME);                                \
-							    }                                                                                                                                                                  \
-							    if (token == '+') {                                                                                                                                                \
+							    if (token == '+')                                                                                                                                                  \
 							        compile_calc_s = '+';                                                                                                                                          \
-							    }                                                                                                                                                                  \
-							    if (token == '-' && !compile_calc_s) {                                                                                                                             \
+							    if (token == '-' && !compile_calc_s)                                                                                                                               \
 							        compile_calc_s = '-';                                                                                                                                          \
-							    }                                                                                                                                                                  \
 							    while (isdigit(token) || token == '.' || token == '+' || token == '-') {                                                                                           \
 							        *compile_eval++ = token;                                                                                                                                       \
 							        token           = lex_token(file);                                                                                                                             \
@@ -342,21 +337,19 @@ int parse_tree(struct lex_file *file) {
 							        if ((token == '-' || token == '+') && compile_calc_s) {                                                                                                        \
 							            error(ERROR_PARSE, "%s:%d Invalid constant initializer sign for vector element %c\n", file->name, file->line, NAME);                                       \
 							            token = lex_token(file);                                                                                                                                   \
-							        } else if (token == '.' && !compile_calc_d) {                                                                                                                  \
+							        }                                                                                                                                                              \
+							        else if (token == '.' && !compile_calc_d)                                                                                                                      \
 							            compile_calc_d = 1;                                                                                                                                        \
-							        } else if (token == '-' && !compile_calc_s) {                                                                                                                  \
+							        else if (token == '-' && !compile_calc_s)                                                                                                                      \
 							            compile_calc_s = '-';                                                                                                                                      \
-							        } else if (token == '+' && !compile_calc_s) {                                                                                                                  \
+							        else if (token == '+' && !compile_calc_s)                                                                                                                      \
 							            compile_calc_s = '+';                                                                                                                                      \
-							        }                                                                                                                                                              \
 							    }                                                                                                                                                                  \
-							    if (token == ' ') {                                                                                                                                                \
+							    if (token == ' ')                                                                                                                                                  \
 							        token = lex_token(file);                                                                                                                                       \
-							    }                                                                                                                                                                  \
 							    if (NAME != 'z') {                                                                                                                                                 \
-							        if (token != ',' && token != ' ')  {                                                                                                                           \
+							        if (token != ',' && token != ' ')                                                                                                                              \
 							            error(ERROR_PARSE, "%s:%d invalid constant initializer element %c for vector (missing spaces, or comma delimited list?)\n", file->name, file->line, NAME); \
-							        }                                                                                                                                                              \
 							    } else if (token != '}') {                                                                                                                                         \
 							        error(ERROR_PARSE, "%s:%d Expected `}` on end of constant initialization for vector\n", file->name, file->line);                                               \
 							    }                                                                                                                                                                  \
@@ -375,10 +368,7 @@ int parse_tree(struct lex_file *file) {
 							PARSE_VEC_ELEMENT('z', z);
 							#undef PARSE_VEC_ELEMENT
 							
-							/*
-							 * Check for the semi-colon... This is insane
-							 * the amount of parsing here that is.
-							 */
+							/* Check for the semi-colon... */
 							token = lex_token(file);
 							if (token == ' ')
 								token = lex_token(file);
