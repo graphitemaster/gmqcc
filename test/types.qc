@@ -1,4 +1,4 @@
-float  typef = 1;
+float  typef;
 vector typev;
 string types;
 entity typee;

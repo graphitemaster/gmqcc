@@ -76,10 +76,11 @@ struct lex_file {
 #define LEX_STRLIT     1130
 #define LEX_IDENT      1131
 
-int              lex_token(struct lex_file *);
-void             lex_reset(struct lex_file *);
-void             lex_close(struct lex_file *);
-struct lex_file *lex_open (FILE *);
+int              lex_token  (struct lex_file *);
+void             lex_reset  (struct lex_file *);
+void             lex_close  (struct lex_file *);
+struct lex_file *lex_include(struct lex_file *, char *);
+struct lex_file *lex_open   (FILE *);
 
 //===================================================================
 //========================== error.c ================================

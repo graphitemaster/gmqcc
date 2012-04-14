@@ -427,6 +427,17 @@ int parse_tree(struct lex_file *file) {
 						token = lex_token(file);
 					if (token == '\n')
 						return error(ERROR_PARSE, "%d: Invalid use of include preprocessor directive: wanted #include \"file.h\"\n", file->line-1);
+						
+					char            *copy = util_strdup(file->lastok);
+					struct lex_file *next = lex_include(file,   copy);
+					
+					if (!next) {
+						error(ERROR_INTERNAL, "Include subsystem failure\n");
+						exit (-1);
+					}
+					parse_tree(next);
+					mem_d     (copy);
+					lex_close (next);
 				}
 			
 				/* skip all tokens to end of directive */

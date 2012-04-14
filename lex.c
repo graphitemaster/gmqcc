@@ -58,7 +58,7 @@ void lex_close(struct lex_file *file) {
 	if (!file) return;
 	
 	fclose(file->file); /* may already be closed */
-	mem_d(file);
+	mem_d (file);
 }
 
 static void lex_addch(int ch, struct lex_file *file) {
@@ -336,4 +336,48 @@ void lex_reset(struct lex_file *file) {
 	
 	memset(file->peek,   0, sizeof(file->peek  ));
 	memset(file->lastok, 0, sizeof(file->lastok));
+}
+
+/*
+ * Include a file into the lexer / parsing process:  This really
+ * should check if names are the same to prevent endless include
+ * recrusion.
+ */
+struct lex_file *lex_include(struct lex_file *lex, char *file) {
+	char *find = (char*)file;
+	/* 
+	 * strip for "" (quotes) .. they might be part of the current
+	 * thing.  Or possibly not.
+	 */
+	if (*find == '"') {
+		find++;
+		file++;
+		while (*find != '"' && *find != '\0')
+			find++;
+	
+		/* strip end "" (quotes) .. if they're actually there */
+		if (*find != '\0')
+			*find  = '\0';
+	}
+	
+	/*
+	 * Dissallow recrusive include: this could easily cause some breakage
+	 * and instant OOM.
+	 */
+	if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
+		error(ERROR_LEX, "%s:%d Source file cannot include itself\n", lex->name, lex->line-1);
+		exit (-1);
+	}
+	
+	FILE *fp = fopen(file, "r");
+	if  (!fp) {
+		error(ERROR_LEX, "%s:%d Include file `%s` doesn't exist\n", lex->name, lex->line, file);
+		exit (-1);
+	}
+	
+	/* must free strdup */
+	file --;
+	mem_d (file);
+	
+	return lex_open(fp);
 }
