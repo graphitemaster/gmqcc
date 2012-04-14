@@ -355,7 +355,7 @@ int parse_tree(struct lex_file *file) {
 							    }                                                                                                                                                                  \
 							    if (NAME != 'z') {                                                                                                                                                 \
 							        if (token != ',' && token != ' ')  {                                                                                                                           \
-							            error(ERROR_PARSE, "%s:%d invalid constant initializer element %c for vector (missing spaces, or comma delimited list?)\n", NAME, file->name, file->line); \
+							            error(ERROR_PARSE, "%s:%d invalid constant initializer element %c for vector (missing spaces, or comma delimited list?)\n", file->name, file->line, NAME); \
 							        }                                                                                                                                                              \
 							    } else if (token != '}') {                                                                                                                                         \
 							        error(ERROR_PARSE, "%s:%d Expected `}` on end of constant initialization for vector\n", file->name, file->line);                                               \
@@ -393,7 +393,6 @@ int parse_tree(struct lex_file *file) {
 							
 						case TOKEN_ENTITY:
 						case TOKEN_FLOAT:
-							
 							if (!isdigit(token))
 								error(ERROR_PARSE, "%s:%d Expected numeric constant for float constant\n");
 							break;
