@@ -26,6 +26,15 @@
 #include <ctype.h>
 #include "gmqcc.h"
 
+/* compile-time constant for constants */
+typedef struct {
+	char *name;
+	int   type;
+	float value[3];
+	char *string; /* string value if constant is string literal */
+} constant;
+VECTOR_MAKE(constant, compile_constants);
+
 /*
  * These are not lexical tokens:  These are parse tree types.  Most people
  * perform tokenizing on language punctuation which is wrong.  That stuff
@@ -76,80 +85,64 @@
  * work actually begins.
  */
 #define PARSE_TREE_ADD(X)                                        \
-	do {                                                         \
-		parsetree->next       = mem_a(sizeof(struct parsenode)); \
-		parsetree->next->next = NULL;                            \
-		parsetree->next->type = (X);                             \
-		parsetree             = parsetree->next;                 \
-	} while (0)
-
-/*
- * This is all the punctuation handled in the parser, these don't
- * need tokens, they're already tokens.
- */
-#if 0
-	"&&", "||", "<=", ">=", "==", "!=", ";", ",", "!", "*",
-	"/" , "(" , ")" , "-" , "+" , "=" , "[" , "]", "{", "}", "...",
-	"." , "<" , ">" , "&" , "|" , 
-#endif
-
-#define STORE(X,C) {  \
-    long f = fill;    \
-    while(f--) {      \
-      putchar(' ');   \
-    }                 \
-    fill C;           \
-	printf(X);        \
-	break;            \
+    do {                                                         \
+        parsetree->next       = mem_a(sizeof(struct parsenode)); \
+        parsetree->next->next = NULL;                            \
+        parsetree->next->type = (X);                             \
+        parsetree             = parsetree->next;                 \
+    } while (0)
+#define STORE(X) { \
+	printf(X);     \
+	break;         \
 }
 
 void parse_debug(struct parsenode *tree) {
 	long fill = 0;
 	while (tree) {	
 		switch (tree->type) {
-			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n", -=0);
-			case PARSE_TYPE_BAND:      STORE("OPERATOR:  BITAND \n",-=0);
-			case PARSE_TYPE_BOR:       STORE("OPERATOR:  BITOR  \n",-=0);
-			case PARSE_TYPE_COMMA:     STORE("OPERATOR:  SEPERATOR\n",-=0);
-			case PARSE_TYPE_DOT:       STORE("OPERATOR:  DOT\n",-=0);
-			case PARSE_TYPE_DIVIDE:    STORE("OPERATOR:  DIVIDE\n",-=0);
-			case PARSE_TYPE_EQUAL:     STORE("OPERATOR:  ASSIGNMENT\n",-=0);
+			case PARSE_TYPE_ADD:       STORE("OPERATOR:  ADD    \n");
+			case PARSE_TYPE_BAND:      STORE("OPERATOR:  BITAND \n");
+			case PARSE_TYPE_BOR:       STORE("OPERATOR:  BITOR  \n");
+			case PARSE_TYPE_COMMA:     STORE("OPERATOR:  SEPERATOR\n");
+			case PARSE_TYPE_DOT:       STORE("OPERATOR:  DOT\n");
+			case PARSE_TYPE_DIVIDE:    STORE("OPERATOR:  DIVIDE\n");
+			case PARSE_TYPE_EQUAL:     STORE("OPERATOR:  ASSIGNMENT\n");
 			
-			case PARSE_TYPE_BREAK:     STORE("STATEMENT: BREAK  \n",-=0);
-			case PARSE_TYPE_CONTINUE:  STORE("STATEMENT: CONTINUE\n",-=0);
-			case PARSE_TYPE_GOTO:      STORE("STATEMENT: GOTO\n",-=0);
-			case PARSE_TYPE_RETURN:    STORE("STATEMENT: RETURN\n",-=0);
-			case PARSE_TYPE_DONE:      STORE("STATEMENT: DONE\n",-=0);
+			case PARSE_TYPE_BREAK:     STORE("STATEMENT: BREAK  \n");
+			case PARSE_TYPE_CONTINUE:  STORE("STATEMENT: CONTINUE\n");
+			case PARSE_TYPE_GOTO:      STORE("STATEMENT: GOTO\n");
+			case PARSE_TYPE_RETURN:    STORE("STATEMENT: RETURN\n");
+			case PARSE_TYPE_DONE:      STORE("STATEMENT: DONE\n");
 
-			case PARSE_TYPE_VOID:      STORE("DECLTYPE:  VOID\n",-=0);
-			case PARSE_TYPE_STRING:    STORE("DECLTYPE:  STRING\n",-=0);
-			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n",-=0);
-			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE:  ENTITY\n",-=0);
-			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE:  FLOAT\n",-=0);
-			case PARSE_TYPE_VECTOR:    STORE("DECLTYPE:  VECTOR\n",-=0);
+			case PARSE_TYPE_VOID:      STORE("DECLTYPE:  VOID\n");
+			case PARSE_TYPE_STRING:    STORE("DECLTYPE:  STRING\n");
+			case PARSE_TYPE_ELIP:      STORE("DECLTYPE:  VALIST\n");
+			case PARSE_TYPE_ENTITY:    STORE("DECLTYPE:  ENTITY\n");
+			case PARSE_TYPE_FLOAT:     STORE("DECLTYPE:  FLOAT\n");
+			case PARSE_TYPE_VECTOR:    STORE("DECLTYPE:  VECTOR\n");
 			
-			case PARSE_TYPE_GT:        STORE("TEST:      GREATER THAN\n",-=0);
-			case PARSE_TYPE_LT:        STORE("TEST:      LESS THAN\n",-=0);
-			case PARSE_TYPE_GTEQ:      STORE("TEST:      GREATER THAN OR EQUAL\n",-=0);
-			case PARSE_TYPE_LTEQ:      STORE("TEST:      LESS THAN OR EQUAL\n",-=0);
-			case PARSE_TYPE_LNEQ:      STORE("TEST:      NOT EQUAL\n",-=0);
-			case PARSE_TYPE_EQEQ:      STORE("TEST:      EQUAL-EQUAL\n",-=0);
+			case PARSE_TYPE_GT:        STORE("TEST:      GREATER THAN\n");
+			case PARSE_TYPE_LT:        STORE("TEST:      LESS THAN\n");
+			case PARSE_TYPE_GTEQ:      STORE("TEST:      GREATER THAN OR EQUAL\n");
+			case PARSE_TYPE_LTEQ:      STORE("TEST:      LESS THAN OR EQUAL\n");
+			case PARSE_TYPE_LNEQ:      STORE("TEST:      NOT EQUAL\n");
+			case PARSE_TYPE_EQEQ:      STORE("TEST:      EQUAL-EQUAL\n");
 			
-			case PARSE_TYPE_LBS:       STORE("BLOCK:     BEG\n",+=4);
-			case PARSE_TYPE_RBS:       STORE("BLOCK:     END\n",-=4);
-			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n",+=0);
-			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n",+=0);
+			case PARSE_TYPE_LBS:       STORE("BLOCK:     BEG\n");
+			case PARSE_TYPE_RBS:       STORE("BLOCK:     END\n");
+			case PARSE_TYPE_ELSE:      STORE("BLOCK:     ELSE\n");
+			case PARSE_TYPE_IF:        STORE("BLOCK:     IF\n");
 			
-			case PARSE_TYPE_LAND:      STORE("LOGICAL:   AND\n",-=0);
-			case PARSE_TYPE_LNOT:      STORE("LOGICAL:   NOT\n",-=0);
-			case PARSE_TYPE_LOR:       STORE("LOGICAL:   OR\n",-=0);
+			case PARSE_TYPE_LAND:      STORE("LOGICAL:   AND\n");
+			case PARSE_TYPE_LNOT:      STORE("LOGICAL:   NOT\n");
+			case PARSE_TYPE_LOR:       STORE("LOGICAL:   OR\n");
 			
-			case PARSE_TYPE_LPARTH:    STORE("PARTH:     BEG\n",-=0);
-			case PARSE_TYPE_RPARTH:    STORE("PARTH:     END\n",-=0);
+			case PARSE_TYPE_LPARTH:    STORE("PARTH:     BEG\n");
+			case PARSE_TYPE_RPARTH:    STORE("PARTH:     END\n");
 			
-			case PARSE_TYPE_WHILE:     STORE("LOOP:      WHILE\n",-=0);
-			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n",-=0);
-			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n",-=0);
+			case PARSE_TYPE_WHILE:     STORE("LOOP:      WHILE\n");
+			case PARSE_TYPE_FOR:       STORE("LOOP:      FOR\n");
+			case PARSE_TYPE_DO:        STORE("LOOP:      DO\n");
 		}
 		tree = tree->next;
 	}
@@ -166,7 +159,7 @@ void parse_debug(struct parsenode *tree) {
     token = lex_token(file);     \
     { C }                        \
     while (token != '\n') {      \
-	    token = lex_token(file); \
+        token = lex_token(file); \
     }                            \
     PARSE_TREE_ADD(X);           \
     break;                       \
@@ -184,23 +177,6 @@ void parse_clear(struct parsenode *tree) {
 	/* free any potential typedefs */
 	typedef_clear();
 }
-
-const char *STRING_(char ch) {
-	if (ch == ' ')
-		return "<space>";
-	if (ch == '\n')
-		return "<newline>";
-	if (ch == '\0')
-		return "<null>";
-		
-	return &ch;
-}
-
-#define TOKEN_SKIPWHITE()        \
-	token = lex_token(file);     \
-	while (token == ' ') {       \
-		token = lex_token(file); \
-	}
 
 /*
  * Generates a parse tree out of the lexees generated by the lexer.  This
@@ -224,13 +200,11 @@ int parse_tree(struct lex_file *file) {
 	}
 	
 	int     token = 0;
-	long    line  = 0;
 	while ((token = lex_token(file)) != ERROR_LEX      && \
 		    token                    != ERROR_COMPILER && \
 		    token                    != ERROR_INTERNAL && \
 		    token                    != ERROR_PARSE    && \
 		    token                    != ERROR_PREPRO   && file->length >= 0) {
-		line = file->line;
 		switch (token) {
 			case TOKEN_TYPEDEF: {
 				char *f; /* from */
@@ -293,10 +267,20 @@ int parse_tree(struct lex_file *file) {
 					switch (type) {
 						case TOKEN_VOID:
 							return error(ERROR_PARSE, "%s:%d Cannot assign value to type void\n", file->name, file->line);
+							
+						/* TODO: Validate (end quote), strip quotes for constant add, name constant */
 						case TOKEN_STRING:
 							if (*file->lastok != '"')
 								error(ERROR_PARSE, "%s:%d Expected a '\"' (quote) for string constant\n", file->name, file->line);
+							/* add the compile-time constant */
+							compile_constants_add((constant){
+								.name   = util_strdup(name),
+								.type   = TYPE_STRING,
+								.value  = {0,0,0},
+								.string = util_strdup(file->lastok)
+							});
 							break;
+						/* TODO: name constant, old qc vec literals, whitespace fixes, name constant */
 						case TOKEN_VECTOR: {
 							float compile_calc_x = 0;
 							float compile_calc_y = 0;
@@ -375,16 +359,30 @@ int parse_tree(struct lex_file *file) {
 							if (token != ';')
 								error(ERROR_PARSE, "%s:%d Expected `;` on end of constant initialization for vector\n", file->name, file->line);
 								
-							printf("VEC_X: %f\n", compile_calc_x);
-							printf("VEC_Y: %f\n", compile_calc_y);
-							printf("VEC_Z: %f\n", compile_calc_z);
+							/* add the compile-time constant */
+							compile_constants_add((constant){
+								.name   = util_strdup(name),
+								.type   = TYPE_VECTOR,
+								.value  = {
+									[0] = compile_calc_x,
+									[1] = compile_calc_y,
+									[2] = compile_calc_z
+								},
+								.string = NULL
+							});
 							break;
 						}
 							
 						case TOKEN_ENTITY:
-						case TOKEN_FLOAT:
+						case TOKEN_FLOAT: /*TODO: validate, constant generation, name constant */
 							if (!isdigit(token))
 								error(ERROR_PARSE, "%s:%d Expected numeric constant for float constant\n");
+							compile_constants_add((constant){
+								.name   = util_strdup(name),
+								.type   = TOKEN_FLOAT,
+								.value  = {0,0,0},
+								.string = NULL
+							});
 							break;
 					}
 				} else if (token == '(') {
@@ -429,7 +427,6 @@ int parse_tree(struct lex_file *file) {
 					mem_d     (copy);
 					lex_close (next);
 				}
-			
 				/* skip all tokens to end of directive */
 				while (token != '\n')
 					token = lex_token(file);
