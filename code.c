@@ -203,6 +203,12 @@ void code_test() {
 	code_statements_add((prog_section_statement){INSTR_STORE_F, {30}/*30 is hello_world */, {OFS_PARM0}, {0}});
 	code_statements_add((prog_section_statement){INSTR_CALL1,   {29}/*29 is print       */, {0},         {0}});
 	code_statements_add((prog_section_statement){INSTR_RETURN,  {0},                        {0},         {0}});
+}
+
+/* program header */
+void code_write() {
+	code_init();
+	code_test();
 	
 	code_header.version    = 6;
 	code_header.crc16      = 0; /* TODO: */
@@ -213,12 +219,6 @@ void code_test() {
 	code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements    };
 	code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_strings_elements    };
 	code_header.entfield   = 0; /* TODO: */
-}
-
-/* program header */
-void code_write() {
-	code_init();
-	code_test();
 	
 	FILE *fp = fopen("program.dat", "wb");
 	fwrite(&code_header,         1, sizeof(prog_header), fp);
