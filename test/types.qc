@@ -1,5 +1,5 @@
 float  typef = 1;
-vector typev = {0,1,2};
+vector typev;
 string types;
 entity typee;
 void   typev;

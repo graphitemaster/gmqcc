@@ -224,11 +224,13 @@ int parse_tree(struct lex_file *file) {
 	}
 	
 	int     token = 0;
+	long    line  = 0;
 	while ((token = lex_token(file)) != ERROR_LEX      && \
 		    token                    != ERROR_COMPILER && \
 		    token                    != ERROR_INTERNAL && \
 		    token                    != ERROR_PARSE    && \
 		    token                    != ERROR_PREPRO   && file->length >= 0) {
+		line = file->line;
 		switch (token) {
 			case TOKEN_TYPEDEF: {
 				char *f; /* from */
@@ -248,7 +250,7 @@ int parse_tree(struct lex_file *file) {
 					token = lex_token(file);
 					
 				if (token != ';')
-					error(ERROR_PARSE, "%s:%d Expected `;` on typedef\n", file->name, file->line);
+					error(ERROR_PARSE, "%s:%d Expected a `;` at end of typedef statement\n", file->name, file->line);
 					
 				token = lex_token(file);
 				break;
@@ -278,7 +280,10 @@ int parse_tree(struct lex_file *file) {
 					token = lex_token(file);
 					
 				if (token == ';') {
-					printf("definition\n");
+					/*
+					 * Definitions go to the defs table, they don't have
+					 * any sort of data with them yet.
+					 */
 				} else if (token == '=') {
 					token = lex_token(file);
 					if (token == ' ')
@@ -286,121 +291,88 @@ int parse_tree(struct lex_file *file) {
 					
 					/* strings are in file->lastok */
 					switch (type) {
-						case TOKEN_VOID:   return error(ERROR_PARSE, "%s:%d Cannot assign value to type void\n", file->name, file->line);
+						case TOKEN_VOID:
+							return error(ERROR_PARSE, "%s:%d Cannot assign value to type void\n", file->name, file->line);
 						case TOKEN_STRING:
 							if (*file->lastok != '"')
-								error(ERROR_PARSE, "%s:%d Expected a '\"' for string constant\n", file->name, file->line);
+								error(ERROR_PARSE, "%s:%d Expected a '\"' (quote) for string constant\n", file->name, file->line);
 							break;
 						case TOKEN_VECTOR: {
 							float compile_calc_x = 0;
 							float compile_calc_y = 0;
 							float compile_calc_z = 0;
-							int   compile_calc_d = 0; /* dot? */
+							int   compile_calc_d = 0; /* dot?        */
+							int   compile_calc_s = 0; /* sign (-, +) */
 							
 							char  compile_data[1024];
 							char *compile_eval = compile_data;
 							
 							if (token != '{')
 								error(ERROR_PARSE, "%s:%d Expected initializer list `{`,`}` for vector constant\n", file->name, file->line);	
-								
-							token = lex_token(file);
-							if (token == ' ')
-								token = lex_token(file);
 							
 							/*
-							 * we support .7623, unlike anyother QuakeC
-							 * compiler.  Does that make us better :-).
+							 * This parses a single vector element: x,y & z.  This will handle all the
+							 * complicated mechanics of a vector, and can be extended as well.  This
+							 * is a rather large macro, and is #undef after it's use below.
 							 */
-							if (token == '.')
-								compile_calc_d = 1;
-							if (!isdigit(token) && !compile_calc_d)
-								error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric\n", file->name, file->line);
+							#define PARSE_VEC_ELEMENT(NAME, BIT)                                                                                                                               \
+                                token = lex_token(file);                                                                                                                                           \
+                                if (token == ' ') {                                                                                                                                                \
+                                    token = lex_token(file);                                                                                                                                       \
+                                }                                                                                                                                                                  \
+                                if (token == '.') {                                                                                                                                                \
+                                    compile_calc_d = 1;                                                                                                                                            \
+                                }                                                                                                                                                                  \
+                                if (!isdigit(token) && !compile_calc_d && token != '+' && token != '-')                                                                                            \
+                                    error(ERROR_PARSE,"%s:%d Invalid constant initializer element %c for vector, must be numeric\n", file->name, file->line, NAME);                                \
+                                if (token == '+') {                                                                                                                                                \
+                                    compile_calc_s = '+';                                                                                                                                          \
+                                }                                                                                                                                                                  \
+                                if (token == '-' && !compile_calc_s) {                                                                                                                             \
+                                    compile_calc_s = '-';                                                                                                                                          \
+                                }                                                                                                                                                                  \
+                                while (isdigit(token) || token == '.' || token == '+' || token == '-') {                                                                                           \
+                                    *compile_eval++ = token;                                                                                                                                       \
+                                    token           = lex_token(file);                                                                                                                             \
+                                    if (token == '.' && compile_calc_d) {                                                                                                                          \
+                                        error(ERROR_PARSE, "%s:%d Invalid constant initializer element %c for vector, must be numeric.\n", file->name, file->line, NAME);                          \
+                                        token = lex_token(file);                                                                                                                                   \
+                                    }                                                                                                                                                              \
+                                    if ((token == '-' || token == '+') && compile_calc_s) {                                                                                                        \
+                                        error(ERROR_PARSE, "%s:%d Invalid constant initializer sign for vector element %c\n", file->name, file->line, NAME);                                       \
+                                        token = lex_token(file);                                                                                                                                   \
+                                    } else if (token == '.' && !compile_calc_d) {                                                                                                                  \
+                                        compile_calc_d = 1;                                                                                                                                        \
+                                    } else if (token == '-' && !compile_calc_s) {                                                                                                                  \
+                                        compile_calc_s = '-';                                                                                                                                      \
+                                    } else if (token == '+' && !compile_calc_s) {                                                                                                                  \
+                                        compile_calc_s = '+';                                                                                                                                      \
+                                    }                                                                                                                                                              \
+                                }                                                                                                                                                                  \
+                                if (token == ' ') {                                                                                                                                                \
+                                    token = lex_token(file);                                                                                                                                       \
+                                }                                                                                                                                                                  \
+                                if (NAME != 'z') {                                                                                                                                                 \
+                                    if (token != ',' && token != ' ')  {                                                                                                                           \
+                                        error(ERROR_PARSE, "%s:%d invalid constant initializer element %c for vector (missing spaces, or comma delimited list?)\n", NAME, file->name, file->line); \
+                                    }                                                                                                                                                              \
+                                } else if (token != '}') {                                                                                                                                         \
+                                    error(ERROR_PARSE, "%s:%d Expected `}` on end of constant initialization for vector\n", file->name, file->line);                                               \
+                                }                                                                                                                                                                  \
+                                compile_calc_##BIT = atof(compile_data);                                                                                                                           \
+                                compile_calc_d = 0;                                                                                                                                                \
+                                compile_calc_s = 0;                                                                                                                                                \
+                                compile_eval   = &compile_data[0];                                                                                                                                 \
+                                memset(compile_data, 0, sizeof(compile_data))
 							
 							/*
-							 * Read in constant data, will be in float format
-							 * which means we use atof.
+							 * Parse all elements using the macro above.
+							 * We must undef the macro afterwards.
 							 */
-							while (isdigit(token) || token == '.') {
-								*compile_eval++ = token;
-								token           = lex_token(file);
-								if (token == '.' && compile_calc_d) {
-									error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric.\n", file->name, file->line);
-								} else if (token == '.' && !compile_calc_d) {
-									compile_calc_d = 1;
-								}
-							}
-							if (token == ' ')
-								token = lex_token(file);
-								
-							if (token != ',' && token != ' ')
-								error(ERROR_PARSE, "%s:%d invalid constant initializer element for vector (missing spaces, or comma delimited list?)\n", file->name, file->line);
-							compile_calc_x = atof(compile_data);
-							compile_calc_d = 0;
-							memset(compile_data, 0, sizeof(compile_data));
-							compile_eval   = &compile_data[0];
-							
-							token = lex_token(file);
-							if (token == ' ')
-								token = lex_token(file);
-								
-							if (token == '.')
-								compile_calc_d = 1;
-							if (!isdigit(token) && !compile_calc_d)
-								error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric\n", file->name, file->line);
-							
-							/*
-							 * Read in constant data, will be in float format
-							 * which means we use atof.
-							 */
-							while (isdigit(token) || token == '.') {
-								*compile_eval++ = token;
-								token           = lex_token(file);
-								if (token == '.' && compile_calc_d) {
-									error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric.\n", file->name, file->line);
-								} else if (token == '.' && !compile_calc_d) {
-									compile_calc_d = 1;
-								}
-							}
-							if (token == ' ')
-								token = lex_token(file);
-								
-							if (token != ',' && token != ' ')
-								error(ERROR_PARSE, "%s:%d invalid constant initializer element for vector (missing spaces, or comma delimited list?)\n", file->name, file->line);
-							compile_calc_y = atof(compile_data);
-							compile_calc_d = 0;
-							memset(compile_data, 0, sizeof(compile_data));
-							compile_eval   = &compile_data[0];
-							
-							token = lex_token(file);
-							if (token == ' ')
-								token = lex_token(file);
-								
-							if (token == '.')
-								compile_calc_d = 1;
-								
-							if (!isdigit(token) && !compile_calc_d)
-								error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric\n", file->name, file->line);
-							
-							/*
-							 * Read in constant data, will be in float format
-							 * which means we use atof.
-							 */
-							while (isdigit(token) || token == '.') {
-								*compile_eval++ = token;
-								token           = lex_token(file);
-								if (token == '.' && compile_calc_d) {
-									error(ERROR_PARSE, "%s:%d Invalid constant initializer element for vector, must be numeric.\n", file->name, file->line);
-								} else if (token == '.' && !compile_calc_d) {
-									compile_calc_d = 1;
-								}
-							}
-							if (token == ' ')
-								token = lex_token(file);
-								
-							if (token != '}')
-								error(ERROR_PARSE, "%s:%d Expected `}` on end of constant initialization for vector\n", file->name, file->line);
-							
-							compile_calc_z = atof(compile_data);
+							PARSE_VEC_ELEMENT('x', x);
+							PARSE_VEC_ELEMENT('y', y);
+							PARSE_VEC_ELEMENT('z', z);
+							#undef PARSE_VEC_ELEMENT
 							
 							/*
 							 * Check for the semi-colon... This is insane
@@ -411,15 +383,16 @@ int parse_tree(struct lex_file *file) {
 								token = lex_token(file);
 							if (token != ';')
 								error(ERROR_PARSE, "%s:%d Expected `;` on end of constant initialization for vector\n", file->name, file->line);
-							
-							//printf("VEC_X: %f\n", compile_calc_x);
-							//printf("VEC_Y: %f\n", compile_calc_y);
-							//printf("VEC_X: %f\n", compile_calc_z);
+								
+							printf("VEC_X: %f\n", compile_calc_x);
+							printf("VEC_Y: %f\n", compile_calc_y);
+							printf("VEC_Z: %f\n", compile_calc_z);
 							break;
 						}
 							
 						case TOKEN_ENTITY:
 						case TOKEN_FLOAT:
+							
 							if (!isdigit(token))
 								error(ERROR_PARSE, "%s:%d Expected numeric constant for float constant\n");
 							break;
@@ -439,6 +412,8 @@ int parse_tree(struct lex_file *file) {
 			 */
 			case '#':
 				token = lex_token(file); /* skip '#' */
+				if (token == ' ')
+					token = lex_token(file);
 				/*
 				 * If we make it here we found a directive, the supported
 				 * directives so far are #include.
@@ -450,10 +425,8 @@ int parse_tree(struct lex_file *file) {
 					 */
 					while (*file->lastok != '"' && token != '\n')
 						token = lex_token(file);
-					
-					/* we handle lexing at that point now */
 					if (token == '\n')
-						return error(ERROR_PARSE, "%d: Invalid use of include preprocessor directive: wanted #include \"file.h\"\n", file->line);
+						return error(ERROR_PARSE, "%d: Invalid use of include preprocessor directive: wanted #include \"file.h\"\n", file->line-1);
 				}
 			
 				/* skip all tokens to end of directive */
