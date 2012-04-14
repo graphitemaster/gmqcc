@@ -337,7 +337,7 @@ int parse_tree(struct lex_file *file) {
 						        if (token == '.' && compile_calc_d) {                                                                                                                          \
 						            error(ERROR_PARSE, "%s:%d Invalid constant initializer element %c for vector, must be numeric.\n", file->name, file->line, NAME);                          \
 						            token = lex_token(file);                                                                                                                                   \
-							    }                                                                                                                                                              \
+						        }                                                                                                                                                              \
 						        if ((token == '-' || token == '+') && compile_calc_s) {                                                                                                        \
 						            error(ERROR_PARSE, "%s:%d Invalid constant initializer sign for vector element %c\n", file->name, file->line, NAME);                                       \
 						            token = lex_token(file);                                                                                                                                   \
