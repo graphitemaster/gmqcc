@@ -315,7 +315,7 @@ int parse_tree(struct lex_file *file) {
 							 * complicated mechanics of a vector, and can be extended as well.  This
 							 * is a rather large macro, and is #undef after it's use below.
 							 */
-							#define PARSE_VEC_ELEMENT(NAME, BIT)                                                                                                                               \
+						#define PARSE_VEC_ELEMENT(NAME, BIT)                                                                                                                               \
 							token = lex_token(file);                                                                                                                                           \
 							if (token == ' ') {                                                                                                                                                \
 								token = lex_token(file);                                                                                                                                       \
