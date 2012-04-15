@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include "gmqcc.h"
 
 /*
  * Compiler error system, this handles the error printing, and managing
@@ -59,7 +60,7 @@ static const char *const error_list[] = {
 	"Preprocessor Error:"
 };
 
-int error(int status, const char *msg, ...) {
+int error(struct lex_file *file, int status, const char *msg, ...) {
 	char      bu[1024*4]; /* enough? */
 	char      fu[1024*4]; /* enough? */
 	va_list   va;
@@ -71,7 +72,7 @@ int error(int status, const char *msg, ...) {
 	error_total ++;
 /* color */
 #	ifndef WIN32
-	sprintf  (bu, "\033[0;%dm%s \033[0;%dm", error_color[status-SHRT_MAX], error_list[status-SHRT_MAX], error_color[(status-1)-SHRT_MAX]);
+	sprintf  (bu, "\033[0;%dm%s \033[0;%dm %s:%d ", error_color[status-SHRT_MAX], error_list[status-SHRT_MAX], error_color[(status-1)-SHRT_MAX], file->name, file->line);
 #else
 	sprintf  (bu, "%s ", error_list[status-SHRT_MAX]);
 #endif

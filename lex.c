@@ -249,7 +249,7 @@ static int lex_skipcmt(struct lex_file *file) {
 		lex_addch(ch, file);
 		while ((ch = lex_getch(file)) != '*') {
 			if (ch == EOF)
-				return error(ERROR_LEX, "malformatted comment at line", "");
+				return error(file, ERROR_LEX, "malformatted comment");
 			else
 				lex_addch(ch, file);
 		}
@@ -344,19 +344,15 @@ void lex_reset(struct lex_file *file) {
  * recrusion.
  */
 struct lex_file *lex_include(struct lex_file *lex, char *file) {
-	char *find = util_strrq(file);
-	/*
-	 * Dissallow recrusive include: this could easily cause some breakage
-	 * and instant OOM.
-	 */
+	util_strrq(file);
 	if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
-		error(ERROR_LEX, "%s:%d Source file cannot include itself\n", lex->name, lex->line-1);
+		error(lex, ERROR_LEX, "Source file cannot include itself\n");
 		exit (-1);
 	}
 	
 	FILE *fp = fopen(file, "r");
 	if  (!fp) {
-		error(ERROR_LEX, "%s:%d Include file `%s` doesn't exist\n", lex->name, lex->line, file);
+		error(lex, ERROR_LEX, "Include file `%s` doesn't exist\n", file);
 		exit (-1);
 	}
 	

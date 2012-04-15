@@ -65,12 +65,12 @@ void typedef_clear() {
 	}
 }
 
-int typedef_add(const char *from, const char *to) {
+int typedef_add(struct lex_file *file, const char *from, const char *to) {
 	unsigned int  hash = typedef_hash(to);
 	typedef_node *find = typedef_table[hash];
 	
 	if (find)
-		return error(ERROR_PARSE, "typedef for %s already exists or conflicts\n", to);
+		return error(file, ERROR_PARSE, "typedef for %s already exists or conflicts\n", to);
 	
 	/* check if the type exists first */
 	if (strncmp(from, "float",  sizeof("float"))  == 0 ||
@@ -91,5 +91,5 @@ int typedef_add(const char *from, const char *to) {
 			return -100;
 		}
 	}
-	return error(ERROR_PARSE, "cannot typedef `%s` (not a type)\n", from);
+	return error(file, ERROR_PARSE, "cannot typedef `%s` (not a type)\n", from);
 }

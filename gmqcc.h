@@ -90,7 +90,7 @@ struct lex_file *lex_open   (FILE *);
 #define ERROR_INTERNAL (SHRT_MAX+2)
 #define ERROR_COMPILER (SHRT_MAX+3)
 #define ERROR_PREPRO   (SHRT_MAX+4)
-int error(int, const char *, ...);
+int error(struct lex_file *, int, const char *, ...);
 
 //===================================================================
 //========================== parse.c ================================
@@ -107,7 +107,7 @@ typedef struct typedef_node_t {
 void          typedef_init();
 void          typedef_clear();
 typedef_node *typedef_find(const char *);
-int           typedef_add (const char *, const char *);
+int           typedef_add (struct lex_file *file, const char *, const char *);
 
 
 //===================================================================

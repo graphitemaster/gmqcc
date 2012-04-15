@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 #include  "gmqcc.h"
 int main(int argc, char **argv) {
 	argc--;
@@ -33,7 +34,7 @@ int main(int argc, char **argv) {
 	FILE *fp = fopen(ifile, "r");
 	if  (!fp) {
 		fclose(fp);
-		return error(ERROR_COMPILER, "Source file: %s not found\n", ifile);
+		return printf("ERROR Source file %s %s\n", ifile, strerror(errno));
 	} else {
 		struct lex_file *lex = lex_open(fp);
 		lex->name = util_strdup(ifile);
