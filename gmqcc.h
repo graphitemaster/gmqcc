@@ -116,6 +116,8 @@ int           typedef_add (const char *, const char *);
 void *util_memory_a(unsigned int, unsigned int, const char *);
 void  util_memory_d(void       *, unsigned int, const char *);
 char *util_strdup  (const char *);
+char *util_strrq   (char *);
+void  util_debug   (const char *, const char *, ...);
 
 #ifdef NOTRACK
 #	define mem_a(x) malloc(x)

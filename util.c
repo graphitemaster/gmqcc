@@ -81,6 +81,28 @@ char *util_strdup(const char *s) {
 	return ptr;
 }
 
+/*
+ * Removed quotes from a string, escapes from \ in string
+ * as well.  This function shouldn't be used to create a
+ * char array that is later freed (it uses pointer arith)
+ */
+char *util_strrq(char *s) {
+	char *dst = s;
+	char *src = s;
+	char  chr;
+	while ((chr = *src++) != '\0') {
+		if (chr == '\\') {
+			*dst++ = chr;
+			if ((chr = *src++) == '\0')
+				break;
+			*dst++ = chr;
+		} else if (chr != '"')
+			*dst++ = chr;
+	}
+	*dst = '\0';
+	return dst;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
 	va_list  va;
 	va_start(va, ms);

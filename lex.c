@@ -344,22 +344,7 @@ void lex_reset(struct lex_file *file) {
  * recrusion.
  */
 struct lex_file *lex_include(struct lex_file *lex, char *file) {
-	char *find = (char*)file;
-	/* 
-	 * strip for "" (quotes) .. they might be part of the current
-	 * thing.  Or possibly not.
-	 */
-	if (*find == '"') {
-		find++;
-		file++;
-		while (*find != '"' && *find != '\0')
-			find++;
-	
-		/* strip end "" (quotes) .. if they're actually there */
-		if (*find != '\0')
-			*find  = '\0';
-	}
-	
+	char *find = util_strrq(file);
 	/*
 	 * Dissallow recrusive include: this could easily cause some breakage
 	 * and instant OOM.
@@ -374,10 +359,6 @@ struct lex_file *lex_include(struct lex_file *lex, char *file) {
 		error(ERROR_LEX, "%s:%d Include file `%s` doesn't exist\n", lex->name, lex->line, file);
 		exit (-1);
 	}
-	
-	/* must free strdup */
-	file --;
-	mem_d (file);
 	
 	return lex_open(fp);
 }
