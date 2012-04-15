@@ -39,7 +39,7 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
 	data->byte = byte;
 	data->file = file;
 	
-	printf("[MEM] allocation: %08u (bytes) at %s:%u\n", byte, file, line);
+	util_debug("MEM", "allocation: %08u (bytes) at %s:%u\n", byte, file, line);
 	return (void*)((uintptr_t)data+sizeof(struct memblock_t));
 }
 
@@ -48,7 +48,7 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
 	void              *data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
 	struct memblock_t *info = (struct memblock_t*)data;
 	
-	printf("[MEM] released:   %08u (bytes) at %s:%u\n", info->byte, file, line);
+	util_debug("MEM", "released:   %08u (bytes) at %s:%u\n", info->byte, file, line);
 	free(data);
 }
 
@@ -81,9 +81,13 @@ char *util_strdup(const char *s) {
 	return ptr;
 }
 
-void util_debug(const char *ms, ...) {
+void util_debug(const char *area, const char *ms, ...) {
 	va_list  va;
 	va_start(va, ms);
-	vprintf (ms, va);
+	fprintf (stdout, "DEBUG: ");
+	fputc   ('[',  stdout);
+	fprintf (stdout, area);
+	fputs   ("] ", stdout);
+	vfprintf(stdout, ms, va);
 	va_end  (va);
 }

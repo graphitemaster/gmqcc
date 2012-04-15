@@ -41,9 +41,9 @@ int main(int argc, char **argv) {
 			fclose(fp);
 			return 0;
 		}
-		parse_tree(lex);
+		parse_gen(lex);
 		mem_d(lex->name);
-		lex_close (lex);
+		lex_close(lex);
 	}
 	
 	code_write();

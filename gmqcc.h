@@ -95,11 +95,7 @@ int error(int, const char *, ...);
 //===================================================================
 //========================== parse.c ================================
 //===================================================================
-int parse_tree(struct lex_file *);
-struct parsenode {
-	struct parsenode *next;
-	int               type; /* some token */
-};
+int parse_gen(struct lex_file *);
 
 //===================================================================
 //========================== typedef.c ==============================
@@ -260,7 +256,6 @@ enum {
 	INSTR_BITAND,
 	INSTR_BITOR
 };
-
 
 void code_write();
 #endif
