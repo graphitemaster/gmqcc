@@ -67,7 +67,7 @@ typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
 typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
 /* intptr_t / uintptr_t correct size check */
 typedef char uintptr_size_is_correct[sizeof(intptr_t) == sizeof(int*)?1:-1];
-typedef char uintptr_size_is_correct[sizeof(uintptr_t)== sizeof(int*)?1:-1];
+typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 
 //===================================================================
 //============================ lex.c ================================

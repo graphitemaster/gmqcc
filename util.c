@@ -43,7 +43,7 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     info->byte = byte;
     info->file = file;
     
-    util_debug("MEM", "allocation: %08u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
+    util_debug("MEM", "allocation: % 8u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
     mem_at++;
     mem_ab += info->byte;
     return data;
@@ -54,7 +54,7 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     void              *data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
     struct memblock_t *info = (struct memblock_t*)data;
     
-    util_debug("MEM", "released:   %08u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
+    util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
     mem_db += info->byte;
     mem_dt++;
     free(data);
@@ -142,7 +142,7 @@ void util_debug(const char *area, const char *ms, ...) {
     va_start(va, ms);
     fprintf (stdout, "DEBUG: ");
     fputc   ('[',  stdout);
-    fprintf (stdout, area);
+    fprintf(stdout, "%s",area);
     fputs   ("] ", stdout);
     vfprintf(stdout, ms, va);
     va_end  (va);
@@ -177,13 +177,14 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
             
             chr = *n + *lineptr - pos;
             strcpy(tmp,*lineptr);
-            if (!(*lineptr = tmp))
+            if (!(*lineptr = tmp)) {
+				mem_d (tmp);
                 return -1;
-                
+            } 
             pos = *n - chr + *lineptr;
         }
 
-        if (ferror(stream)) 
+        if (ferror(stream))
             return -1;
         if (c == EOF) {
             if (pos == *lineptr)

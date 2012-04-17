@@ -293,7 +293,7 @@ int lex_token(struct lex_file *file) {
         
         /* look inside the table for a keyword .. */
         for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
-            if (!strncmp(file->lastok, lex_keywords[it], sizeof(lex_keywords[it])))
+            if (!strncmp(file->lastok, lex_keywords[it], strlen(lex_keywords[it])))
                 return it;
                 
         /* try a type? */

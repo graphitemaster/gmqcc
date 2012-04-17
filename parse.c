@@ -293,7 +293,7 @@ int parse_gen(struct lex_file *file) {
     lex_reset(file);
     /* free constants */
     {
-		size_t i;
+		size_t i = 0;
 		for (; i < compile_constants_elements; i++) {
 			mem_d(compile_constants_data[i].name);
 			mem_d(compile_constants_data[i].string);
