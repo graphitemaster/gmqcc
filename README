@@ -129,4 +129,24 @@ Misc:
 	There exists one other keyword that is considered sugar, and that
 	is AUTHOR, this keyword will allow you to speciy the AUTHOR(S) of
 	the assembly being assembled. The string represented for each usage
-	of AUTHOR is wrote to the end of the string table.
+	of AUTHOR is wrote to the end of the string table. Simaler to the
+	usage of constants and functions the AUTHOR keyword must be proceeded
+	by a colon.
+	
+	Examples:
+		AUTHOR: "Dale Weiler"
+		AUTHOR: "John Doe"
+		
+	Colons exist for the sole reason of not having to use spaces after
+	keyword usage (however spaces are allowed).  To understand the
+	following examples below are equivlent.
+	
+	Example 1:
+		FLOAT:foo 1
+	Example 2:
+		FLOAT: foo 1
+	Example 3:
+		FLOAT:  foo 2
+		
+	variable amounts of whitespace is allowed anywhere (as it should be).
+	think of `:` as a delimiter (which is what it's used for during assembly).
