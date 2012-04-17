@@ -150,3 +150,7 @@ Misc:
 		
 	variable amounts of whitespace is allowed anywhere (as it should be).
 	think of `:` as a delimiter (which is what it's used for during assembly).
+	
+////////////////////////////////////////////////////////////////////////
+/////////////////////// Quake C Documentation //////////////////////////
+TODO ....
