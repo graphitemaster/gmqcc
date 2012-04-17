@@ -76,6 +76,12 @@ Comments:
 	that you'd like to be ignored by the assembler. You can only comment
 	blank lines, and not lines assembly already exists on.
 	
+	Examples:
+		; this is allowed
+		# as it this
+		FLOAT: foo 1 ; this is not allowed
+		FLOAT: bar 2 # neither is this
+	
 Functions:
 	Creating functions is the same as declaring a constant, simply use
 	FUNCTION followed by a colon, and the name (white space doesn't matter)
@@ -119,3 +125,8 @@ Misc:
 	
 	No two identifiers can be the same name, this applies for variables allocated
 	inside a function scope (despite it being considered local).
+	
+	There exists one other keyword that is considered sugar, and that
+	is AUTHOR this keyword will allow you to speciy the AUTHOR(S) of
+	the assembly being assembled. The string represented for each usage
+	of AUTHOR is wrote to the end of the string table.
