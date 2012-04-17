@@ -158,6 +158,8 @@ int           typedef_add (struct lex_file *file, const char *, const char *);
 //===================================================================
 void *util_memory_a(unsigned int, unsigned int, const char *);
 void  util_memory_d(void       *, unsigned int, const char *);
+void  util_meminfo ();
+
 char *util_strdup  (const char *);
 char *util_strrq   (char *);
 char *util_strrnl  (char *);
@@ -185,10 +187,11 @@ int   util_getline (char **, size_t *, FILE *);
             }                                                            \
             void *temp = mem_a(N##_allocated * sizeof(T));               \
             if  (!temp) {                                                \
-                free(temp);                                              \
+                mem_d(temp);                                             \
                 return -1;                                               \
             }                                                            \
             memcpy(temp, N##_data, (N##_elements * sizeof(T)));          \
+            mem_d(N##_data);                                             \
             N##_data = (T*)temp;                                         \
         }                                                                \
         N##_data[N##_elements] = element;                                \
@@ -211,13 +214,13 @@ int   util_getline (char **, size_t *, FILE *);
  * Each paramater incerements by 3 since vector types hold
  * 3 components (x,y,z).
  */
-#define    OFS_NULL      0
-#define    OFS_RETURN    1
-#define    OFS_PARM0     (OFS_RETURN+3)
-#define    OFS_PARM1     (OFS_PARM0 +3)
-#define    OFS_PARM2     (OFS_PARM1 +3)
-#define    OFS_PARM3     (OFS_PARM2 +3)
-#define    OFS_PARM4     (OFS_PARM3 +3)
+#define OFS_NULL      0
+#define OFS_RETURN    1
+#define OFS_PARM0     (OFS_RETURN+3)
+#define OFS_PARM1     (OFS_PARM0 +3)
+#define OFS_PARM2     (OFS_PARM1 +3)
+#define OFS_PARM3     (OFS_PARM2 +3)
+#define OFS_PARM4     (OFS_PARM3 +3)
 #define OFS_PARM5     (OFS_PARM4 +3)
 #define OFS_PARM6     (OFS_PARM5 +3)
 #define OFS_PARM7     (OFS_PARM6 +3)

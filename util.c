@@ -23,7 +23,12 @@
 #include <stdarg.h>
 #include <errno.h>
 #include "gmqcc.h"
- 
+
+unsigned long long mem_ab = 0;
+unsigned long long mem_db = 0;
+unsigned long long mem_at = 0;
+unsigned long long mem_dt = 0;
+
 struct memblock_t {
     const char  *file;
     unsigned int line;
@@ -31,14 +36,17 @@ struct memblock_t {
 };
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
-    struct memblock_t *data = malloc(sizeof(struct memblock_t) + byte);
+    struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
+    void              *data =(void*)((uintptr_t)info+sizeof(struct memblock_t));
     if (!data) return NULL;
-    data->line = line;
-    data->byte = byte;
-    data->file = file;
+    info->line = line;
+    info->byte = byte;
+    info->file = file;
     
-    util_debug("MEM", "allocation: %08u (bytes) at %s:%u\n", byte, file, line);
-    return (void*)((uintptr_t)data+sizeof(struct memblock_t));
+    util_debug("MEM", "allocation: %08u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
+    mem_at++;
+    mem_ab += info->byte;
+    return data;
 }
 
 void util_memory_d(void *ptrn, unsigned int line, const char *file) {
@@ -46,8 +54,21 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     void              *data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
     struct memblock_t *info = (struct memblock_t*)data;
     
-    util_debug("MEM", "released:   %08u (bytes) at %s:%u\n", info->byte, file, line);
+    util_debug("MEM", "released:   %08u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
+    mem_db += info->byte;
+    mem_dt++;
     free(data);
+}
+
+void util_meminfo() {
+	util_debug("MEM", "Memory information:\n\
+	Total allocations:   %llu\n\
+	Total deallocations: %llu\n\
+	Total allocated:     %llu (bytes)\n\
+	Total deallocated:   %llu (bytes)\n",
+		mem_at, mem_dt,
+		mem_ab, mem_db
+	);
 }
 
 #ifndef mem_d
@@ -156,7 +177,6 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
             
             chr = *n + *lineptr - pos;
             strcpy(tmp,*lineptr);
-            
             if (!(*lineptr = tmp))
                 return -1;
                 

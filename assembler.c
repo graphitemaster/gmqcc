@@ -154,6 +154,13 @@ typedef struct {
     int   offset; /* location in globals */
 } globals;
 VECTOR_MAKE(globals, assembly_constants);
+
+void asm_clear() {
+	size_t i = 0;
+	for (; i < assembly_constants_elements; i++)
+		mem_d(assembly_constants_data[i].name);
+	mem_d(assembly_constants_data);
+}
     
 void asm_parse(FILE *fp) {
     char     *data  = NULL;
@@ -321,8 +328,8 @@ void asm_parse(FILE *fp) {
             printf("%li: Invalid statement, expression, or decleration\n", line);
         
         end:
-        //free(data);
         mem_d(data);
         line ++;
     }
+    asm_clear();
 }

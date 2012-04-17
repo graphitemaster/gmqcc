@@ -33,5 +33,6 @@ int main(int argc, char **argv) {
     asm_init ("test.qs", &fp);
     asm_parse(fp);
     asm_close(fp);
+    util_meminfo();
     return 0;
 }
