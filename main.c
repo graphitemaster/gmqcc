@@ -20,33 +20,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include  "gmqcc.h"
+#include "gmqcc.h"
 int main(int argc, char **argv) {
 	argc--;
 	argv++;
 	
-	const char *ifile = argv[0];
+	//const char *ifile = argv[0];
+	FILE *fp;
 	
-	FILE *fp = fopen(ifile, "r");
-	if  (!fp) {
-		fclose(fp);
-		return printf("ERROR Source file %s %s\n", ifile, strerror(errno));
-	} else {
-		struct lex_file *lex = lex_open(fp);
-		lex->name = util_strdup(ifile);
-		if (!lex) {
-			fclose(fp);
-			return 0;
-		}
-		parse_gen(lex);
-		mem_d(lex->name);
-		lex_close(lex);
-	}
+	/*TODO: proper interface swith switches*/
 	
-	code_write();
+	asm_init ("test.qs", &fp);
+	asm_parse(fp);
+	asm_close(fp);
 	return 0;
 }

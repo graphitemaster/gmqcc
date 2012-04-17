@@ -20,9 +20,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <string.h>
-#include <stdint.h> /* replace if stdint.h doesn't exist! */
-#include <limits.h>
 #include "gmqcc.h"
 static typedef_node *typedef_table[1024];
 

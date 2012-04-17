@@ -20,10 +20,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include "gmqcc.h"
 
 /* compile-time constant for type constants */

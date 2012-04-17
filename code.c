@@ -20,74 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdint.h>
-#include <stdlib.h>
 #include "gmqcc.h"
-
-typedef struct {
-	uint16_t opcode;
-	
-	/* operand 1 */
-	union {
-		int16_t  s1; /* signed   */
-		uint16_t u1; /* unsigned */
-	};
-	/* operand 2 */
-	union {
-		int16_t  s2; /* signed   */
-		uint16_t u2; /* unsigned */
-	};
-	/* operand 3 */
-	union {
-		int16_t  s3; /* signed   */
-		uint16_t u3; /* unsigned */
-	};
-	
-	/*
-	 * This is the same as the structure in darkplaces
-	 * {
-	 *     unsigned short op;
-	 *     short          a,b,c;
-	 * }
-	 * But this one is more sane to work with, and the
-	 * type sizes are guranteed.
-	 */
-} prog_section_statement;
-
-typedef struct {
-	/* The type is (I assume)
-	 * 0 = ev_void
-	 * 1 = ev_string
-	 * 2 = ev_float
-	 * 3 = ev_vector
-	 * 4 = ev_entity
-	 * 5 = ev_field
-	 * 6 = ev_function
-	 * 7 = ev_pointer
-	 * 8 = ev_bad    (is this right for uint16_t type?)
-	 */
-	uint16_t type;
-	uint16_t offset;     /* offset in file? (what about length)   */
-	uint32_t name;       /* offset in string table? (confused :() */
-} prog_section_both;
-
-/*
- * var and field use the same structure.  But lets not use the same
- * name just for safety reasons?  (still castable ...).
- */
-typedef prog_section_both prog_section_def;
-typedef prog_section_both prog_section_field;
-
-typedef struct {
-	int32_t   entry;      /* in statement table for instructions  */
-	uint32_t  firstlocal; /* First local in local table           */
-	uint32_t  locals;     /* Total ints of params + locals        */
-	uint32_t  profile;    /* Always zero (engine uses this)       */
-	uint32_t  name;       /* name of function in string table     */
-	uint32_t  file;       /* file of the source file              */
-	uint32_t  nargs;      /* number of arguments                  */
-	uint8_t   argsize[8]; /* size of arguments (keep 8 always?)   */
-} prog_section_function;
 
 typedef struct {
 	uint32_t offset;      /* Offset in file of where data begins  */
@@ -146,7 +79,6 @@ VECTOR_MAKE(prog_section_field,     code_fields    );
 VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_strings   );
-prog_header     code_header ={0};
 
 void code_init() {
 	/*
@@ -205,11 +137,8 @@ void code_test() {
 	code_statements_add((prog_section_statement){INSTR_RETURN,  {0},                        {0},         {0}});
 }
 
-/* program header */
 void code_write() {
-	code_init();
-	code_test();
-	
+	prog_header code_header={0};
 	code_header.version    = 6;
 	code_header.crc16      = 0; /* TODO: */
 	code_header.statements = (prog_section){sizeof(prog_header), code_statements_elements };
@@ -235,6 +164,51 @@ void code_write() {
 	free(code_functions_data);
 	free(code_globals_data);
 	free(code_strings_data);
+	
+	util_debug("CODE","wrote program.dat\n\
+    version:    = %d\n\
+    crc16:      = %d\n\
+    statements {\n\
+        .offset = %d\n\
+        .length = %d\n\
+    }\n\
+    defs       {\n\
+        .offset = %d\n\
+        .length = %d\n\
+    }\n\
+    fields     {\n\
+        .offset = %d\n\
+        .length = %d\n\
+    }\n\
+    functions  {\n\
+        .offset = %d\n\
+        .length = %d\n\
+    }\n\
+    globals    {\n\
+        .offset = %d\n\
+        .length = %d\n\
+    }\n\
+    strings    {\n\
+        .offset = %d\n\
+        .length = %d\n\
+    }\n\
+    entfield:   = %d\n",
+		code_header.version,
+		code_header.crc16,
+		code_header.statements.offset,
+		code_header.statements.length,
+		code_header.defs.offset,
+		code_header.defs.length,
+		code_header.fields.offset,
+		code_header.fields.length,
+		code_header.functions.offset,
+		code_header.functions.length,
+		code_header.strings.offset,
+		code_header.strings.length,
+		code_header.globals.offset,
+		code_header.globals.length,
+		code_header.entfield
+	);
 	
 	fclose(fp);
 }
