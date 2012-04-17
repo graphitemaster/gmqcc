@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 
- * 	Dale Weiler
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -25,29 +25,29 @@
 #include "gmqcc.h"
  
 struct memblock_t {
-	const char  *file;
-	unsigned int line;
-	unsigned int byte;
+    const char  *file;
+    unsigned int line;
+    unsigned int byte;
 };
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
-	struct memblock_t *data = malloc(sizeof(struct memblock_t) + byte);
-	if (!data) return NULL;
-	data->line = line;
-	data->byte = byte;
-	data->file = file;
-	
-	util_debug("MEM", "allocation: %08u (bytes) at %s:%u\n", byte, file, line);
-	return (void*)((uintptr_t)data+sizeof(struct memblock_t));
+    struct memblock_t *data = malloc(sizeof(struct memblock_t) + byte);
+    if (!data) return NULL;
+    data->line = line;
+    data->byte = byte;
+    data->file = file;
+    
+    util_debug("MEM", "allocation: %08u (bytes) at %s:%u\n", byte, file, line);
+    return (void*)((uintptr_t)data+sizeof(struct memblock_t));
 }
 
 void util_memory_d(void *ptrn, unsigned int line, const char *file) {
-	if (!ptrn) return;
-	void              *data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
-	struct memblock_t *info = (struct memblock_t*)data;
-	
-	util_debug("MEM", "released:   %08u (bytes) at %s:%u\n", info->byte, file, line);
-	free(data);
+    if (!ptrn) return;
+    void              *data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
+    struct memblock_t *info = (struct memblock_t*)data;
+    
+    util_debug("MEM", "released:   %08u (bytes) at %s:%u\n", info->byte, file, line);
+    free(data);
 }
 
 #ifndef mem_d
@@ -62,21 +62,21 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
  * to track all memory (without replacing malloc).
  */
 char *util_strdup(const char *s) {
-	size_t  len;
-	char   *ptr;
-	
-	if (!s)
-		return NULL;
-		
-	len = strlen(s);
-	ptr = mem_a (len+1);
-	
-	if (ptr && len) {
-		memcpy(ptr, s, len);
-		ptr[len] = '\0';
-	}
-	
-	return ptr;
+    size_t  len;
+    char   *ptr;
+    
+    if (!s)
+        return NULL;
+        
+    len = strlen(s);
+    ptr = mem_a (len+1);
+    
+    if (ptr && len) {
+        memcpy(ptr, s, len);
+        ptr[len] = '\0';
+    }
+    
+    return ptr;
 }
 
 /*
@@ -85,20 +85,20 @@ char *util_strdup(const char *s) {
  * char array that is later freed (it uses pointer arith)
  */
 char *util_strrq(char *s) {
-	char *dst = s;
-	char *src = s;
-	char  chr;
-	while ((chr = *src++) != '\0') {
-		if (chr == '\\') {
-			*dst++ = chr;
-			if ((chr = *src++) == '\0')
-				break;
-			*dst++ = chr;
-		} else if (chr != '"')
-			*dst++ = chr;
-	}
-	*dst = '\0';
-	return dst;
+    char *dst = s;
+    char *src = s;
+    char  chr;
+    while ((chr = *src++) != '\0') {
+        if (chr == '\\') {
+            *dst++ = chr;
+            if ((chr = *src++) == '\0')
+                break;
+            *dst++ = chr;
+        } else if (chr != '"')
+            *dst++ = chr;
+    }
+    *dst = '\0';
+    return dst;
 }
 
 /*
@@ -107,24 +107,24 @@ char *util_strrq(char *s) {
  * access.
  */
 char *util_strrnl(char *src) {
-	if (!src) return NULL;
-	char   *cpy = src;
-	while (*cpy && *cpy != '\n')
-		cpy++;
-		
-	*cpy = '\0';
-	return src;
+    if (!src) return NULL;
+    char   *cpy = src;
+    while (*cpy && *cpy != '\n')
+        cpy++;
+        
+    *cpy = '\0';
+    return src;
 }
 
 void util_debug(const char *area, const char *ms, ...) {
-	va_list  va;
-	va_start(va, ms);
-	fprintf (stdout, "DEBUG: ");
-	fputc   ('[',  stdout);
-	fprintf (stdout, area);
-	fputs   ("] ", stdout);
-	vfprintf(stdout, ms, va);
-	va_end  (va);
+    va_list  va;
+    va_start(va, ms);
+    fprintf (stdout, "DEBUG: ");
+    fputc   ('[',  stdout);
+    fprintf (stdout, area);
+    fputs   ("] ", stdout);
+    vfprintf(stdout, ms, va);
+    va_end  (va);
 }
 
 /*
@@ -132,51 +132,51 @@ void util_debug(const char *area, const char *ms, ...) {
  * assmed all.  This works the same as getline().
  */
 int util_getline(char **lineptr, size_t *n, FILE *stream) {
-	int   chr;
-	int   ret;
-	char *pos;	
+    int   chr;
+    int   ret;
+    char *pos;    
 
-	if (!lineptr || !n || !stream)
-		return -1;
-	if (!*lineptr) {
-		if (!(*lineptr = mem_a((*n = 64))))
-			return -1;
-	}
+    if (!lineptr || !n || !stream)
+        return -1;
+    if (!*lineptr) {
+        if (!(*lineptr = mem_a((*n = 64))))
+            return -1;
+    }
 
-	chr = *n;
-	pos = *lineptr;
+    chr = *n;
+    pos = *lineptr;
 
-	for (;;) {
-		int c = getc(stream);
-		
-		if (chr < 2) {
-			char *tmp = mem_a((*n+=(*n>16)?*n:64));
-			if  (!tmp)
-				return -1;
-			
-			chr = *n + *lineptr - pos;
-			strcpy(tmp,*lineptr);
-			
-			if (!(*lineptr = tmp))
-				return -1;
-				
-			pos = *n - chr + *lineptr;
-		}
+    for (;;) {
+        int c = getc(stream);
+        
+        if (chr < 2) {
+            char *tmp = mem_a((*n+=(*n>16)?*n:64));
+            if  (!tmp)
+                return -1;
+            
+            chr = *n + *lineptr - pos;
+            strcpy(tmp,*lineptr);
+            
+            if (!(*lineptr = tmp))
+                return -1;
+                
+            pos = *n - chr + *lineptr;
+        }
 
-		if (ferror(stream)) 
-			return -1;
-		if (c == EOF) {
-			if (pos == *lineptr)
-				return -1;
-			else
-				break;
-		}
+        if (ferror(stream)) 
+            return -1;
+        if (c == EOF) {
+            if (pos == *lineptr)
+                return -1;
+            else
+                break;
+        }
 
-		*pos++ = c;
-		 chr--;
-		if (c == '\n')
-			break;
-	}
-	*pos = '\0';
-	return (ret = pos - *lineptr);
+        *pos++ = c;
+         chr--;
+        if (c == '\n')
+            break;
+    }
+    *pos = '\0';
+    return (ret = pos - *lineptr);
 }

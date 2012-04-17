@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 
- * 	Dale Weiler
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -27,43 +27,43 @@
  * than keyword lexing.
  */
 static const char *const lex_keywords[] = {
-	"do",    "else",     "if",     "while",
-	"break", "continue", "return", "goto",
-	"for",   "typedef"
+    "do",    "else",     "if",     "while",
+    "break", "continue", "return", "goto",
+    "for",   "typedef"
 };
 
 struct lex_file *lex_open(FILE *fp) {
-	struct lex_file *lex = mem_a(sizeof(struct lex_file));
-	if (!lex || !fp)
-		return NULL;
-		
-	lex->file = fp;
-	fseek(lex->file, 0, SEEK_END);
-	lex->length = ftell(lex->file);
-	lex->size   = lex->length; /* copy, this is never changed */
-	fseek(lex->file, 0, SEEK_SET);
-	lex->last = 0;
-	lex->line = 0;
-	
-	memset(lex->peek, 0, sizeof(lex->peek));
-	return lex;
+    struct lex_file *lex = mem_a(sizeof(struct lex_file));
+    if (!lex || !fp)
+        return NULL;
+        
+    lex->file = fp;
+    fseek(lex->file, 0, SEEK_END);
+    lex->length = ftell(lex->file);
+    lex->size   = lex->length; /* copy, this is never changed */
+    fseek(lex->file, 0, SEEK_SET);
+    lex->last = 0;
+    lex->line = 0;
+    
+    memset(lex->peek, 0, sizeof(lex->peek));
+    return lex;
 }
 
 void lex_close(struct lex_file *file) {
-	if (!file) return;
-	
-	fclose(file->file); /* may already be closed */
-	mem_d (file);
+    if (!file) return;
+    
+    fclose(file->file); /* may already be closed */
+    mem_d (file);
 }
 
 static void lex_addch(int ch, struct lex_file *file) {
-	if (file->current <  sizeof(file->lastok)-1)
-		file->lastok[file->current++] = (char)ch;
-	if (file->current == sizeof(file->lastok)-1)
-		file->lastok[file->current]   = (char)'\0';
+    if (file->current <  sizeof(file->lastok)-1)
+        file->lastok[file->current++] = (char)ch;
+    if (file->current == sizeof(file->lastok)-1)
+        file->lastok[file->current]   = (char)'\0';
 }
 static inline void lex_clear(struct lex_file *file) {
-	file->current = 0;
+    file->current = 0;
 }
 
 /*
@@ -72,15 +72,15 @@ static inline void lex_clear(struct lex_file *file) {
  * it's own internal state for this.
  */
 static int lex_inget(struct lex_file *file) {
-	file->length --;
-	if (file->last > 0)
-		return file->peek[--file->last];
-	return fgetc(file->file);
+    file->length --;
+    if (file->last > 0)
+        return file->peek[--file->last];
+    return fgetc(file->file);
 }
 static void lex_unget(int ch, struct lex_file *file) {
-	if (file->last < sizeof(file->peek))
-		file->peek[file->last++] = ch;
-	file->length ++;
+    if (file->last < sizeof(file->peek))
+        file->peek[file->last++] = ch;
+    file->length ++;
 }
 
 /*
@@ -88,249 +88,249 @@ static void lex_unget(int ch, struct lex_file *file) {
  * supports.  Moving up in this world!
  */
 static int lex_trigraph(struct lex_file *file) {
-	int  ch;
-	if ((ch = lex_inget(file)) != '?') {
-		lex_unget(ch, file);
-		return '?';
-	}
-	
-	ch = lex_inget(file);
-	switch (ch) {
-		case '(' : return '[' ;
-		case ')' : return ']' ;
-		case '/' : return '\\';
-		case '\'': return '^' ;
-		case '<' : return '{' ;
-		case '>' : return '}' ;
-		case '!' : return '|' ;
-		case '-' : return '~' ;
-		case '=' : return '#' ;
-		default:
-			lex_unget('?', file);
-			lex_unget(ch , file);
-			return '?';
-	}
-	return '?';
+    int  ch;
+    if ((ch = lex_inget(file)) != '?') {
+        lex_unget(ch, file);
+        return '?';
+    }
+    
+    ch = lex_inget(file);
+    switch (ch) {
+        case '(' : return '[' ;
+        case ')' : return ']' ;
+        case '/' : return '\\';
+        case '\'': return '^' ;
+        case '<' : return '{' ;
+        case '>' : return '}' ;
+        case '!' : return '|' ;
+        case '-' : return '~' ;
+        case '=' : return '#' ;
+        default:
+            lex_unget('?', file);
+            lex_unget(ch , file);
+            return '?';
+    }
+    return '?';
 }
 static int lex_digraph(struct lex_file *file, int first) {
-	int ch = lex_inget(file);
-	switch (first) {
-		case '<':
-			if (ch == '%') return '{';
-			if (ch == ':') return '[';
-			break;
-		case '%':
-			if (ch == '>') return '}';
-			if (ch == ':') return '#';
-			break;
-		case ':':
-			if (ch == '>') return ']';
-			break;
-	}
-	
-	lex_unget(ch, file);
-	return first;
+    int ch = lex_inget(file);
+    switch (first) {
+        case '<':
+            if (ch == '%') return '{';
+            if (ch == ':') return '[';
+            break;
+        case '%':
+            if (ch == '>') return '}';
+            if (ch == ':') return '#';
+            break;
+        case ':':
+            if (ch == '>') return ']';
+            break;
+    }
+    
+    lex_unget(ch, file);
+    return first;
 }
 
 static int lex_getch(struct lex_file *file) {
-	int ch = lex_inget(file);
+    int ch = lex_inget(file);
 
-	static int str = 0;
-	switch (ch) {
-		case '?' :
-			return lex_trigraph(file);
-		case '<' :
-		case ':' :
-		case '%' :
-		case '"' : str = !str; if (str) { file->line ++; }
-			return lex_digraph(file, ch);
-			
-		case '\n':
-			if (!str)
-				file->line++;
-	}
-		
-	return ch;
+    static int str = 0;
+    switch (ch) {
+        case '?' :
+            return lex_trigraph(file);
+        case '<' :
+        case ':' :
+        case '%' :
+        case '"' : str = !str; if (str) { file->line ++; }
+            return lex_digraph(file, ch);
+            
+        case '\n':
+            if (!str)
+                file->line++;
+    }
+        
+    return ch;
 }
 
 static int lex_get(struct lex_file *file) {
-	int ch;
-	if (!isspace(ch = lex_getch(file)))
-		return ch;
-		
-	/* skip over all spaces */
-	while (isspace(ch) && ch != '\n')
-		ch = lex_getch(file);
-		
-	if (ch == '\n')
-		return ch;
-	lex_unget(ch, file);
-	return ' ';
+    int ch;
+    if (!isspace(ch = lex_getch(file)))
+        return ch;
+        
+    /* skip over all spaces */
+    while (isspace(ch) && ch != '\n')
+        ch = lex_getch(file);
+        
+    if (ch == '\n')
+        return ch;
+    lex_unget(ch, file);
+    return ' ';
 }
 
 static int lex_skipchr(struct lex_file *file) {
-	int ch;
-	int it;
-	
-	lex_clear(file);
-	lex_addch('\'', file);
-	
-	for (it = 0; it < 2 && ((ch = lex_inget(file)) != '\''); it++) {
-		lex_addch(ch, file);
-		
-		if (ch == '\n')
-			return ERROR_LEX;
-		if (ch == '\\')
-			lex_addch(lex_getch(file), file);
-	}
-	lex_addch('\'', file);
-	lex_addch('\0', file);
-	
-	if (it > 2)
-		return ERROR_LEX;
-		
-	return LEX_CHRLIT;
+    int ch;
+    int it;
+    
+    lex_clear(file);
+    lex_addch('\'', file);
+    
+    for (it = 0; it < 2 && ((ch = lex_inget(file)) != '\''); it++) {
+        lex_addch(ch, file);
+        
+        if (ch == '\n')
+            return ERROR_LEX;
+        if (ch == '\\')
+            lex_addch(lex_getch(file), file);
+    }
+    lex_addch('\'', file);
+    lex_addch('\0', file);
+    
+    if (it > 2)
+        return ERROR_LEX;
+        
+    return LEX_CHRLIT;
 }
 
 static int lex_skipstr(struct lex_file *file) {
-	int ch;
-	lex_clear(file);
-	lex_addch('"', file);
-	
-	while ((ch = lex_getch(file)) != '"') {
-		if (ch == '\n' || ch == EOF)
-			return ERROR_LEX;
-			
-		lex_addch(ch, file);
-		if (ch == '\\')
-			lex_addch(lex_inget(file), file);
-	}
-	
-	lex_addch('"', file);
-	lex_addch('\0', file);
-	
-	return LEX_STRLIT;
+    int ch;
+    lex_clear(file);
+    lex_addch('"', file);
+    
+    while ((ch = lex_getch(file)) != '"') {
+        if (ch == '\n' || ch == EOF)
+            return ERROR_LEX;
+            
+        lex_addch(ch, file);
+        if (ch == '\\')
+            lex_addch(lex_inget(file), file);
+    }
+    
+    lex_addch('"', file);
+    lex_addch('\0', file);
+    
+    return LEX_STRLIT;
 }
 static int lex_skipcmt(struct lex_file *file) {
-	int ch;
-	lex_clear(file);
-	ch = lex_getch(file);
-	
-	if (ch == '/') {
-		lex_addch('/', file);
-		lex_addch('/', file);
-		
-		while ((ch = lex_getch(file)) != '\n') {
-			if (ch == '\\') {
-				lex_addch(ch, file);
-				lex_addch(lex_getch(file), file);
-			} else {
-				lex_addch(ch, file);
-			}
-		}
-		lex_addch('\0', file);
-		return LEX_COMMENT;
-	}
-	
-	if (ch != '*') {
-		lex_unget(ch, file);
-		return '/';
-	}
-	
-	lex_addch('/', file);
-	
-	/* hate this */
-	do {
-		lex_addch(ch, file);
-		while ((ch = lex_getch(file)) != '*') {
-			if (ch == EOF)
-				return error(file, ERROR_LEX, "malformatted comment");
-			else
-				lex_addch(ch, file);
-		}
-		lex_addch(ch, file);
-	} while ((ch = lex_getch(file)) != '/');
-	
-	lex_addch('/',  file);
-	lex_addch('\0', file);
-	
-	return LEX_COMMENT;
+    int ch;
+    lex_clear(file);
+    ch = lex_getch(file);
+    
+    if (ch == '/') {
+        lex_addch('/', file);
+        lex_addch('/', file);
+        
+        while ((ch = lex_getch(file)) != '\n') {
+            if (ch == '\\') {
+                lex_addch(ch, file);
+                lex_addch(lex_getch(file), file);
+            } else {
+                lex_addch(ch, file);
+            }
+        }
+        lex_addch('\0', file);
+        return LEX_COMMENT;
+    }
+    
+    if (ch != '*') {
+        lex_unget(ch, file);
+        return '/';
+    }
+    
+    lex_addch('/', file);
+    
+    /* hate this */
+    do {
+        lex_addch(ch, file);
+        while ((ch = lex_getch(file)) != '*') {
+            if (ch == EOF)
+                return error(file, ERROR_LEX, "malformatted comment");
+            else
+                lex_addch(ch, file);
+        }
+        lex_addch(ch, file);
+    } while ((ch = lex_getch(file)) != '/');
+    
+    lex_addch('/',  file);
+    lex_addch('\0', file);
+    
+    return LEX_COMMENT;
 }
 
 static int lex_getsource(struct lex_file *file) {
-	int ch = lex_get(file);
-	
-	/* skip char/string/comment */
-	switch (ch) {
-		case '\'': return lex_skipchr(file);
-		case '"':  return lex_skipstr(file);
-		case '/':  return lex_skipcmt(file);
-		default:
-			return ch;
-	}
+    int ch = lex_get(file);
+    
+    /* skip char/string/comment */
+    switch (ch) {
+        case '\'': return lex_skipchr(file);
+        case '"':  return lex_skipstr(file);
+        case '/':  return lex_skipcmt(file);
+        default:
+            return ch;
+    }
 }
 
 int lex_token(struct lex_file *file) {
-	int ch = lex_getsource(file);
-	int it;
-	
-	/* valid identifier */
-	if (ch > 0 && (ch == '_' || isalpha(ch))) {
-		lex_clear(file);
-		
-		/*
-		 * Yes this is dirty, but there is no other _sane_ easy
-		 * way to do it, this is what I call defensive programming
-		 * if something breaks, add more defense :-)
-		 */
-		while (ch >   0   && ch != ' ' && ch != '(' &&
-		       ch != '\n' && ch != ';' && ch != ')') {
-			lex_addch(ch, file);
-			ch = lex_getsource(file);
-		}
-		lex_unget(ch,   file);
-		lex_addch('\0', file);
-		
-		/* look inside the table for a keyword .. */
-		for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
-			if (!strncmp(file->lastok, lex_keywords[it], sizeof(lex_keywords[it])))
-				return it;
-				
-		/* try a type? */
-		#define TEST_TYPE(X)                                 \
-		    do {                                             \
-		        if (!strncmp(X, "float",  sizeof("float")))  \
-		            return TOKEN_FLOAT;                      \
-		        if (!strncmp(X, "vector", sizeof("vector"))) \
-		            return TOKEN_VECTOR;                     \
-		        if (!strncmp(X, "string", sizeof("string"))) \
-		    	    return TOKEN_STRING;                     \
-		        if (!strncmp(X, "entity", sizeof("entity"))) \
-		    	    return TOKEN_ENTITY;                     \
-		        if (!strncmp(X, "void"  , sizeof("void")))   \
-		            return TOKEN_VOID;                       \
-		    } while(0)
-		
-		TEST_TYPE(file->lastok);
-		
-		/* try the hashtable for typedefs? */
-		if (typedef_find(file->lastok))
-			TEST_TYPE(typedef_find(file->lastok)->name);
-			
-		#undef TEST_TYPE
-		return LEX_IDENT;
-	}
-	return ch;
+    int ch = lex_getsource(file);
+    int it;
+    
+    /* valid identifier */
+    if (ch > 0 && (ch == '_' || isalpha(ch))) {
+        lex_clear(file);
+        
+        /*
+         * Yes this is dirty, but there is no other _sane_ easy
+         * way to do it, this is what I call defensive programming
+         * if something breaks, add more defense :-)
+         */
+        while (ch >   0   && ch != ' ' && ch != '(' &&
+               ch != '\n' && ch != ';' && ch != ')') {
+            lex_addch(ch, file);
+            ch = lex_getsource(file);
+        }
+        lex_unget(ch,   file);
+        lex_addch('\0', file);
+        
+        /* look inside the table for a keyword .. */
+        for (it = 0; it < sizeof(lex_keywords)/sizeof(*lex_keywords); it++)
+            if (!strncmp(file->lastok, lex_keywords[it], sizeof(lex_keywords[it])))
+                return it;
+                
+        /* try a type? */
+        #define TEST_TYPE(X)                                 \
+            do {                                             \
+                if (!strncmp(X, "float",  sizeof("float")))  \
+                    return TOKEN_FLOAT;                      \
+                if (!strncmp(X, "vector", sizeof("vector"))) \
+                    return TOKEN_VECTOR;                     \
+                if (!strncmp(X, "string", sizeof("string"))) \
+                    return TOKEN_STRING;                     \
+                if (!strncmp(X, "entity", sizeof("entity"))) \
+                    return TOKEN_ENTITY;                     \
+                if (!strncmp(X, "void"  , sizeof("void")))   \
+                    return TOKEN_VOID;                       \
+            } while(0)
+        
+        TEST_TYPE(file->lastok);
+        
+        /* try the hashtable for typedefs? */
+        if (typedef_find(file->lastok))
+            TEST_TYPE(typedef_find(file->lastok)->name);
+            
+        #undef TEST_TYPE
+        return LEX_IDENT;
+    }
+    return ch;
 }
 
 void lex_reset(struct lex_file *file) {
-	file->current = 0;
-	file->last    = 0;
-	file->length  = file->size;
-	fseek(file->file, 0, SEEK_SET);
-	
-	memset(file->peek,   0, sizeof(file->peek  ));
-	memset(file->lastok, 0, sizeof(file->lastok));
+    file->current = 0;
+    file->last    = 0;
+    file->length  = file->size;
+    fseek(file->file, 0, SEEK_SET);
+    
+    memset(file->peek,   0, sizeof(file->peek  ));
+    memset(file->lastok, 0, sizeof(file->lastok));
 }
 
 /*
@@ -339,17 +339,17 @@ void lex_reset(struct lex_file *file) {
  * recrusion.
  */
 struct lex_file *lex_include(struct lex_file *lex, char *file) {
-	util_strrq(file);
-	if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
-		error(lex, ERROR_LEX, "Source file cannot include itself\n");
-		exit (-1);
-	}
-	
-	FILE *fp = fopen(file, "r");
-	if  (!fp) {
-		error(lex, ERROR_LEX, "Include file `%s` doesn't exist\n", file);
-		exit (-1);
-	}
-	
-	return lex_open(fp);
+    util_strrq(file);
+    if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
+        error(lex, ERROR_LEX, "Source file cannot include itself\n");
+        exit (-1);
+    }
+    
+    FILE *fp = fopen(file, "r");
+    if  (!fp) {
+        error(lex, ERROR_LEX, "Include file `%s` doesn't exist\n", file);
+        exit (-1);
+    }
+    
+    return lex_open(fp);
 }
