@@ -78,7 +78,7 @@ Comments:
 	
 	Examples:
 		; this is allowed
-		# as it this
+		# as is this
 		FLOAT: foo 1 ; this is not allowed
 		FLOAT: bar 2 # neither is this
 	
@@ -121,7 +121,7 @@ Misc:
 	and signs (+, -) however.
 	
 	Constants cannot be assigned values of other constants, their value must
-	be fully expressed inspot of the declration.
+	be fully expressed inspot of the declartion.
 	
 	No two identifiers can be the same name, this applies for variables allocated
 	inside a function scope (despite it being considered local).
@@ -153,4 +153,5 @@ Misc:
 	
 ////////////////////////////////////////////////////////////////////////
 /////////////////////// Quake C Documentation //////////////////////////
+////////////////////////////////////////////////////////////////////////
 TODO ....
