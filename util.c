@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 #include <stdarg.h>
+#include <errno.h>
 #include "gmqcc.h"
  
 struct memblock_t {
@@ -79,7 +80,7 @@ char *util_strdup(const char *s) {
 }
 
 /*
- * Removed quotes from a string, escapes from \ in string
+ * Remove quotes from a string, escapes from \ in string
  * as well.  This function shouldn't be used to create a
  * char array that is later freed (it uses pointer arith)
  */
@@ -100,6 +101,20 @@ char *util_strrq(char *s) {
 	return dst;
 }
 
+/*
+ * Remove newline from a string (if it exists).  This is
+ * done pointer wise instead of strlen(), and an array
+ * access.
+ */
+char *util_strrnl(char *s) {
+	char  *cpy = s;
+	while (cpy && *cpy && *cpy != '\n')
+		cpy++;
+		
+	*cpy = '\0';
+	return s;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
 	va_list  va;
 	va_start(va, ms);
@@ -109,4 +124,58 @@ void util_debug(const char *area, const char *ms, ...) {
 	fputs   ("] ", stdout);
 	vfprintf(stdout, ms, va);
 	va_end  (va);
+}
+
+/*
+ * Implements libc getline for systems that don't have it, which is 
+ * assmed all.  This works the same as getline().
+ */
+int util_getline(char **lineptr, size_t *n, FILE *stream) {
+	int   chr;
+	int   ret;
+	char *pos;	
+
+	if (!lineptr || !n || !stream)
+		return -1;
+	if (!*lineptr) {
+		if (!(*lineptr = mem_a((*n = 64))))
+			return -1;
+	}
+
+	chr = *n;
+	pos = *lineptr;
+
+	for (;;) {
+		int c = getc(stream);
+		
+		if (chr < 2) {
+			char *tmp = mem_a((*n+=(*n>16)?*n:64));
+			if  (!tmp)
+				return -1;
+			
+			chr = *n + *lineptr - pos;
+			strcpy(tmp,*lineptr);
+			
+			if (!(*lineptr = tmp))
+				return -1;
+				
+			pos = *n - chr + *lineptr;
+		}
+
+		if (ferror(stream)) 
+			return -1;
+		if (c == EOF) {
+			if (pos == *lineptr)
+				return -1;
+			else
+				break;
+		}
+
+		*pos++ = c;
+		 chr--;
+		if (c == '\n')
+			break;
+	}
+	*pos = '\0';
+	return (ret = pos - *lineptr);
 }

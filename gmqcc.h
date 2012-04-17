@@ -160,7 +160,9 @@ void *util_memory_a(unsigned int, unsigned int, const char *);
 void  util_memory_d(void       *, unsigned int, const char *);
 char *util_strdup  (const char *);
 char *util_strrq   (char *);
+char *util_strrnl  (char *);
 void  util_debug   (const char *, const char *, ...);
+int   util_getline (char **, size_t *, FILE *);
 
 #ifdef NOTRACK
 #	define mem_a(x) malloc(x)
@@ -181,11 +183,12 @@ void  util_debug   (const char *, const char *, ...);
             } else {                                                     \
                 N##_allocated *= 2;                                      \
             }                                                            \
-            void *temp = realloc(N##_data, (N##_allocated * sizeof(T))); \
+            void *temp = mem_a(N##_allocated * sizeof(T));               \
             if  (!temp) {                                                \
                 free(temp);                                              \
                 return -1;                                               \
             }                                                            \
+            memcpy(temp, N##_data, (N##_elements * sizeof(T)));          \
             N##_data = (T*)temp;                                         \
         }                                                                \
         N##_data[N##_elements] = element;                                \

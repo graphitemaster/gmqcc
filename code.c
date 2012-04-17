@@ -158,43 +158,26 @@ void code_write() {
 	fwrite(code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
 	fwrite(code_strings_data,    1, 1                             *code_strings_elements,    fp);
 	
-	free(code_statements_data);
-	free(code_defs_data);
-	free(code_fields_data);
-	free(code_functions_data);
-	free(code_globals_data);
-	free(code_strings_data);
+	mem_d(code_statements_data);
+	mem_d(code_defs_data);
+	mem_d(code_fields_data);
+	mem_d(code_functions_data);
+	mem_d(code_globals_data);
+	mem_d(code_strings_data);
 	
-	util_debug("CODE","wrote program.dat\n\
+	util_debug("GEN","wrote program.dat:\n\
     version:    = %d\n\
     crc16:      = %d\n\
-    statements {\n\
-        .offset = %d\n\
-        .length = %d\n\
-    }\n\
-    defs       {\n\
-        .offset = %d\n\
-        .length = %d\n\
-    }\n\
-    fields     {\n\
-        .offset = %d\n\
-        .length = %d\n\
-    }\n\
-    functions  {\n\
-        .offset = %d\n\
-        .length = %d\n\
-    }\n\
-    globals    {\n\
-        .offset = %d\n\
-        .length = %d\n\
-    }\n\
-    strings    {\n\
-        .offset = %d\n\
-        .length = %d\n\
-    }\n\
-    entfield:   = %d\n",
+    entfield:   = %d\n\
+    statements {.offset = % 8d, .length = % 8d}\n\
+    defs       {.offset = % 8d, .length = % 8d}\n\
+    fields     {.offset = % 8d, .length = % 8d}\n\
+    functions  {.offset = % 8d, .length = % 8d}\n\
+    globals    {.offset = % 8d, .length = % 8d}\n\
+    strings    {.offset = % 8d, .length = % 8d}\n",
 		code_header.version,
 		code_header.crc16,
+		code_header.entfield,
 		code_header.statements.offset,
 		code_header.statements.length,
 		code_header.defs.offset,
@@ -206,8 +189,7 @@ void code_write() {
 		code_header.strings.offset,
 		code_header.strings.length,
 		code_header.globals.offset,
-		code_header.globals.length,
-		code_header.entfield
+		code_header.globals.length
 	);
 	
 	fclose(fp);
