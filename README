@@ -102,7 +102,7 @@ Internal:
 	The Quake engine provides some internal functions such as print, to
 	access these you first must declare them and their names. To do this
 	you create a FUNCTION as you currently do. Adding a $ followed by the
-	number of the engine builtin will bind it to that builtin.
+	number of the engine builtin (negated).
 	
 	Examples:
 		FUNCTION: print $4
@@ -127,6 +127,6 @@ Misc:
 	inside a function scope (despite it being considered local).
 	
 	There exists one other keyword that is considered sugar, and that
-	is AUTHOR this keyword will allow you to speciy the AUTHOR(S) of
+	is AUTHOR, this keyword will allow you to speciy the AUTHOR(S) of
 	the assembly being assembled. The string represented for each usage
 	of AUTHOR is wrote to the end of the string table.
