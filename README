@@ -34,6 +34,11 @@ util.c
 	These are utilities for the compiler, some things in here include a
 	allocator used for debugging, and some string functions.
 	
+assembler.c
+	This implements support for assembling Quake assembler (which doesn't
+	actually exist untill now: documentation of the Quake assembler is below.
+	This also implements (will) inline assembly for the C compiler.
+	
 README
 	This is the file you're currently reading
 	
@@ -48,3 +53,69 @@ Makefile
 			
 		#make clean
 			Cleans the build files left behind by a previous build
+
+////////////////////////////////////////////////////////////////////////
+///////////////////// Quake Assembler Documentation ////////////////////
+////////////////////////////////////////////////////////////////////////
+Quake assembler is quite simple: it's just an annotated version of the binary
+produced by any existing QuakeC compiler, but made cleaner to use, (so that
+the location of various globals or strings are not required to be known).
+
+Constants:
+	Using one of the following valid constant typenames, you can declare
+	a constant {FLOAT,VECTOR,FUNCTION,FIELD,ENTITY}, all typenames are
+	proceeded by a colon, and the name (white space doesn't matter).
+	
+	Examples:
+		FLOAT: foo 1
+		VECTOR: bar 1 2 1
+		STRING: hello "hello world"
+		
+Comments:
+	Commenting assembly requires the use of either # or ; on the line
+	that you'd like to be ignored by the assembler. You can only comment
+	blank lines, and not lines assembly already exists on.
+	
+Functions:
+	Creating functions is the same as declaring a constant, simply use
+	FUNCTION followed by a colon, and the name (white space doesn't matter)
+	and start the statements for that function on the line after it
+	
+	Examples:
+		FLOAT: foo 1
+		FLOAT: bar 2
+		FUNCTION: test1
+			ADD foo, bar, OFS_RETURN
+			RETURN
+			
+		FUNCTION: test2
+			CALL0 test1
+			DONE
+			
+Internal:
+	The Quake engine provides some internal functions such as print, to
+	access these you first must declare them and their names. To do this
+	you create a FUNCTION as you currently do. Adding a $ followed by the
+	number of the engine builtin will bind it to that builtin.
+	
+	Examples:
+		FUNCTION: print $4
+		FUNCTION: error $3
+
+Misc:
+	There are some rules as to what your identifiers can be for functions
+	and constants.  All indentifiers mustn't begin with a numeric digit,
+	identifiers cannot include spaces, or tabs; they cannot contain symbols,
+	and they cannot exceed 32768 characters. Identifiers cannot be all 
+	capitalized either, as all capatilized identifiers are reserved by the
+	assembler.
+	
+	Numeric constants cannot contain special notation such as `1-e10`, all
+	numeric constants have to be numeric, they can contain decmial points
+	and signs (+, -) however.
+	
+	Constants cannot be assigned values of other constants, their value must
+	be fully expressed inspot of the declration.
+	
+	No two identifiers can be the same name, this applies for variables allocated
+	inside a function scope (despite it being considered local).
