@@ -106,13 +106,14 @@ char *util_strrq(char *s) {
  * done pointer wise instead of strlen(), and an array
  * access.
  */
-char *util_strrnl(char *s) {
-	char  *cpy = s;
-	while (cpy && *cpy && *cpy != '\n')
+char *util_strrnl(char *src) {
+	if (!src) return NULL;
+	char   *cpy = src;
+	while (*cpy && *cpy != '\n')
 		cpy++;
 		
 	*cpy = '\0';
-	return s;
+	return src;
 }
 
 void util_debug(const char *area, const char *ms, ...) {
