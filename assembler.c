@@ -156,10 +156,10 @@ typedef struct {
 VECTOR_MAKE(globals, assembly_constants);
 
 void asm_clear() {
-	size_t i = 0;
-	for (; i < assembly_constants_elements; i++)
-		mem_d(assembly_constants_data[i].name);
-	mem_d(assembly_constants_data);
+    size_t i = 0;
+    for (; i < assembly_constants_elements; i++)
+        mem_d(assembly_constants_data[i].name);
+    mem_d(assembly_constants_data);
 }
 
 void asm_parse(FILE *fp) {
@@ -210,7 +210,7 @@ void asm_parse(FILE *fp) {
         
         /* FLOAT    */
         DECLTYPE(asm_keys[0], {
-			//util_debug("ASM", "Constant FLOAT\n");
+            //util_debug("ASM", "Constant FLOAT\n");
             code_defs_add((prog_section_def){
                 .type   = TYPE_FLOAT,
                 .offset = offset_globals, /* global table */
@@ -222,7 +222,7 @@ void asm_parse(FILE *fp) {
         });
         /* VECTOR */
         DECLTYPE(asm_keys[1], {
-			//util_debug("ASM", "Constant VECTOR\n");
+            //util_debug("ASM", "Constant VECTOR\n");
             code_defs_add((prog_section_def){
                 .type   = TYPE_FLOAT,
                 .offset = offset_globals, /* global table */
@@ -239,7 +239,7 @@ void asm_parse(FILE *fp) {
         /* FIELD    */ DECLTYPE(asm_keys[3], {util_debug("ASM", "Constant FIELD\n");});
         /* STRING   */
         DECLTYPE(asm_keys[4], {
-			//util_debug("ASM", "Constant STRING\n");
+            //util_debug("ASM", "Constant STRING\n");
             code_defs_add((prog_section_def){
                 .type   = TYPE_STRING,    
                 .offset = offset_globals, /* offset to offset in string table (for data)*/
@@ -249,7 +249,7 @@ void asm_parse(FILE *fp) {
         });
         /* FUNCTION */
         DECLTYPE(asm_keys[5], {
-			//util_debug("ASM", "Constant FUNCTION\n");
+            //util_debug("ASM", "Constant FUNCTION\n");
             /* TODO: parse */
             if (state != ASM_NULL) {
                 printf("%li: Error unfinished function block, expected DONE or RETURN\n", line);

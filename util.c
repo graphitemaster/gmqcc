@@ -150,23 +150,22 @@ void util_debug(const char *area, const char *ms, ...) {
  * certian-sized types like short or int.
  */
 void util_endianswap(void *m, int s, int l) {
-	size_t w = 0;
-	size_t i = 0;
-	
-	/* ignore if we're already LE */
-    if(*((char *)&s))
-		return;
-    
-    for(; w < l; w++) {
-		for(;  i < s << 1; i++) {
-			unsigned char *p = (unsigned char *)m+w*s;
-			unsigned char  t = p[i];
-			p[i]             = p[s-i-1];
-			p[s-i-1]         = t;
-		}
-	}
-}
+    size_t w = 0;
+    size_t i = 0;
 
+    /* ignore if we're already LE */
+    if(*((char *)&s))
+        return;
+
+    for(; w < l; w++) {
+        for(;  i < s << 1; i++) {
+            unsigned char *p = (unsigned char *)m+w*s;
+            unsigned char  t = p[i];
+            p[i]             = p[s-i-1];
+            p[s-i-1]         = t;
+        }
+    }
+}
 
 /*
  * Implements libc getline for systems that don't have it, which is 
@@ -198,7 +197,7 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
             chr = *n + *lineptr - pos;
             strcpy(tmp,*lineptr);
             if (!(*lineptr = tmp)) {
-				mem_d (tmp);
+                mem_d (tmp);
                 return -1;
             } 
             pos = *n - chr + *lineptr;

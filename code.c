@@ -81,12 +81,12 @@ VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_chars     );
 
 int code_strings_add(const char *src) {
-	size_t size = strlen(src);
-	size_t iter = 0;
-	while (iter < size)
-		code_chars_add(src[iter++]);
-	code_chars_add('\0');
-	return code_chars_elements;
+    size_t size = strlen(src);
+    size_t iter = 0;
+    while (iter < size)
+        code_chars_add(src[iter++]);
+    code_chars_add('\0');
+    return code_chars_elements;
 }
 
 void code_init() {
@@ -179,24 +179,24 @@ void code_write() {
     util_debug("GEN", "functions:\n");
     size_t i = 0;
     for (; i < code_functions_elements; i++) {
-    	util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize =%0X }\n",
-    		code_functions_data[i].entry,
-    		code_functions_data[i].firstlocal,
-    		code_functions_data[i].locals,
-    		code_functions_data[i].profile,
-    		code_functions_data[i].name,
-    		code_functions_data[i].file,
-    		code_functions_data[i].nargs,
-    		*((int32_t*)&code_functions_data[i].argsize)
-    	);
+        util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize =%0X }\n",
+            code_functions_data[i].entry,
+            code_functions_data[i].firstlocal,
+            code_functions_data[i].locals,
+            code_functions_data[i].profile,
+            code_functions_data[i].name,
+            code_functions_data[i].file,
+            code_functions_data[i].nargs,
+            *((int32_t*)&code_functions_data[i].argsize)
+        );
     }
-    		
-	mem_d(code_statements_data);
-	mem_d(code_defs_data);
-	mem_d(code_fields_data);
-	mem_d(code_functions_data);
-	mem_d(code_globals_data);
-	mem_d(code_chars_data);
+    
+    mem_d(code_statements_data);
+    mem_d(code_defs_data);
+    mem_d(code_fields_data);
+    mem_d(code_functions_data);
+    mem_d(code_globals_data);
+    mem_d(code_chars_data);
     
     fclose(fp);
 }
