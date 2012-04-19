@@ -156,15 +156,16 @@ int           typedef_add (struct lex_file *file, const char *, const char *);
 //===================================================================
 //=========================== util.c ================================
 //===================================================================
-void *util_memory_a(unsigned int, unsigned int, const char *);
-void  util_memory_d(void       *, unsigned int, const char *);
-void  util_meminfo ();
+void *util_memory_a  (unsigned int, unsigned int, const char *);
+void  util_memory_d  (void       *, unsigned int, const char *);
+void  util_meminfo   ();
 
-char *util_strdup  (const char *);
-char *util_strrq   (char *);
-char *util_strrnl  (char *);
-void  util_debug   (const char *, const char *, ...);
-int   util_getline (char **, size_t *, FILE *);
+char *util_strdup    (const char *);
+char *util_strrq     (char *);
+char *util_strrnl    (char *);
+void  util_debug     (const char *, const char *, ...);
+int   util_getline   (char **, size_t *, FILE *);
+void  util_endianswap(void *, int, int);
 
 #ifdef NOTRACK
 #    define mem_a(x) malloc(x)
@@ -368,16 +369,17 @@ enum {
  * VECTOR_MAKE(prog_section_field,     code_fields    );
  * VECTOR_MAKE(prog_section_function,  code_functions );
  * VECTOR_MAKE(int,                    code_globals   );
- * VECTOR_MAKE(char,                   code_strings   );
+ * VECTOR_MAKE(char,                   code_chars     );
  */
 int         code_statements_add(prog_section_statement);
-int         code_defs_add     (prog_section_def);
-int         code_fields_add   (prog_section_field);
-int         code_functions_add(prog_section_function);
-int         code_globals_add  (int);
-int         code_strings_add  (char);
+int         code_defs_add      (prog_section_def);
+int         code_fields_add    (prog_section_field);
+int         code_functions_add (prog_section_function);
+int         code_globals_add   (int);
+int         code_chars_add     (char);
+int         code_strings_add   (const char *); /* function wrapping code_chars_add */
 extern long code_statements_elements;
-extern long code_strings_elements;
+extern long code_chars_elements;
 extern long code_globals_elements;
 extern long code_functions_elements;
 extern long code_fields_elements;

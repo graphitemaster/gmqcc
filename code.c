@@ -68,17 +68,26 @@ typedef struct {
  * code_globals_allocated    -- size of the array allocated
  * code_globals_add(T)       -- add element (returns -1 on error)
  * 
- * code_strings_data         -- raw char* array
- * code_strings_elements     -- number of elements
- * code_strings_allocated    -- size of the array allocated
- * code_strings_add(T)       -- add element (returns -1 on error)
+ * code_chars_data           -- raw char* array
+ * code_chars_elements       -- number of elements
+ * code_chars_allocated      -- size of the array allocated
+ * code_chars_add(T)         -- add element (returns -1 on error)
  */
 VECTOR_MAKE(prog_section_statement, code_statements);
 VECTOR_MAKE(prog_section_def,       code_defs      );
 VECTOR_MAKE(prog_section_field,     code_fields    );
 VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
-VECTOR_MAKE(char,                   code_strings   );
+VECTOR_MAKE(char,                   code_chars     );
+
+int code_strings_add(const char *src) {
+	size_t size = strlen(src);
+	size_t iter = 0;
+	while (iter < size)
+		code_chars_add(src[iter++]);
+	code_chars_add('\0');
+	return code_chars_elements;
+}
 
 void code_init() {
     /*
@@ -91,30 +100,19 @@ void code_init() {
     for(i = 0; i < 28; i++)
         code_globals_add(0);
         
-    code_strings_add   ('\0');
+    code_chars_add     ('\0');
     code_functions_add (empty_function);
     code_statements_add(empty_statement);
 }
 
-void code_test() {
-    const char *X;
-    size_t size = sizeof(X);
-    size_t iter = 0;
-    
-    #define FOO(Y) \
-        X = Y; \
-        size = sizeof(Y); \
-        for (iter=0; iter < size; iter++) { \
-            code_strings_add(X[iter]);    \
-        }
-        
-    FOO("m_init");
-    FOO("print");
-    FOO("hello world\n");
-    FOO("m_keydown");
-    FOO("m_draw");
-    FOO("m_toggle");
-    FOO("m_shutdown");
+void code_test() {    
+    code_strings_add("m_init");
+    code_strings_add("print");
+    code_strings_add("hello world\n");
+    code_strings_add("m_keydown");
+    code_strings_add("m_draw");
+    code_strings_add("m_toggle");
+    code_strings_add("m_shutdown");
     
     code_globals_add(1);  /* m_init */
     code_globals_add(2);  /* print  */
@@ -142,12 +140,20 @@ void code_write() {
     code_header.version    = 6;
     code_header.crc16      = 0; /* TODO: */
     code_header.statements = (prog_section){sizeof(prog_header), code_statements_elements };
-    code_header.defs       = (prog_section){code_header.statements.offset + sizeof(prog_section_statement)*code_statements_elements,  code_defs_elements       };
-    code_header.fields     = (prog_section){code_header.defs.offset       + sizeof(prog_section_def)      *code_defs_elements,        code_fields_elements     };
-    code_header.functions  = (prog_section){code_header.fields.offset     + sizeof(prog_section_field)    *code_fields_elements,      code_functions_elements  };
-    code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements    };
-    code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_strings_elements    };
+    code_header.defs       = (prog_section){code_header.statements.offset + sizeof(prog_section_statement)*code_statements_elements,  code_defs_elements      };
+    code_header.fields     = (prog_section){code_header.defs.offset       + sizeof(prog_section_def)      *code_defs_elements,        code_fields_elements    };
+    code_header.functions  = (prog_section){code_header.fields.offset     + sizeof(prog_section_field)    *code_fields_elements,      code_functions_elements };
+    code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements   };
+    code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_chars_elements     };
     code_header.entfield   = 0; /* TODO: */
+    
+    /* ensure all data is in LE format */
+    util_endianswap(&code_header,         sizeof(prog_header), 1);
+    util_endianswap(code_statements_data, sizeof(prog_section_statement), code_statements_elements);
+    util_endianswap(code_defs_data,       sizeof(prog_section_def),       code_defs_elements);
+    util_endianswap(code_fields_data,     sizeof(prog_section_field),     code_fields_elements);
+    util_endianswap(code_functions_data,  sizeof(prog_section_function),  code_functions_elements);
+    util_endianswap(code_globals_data,    sizeof(int),                    code_globals_elements);
     
     FILE *fp = fopen("program.dat", "wb");
     fwrite(&code_header,         1, sizeof(prog_header), fp);
@@ -156,41 +162,41 @@ void code_write() {
     fwrite(code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
     fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
     fwrite(code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
-    fwrite(code_strings_data,    1, 1                             *code_strings_elements,    fp);
+    fwrite(code_chars_data,      1, 1                             *code_chars_elements,      fp);
     
-    mem_d(code_statements_data);
-    mem_d(code_defs_data);
-    mem_d(code_fields_data);
-    mem_d(code_functions_data);
-    mem_d(code_globals_data);
-    mem_d(code_strings_data);
+    util_debug("GEN","header:\n");
+    util_debug("GEN","    version:    = %d\n", code_header.version );
+    util_debug("GEN","    crc16:      = %d\n", code_header.crc16   );
+    util_debug("GEN","    entfield:   = %d\n", code_header.entfield);
+    util_debug("GEN","    statements  = {.offset = % 8d, .length = % 8d}\n", code_header.statements.offset, code_header.statements.length);
+    util_debug("GEN","    defs        = {.offset = % 8d, .length = % 8d}\n", code_header.defs      .offset, code_header.defs      .length);
+    util_debug("GEN","    fields      = {.offset = % 8d, .length = % 8d}\n", code_header.fields    .offset, code_header.fields    .length);
+    util_debug("GEN","    functions   = {.offset = % 8d, .length = % 8d}\n", code_header.functions .offset, code_header.functions .length);
+    util_debug("GEN","    globals     = {.offset = % 8d, .length = % 8d}\n", code_header.globals   .offset, code_header.globals   .length);
+    util_debug("GEN","    strings     = {.offset = % 8d, .length = % 8d}\n", code_header.strings   .offset, code_header.strings   .length);
     
-    util_debug("GEN","wrote program.dat:\n\
-    version:    = %d\n\
-    crc16:      = %d\n\
-    entfield:   = %d\n\
-    statements {.offset = % 8d, .length = % 8d}\n\
-    defs       {.offset = % 8d, .length = % 8d}\n\
-    fields     {.offset = % 8d, .length = % 8d}\n\
-    functions  {.offset = % 8d, .length = % 8d}\n\
-    globals    {.offset = % 8d, .length = % 8d}\n\
-    strings    {.offset = % 8d, .length = % 8d}\n",
-        code_header.version,
-        code_header.crc16,
-        code_header.entfield,
-        code_header.statements.offset,
-        code_header.statements.length,
-        code_header.defs.offset,
-        code_header.defs.length,
-        code_header.fields.offset,
-        code_header.fields.length,
-        code_header.functions.offset,
-        code_header.functions.length,
-        code_header.strings.offset,
-        code_header.strings.length,
-        code_header.globals.offset,
-        code_header.globals.length
-    );
+    /* WRITE out all functions */
+    util_debug("GEN", "functions:\n");
+    size_t i = 0;
+    for (; i < code_functions_elements; i++) {
+    	util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize =%0X }\n",
+    		code_functions_data[i].entry,
+    		code_functions_data[i].firstlocal,
+    		code_functions_data[i].locals,
+    		code_functions_data[i].profile,
+    		code_functions_data[i].name,
+    		code_functions_data[i].file,
+    		code_functions_data[i].nargs,
+    		*((int32_t*)&code_functions_data[i].argsize)
+    	);
+    }
+    		
+	mem_d(code_statements_data);
+	mem_d(code_defs_data);
+	mem_d(code_fields_data);
+	mem_d(code_functions_data);
+	mem_d(code_globals_data);
+	mem_d(code_chars_data);
     
     fclose(fp);
 }

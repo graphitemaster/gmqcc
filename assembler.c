@@ -161,7 +161,7 @@ void asm_clear() {
 		mem_d(assembly_constants_data[i].name);
 	mem_d(assembly_constants_data);
 }
-    
+
 void asm_parse(FILE *fp) {
     char     *data  = NULL;
     char     *skip  = NULL;
@@ -187,7 +187,7 @@ void asm_parse(FILE *fp) {
                     exit (1);                                             \
                 } else {                                                  \
                     size_t offset_code      = code_statements_elements+1; \
-                    size_t offset_chars     = code_strings_elements   +1; \
+                    size_t offset_chars     = code_chars_elements     +1; \
                     size_t offset_globals   = code_globals_elements   +1; \
                     size_t offset_functions = code_functions_elements +1; \
                     size_t offset_fields    = code_fields_elements    +1; \
@@ -201,7 +201,7 @@ void asm_parse(FILE *fp) {
                     (void)offset_fields;                                  \
                     (void)offset_defs;                                    \
                     assembly_constants_add((globals){                     \
-                        .name   = util_strdup(skip),                      \
+                        .name   = util_strdup("empty"),                   \
                         .offset = offset_globals                          \
                     });                                                   \
                 }                                                         \
@@ -210,6 +210,7 @@ void asm_parse(FILE *fp) {
         
         /* FLOAT    */
         DECLTYPE(asm_keys[0], {
+			//util_debug("ASM", "Constant FLOAT\n");
             code_defs_add((prog_section_def){
                 .type   = TYPE_FLOAT,
                 .offset = offset_globals, /* global table */
@@ -219,7 +220,9 @@ void asm_parse(FILE *fp) {
             code_globals_add(*(int*)&f);
             
         });
+        /* VECTOR */
         DECLTYPE(asm_keys[1], {
+			//util_debug("ASM", "Constant VECTOR\n");
             code_defs_add((prog_section_def){
                 .type   = TYPE_FLOAT,
                 .offset = offset_globals, /* global table */
@@ -232,19 +235,21 @@ void asm_parse(FILE *fp) {
             code_globals_add(*(int*)&f2);
             code_globals_add(*(int*)&f3);
         });
-        /* ENTITY   */ DECLTYPE(asm_keys[2], {});
-        /* FIELD    */ DECLTYPE(asm_keys[3], {});
+        /* ENTITY   */ DECLTYPE(asm_keys[2], {util_debug("ASM", "Constant ENTITY\n");});
+        /* FIELD    */ DECLTYPE(asm_keys[3], {util_debug("ASM", "Constant FIELD\n");});
         /* STRING   */
         DECLTYPE(asm_keys[4], {
+			//util_debug("ASM", "Constant STRING\n");
             code_defs_add((prog_section_def){
                 .type   = TYPE_STRING,    
                 .offset = offset_globals, /* offset to offset in string table (for data)*/
                 .name   = offset_chars    /* location of name in string table (for name)*/
             });
-            code_strings_add('h');
+            code_strings_add("hello world");
         });
         /* FUNCTION */
         DECLTYPE(asm_keys[5], {
+			//util_debug("ASM", "Constant FUNCTION\n");
             /* TODO: parse */
             if (state != ASM_NULL) {
                 printf("%li: Error unfinished function block, expected DONE or RETURN\n", line);
@@ -305,9 +310,9 @@ void asm_parse(FILE *fp) {
                         i ++;
                     }
                     
-                    util_debug("ASM", "Operand 1: %s\n", util_strrnl(op[0]));
-                    util_debug("ASM", "Operand 2: %s\n", util_strrnl(op[1]));
-                    util_debug("ASM", "Operand 3: %s\n", util_strrnl(op[2]));
+                   // util_debug("ASM", "Operand 1: %s\n", util_strrnl(op[0]));
+                   // util_debug("ASM", "Operand 2: %s\n", util_strrnl(op[1]));
+                   // util_debug("ASM", "Operand 3: %s\n", util_strrnl(op[2]));
                     
                     /* check */
                     if (i != o) {
@@ -331,5 +336,5 @@ void asm_parse(FILE *fp) {
         mem_d(data);
         line ++;
     }
-    asm_clear();
+	asm_clear();
 }

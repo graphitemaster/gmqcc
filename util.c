@@ -71,32 +71,28 @@ void util_meminfo() {
 	);
 }
 
-#ifndef mem_d
-#define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
-#endif
-#ifndef mem_a
-#define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
-#endif
+//#ifndef mem_d
+//#define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
+//#endif
+//#ifndef mem_a
+//#define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
+//#endif
 
 /*
  * Some string utility functions, because strdup uses malloc, and we want
  * to track all memory (without replacing malloc).
  */
 char *util_strdup(const char *s) {
-    size_t  len;
-    char   *ptr;
+    size_t  len = 0;
+    char   *ptr = NULL;
     
     if (!s)
         return NULL;
         
-    len = strlen(s);
-    ptr = mem_a (len+1);
-    
-    if (ptr && len) {
+    if ((len = strlen(s)) && (ptr = mem_a(len+1))) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
-    
     return ptr;
 }
 
@@ -142,11 +138,35 @@ void util_debug(const char *area, const char *ms, ...) {
     va_start(va, ms);
     fprintf (stdout, "DEBUG: ");
     fputc   ('[',  stdout);
-    fprintf(stdout, "%s",area);
+    fprintf(stdout, "%s", area);
     fputs   ("] ", stdout);
     vfprintf(stdout, ms, va);
     va_end  (va);
 }
+
+/*
+ * Endianess swapping, all data must be stored little-endian.  This
+ * reorders by stride and length, much nicer than other functions for
+ * certian-sized types like short or int.
+ */
+void util_endianswap(void *m, int s, int l) {
+	size_t w = 0;
+	size_t i = 0;
+	
+	/* ignore if we're already LE */
+    if(*((char *)&s))
+		return;
+    
+    for(; w < l; w++) {
+		for(;  i < s << 1; i++) {
+			unsigned char *p = (unsigned char *)m+w*s;
+			unsigned char  t = p[i];
+			p[i]             = p[s-i-1];
+			p[s-i-1]         = t;
+		}
+	}
+}
+
 
 /*
  * Implements libc getline for systems that don't have it, which is 
