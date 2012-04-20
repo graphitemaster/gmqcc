@@ -164,7 +164,7 @@ void code_write() {
     fwrite(code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
     fwrite(code_chars_data,      1, 1                             *code_chars_elements,      fp);
     
-    util_debug("GEN","header:\n");
+    util_debug("GEN","HEADER:\n");
     util_debug("GEN","    version:    = %d\n", code_header.version );
     util_debug("GEN","    crc16:      = %d\n", code_header.crc16   );
     util_debug("GEN","    entfield:   = %d\n", code_header.entfield);
@@ -175,10 +175,11 @@ void code_write() {
     util_debug("GEN","    globals     = {.offset = % 8d, .length = % 8d}\n", code_header.globals   .offset, code_header.globals   .length);
     util_debug("GEN","    strings     = {.offset = % 8d, .length = % 8d}\n", code_header.strings   .offset, code_header.strings   .length);
     
-    /* WRITE out all functions */
-    util_debug("GEN", "functions:\n");
-    size_t i = 0;
+    /* FUNCTIONS */
+    util_debug("GEN", "FUNCTIONS:\n");
+    size_t i = 1;
     for (; i < code_functions_elements; i++) {
+        size_t j = code_functions_data[i].entry;
         util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize =%0X }\n",
             code_functions_data[i].entry,
             code_functions_data[i].firstlocal,
@@ -189,6 +190,20 @@ void code_write() {
             code_functions_data[i].nargs,
             *((int32_t*)&code_functions_data[i].argsize)
         );
+        util_debug("GEN", "    NAME: %s\n", &code_chars_data[code_functions_data[i].name]);
+        util_debug("GEN", "    CODE:\n");
+        for (;;) {
+            if (code_statements_data[j].opcode != INSTR_DONE &&
+                code_statements_data[j].opcode != INSTR_RETURN)
+                util_debug("GEN", "        %s {0x%05d,0x%05d,0x%05d}\n",
+                    asm_instr[code_statements_data[j].opcode].m,
+                    code_statements_data[j].s1,
+                    code_statements_data[j].s2,
+                    code_statements_data[j].s3
+                );
+            else break;
+            j++;
+        }
     }
     
     mem_d(code_statements_data);
@@ -197,6 +212,5 @@ void code_write() {
     mem_d(code_functions_data);
     mem_d(code_globals_data);
     mem_d(code_chars_data);
-    
     fclose(fp);
 }
