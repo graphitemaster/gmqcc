@@ -95,7 +95,6 @@ int main(int argc, char **argv) {
         mem_d(items_data[itr].name);
     mem_d(items_data);
 
-    if (opts_memchk)
-        util_meminfo();
+    util_meminfo();
     return 0;
 }
