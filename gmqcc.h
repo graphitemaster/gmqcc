@@ -471,4 +471,9 @@ static const struct {
 void asm_init (const char *, FILE **);
 void asm_close(FILE *);
 void asm_parse(FILE *);
+//======================================================================
+//============================= main.c =================================
+//======================================================================
+extern int opts_debug;
+extern int opts_memchk;
 #endif

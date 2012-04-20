@@ -61,14 +61,17 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
 }
 
 void util_meminfo() {
-	util_debug("MEM", "Memory information:\n\
-	Total allocations:   %llu\n\
-	Total deallocations: %llu\n\
-	Total allocated:     %llu (bytes)\n\
-	Total deallocated:   %llu (bytes)\n",
-		mem_at, mem_dt,
-		mem_ab, mem_db
-	);
+    if (!opts_memchk)
+        return;
+        
+    util_debug("MEM", "Memory information:\n\
+        Total allocations:   %llu\n\
+        Total deallocations: %llu\n\
+        Total allocated:     %llu (bytes)\n\
+        Total deallocated:   %llu (bytes)\n",
+            mem_at, mem_dt,
+            mem_ab, mem_db
+    );
 }
 
 //#ifndef mem_d
@@ -134,6 +137,9 @@ char *util_strrnl(char *src) {
 }
 
 void util_debug(const char *area, const char *ms, ...) {
+    if (!opts_debug)
+        return;
+        
     va_list  va;
     va_start(va, ms);
     fprintf (stdout, "DEBUG: ");

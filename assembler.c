@@ -45,12 +45,6 @@ static char *const asm_getline(size_t *byte, FILE *fp) {
     return line;
 }
 
-#define asm_rmnewline(L,S) *((L)+*(S)-1) = '\0'
-#define asm_skipwhite(L)             \
-    while((*(L)==' '||*(L)=='\t')) { \
-        (L)++;                       \
-    }
-    
 void asm_init(const char *file, FILE **fp) {
     *fp = fopen(file, "r");
     code_init();
