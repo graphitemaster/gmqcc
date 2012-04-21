@@ -31,11 +31,15 @@ int opts_memchk = 0;
 
 static const int usage(const char *const app) {
     printf("usage:\n");
-    printf("    %s -c<file> -- compile file\n" , app);
-    printf("    %s -a<file> -- assemble file\n", app);
+    printf("    %s -c<file>          -oprog.dat -- compile file\n"     , app);
+    printf("    %s -a<file>          -oprog.dat -- assemble file\n"    , app);
+    printf("    %s -c<file> -i<file> -oprog.dat -- compile together (allowed multiple -i<file>)\n" , app);
+    printf("    %s -a<file> -i<file> -oprog.dat -- assemble together(allowed multiple -i<file>)\n", app);
+    printf("    example:\n");
+    printf("    %s -cfoo.qc -ibar.qc -oqc.dat -afoo.qs -ibar.qs -oqs.dat\n", app);
     printf("    additional flags:\n");
-    printf("        -debug  -- turns on compiler debug messages\n");
-    printf("        -memchk -- turns on compiler memory leak check\n");
+    printf("        -debug           -- turns on compiler debug messages\n");
+    printf("        -memchk          -- turns on compiler memory leak check\n");
     
     return -1;
 }
@@ -56,6 +60,7 @@ int main(int argc, char **argv) {
         switch (argv[1][1]) {
             case 'c': items_add((argitem){util_strdup(&argv[1][2]), 0}); break; /* compile  */ 
             case 'a': items_add((argitem){util_strdup(&argv[1][2]), 1}); break; /* assemble */
+            case 'i': items_add((argitem){util_strdup(&argv[1][2]), 2}); break; /* includes */
             default:
                 if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = 1; break; }
                 if (!strncmp(&argv[1][1], "memchk", 6)) { opts_memchk = 1; break; }

@@ -29,21 +29,8 @@ void typedef_init() {
         typedef_table[i] = NULL;
 }
 
-unsigned int typedef_hash(const char *s) {
-    unsigned int hash = 0;
-    unsigned int size = strlen(s);
-    unsigned int iter;
-    
-    for (iter = 0; iter < size; iter++) {
-        hash += s[iter];
-        hash += (hash << 10);
-        hash ^= (hash >> 6);
-    }
-    hash += (hash << 3);
-    hash ^= (hash >> 11);
-    hash += (hash << 15);
-    
-    return hash % 1024;
+uint32_t typedef_hash(const char *s) {
+    return util_crc32(s, strlen(s), 1024);
 }
 
 typedef_node *typedef_find(const char *s) {

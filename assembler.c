@@ -200,7 +200,7 @@ void asm_parse(FILE *fp) {
         
         /* if we made it this far something is wrong */
         if (*skip != '\0')
-            printf("%li: Invalid statement, expression, or decleration\n", line);
+            printf("%li: Invalid statement %s, expression, or decleration\n", line, skip);
         
         end:
         mem_d(data);

@@ -167,6 +167,8 @@ void  util_debug     (const char *, const char *, ...);
 int   util_getline   (char **, size_t *, FILE *);
 void  util_endianswap(void *, int, int);
 
+uint32_t util_crc32(const char *, int, register const short); 
+
 #ifdef NOTRACK
 #    define mem_a(x) malloc(x)
 #    define mem_d(x) free  (x)
