@@ -26,8 +26,9 @@ typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
 /* global options */
-int opts_debug  = 0;
-int opts_memchk = 0;
+int opts_debug    = 0;
+int opts_memchk   = 0;
+int opts_compiler = COMPILER_GMQCC;
 
 static const int usage(const char *const app) {
     printf("usage:\n");
@@ -40,7 +41,12 @@ static const int usage(const char *const app) {
     printf("    additional flags:\n");
     printf("        -debug           -- turns on compiler debug messages\n");
     printf("        -memchk          -- turns on compiler memory leak check\n");
-    
+    printf("        -help            -- prints this help/usage text\n");
+    printf("        -std             -- select the QuakeC compile type (types below):\n");
+    printf("            -std=qcc     -- original QuakeC\n");
+    printf("            -std=ftqecc  -- fteqcc QuakeC\n");
+    printf("            -std=qccx    -- qccx QuakeC\n");
+    printf("            -std=gmqcc   -- this compiler QuakeC (default selection)\n");
     return -1;
 }
 
@@ -64,6 +70,23 @@ int main(int argc, char **argv) {
             default:
                 if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = 1; break; }
                 if (!strncmp(&argv[1][1], "memchk", 6)) { opts_memchk = 1; break; }
+                if (!strncmp(&argv[1][1], "help",   4)) {
+                    return usage(app);
+                    break;
+                }
+                /* compiler type selection */
+                if (!strncmp(&argv[1][1], "std=qcc"   , 7 )) { opts_compiler = COMPILER_QCC;    break; }
+                if (!strncmp(&argv[1][1], "std=fteqcc", 10)) { opts_compiler = COMPILER_FTEQCC; break; }
+                if (!strncmp(&argv[1][1], "std=qccx",   8 )) { opts_compiler = COMPILER_QCCX;   break; }
+                if (!strncmp(&argv[1][1], "std=gmqcc",  9 )) { opts_compiler = COMPILER_GMQCC;  break; }
+                if (!strncmp(&argv[1][1], "std=",       4 )) {
+                    printf("invalid std selection, supported types:\n");
+                    printf("    -std=qcc     -- original QuakeC\n");
+                    printf("    -std=ftqecc  -- fteqcc QuakeC\n");
+                    printf("    -std=qccx    -- qccx QuakeC\n");
+                    printf("    -std=gmqcc   -- this compiler QuakeC (default selection)\n");
+                    return 0;
+                }
                 return usage(app);
                 
         }
@@ -78,6 +101,7 @@ int main(int argc, char **argv) {
     if (opts_memchk && !opts_debug) 
         printf("Warning: cannot enable -memchk, without -debug.\n");
 
+    util_debug("COM", "starting ...\n");
     /* multi file multi path compilation system */
     for (; itr < items_elements; itr++) {
         switch (items_data[itr].type) {
@@ -94,7 +118,8 @@ int main(int argc, char **argv) {
                 break;
         }
     }
-    
+
+    util_debug("COM", "cleaning ...\n"); 
     /* clean list */
     for (itr = 0; itr < items_elements; itr++)
         mem_d(items_data[itr].name);

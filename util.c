@@ -68,18 +68,14 @@ void util_meminfo() {
         Total allocations:   %llu\n\
         Total deallocations: %llu\n\
         Total allocated:     %llu (bytes)\n\
-        Total deallocated:   %llu (bytes)\n",
+        Total deallocated:   %llu (bytes)\n\
+        Leaks found:         lost %llu (bytes) in %d allocations\n",
             mem_at, mem_dt,
-            mem_ab, mem_db
+            mem_ab, mem_db,
+            (mem_ab -  mem_db),
+            (mem_at -  mem_dt)
     );
 }
-
-//#ifndef mem_d
-//#define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
-//#endif
-//#ifndef mem_a
-//#define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
-//#endif
 
 /*
  * Some string utility functions, because strdup uses malloc, and we want

@@ -476,6 +476,12 @@ void asm_parse(FILE *);
 //======================================================================
 //============================= main.c =================================
 //======================================================================
+enum {
+    COMPILER_QCC,     /* circa  QuakeC */
+    COMPILER_FTEQCC,  /* fteqcc QuakeC */
+    COMPILER_QCCX,    /* qccx   QuakeC */
+    COMPILER_GMQCC    /* this   QuakeC */
+};
 extern int opts_debug;
 extern int opts_memchk;
 #endif
