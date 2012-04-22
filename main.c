@@ -26,9 +26,10 @@ typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
 /* global options */
-int opts_debug    = 0;
-int opts_memchk   = 0;
-int opts_compiler = COMPILER_GMQCC;
+int opts_debug                     = 0;
+int opts_memchk                    = 0;
+int opts_compiler                  = COMPILER_GMQCC;
+int opts_darkplaces_stringtablebug = 0;
 
 static const int usage(const char *const app) {
     printf("usage:\n");
@@ -47,6 +48,8 @@ static const int usage(const char *const app) {
     printf("            -std=ftqecc  -- fteqcc QuakeC\n");
     printf("            -std=qccx    -- qccx QuakeC\n");
     printf("            -std=gmqcc   -- this compiler QuakeC (default selection)\n");
+    printf("    code flags -f*\n");
+    printf("        -fdarkplaces-stringtablebug -- patches the string table to work with bugged versions of darkplaces\n");
     return -1;
 }
 
@@ -86,6 +89,12 @@ int main(int argc, char **argv) {
                     printf("    -std=qccx    -- qccx QuakeC\n");
                     printf("    -std=gmqcc   -- this compiler QuakeC (default selection)\n");
                     return 0;
+                }
+
+                /* code specific switches */
+                if (!strncmp(&argv[1][1], "fdarkplaces-stringtablebug", 26)) {
+                    opts_darkplaces_stringtablebug = 1;
+                    break;
                 }
                 return usage(app);
                 

@@ -146,14 +146,23 @@ void code_write() {
     code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements   };
     code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_chars_elements     };
     code_header.entfield   = 0; /* TODO: */
-    
+
+    if (opts_darkplaces_stringtablebug) {
+        util_debug("GEN", "Patching stringtable for -fdarkplaces-stringtablebug\n");
+
+        /* >= + padd */
+        code_chars_add('\0'); /* > */
+        code_chars_add('\0'); /* = */
+        code_chars_add('\0'); /* P */
+    }
+        
     /* ensure all data is in LE format */
-    util_endianswap(&code_header,         sizeof(prog_header), 1);
-    util_endianswap(code_statements_data, sizeof(prog_section_statement), code_statements_elements);
-    util_endianswap(code_defs_data,       sizeof(prog_section_def),       code_defs_elements);
-    util_endianswap(code_fields_data,     sizeof(prog_section_field),     code_fields_elements);
-    util_endianswap(code_functions_data,  sizeof(prog_section_function),  code_functions_elements);
-    util_endianswap(code_globals_data,    sizeof(int),                    code_globals_elements);
+    util_endianswap(&code_header,         1,                        sizeof(prog_header));
+    util_endianswap(code_statements_data, code_statements_elements, sizeof(prog_section_statement));
+    util_endianswap(code_defs_data,       code_defs_elements,       sizeof(prog_section_def));
+    util_endianswap(code_fields_data,     code_fields_elements,     sizeof(prog_section_field));
+    util_endianswap(code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
+    util_endianswap(code_globals_data,    code_globals_elements,    sizeof(int));
     
     FILE *fp = fopen("program.dat", "wb");
     fwrite(&code_header,         1, sizeof(prog_header), fp);
