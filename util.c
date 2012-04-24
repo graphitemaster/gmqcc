@@ -244,7 +244,7 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
     if (!lineptr || !n || !stream)
         return -1;
     if (!*lineptr) {
-        if (!(*lineptr = mem_a((*n = 64))))
+        if (!(*lineptr = mem_a((*n=64))))
             return -1;
     }
 

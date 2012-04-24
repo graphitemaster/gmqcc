@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
                 }
 
                 /* code specific switches */
-                if (!strcmp(&argv[1][1], "fdarkplaces-string-table-bug")) {
+                if (!strcmp(&argv[1][1], "fdarkplaces-stringtablebug")) {
                     opts_darkplaces_stringtablebug = 1;
                     break;
                 }
