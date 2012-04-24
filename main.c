@@ -30,6 +30,7 @@ int opts_debug                     = 0;
 int opts_memchk                    = 0;
 int opts_compiler                  = COMPILER_GMQCC;
 int opts_darkplaces_stringtablebug = 0;
+int opts_omit_nullcode             = 0;
 
 static const int usage(const char *const app) {
     printf("usage:\n");
@@ -48,8 +49,9 @@ static const int usage(const char *const app) {
     printf("            -std=ftqecc  -- fteqcc QuakeC\n");
     printf("            -std=qccx    -- qccx QuakeC\n");
     printf("            -std=gmqcc   -- this compiler QuakeC (default selection)\n");
-    printf("    code flags -f*\n");
-    printf("        -fdarkplaces-stringtablebug -- patches the string table to work with bugged versions of darkplaces\n");
+    printf("    codegen flags:\n");
+    printf("        -fdarkplaces-string-table-bug -- patches the string table to work with bugged versions of darkplaces\n");
+    printf("        -fomit-nullcode               -- omits the generation of null code (will break everywhere see propsal.txt)\n");
     return -1;
 }
 
@@ -92,8 +94,12 @@ int main(int argc, char **argv) {
                 }
 
                 /* code specific switches */
-                if (!strncmp(&argv[1][1], "fdarkplaces-stringtablebug", 26)) {
+                if (!strcmp(&argv[1][1], "fdarkplaces-string-table-bug")) {
                     opts_darkplaces_stringtablebug = 1;
+                    break;
+                }
+                if (!strcmp(&argv[1][1], "fomit-nullcode")) {
+                    opts_omit_nullcode = 1;
                     break;
                 }
                 return usage(app);

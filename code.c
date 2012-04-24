@@ -28,8 +28,11 @@ typedef struct {
 } prog_section;
 
 typedef struct {
-    uint32_t     version;      /* Program version (6)     */
-    uint32_t     crc16;        /* What is this?           */
+    uint16_t     version;      /* Program version (6)     */
+    uint16_t     flags;        /* see propsal.txt         */
+    uint16_t     crc16;        /* What is this?           */
+    uint16_t     skip;         /* see propsal.txt         */
+    
     prog_section statements;   /* prog_section_statement  */
     prog_section defs;         /* prog_section_def        */
     prog_section fields;       /* prog_section_field      */
@@ -90,6 +93,10 @@ int code_strings_add(const char *src) {
 }
 
 void code_init() {
+    /* omit creation of null code */
+    if (opts_omit_nullcode)
+        return;
+        
     /*
      * The way progs.dat is suppose to work is odd, there needs to be
      * some null (empty) statements, functions, and 28 globals
@@ -137,6 +144,13 @@ void code_test() {
 
 void code_write() {
     prog_header code_header={0};
+
+    /* see proposal.txt */
+    if (opts_omit_nullcode) {
+        code_header.skip   = 28;
+        code_header.flags  = 1;
+    }
+    
     code_header.version    = 6;
     code_header.crc16      = 0; /* TODO: */
     code_header.statements = (prog_section){sizeof(prog_header), code_statements_elements };
@@ -150,7 +164,7 @@ void code_write() {
     if (opts_darkplaces_stringtablebug) {
         util_debug("GEN", "Patching stringtable for -fdarkplaces-stringtablebug\n");
 
-        /* >= + padd */
+        /* >= + P */
         code_chars_add('\0'); /* > */
         code_chars_add('\0'); /* = */
         code_chars_add('\0'); /* P */

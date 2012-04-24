@@ -1,0 +1,35 @@
+This is a propsal to extend the progs.dat file format without breaking
+backwards compatability.  Currently the progs file format header has a
+description simaler to this:
+
+struct {
+    uint32_t     version;
+    uint32_t     crc16;
+    ....
+    uint32_t     entfield;
+}
+
+The obvious notable issue here is version and crc16 are larger than they
+essentially need to be, if we made version and crc16 both uint16_t we can
+give ourselfs 32 bytes (2x16) to store additional data that can be used
+to make smaller progs.dat files.
+
+I propose a new structual layout like this:
+struct {
+    uint16_t     version;
+    uint16_t     flags;   /* contains a skip field */
+    uint16_t     crc16;
+    uint16_t     skip;    /* skiped globals        */
+    ....
+    uint32_t     entfield;
+}
+
+about 45% of globals are zero, if we could order them at the top of the
+globals array we can essentially use the skip field to specify how much
+zero globals the engine would have to populate (instead of being stored
+in the actual file itself) flags can specify if the progs.dat file skiped
+globals on the write of the progs.dat file.
+
+Of course only one bit in the flags would have to be set to specify if the
+file contains a skip field.  Which lends itself to the fact that flags could
+later be extended for other things.

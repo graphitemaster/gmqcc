@@ -485,4 +485,5 @@ enum {
 extern int opts_debug;
 extern int opts_memchk;
 extern int opts_darkplaces_stringtablebug;
+extern int opts_omit_nullcode;
 #endif
