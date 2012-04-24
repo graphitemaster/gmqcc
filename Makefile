@@ -7,7 +7,7 @@ OBJ     = main.o      \
           typedef.o   \
           util.o      \
           code.o      \
-          assembler.c
+          asm.c
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
