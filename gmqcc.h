@@ -365,7 +365,14 @@ enum {
     INSTR_AND,
     INSTR_OR,
     INSTR_BITAND,
-    INSTR_BITOR
+    INSTR_BITOR,
+
+    /* Virtual instructions used by the IR
+     * Keep at the end!
+     */
+    VINSTR_PHI,
+    VINSTR_JUMP,
+    VINSTR_COND,
 };
 
 /*
