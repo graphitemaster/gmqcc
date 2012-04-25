@@ -205,7 +205,7 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
-    self->final = ifalse;
+    self->final = false;
     MEM_VECTOR_INIT(self, instr);
     MEM_VECTOR_INIT(self, entries);
     MEM_VECTOR_INIT(self, exits);
@@ -213,7 +213,7 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     ir_block_set_label(self, name);
 
     self->eid = 0;
-    self->is_return = ifalse;
+    self->is_return = false;
     self->run_id = 0;
     MEM_VECTOR_INIT(self, living);
     return self;
@@ -269,9 +269,9 @@ MEM_VECTOR_FUNCTIONS(ir_instr, ir_phi_entry_t, phi)
 
 void ir_instr_delete(ir_instr *self)
 {
-    ir_instr_op(self, 0, NULL, ifalse);
-    ir_instr_op(self, 1, NULL, ifalse);
-    ir_instr_op(self, 2, NULL, ifalse);
+    ir_instr_op(self, 0, NULL, false);
+    ir_instr_op(self, 1, NULL, false);
+    ir_instr_op(self, 2, NULL, false);
     MEM_VECTOR_CLEAR(self, phi);
     mem_d(self);
 }
@@ -305,7 +305,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->store = storetype;
     MEM_VECTOR_INIT(self, reads);
     MEM_VECTOR_INIT(self, writes);
-    self->has_constval = ifalse;
+    self->has_constval = false;
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->name = NULL;
@@ -349,37 +349,37 @@ void ir_value_set_name(ir_value *self, const char *name)
 qbool ir_value_set_float(ir_value *self, float f)
 {
     if (self->vtype != qc_float)
-        return ifalse;
+        return false;
     self->cvalue.vfloat = f;
-    self->has_constval = itrue;
-    return itrue;
+    self->has_constval = true;
+    return true;
 }
 
 qbool ir_value_set_vector(ir_value *self, qc_vec_t v)
 {
     if (self->vtype != qc_vector)
-        return ifalse;
+        return false;
     self->cvalue.vvec = v;
-    self->has_constval = itrue;
-    return itrue;
+    self->has_constval = true;
+    return true;
 }
 
 qbool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != qc_string)
-        return ifalse;
+        return false;
     self->cvalue.vstring = util_strdup(str);
-    self->has_constval = itrue;
-    return itrue;
+    self->has_constval = true;
+    return true;
 }
 
 qbool ir_value_set_int(ir_value *self, int i)
 {
     if (self->vtype != qc_int)
-        return ifalse;
+        return false;
     self->cvalue.vint = i;
-    self->has_constval = itrue;
-    return itrue;
+    self->has_constval = true;
+    return true;
 }
 
 qbool ir_value_lives(ir_value *self, size_t at)
@@ -389,11 +389,11 @@ qbool ir_value_lives(ir_value *self, size_t at)
     {
         ir_life_entry_t *life = &self->life[i];
         if (life->start <= at && at <= life->end)
-            return itrue;
+            return true;
         if (life->start > at) /* since it's ordered */
-            return ifalse;
+            return false;
     }
-    return ifalse;
+    return false;
 }
 
 void ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
@@ -426,14 +426,14 @@ qbool ir_value_life_merge(ir_value *self, size_t s)
         {
             /* previous life range can be merged in */
             life->end++;
-            return itrue;
+            return true;
         }
         if (life && life->end >= s)
-            return ifalse;
+            return false;
         ir_life_entry_t e;
         e.start = e.end = s;
         ir_value_life_add(self, e);
-        return itrue;
+        return true;
     }
     /* found */
     if (before)
@@ -444,28 +444,28 @@ qbool ir_value_life_merge(ir_value *self, size_t s)
             /* merge */
             before->end = life->end;
             ir_value_life_remove(self, i);
-            return itrue;
+            return true;
         }
         if (before->end + 1 == s)
         {
             /* extend before */
             before->end++;
-            return itrue;
+            return true;
         }
         /* already contained */
         if (before->end >= s)
-            return ifalse;
+            return false;
     }
     /* extend */
     if (life->start - 1 == s)
     {
         life->start--;
-        return itrue;
+        return true;
     }
     /* insert a new entry */
     new_entry.start = new_entry.end = s;
     ir_value_life_insert(self, i, new_entry);
-    return itrue;
+    return true;
 }
 
 /***********************************************************************
@@ -476,13 +476,13 @@ qbool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_valu
 {
     if (target->store == qc_localval) {
         fprintf(stderr, "cannot store to an SSA value\n");
-        return ifalse;
+        return false;
     } else {
         ir_instr *in = ir_instr_new(self, op);
-        ir_instr_op(in, 0, target, itrue);
-        ir_instr_op(in, 1, what, ifalse);
+        ir_instr_op(in, 0, target, true);
+        ir_instr_op(in, 1, what, false);
         ir_block_instr_add(self, in);
-        return itrue;
+        return true;
     }
 }
 
@@ -531,10 +531,10 @@ void ir_block_create_return(ir_block *self, ir_value *v)
         fprintf(stderr, "block already ended (%s)\n", self->_label);
         return;
     }
-    self->final = itrue;
-    self->is_return = itrue;
+    self->final = true;
+    self->is_return = true;
     in = ir_instr_new(self, INSTR_RETURN);
-    ir_instr_op(in, 0, v, ifalse);
+    ir_instr_op(in, 0, v, false);
     ir_block_instr_add(self, in);
 }
 
@@ -546,10 +546,10 @@ void ir_block_create_if(ir_block *self, ir_value *v,
         fprintf(stderr, "block already ended (%s)\n", self->_label);
         return;
     }
-    self->final = itrue;
+    self->final = true;
     //in = ir_instr_new(self, (v->vtype == qc_string ? INSTR_IF_S : INSTR_IF_F));
     in = ir_instr_new(self, VINSTR_COND);
-    ir_instr_op(in, 0, v, ifalse);
+    ir_instr_op(in, 0, v, false);
     in->bops[0] = ontrue;
     in->bops[1] = onfalse;
     ir_block_instr_add(self, in);
@@ -567,7 +567,7 @@ void ir_block_create_jump(ir_block *self, ir_block *to)
         fprintf(stderr, "block already ended (%s)\n", self->_label);
         return;
     }
-    self->final = itrue;
+    self->final = true;
     in = ir_instr_new(self, VINSTR_JUMP);
     in->bops[0] = to;
     ir_block_instr_add(self, in);
@@ -583,7 +583,7 @@ void ir_block_create_goto(ir_block *self, ir_block *to)
         fprintf(stderr, "block already ended (%s)\n", self->_label);
         return;
     }
-    self->final = itrue;
+    self->final = true;
     in = ir_instr_new(self, INSTR_GOTO);
     in->bops[0] = to;
     ir_block_instr_add(self, in);
@@ -598,7 +598,7 @@ ir_instr* ir_block_create_phi(ir_block *self, const char *label, int ot)
     ir_instr *in;
     in = ir_instr_new(self, VINSTR_PHI);
     out = ir_value_out(self->owner, label, qc_localval, ot);
-    ir_instr_op(in, 0, out, itrue);
+    ir_instr_op(in, 0, out, true);
     ir_block_instr_add(self, in);
     return in;
 }
@@ -624,4 +624,230 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
     pe.from = b;
     ir_value_reads_add(v, self);
     ir_instr_phi_add(self, pe);
+}
+
+/* binary op related code */
+
+ir_value* ir_block_create_binop(ir_block *self,
+                                const char *label, int opcode,
+                                ir_value *left, ir_value *right)
+{
+    int ot = qc_void;
+    switch (opcode) {
+        case INSTR_ADD_F:
+        case INSTR_SUB_F:
+        case INSTR_DIV_F:
+        case INSTR_MUL_F:
+        case INSTR_MUL_V:
+        case INSTR_AND:
+        case INSTR_OR:
+        case INSTR_AND_I:
+        case INSTR_AND_IF:
+        case INSTR_AND_FI:
+        case INSTR_OR_I:
+        case INSTR_OR_IF:
+        case INSTR_OR_FI:
+        case INSTR_BITAND:
+        case INSTR_BITOR:
+        case INSTR_SUB_S: /* -- offset of string as float */
+        case INSTR_MUL_IF:
+        case INSTR_MUL_FI:
+        case INSTR_DIV_IF:
+        case INSTR_DIV_FI:
+        case INSTR_BITOR_IF:
+        case INSTR_BITOR_FI:
+        case INSTR_BITAND_FI:
+        case INSTR_BITAND_IF:
+        case INSTR_EQ_I:
+        case INSTR_NE_I:
+            ot = qc_float;
+            break;
+        case INSTR_ADD_I:
+        case INSTR_ADD_IF:
+        case INSTR_ADD_FI:
+        case INSTR_SUB_I:
+        case INSTR_SUB_FI:
+        case INSTR_SUB_IF:
+        case INSTR_MUL_I:
+        case INSTR_DIV_I:
+        case INSTR_BITAND_I:
+        case INSTR_BITOR_I:
+        case INSTR_XOR_I:
+        case INSTR_RSHIFT_I:
+        case INSTR_LSHIFT_I:
+            ot = qc_int;
+            break;
+        case INSTR_ADD_V:
+        case INSTR_SUB_V:
+        case INSTR_MUL_VF:
+        case INSTR_MUL_FV:
+        case INSTR_DIV_VF:
+        case INSTR_MUL_IV:
+        case INSTR_MUL_VI:
+            ot = qc_vector;
+            break;
+        case INSTR_ADD_SF:
+            ot = qc_pointer;
+            break;
+        default:
+            // ranges:
+            /* boolean operations result in floats */
+            if (opcode >= INSTR_EQ_F && opcode <= INSTR_GT)
+                ot = qc_float;
+            else if (opcode >= INSTR_LE && opcode <= INSTR_GT)
+                ot = qc_float;
+            else if (opcode >= INSTR_LE_I && opcode <= INSTR_EQ_FI)
+                ot = qc_float;
+            break;
+    };
+    if (ot == qc_void) {
+        fprintf(stderr, "binop %i (%s)\n", opcode, qc_opname(opcode));
+        abort();
+        return NULL;
+    }
+    ir_value *out = ir_value_out(self->owner, label, qc_localval, ot);
+    ir_instr *in = ir_instr_new(self, opcode);
+    ir_instr_op(in, 0, out, true);
+    ir_instr_op(in, 1, left, false);
+    ir_instr_op(in, 2, right, false);
+    ir_block_instr_add(self, in);
+    return out;
+}
+
+ir_value* ir_block_create_add(ir_block *self,
+                              const char *label,
+                              ir_value *left, ir_value *right)
+{
+    int op = 0;
+    int l = left->vtype;
+    int r = right->vtype;
+    if (l == r) {
+        switch (l) {
+            default:
+                return NULL;
+            case qc_float:
+                op = INSTR_ADD_F;
+                break;
+            case qc_int:
+                op = INSTR_ADD_I;
+                break;
+            case qc_vector:
+                op = INSTR_ADD_V;
+                break;
+        }
+    } else {
+        if ( (l == qc_float && r == qc_int) )
+            op = INSTR_ADD_FI;
+        else if ( (l == qc_int && r == qc_float) )
+            op = INSTR_ADD_IF;
+        else
+            return NULL;
+    }
+    return ir_block_create_binop(self, label, op, left, right);
+}
+
+ir_value* ir_block_create_sub(ir_block *self,
+                              const char *label,
+                              ir_value *left, ir_value *right)
+{
+    int op = 0;
+    int l = left->vtype;
+    int r = right->vtype;
+    if (l == r) {
+
+        switch (l) {
+            default:
+                return NULL;
+            case qc_float:
+                op = INSTR_SUB_F;
+                break;
+            case qc_int:
+                op = INSTR_SUB_I;
+                break;
+            case qc_vector:
+                op = INSTR_SUB_V;
+                break;
+        }
+    } else {
+        if ( (l == qc_float && r == qc_int) )
+            op = INSTR_SUB_FI;
+        else if ( (l == qc_int && r == qc_float) )
+            op = INSTR_SUB_IF;
+        else
+            return NULL;
+    }
+    return ir_block_create_binop(self, label, op, left, right);
+}
+
+ir_value* ir_block_create_mul(ir_block *self,
+                              const char *label,
+                              ir_value *left, ir_value *right)
+{
+    int op = 0;
+    int l = left->vtype;
+    int r = right->vtype;
+    if (l == r) {
+
+        switch (l) {
+            default:
+                return NULL;
+            case qc_float:
+                op = INSTR_MUL_F;
+                break;
+            case qc_int:
+                op = INSTR_MUL_I;
+                break;
+            case qc_vector:
+                op = INSTR_MUL_V;
+                break;
+        }
+    } else {
+        if ( (l == qc_float && r == qc_int) )
+            op = INSTR_MUL_FI;
+        else if ( (l == qc_int && r == qc_float) )
+            op = INSTR_MUL_IF;
+        else if ( (l == qc_vector && r == qc_float) )
+            op = INSTR_MUL_VF;
+        else if ( (l == qc_float && r == qc_vector) )
+            op = INSTR_MUL_FV;
+        else if ( (l == qc_vector && r == qc_int) )
+            op = INSTR_MUL_VI;
+        else if ( (l == qc_int && r == qc_vector) )
+            op = INSTR_MUL_IV;
+        else
+            return NULL;
+    }
+    return ir_block_create_binop(self, label, op, left, right);
+}
+
+ir_value* ir_block_create_div(ir_block *self,
+                              const char *label,
+                              ir_value *left, ir_value *right)
+{
+    int op = 0;
+    int l = left->vtype;
+    int r = right->vtype;
+    if (l == r) {
+
+        switch (l) {
+            default:
+                return NULL;
+            case qc_float:
+                op = INSTR_DIV_F;
+                break;
+            case qc_int:
+                op = INSTR_DIV_I;
+                break;
+        }
+    } else {
+        if ( (l == qc_float && r == qc_int) )
+            op = INSTR_DIV_FI;
+        else if ( (l == qc_int && r == qc_float) )
+            op = INSTR_DIV_IF;
+        else if ( (l == qc_vector && r == qc_float) )
+            op = INSTR_DIV_VF;
+        else
+            return NULL;
+    }
+    return ir_block_create_binop(self, label, op, left, right);
 }
