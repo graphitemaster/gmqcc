@@ -181,10 +181,13 @@ uint32_t util_crc32(const char *, int, register const short);
 #    define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
 #endif
 
-#define VECTOR_MAKE(T,N)                                                 \
+/* Builds vector type (usefull for inside structures) */
+#define VECTOR_TYPE(T,N)                                                 \
     T*     N##_data      = NULL;                                         \
     long   N##_elements  = 0;                                            \
-    long   N##_allocated = 0;                                            \
+    long   N##_allocated = 0
+/* Builds vector add */
+#define VECTOR_CORE(T,N)                                                 \
     int    N##_add(T element) {                                          \
         if (N##_elements == N##_allocated) {                             \
             if (N##_allocated == 0) {                                    \
@@ -204,6 +207,13 @@ uint32_t util_crc32(const char *, int, register const short);
         N##_data[N##_elements] = element;                                \
         return   N##_elements++;                                         \
     }
+/* Builds a full vector inspot */
+#define VECTOR_MAKE(T,N) \
+    VECTOR_TYPE(T,N);    \
+    VECTOR_CORE(T,N)
+/* Builds a vector add function pointer for inside structures */
+#define VECTOR_IMPL(T,N) \
+    int (*N##_add)(T)
 
 //===================================================================
 //=========================== code.c ================================
