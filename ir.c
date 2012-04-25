@@ -396,24 +396,6 @@ ir_bool ir_value_lives(ir_value *self, size_t at)
     return ifalse;
 }
 
-/*
-void ir_value_life_remove(ir_value *self, size_t idx)
-{
-    size_t i;
-    if (idx >= self->life_count)
-        return;
-    for (i = idx; i < self->life_count-1; ++i)
-        self->life[i] = self->life[i+1];
-    self->life_count--;
-    if (self->life_count < self->life_alloc/2)
-    {
-        self->life_alloc /= 2;
-        self->life = (ir_life_entry_t*)realloc(self->life,
-            self->life_alloc * sizeof(ir_life_entry_t));
-    }
-}
-*/
-
 void ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
 {
     size_t k;
