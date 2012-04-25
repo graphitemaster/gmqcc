@@ -242,3 +242,53 @@ void ir_block_set_label(ir_block *self, const char *name)
         mem_d((void*)self->label);
     self->label = util_strdup(name);
 }
+
+/***********************************************************************
+ *IR Instructions
+ */
+
+ir_instr* ir_instr_new(ir_block* owner, ir_op_t op)
+{
+	ir_instr *self;
+	self = (ir_instr*)malloc(sizeof(*self));
+	self->owner = owner;
+	self->context.file = "<@no context>";
+	self->context.line = 0;
+	self->opcode = op;
+	self->_ops[0] = NULL;
+	self->_ops[1] = NULL;
+	self->_ops[2] = NULL;
+	self->bops[0] = NULL;
+	self->bops[1] = NULL;
+	VEC_INIT(self, phi);
+
+	self->eid = 0;
+	return self;
+}
+MAKE_VEC_ADD(ir_instr, ir_phi_entry_t, phi)
+
+void ir_instr_delete(ir_instr *self)
+{
+	ir_instr_op(self, 0, NULL, ifalse);
+	ir_instr_op(self, 1, NULL, ifalse);
+	ir_instr_op(self, 2, NULL, ifalse);
+	VEC_CLEAR(self, phi);
+	free(self);
+}
+
+void ir_instr_op(ir_instr *self, int op, ir_value *v, ir_bool writing)
+{
+	if (self->_ops[op]) {
+		if (writing)
+			ir_value_writes_add(self->_ops[op], self);
+		else
+			ir_value_reads_add(self->_ops[op], self);
+	}
+	if (v) {
+		if (writing)
+			ir_value_writes_add(v, self);
+		else
+			ir_value_reads_add(v, self);
+	}
+	self->_ops[op] = v;
+}
