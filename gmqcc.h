@@ -89,24 +89,26 @@ struct lex_file {
  * It's important that this table never exceed 32 keywords, the ascii
  * table starts at 33 (and we don't want conflicts)
  */
-#define TOKEN_DO       0
-#define TOKEN_ELSE     1
-#define TOKEN_IF       2
-#define TOKEN_WHILE    3
-#define TOKEN_BREAK    4
-#define TOKEN_CONTINUE 5
-#define TOKEN_RETURN   6
-#define TOKEN_GOTO     7
-#define TOKEN_FOR      8   // extension
-#define TOKEN_TYPEDEF  9   // extension
+enum {
+    TOKEN_DO       ,
+    TOKEN_ELSE     ,
+    TOKEN_IF       ,
+    TOKEN_WHILE    ,
+    TOKEN_BREAK    ,
+    TOKEN_CONTINUE ,
+    TOKEN_RETURN   ,
+    TOKEN_GOTO     ,
+    TOKEN_FOR      ,   // extension
+    TOKEN_TYPEDEF  ,   // extension
 
-// ensure the token types are out of the
-// bounds of anyothers that may conflict.
-#define TOKEN_FLOAT    110
-#define TOKEN_VECTOR   111
-#define TOKEN_STRING   112
-#define TOKEN_ENTITY   113
-#define TOKEN_VOID     114
+    // ensure the token types are out of the
+    // bounds of anyothers that may conflict.
+    TOKEN_FLOAT    = 110,
+    TOKEN_VECTOR        ,
+    TOKEN_STRING        ,
+    TOKEN_ENTITY        ,
+    TOKEN_VOID
+};
 
 /*
  * Lexer state constants, these are numbers for where exactly in
@@ -114,10 +116,12 @@ struct lex_file {
  * error occurs.  These numbers must be > where the ascii-table ends
  * and > the last type token which is TOKEN_VOID
  */
-#define LEX_COMMENT    1128 
-#define LEX_CHRLIT     1129
-#define LEX_STRLIT     1130
-#define LEX_IDENT      1131
+enum {
+    LEX_COMMENT = 1128, 
+    LEX_CHRLIT        ,
+    LEX_STRLIT        ,
+    LEX_IDENT
+};
 
 int              lex_token  (struct lex_file *);
 void             lex_reset  (struct lex_file *);
