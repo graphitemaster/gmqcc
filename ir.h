@@ -7,37 +7,33 @@
 
 typedef struct
 {
-	/* both inclusive */
-	size_t start;
-	size_t end;
+    /* both inclusive */
+    size_t start;
+    size_t end;
 } ir_life_entry_t;
 
 struct ir_function_s;
 typedef struct ir_value_s {
-	const char *_name;
-	ir_type_t  vtype;
-	ir_store_t store;
-	filecontext_t context;
+    const char *_name;
+    ir_type_t  vtype;
+    ir_store_t store;
+    filecontext_t context;
 
-	/*
-	size_t     read_use;
-	size_t     write_use;
-	*/
-	MAKE_VEC(struct ir_instr_s*, reads);
-	MAKE_VEC(struct ir_instr_s*, writes);
+    MAKE_VEC(struct ir_instr_s*, reads);
+    MAKE_VEC(struct ir_instr_s*, writes);
 
-	/* constantvalues */
-	union {
-		float vfloat;
-		int   vint;
-		qc_vec_t vvec;
-		struct ir_value_s *vpointer;
-		const char *vstring;
-	} cvalue;
-	ir_bool has_constval;
+    /* constantvalues */
+    union {
+        float vfloat;
+        int   vint;
+        qc_vec_t vvec;
+        struct ir_value_s *vpointer;
+        const char *vstring;
+    } cvalue;
+    qbool has_constval;
 
-	/* For the temp allocator */
-	MAKE_VEC(ir_life_entry_t, life);
+    /* For the temp allocator */
+    MAKE_VEC(ir_life_entry_t, life);
 } ir_value;
 
 /* ir_value can be a variable, or created by an operation */
@@ -52,71 +48,71 @@ void      ir_value_set_name(ir_value*, const char *name);
 void    ir_value_reads_add(ir_value*, struct ir_instr_s*);
 void    ir_value_writes_add(ir_value*, struct ir_instr_s*);
 
-ir_bool ir_value_set_float(ir_value*, float f);
-ir_bool ir_value_set_int(ir_value*, int i);
-ir_bool ir_value_set_string(ir_value*, const char *s);
-ir_bool ir_value_set_vector(ir_value*, qc_vec_t v);
-/*ir_bool ir_value_set_pointer_v(ir_value*, ir_value* p); */
-/*ir_bool ir_value_set_pointer_i(ir_value*, int i);       */
+qbool   ir_value_set_float(ir_value*, float f);
+qbool   ir_value_set_int(ir_value*, int i);
+qbool   ir_value_set_string(ir_value*, const char *s);
+qbool   ir_value_set_vector(ir_value*, qc_vec_t v);
+/*qbool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
+/*qbool   ir_value_set_pointer_i(ir_value*, int i);       */
 
 void ir_value_life_add(ir_value*, ir_life_entry_t e);
 /* merge an instruction into the life-range */
 /* returns false if the lifepoint was already known */
-ir_bool ir_value_life_merge(ir_value*, size_t);
+qbool ir_value_life_merge(ir_value*, size_t);
 /* check if a value lives at a specific point */
-ir_bool ir_value_lives(ir_value*, size_t);
+qbool ir_value_lives(ir_value*, size_t);
 
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));
 
 typedef struct ir_phi_entry_s
 {
-	ir_value          *value;
-	struct ir_block_s *from;
+    ir_value          *value;
+    struct ir_block_s *from;
 } ir_phi_entry_t;
 
 /* instruction */
 typedef struct ir_instr_s
 {
-	ir_op_t       opcode;
-	filecontext_t context;
-	ir_value*     (_ops[3]);
-	struct ir_block_s* (bops[2]);
+    ir_op_t       opcode;
+    filecontext_t context;
+    ir_value*     (_ops[3]);
+    struct ir_block_s* (bops[2]);
 
-	MAKE_VEC(ir_phi_entry_t, phi);
+    MAKE_VEC(ir_phi_entry_t, phi);
 
-	/* For the temp-allocation */
-	size_t eid;
+    /* For the temp-allocation */
+    size_t eid;
 
-	struct ir_block_s *owner;
+    struct ir_block_s *owner;
 } ir_instr;
 
 ir_instr* ir_instr_new(struct ir_block_s *owner, ir_op_t opcode);
 void      ir_instr_delete(ir_instr*);
 
 void ir_instr_phi_add(ir_instr*, ir_phi_entry_t e);
-void ir_instr_op(ir_instr*, int op, ir_value *value, ir_bool writing);
+void ir_instr_op(ir_instr*, int op, ir_value *value, qbool writing);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 
 /* block */
 typedef struct ir_block_s
 {
-	const char    *_label;
-	filecontext_t context;
-	ir_bool         final; /* once a jump is added we're done */
+    const char    *_label;
+    filecontext_t context;
+    qbool         final; /* once a jump is added we're done */
 
-	MAKE_VEC(ir_instr*, instr);
-	MAKE_VEC(struct ir_block_s*, entries);
-	MAKE_VEC(struct ir_block_s*, exits);
-	MAKE_VEC(ir_value*, living);
+    MAKE_VEC(ir_instr*, instr);
+    MAKE_VEC(struct ir_block_s*, entries);
+    MAKE_VEC(struct ir_block_s*, exits);
+    MAKE_VEC(ir_value*, living);
 
-	/* For the temp-allocation */
-	size_t eid;
-	ir_bool is_return;
-	size_t run_id;
+    /* For the temp-allocation */
+    size_t eid;
+    qbool  is_return;
+    size_t run_id;
 
-	struct ir_function_s *owner;
+    struct ir_function_s *owner;
 } ir_block;
 
 ir_block* ir_block_new(struct ir_function_s *owner, const char *label);
@@ -128,12 +124,12 @@ void      ir_block_instr_add(ir_block*, ir_instr *instr);
 void      ir_block_instr_remove(ir_block*, size_t idx);
 void      ir_block_exits_add(ir_block*, ir_block *b);
 void      ir_block_entries_add(ir_block*, ir_block *b);
-ir_bool   ir_block_entries_find(ir_block*, ir_block *b, size_t *idx);
+qbool     ir_block_entries_find(ir_block*, ir_block *b, size_t *idx);
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, ir_op_t op,
                                 ir_value *left, ir_value *right);
-ir_bool   ir_block_create_store_op(ir_block*, ir_op_t op, ir_value *target, ir_value *what);
-ir_bool   ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
+qbool   ir_block_create_store_op(ir_block*, ir_op_t op, ir_value *target, ir_value *what);
+qbool   ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
 
 ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_sub(ir_block*, const char *label, ir_value *l, ir_value *r);
@@ -158,7 +154,7 @@ void      ir_block_create_goto(ir_block*, ir_block *to);
 
 void      ir_block_living_add(ir_block*, ir_value*);
 void      ir_block_living_remove(ir_block*, size_t idx);
-ir_bool   ir_block_living_find(ir_block*, ir_value*, size_t *idx);
+qbool     ir_block_living_find(ir_block*, ir_value*, size_t *idx);
 
 void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
@@ -166,29 +162,29 @@ void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
 typedef struct ir_function_s
 {
-	const char    *_name;
-	ir_type_t     retype;
-	MAKE_VEC(ir_type_t, params);
-	MAKE_VEC(ir_block*, blocks);
+    const char    *_name;
+    ir_type_t     retype;
+    MAKE_VEC(ir_type_t, params);
+    MAKE_VEC(ir_block*, blocks);
 
-	/* values generated from operations
-	 * which might get optimized away, so anything
-	 * in there needs to be deleted in the dtor.
-	 */
-	MAKE_VEC(ir_value*, values);
+    /* values generated from operations
+     * which might get optimized away, so anything
+     * in there needs to be deleted in the dtor.
+     */
+    MAKE_VEC(ir_value*, values);
 
-	/* locally defined variables */
-	MAKE_VEC(ir_value*, locals);
+    /* locally defined variables */
+    MAKE_VEC(ir_value*, locals);
 
-	ir_block*     first;
-	ir_block*     last;
+    ir_block*     first;
+    ir_block*     last;
 
-	filecontext_t context;
+    filecontext_t context;
 
-	/* for temp allocation */
-	size_t run_id;
+    /* for temp allocation */
+    size_t run_id;
 
-	struct ir_builder_s *owner;
+    struct ir_builder_s *owner;
 } ir_function;
 
 ir_function* ir_function_new(struct ir_builder_s *owner);
@@ -217,9 +213,9 @@ void ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 /* builder */
 typedef struct ir_builder_s
 {
-	const char     *_name;
-	MAKE_VEC(ir_function*, functions);
-	MAKE_VEC(ir_value*, globals);
+    const char     *_name;
+    MAKE_VEC(ir_function*, functions);
+    MAKE_VEC(ir_value*, globals);
 } ir_builder;
 
 ir_builder* ir_builder_new(const char *modulename);
