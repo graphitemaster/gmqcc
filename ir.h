@@ -14,7 +14,7 @@ typedef struct
 
 struct ir_function_s;
 typedef struct ir_value_s {
-    const char *name;
+    char      *name;
     ir_type_t  vtype;
     ir_store_t store;
     filecontext_t context;
@@ -28,7 +28,7 @@ typedef struct ir_value_s {
         int   vint;
         qc_vec_t vvec;
         struct ir_value_s *vpointer;
-        const char *vstring;
+        char *vstring;
     } cvalue;
     qbool has_constval;
 
@@ -98,9 +98,9 @@ void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 /* block */
 typedef struct ir_block_s
 {
-    const char    *label;
-    filecontext_t context;
-    qbool         final; /* once a jump is added we're done */
+    char      *label;
+    lex_ctx_t  context;
+    qbool      final; /* once a jump is added we're done */
 
     MEM_VECTOR_MAKE(ir_instr*, instr);
     MEM_VECTOR_MAKE(struct ir_block_s*, entries);
@@ -158,8 +158,8 @@ void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
 typedef struct ir_function_s
 {
-    const char    *name;
-    ir_type_t     retype;
+    char *name;
+    int   retype;
     MEM_VECTOR_MAKE(ir_type_t, params);
     MEM_VECTOR_MAKE(ir_block*, blocks);
 
@@ -175,7 +175,7 @@ typedef struct ir_function_s
     ir_block*     first;
     ir_block*     last;
 
-    filecontext_t context;
+    lex_ctx_t     context;
 
     /* for temp allocation */
     size_t run_id;
@@ -209,7 +209,7 @@ void ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 /* builder */
 typedef struct ir_builder_s
 {
-    const char     *name;
+    char *name;
     MEM_VECTOR_MAKE(ir_function*, functions);
     MEM_VECTOR_MAKE(ir_value*, globals);
 } ir_builder;
