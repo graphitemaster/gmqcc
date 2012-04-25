@@ -54,8 +54,8 @@ MEM_VEC_FUNCTIONS(ast_value, ast_value*, params)
 void ast_value_delete(ast_value* self)
 {
     size_t i;
-    if (self->_name)
-        mem_d((void*)self->_name);
+    if (self->name)
+        mem_d((void*)self->name);
     for (i = 0; i < self->params_count; ++i)
         ast_delete(self->params[i]);
     VEC_CLEAR(self, params);
@@ -79,9 +79,9 @@ void ast_value_delete(ast_value* self)
 
 void ast_value_set_name(ast_value *self, const char *name)
 {
-    if (self->_name)
-        mem_d((void*)self->_name);
-    self->_name = strdup(name);
+    if (self->name)
+        mem_d((void*)self->name);
+    self->name = util_strdup(name);
 }
 
 ast_binary* ast_binary_new(filecontext_t ctx, qc_op_t op,
@@ -133,7 +133,7 @@ ast_function* ast_function_new(filecontext_t ctx, const char *name, ast_value *v
     ast_instantiate(ast_function, ctx, ast_function_delete);
 
     self->vtype = vtype;
-    self->_name = name ? strdup(name) : NULL;
+    self->name = name ? util_strdup(name) : NULL;
     VEC_INIT(self, blocks);
 
     return self;
@@ -144,8 +144,8 @@ MEM_VEC_FUNCTIONS(ast_function, ast_block*, blocks)
 void ast_function_delete(ast_function *self)
 {
     size_t i;
-    if (self->_name)
-        mem_d((void*)self->_name);
+    if (self->name)
+        mem_d((void*)self->name);
     if (self->vtype)
         ast_value_delete(self->vtype);
     for (i = 0; i < self->blocks_count; ++i)
