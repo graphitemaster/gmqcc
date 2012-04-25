@@ -89,7 +89,7 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
         return NULL;
     }
 
-    ve = ir_value_var(name, qc_global, vtype);
+    ve = ir_value_var(name, store_global, vtype);
     ir_builder_globals_add(self, ve);
     return ve;
 }
@@ -189,7 +189,7 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
         return NULL;
     }
 
-    ve = ir_value_var(name, qc_localvar, vtype);
+    ve = ir_value_var(name, store_local, vtype);
     ir_function_locals_add(self, ve);
     return ve;
 }
@@ -474,7 +474,7 @@ qbool ir_value_life_merge(ir_value *self, size_t s)
 
 qbool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
 {
-    if (target->store == qc_localval) {
+    if (target->store == store_value) {
         fprintf(stderr, "cannot store to an SSA value\n");
         return false;
     } else {
@@ -597,7 +597,7 @@ ir_instr* ir_block_create_phi(ir_block *self, const char *label, int ot)
     ir_value *out;
     ir_instr *in;
     in = ir_instr_new(self, VINSTR_PHI);
-    out = ir_value_out(self->owner, label, qc_localval, ot);
+    out = ir_value_out(self->owner, label, store_local, ot);
     ir_instr_op(in, 0, out, true);
     ir_block_instr_add(self, in);
     return in;
@@ -705,7 +705,7 @@ ir_value* ir_block_create_binop(ir_block *self,
         abort();
         return NULL;
     }
-    ir_value *out = ir_value_out(self->owner, label, qc_localval, ot);
+    ir_value *out = ir_value_out(self->owner, label, store_local, ot);
     ir_instr *in = ir_instr_new(self, opcode);
     ir_instr_op(in, 0, out, true);
     ir_instr_op(in, 1, left, false);
@@ -912,7 +912,7 @@ static void ir_block_naive_phi(ir_block *self)
                 if (v->writes[w]->_ops[0] == v)
                     v->writes[w]->_ops[0] = instr->_ops[0];
 
-                if (old->store != qc_localval)
+                if (old->store != store_local)
                 {
                     /* If it originally wrote to a global we need to store the value
                      * there as welli
@@ -948,5 +948,283 @@ static void ir_block_naive_phi(ir_block *self)
             }
         }
         ir_instr_delete(instr);
+    }
+}
+
+/***********************************************************************
+ *IR Temp allocation code
+ * Propagating value life ranges by walking through the function backwards
+ * until no more changes are made.
+ * In theory this should happen once more than once for every nested loop
+ * level.
+ * Though this implementation might run an additional time for if nests.
+ */
+
+typedef struct
+{
+    ir_value* *v;
+    size_t    v_count;
+    size_t    v_alloc;
+} new_reads_t;
+MEM_VECTOR_FUNCTIONS_ALL(new_reads_t, ir_value*, v)
+
+/* Enumerate instructions used by value's life-ranges
+ */
+static void ir_block_enumerate(ir_block *self, size_t *_eid)
+{
+    size_t i;
+    size_t eid = *_eid;
+    for (i = 0; i < self->instr_count; ++i)
+    {
+        self->instr[i]->eid = eid++;
+    }
+    *_eid = eid;
+}
+
+/* Enumerate blocks and instructions.
+ * The block-enumeration is unordered!
+ * We do not really use the block enumreation, however
+ * the instruction enumeration is important for life-ranges.
+ */
+void ir_function_enumerate(ir_function *self)
+{
+    size_t i;
+    size_t instruction_id = 0;
+    for (i = 0; i < self->blocks_count; ++i)
+    {
+        self->blocks[i]->eid = i;
+        self->blocks[i]->run_id = 0;
+        ir_block_enumerate(self->blocks[i], &instruction_id);
+    }
+}
+
+static void ir_block_life_propagate(ir_block *b, ir_block *prev, qbool *changed);
+void ir_function_calculate_liferanges(ir_function *self)
+{
+    size_t i;
+    qbool changed;
+
+    do {
+        self->run_id++;
+        changed = false;
+        for (i = 0; i != self->blocks_count; ++i)
+        {
+            if (self->blocks[i]->is_return)
+                ir_block_life_propagate(self->blocks[i], NULL, &changed);
+        }
+    } while (changed);
+}
+
+/* Get information about which operand
+ * is read from, or written to.
+ */
+static void ir_op_read_write(int op, size_t *read, size_t *write)
+{
+    switch (op)
+    {
+    case VINSTR_JUMP:
+    case INSTR_GOTO:
+        *write = 0;
+        *read = 0;
+        break;
+    case INSTR_IF:
+    case INSTR_IFNOT:
+    case INSTR_IF_S:
+    case INSTR_IFNOT_S:
+    case INSTR_RETURN:
+    case VINSTR_COND:
+        *write = 0;
+        *read = 1;
+        break;
+    default:
+        *write = 1;
+        *read = 6;
+        break;
+    };
+}
+
+static qbool ir_block_living_add_instr(ir_block *self, size_t eid)
+{
+    size_t i;
+    qbool changed = false;
+    qbool tempbool;
+    for (i = 0; i != self->living_count; ++i)
+    {
+        tempbool = ir_value_life_merge(self->living[i], eid);
+        /* debug
+        if (tempbool)
+            fprintf(stderr, "block_living_add_instr() value instruction added %s: %i\n", self->living[i]->_name, (int)eid);
+        */
+        changed = changed || tempbool;
+    }
+    return changed;
+}
+
+static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, qbool *changed)
+{
+    size_t i;
+    /* values which have been read in a previous iteration are now
+     * in the "living" array even if the previous block doesn't use them.
+     * So we have to remove whatever does not exist in the previous block.
+     * They will be re-added on-read, but the liferange merge won't cause
+     * a change.
+     */
+    for (i = 0; i < self->living_count; ++i)
+    {
+        if (!ir_block_living_find(prev, self->living[i], NULL)) {
+            ir_block_living_remove(self, i);
+            --i;
+        }
+    }
+
+    /* Whatever the previous block still has in its living set
+     * must now be added to ours as well.
+     */
+    for (i = 0; i < prev->living_count; ++i)
+    {
+        if (ir_block_living_find(self, prev->living[i], NULL))
+            continue;
+        ir_block_living_add(self, prev->living[i]);
+        /*
+        printf("%s got from prev: %s\n", self->_label, prev->living[i]->_name);
+        */
+    }
+}
+
+static void ir_block_life_propagate(ir_block *self, ir_block *prev, qbool *changed)
+{
+    ir_instr *instr;
+    ir_value *value;
+    qbool  tempbool;
+    size_t i, o, p, rd;
+    /* bitmasks which operands are read from or written to */
+    size_t read, write;
+    new_reads_t new_reads;
+    char dbg_ind[16] = { '#', '0' };
+    (void)dbg_ind;
+
+    VEC_INIT(&new_reads, v);
+
+    if (prev)
+        ir_block_life_prop_previous(self, prev, changed);
+
+    i = self->instr_count;
+    while (i)
+    { --i;
+        instr = self->instr[i];
+
+        /* PHI operands are always read operands */
+        for (p = 0; p < instr->phi_count; ++p)
+        {
+            value = instr->phi[p].value;
+            /* used this before new_reads - puts the last read into the life range as well
+            if (!ir_block_living_find(self, value, NULL))
+                ir_block_living_add(self, value);
+            */
+            /* fprintf(stderr, "read: %s\n", value->_name); */
+            if (!new_reads_t_v_find(&new_reads, value, NULL))
+                new_reads_t_v_add(&new_reads, value);
+        }
+
+        /* See which operands are read and write operands */
+        ir_op_read_write(instr->opcode, &read, &write);
+
+        /* Go through the 3 main operands */
+        for (o = 0; o < 3; ++o)
+        {
+            if (!instr->_ops[o]) /* no such operand */
+                continue;
+
+            value = instr->_ops[o];
+
+            /* We only care about locals */
+            if (value->store != store_value &&
+                value->store != store_local)
+                continue;
+
+            /* read operands */
+            if (read & (1<<o))
+            {
+                /* used this before new_reads - puts the last read into the life range as well
+                if (!ir_block_living_find(self, value, NULL))
+                    ir_block_living_add(self, value);
+                */
+                /* fprintf(stderr, "read: %s\n", value->_name); */
+                if (!new_reads_t_v_find(&new_reads, value, NULL))
+                    new_reads_t_v_add(&new_reads, value);
+            }
+
+            /* write operands */
+            /* When we write to a local, we consider it "dead" for the
+             * remaining upper part of the function, since in SSA a value
+             * can only be written once (== created)
+             */
+            if (write & (1<<o))
+            {
+                size_t idx, readidx;
+                qbool in_living = ir_block_living_find(self, value, &idx);
+                qbool in_reads = new_reads_t_v_find(&new_reads, value, &readidx);
+                if (!in_living && !in_reads)
+                {
+                    /* If the value isn't alive it hasn't been read before... */
+                    /* TODO: See if the warning can be emitted during parsing or AST processing
+                     * otherwise have warning printed here.
+                     * IF printing a warning here: include filecontext_t,
+                     * and make sure it's only printed once
+                     * since this function is run multiple times.
+                     */
+                    /* For now: debug info: */
+                    fprintf(stderr, "Value only written %s\n", value->_name);
+                    tempbool = ir_value_life_merge(value, instr->eid);
+                    *changed = *changed || tempbool;
+                    /*
+                    ir_instr_dump(instr, dbg_ind, printf);
+                    abort();
+                    */
+                } else {
+                    /* since 'living' won't contain it
+                     * anymore, merge the value, since
+                     * (A) doesn't.
+                     */
+                    tempbool = ir_value_life_merge(value, instr->eid);
+                    /*
+                    if (tempbool)
+                        fprintf(stderr, "value added id %s %i\n", value->_name, (int)instr->eid);
+                    */
+                    *changed = *changed || tempbool;
+                    /* Then remove */
+                    ir_block_living_remove(self, idx);
+                    if (in_reads)
+                        new_reads_t_v_remove(&new_reads, readidx);
+                }
+            }
+        }
+        /* (A) */
+        tempbool = ir_block_living_add_instr(self, instr->eid);
+        //fprintf(stderr, "living added values\n");
+        *changed = *changed || tempbool;
+
+        /* new reads: */
+        for (rd = 0; rd < new_reads.v_count; ++rd)
+        {
+            if (!ir_block_living_find(self, new_reads.v[rd], NULL)) {
+                ir_block_living_add(self, new_reads.v[rd]);
+            }
+            if (!i && !self->entries_count) {
+                /* fix the top */
+                *changed = *changed || ir_value_life_merge(new_reads.v[rd], instr->eid);
+            }
+        }
+        new_reads_t_v_clear(&new_reads);
+    }
+
+    if (self->run_id == self->owner->run_id)
+        return;
+    self->run_id = self->owner->run_id;
+
+    for (i = 0; i < self->entries_count; ++i)
+    {
+        ir_block *entry = self->entries[i];
+        ir_block_life_propagate(entry, self, changed);
     }
 }
