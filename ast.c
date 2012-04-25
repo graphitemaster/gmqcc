@@ -6,10 +6,10 @@
 
 #define ast_setfunc(me, fn, what) ( *(void**)&((me)->fn) = what )
 
-#define ast_instantiate(T, ctx, destroyfn) \
-	T *self = (T*)mem_a(sizeof(T)); \
-	ast_node_init((ast_node*)self, ctx); \
-	ast_setfunc(&((ast_node*)self)->node, destroy, destroyfn)
+#define ast_instantiate(T, ctx, destroyfn)                    \
+    T *self = (T*)mem_a(sizeof(T));                           \
+    ast_node_init((ast_node*)self, ctx);                      \
+    ast_setfunc(&((ast_node*)self)->node, destroy, destroyfn)
 
 /* It must not be possible to get here. */
 static void _ast_node_destroy(ast_node *self)
