@@ -41,7 +41,7 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type_t t)
     self->name = name ? util_strdup(name) : NULL;
     self->vtype = t;
     self->next = NULL;
-    VEC_INIT(self, params);
+    MEM_VECTOR_INIT(self, params);
     self->has_constval = ifalse;
     memset(&self->cvalue, 0, sizeof(self->cvalue));
 
@@ -58,7 +58,7 @@ void ast_value_delete(ast_value* self)
         mem_d((void*)self->name);
     for (i = 0; i < self->params_count; ++i)
         ast_delete(self->params[i]);
-    VEC_CLEAR(self, params);
+    MEM_VECTOR_CLEAR(self, params);
     if (self->next)
         ast_delete(self->next);
     if (self->has_constval) {
@@ -108,8 +108,8 @@ ast_block* ast_block_new(lex_ctx_t ctx)
     ast_expression_init((ast_expression*)self,
                         (ast_expression_codegen*)&ast_block_codegen);
 
-    VEC_INIT(self, locals);
-    VEC_INIT(self, exprs);
+    MEM_VECTOR_INIT(self, locals);
+    MEM_VECTOR_INIT(self, exprs);
 
     return self;
 }
@@ -121,10 +121,10 @@ void ast_block_delete(ast_block *self)
     size_t i;
     for (i = 0; i < self->locals_count; ++i)
         ast_delete(self->locals[i]);
-    VEC_CLEAR(self, locals);
+    MEM_VECTOR_CLEAR(self, locals);
     for (i = 0; i < self->exprs_count; ++i)
         ast_delete(self->exprs[i]);
-    VEC_CLEAR(self, exprs);
+    MEM_VECTOR_CLEAR(self, exprs);
     mem_d(self);
 }
 
@@ -134,7 +134,7 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
 
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
-    VEC_INIT(self, blocks);
+    MEM_VECTOR_INIT(self, blocks);
 
     return self;
 }
@@ -150,6 +150,6 @@ void ast_function_delete(ast_function *self)
         ast_value_delete(self->vtype);
     for (i = 0; i < self->blocks_count; ++i)
         ast_delete(self->blocks[i]);
-    VEC_CLEAR(self, blocks);
+    MEM_VECTOR_CLEAR(self, blocks);
     mem_d(self);
 }
