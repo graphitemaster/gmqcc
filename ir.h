@@ -15,8 +15,8 @@ typedef struct
 struct ir_function_s;
 typedef struct ir_value_s {
     char      *name;
-    ir_type_t  vtype;
-    ir_store_t store;
+    int  vtype;
+    int store;
     filecontext_t context;
 
     MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
@@ -24,11 +24,11 @@ typedef struct ir_value_s {
 
     /* constantvalues */
     union {
-        float vfloat;
-        int   vint;
-        qc_vec_t vvec;
+        float    vfloat;
+        int      vint;
+        vector_t vvec;
+        char    *vstring;
         struct ir_value_s *vpointer;
-        char *vstring;
     } cvalue;
     qbool has_constval;
 
@@ -37,11 +37,11 @@ typedef struct ir_value_s {
 } ir_value;
 
 /* ir_value can be a variable, or created by an operation */
-ir_value* ir_value_var(const char *name, ir_store_t st, ir_type_t vtype);
+ir_value* ir_value_var(const char *name, int st, int vtype);
 /* if a result of an operation: the function should store
  * it to remember to delete it / garbage collect it
  */
-ir_value* ir_value_out(struct ir_function_s *owner, const char *name, ir_store_t st, ir_type_t vtype);
+ir_value* ir_value_out(struct ir_function_s *owner, const char *name, int st, int vtype);
 void      ir_value_delete(ir_value*);
 void      ir_value_set_name(ir_value*, const char *name);
 
@@ -133,7 +133,7 @@ ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_valu
 ir_value* ir_block_create_sub(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_mul(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_div(ir_block*, const char *label, ir_value *l, ir_value *r);
-ir_instr* ir_block_create_phi(ir_block*, const char *label, ir_type_t vtype);
+ir_instr* ir_block_create_phi(ir_block*, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
 void      ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
 
@@ -160,7 +160,7 @@ typedef struct ir_function_s
 {
     char *name;
     int   retype;
-    MEM_VECTOR_MAKE(ir_type_t, params);
+    MEM_VECTOR_MAKE(int, params);
     MEM_VECTOR_MAKE(ir_block*, blocks);
 
     /* values generated from operations
@@ -189,11 +189,11 @@ void         ir_function_delete(ir_function*);
 void ir_function_collect_value(ir_function*, ir_value *value);
 
 void ir_function_set_name(ir_function*, const char *name);
-MEM_VECTOR_PROTO(ir_function, ir_type_t, params)
+MEM_VECTOR_PROTO(ir_function, int, params)
 MEM_VECTOR_PROTO(ir_function, ir_block*, blocks)
 
 ir_value* ir_function_get_local(ir_function *self, const char *name);
-ir_value* ir_function_create_local(ir_function *self, const char *name, ir_type_t vtype);
+ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype);
 
 void ir_function_finalize(ir_function*);
 /*
@@ -226,7 +226,7 @@ ir_function* ir_builder_get_function(ir_builder*, const char *fun);
 ir_function* ir_builder_create_function(ir_builder*, const char *name);
 
 ir_value* ir_builder_get_global(ir_builder*, const char *fun);
-ir_value* ir_builder_create_global(ir_builder*, const char *name, ir_type_t vtype);
+ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);
 
 void ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));
 
