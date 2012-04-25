@@ -86,6 +86,7 @@ int asm_parsetype(const char *key, char **skip, long line) {
             exit(1);
         }
         *skip += keylen+1;
+        /* skip whitespace */
         while (**skip == ' ' || **skip == '\t')
             (*skip)++;
         

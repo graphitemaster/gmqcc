@@ -160,16 +160,16 @@ int           typedef_add (struct lex_file *file, const char *, const char *);
 //===================================================================
 //=========================== util.c ================================
 //===================================================================
-void *util_memory_a  (unsigned int, unsigned int, const char *);
-void  util_memory_d  (void       *, unsigned int, const char *);
-void  util_meminfo   ();
+void *util_memory_a      (unsigned int, unsigned int, const char *);
+void  util_memory_d      (void       *, unsigned int, const char *);
+void  util_meminfo       ();
 
-char *util_strdup    (const char *);
-char *util_strrq     (char *);
-char *util_strrnl    (char *);
-void  util_debug     (const char *, const char *, ...);
-int   util_getline   (char **, size_t *, FILE *);
-void  util_endianswap(void *, int, int);
+char *util_strdup        (const char *);
+char *util_strrq         (char *);
+char *util_strrnl        (char *);
+void  util_debug         (const char *, const char *, ...);
+int   util_getline       (char **, size_t *, FILE *);
+void  util_endianswap    (void *,  int, int);
 
 uint32_t util_crc32(const char *, int, register const short); 
 
@@ -182,38 +182,43 @@ uint32_t util_crc32(const char *, int, register const short);
 #endif
 
 /* Builds vector type (usefull for inside structures) */
-#define VECTOR_TYPE(T,N)                                                 \
-    T*     N##_data      = NULL;                                         \
-    long   N##_elements  = 0;                                            \
+#define VECTOR_TYPE(T,N)                                        \
+    T*     N##_data      = NULL;                                \
+    long   N##_elements  = 0;                                   \
     long   N##_allocated = 0
 /* Builds vector add */
-#define VECTOR_CORE(T,N)                                                 \
-    int    N##_add(T element) {                                          \
-        if (N##_elements == N##_allocated) {                             \
-            if (N##_allocated == 0) {                                    \
-                N##_allocated = 12;                                      \
-            } else {                                                     \
-                N##_allocated *= 2;                                      \
-            }                                                            \
-            void *temp = mem_a(N##_allocated * sizeof(T));               \
-            if  (!temp) {                                                \
-                mem_d(temp);                                             \
-                return -1;                                               \
-            }                                                            \
-            memcpy(temp, N##_data, (N##_elements * sizeof(T)));          \
-            mem_d(N##_data);                                             \
-            N##_data = (T*)temp;                                         \
-        }                                                                \
-        N##_data[N##_elements] = element;                                \
-        return   N##_elements++;                                         \
+#define VECTOR_CORE(T,N)                                        \
+    int    N##_add(T element) {                                 \
+        if (N##_elements == N##_allocated) {                    \
+            if (N##_allocated == 0) {                           \
+                N##_allocated = 12;                             \
+            } else {                                            \
+                N##_allocated *= 2;                             \
+            }                                                   \
+            void *temp = mem_a(N##_allocated * sizeof(T));      \
+            if  (!temp) {                                       \
+                mem_d(temp);                                    \
+                return -1;                                      \
+            }                                                   \
+            memcpy(temp, N##_data, (N##_elements * sizeof(T))); \
+            mem_d(N##_data);                                    \
+            N##_data = (T*)temp;                                \
+        }                                                       \
+        N##_data[N##_elements] = element;                       \
+        return   N##_elements++;                                \
+    }                                                           \
+    int N##_put(T* elements, size_t len) {                      \
+        len     --;                                             \
+        elements--;                                             \
+        while (N##_add(*++elements) != -1 && len--);            \
+        return N##_elements;                                    \
     }
 /* Builds a full vector inspot */
 #define VECTOR_MAKE(T,N) \
     VECTOR_TYPE(T,N);    \
     VECTOR_CORE(T,N)
 /* Builds a vector add function pointer for inside structures */
-#define VECTOR_IMPL(T,N) \
-    int (*N##_add)(T)
+#define VECTOR_IMPL(T,N) int (*N##_add)(T)
 
 //===================================================================
 //=========================== code.c ================================
