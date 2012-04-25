@@ -200,50 +200,45 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
 
 ir_block* ir_block_new(ir_function* owner, const char *name)
 {
-	ir_block *self;
-	self = (ir_block*)malloc(sizeof(*self));
-	self->owner = owner;
-	self->context.file = "<@no context>";
-	self->context.line = 0;
-	self->final = ifalse;
-	VEC_INIT(self, instr);
-	VEC_INIT(self, entries);
-	VEC_INIT(self, exits);
-	self->_label = NULL;
-	ir_block_set_label(self, name);
+    ir_block *self;
+    self = (ir_block*)mem_a(sizeof(*self));
+    self->owner = owner;
+    self->context.file = "<@no context>";
+    self->context.line = 0;
+    self->final = ifalse;
+    MEM_VECTOR_INIT(self, instr);
+    MEM_VECTOR_INIT(self, entries);
+    MEM_VECTOR_INIT(self, exits);
+    self->label = NULL;
+    ir_block_set_label(self, name);
 
-	self->eid = 0;
-	self->is_return = ifalse;
-	self->run_id = 0;
-	VEC_INIT(self, living);
-	return self;
+    self->eid = 0;
+    self->is_return = ifalse;
+    self->run_id = 0;
+    MEM_VECTOR_INIT(self, living);
+    return self;
 }
-MAKE_VEC_ADD(ir_block, ir_instr*, instr)
-MAKE_VEC_REMOVE(ir_block, ir_instr*, instr)
-MAKE_VEC_ADD(ir_block, ir_block*, entries)
-MAKE_VEC_FIND(ir_block, ir_block*, entries)
-MAKE_VEC_ADD(ir_block, ir_block*, exits)
-
-MAKE_VEC_ADD(ir_block, ir_value*, living)
-MAKE_VEC_REMOVE(ir_block, ir_value*, living)
-MAKE_VEC_FIND(ir_block, ir_value*, living)
+MEM_VECTOR_FUNCTIONS(ir_block, ir_instr*, instr)
+MEM_VECTOR_FUNCTIONS_ALL(ir_block, ir_block*, entries)
+MEM_VECTOR_FUNCTIONS_ALL(ir_block, ir_block*, exits)
+MEM_VECTOR_FUNCTIONS_ALL(ir_block, ir_value*, living)
 
 void ir_block_delete(ir_block* self)
 {
-	size_t i;
-	free((void*)self->_label);
-	for (i = 0; i != self->instr_count; ++i)
-		ir_instr_delete(self->instr[i]);
-	VEC_CLEAR(self, instr);
-	VEC_CLEAR(self, entries);
-	VEC_CLEAR(self, exits);
-	VEC_CLEAR(self, living);
-	free(self);
+    size_t i;
+    mem_d((void*)self->label);
+    for (i = 0; i != self->instr_count; ++i)
+        ir_instr_delete(self->instr[i]);
+    MEM_VECTOR_CLEAR(self, instr);
+    MEM_VECTOR_CLEAR(self, entries);
+    MEM_VECTOR_CLEAR(self, exits);
+    MEM_VECTOR_CLEAR(self, living);
+    mem_d(self);
 }
 
 void ir_block_set_label(ir_block *self, const char *name)
 {
-	if (self->_label)
-		free((void*)self->_label);
-	self->_label = strdup(name);
+    if (self->label)
+        mem_d((void*)self->label);
+    self->label = util_strdup(name);
 }
