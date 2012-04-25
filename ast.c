@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "gmqcc.h"
 #include "ast.h"
 
 #define ast_setfunc(me, fn, what) ( *(void**)&((me)->fn) = what )
@@ -32,7 +33,7 @@ static void ast_expression_init(ast_expression *self,
     ast_setfunc(&self->expression, codegen, codegen);
 }
 
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type_t t)
+ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
@@ -42,8 +43,8 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type_t t)
     self->vtype = t;
     self->next = NULL;
     MEM_VECTOR_INIT(self, params);
-    self->has_constval = false;
-    memset(&self->cvalue, 0, sizeof(self->cvalue));
+    self->isconst = false;
+    memset(&self->constval, 0, sizeof(self->constval));
 
     self->ir_v = NULL;
 
@@ -61,11 +62,11 @@ void ast_value_delete(ast_value* self)
     MEM_VECTOR_CLEAR(self, params);
     if (self->next)
         ast_delete(self->next);
-    if (self->has_constval) {
+    if (self->isconst) {
         switch (self->vtype)
         {
         case qc_string:
-            mem_d((void*)self->cvalue.vstring);
+            mem_d((void*)self->constval.vstring);
             break;
         /* NOTE: delete function? currently collected in
          * the parser structure
@@ -84,11 +85,11 @@ void ast_value_set_name(ast_value *self, const char *name)
     self->name = util_strdup(name);
 }
 
-ast_binary* ast_binary_new(lex_ctx_t ctx, qc_op_t op,
+ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
                            ast_value* left, ast_value* right)
 {
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)codegen);
+    ast_expression_init((ast_expression*)self, NULL); /* FIXME */
 
     self->op = op;
     self->left = left;
@@ -158,32 +159,33 @@ void ast_function_delete(ast_function *self)
 /* AST codegen aprt
  */
 
+#if 0
 static qbool ast_value_gen_global(ir_builder *ir, ast_value *self, ir_value **out)
 {
     ir_value *v;
     *out = NULL;
 
     /* Generate functions */
-    if (self->vtype == qc_function && self->has_constval)
+    if (self->vtype == qc_function && self->isconst)
     {
-        /* Without has_constval it would be invalid... function pointers actually have
+        /* Without isconst it would be invalid... function pointers actually have
          * type qc_pointer and next with type qc_function
          */
-        ast_function *func = self->cvalue.vfunc;
+        ast_function *func = self->constval.vfunc;
         if (!ast_function_codegen(func, ir))
             return false;
 
         /* Here we do return NULL anyway */
         return true;
     }
-    else if (self->vtype == qc_function && !self->has_constval) {
+    else if (self->vtype == qc_function && !self->isconst) {
         fprintf(stderr,
-        "!v->has_constval <- qc_function body missing - FIXME: remove when implementing prototypes\n");
-        fprintf(stderr, "Value: %s\n", self->_name);
+        "!v->isconst <- qc_function body missing - FIXME: remove when implementing prototypes\n");
+        fprintf(stderr, "Value: %s\n", self->name);
         abort();
     }
 
-    v = ir_builder_create_global(ir, self->_name, self->vtype);
+    v = ir_builder_create_global(ir, self->name, self->vtype);
     self->ir_v = v;
 
     *out = v;
@@ -193,7 +195,7 @@ static qbool ast_value_gen_global(ir_builder *ir, ast_value *self, ir_value **ou
 qbool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
 {
     if (!func)
-        return ast_value_gen_global(parser.ir, self, out);
+        return ast_value_gen_global(ir, self, out);
     return false;
 }
 
@@ -226,3 +228,4 @@ qbool ast_bin_store_codegen(ast_binary *self, ir_function *func, ir_value **out)
 {
     return false;
 }
+#endif

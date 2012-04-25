@@ -6,7 +6,7 @@
     void Towner##_##mem##_remove(Towner*, size_t);
 
 #define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)          \
-    MEM_VECTOR_PROTO(Towner, Towner, Tmem, mem)          \
+    MEM_VECTOR_PROTO(Towner, Tmem, mem)          \
     qbool Towner##_##mem##_find(Towner*, Tmem, size_t*); \
     void Towner##_##mem##_clear(Towner*);
 
@@ -54,10 +54,10 @@ qbool Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
         if (self->mem[i] == obj) {                              \
             if (idx)                                            \
                 *idx = i;                                       \
-            return itrue;                                       \
+            return true;                                        \
         }                                                       \
     }                                                           \
-    return ifalse;                                              \
+    return false;                                               \
 }
 
 #define _MEM_VEC_FUN_CLEAR(Tself, mem)  \
@@ -91,7 +91,7 @@ _MEM_VEC_FUN_ADD(Tself, Twhat, mem)
 
 #define MEM_VEC_FUNCTIONS_ALL(Tself, Twhat, mem) \
 MEM_VEC_FUNCTIONS(Tself, Twhat, mem)             \
-_MEM_VEC_FUN_CLEAR(Tself, Twhat, mem)            \
+_MEM_VEC_FUN_CLEAR(Tself, mem)                   \
 _MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 
 typedef enum { false, true } qbool;
@@ -103,6 +103,7 @@ enum qc_types {
     qc_vector,
     qc_entity,
     qc_string,
+
     qc_int,
 
     /* "virtual" and internal types */

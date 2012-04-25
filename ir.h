@@ -15,22 +15,22 @@ typedef struct
 struct ir_function_s;
 typedef struct ir_value_s {
     char      *name;
-    int  vtype;
-    int store;
-    filecontext_t context;
+    int       vtype;
+    int       store;
+    lex_ctx_t context;
 
     MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
     MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
 
     /* constantvalues */
+    qbool isconst;
     union {
         float    vfloat;
         int      vint;
         vector_t vvec;
         char    *vstring;
         struct ir_value_s *vpointer;
-    } cvalue;
-    qbool has_constval;
+    } constval;
 
     /* For the temp allocator */
     MEM_VECTOR_MAKE(ir_life_entry_t, life);
@@ -51,7 +51,7 @@ MEM_VECTOR_PROTO(ir_value, struct ir_instr_s*, writes)
 qbool   ir_value_set_float(ir_value*, float f);
 qbool   ir_value_set_int(ir_value*, int i);
 qbool   ir_value_set_string(ir_value*, const char *s);
-qbool   ir_value_set_vector(ir_value*, qc_vec_t v);
+qbool   ir_value_set_vector(ir_value*, vector_t v);
 /*qbool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*qbool   ir_value_set_pointer_i(ir_value*, int i);       */
 
@@ -74,9 +74,9 @@ typedef struct ir_phi_entry_s
 /* instruction */
 typedef struct ir_instr_s
 {
-    ir_op_t       opcode;
-    filecontext_t context;
-    ir_value*     (_ops[3]);
+    int       opcode;
+    lex_ctx_t context;
+    ir_value* (_ops[3]);
     struct ir_block_s* (bops[2]);
 
     MEM_VECTOR_MAKE(ir_phi_entry_t, phi);
@@ -87,7 +87,7 @@ typedef struct ir_instr_s
     struct ir_block_s *owner;
 } ir_instr;
 
-ir_instr* ir_instr_new(struct ir_block_s *owner, ir_op_t opcode);
+ir_instr* ir_instr_new(struct ir_block_s *owner, int opcode);
 void      ir_instr_delete(ir_instr*);
 
 MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi)
@@ -124,9 +124,9 @@ MEM_VECTOR_PROTO(ir_block, ir_instr*, instr)
 MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, exits)
 MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries)
 
-ir_value* ir_block_create_binop(ir_block*, const char *label, ir_op_t op,
+ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
-qbool   ir_block_create_store_op(ir_block*, ir_op_t op, ir_value *target, ir_value *what);
+qbool   ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
 qbool   ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
 
 ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_value *r);
