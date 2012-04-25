@@ -27,6 +27,30 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+
+/*
+ * We cannoy rely on C99 at all, since compilers like MSVC
+ * simply don't support it.  We define our own boolean type
+ * as a result (since we cannot include <stdbool.h>). For
+ * compilers that are in 1999 mode (C99 compliant) we can use
+ * the language keyword _Bool which can allow for better code
+ * on GCC and GCC-like compilers, opposed to `int`.
+ */
+#ifndef __cplusplus
+#   ifdef  false
+#       undef  false
+#   endif /* !false */
+#   ifdef  true
+#       undef true
+#   endif /* !true  */
+#   define false (0)
+#   define true  (1)
+#   define bool _Bool
+#   if __STDC_VERSION__ < 199901L && __GNUC__ < 3
+        typedef int  _Bool
+#   endif
+#   endif /* !__cplusplus */
+
 /*
  * stdint.h and inttypes.h -less subset
  * for systems that don't have it, which we must
@@ -508,8 +532,9 @@ enum {
     COMPILER_QCCX,    /* qccx   QuakeC */
     COMPILER_GMQCC    /* this   QuakeC */
 };
-extern int opts_debug;
-extern int opts_memchk;
-extern int opts_darkplaces_stringtablebug;
-extern int opts_omit_nullcode;
+extern bool opts_debug;
+extern bool opts_memchk;
+extern bool opts_darkplaces_stringtablebug;
+extern bool opts_omit_nullcode;
+extern int  opts_compiler;
 #endif
