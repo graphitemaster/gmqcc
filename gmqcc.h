@@ -400,7 +400,12 @@ int         code_fields_add    (prog_section_field);
 int         code_functions_add (prog_section_function);
 int         code_globals_add   (int);
 int         code_chars_add     (char);
-int         code_strings_add   (const char *); /* function wrapping code_chars_add */
+int         code_statements_put(prog_section_statement*, size_t);
+int         code_defs_put      (prog_section_def*,       size_t);
+int         code_fields_put    (prog_section_field*,     size_t);
+int         code_functions_put (prog_section_function*,  size_t);
+int         code_globals_put   (int*,                    size_t);
+int         code_chars_put     (char*,                   size_t);
 extern long code_statements_elements;
 extern long code_chars_elements;
 extern long code_globals_elements;

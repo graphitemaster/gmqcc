@@ -140,7 +140,7 @@ void asm_parse(FILE *fp) {
                 .nargs      =  0,
                 .argsize    = {0}
             });
-            code_strings_add(skip);
+            code_chars_put(skip, strlen(skip));
         };
 
         #if 0
