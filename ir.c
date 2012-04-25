@@ -346,7 +346,7 @@ void ir_value_set_name(ir_value *self, const char *name)
     self->name = util_strdup(name);
 }
 
-ir_bool ir_value_set_float(ir_value *self, float f)
+qbool ir_value_set_float(ir_value *self, float f)
 {
     if (self->vtype != qc_float)
         return ifalse;
@@ -355,7 +355,7 @@ ir_bool ir_value_set_float(ir_value *self, float f)
     return itrue;
 }
 
-ir_bool ir_value_set_vector(ir_value *self, qc_vec_t v)
+qbool ir_value_set_vector(ir_value *self, qc_vec_t v)
 {
     if (self->vtype != qc_vector)
         return ifalse;
@@ -364,7 +364,7 @@ ir_bool ir_value_set_vector(ir_value *self, qc_vec_t v)
     return itrue;
 }
 
-ir_bool ir_value_set_string(ir_value *self, const char *str)
+qbool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != qc_string)
         return ifalse;
@@ -373,7 +373,7 @@ ir_bool ir_value_set_string(ir_value *self, const char *str)
     return itrue;
 }
 
-ir_bool ir_value_set_int(ir_value *self, int i)
+qbool ir_value_set_int(ir_value *self, int i)
 {
     if (self->vtype != qc_int)
         return ifalse;
@@ -382,7 +382,7 @@ ir_bool ir_value_set_int(ir_value *self, int i)
     return itrue;
 }
 
-ir_bool ir_value_lives(ir_value *self, size_t at)
+qbool ir_value_lives(ir_value *self, size_t at)
 {
     size_t i;
     for (i = 0; i < self->life_count; ++i)
@@ -405,7 +405,7 @@ void ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
     self->life[idx] = e;
 }
 
-ir_bool ir_value_life_merge(ir_value *self, size_t s)
+qbool ir_value_life_merge(ir_value *self, size_t s)
 {
     size_t i;
     ir_life_entry_t *life = NULL;
@@ -466,4 +466,162 @@ ir_bool ir_value_life_merge(ir_value *self, size_t s)
     new_entry.start = new_entry.end = s;
     ir_value_life_insert(self, i, new_entry);
     return itrue;
+}
+
+/***********************************************************************
+ *IR main operations
+ */
+
+qbool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
+{
+    if (target->store == qc_localval) {
+        fprintf(stderr, "cannot store to an SSA value\n");
+        return ifalse;
+    } else {
+        ir_instr *in = ir_instr_new(self, op);
+        ir_instr_op(in, 0, target, itrue);
+        ir_instr_op(in, 1, what, ifalse);
+        ir_block_instr_add(self, in);
+        return itrue;
+    }
+}
+
+qbool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
+{
+    int op = 0;
+    int vtype;
+    if (target->vtype == qc_variant)
+        vtype = what->vtype;
+    else
+        vtype = target->vtype;
+
+    switch (vtype) {
+        case qc_float:
+            if (what->vtype == qc_int)
+                op = INSTR_CONV_ITOF;
+            else
+                op = INSTR_STORE_F;
+            break;
+        case qc_vector:
+            op = INSTR_STORE_V;
+            break;
+        case qc_entity:
+            op = INSTR_STORE_ENT;
+            break;
+        case qc_string:
+            op = INSTR_STORE_S;
+            break;
+        case qc_int:
+            if (what->vtype == qc_int)
+                op = INSTR_CONV_FTOI;
+            else
+                op = INSTR_STORE_I;
+            break;
+        case qc_pointer:
+            op = INSTR_STORE_I;
+            break;
+    }
+    return ir_block_create_store_op(self, op, target, what);
+}
+
+void ir_block_create_return(ir_block *self, ir_value *v)
+{
+    ir_instr *in;
+    if (self->final) {
+        fprintf(stderr, "block already ended (%s)\n", self->_label);
+        return;
+    }
+    self->final = itrue;
+    self->is_return = itrue;
+    in = ir_instr_new(self, INSTR_RETURN);
+    ir_instr_op(in, 0, v, ifalse);
+    ir_block_instr_add(self, in);
+}
+
+void ir_block_create_if(ir_block *self, ir_value *v,
+                        ir_block *ontrue, ir_block *onfalse)
+{
+    ir_instr *in;
+    if (self->final) {
+        fprintf(stderr, "block already ended (%s)\n", self->_label);
+        return;
+    }
+    self->final = itrue;
+    //in = ir_instr_new(self, (v->vtype == qc_string ? INSTR_IF_S : INSTR_IF_F));
+    in = ir_instr_new(self, VINSTR_COND);
+    ir_instr_op(in, 0, v, ifalse);
+    in->bops[0] = ontrue;
+    in->bops[1] = onfalse;
+    ir_block_instr_add(self, in);
+
+    ir_block_exits_add(self, ontrue);
+    ir_block_exits_add(self, onfalse);
+    ir_block_entries_add(ontrue, self);
+    ir_block_entries_add(onfalse, self);
+}
+
+void ir_block_create_jump(ir_block *self, ir_block *to)
+{
+    ir_instr *in;
+    if (self->final) {
+        fprintf(stderr, "block already ended (%s)\n", self->_label);
+        return;
+    }
+    self->final = itrue;
+    in = ir_instr_new(self, VINSTR_JUMP);
+    in->bops[0] = to;
+    ir_block_instr_add(self, in);
+
+    ir_block_exits_add(self, to);
+    ir_block_entries_add(to, self);
+}
+
+void ir_block_create_goto(ir_block *self, ir_block *to)
+{
+    ir_instr *in;
+    if (self->final) {
+        fprintf(stderr, "block already ended (%s)\n", self->_label);
+        return;
+    }
+    self->final = itrue;
+    in = ir_instr_new(self, INSTR_GOTO);
+    in->bops[0] = to;
+    ir_block_instr_add(self, in);
+
+    ir_block_exits_add(self, to);
+    ir_block_entries_add(to, self);
+}
+
+ir_instr* ir_block_create_phi(ir_block *self, const char *label, int ot)
+{
+    ir_value *out;
+    ir_instr *in;
+    in = ir_instr_new(self, VINSTR_PHI);
+    out = ir_value_out(self->owner, label, qc_localval, ot);
+    ir_instr_op(in, 0, out, itrue);
+    ir_block_instr_add(self, in);
+    return in;
+}
+
+ir_value* ir_phi_value(ir_instr *self)
+{
+    return self->_ops[0];
+}
+
+void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
+{
+    ir_phi_entry_t pe;
+
+    if (!ir_block_entries_find(self->owner, b, NULL)) {
+        /* Must not be possible to cause this, otherwise the AST
+         * is doing something wrong.
+         */
+        fprintf(stderr, "Invalid entry block for PHI\n");
+        abort();
+    }
+
+    pe.value = v;
+    pe.from = b;
+    ir_value_reads_add(v, self);
+    ir_instr_phi_add(self, pe);
 }
