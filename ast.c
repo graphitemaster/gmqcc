@@ -160,62 +160,62 @@ void ast_function_delete(ast_function *self)
 
 static qbool ast_value_gen_global(ir_builder *ir, ast_value *self, ir_value **out)
 {
-	ir_value *v;
-	*out = NULL;
+    ir_value *v;
+    *out = NULL;
 
-	/* Generate functions */
-	if (self->vtype == qc_function && self->has_constval)
-	{
-		/* Without has_constval it would be invalid... function pointers actually have
-		 * type qc_pointer and next with type qc_function
-		 */
-		ast_function *func = self->cvalue.vfunc;
-		(void)func;
-		if (!ast_function_codegen(func, ir))
-			return false;
+    /* Generate functions */
+    if (self->vtype == qc_function && self->has_constval)
+    {
+        /* Without has_constval it would be invalid... function pointers actually have
+         * type qc_pointer and next with type qc_function
+         */
+        ast_function *func = self->cvalue.vfunc;
+        (void)func;
+        if (!ast_function_codegen(func, ir))
+            return false;
 
-		/* Here we do return NULL anyway */
-		return true;
-	}
-	else if (self->vtype == qc_function && !self->has_constval) {
-		fprintf(stderr,
-		"!v->has_constval <- qc_function body missing - FIXME: remove when implementing prototypes\n");
-		fprintf(stderr, "Value: %s\n", self->_name);
-		abort();
-	}
+        /* Here we do return NULL anyway */
+        return true;
+    }
+    else if (self->vtype == qc_function && !self->has_constval) {
+        fprintf(stderr,
+        "!v->has_constval <- qc_function body missing - FIXME: remove when implementing prototypes\n");
+        fprintf(stderr, "Value: %s\n", self->_name);
+        abort();
+    }
 
-	v = ir_builder_create_global(ir, self->_name, self->vtype);
-	self->ir_v = v;
+    v = ir_builder_create_global(ir, self->_name, self->vtype);
+    self->ir_v = v;
 
-	*out = v;
-	return true;
+    *out = v;
+    return true;
 }
 
 qbool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
 {
-	if (!func)
-		return ast_value_gen_global(parser.ir, self, out);
-	return false;
+    if (!func)
+        return ast_value_gen_global(parser.ir, self, out);
+    return false;
 }
 
 qbool ast_function_codegen(ast_function *self, ir_builder *builder)
 {
-	size_t i;
-	for (i = 0; i < self->blocks_count; ++i)
-	{
-		ast_expression *expr;
-		ir_value *out;
+    size_t i;
+    for (i = 0; i < self->blocks_count; ++i)
+    {
+        ast_expression *expr;
+        ir_value *out;
 
-		expr = (ast_expression*)self->blocks[i];
+        expr = (ast_expression*)self->blocks[i];
 
-		if (!(expr->expression.codegen)(expr, self, &out))
-		{
-			/* there was an error while building this expression... */
-			return false;
-		}
-		(void)out;
-	}
-	return true;
+        if (!(expr->expression.codegen)(expr, self, &out))
+        {
+            /* there was an error while building this expression... */
+            return false;
+        }
+        (void)out;
+    }
+    return true;
 }
 
 qbool ast_block_codegen(ast_block *self, ir_function *func, ir_value **out)
