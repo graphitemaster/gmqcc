@@ -851,3 +851,102 @@ ir_value* ir_block_create_div(ir_block *self,
     }
     return ir_block_create_binop(self, label, op, left, right);
 }
+
+/* PHI resolving breaks the SSA, and must thus be the last
+ * step before life-range calculation.
+ */
+
+static void ir_block_naive_phi(ir_block *self);
+void ir_function_naive_phi(ir_function *self)
+{
+    size_t i;
+
+    for (i = 0; i < self->blocks_count; ++i)
+        ir_block_naive_phi(self->blocks[i]);
+}
+
+static void ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, ir_value *what)
+{
+    ir_instr *instr;
+    size_t i;
+
+    /* create a store */
+    ir_block_create_store(block, old, what);
+
+    /* we now move it up */
+    instr = block->instr[block->instr_count-1];
+    for (i = block->instr_count; i > iid; --i)
+        block->instr[i] = block->instr[i-1];
+    block->instr[i] = instr;
+}
+
+static void ir_block_naive_phi(ir_block *self)
+{
+    size_t i, p, w;
+    /* FIXME: optionally, create_phi can add the phis
+     * to a list so we don't need to loop through blocks
+     * - anyway: "don't optimize YET"
+     */
+    for (i = 0; i < self->instr_count; ++i)
+    {
+        ir_instr *instr = self->instr[i];
+        if (instr->opcode != VINSTR_PHI)
+            continue;
+
+        ir_block_instr_remove(self, i);
+        --i; /* NOTE: i+1 below */
+
+        for (p = 0; p < instr->phi_count; ++p)
+        {
+            ir_value *v = instr->phi[p].value;
+            for (w = 0; w < v->writes_count; ++w) {
+                ir_value *old;
+
+                if (!v->writes[w]->_ops[0])
+                    continue;
+
+                /* When the write was to a global, we have to emit a mov */
+                old = v->writes[w]->_ops[0];
+
+                /* The original instruction now writes to the PHI target local */
+                if (v->writes[w]->_ops[0] == v)
+                    v->writes[w]->_ops[0] = instr->_ops[0];
+
+                if (old->store != qc_localval)
+                {
+                    /* If it originally wrote to a global we need to store the value
+                     * there as welli
+                     */
+                    ir_naive_phi_emit_store(self, i+1, old, v);
+                    if (i+1 < self->instr_count)
+                        instr = self->instr[i+1];
+                    else
+                        instr = NULL;
+                    /* In case I forget and access instr later, it'll be NULL
+                     * when it's a problem, to make sure we crash, rather than accessing
+                     * invalid data.
+                     */
+                }
+                else
+                {
+                    /* If it didn't, we can replace all reads by the phi target now. */
+                    size_t r;
+                    for (r = 0; r < old->reads_count; ++r)
+                    {
+                        size_t op;
+                        ir_instr *ri = old->reads[r];
+                        for (op = 0; op < ri->phi_count; ++op) {
+                            if (ri->phi[op].value == old)
+                                ri->phi[op].value = v;
+                        }
+                        for (op = 0; op < 3; ++op) {
+                            if (ri->_ops[op] == old)
+                                ri->_ops[op] = v;
+                        }
+                    }
+                }
+            }
+        }
+        ir_instr_delete(instr);
+    }
+}
