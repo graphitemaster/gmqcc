@@ -42,7 +42,7 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type_t t)
     self->vtype = t;
     self->next = NULL;
     MEM_VECTOR_INIT(self, params);
-    self->has_constval = ifalse;
+    self->has_constval = false;
     memset(&self->cvalue, 0, sizeof(self->cvalue));
 
     self->ir_v = NULL;
@@ -172,10 +172,10 @@ static qbool ast_value_gen_global(ir_builder *ir, ast_value *self, ir_value **ou
 		ast_function *func = self->cvalue.vfunc;
 		(void)func;
 		if (!ast_function_codegen(func, ir))
-			return ifalse;
+			return false;
 
 		/* Here we do return NULL anyway */
-		return itrue;
+		return true;
 	}
 	else if (self->vtype == qc_function && !self->has_constval) {
 		fprintf(stderr,
@@ -188,14 +188,14 @@ static qbool ast_value_gen_global(ir_builder *ir, ast_value *self, ir_value **ou
 	self->ir_v = v;
 
 	*out = v;
-	return itrue;
+	return true;
 }
 
 qbool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
 {
 	if (!func)
 		return ast_value_gen_global(parser.ir, self, out);
-	return ifalse;
+	return false;
 }
 
 qbool ast_function_codegen(ast_function *self, ir_builder *builder)
@@ -211,19 +211,19 @@ qbool ast_function_codegen(ast_function *self, ir_builder *builder)
 		if (!(expr->expression.codegen)(expr, self, &out))
 		{
 			/* there was an error while building this expression... */
-			return ifalse;
+			return false;
 		}
 		(void)out;
 	}
-	return itrue;
+	return true;
 }
 
 qbool ast_block_codegen(ast_block *self, ir_function *func, ir_value **out)
 {
-	return ifalse;
+    return false;
 }
 
 qbool ast_bin_store_codegen(ast_binary *self, ir_function *func, ir_value **out)
 {
-	return ifalse;
+    return false;
 }
