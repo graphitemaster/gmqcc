@@ -292,3 +292,196 @@ void ir_instr_op(ir_instr *self, int op, ir_value *v, qbool writing)
     }
     self->_ops[op] = v;
 }
+
+/***********************************************************************
+ *IR Value
+ */
+
+ir_value* ir_value_var(const char *name, int storetype, int vtype)
+{
+    ir_value *self;
+    self = (ir_value*)mem_a(sizeof(*self));
+    self->vtype = vtype;
+    self->store = storetype;
+    MEM_VECTOR_INIT(self, reads);
+    MEM_VECTOR_INIT(self, writes);
+    self->has_constval = ifalse;
+    self->context.file = "<@no context>";
+    self->context.line = 0;
+    self->name = NULL;
+    ir_value_set_name(self, name);
+
+    MEM_VECTOR_INIT(self, life);
+    return self;
+}
+MEM_VECTOR_FUNCTIONS(ir_value, ir_life_entry_t, life)
+MEM_VECTOR_FUNCTIONS(ir_value, ir_instr*, reads)
+MEM_VECTOR_FUNCTIONS(ir_value, ir_instr*, writes)
+
+ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int vtype)
+{
+    ir_value *v = ir_value_var(name, storetype, vtype);
+    ir_function_collect_value(owner, v);
+    return v;
+}
+
+void ir_value_delete(ir_value* self)
+{
+    mem_d((void*)self->name);
+    if (self->has_constval)
+    {
+        if (self->vtype == qc_string)
+            mem_d((void*)self->cvalue.vstring);
+    }
+    MEM_VECTOR_CLEAR(self, reads);
+    MEM_VECTOR_CLEAR(self, writes);
+    MEM_VECTOR_CLEAR(self, life);
+    mem_d(self);
+}
+
+void ir_value_set_name(ir_value *self, const char *name)
+{
+    if (self->name)
+        mem_d((void*)self->name);
+    self->name = util_strdup(name);
+}
+
+ir_bool ir_value_set_float(ir_value *self, float f)
+{
+    if (self->vtype != qc_float)
+        return ifalse;
+    self->cvalue.vfloat = f;
+    self->has_constval = itrue;
+    return itrue;
+}
+
+ir_bool ir_value_set_vector(ir_value *self, qc_vec_t v)
+{
+    if (self->vtype != qc_vector)
+        return ifalse;
+    self->cvalue.vvec = v;
+    self->has_constval = itrue;
+    return itrue;
+}
+
+ir_bool ir_value_set_string(ir_value *self, const char *str)
+{
+    if (self->vtype != qc_string)
+        return ifalse;
+    self->cvalue.vstring = util_strdup(str);
+    self->has_constval = itrue;
+    return itrue;
+}
+
+ir_bool ir_value_set_int(ir_value *self, int i)
+{
+    if (self->vtype != qc_int)
+        return ifalse;
+    self->cvalue.vint = i;
+    self->has_constval = itrue;
+    return itrue;
+}
+
+ir_bool ir_value_lives(ir_value *self, size_t at)
+{
+    size_t i;
+    for (i = 0; i < self->life_count; ++i)
+    {
+        ir_life_entry_t *life = &self->life[i];
+        if (life->start <= at && at <= life->end)
+            return itrue;
+        if (life->start > at) /* since it's ordered */
+            return ifalse;
+    }
+    return ifalse;
+}
+
+/*
+void ir_value_life_remove(ir_value *self, size_t idx)
+{
+    size_t i;
+    if (idx >= self->life_count)
+        return;
+    for (i = idx; i < self->life_count-1; ++i)
+        self->life[i] = self->life[i+1];
+    self->life_count--;
+    if (self->life_count < self->life_alloc/2)
+    {
+        self->life_alloc /= 2;
+        self->life = (ir_life_entry_t*)realloc(self->life,
+            self->life_alloc * sizeof(ir_life_entry_t));
+    }
+}
+*/
+
+void ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
+{
+    size_t k;
+    ir_value_life_add(self, e); /* naive... */
+    for (k = self->life_count-1; k > idx; --k)
+        self->life[k] = self->life[k-1];
+    self->life[idx] = e;
+}
+
+ir_bool ir_value_life_merge(ir_value *self, size_t s)
+{
+    size_t i;
+    ir_life_entry_t *life = NULL;
+    ir_life_entry_t *before = NULL;
+    ir_life_entry_t new_entry;
+
+    /* Find the first range >= s */
+    for (i = 0; i < self->life_count; ++i)
+    {
+        before = life;
+        life = &self->life[i];
+        if (life->start > s)
+            break;
+    }
+    /* nothing found? append */
+    if (i == self->life_count) {
+        if (life && life->end+1 == s)
+        {
+            /* previous life range can be merged in */
+            life->end++;
+            return itrue;
+        }
+        if (life && life->end >= s)
+            return ifalse;
+        ir_life_entry_t e;
+        e.start = e.end = s;
+        ir_value_life_add(self, e);
+        return itrue;
+    }
+    /* found */
+    if (before)
+    {
+        if (before->end + 1 == s &&
+            life->start - 1 == s)
+        {
+            /* merge */
+            before->end = life->end;
+            ir_value_life_remove(self, i);
+            return itrue;
+        }
+        if (before->end + 1 == s)
+        {
+            /* extend before */
+            before->end++;
+            return itrue;
+        }
+        /* already contained */
+        if (before->end >= s)
+            return ifalse;
+    }
+    /* extend */
+    if (life->start - 1 == s)
+    {
+        life->start--;
+        return itrue;
+    }
+    /* insert a new entry */
+    new_entry.start = new_entry.end = s;
+    ir_value_life_insert(self, i, new_entry);
+    return itrue;
+}
