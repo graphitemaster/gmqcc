@@ -208,14 +208,16 @@ uint32_t util_crc32(const char *, int, register const short);
 //===================================================================
 //=========================== code.c ================================
 //===================================================================
-#define TYPE_VOID     0
-#define TYPE_STRING   1
-#define TYPE_FLOAT    2
-#define TYPE_VECTOR   3
-#define TYPE_ENTITY   4
-#define TYPE_FIELD    5
-#define TYPE_FUNCTION 6
-#define TYPE_POINTER  7
+enum {
+    TYPE_VOID     ,
+    TYPE_STRING   ,
+    TYPE_FLOAT    ,
+    TYPE_VECTOR   ,
+    TYPE_ENTITY   ,
+    TYPE_FIELD    ,
+    TYPE_FUNCTION ,
+    TYPE_POINTER
+};
 
 /*
  * Each paramater incerements by 3 since vector types hold
