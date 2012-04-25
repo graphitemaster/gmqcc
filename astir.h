@@ -2,13 +2,13 @@
 #define ASTIR_COMMON_H__
 
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)        \
-    void Towner##_##mem##_add(Towner*, Tmem);
+    void Towner##_##mem##_add(Towner*, Tmem);      \
+    void Towner##_##mem##_remove(Towner*, size_t);
 
 #define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)          \
     MEM_VECTOR_PROTO(Towner, Towner, Tmem, mem)          \
     qbool Towner##_##mem##_find(Towner*, Tmem, size_t*); \
-    void Towner##_##mem##_clear(Towner*);                \
-    void Towner##_##mem##_remove(Towner*, size_t);
+    void Towner##_##mem##_clear(Towner*);
 
 #define MEM_VECTOR_MAKE(Twhat, name) \
     Twhat  *name;                    \
@@ -86,11 +86,11 @@ void Tself##_##mem##_clear(Tself *self) \
 }
 
 #define MEM_VEC_FUNCTIONS(Tself, Twhat, mem) \
+_MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)       \
 _MEM_VEC_FUN_ADD(Tself, Twhat, mem)
 
 #define MEM_VEC_FUNCTIONS_ALL(Tself, Twhat, mem) \
 MEM_VEC_FUNCTIONS(Tself, Twhat, mem)             \
-_MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)           \
 _MEM_VEC_FUN_CLEAR(Tself, Twhat, mem)            \
 _MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 

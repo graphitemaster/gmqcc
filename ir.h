@@ -19,8 +19,8 @@ typedef struct ir_value_s {
     ir_store_t store;
     filecontext_t context;
 
-    MAKE_VEC(struct ir_instr_s*, reads);
-    MAKE_VEC(struct ir_instr_s*, writes);
+    MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
+    MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
 
     /* constantvalues */
     union {
@@ -33,7 +33,7 @@ typedef struct ir_value_s {
     qbool has_constval;
 
     /* For the temp allocator */
-    MAKE_VEC(ir_life_entry_t, life);
+    MEM_VECTOR_MAKE(ir_life_entry_t, life);
 } ir_value;
 
 /* ir_value can be a variable, or created by an operation */
@@ -45,8 +45,8 @@ ir_value* ir_value_out(struct ir_function_s *owner, const char *name, ir_store_t
 void      ir_value_delete(ir_value*);
 void      ir_value_set_name(ir_value*, const char *name);
 
-void    ir_value_reads_add(ir_value*, struct ir_instr_s*);
-void    ir_value_writes_add(ir_value*, struct ir_instr_s*);
+MEM_VECTOR_PROTO(ir_value, struct ir_instr_s*, reads)
+MEM_VECTOR_PROTO(ir_value, struct ir_instr_s*, writes)
 
 qbool   ir_value_set_float(ir_value*, float f);
 qbool   ir_value_set_int(ir_value*, int i);
@@ -55,7 +55,7 @@ qbool   ir_value_set_vector(ir_value*, qc_vec_t v);
 /*qbool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*qbool   ir_value_set_pointer_i(ir_value*, int i);       */
 
-void ir_value_life_add(ir_value*, ir_life_entry_t e);
+MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life)
 /* merge an instruction into the life-range */
 /* returns false if the lifepoint was already known */
 qbool ir_value_life_merge(ir_value*, size_t);
@@ -79,7 +79,7 @@ typedef struct ir_instr_s
     ir_value*     (_ops[3]);
     struct ir_block_s* (bops[2]);
 
-    MAKE_VEC(ir_phi_entry_t, phi);
+    MEM_VECTOR_MAKE(ir_phi_entry_t, phi);
 
     /* For the temp-allocation */
     size_t eid;
@@ -90,7 +90,7 @@ typedef struct ir_instr_s
 ir_instr* ir_instr_new(struct ir_block_s *owner, ir_op_t opcode);
 void      ir_instr_delete(ir_instr*);
 
-void ir_instr_phi_add(ir_instr*, ir_phi_entry_t e);
+MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi)
 void ir_instr_op(ir_instr*, int op, ir_value *value, qbool writing);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
@@ -102,10 +102,10 @@ typedef struct ir_block_s
     filecontext_t context;
     qbool         final; /* once a jump is added we're done */
 
-    MAKE_VEC(ir_instr*, instr);
-    MAKE_VEC(struct ir_block_s*, entries);
-    MAKE_VEC(struct ir_block_s*, exits);
-    MAKE_VEC(ir_value*, living);
+    MEM_VECTOR_MAKE(ir_instr*, instr);
+    MEM_VECTOR_MAKE(struct ir_block_s*, entries);
+    MEM_VECTOR_MAKE(struct ir_block_s*, exits);
+    MEM_VECTOR_MAKE(ir_value*, living);
 
     /* For the temp-allocation */
     size_t eid;
@@ -120,11 +120,9 @@ void      ir_block_delete(ir_block*);
 
 void      ir_block_set_label(ir_block*, const char *label);
 
-void      ir_block_instr_add(ir_block*, ir_instr *instr);
-void      ir_block_instr_remove(ir_block*, size_t idx);
-void      ir_block_exits_add(ir_block*, ir_block *b);
-void      ir_block_entries_add(ir_block*, ir_block *b);
-qbool     ir_block_entries_find(ir_block*, ir_block *b, size_t *idx);
+MEM_VECTOR_PROTO(ir_block, ir_instr*, instr)
+MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, exits)
+MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries)
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, ir_op_t op,
                                 ir_value *left, ir_value *right);
@@ -152,9 +150,7 @@ void      ir_block_create_if(ir_block*, ir_value *cond,
 void      ir_block_create_jump(ir_block*, ir_block *to);
 void      ir_block_create_goto(ir_block*, ir_block *to);
 
-void      ir_block_living_add(ir_block*, ir_value*);
-void      ir_block_living_remove(ir_block*, size_t idx);
-qbool     ir_block_living_find(ir_block*, ir_value*, size_t *idx);
+MEM_VECTOR_PROTO_ALL(ir_block, ir_value*, living)
 
 void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
@@ -164,17 +160,17 @@ typedef struct ir_function_s
 {
     const char    *_name;
     ir_type_t     retype;
-    MAKE_VEC(ir_type_t, params);
-    MAKE_VEC(ir_block*, blocks);
+    MEM_VECTOR_MAKE(ir_type_t, params);
+    MEM_VECTOR_MAKE(ir_block*, blocks);
 
     /* values generated from operations
      * which might get optimized away, so anything
      * in there needs to be deleted in the dtor.
      */
-    MAKE_VEC(ir_value*, values);
+    MEM_VECTOR_MAKE(ir_value*, values);
 
     /* locally defined variables */
-    MAKE_VEC(ir_value*, locals);
+    MEM_VECTOR_MAKE(ir_value*, locals);
 
     ir_block*     first;
     ir_block*     last;
@@ -193,8 +189,8 @@ void         ir_function_delete(ir_function*);
 void ir_function_collect_value(ir_function*, ir_value *value);
 
 void ir_function_set_name(ir_function*, const char *name);
-void ir_function_params_add(ir_function*, ir_type_t p);
-void ir_function_blocks_add(ir_function*, ir_block *b);
+MEM_VECTOR_PROTO(ir_function, ir_type_t, params)
+MEM_VECTOR_PROTO(ir_function, ir_block*, blocks)
 
 ir_value* ir_function_get_local(ir_function *self, const char *name);
 ir_value* ir_function_create_local(ir_function *self, const char *name, ir_type_t vtype);
@@ -214,8 +210,8 @@ void ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 typedef struct ir_builder_s
 {
     const char     *_name;
-    MAKE_VEC(ir_function*, functions);
-    MAKE_VEC(ir_value*, globals);
+    MEM_VECTOR_MAKE(ir_function*, functions);
+    MEM_VECTOR_MAKE(ir_value*, globals);
 } ir_builder;
 
 ir_builder* ir_builder_new(const char *modulename);
@@ -223,8 +219,8 @@ void        ir_builder_delete(ir_builder*);
 
 void ir_builder_set_name(ir_builder *self, const char *name);
 
-void ir_builder_functions_add(ir_builder* b, ir_function* f);
-void ir_builder_globals_add(ir_builder* b, ir_value* f);
+MEM_VECTOR_PROTO(ir_builder, ir_function*, functions)
+MEM_VECTOR_PROTO(ir_builder, ir_value*, globals)
 
 ir_function* ir_builder_get_function(ir_builder*, const char *fun);
 ir_function* ir_builder_create_function(ir_builder*, const char *name);
