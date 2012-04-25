@@ -6,10 +6,10 @@ ir_builder* ir_builder_new(const char *modulename)
 {
 	ir_builder* self;
 
-	self = (ir_builder*)malloc(sizeof(*self));
-	VEC_INIT(self, functions);
-	VEC_INIT(self, globals);
-	self->_name = NULL;
+	self = (ir_builder*)mem_a(sizeof(*self));
+	MEM_VECTOR_INIT(self, functions);
+	MEM_VECTOR_INIT(self, globals);
+	self->name = NULL;
 	ir_builder_set_name(self, modulename);
 
 	/* globals which always exist */
@@ -20,13 +20,13 @@ ir_builder* ir_builder_new(const char *modulename)
 	return self;
 }
 
-MAKE_VEC_ADD(ir_builder, ir_value*, globals)
-MAKE_VEC_ADD(ir_builder, ir_function*, functions)
+MEM_VEC_FUNCTIONS(ir_builder, ir_value*, globals)
+MEM_VECTOR_FUNCTIONS(ir_builder, ir_function*, functions)
 
 void ir_builder_delete(ir_builder* self)
 {
 	size_t i;
-	free((void*)self->_name);
+	mem_d((void*)self->name);
 	for (i = 0; i != self->functions_count; ++i) {
 		ir_function_delete(self->functions[i]);
 	}
@@ -35,21 +35,21 @@ void ir_builder_delete(ir_builder* self)
 		ir_value_delete(self->globals[i]);
 	}
 	VEC_CLEAR(self, globals);
-	free(self);
+	mem_d(self);
 }
 
 void ir_builder_set_name(ir_builder *self, const char *name)
 {
-	if (self->_name)
-		free((void*)self->_name);
-	self->_name = strdup(name);
+	if (self->name)
+		mem_d((void*)self->name);
+	self->name = util_strdup(name);
 }
 
 ir_function* ir_builder_get_function(ir_builder *self, const char *name)
 {
 	size_t i;
 	for (i = 0; i < self->functions_count; ++i) {
-		if (!strcmp(name, self->functions[i]->_name))
+		if (!strcmp(name, self->functions[i]->name))
 			return self->functions[i];
 	}
 	return NULL;
@@ -72,7 +72,7 @@ ir_value* ir_builder_get_global(ir_builder *self, const char *name)
 {
 	size_t i;
 	for (i = 0; i < self->globals_count; ++i) {
-		if (!strcmp(self->globals[i]->_name, name))
+		if (!strcmp(self->globals[i]->name, name))
 			return self->globals[i];
 	}
 	return NULL;
