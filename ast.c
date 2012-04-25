@@ -170,7 +170,6 @@ static qbool ast_value_gen_global(ir_builder *ir, ast_value *self, ir_value **ou
          * type qc_pointer and next with type qc_function
          */
         ast_function *func = self->cvalue.vfunc;
-        (void)func;
         if (!ast_function_codegen(func, ir))
             return false;
 
