@@ -84,7 +84,7 @@ void ast_value_set_name(ast_value *self, const char *name)
     self->name = util_strdup(name);
 }
 
-ast_binary* ast_binary_new(filecontext_t ctx, qc_op_t op,
+ast_binary* ast_binary_new(lex_ctx_t ctx, qc_op_t op,
                            ast_value* left, ast_value* right)
 {
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
@@ -102,7 +102,7 @@ void ast_binary_delete(ast_binary *self)
     mem_d(self);
 }
 
-ast_block* ast_block_new(filecontext_t ctx)
+ast_block* ast_block_new(lex_ctx_t ctx)
 {
     ast_instantiate(ast_block, ctx, ast_block_delete);
     ast_expression_init((ast_expression*)self,
@@ -128,7 +128,7 @@ void ast_block_delete(ast_block *self)
     mem_d(self);
 }
 
-ast_function* ast_function_new(filecontext_t ctx, const char *name, ast_value *vtype)
+ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
 
