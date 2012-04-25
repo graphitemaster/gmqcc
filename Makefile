@@ -1,4 +1,4 @@
-CC      = clang
+CC     ?= clang
 CFLAGS += -Wall
 OBJ     = main.o      \
           lex.o       \
@@ -7,7 +7,9 @@ OBJ     = main.o      \
           typedef.o   \
           util.o      \
           code.o      \
-          asm.c
+          asm.c       \
+          ast.c       \
+          ir.c
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
