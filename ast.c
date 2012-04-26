@@ -111,7 +111,36 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
                            ast_value* left, ast_value* right)
 {
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
-    ast_expression_init((ast_expression*)self, NULL); /* FIXME */
+    switch (op) {
+    case INSTR_STORE_F:
+    case INSTR_STORE_V:
+    case INSTR_STORE_S:
+    case INSTR_STORE_ENT:
+    case INSTR_STORE_FLD:
+    case INSTR_STORE_FNC:
+    case INSTR_STOREP_F:
+    case INSTR_STOREP_V:
+    case INSTR_STOREP_S:
+    case INSTR_STOREP_ENT:
+    case INSTR_STOREP_FLD:
+    case INSTR_STOREP_FNC:
+#if 0
+    case INSTR_STORE_I:
+    case INSTR_STORE_IF:
+    case INSTR_STORE_FI:
+    case INSTR_STOREP_I:
+    case INSTR_STOREP_IF:
+    case INSTR_STOREP_FI:
+    case INSTR_STORE_P:
+    case INSTR_STOREP_P:
+    case INSTR_STOREP_C:
+#endif
+        ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_bin_store_codegen);
+        break;
+    default:
+        ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binary_codegen);
+        break;
+    }
 
     self->op = op;
     self->left = left;
@@ -188,6 +217,16 @@ bool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
 }
 
 bool ast_block_codegen(ast_block *self, ast_function *func, ir_value **out)
+{
+    return false;
+}
+
+bool ast_bin_store_codegen(ast_binary *self, ast_function *func, ir_value **out)
+{
+    return false;
+}
+
+bool ast_binary_codegen(ast_binary *self, ast_function *func, ir_value **out)
 {
     return false;
 }

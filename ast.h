@@ -122,15 +122,13 @@ ast_binary* ast_binary_new(lex_ctx_t  ctx,
                            ast_value *right);
 void ast_binary_delete(ast_binary*);
 
-/* hmm, seperate functions? */
-bool ast_bin_add_codegen(ast_binary*, ir_function*, ir_value**);
-/* ... */
-
+/* hmm, seperate functions?
+bool ast_block_codegen(ast_block*, ast_function*, ir_value**);
+ */
 /* maybe for this one */
-bool ast_bin_store_codegen(ast_binary*, ir_function*, ir_value**);
+bool ast_bin_store_codegen(ast_binary*, ast_function*, ir_value**);
 
-/* could decide what to use */
-bool ast_binary_codegen(ast_binary*, ir_function*, ir_value**);
+bool ast_binary_codegen(ast_binary*, ast_function*, ir_value**);
 
 /* Blocks
  *
