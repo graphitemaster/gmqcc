@@ -33,25 +33,27 @@ bool opts_omit_nullcode             = false;
 int  opts_compiler                  = COMPILER_GMQCC;
 
 static const int usage(const char *const app) {
-    printf("usage:\n");
-    printf("    %s -c<file>          -oprog.dat -- compile file\n"     , app);
-    printf("    %s -a<file>          -oprog.dat -- assemble file\n"    , app);
-    printf("    %s -c<file> -i<file> -oprog.dat -- compile together (allowed multiple -i<file>)\n" , app);
-    printf("    %s -a<file> -i<file> -oprog.dat -- assemble together(allowed multiple -i<file>)\n", app);
-    printf("    example:\n");
-    printf("    %s -cfoo.qc -ibar.qc -oqc.dat -afoo.qs -ibar.qs -oqs.dat\n", app);
-    printf("    additional flags:\n");
-    printf("        -debug           -- turns on compiler debug messages\n");
-    printf("        -memchk          -- turns on compiler memory leak check\n");
-    printf("        -help            -- prints this help/usage text\n");
-    printf("        -std             -- select the QuakeC compile type (types below):\n");
-    printf("            -std=qcc     -- original QuakeC\n");
-    printf("            -std=ftqecc  -- fteqcc QuakeC\n");
-    printf("            -std=qccx    -- qccx QuakeC\n");
-    printf("            -std=gmqcc   -- this compiler QuakeC (default selection)\n");
-    printf("    codegen flags:\n");
-    printf("        -fdarkplaces-string-table-bug -- patches the string table to work with bugged versions of darkplaces\n");
-    printf("        -fomit-nullcode               -- omits the generation of null code (will break everywhere see propsal.txt)\n");
+    printf("usage:\n"
+           "    %s -c<file>          -oprog.dat -- compile file\n"
+           "    %s -a<file>          -oprog.dat -- assemble file\n"
+           "    %s -c<file> -i<file> -oprog.dat -- compile together (allowed multiple -i<file>)\n"
+           "    %s -a<file> -i<file> -oprog.dat -- assemble together(allowed multiple -i<file>)\n"
+           "    example:\n"
+           "    %s -cfoo.qc -ibar.qc -oqc.dat -afoo.qs -ibar.qs -oqs.dat\n"
+           "    additional flags:\n"
+           "        -debug           -- turns on compiler debug messages\n"
+           "        -memchk          -- turns on compiler memory leak check\n"
+           "        -help            -- prints this help/usage text\n"
+           "        -std             -- select the QuakeC compile type (types below):\n"
+           "            -std=qcc     -- original QuakeC\n"
+           "            -std=ftqecc  -- fteqcc QuakeC\n"
+           "            -std=qccx    -- qccx QuakeC\n"
+           "            -std=gmqcc   -- this compiler QuakeC (default selection)\n"
+           "    codegen flags:\n"
+           "        -fdarkplaces-string-table-bug -- patches the string table to work with bugged versions of darkplaces\n"
+           "        -fomit-nullcode               -- omits the generation of null code (will break everywhere see propsal.txt)\n",
+            app,app,app,app,app
+    );
     return -1;
 }
 
@@ -69,6 +71,20 @@ int main(int argc, char **argv) {
 
     while ((argc > 1) && argv[1][0] == '-') {
         switch (argv[1][1]) {
+            case 'v': {
+                printf("GMQCC:\n"
+                       "    version:    %d.%d.%d (0x%08X)\n"
+                       "    build date: %s\n"
+                       "    build time: %s\n",
+                    (GMQCC_VERSION >> 16) & 0xFF,
+                    (GMQCC_VERSION >>  8) & 0xFF,
+                    (GMQCC_VERSION >>  0) & 0xFF,
+                    (GMQCC_VERSION),
+                    __DATE__,
+                    __TIME__
+                );
+                return 0;
+            }
             case 'c': items_add((argitem){util_strdup(&argv[1][2]), 0}); break; /* compile  */ 
             case 'a': items_add((argitem){util_strdup(&argv[1][2]), 1}); break; /* assemble */
             case 'i': items_add((argitem){util_strdup(&argv[1][2]), 2}); break; /* includes */
@@ -85,11 +101,11 @@ int main(int argc, char **argv) {
                 if (!strncmp(&argv[1][1], "std=qccx",   8 )) { opts_compiler = COMPILER_QCCX;   break; }
                 if (!strncmp(&argv[1][1], "std=gmqcc",  9 )) { opts_compiler = COMPILER_GMQCC;  break; }
                 if (!strncmp(&argv[1][1], "std=",       4 )) {
-                    printf("invalid std selection, supported types:\n");
-                    printf("    -std=qcc     -- original QuakeC\n");
-                    printf("    -std=ftqecc  -- fteqcc QuakeC\n");
-                    printf("    -std=qccx    -- qccx QuakeC\n");
-                    printf("    -std=gmqcc   -- this compiler QuakeC (default selection)\n");
+                    printf("invalid std selection, supported types:\n"
+                           "    -std=qcc     -- original QuakeC\n"
+                           "    -std=ftqecc  -- fteqcc QuakeC\n"
+                           "    -std=qccx    -- qccx QuakeC\n"
+                           "    -std=gmqcc   -- this compiler QuakeC (default selection)\n");
                     return 0;
                 }
 
