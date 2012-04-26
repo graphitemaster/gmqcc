@@ -27,6 +27,30 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+
+/*
+ * We cannoy rely on C99 at all, since compilers like MSVC
+ * simply don't support it.  We define our own boolean type
+ * as a result (since we cannot include <stdbool.h>). For
+ * compilers that are in 1999 mode (C99 compliant) we can use
+ * the language keyword _Bool which can allow for better code
+ * on GCC and GCC-like compilers, opposed to `int`.
+ */
+#ifndef __cplusplus
+#   ifdef  false
+#       undef  false
+#   endif /* !false */
+#   ifdef  true
+#       undef true
+#   endif /* !true  */
+#   define false (0)
+#   define true  (1)
+#   define bool _Bool
+#   if __STDC_VERSION__ < 199901L && __GNUC__ < 3
+        typedef int  _Bool
+#   endif
+#   endif /* !__cplusplus */
+
 /*
  * stdint.h and inttypes.h -less subset
  * for systems that don't have it, which we must
@@ -160,16 +184,16 @@ int           typedef_add (struct lex_file *file, const char *, const char *);
 //===================================================================
 //=========================== util.c ================================
 //===================================================================
-void *util_memory_a  (unsigned int, unsigned int, const char *);
-void  util_memory_d  (void       *, unsigned int, const char *);
-void  util_meminfo   ();
+void *util_memory_a      (unsigned int, unsigned int, const char *);
+void  util_memory_d      (void       *, unsigned int, const char *);
+void  util_meminfo       ();
 
-char *util_strdup    (const char *);
-char *util_strrq     (char *);
-char *util_strrnl    (char *);
-void  util_debug     (const char *, const char *, ...);
-int   util_getline   (char **, size_t *, FILE *);
-void  util_endianswap(void *, int, int);
+char *util_strdup        (const char *);
+char *util_strrq         (char *);
+char *util_strrnl        (char *);
+void  util_debug         (const char *, const char *, ...);
+int   util_getline       (char **, size_t *, FILE *);
+void  util_endianswap    (void *,  int, int);
 
 uint32_t util_crc32(const char *, int, register const short); 
 
@@ -181,29 +205,44 @@ uint32_t util_crc32(const char *, int, register const short);
 #    define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
 #endif
 
-#define VECTOR_MAKE(T,N)                                                 \
-    T*     N##_data      = NULL;                                         \
-    long   N##_elements  = 0;                                            \
-    long   N##_allocated = 0;                                            \
-    int    N##_add(T element) {                                          \
-        if (N##_elements == N##_allocated) {                             \
-            if (N##_allocated == 0) {                                    \
-                N##_allocated = 12;                                      \
-            } else {                                                     \
-                N##_allocated *= 2;                                      \
-            }                                                            \
-            void *temp = mem_a(N##_allocated * sizeof(T));               \
-            if  (!temp) {                                                \
-                mem_d(temp);                                             \
-                return -1;                                               \
-            }                                                            \
-            memcpy(temp, N##_data, (N##_elements * sizeof(T)));          \
-            mem_d(N##_data);                                             \
-            N##_data = (T*)temp;                                         \
-        }                                                                \
-        N##_data[N##_elements] = element;                                \
-        return   N##_elements++;                                         \
+/* Builds vector type (usefull for inside structures) */
+#define VECTOR_TYPE(T,N)                                        \
+    T*     N##_data      = NULL;                                \
+    long   N##_elements  = 0;                                   \
+    long   N##_allocated = 0
+/* Builds vector add */
+#define VECTOR_CORE(T,N)                                        \
+    int    N##_add(T element) {                                 \
+        if (N##_elements == N##_allocated) {                    \
+            if (N##_allocated == 0) {                           \
+                N##_allocated = 12;                             \
+            } else {                                            \
+                N##_allocated *= 2;                             \
+            }                                                   \
+            void *temp = mem_a(N##_allocated * sizeof(T));      \
+            if  (!temp) {                                       \
+                mem_d(temp);                                    \
+                return -1;                                      \
+            }                                                   \
+            memcpy(temp, N##_data, (N##_elements * sizeof(T))); \
+            mem_d(N##_data);                                    \
+            N##_data = (T*)temp;                                \
+        }                                                       \
+        N##_data[N##_elements] = element;                       \
+        return   N##_elements++;                                \
+    }                                                           \
+    int N##_put(T* elements, size_t len) {                      \
+        len     --;                                             \
+        elements--;                                             \
+        while (N##_add(*++elements) != -1 && len--);            \
+        return N##_elements;                                    \
     }
+/* Builds a full vector inspot */
+#define VECTOR_MAKE(T,N) \
+    VECTOR_TYPE(T,N);    \
+    VECTOR_CORE(T,N)
+/* Builds a vector add function pointer for inside structures */
+#define VECTOR_IMPL(T,N) int (*N##_add)(T)
 
 //===================================================================
 //=========================== code.c ================================
@@ -392,7 +431,12 @@ int         code_fields_add    (prog_section_field);
 int         code_functions_add (prog_section_function);
 int         code_globals_add   (int);
 int         code_chars_add     (char);
-int         code_strings_add   (const char *); /* function wrapping code_chars_add */
+int         code_statements_put(prog_section_statement*, size_t);
+int         code_defs_put      (prog_section_def*,       size_t);
+int         code_fields_put    (prog_section_field*,     size_t);
+int         code_functions_put (prog_section_function*,  size_t);
+int         code_globals_put   (int*,                    size_t);
+int         code_chars_put     (char*,                   size_t);
 extern long code_statements_elements;
 extern long code_chars_elements;
 extern long code_globals_elements;
@@ -495,8 +539,9 @@ enum {
     COMPILER_QCCX,    /* qccx   QuakeC */
     COMPILER_GMQCC    /* this   QuakeC */
 };
-extern int opts_debug;
-extern int opts_memchk;
-extern int opts_darkplaces_stringtablebug;
-extern int opts_omit_nullcode;
+extern bool opts_debug;
+extern bool opts_memchk;
+extern bool opts_darkplaces_stringtablebug;
+extern bool opts_omit_nullcode;
+extern int  opts_compiler;
 #endif

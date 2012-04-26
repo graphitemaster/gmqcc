@@ -335,3 +335,21 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
     *pos = '\0';
     return (ret = pos - *lineptr);
 }
+
+/*
+ * Strechy string buffer (for easy string creation) -- this is fast, just
+ * say no to strict aliasing.
+ */
+//#define util_stringbuf_add(a,v) ((((a)==0 ||((int*)(a)-2)[1]+(1)>=((int*)(a)-2)[0])?util_stringbuf_grow((void**)&(a),(1),sizeof(*(a))):0),(a)[((int*)(a)-2)[1]++]=(v))
+//#define util_stringbuf_len(a)   ((a)?       ((int*)(a)-2)[1]:0)
+//#define util_stringbuf_del(a)   ((a)?free  (((int*)(a)-2)),0:0)
+void *util_stringbuf_grow(void **a, int in, int it) {
+    int m = *a ? 2 * ((int*)(*a)-2)[0]+in : in+1;
+    void *p = realloc(*a ? ((int*)(*a)-2) : 0, it * m + sizeof(int)*2);
+    if (p) {
+        if (!*a) ((int*)p)[1] = 0;
+        *a = (void*)((int*)p+2);
+        ((int*)(*a)-2)[0] = m;
+    }
+    return *a;
+}

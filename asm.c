@@ -86,6 +86,7 @@ int asm_parsetype(const char *key, char **skip, long line) {
             exit(1);
         }
         *skip += keylen+1;
+        /* skip whitespace */
         while (**skip == ' ' || **skip == '\t')
             (*skip)++;
         
@@ -139,7 +140,7 @@ void asm_parse(FILE *fp) {
                 .nargs      =  0,
                 .argsize    = {0}
             });
-            code_strings_add(skip);
+            code_chars_put(skip, strlen(skip));
         };
 
         #if 0

@@ -26,11 +26,11 @@ typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
 /* global options */
-int opts_debug                     = 0;
-int opts_memchk                    = 0;
-int opts_compiler                  = COMPILER_GMQCC;
-int opts_darkplaces_stringtablebug = 0;
-int opts_omit_nullcode             = 0;
+bool opts_debug                     = false;
+bool opts_memchk                    = false;
+bool opts_darkplaces_stringtablebug = false;
+bool opts_omit_nullcode             = false;
+int  opts_compiler                  = COMPILER_GMQCC;
 
 static const int usage(const char *const app) {
     printf("usage:\n");
@@ -73,8 +73,8 @@ int main(int argc, char **argv) {
             case 'a': items_add((argitem){util_strdup(&argv[1][2]), 1}); break; /* assemble */
             case 'i': items_add((argitem){util_strdup(&argv[1][2]), 2}); break; /* includes */
             default:
-                if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = 1; break; }
-                if (!strncmp(&argv[1][1], "memchk", 6)) { opts_memchk = 1; break; }
+                if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = true; break; }
+                if (!strncmp(&argv[1][1], "memchk", 6)) { opts_memchk = true; break; }
                 if (!strncmp(&argv[1][1], "help",   4)) {
                     return usage(app);
                     break;
@@ -95,11 +95,11 @@ int main(int argc, char **argv) {
 
                 /* code specific switches */
                 if (!strcmp(&argv[1][1], "fdarkplaces-stringtablebug")) {
-                    opts_darkplaces_stringtablebug = 1;
+                    opts_darkplaces_stringtablebug = true;
                     break;
                 }
                 if (!strcmp(&argv[1][1], "fomit-nullcode")) {
-                    opts_omit_nullcode = 1;
+                    opts_omit_nullcode = true;
                     break;
                 }
                 return usage(app);

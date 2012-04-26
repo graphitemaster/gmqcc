@@ -83,15 +83,6 @@ VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_chars     );
 
-int code_strings_add(const char *src) {
-    size_t size = strlen(src);
-    size_t iter = 0;
-    while (iter < size)
-        code_chars_add(src[iter++]);
-    code_chars_add('\0');
-    return code_chars_elements;
-}
-
 void code_init() {
     /* omit creation of null code */
     if (opts_omit_nullcode)
@@ -113,13 +104,13 @@ void code_init() {
 }
 
 void code_test() {    
-    code_strings_add("m_init");
-    code_strings_add("print");
-    code_strings_add("hello world\n");
-    code_strings_add("m_keydown");
-    code_strings_add("m_draw");
-    code_strings_add("m_toggle");
-    code_strings_add("m_shutdown");
+    code_chars_put("m_init",        0x6);
+    code_chars_put("print",         0x5);
+    code_chars_put("hello world\n", 0xC);
+    code_chars_put("m_keydown",     0x9);
+    code_chars_put("m_draw",        0x6);
+    code_chars_put("m_toggle",      0x8);
+    code_chars_put("m_shutdown",    0xA);
     
     code_globals_add(1);  /* m_init */
     code_globals_add(2);  /* print  */
