@@ -181,4 +181,13 @@ void ast_function_delete(ast_function *self)
 /* AST codegen aprt
  */
 
-/* TODO */
+/* Some dummies so it compiles... */
+bool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
+{
+    return false;
+}
+
+bool ast_block_codegen(ast_block *self, ast_function *func, ir_value **out)
+{
+    return false;
+}

@@ -148,7 +148,7 @@ void ast_block_delete(ast_block*);
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
 
-bool ast_block_codegen(ast_block*, ir_function*, ir_value**);
+bool ast_block_codegen(ast_block*, ast_function*, ir_value**);
 
 /* Function
  *
