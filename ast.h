@@ -37,6 +37,7 @@ typedef struct ast_value_s      ast_value;
 typedef struct ast_function_s   ast_function;
 typedef struct ast_block_s      ast_block;
 typedef struct ast_binary_s     ast_binary;
+typedef struct ast_store_s      ast_store;
 
 /* Node interface with common components
  */
@@ -46,6 +47,10 @@ typedef struct
     lex_ctx_t        context;
     /* I don't feel comfortable using keywords like 'delete' as names... */
     ast_node_delete *destroy;
+    /* keep: if a node contains this node, 'keep'
+     * prevents its dtor from destroying this node as well.
+     */
+    bool             keep;
 } ast_node_common;
 
 #define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
@@ -125,10 +130,25 @@ void ast_binary_delete(ast_binary*);
 /* hmm, seperate functions?
 bool ast_block_codegen(ast_block*, ast_function*, ir_value**);
  */
-/* maybe for this one */
-bool ast_bin_store_codegen(ast_binary*, ast_function*, ir_value**);
-
 bool ast_binary_codegen(ast_binary*, ast_function*, ir_value**);
+
+/* Store
+ *
+ * Stores left<-right and returns left.
+ * Specialized binary expression node
+ */
+struct ast_store_s
+{
+    ast_expression_common expression;
+    int       op;
+    ast_value *dest;
+    ast_value *source;
+};
+ast_store* ast_store_new(lex_ctx_t ctx, int op,
+                         ast_value *d, ast_value *s);
+void ast_store_delete(ast_store*);
+
+bool ast_store_codegen(ast_store*, ast_function*, ir_value**);
 
 /* Blocks
  *
