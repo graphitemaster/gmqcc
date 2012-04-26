@@ -46,6 +46,7 @@ static void ast_node_init(ast_node *self, lex_ctx_t ctx)
 {
     self->node.context = ctx;
     self->node.destroy = &_ast_node_destroy;
+    self->node.keep    = false;
 }
 
 /* General expression initialization */
@@ -55,11 +56,12 @@ static void ast_expression_init(ast_expression *self,
     ast_setfunc(&self->expression, codegen, codegen);
 }
 
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
+ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t, bool keep)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
                         (ast_expression_codegen*)&ast_value_codegen);
+    self->expression.node.keep = keep;
 
     self->name = name ? util_strdup(name) : NULL;
     self->vtype = t;
@@ -80,9 +82,9 @@ void ast_value_delete(ast_value* self)
     if (self->name)
         mem_d((void*)self->name);
     for (i = 0; i < self->params_count; ++i)
-        ast_delete(self->params[i]);
+        ast_unref(self->params[i]);
     MEM_VECTOR_CLEAR(self, params);
-    if (self->next)
+    if (self->next) /* delete, not unref, types are always copied */
         ast_delete(self->next);
     if (self->isconst) {
         switch (self->vtype)
@@ -122,6 +124,8 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
 
 void ast_binary_delete(ast_binary *self)
 {
+    ast_unref(self->left);
+    ast_unref(self->right);
     mem_d(self);
 }
 
@@ -140,6 +144,8 @@ ast_store* ast_store_new(lex_ctx_t ctx, int op,
 
 void ast_store_delete(ast_store *self)
 {
+    ast_unref(self->dest);
+    ast_unref(self->source);
     mem_d(self);
 }
 
@@ -164,7 +170,7 @@ void ast_block_delete(ast_block *self)
         ast_delete(self->locals[i]);
     MEM_VECTOR_CLEAR(self, locals);
     for (i = 0; i < self->exprs_count; ++i)
-        ast_delete(self->exprs[i]);
+        ast_unref(self->exprs[i]);
     MEM_VECTOR_CLEAR(self, exprs);
     mem_d(self);
 }

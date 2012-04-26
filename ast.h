@@ -54,6 +54,12 @@ typedef struct
 } ast_node_common;
 
 #define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
+#define ast_unref(x) do                     \
+{                                           \
+    if (! (((ast_node*)(x))->node.keep) ) { \
+        ast_delete(x);                      \
+    }                                       \
+} while(0)
 
 /* Expression interface
  *
@@ -102,7 +108,7 @@ struct ast_value_s
      */
     MEM_VECTOR_MAKE(ast_value*, params);
 };
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int qctype);
+ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int qctype, bool keep);
 void ast_value_delete(ast_value*);
 
 void ast_value_set_name(ast_value*, const char *name);
