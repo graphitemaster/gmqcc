@@ -45,7 +45,7 @@ typedef struct ir_value_s {
     MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
 
     /* constantvalues */
-    qbool isconst;
+    bool isconst;
     union {
         float    vfloat;
         int      vint;
@@ -70,19 +70,19 @@ void      ir_value_set_name(ir_value*, const char *name);
 MEM_VECTOR_PROTO(ir_value, struct ir_instr_s*, reads)
 MEM_VECTOR_PROTO(ir_value, struct ir_instr_s*, writes)
 
-qbool   ir_value_set_float(ir_value*, float f);
-qbool   ir_value_set_int(ir_value*, int i);
-qbool   ir_value_set_string(ir_value*, const char *s);
-qbool   ir_value_set_vector(ir_value*, vector_t v);
-/*qbool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
-/*qbool   ir_value_set_pointer_i(ir_value*, int i);       */
+bool   ir_value_set_float(ir_value*, float f);
+bool   ir_value_set_int(ir_value*, int i);
+bool   ir_value_set_string(ir_value*, const char *s);
+bool   ir_value_set_vector(ir_value*, vector_t v);
+/*bool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
+/*bool   ir_value_set_pointer_i(ir_value*, int i);       */
 
 MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life)
 /* merge an instruction into the life-range */
 /* returns false if the lifepoint was already known */
-qbool ir_value_life_merge(ir_value*, size_t);
+bool ir_value_life_merge(ir_value*, size_t);
 /* check if a value lives at a specific point */
-qbool ir_value_lives(ir_value*, size_t);
+bool ir_value_lives(ir_value*, size_t);
 
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));
@@ -113,7 +113,7 @@ ir_instr* ir_instr_new(struct ir_block_s *owner, int opcode);
 void      ir_instr_delete(ir_instr*);
 
 MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi)
-void ir_instr_op(ir_instr*, int op, ir_value *value, qbool writing);
+void ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 
@@ -122,7 +122,7 @@ typedef struct ir_block_s
 {
     char      *label;
     lex_ctx_t  context;
-    qbool      final; /* once a jump is added we're done */
+    bool       final; /* once a jump is added we're done */
 
     MEM_VECTOR_MAKE(ir_instr*, instr);
     MEM_VECTOR_MAKE(struct ir_block_s*, entries);
@@ -131,7 +131,7 @@ typedef struct ir_block_s
 
     /* For the temp-allocation */
     size_t eid;
-    qbool  is_return;
+    bool   is_return;
     size_t run_id;
 
     struct ir_function_s *owner;
@@ -148,8 +148,8 @@ MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries)
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
-qbool   ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
-qbool   ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
+bool   ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
+bool   ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
 
 ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_sub(ir_block*, const char *label, ir_value *l, ir_value *r);

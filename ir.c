@@ -299,7 +299,7 @@ void ir_instr_delete(ir_instr *self)
     mem_d(self);
 }
 
-void ir_instr_op(ir_instr *self, int op, ir_value *v, qbool writing)
+void ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
 {
     if (self->_ops[op]) {
         if (writing)
@@ -369,7 +369,7 @@ void ir_value_set_name(ir_value *self, const char *name)
     self->name = util_strdup(name);
 }
 
-qbool ir_value_set_float(ir_value *self, float f)
+bool ir_value_set_float(ir_value *self, float f)
 {
     if (self->vtype != qc_float)
         return false;
@@ -378,7 +378,7 @@ qbool ir_value_set_float(ir_value *self, float f)
     return true;
 }
 
-qbool ir_value_set_vector(ir_value *self, vector_t v)
+bool ir_value_set_vector(ir_value *self, vector_t v)
 {
     if (self->vtype != qc_vector)
         return false;
@@ -387,7 +387,7 @@ qbool ir_value_set_vector(ir_value *self, vector_t v)
     return true;
 }
 
-qbool ir_value_set_string(ir_value *self, const char *str)
+bool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != qc_string)
         return false;
@@ -396,7 +396,7 @@ qbool ir_value_set_string(ir_value *self, const char *str)
     return true;
 }
 
-qbool ir_value_set_int(ir_value *self, int i)
+bool ir_value_set_int(ir_value *self, int i)
 {
     if (self->vtype != qc_int)
         return false;
@@ -405,7 +405,7 @@ qbool ir_value_set_int(ir_value *self, int i)
     return true;
 }
 
-qbool ir_value_lives(ir_value *self, size_t at)
+bool ir_value_lives(ir_value *self, size_t at)
 {
     size_t i;
     for (i = 0; i < self->life_count; ++i)
@@ -428,7 +428,7 @@ void ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
     self->life[idx] = e;
 }
 
-qbool ir_value_life_merge(ir_value *self, size_t s)
+bool ir_value_life_merge(ir_value *self, size_t s)
 {
     size_t i;
     ir_life_entry_t *life = NULL;
@@ -495,7 +495,7 @@ qbool ir_value_life_merge(ir_value *self, size_t s)
  *IR main operations
  */
 
-qbool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
+bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
 {
     if (target->store == store_value) {
         fprintf(stderr, "cannot store to an SSA value\n");
@@ -509,7 +509,7 @@ qbool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_valu
     }
 }
 
-qbool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
+bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
 {
     int op = 0;
     int vtype;
@@ -1057,11 +1057,11 @@ void ir_function_enumerate(ir_function *self)
     }
 }
 
-static void ir_block_life_propagate(ir_block *b, ir_block *prev, qbool *changed);
+static void ir_block_life_propagate(ir_block *b, ir_block *prev, bool *changed);
 void ir_function_calculate_liferanges(ir_function *self)
 {
     size_t i;
-    qbool changed;
+    bool changed;
 
     do {
         self->run_id++;
@@ -1104,11 +1104,11 @@ static void ir_op_read_write(int op, size_t *read, size_t *write)
     };
 }
 
-static qbool ir_block_living_add_instr(ir_block *self, size_t eid)
+static bool ir_block_living_add_instr(ir_block *self, size_t eid)
 {
     size_t i;
-    qbool changed = false;
-    qbool tempbool;
+    bool changed = false;
+    bool tempbool;
     for (i = 0; i != self->living_count; ++i)
     {
         tempbool = ir_value_life_merge(self->living[i], eid);
@@ -1121,7 +1121,7 @@ static qbool ir_block_living_add_instr(ir_block *self, size_t eid)
     return changed;
 }
 
-static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, qbool *changed)
+static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *changed)
 {
     size_t i;
     /* values which have been read in a previous iteration are now
@@ -1152,11 +1152,11 @@ static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, qbool *c
     }
 }
 
-static void ir_block_life_propagate(ir_block *self, ir_block *prev, qbool *changed)
+static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *changed)
 {
     ir_instr *instr;
     ir_value *value;
-    qbool  tempbool;
+    bool  tempbool;
     size_t i, o, p, rd;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
@@ -1223,8 +1223,8 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, qbool *chang
             if (write & (1<<o))
             {
                 size_t idx, readidx;
-                qbool in_living = ir_block_living_find(self, value, &idx);
-                qbool in_reads = new_reads_t_v_find(&new_reads, value, &readidx);
+                bool in_living = ir_block_living_find(self, value, &idx);
+                bool in_reads = new_reads_t_v_find(&new_reads, value, &readidx);
                 if (!in_living && !in_reads)
                 {
                     /* If the value isn't alive it hasn't been read before... */

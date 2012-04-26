@@ -29,7 +29,7 @@
 
 #define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)          \
     MEM_VECTOR_PROTO(Towner, Tmem, mem)          \
-    qbool Towner##_##mem##_find(Towner*, Tmem, size_t*); \
+    bool Towner##_##mem##_find(Towner*, Tmem, size_t*); \
     void Towner##_##mem##_clear(Towner*);
 
 #define MEM_VECTOR_MAKE(Twhat, name) \
@@ -69,7 +69,7 @@ void Tself##_##mem##_remove(Tself *self, size_t idx) \
 }
 
 #define _MEM_VEC_FUN_FIND(Tself, Twhat, mem)                    \
-qbool Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
+bool Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
 {                                                               \
     size_t i;                                                   \
     for (i = 0; i < self->mem##_count; ++i) {                   \
@@ -115,8 +115,6 @@ _MEM_VEC_FUN_ADD(Tself, Twhat, mem)
 MEM_VEC_FUNCTIONS(Tself, Twhat, mem)             \
 _MEM_VEC_FUN_CLEAR(Tself, mem)                   \
 _MEM_VEC_FUN_FIND(Tself, Twhat, mem)
-
-typedef enum { false, true } qbool;
 
 enum qc_types {
     /* Main QC types */

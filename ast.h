@@ -55,9 +55,9 @@ typedef struct
  * Any expression or block returns an ir_value, and needs
  * to know the current function.
  */
-typedef qbool ast_expression_codegen(ast_expression*,
-                                     ast_function*,
-                                     ir_value**);
+typedef bool ast_expression_codegen(ast_expression*,
+                                    ast_function*,
+                                    ir_value**);
 typedef struct
 {
     ast_node_common         node;
@@ -80,7 +80,7 @@ struct ast_value_s
     int         vtype;
     ast_value  *next;
 
-    qbool isconst;
+    bool isconst;
     union {
         double        vfloat;
         int           vint;
@@ -102,7 +102,7 @@ void ast_value_delete(ast_value*);
 
 void ast_value_set_name(ast_value*, const char *name);
 
-qbool ast_value_codegen(ast_value*, ast_function*, ir_value**);
+bool ast_value_codegen(ast_value*, ast_function*, ir_value**);
 
 /* Binary
  *
@@ -123,14 +123,14 @@ ast_binary* ast_binary_new(lex_ctx_t  ctx,
 void ast_binary_delete(ast_binary*);
 
 /* hmm, seperate functions? */
-qbool ast_bin_add_codegen(ast_binary*, ir_function*, ir_value**);
+bool ast_bin_add_codegen(ast_binary*, ir_function*, ir_value**);
 /* ... */
 
 /* maybe for this one */
-qbool ast_bin_store_codegen(ast_binary*, ir_function*, ir_value**);
+bool ast_bin_store_codegen(ast_binary*, ir_function*, ir_value**);
 
 /* could decide what to use */
-qbool ast_binary_codegen(ast_binary*, ir_function*, ir_value**);
+bool ast_binary_codegen(ast_binary*, ir_function*, ir_value**);
 
 /* Blocks
  *
@@ -148,7 +148,7 @@ void ast_block_delete(ast_block*);
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
 
-qbool ast_block_codegen(ast_block*, ir_function*, ir_value**);
+bool ast_block_codegen(ast_block*, ir_function*, ir_value**);
 
 /* Function
  *
@@ -174,7 +174,7 @@ void ast_function_delete(ast_function*);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);
 
-qbool ast_function_codegen(ast_function *self, ir_builder *builder);
+bool ast_function_codegen(ast_function *self, ir_builder *builder);
 
 /* Expression union
  */
