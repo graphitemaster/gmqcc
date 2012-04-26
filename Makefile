@@ -7,9 +7,9 @@ OBJ     = main.o      \
           typedef.o   \
           util.o      \
           code.o      \
-          asm.c       \
-          ast.c       \
-          ir.c
+          asm.o       \
+          ast.o       \
+          ir.o
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
