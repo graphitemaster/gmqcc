@@ -132,6 +132,21 @@ char *util_strrnl(char *src) {
     return src;
 }
 
+/*
+ * Removes any whitespace prefixed on a string by moving
+ * skipping past it, and stroing the skip distance, so
+ * the string can later be freed (if it was allocated)
+ */
+char *util_strsws(char *skip) {
+    size_t size = 0;
+    if (!skip)
+        return NULL;
+    
+    while (*skip == ' ' || *skip == '\t')
+        skip++,size++;
+    return skip-size;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
     if (!opts_debug)
         return;
