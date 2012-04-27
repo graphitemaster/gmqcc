@@ -59,6 +59,17 @@
 #   endif /* !__cplusplus */
 
 /*
+ * Of some functions which are generated we want to make sure
+ * that the result isn't ignored. To find such function calls,
+ * we use this macro.
+ */
+#if defined(__GNUC__) || defined(__CLANG__)
+#   define GMQCC_WARN __attribute__((warn_unused_result))
+#else
+#   define GMQCC_WARN
+#endif
+
+/*
  * stdint.h and inttypes.h -less subset
  * for systems that don't have it, which we must
  * assume is all systems. (int8_t not required)
