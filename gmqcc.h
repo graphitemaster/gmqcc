@@ -28,6 +28,13 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define GMQCC_VERSION_MAJOR 0
+#define GMQCC_VERSION_MINOR 1
+#define GMQCC_VERSION_PATCH 0
+#define GMQCC_VERSION_BUILD(J,N,P) (((J)<<16)|((N)<<8)|(P))
+#define GMQCC_VERSION \
+    GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
+
 /*
  * We cannoy rely on C99 at all, since compilers like MSVC
  * simply don't support it.  We define our own boolean type
@@ -86,7 +93,7 @@
 typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
 typedef char uint16_size_if_correct [sizeof(uint16_t) == 2?1:-1];
 typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
-typedef char int8_size_is_correct   [sizeof(int8_t)   == 1?1:-1];
+//typedef char int8_size_is_correct   [sizeof(int8_t)   == 1?1:-1];
 typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
 typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
 /* intptr_t / uintptr_t correct size check */
