@@ -23,13 +23,13 @@
 #ifndef ASTIR_COMMON_H__
 #define ASTIR_COMMON_H__
 
-#define MEM_VECTOR_PROTO(Towner, Tmem, mem)        \
-    bool Towner##_##mem##_add(Towner*, Tmem);      \
-    bool Towner##_##mem##_remove(Towner*, size_t);
+#define MEM_VECTOR_PROTO(Towner, Tmem, mem)                   \
+    bool GMQCC_WARN Towner##_##mem##_add(Towner*, Tmem);      \
+    bool GMQCC_WARN Towner##_##mem##_remove(Towner*, size_t);
 
-#define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)          \
-    MEM_VECTOR_PROTO(Towner, Tmem, mem)          \
-    bool Towner##_##mem##_find(Towner*, Tmem, size_t*); \
+#define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)                    \
+    MEM_VECTOR_PROTO(Towner, Tmem, mem)                            \
+    bool GMQCC_WARN Towner##_##mem##_find(Towner*, Tmem, size_t*); \
     void Towner##_##mem##_clear(Towner*);
 
 #define MEM_VECTOR_MAKE(Twhat, name) \
@@ -38,7 +38,7 @@
     size_t name##_alloc
 
 #define _MEM_VEC_FUN_ADD(Tself, Twhat, mem)                          \
-bool Tself##_##mem##_add(Tself *self, Twhat f)                       \
+bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
 {                                                                    \
     Twhat *reall;                                                    \
     if (self->mem##_count == self->mem##_alloc) {                    \
@@ -60,7 +60,7 @@ bool Tself##_##mem##_add(Tself *self, Twhat f)                       \
 }
 
 #define _MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)                       \
-bool Tself##_##mem##_remove(Tself *self, size_t idx)                 \
+bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
 {                                                                    \
     size_t i;                                                        \
     Twhat *reall;                                                    \
@@ -85,7 +85,7 @@ bool Tself##_##mem##_remove(Tself *self, size_t idx)                 \
 }
 
 #define _MEM_VEC_FUN_FIND(Tself, Twhat, mem)                    \
-bool Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
+bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
 {                                                               \
     size_t i;                                                   \
     for (i = 0; i < self->mem##_count; ++i) {                   \
