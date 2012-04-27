@@ -111,7 +111,7 @@ struct ast_value_s
 ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int qctype, bool keep);
 void ast_value_delete(ast_value*);
 
-void ast_value_set_name(ast_value*, const char *name);
+bool ast_value_set_name(ast_value*, const char *name);
 
 bool ast_value_codegen(ast_value*, ast_function*, ir_value**);
 

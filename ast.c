@@ -102,11 +102,12 @@ void ast_value_delete(ast_value* self)
     mem_d(self);
 }
 
-void ast_value_set_name(ast_value *self, const char *name)
+bool ast_value_set_name(ast_value *self, const char *name)
 {
     if (self->name)
         mem_d((void*)self->name);
     self->name = util_strdup(name);
+    return !!self->name;
 }
 
 ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
