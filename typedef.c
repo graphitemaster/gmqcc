@@ -73,7 +73,7 @@ int typedef_add(struct lex_file *file, const char *from, const char *to) {
         /* search the typedefs for it (typedef-a-typedef?) */
         typedef_node *find = typedef_table[typedef_hash(from)];
         if (find) {
-            typedef_table[hash]       = mem_a(sizeof(typedef_node));
+            typedef_table[hash] = mem_a(sizeof(typedef_node));
             if (typedef_table[hash])
                 typedef_table[hash]->name = util_strdup(find->name);
             else
