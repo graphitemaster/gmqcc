@@ -63,15 +63,21 @@ int typedef_add(struct lex_file *file, const char *from, const char *to) {
         strncmp(from, "entity", sizeof("entity")) == 0 ||
         strncmp(from, "void",   sizeof("void"))   == 0) {
         
-        typedef_table[hash]       = mem_a(sizeof(typedef_node));
-        typedef_table[hash]->name = util_strdup(from);
+        typedef_table[hash] = mem_a(sizeof(typedef_node));
+        if (typedef_table[hash])
+            typedef_table[hash]->name = util_strdup(from);
+        else
+            return error(file, ERROR_PARSE, "ran out of resources for typedef %s\n", to);
         return -100;
     } else {
         /* search the typedefs for it (typedef-a-typedef?) */
         typedef_node *find = typedef_table[typedef_hash(from)];
         if (find) {
             typedef_table[hash]       = mem_a(sizeof(typedef_node));
-            typedef_table[hash]->name = util_strdup(find->name);
+            if (typedef_table[hash])
+                typedef_table[hash]->name = util_strdup(find->name);
+            else
+                return error(file, ERROR_PARSE, "ran out of resources for typedef %s\n", to);
             return -100;
         }
     }
