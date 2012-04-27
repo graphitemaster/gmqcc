@@ -73,10 +73,8 @@ bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
     {                                                                \
         self->mem##_alloc /= 2;                                      \
         reall = (Twhat*)mem_a(sizeof(Twhat) * self->mem##_count);    \
-        if (!reall) {                                                \
-            MEM_VECTOR_CLEAR(self, mem);                             \
+        if (!reall)                                                  \
             return false;                                            \
-        }                                                            \
         memcpy(reall, self->mem, sizeof(Twhat) * self->mem##_count); \
         mem_d(self->mem);                                            \
         self->mem = reall;                                           \
