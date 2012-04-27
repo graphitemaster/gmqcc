@@ -24,8 +24,8 @@
 #define ASTIR_COMMON_H__
 
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)        \
-    void Towner##_##mem##_add(Towner*, Tmem);      \
-    void Towner##_##mem##_remove(Towner*, size_t);
+    bool Towner##_##mem##_add(Towner*, Tmem);      \
+    bool Towner##_##mem##_remove(Towner*, size_t);
 
 #define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)          \
     MEM_VECTOR_PROTO(Towner, Tmem, mem)          \
@@ -37,35 +37,51 @@
     size_t name##_count;             \
     size_t name##_alloc
 
-#define _MEM_VEC_FUN_ADD(Tself, Twhat, mem)       \
-void Tself##_##mem##_add(Tself *self, Twhat f)    \
-{                                                 \
-    if (self->mem##_count == self->mem##_alloc) { \
-        if (!self->mem##_alloc)                   \
-            self->mem##_alloc = 16;               \
-        else                                      \
-            self->mem##_alloc *= 2;               \
-        self->mem = (Twhat*)realloc(self->mem,    \
-            sizeof(Twhat) * self->mem##_alloc);   \
-    }                                             \
-    self->mem[self->mem##_count++] = f;           \
+#define _MEM_VEC_FUN_ADD(Tself, Twhat, mem)                          \
+bool Tself##_##mem##_add(Tself *self, Twhat f)                       \
+{                                                                    \
+    Twhat *reall;                                                    \
+    if (self->mem##_count == self->mem##_alloc) {                    \
+        if (!self->mem##_alloc)                                      \
+            self->mem##_alloc = 16;                                  \
+        else                                                         \
+            self->mem##_alloc *= 2;                                  \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * self->mem##_alloc);    \
+        if (!reall) {                                                \
+            MEM_VECTOR_CLEAR(self, mem);                             \
+            return false;                                            \
+        }                                                            \
+        memcpy(reall, self->mem, sizeof(Twhat) * self->mem##_count); \
+        mem_d(self->mem);                                            \
+        self->mem = reall;                                           \
+    }                                                                \
+    self->mem[self->mem##_count++] = f;                              \
+    return true;                                                     \
 }
 
-#define _MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)       \
-void Tself##_##mem##_remove(Tself *self, size_t idx) \
-{                                                    \
-    size_t i;                                        \
-    if (idx >= self->mem##_count)                    \
-        return;                                      \
-    for (i = idx; i < self->mem##_count-1; ++i)      \
-        self->mem[i] = self->mem[i+1];               \
-    self->mem##_count--;                             \
-    if (self->mem##_count < self->mem##_count/2)     \
-    {                                                \
-        self->mem##_alloc /= 2;                      \
-        self->mem = (Twhat*)realloc(self->mem,       \
-            self->mem##_alloc * sizeof(Twhat));      \
-    }                                                \
+#define _MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)                       \
+bool Tself##_##mem##_remove(Tself *self, size_t idx)                 \
+{                                                                    \
+    size_t i;                                                        \
+    Twhat *reall;                                                    \
+    if (idx >= self->mem##_count)                                    \
+        return true; /* huh... */                                    \
+    for (i = idx; i < self->mem##_count-1; ++i)                      \
+        self->mem[i] = self->mem[i+1];                               \
+    self->mem##_count--;                                             \
+    if (self->mem##_count < self->mem##_count/2)                     \
+    {                                                                \
+        self->mem##_alloc /= 2;                                      \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * self->mem##_count);    \
+        if (!reall) {                                                \
+            MEM_VECTOR_CLEAR(self, mem);                             \
+            return false;                                            \
+        }                                                            \
+        memcpy(reall, self->mem, sizeof(Twhat) * self->mem##_count); \
+        mem_d(self->mem);                                            \
+        self->mem = reall;                                           \
+    }                                                                \
+    return true;                                                     \
 }
 
 #define _MEM_VEC_FUN_FIND(Tself, Twhat, mem)                    \
