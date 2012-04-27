@@ -37,7 +37,10 @@ ir_builder* ir_builder_new(const char *modulename)
     MEM_VECTOR_INIT(self, functions);
     MEM_VECTOR_INIT(self, globals);
     self->name = NULL;
-    ir_builder_set_name(self, modulename);
+    if (!ir_builder_set_name(self, modulename)) {
+        mem_d(self);
+        return NULL;
+    }
 
     /* globals which always exist */
 
@@ -65,11 +68,12 @@ void ir_builder_delete(ir_builder* self)
     mem_d(self);
 }
 
-void ir_builder_set_name(ir_builder *self, const char *name)
+bool ir_builder_set_name(ir_builder *self, const char *name)
 {
     if (self->name)
         mem_d((void*)self->name);
     self->name = util_strdup(name);
+    return !!self->name;
 }
 
 ir_function* ir_builder_get_function(ir_builder *self, const char *name)
@@ -90,8 +94,12 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name)
     }
 
     fn = ir_function_new(self);
-    ir_function_set_name(fn, name);
-    ir_builder_functions_add(self, fn);
+    if (!ir_function_set_name(fn, name) ||
+        !ir_builder_functions_add(self, fn) )
+    {
+        ir_function_delete(fn);
+        return NULL;
+    }
     return fn;
 }
 
@@ -113,7 +121,10 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
     }
 
     ve = ir_value_var(name, store_global, vtype);
-    ir_builder_globals_add(self, ve);
+    if (!ir_builder_globals_add(self, ve)) {
+        ir_value_delete(ve);
+        return NULL;
+    }
     return ve;
 }
 
@@ -121,14 +132,18 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
  *IR Function
  */
 
-void ir_function_naive_phi(ir_function*);
+bool ir_function_naive_phi(ir_function*);
 void ir_function_enumerate(ir_function*);
-void ir_function_calculate_liferanges(ir_function*);
+bool ir_function_calculate_liferanges(ir_function*);
 
 ir_function* ir_function_new(ir_builder* owner)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
+    if (!ir_function_set_name(self, "<@unnamed>")) {
+        mem_d(self);
+        return NULL;
+    }
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
@@ -137,7 +152,6 @@ ir_function* ir_function_new(ir_builder* owner)
     MEM_VECTOR_INIT(self, blocks);
     MEM_VECTOR_INIT(self, values);
     MEM_VECTOR_INIT(self, locals);
-    ir_function_set_name(self, "<@unnamed>");
 
     self->run_id = 0;
     return self;
@@ -146,11 +160,12 @@ MEM_VEC_FUNCTIONS(ir_function, ir_value*, values)
 MEM_VEC_FUNCTIONS(ir_function, ir_block*, blocks)
 MEM_VEC_FUNCTIONS(ir_function, ir_value*, locals)
 
-void ir_function_set_name(ir_function *self, const char *name)
+bool ir_function_set_name(ir_function *self, const char *name)
 {
     if (self->name)
         mem_d((void*)self->name);
     self->name = util_strdup(name);
+    return !!self->name;
 }
 
 void ir_function_delete(ir_function *self)
@@ -175,24 +190,32 @@ void ir_function_delete(ir_function *self)
     mem_d(self);
 }
 
-void ir_function_collect_value(ir_function *self, ir_value *v)
+bool GMQCC_WARN ir_function_collect_value(ir_function *self, ir_value *v)
 {
-    ir_function_values_add(self, v);
+    return ir_function_values_add(self, v);
 }
 
 ir_block* ir_function_create_block(ir_function *self, const char *label)
 {
     ir_block* bn = ir_block_new(self, label);
     memcpy(&bn->context, &self->context, sizeof(self->context));
-    ir_function_blocks_add(self, bn);
+    if (!ir_function_blocks_add(self, bn)) {
+        ir_block_delete(bn);
+        return NULL;
+    }
     return bn;
 }
 
-void ir_function_finalize(ir_function *self)
+bool ir_function_finalize(ir_function *self)
 {
-    ir_function_naive_phi(self);
+    if (!ir_function_naive_phi(self))
+        return false;
+
     ir_function_enumerate(self);
-    ir_function_calculate_liferanges(self);
+
+    if (!ir_function_calculate_liferanges(self))
+        return false;
+    return true;
 }
 
 ir_value* ir_function_get_local(ir_function *self, const char *name)
@@ -213,7 +236,10 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
     }
 
     ve = ir_value_var(name, store_local, vtype);
-    ir_function_locals_add(self, ve);
+    if (!ir_function_locals_add(self, ve)) {
+        ir_value_delete(ve);
+        return NULL;
+    }
     return ve;
 }
 
@@ -225,6 +251,10 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
 {
     ir_block *self;
     self = (ir_block*)mem_a(sizeof(*self));
+    if (!ir_block_set_label(self, name)) {
+        mem_d(self);
+        return NULL;
+    }
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
@@ -233,7 +263,6 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     MEM_VECTOR_INIT(self, entries);
     MEM_VECTOR_INIT(self, exits);
     self->label = NULL;
-    ir_block_set_label(self, name);
 
     self->eid = 0;
     self->is_return = false;
@@ -259,11 +288,12 @@ void ir_block_delete(ir_block* self)
     mem_d(self);
 }
 
-void ir_block_set_label(ir_block *self, const char *name)
+bool ir_block_set_label(ir_block *self, const char *name)
 {
     if (self->label)
         mem_d((void*)self->label);
     self->label = util_strdup(name);
+    return !!self->label;
 }
 
 /***********************************************************************
@@ -292,28 +322,53 @@ MEM_VEC_FUNCTIONS(ir_instr, ir_phi_entry_t, phi)
 
 void ir_instr_delete(ir_instr *self)
 {
-    ir_instr_op(self, 0, NULL, false);
-    ir_instr_op(self, 1, NULL, false);
-    ir_instr_op(self, 2, NULL, false);
+    size_t i;
+    /* The following calls can only delete from
+     * vectors, we still want to delete this instruction
+     * so ignore the return value. Since with the warn_unused_result attribute
+     * gcc doesn't care about an explicit: (void)foo(); to ignore the result,
+     * I have to improvise here and use if(foo());
+     */
+    for (i = 0; i < self->phi_count; ++i) {
+        size_t idx;
+        if (ir_value_writes_find(self->phi[i].value, self, &idx))
+            if (ir_value_writes_remove(self->phi[i].value, idx));
+        if (ir_value_reads_find(self->phi[i].value, self, &idx))
+            if (ir_value_reads_remove(self->phi[i].value, idx));
+    }
     MEM_VECTOR_CLEAR(self, phi);
+    if (ir_instr_op(self, 0, NULL, false));
+    if (ir_instr_op(self, 1, NULL, false));
+    if (ir_instr_op(self, 2, NULL, false));
     mem_d(self);
 }
 
-void ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
+bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
 {
     if (self->_ops[op]) {
-        if (writing)
-            ir_value_writes_add(self->_ops[op], self);
-        else
-            ir_value_reads_add(self->_ops[op], self);
+        size_t idx;
+        if (writing && ir_value_writes_find(self->_ops[op], self, &idx))
+        {
+            if (!ir_value_writes_remove(self->_ops[op], idx))
+                return false;
+        }
+        else if (ir_value_reads_find(self->_ops[op], self, &idx))
+        {
+            if (!ir_value_reads_remove(self->_ops[op], idx))
+                return false;
+        }
     }
     if (v) {
-        if (writing)
-            ir_value_writes_add(v, self);
-        else
-            ir_value_reads_add(v, self);
+        if (writing) {
+            if (!ir_value_writes_add(v, self))
+                return false;
+        } else {
+            if (!ir_value_reads_add(v, self))
+                return false;
+        }
     }
     self->_ops[op] = v;
+    return true;
 }
 
 /***********************************************************************
@@ -338,13 +393,19 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     return self;
 }
 MEM_VEC_FUNCTIONS(ir_value, ir_life_entry_t, life)
-MEM_VEC_FUNCTIONS(ir_value, ir_instr*, reads)
-MEM_VEC_FUNCTIONS(ir_value, ir_instr*, writes)
+MEM_VEC_FUNCTIONS_ALL(ir_value, ir_instr*, reads)
+MEM_VEC_FUNCTIONS_ALL(ir_value, ir_instr*, writes)
 
 ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int vtype)
 {
     ir_value *v = ir_value_var(name, storetype, vtype);
-    ir_function_collect_value(owner, v);
+    if (!v)
+        return NULL;
+    if (!ir_function_collect_value(owner, v))
+    {
+        ir_value_delete(v);
+        return NULL;
+    }
     return v;
 }
 
@@ -419,13 +480,15 @@ bool ir_value_lives(ir_value *self, size_t at)
     return false;
 }
 
-void ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
+bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
 {
     size_t k;
-    ir_value_life_add(self, e); /* naive... */
+    if (!ir_value_life_add(self, e)) /* naive... */
+        return false;
     for (k = self->life_count-1; k > idx; --k)
         self->life[k] = self->life[k-1];
     self->life[idx] = e;
+    return true;
 }
 
 bool ir_value_life_merge(ir_value *self, size_t s)
@@ -455,7 +518,8 @@ bool ir_value_life_merge(ir_value *self, size_t s)
             return false;
         ir_life_entry_t e;
         e.start = e.end = s;
-        ir_value_life_add(self, e);
+        if (!ir_value_life_add(self, e))
+            return false; /* failing */
         return true;
     }
     /* found */
@@ -466,7 +530,8 @@ bool ir_value_life_merge(ir_value *self, size_t s)
         {
             /* merge */
             before->end = life->end;
-            ir_value_life_remove(self, i);
+            if (!ir_value_life_remove(self, i))
+                return false; /* failing */
             return true;
         }
         if (before->end + 1 == s)
@@ -487,8 +552,7 @@ bool ir_value_life_merge(ir_value *self, size_t s)
     }
     /* insert a new entry */
     new_entry.start = new_entry.end = s;
-    ir_value_life_insert(self, i, new_entry);
-    return true;
+    return ir_value_life_insert(self, i, new_entry);
 }
 
 /***********************************************************************
@@ -502,9 +566,14 @@ bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value
         return false;
     } else {
         ir_instr *in = ir_instr_new(self, op);
-        ir_instr_op(in, 0, target, true);
-        ir_instr_op(in, 1, what, false);
-        ir_block_instr_add(self, in);
+        if (!in)
+            return false;
+        if (!ir_instr_op(in, 0, target, true) ||
+            !ir_instr_op(in, 1, what, false)  ||
+            !ir_block_instr_add(self, in) )
+        {
+            return false;
+        }
         return true;
     }
 }
@@ -555,72 +624,108 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
     return ir_block_create_store_op(self, op, target, what);
 }
 
-void ir_block_create_return(ir_block *self, ir_value *v)
+bool ir_block_create_return(ir_block *self, ir_value *v)
 {
     ir_instr *in;
     if (self->final) {
         fprintf(stderr, "block already ended (%s)\n", self->label);
-        return;
+        return false;
     }
     self->final = true;
     self->is_return = true;
     in = ir_instr_new(self, INSTR_RETURN);
-    ir_instr_op(in, 0, v, false);
-    ir_block_instr_add(self, in);
+    if (!in)
+        return false;
+
+    if (!ir_instr_op(in, 0, v, false) ||
+        !ir_block_instr_add(self, in) )
+    {
+        return false;
+    }
+    return true;
 }
 
-void ir_block_create_if(ir_block *self, ir_value *v,
+bool ir_block_create_if(ir_block *self, ir_value *v,
                         ir_block *ontrue, ir_block *onfalse)
 {
     ir_instr *in;
     if (self->final) {
         fprintf(stderr, "block already ended (%s)\n", self->label);
-        return;
+        return false;
     }
     self->final = true;
     //in = ir_instr_new(self, (v->vtype == qc_string ? INSTR_IF_S : INSTR_IF_F));
     in = ir_instr_new(self, VINSTR_COND);
-    ir_instr_op(in, 0, v, false);
+    if (!in)
+        return false;
+
+    if (!ir_instr_op(in, 0, v, false)) {
+        ir_instr_delete(in);
+        return false;
+    }
+
     in->bops[0] = ontrue;
     in->bops[1] = onfalse;
-    ir_block_instr_add(self, in);
 
-    ir_block_exits_add(self, ontrue);
-    ir_block_exits_add(self, onfalse);
-    ir_block_entries_add(ontrue, self);
-    ir_block_entries_add(onfalse, self);
+    if (!ir_block_instr_add(self, in))
+        return false;
+
+    if (!ir_block_exits_add(self, ontrue)    ||
+        !ir_block_exits_add(self, onfalse)   ||
+        !ir_block_entries_add(ontrue, self)  ||
+        !ir_block_entries_add(onfalse, self) )
+    {
+        return false;
+    }
+    return true;
 }
 
-void ir_block_create_jump(ir_block *self, ir_block *to)
+bool ir_block_create_jump(ir_block *self, ir_block *to)
 {
     ir_instr *in;
     if (self->final) {
         fprintf(stderr, "block already ended (%s)\n", self->label);
-        return;
+        return false;
     }
     self->final = true;
     in = ir_instr_new(self, VINSTR_JUMP);
-    in->bops[0] = to;
-    ir_block_instr_add(self, in);
+    if (!in)
+        return false;
 
-    ir_block_exits_add(self, to);
-    ir_block_entries_add(to, self);
+    in->bops[0] = to;
+    if (!ir_block_instr_add(self, in))
+        return false;
+
+    if (!ir_block_exits_add(self, to) ||
+        !ir_block_entries_add(to, self) )
+    {
+        return false;
+    }
+    return true;
 }
 
-void ir_block_create_goto(ir_block *self, ir_block *to)
+bool ir_block_create_goto(ir_block *self, ir_block *to)
 {
     ir_instr *in;
     if (self->final) {
         fprintf(stderr, "block already ended (%s)\n", self->label);
-        return;
+        return false;
     }
     self->final = true;
     in = ir_instr_new(self, INSTR_GOTO);
-    in->bops[0] = to;
-    ir_block_instr_add(self, in);
+    if (!in)
+        return false;
 
-    ir_block_exits_add(self, to);
-    ir_block_entries_add(to, self);
+    in->bops[0] = to;
+    if (!ir_block_instr_add(self, in))
+        return false;
+
+    if (!ir_block_exits_add(self, to) ||
+        !ir_block_entries_add(to, self) )
+    {
+        return false;
+    }
+    return true;
 }
 
 ir_instr* ir_block_create_phi(ir_block *self, const char *label, int ot)
@@ -628,9 +733,23 @@ ir_instr* ir_block_create_phi(ir_block *self, const char *label, int ot)
     ir_value *out;
     ir_instr *in;
     in = ir_instr_new(self, VINSTR_PHI);
+    if (!in)
+        return NULL;
     out = ir_value_out(self->owner, label, store_local, ot);
-    ir_instr_op(in, 0, out, true);
-    ir_block_instr_add(self, in);
+    if (!out) {
+        ir_instr_delete(in);
+        return NULL;
+    }
+    if (!ir_instr_op(in, 0, out, true)) {
+        ir_instr_delete(in);
+        ir_value_delete(out);
+        return NULL;
+    }
+    if (!ir_block_instr_add(self, in)) {
+        ir_instr_delete(in);
+        ir_value_delete(out);
+        return NULL;
+    }
     return in;
 }
 
@@ -639,7 +758,7 @@ ir_value* ir_phi_value(ir_instr *self)
     return self->_ops[0];
 }
 
-void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
+bool ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 {
     ir_phi_entry_t pe;
 
@@ -653,8 +772,9 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 
     pe.value = v;
     pe.from = b;
-    ir_value_reads_add(v, self);
-    ir_instr_phi_add(self, pe);
+    if (!ir_value_reads_add(v, self))
+        return false;
+    return ir_instr_phi_add(self, pe);
 }
 
 /* binary op related code */
@@ -745,16 +865,34 @@ ir_value* ir_block_create_binop(ir_block *self,
     };
     if (ot == qc_void) {
         /* The AST or parser were supposed to check this! */
-        abort();
         return NULL;
     }
+
     ir_value *out = ir_value_out(self->owner, label, store_local, ot);
+    if (!out)
+        return NULL;
+
     ir_instr *in = ir_instr_new(self, opcode);
-    ir_instr_op(in, 0, out, true);
-    ir_instr_op(in, 1, left, false);
-    ir_instr_op(in, 2, right, false);
-    ir_block_instr_add(self, in);
+    if (!in) {
+        ir_value_delete(out);
+        return NULL;
+    }
+
+    if (!ir_instr_op(in, 0, out, true) ||
+        !ir_instr_op(in, 1, left, false) ||
+        !ir_instr_op(in, 2, right, false) )
+    {
+        goto on_error;
+    }
+
+    if (!ir_block_instr_add(self, in))
+        goto on_error;
+
     return out;
+on_error:
+    ir_value_delete(out);
+    ir_instr_delete(in);
+    return NULL;
 }
 
 ir_value* ir_block_create_add(ir_block *self,
@@ -915,16 +1053,20 @@ ir_value* ir_block_create_div(ir_block *self,
  * step before life-range calculation.
  */
 
-static void ir_block_naive_phi(ir_block *self);
-void ir_function_naive_phi(ir_function *self)
+static bool ir_block_naive_phi(ir_block *self);
+bool ir_function_naive_phi(ir_function *self)
 {
     size_t i;
 
     for (i = 0; i < self->blocks_count; ++i)
-        ir_block_naive_phi(self->blocks[i]);
+    {
+        if (!ir_block_naive_phi(self->blocks[i]))
+            return false;
+    }
+    return true;
 }
 
-static void ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, ir_value *what)
+static bool ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, ir_value *what)
 {
     ir_instr *instr;
     size_t i;
@@ -937,9 +1079,11 @@ static void ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, 
     for (i = block->instr_count; i > iid; --i)
         block->instr[i] = block->instr[i-1];
     block->instr[i] = instr;
+
+    return true;
 }
 
-static void ir_block_naive_phi(ir_block *self)
+static bool ir_block_naive_phi(ir_block *self)
 {
     size_t i, p, w;
     /* FIXME: optionally, create_phi can add the phis
@@ -952,7 +1096,8 @@ static void ir_block_naive_phi(ir_block *self)
         if (instr->opcode != VINSTR_PHI)
             continue;
 
-        ir_block_instr_remove(self, i);
+        if (!ir_block_instr_remove(self, i))
+            return false;
         --i; /* NOTE: i+1 below */
 
         for (p = 0; p < instr->phi_count; ++p)
@@ -1008,6 +1153,7 @@ static void ir_block_naive_phi(ir_block *self)
         }
         ir_instr_delete(instr);
     }
+    return true;
 }
 
 /***********************************************************************
@@ -1057,8 +1203,8 @@ void ir_function_enumerate(ir_function *self)
     }
 }
 
-static void ir_block_life_propagate(ir_block *b, ir_block *prev, bool *changed);
-void ir_function_calculate_liferanges(ir_function *self)
+static bool ir_block_life_propagate(ir_block *b, ir_block *prev, bool *changed);
+bool ir_function_calculate_liferanges(ir_function *self)
 {
     size_t i;
     bool changed;
@@ -1069,9 +1215,13 @@ void ir_function_calculate_liferanges(ir_function *self)
         for (i = 0; i != self->blocks_count; ++i)
         {
             if (self->blocks[i]->is_return)
-                ir_block_life_propagate(self->blocks[i], NULL, &changed);
+            {
+                if (!ir_block_life_propagate(self->blocks[i], NULL, &changed))
+                    return false;
+            }
         }
     } while (changed);
+    return true;
 }
 
 /* Get information about which operand
@@ -1121,7 +1271,7 @@ static bool ir_block_living_add_instr(ir_block *self, size_t eid)
     return changed;
 }
 
-static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *changed)
+static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *changed)
 {
     size_t i;
     /* values which have been read in a previous iteration are now
@@ -1133,7 +1283,8 @@ static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *ch
     for (i = 0; i < self->living_count; ++i)
     {
         if (!ir_block_living_find(prev, self->living[i], NULL)) {
-            ir_block_living_remove(self, i);
+            if (!ir_block_living_remove(self, i))
+                return false;
             --i;
         }
     }
@@ -1145,14 +1296,15 @@ static void ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *ch
     {
         if (ir_block_living_find(self, prev->living[i], NULL))
             continue;
-        ir_block_living_add(self, prev->living[i]);
+        if (!ir_block_living_add(self, prev->living[i]))
+            return false;
         /*
         printf("%s got from prev: %s\n", self->label, prev->living[i]->_name);
         */
     }
 }
 
-static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *changed)
+static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *changed)
 {
     ir_instr *instr;
     ir_value *value;
@@ -1167,7 +1319,10 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     MEM_VECTOR_INIT(&new_reads, v);
 
     if (prev)
-        ir_block_life_prop_previous(self, prev, changed);
+    {
+        if (!ir_block_life_prop_previous(self, prev, changed))
+            return false;
+    }
 
     i = self->instr_count;
     while (i)
@@ -1184,7 +1339,10 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             */
             /* fprintf(stderr, "read: %s\n", value->_name); */
             if (!new_reads_t_v_find(&new_reads, value, NULL))
-                new_reads_t_v_add(&new_reads, value);
+            {
+                if (!new_reads_t_v_add(&new_reads, value))
+                    goto on_error;
+            }
         }
 
         /* See which operands are read and write operands */
@@ -1212,7 +1370,10 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 */
                 /* fprintf(stderr, "read: %s\n", value->_name); */
                 if (!new_reads_t_v_find(&new_reads, value, NULL))
-                    new_reads_t_v_add(&new_reads, value);
+                {
+                    if (!new_reads_t_v_add(&new_reads, value))
+                        goto on_error;
+                }
             }
 
             /* write operands */
@@ -1254,9 +1415,13 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                     */
                     *changed = *changed || tempbool;
                     /* Then remove */
-                    ir_block_living_remove(self, idx);
+                    if (!ir_block_living_remove(self, idx))
+                        goto on_error;
                     if (in_reads)
-                        new_reads_t_v_remove(&new_reads, readidx);
+                    {
+                        if (!new_reads_t_v_remove(&new_reads, readidx))
+                            goto on_error;
+                    }
                 }
             }
         }
@@ -1269,14 +1434,15 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (rd = 0; rd < new_reads.v_count; ++rd)
         {
             if (!ir_block_living_find(self, new_reads.v[rd], NULL)) {
-                ir_block_living_add(self, new_reads.v[rd]);
+                if (!ir_block_living_add(self, new_reads.v[rd]))
+                    goto on_error;
             }
             if (!i && !self->entries_count) {
                 /* fix the top */
                 *changed = *changed || ir_value_life_merge(new_reads.v[rd], instr->eid);
             }
         }
-        new_reads_t_v_clear(&new_reads);
+        MEM_VECTOR_CLEAR(&new_reads, v);
     }
 
     if (self->run_id == self->owner->run_id)
@@ -1288,4 +1454,9 @@ static void ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         ir_block *entry = self->entries[i];
         ir_block_life_propagate(entry, self, changed);
     }
+
+    return true;
+on_error:
+    MEM_VECTOR_CLEAR(&new_reads, v);
+    return false;
 }
