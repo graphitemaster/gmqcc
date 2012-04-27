@@ -1304,6 +1304,7 @@ static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *ch
         printf("%s got from prev: %s\n", self->label, prev->living[i]->_name);
         */
     }
+    return true;
 }
 
 static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *changed)
@@ -1448,7 +1449,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     }
 
     if (self->run_id == self->owner->run_id)
-        return;
+        return true;
+
     self->run_id = self->owner->run_id;
 
     for (i = 0; i < self->entries_count; ++i)
