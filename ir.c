@@ -1072,7 +1072,8 @@ static bool ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, 
     size_t i;
 
     /* create a store */
-    ir_block_create_store(block, old, what);
+    if (!ir_block_create_store(block, old, what))
+        return false;
 
     /* we now move it up */
     instr = block->instr[block->instr_count-1];
@@ -1121,7 +1122,8 @@ static bool ir_block_naive_phi(ir_block *self)
                     /* If it originally wrote to a global we need to store the value
                      * there as welli
                      */
-                    ir_naive_phi_emit_store(self, i+1, old, v);
+                    if (!ir_naive_phi_emit_store(self, i+1, old, v))
+                        return false;
                     if (i+1 < self->instr_count)
                         instr = self->instr[i+1];
                     else

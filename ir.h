@@ -70,10 +70,10 @@ void      ir_value_set_name(ir_value*, const char *name);
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads)
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes)
 
-bool   ir_value_set_float(ir_value*, float f);
-bool   ir_value_set_int(ir_value*, int i);
-bool   ir_value_set_string(ir_value*, const char *s);
-bool   ir_value_set_vector(ir_value*, vector_t v);
+bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
+bool GMQCC_WARN ir_value_set_int(ir_value*, int i);
+bool GMQCC_WARN ir_value_set_string(ir_value*, const char *s);
+bool GMQCC_WARN ir_value_set_vector(ir_value*, vector_t v);
 /*bool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*bool   ir_value_set_pointer_i(ir_value*, int i);       */
 
@@ -148,8 +148,8 @@ MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries)
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
-bool   ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
-bool   ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
+bool GMQCC_WARN ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
+bool GMQCC_WARN ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
 
 ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_sub(ir_block*, const char *label, ir_value *l, ir_value *r);
@@ -157,11 +157,11 @@ ir_value* ir_block_create_mul(ir_block*, const char *label, ir_value *l, ir_valu
 ir_value* ir_block_create_div(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_instr* ir_block_create_phi(ir_block*, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
-bool      ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
+bool GMQCC_WARN ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
 
-bool      ir_block_create_return(ir_block*, ir_value *opt_value);
+bool GMQCC_WARN ir_block_create_return(ir_block*, ir_value *opt_value);
 
-bool      ir_block_create_if(ir_block*, ir_value *cond,
+bool GMQCC_WARN ir_block_create_if(ir_block*, ir_value *cond,
                              ir_block *ontrue, ir_block *onfalse);
 /* A 'goto' is an actual 'goto' coded in QC, whereas
  * a 'jump' is a virtual construct which simply names the
@@ -169,8 +169,8 @@ bool      ir_block_create_if(ir_block*, ir_value *cond,
  * A goto usually becomes an OP_GOTO in the resulting code,
  * whereas a 'jump' usually doesn't add any actual instruction.
  */
-bool      ir_block_create_jump(ir_block*, ir_block *to);
-bool      ir_block_create_goto(ir_block*, ir_block *to);
+bool GMQCC_WARN ir_block_create_jump(ir_block*, ir_block *to);
+bool GMQCC_WARN ir_block_create_goto(ir_block*, ir_block *to);
 
 MEM_VECTOR_PROTO_ALL(ir_block, ir_value*, living)
 
@@ -217,7 +217,7 @@ MEM_VECTOR_PROTO(ir_function, ir_block*, blocks)
 ir_value* ir_function_get_local(ir_function *self, const char *name);
 ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype);
 
-bool ir_function_finalize(ir_function*);
+bool GMQCC_WARN ir_function_finalize(ir_function*);
 /*
 bool ir_function_naive_phi(ir_function*);
 bool ir_function_enumerate(ir_function*);
