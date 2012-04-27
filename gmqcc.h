@@ -197,7 +197,7 @@ void  util_meminfo       ();
 char *util_strdup        (const char *);
 char *util_strrq         (char *);
 char *util_strrnl        (char *);
-char *util_strsws        (char *);
+char *util_strsws        (char *, char **);
 void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  int, int);

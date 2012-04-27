@@ -137,13 +137,14 @@ char *util_strrnl(char *src) {
  * skipping past it, and stroing the skip distance, so
  * the string can later be freed (if it was allocated)
  */
-char *util_strsws(char *skip) {
+char *util_strsws(char *skip, char **move) {
     size_t size = 0;
     if (!skip)
         return NULL;
     
     while (*skip == ' ' || *skip == '\t')
         skip++,size++;
+    *move = skip;
     return skip-size;
 }
 

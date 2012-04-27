@@ -78,22 +78,58 @@ void asm_clear() {
     mem_d(assembly_constants_data);
 }
 
+/*
+ * Parses a type, could be global or not depending on the
+ * assembly state: global scope with assignments are constants.
+ * globals with no assignments are globals.  Function body types
+ * are locals.
+ */
+static inline bool asm_parse_type(const char *skip, size_t line, asm_state *state) {
+    if (strstr(skip, "FLOAT:")  == &skip[0]) { return true; }
+    if (strstr(skip, "VECTOR:") == &skip[0]) { return true; }
+    if (strstr(skip, "ENTITY:") == &skip[0]) { return true; }
+    if (strstr(skip, "FIELD:")  == &skip[0]) { return true; }
+    if (strstr(skip, "STRING:") == &skip[0]) { return true; }
+    return false;
+}
+
+/*
+ * Parses a function: trivial case, handles occurances of duplicated
+ * names among other things.  Ensures valid name as well, and even
+ * internal engine function selection.
+ */
+static inline bool asm_parse_func(const char *skip, size_t line, asm_state *state) {
+    if (*state == ASM_FUNCTION && (strstr(skip, "FUNCTION:") == &skip[0]))
+        return false;
+
+    if (strstr(skip, "FUNCTION:") == &skip[0]) {
+        *state = ASM_FUNCTION; /* update state */
+        /* TODO */
+        return true;
+    }
+    return false;
+}
+
 void asm_parse(FILE *fp) {
     char     *data  = NULL;
+    char     *skip  = NULL;
     long      line  = 1; /* current line */
     size_t    size  = 0; /* size of line */
     asm_state state = ASM_NULL;
-    
-    while ((data = asm_getline(&size, fp)) != NULL) {
-        data = util_strsws(data); /* skip   whitespace */
-        data = util_strrnl(data); /* delete newline    */
 
+    #define asm_end(x) do { mem_d(data); line++; printf(x); } while (0); continue
+    
+    while ((data = asm_getline (&size, fp)) != NULL) {
+        data = util_strsws(data,&skip); /* skip   whitespace */
+        data = util_strrnl(data);       /* delete newline    */
+
+        /* parse type */
+        if(asm_parse_type(skip, line, &state)){ asm_end(""); }
+        /* parse func */
+        if(asm_parse_func(skip, line, &state)){ asm_end(""); }
+        
         /* TODO: everything */
         (void)state;
-        goto end;
-    end:
-        mem_d(data);
-        line ++;
     }
 	asm_clear();
 }
