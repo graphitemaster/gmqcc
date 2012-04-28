@@ -161,6 +161,8 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
                 mem_d(name);
                 return false;
             }
+            *strchr(name, ',')='\0';
+            
             /*
              * Now add the following items to the code system:
              *  function
