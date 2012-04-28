@@ -263,7 +263,7 @@ int parse_gen(lex_file *file) {
                         return error(file, ERROR_PARSE, "Invalid use of include preprocessor directive: wanted #include \"file.h\"\n");
                         
                     char      *copy = util_strdup(file->lastok);
-                     lex_file *next = lex_include(file,   copy);
+                    lex_file  *next = lex_include(file,   copy);
                     
                     if (!next) {
                         error(file, ERROR_INTERNAL, "Include subsystem failure\n");

@@ -58,9 +58,10 @@ static const int usage(const char *const app) {
 }
 
 int main(int argc, char **argv) {
-    size_t itr = 0;
-    char  *app = &argv[0][0];
-    FILE  *fpp = NULL;
+    size_t    itr = 0;
+    char     *app = &argv[0][0];
+    FILE     *fpp = NULL;
+    lex_file *lex = NULL;
 
     /*
      * Parse all command line arguments.  This is rather annoying to do
@@ -137,9 +138,8 @@ int main(int argc, char **argv) {
     for (; itr < items_elements; itr++) {
         switch (items_data[itr].type) {
             case 0:
-                fpp = fopen(items_data[itr].name, "r");
-                lex_file *lex = lex_open(fpp);
-                parse_gen(lex);
+                lex_init (items_data[itr].name, &lex);
+                lex_parse(lex);
                 lex_close(lex);
                 break;
             case 1:

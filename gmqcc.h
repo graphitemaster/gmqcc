@@ -167,8 +167,9 @@ enum {
 int       lex_token  (lex_file *);
 void      lex_reset  (lex_file *);
 void      lex_close  (lex_file *);
-lex_file *lex_include(lex_file *, char *);
-lex_file *lex_open   (FILE *);
+void      lex_parse  (lex_file *);
+lex_file *lex_include(lex_file *, const char *);
+void      lex_init   (const char *, lex_file **);
 
 //===================================================================
 //========================== error.c ================================
@@ -208,8 +209,8 @@ void  util_meminfo       ();
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
 char *util_strdup        (const char *);
-char *util_strrq         (char *);
-char *util_strrnl        (char *);
+char *util_strrq         (const char *);
+char *util_strrnl        (const char *);
 char *util_strsws        (const char *);
 char *util_strchp        (const char *, const char *);
 void  util_debug         (const char *, const char *, ...);

@@ -32,12 +32,17 @@ static const char *const lex_keywords[] = {
     "for",   "typedef"
 };
 
-lex_file *lex_open(FILE *fp) {
+void lex_init(const char *file, lex_file **set) {
     lex_file *lex = mem_a(sizeof(lex_file));
-    if (!lex || !fp)
-        return NULL;
-        
-    lex->file = fp;
+    if (!lex)
+        return;
+
+    lex->file = fopen(file, "r");
+    if (!lex->file) {
+        mem_d(lex);
+        return;
+    }
+    
     fseek(lex->file, 0, SEEK_END);
     lex->length = ftell(lex->file);
     lex->size   = lex->length; /* copy, this is never changed */
@@ -46,7 +51,7 @@ lex_file *lex_open(FILE *fp) {
     lex->line = 0;
     
     memset(lex->peek, 0, sizeof(lex->peek));
-    return lex;
+    *set = lex;
 }
 
 void lex_close(lex_file *file) {
@@ -333,23 +338,25 @@ void lex_reset(lex_file *file) {
     memset(file->lastok, 0, sizeof(file->lastok));
 }
 
+void lex_parse(lex_file *file) {
+    if (!file) return;
+    parse_gen(file); /* run parser */
+}
+
 /*
  * Include a file into the lexer / parsing process:  This really
  * should check if names are the same to prevent endless include
  * recrusion.
  */
-lex_file *lex_include(lex_file *lex, char *file) {
+lex_file *lex_include(lex_file *lex, const char *file) {
     util_strrq(file);
     if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
         error(lex, ERROR_LEX, "Source file cannot include itself\n");
         exit (-1);
     }
-    
-    FILE *fp = fopen(file, "r");
-    if  (!fp) {
-        error(lex, ERROR_LEX, "Include file `%s` doesn't exist\n", file);
-        exit (-1);
-    }
-    
-    return lex_open(fp);
+
+    lex_file *set = NULL;
+    lex_init(file, &set);
+
+    return set;
 }

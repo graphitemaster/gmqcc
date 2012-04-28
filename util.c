@@ -102,9 +102,9 @@ char *util_strdup(const char *s) {
  * as well.  This function shouldn't be used to create a
  * char array that is later freed (it uses pointer arith)
  */
-char *util_strrq(char *s) {
-    char *dst = s;
-    char *src = s;
+char *util_strrq(const char *s) {
+    char *dst = (char*)s;
+    char *src = (char*)s;
     char  chr;
     while ((chr = *src++) != '\0') {
         if (chr == '\\') {
@@ -141,14 +141,14 @@ char *util_strchp(const char *s, const char *e) {
  * done pointer wise instead of strlen(), and an array
  * access.
  */
-char *util_strrnl(char *src) {
+char *util_strrnl(const char *src) {
     if (!src) return NULL;
-    char   *cpy = src;
+    char   *cpy = (char*)src;
     while (*cpy && *cpy != '\n')
         cpy++;
 
     *cpy = '\0';
-    return src;
+    return (char*)src;
 }
 
 /*
