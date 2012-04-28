@@ -140,6 +140,7 @@ ir_function* ir_function_new(ir_builder* owner)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
+    self->name = NULL;
     if (!ir_function_set_name(self, "<@unnamed>")) {
         mem_d(self);
         return NULL;
@@ -251,6 +252,7 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
 {
     ir_block *self;
     self = (ir_block*)mem_a(sizeof(*self));
+    self->label = NULL;
     if (!ir_block_set_label(self, name)) {
         mem_d(self);
         return NULL;
@@ -262,7 +264,6 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     MEM_VECTOR_INIT(self, instr);
     MEM_VECTOR_INIT(self, entries);
     MEM_VECTOR_INIT(self, exits);
-    self->label = NULL;
 
     self->eid = 0;
     self->is_return = false;
@@ -278,7 +279,7 @@ MEM_VEC_FUNCTIONS_ALL(ir_block, ir_value*, living)
 void ir_block_delete(ir_block* self)
 {
     size_t i;
-    mem_d((void*)self->label);
+    mem_d(self->label);
     for (i = 0; i != self->instr_count; ++i)
         ir_instr_delete(self->instr[i]);
     MEM_VECTOR_CLEAR(self, instr);
