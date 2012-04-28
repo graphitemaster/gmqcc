@@ -181,13 +181,14 @@ void ast_block_delete(ast_block *self)
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
-    
-    if (!vtype)
+
+    if (!vtype ||
+        vtype->isconst ||
+        vtype->vtype != TYPE_FUNCTION)
+    {
+        mem_d(self);
         return NULL;
-    if (vtype->isconst)
-        return NULL;
-    if (vtype->vtype != TYPE_FUNCTION)
-        return NULL;
+    }
 
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
