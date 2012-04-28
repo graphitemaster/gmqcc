@@ -140,6 +140,7 @@ ir_function* ir_function_new(ir_builder* owner)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
+    self->name = NULL;
     if (!ir_function_set_name(self, "<@unnamed>")) {
         mem_d(self);
         return NULL;
@@ -251,6 +252,7 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
 {
     ir_block *self;
     self = (ir_block*)mem_a(sizeof(*self));
+    self->label = NULL;
     if (!ir_block_set_label(self, name)) {
         mem_d(self);
         return NULL;
@@ -262,7 +264,6 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     MEM_VECTOR_INIT(self, instr);
     MEM_VECTOR_INIT(self, entries);
     MEM_VECTOR_INIT(self, exits);
-    self->label = NULL;
 
     self->eid = 0;
     self->is_return = false;
@@ -278,7 +279,7 @@ MEM_VEC_FUNCTIONS_ALL(ir_block, ir_value*, living)
 void ir_block_delete(ir_block* self)
 {
     size_t i;
-    mem_d((void*)self->label);
+    mem_d(self->label);
     for (i = 0; i != self->instr_count; ++i)
         ir_instr_delete(self->instr[i]);
     MEM_VECTOR_CLEAR(self, instr);
@@ -1465,4 +1466,191 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
 on_error:
     MEM_VECTOR_CLEAR(&new_reads, v);
     return false;
+}
+
+/***********************************************************************
+ *IR DEBUG Dump functions...
+ */
+
+#define IND_BUFSZ 1024
+
+const char *qc_opname(int op)
+{
+    if (op < 0) return "<INVALID>";
+    if (op < ( sizeof(asm_instr) / sizeof(asm_instr[0]) ))
+        return asm_instr[op].m;
+    switch (op) {
+        case VINSTR_PHI:  return "PHI";
+        case VINSTR_JUMP: return "JUMP";
+        case VINSTR_COND: return "COND";
+        default:          return "<UNK>";
+    }
+}
+
+void ir_builder_dump(ir_builder *b, int (*oprintf)(const char*, ...))
+{
+	size_t i;
+	char indent[IND_BUFSZ];
+	indent[0] = '\t';
+	indent[1] = 0;
+
+	oprintf("module %s\n", b->name);
+	for (i = 0; i < b->globals_count; ++i)
+	{
+		oprintf("global ");
+		if (b->globals[i]->isconst)
+			oprintf("%s = ", b->globals[i]->name);
+		ir_value_dump(b->globals[i], oprintf);
+		oprintf("\n");
+	}
+	for (i = 0; i < b->functions_count; ++i)
+		ir_function_dump(b->functions[i], indent, oprintf);
+	oprintf("endmodule %s\n", b->name);
+}
+
+void ir_function_dump(ir_function *f, char *ind,
+                      int (*oprintf)(const char*, ...))
+{
+	size_t i;
+	oprintf("%sfunction %s\n", ind, f->name);
+	strncat(ind, "\t", IND_BUFSZ);
+	if (f->locals_count)
+	{
+		oprintf("%s%i locals:\n", ind, (int)f->locals_count);
+		for (i = 0; i < f->locals_count; ++i) {
+			oprintf("%s\t", ind);
+			ir_value_dump(f->locals[i], oprintf);
+			oprintf("\n");
+		}
+	}
+	if (f->blocks_count)
+	{
+
+		oprintf("%slife passes: %i\n", ind, (int)f->blocks[0]->run_id);
+		for (i = 0; i < f->blocks_count; ++i)
+			ir_block_dump(f->blocks[i], ind, oprintf);
+
+	}
+	ind[strlen(ind)-1] = 0;
+	oprintf("%sendfunction %s\n", ind, f->name);
+}
+
+void ir_block_dump(ir_block* b, char *ind,
+                   int (*oprintf)(const char*, ...))
+{
+	size_t i;
+	oprintf("%s:%s\n", ind, b->label);
+	strncat(ind, "\t", IND_BUFSZ);
+
+	for (i = 0; i < b->instr_count; ++i)
+		ir_instr_dump(b->instr[i], ind, oprintf);
+	ind[strlen(ind)-1] = 0;
+}
+
+void dump_phi(ir_instr *in, char *ind,
+              int (*oprintf)(const char*, ...))
+{
+	size_t i;
+	oprintf("%s <- phi ", in->_ops[0]->name);
+	for (i = 0; i < in->phi_count; ++i)
+	{
+		oprintf("([%s] : %s) ", in->phi[i].from->label,
+		                        in->phi[i].value->name);
+	}
+	oprintf("\n");
+}
+
+void ir_instr_dump(ir_instr *in, char *ind,
+                       int (*oprintf)(const char*, ...))
+{
+	size_t i;
+	const char *comma = NULL;
+
+	oprintf("%s (%i) ", ind, (int)in->eid);
+
+	if (in->opcode == VINSTR_PHI) {
+		dump_phi(in, ind, oprintf);
+		return;
+	}
+
+	strncat(ind, "\t", IND_BUFSZ);
+
+	if (in->_ops[0] && (in->_ops[1] || in->_ops[2])) {
+		ir_value_dump(in->_ops[0], oprintf);
+		if (in->_ops[1] || in->_ops[2])
+			oprintf(" <- ");
+	}
+	oprintf("%s\t", qc_opname(in->opcode));
+	if (in->_ops[0] && !(in->_ops[1] || in->_ops[2])) {
+		ir_value_dump(in->_ops[0], oprintf);
+		comma = ",\t";
+	}
+	else
+	{
+		for (i = 1; i != 3; ++i) {
+			if (in->_ops[i]) {
+				if (comma)
+					oprintf(comma);
+				ir_value_dump(in->_ops[i], oprintf);
+				comma = ",\t";
+			}
+		}
+	}
+	if (in->bops[0]) {
+		if (comma)
+			oprintf(comma);
+		oprintf("[%s]", in->bops[0]->label);
+		comma = ",\t";
+	}
+	if (in->bops[1])
+		oprintf("%s[%s]", comma, in->bops[1]->label);
+	oprintf("\n");
+	ind[strlen(ind)-1] = 0;
+}
+
+void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
+{
+	if (v->isconst) {
+		switch (v->vtype) {
+			case TYPE_VOID:
+				oprintf("(void)");
+				break;
+			case TYPE_FLOAT:
+				oprintf("%g", v->constval.vfloat);
+				break;
+			case TYPE_VECTOR:
+				oprintf("'%g %g %g'",
+				        v->constval.vvec.x,
+				        v->constval.vvec.y,
+				        v->constval.vvec.z);
+				break;
+			case TYPE_ENTITY:
+				oprintf("(entity)");
+				break;
+			case TYPE_STRING:
+				oprintf("\"%s\"", v->constval.vstring);
+				break;
+#if 0
+			case TYPE_INTEGER:
+				oprintf("%i", v->constval.vint);
+				break;
+#endif
+			case TYPE_POINTER:
+				oprintf("&%s",
+					v->constval.vpointer->name);
+				break;
+		}
+	} else {
+		oprintf("%s", v->name);
+	}
+}
+
+void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...))
+{
+	size_t i;
+	oprintf("Life of %s:\n", self->name);
+	for (i = 0; i < self->life_count; ++i)
+	{
+		oprintf(" + [%i, %i]\n", self->life[i].start, self->life[i].end);
+	}
 }
