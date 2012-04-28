@@ -23,8 +23,6 @@
 #ifndef GMQCC_IR_HDR
 #define GMQCC_IR_HDR
 
-#include "astir.h"
-
 /* ir_value */
 
 typedef struct

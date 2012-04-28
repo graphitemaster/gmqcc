@@ -22,8 +22,6 @@
  */
 #ifndef GMQCC_AST_HDR
 #define GMQCC_AST_HDR
-
-#include "astir.h"
 #include "ir.h"
 
 /* Note: I will not be using a _t suffix for the
