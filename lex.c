@@ -48,7 +48,7 @@ void lex_init(const char *file, lex_file **set) {
     lex->size   = lex->length; /* copy, this is never changed */
     fseek(lex->file, 0, SEEK_SET);
     lex->last = 0;
-    lex->line = 0;
+    lex->line = 1;
     
     memset(lex->peek, 0, sizeof(lex->peek));
     *set = lex;
