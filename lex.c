@@ -77,14 +77,25 @@ static inline void lex_clear(lex_file *file) {
  * it's own internal state for this.
  */
 static int lex_inget(lex_file *file) {
+    char  get;
     file->length --;
-    if (file->last > 0)
-        return file->peek[--file->last];
-    return fgetc(file->file);
+    
+    if (file->last > 0) {
+        if ((get = file->peek[--file->last]) == '\n')
+            file->line ++;
+        return get;
+    }
+    if ((get = fgetc(file->file)) == '\n')
+        file->line++;
+        
+    return get;
 }
 static void lex_unget(int ch, lex_file *file) {
-    if (file->last < sizeof(file->peek))
+    if (file->last < sizeof(file->peek)) {
+        if (ch == '\n')
+            file->line --;
         file->peek[file->last++] = ch;
+    }
     file->length ++;
 }
 
