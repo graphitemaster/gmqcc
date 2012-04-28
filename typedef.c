@@ -49,7 +49,7 @@ void typedef_clear() {
     }
 }
 
-int typedef_add(struct lex_file *file, const char *from, const char *to) {
+int typedef_add(lex_file *file, const char *from, const char *to) {
     unsigned int  hash = typedef_hash(to);
     typedef_node *find = typedef_table[hash];
     

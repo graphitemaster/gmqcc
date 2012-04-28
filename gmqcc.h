@@ -113,7 +113,7 @@ typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 //===================================================================
 //============================ lex.c ================================
 //===================================================================
-struct lex_file {
+typedef struct lex_file_t {
     FILE *file;        /* file handler */
     char *name;        /* name of file */
     char  peek  [5];  
@@ -124,7 +124,7 @@ struct lex_file {
     int   length;  /* bytes left to parse          */
     int   size;    /* never changes (size of file) */
     int   line;    /* what line are we on?         */
-};
+} lex_file;
 
 /*
  * It's important that this table never exceed 32 keywords, the ascii
@@ -164,11 +164,11 @@ enum {
     LEX_IDENT
 };
 
-int              lex_token  (struct lex_file *);
-void             lex_reset  (struct lex_file *);
-void             lex_close  (struct lex_file *);
-struct lex_file *lex_include(struct lex_file *, char *);
-struct lex_file *lex_open   (FILE *);
+int       lex_token  (lex_file *);
+void      lex_reset  (lex_file *);
+void      lex_close  (lex_file *);
+lex_file *lex_include(lex_file *, char *);
+lex_file *lex_open   (FILE *);
 
 //===================================================================
 //========================== error.c ================================
@@ -178,12 +178,12 @@ struct lex_file *lex_open   (FILE *);
 #define ERROR_INTERNAL (SHRT_MAX+2)
 #define ERROR_COMPILER (SHRT_MAX+3)
 #define ERROR_PREPRO   (SHRT_MAX+4)
-int error(struct lex_file *, int, const char *, ...);
+int error(lex_file *, int, const char *, ...);
 
 //===================================================================
 //========================== parse.c ================================
 //===================================================================
-int parse_gen(struct lex_file *);
+int parse_gen(lex_file *);
 
 //===================================================================
 //========================== typedef.c ==============================
@@ -195,7 +195,7 @@ typedef struct typedef_node_t {
 void          typedef_init();
 void          typedef_clear();
 typedef_node *typedef_find(const char *);
-int           typedef_add (struct lex_file *file, const char *, const char *);
+int           typedef_add (lex_file *file, const char *, const char *);
 
 
 //===================================================================

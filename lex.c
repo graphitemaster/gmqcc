@@ -32,8 +32,8 @@ static const char *const lex_keywords[] = {
     "for",   "typedef"
 };
 
-struct lex_file *lex_open(FILE *fp) {
-    struct lex_file *lex = mem_a(sizeof(struct lex_file));
+lex_file *lex_open(FILE *fp) {
+    lex_file *lex = mem_a(sizeof(lex_file));
     if (!lex || !fp)
         return NULL;
         
@@ -49,20 +49,20 @@ struct lex_file *lex_open(FILE *fp) {
     return lex;
 }
 
-void lex_close(struct lex_file *file) {
+void lex_close(lex_file *file) {
     if (!file) return;
     
     fclose(file->file); /* may already be closed */
     mem_d (file);
 }
 
-static void lex_addch(int ch, struct lex_file *file) {
+static void lex_addch(int ch, lex_file *file) {
     if (file->current <  sizeof(file->lastok)-1)
         file->lastok[file->current++] = (char)ch;
     if (file->current == sizeof(file->lastok)-1)
         file->lastok[file->current]   = (char)'\0';
 }
-static inline void lex_clear(struct lex_file *file) {
+static inline void lex_clear(lex_file *file) {
     file->current = 0;
 }
 
@@ -71,13 +71,13 @@ static inline void lex_clear(struct lex_file *file) {
  * This doesn't play with file streams, the lexer has
  * it's own internal state for this.
  */
-static int lex_inget(struct lex_file *file) {
+static int lex_inget(lex_file *file) {
     file->length --;
     if (file->last > 0)
         return file->peek[--file->last];
     return fgetc(file->file);
 }
-static void lex_unget(int ch, struct lex_file *file) {
+static void lex_unget(int ch, lex_file *file) {
     if (file->last < sizeof(file->peek))
         file->peek[file->last++] = ch;
     file->length ++;
@@ -87,7 +87,7 @@ static void lex_unget(int ch, struct lex_file *file) {
  * This is trigraph and digraph support, a feature not qc compiler
  * supports.  Moving up in this world!
  */
-static int lex_trigraph(struct lex_file *file) {
+static int lex_trigraph(lex_file *file) {
     int  ch;
     if ((ch = lex_inget(file)) != '?') {
         lex_unget(ch, file);
@@ -112,7 +112,7 @@ static int lex_trigraph(struct lex_file *file) {
     }
     return '?';
 }
-static int lex_digraph(struct lex_file *file, int first) {
+static int lex_digraph(lex_file *file, int first) {
     int ch = lex_inget(file);
     switch (first) {
         case '<':
@@ -132,7 +132,7 @@ static int lex_digraph(struct lex_file *file, int first) {
     return first;
 }
 
-static int lex_getch(struct lex_file *file) {
+static int lex_getch(lex_file *file) {
     int ch = lex_inget(file);
 
     static int str = 0;
@@ -153,7 +153,7 @@ static int lex_getch(struct lex_file *file) {
     return ch;
 }
 
-static int lex_get(struct lex_file *file) {
+static int lex_get(lex_file *file) {
     int ch;
     if (!isspace(ch = lex_getch(file)))
         return ch;
@@ -168,7 +168,7 @@ static int lex_get(struct lex_file *file) {
     return ' ';
 }
 
-static int lex_skipchr(struct lex_file *file) {
+static int lex_skipchr(lex_file *file) {
     int ch;
     int it;
     
@@ -192,7 +192,7 @@ static int lex_skipchr(struct lex_file *file) {
     return LEX_CHRLIT;
 }
 
-static int lex_skipstr(struct lex_file *file) {
+static int lex_skipstr(lex_file *file) {
     int ch;
     lex_clear(file);
     lex_addch('"', file);
@@ -211,7 +211,7 @@ static int lex_skipstr(struct lex_file *file) {
     
     return LEX_STRLIT;
 }
-static int lex_skipcmt(struct lex_file *file) {
+static int lex_skipcmt(lex_file *file) {
     int ch;
     lex_clear(file);
     ch = lex_getch(file);
@@ -257,7 +257,7 @@ static int lex_skipcmt(struct lex_file *file) {
     return LEX_COMMENT;
 }
 
-static int lex_getsource(struct lex_file *file) {
+static int lex_getsource(lex_file *file) {
     int ch = lex_get(file);
     
     /* skip char/string/comment */
@@ -270,7 +270,7 @@ static int lex_getsource(struct lex_file *file) {
     }
 }
 
-int lex_token(struct lex_file *file) {
+int lex_token(lex_file *file) {
     int ch = lex_getsource(file);
     int it;
     
@@ -323,7 +323,7 @@ int lex_token(struct lex_file *file) {
     return ch;
 }
 
-void lex_reset(struct lex_file *file) {
+void lex_reset(lex_file *file) {
     file->current = 0;
     file->last    = 0;
     file->length  = file->size;
@@ -338,7 +338,7 @@ void lex_reset(struct lex_file *file) {
  * should check if names are the same to prevent endless include
  * recrusion.
  */
-struct lex_file *lex_include(struct lex_file *lex, char *file) {
+lex_file *lex_include(lex_file *lex, char *file) {
     util_strrq(file);
     if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
         error(lex, ERROR_LEX, "Source file cannot include itself\n");

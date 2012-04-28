@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
         switch (items_data[itr].type) {
             case 0:
                 fpp = fopen(items_data[itr].name, "r");
-                struct lex_file *lex = lex_open(fpp);
+                lex_file *lex = lex_open(fpp);
                 parse_gen(lex);
                 lex_close(lex);
                 break;

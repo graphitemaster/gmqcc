@@ -57,7 +57,7 @@ static const char *const error_list[] = {
     "Preprocessor Error:"
 };
 
-int error(struct lex_file *file, int status, const char *msg, ...) {
+int error(lex_file *file, int status, const char *msg, ...) {
     char      bu[1024*4]; /* enough? */
     char      fu[1024*4]; /* enough? */
     va_list   va;
