@@ -24,10 +24,10 @@
 #include <errno.h>
 #include "gmqcc.h"
 
-unsigned long long mem_ab = 0;
-unsigned long long mem_db = 0;
-unsigned long long mem_at = 0;
-unsigned long long mem_dt = 0;
+uint64_t mem_ab = 0;
+uint64_t mem_db = 0;
+uint64_t mem_at = 0;
+uint64_t mem_dt = 0;
 
 struct memblock_t {
     const char  *file;
@@ -51,10 +51,12 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
 }
 
 void util_memory_d(void *ptrn, unsigned int line, const char *file) {
+    void              *data = NULL;
+    struct memblock_t *info = NULL;
     if (!ptrn) return;
-    void              *data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
-    struct memblock_t *info = (struct memblock_t*)data;
-
+    data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
+    info = (struct memblock_t*)data;
+    
     util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
     mem_db += info->byte;
     mem_dt++;
@@ -124,10 +126,11 @@ char *util_strrq(const char *s) {
  * copy of it and null terminating it at the required position.
  */
 char *util_strchp(const char *s, const char *e) {
+    const char *c = NULL;
     if (!s || !e)
         return NULL;
 
-    const char *c = s;
+    c = s;
     while (c != e)
         c++;
 
@@ -140,12 +143,15 @@ char *util_strchp(const char *s, const char *e) {
  * access.
  */
 char *util_strrnl(const char *src) {
-    if (!src) return NULL;
-    char   *cpy = (char*)src;
-    while (*cpy && *cpy != '\n')
-        cpy++;
+    char   *cpy = NULL;
 
-    *cpy = '\0';
+    if (src) {
+        cpy = (char*)src;
+        while (*cpy && *cpy != '\n')
+            cpy++;
+
+        *cpy = '\0';
+    }
     return (char*)src;
 }
 
@@ -191,10 +197,10 @@ bool util_strdigit(const char *str) {
 }
 
 void util_debug(const char *area, const char *ms, ...) {
+    va_list  va;
     if (!opts_debug)
         return;
 
-    va_list  va;
     va_start(va, ms);
     fprintf (stdout, "DEBUG: ");
     fputc   ('[',  stdout);

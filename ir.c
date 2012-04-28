@@ -511,6 +511,7 @@ bool ir_value_life_merge(ir_value *self, size_t s)
     }
     /* nothing found? append */
     if (i == self->life_count) {
+        ir_life_entry_t e;
         if (life && life->end+1 == s)
         {
             /* previous life range can be merged in */
@@ -519,7 +520,6 @@ bool ir_value_life_merge(ir_value *self, size_t s)
         }
         if (life && life->end >= s)
             return false;
-        ir_life_entry_t e;
         e.start = e.end = s;
         if (!ir_value_life_add(self, e))
             return false; /* failing */
@@ -657,7 +657,7 @@ bool ir_block_create_if(ir_block *self, ir_value *v,
         return false;
     }
     self->final = true;
-    //in = ir_instr_new(self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));
+    /*in = ir_instr_new(self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));*/
     in = ir_instr_new(self, VINSTR_COND);
     if (!in)
         return false;
@@ -786,6 +786,9 @@ ir_value* ir_block_create_binop(ir_block *self,
                                 const char *label, int opcode,
                                 ir_value *left, ir_value *right)
 {
+    ir_value *out = NULL;
+    ir_instr *in  = NULL;
+    
     int ot = TYPE_VOID;
     switch (opcode) {
         case INSTR_ADD_F:
@@ -854,7 +857,7 @@ ir_value* ir_block_create_binop(ir_block *self,
             break;
 #endif
         default:
-            // ranges:
+            /* ranges: */
             /* boolean operations result in floats */
             if (opcode >= INSTR_EQ_F && opcode <= INSTR_GT)
                 ot = TYPE_FLOAT;
@@ -871,11 +874,11 @@ ir_value* ir_block_create_binop(ir_block *self,
         return NULL;
     }
 
-    ir_value *out = ir_value_out(self->owner, label, store_local, ot);
+    out = ir_value_out(self->owner, label, store_local, ot);
     if (!out)
         return NULL;
 
-    ir_instr *in = ir_instr_new(self, opcode);
+    in = ir_instr_new(self, opcode);
     if (!in) {
         ir_value_delete(out);
         return NULL;
@@ -1433,7 +1436,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         }
         /* (A) */
         tempbool = ir_block_living_add_instr(self, instr->eid);
-        //fprintf(stderr, "living added values\n");
+        /*fprintf(stderr, "living added values\n");*/
         *changed = *changed || tempbool;
 
         /* new reads: */

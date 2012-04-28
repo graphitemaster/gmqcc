@@ -82,7 +82,7 @@ int parse_gen(lex_file *file) {
             case TOKEN_ENTITY: goto fall;
             case TOKEN_FLOAT:  goto fall;
             {
-            fall:;
+            fall:; {
                 char *name = NULL;
                 int   type = token; /* story copy */
 
@@ -119,12 +119,16 @@ int parse_gen(lex_file *file) {
                             if (*file->lastok != '"')
                                 error(file, ERROR_PARSE, "Expected a '\"' (quote) for string constant\n");
                             /* add the compile-time constant */
-                            compile_constants_add((constant){
-                                .name   = util_strdup(name),
-                                .type   = TYPE_STRING,
-                                .value  = {0,0,0},
-                                .string = util_strdup(file->lastok)
-                            });
+                            {
+                                constant c;
+                                c.name     = util_strdup(name),
+                                c.type     = TYPE_STRING,
+                                c.value[0] = 0;
+                                c.value[1] = 0;
+                                c.value[2] = 0;
+                                c.string   = util_strdup(file->lastok);
+                                compile_constants_add(c);
+                            }
                             break;
                         /* TODO: name constant, old qc vec literals, whitespace fixes, name constant */
                         case TOKEN_VECTOR: {
@@ -206,16 +210,17 @@ int parse_gen(lex_file *file) {
                                 error(file, ERROR_PARSE, "Expected `;` on end of constant initialization for vector\n");
 
                             /* add the compile-time constant */
-                            compile_constants_add((constant){
-                                .name   = util_strdup(name),
-                                .type   = TYPE_VECTOR,
-                                .value  = {
-                                    [0] = compile_calc_x,
-                                    [1] = compile_calc_y,
-                                    [2] = compile_calc_z
-                                },
-                                .string = NULL
-                            });
+                            {
+                                constant c;
+                                
+                                c.name     = util_strdup(name),
+                                c.type     = TYPE_VECTOR,
+                                c.value[0] = compile_calc_x;
+                                c.value[1] = compile_calc_y;
+                                c.value[2] = compile_calc_z;
+                                c.string   = NULL;
+                                compile_constants_add(c);
+                            }
                             break;
                         }
 
@@ -223,19 +228,24 @@ int parse_gen(lex_file *file) {
                         case TOKEN_FLOAT: /*TODO: validate, constant generation, name constant */
                             if (!isdigit(token))
                                 error(file, ERROR_PARSE, "Expected numeric constant for float constant\n");
-                            compile_constants_add((constant){
-                                .name   = util_strdup(name),
-                                .type   = TOKEN_FLOAT,
-                                .value  = {0,0,0},
-                                .string = NULL
-                            });
+                            /* constant */
+                            {
+                                constant c;
+                                c.name     = util_strdup(name),
+                                c.type     = TOKEN_FLOAT,
+                                c.value[0] = 0;
+                                c.value[1] = 0;
+                                c.value[2] = 0;
+                                c.string   = NULL;
+                                compile_constants_add(c);
+                            }
                             break;
                     }
                 } else if (token == '(') {
                     printf("FUNCTION ??\n");
                 }
                 mem_d(name);
-            }
+            }}
 
             /*
              * From here down is all language punctuation:  There is no
@@ -253,6 +263,8 @@ int parse_gen(lex_file *file) {
                  * directives so far are #include.
                  */
                 if (strncmp(file->lastok, "include", sizeof("include")) == 0) {
+                    char     *copy = NULL;
+                    lex_file *next = NULL;
                     /*
                      * We only suport include " ", not <> like in C (why?)
                      * because the latter is silly.
@@ -262,19 +274,24 @@ int parse_gen(lex_file *file) {
                     if (token == '\n')
                         return error(file, ERROR_PARSE, "Invalid use of include preprocessor directive: wanted #include \"file.h\"\n");
 
-                    char      *copy = util_strdup(file->lastok);
-                    lex_file  *next = lex_include(file,   copy);
+                    copy = util_strdup(file->lastok);
+                    next = lex_include(file,   copy);
 
                     if (!next) {
                         error(file, ERROR_INTERNAL, "Include subsystem failure\n");
                         exit (-1);
                     }
-                    compile_constants_add((constant) {
-                            .name   = "#include",
-                            .type   = TYPE_VOID,
-                            .value  = {0,0,0},
-                            .string = copy
-                    });
+                    /* constant */
+                    {
+                        constant c;
+                        c.name     = "#include",
+                        c.type     = TYPE_VOID,
+                        c.value[0] = 0;
+                        c.value[1] = 0;
+                        c.value[2] = 0;
+                        c.string   = copy;
+                        compile_constants_add(c);
+                    }
                     parse_gen(next);
                     mem_d    (copy);
                     lex_close(next);
@@ -293,12 +310,12 @@ int parse_gen(lex_file *file) {
     lex_reset(file);
     /* free constants */
     {
-		size_t i = 0;
-		for (; i < compile_constants_elements; i++) {
-			mem_d(compile_constants_data[i].name);
-			mem_d(compile_constants_data[i].string);
-		}
-		mem_d(compile_constants_data);
-	}
+        size_t i = 0;
+        for (; i < compile_constants_elements; i++) {
+            mem_d(compile_constants_data[i].name);
+            mem_d(compile_constants_data[i].string);
+        }
+        mem_d(compile_constants_data);
+    }
     return 1;
 }

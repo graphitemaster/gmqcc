@@ -75,6 +75,25 @@
 #define GMQCC_SUPRESS_EMPTY_BODY do { } while (0)
 
 /*
+ * Inline is not supported in < C90, however some compilers
+ * like gcc and clang might have an inline attribute we can
+ * use if present.
+ */
+#if __STDC_VERSION__ < 199901L
+#   if defined(__GNUC__) || defined (__CLANG__)
+#       if __GNUC__ < 2
+#           define GMQCC_INLINE
+#       else
+#           define GMQCC_INLINE __attribute__ ((always_inline))
+#       endif
+#   else
+#       define GMQCC_INLINE
+#   endif
+#else
+#   define GMQCC_INLINE inline
+#endif
+
+/*
  * stdint.h and inttypes.h -less subset
  * for systems that don't have it, which we must
  * assume is all systems. (int8_t not required)
@@ -94,9 +113,15 @@
 #if   INT_MAX   == 0x7FFFFFFF
     typedef int            int32_t;
     typedef unsigned int   uint32_t;
+    typedef long           int64_t;
+    typedef unsigned long  uint64_t;
 #elif LONG_MAX  == 0x7FFFFFFF
     typedef long           int32_t;
     typedef unsigned long  uint32_t;
+
+    /* bail on 64 bit type! */
+    typedef char           int64_t;
+    typedef char           uint64_t;
 #endif
 #ifdef _LP64 /* long pointer == 64 */
     typedef unsigned long  uintptr_t;
@@ -109,15 +134,17 @@
 typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
 typedef char uint16_size_if_correct [sizeof(uint16_t) == 2?1:-1];
 typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
+typedef char uint64_size_is_correct [sizeof(uint64_t) == 8?1:-1];
 typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
 typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
+typedef char int64_size_is_correct  [sizeof(int64_t)  == 8?1:-1];
 /* intptr_t / uintptr_t correct size check */
 typedef char uintptr_size_is_correct[sizeof(intptr_t) == sizeof(int*)?1:-1];
 typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 
-//===================================================================
-//============================ lex.c ================================
-//===================================================================
+/*===================================================================*/
+/*============================ lex.c ================================*/
+/*===================================================================*/
 typedef struct lex_file_t {
     FILE *file;        /* file handler */
     char *name;        /* name of file */
@@ -144,11 +171,11 @@ enum {
     TOKEN_CONTINUE ,
     TOKEN_RETURN   ,
     TOKEN_GOTO     ,
-    TOKEN_FOR      ,   // extension
-    TOKEN_TYPEDEF  ,   // extension
+    TOKEN_FOR      ,   /* extension */
+    TOKEN_TYPEDEF  ,   /* extension */
 
-    // ensure the token types are out of the
-    // bounds of anyothers that may conflict.
+    /* ensure the token types are out of the  */
+    /* bounds of anyothers that may conflict. */
     TOKEN_FLOAT    = 110,
     TOKEN_VECTOR        ,
     TOKEN_STRING        ,
@@ -176,9 +203,9 @@ void      lex_parse  (lex_file *);
 lex_file *lex_include(lex_file *, const char *);
 void      lex_init   (const char *, lex_file **);
 
-//===================================================================
-//========================== error.c ================================
-//===================================================================
+/*===================================================================*/
+/*========================== error.c ================================*/
+/*===================================================================*/
 #define ERROR_LEX      (SHRT_MAX+0)
 #define ERROR_PARSE    (SHRT_MAX+1)
 #define ERROR_INTERNAL (SHRT_MAX+2)
@@ -186,14 +213,14 @@ void      lex_init   (const char *, lex_file **);
 #define ERROR_PREPRO   (SHRT_MAX+4)
 int error(lex_file *, int, const char *, ...);
 
-//===================================================================
-//========================== parse.c ================================
-//===================================================================
+/*===================================================================*/
+/*========================== parse.c ================================*/
+/*===================================================================*/
 int parse_gen(lex_file *);
 
-//===================================================================
-//========================== typedef.c ==============================
-//===================================================================
+/*===================================================================*/
+/*========================== typedef.c ==============================*/
+/*===================================================================*/
 typedef struct typedef_node_t {
     char      *name;
 } typedef_node;
@@ -204,9 +231,9 @@ typedef_node *typedef_find(const char *);
 int           typedef_add (lex_file *file, const char *, const char *);
 
 
-//===================================================================
-//=========================== util.c ================================
-//===================================================================
+/*===================================================================*/
+/*=========================== util.c ================================*/
+/*===================================================================*/
 void *util_memory_a      (unsigned int, unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
 void  util_meminfo       ();
@@ -242,14 +269,14 @@ uint32_t util_crc32(const char *, int, register const short);
 /* Builds vector add */
 #define VECTOR_CORE(T,N)                                        \
     int    N##_add(T element) {                                 \
+        void *temp = NULL;                                      \
         if (N##_elements == N##_allocated) {                    \
             if (N##_allocated == 0) {                           \
                 N##_allocated = 12;                             \
             } else {                                            \
                 N##_allocated *= 2;                             \
             }                                                   \
-            void *temp = mem_a(N##_allocated * sizeof(T));      \
-            if  (!temp) {                                       \
+            if  (!(temp = mem_a(N##_allocated * sizeof(T)))) {  \
                 mem_d(temp);                                    \
                 return -1;                                      \
             }                                                   \
@@ -272,9 +299,9 @@ uint32_t util_crc32(const char *, int, register const short);
     VECTOR_TYPE(T,N);    \
     VECTOR_CORE(T,N)
 
-//===================================================================
-//=========================== code.c ================================
-//===================================================================
+/*===================================================================*/
+/*=========================== code.c ================================*/
+/*===================================================================*/
 enum {
     TYPE_VOID     ,
     TYPE_STRING   ,
@@ -285,7 +312,7 @@ enum {
     TYPE_FUNCTION ,
     TYPE_POINTER  ,
     /* TYPE_INTEGER  , */
-    TYPE_VARIANT  ,
+    TYPE_VARIANT
 };
 
 /*
@@ -441,7 +468,7 @@ enum {
      */
     VINSTR_PHI,
     VINSTR_JUMP,
-    VINSTR_COND,
+    VINSTR_COND
 };
 
 /*
@@ -481,88 +508,88 @@ extern long code_defs_elements;
 void code_write ();
 void code_init  ();
 
-//===================================================================
-//========================= assembler.c =============================
-//===================================================================
+/*===================================================================*/
+/*========================= assembler.c =============================*/
+/*===================================================================*/
 static const struct {
     const char  *m; /* menomic     */
     const size_t o; /* operands    */
     const size_t l; /* menomic len */
-} const asm_instr[] = {
-    [INSTR_DONE]       = { "DONE"      , 1, 4 },
-    [INSTR_MUL_F]      = { "MUL_F"     , 3, 5 },
-    [INSTR_MUL_V]      = { "MUL_V"     , 3, 5 },
-    [INSTR_MUL_FV]     = { "MUL_FV"    , 3, 6 },
-    [INSTR_MUL_VF]     = { "MUL_VF"    , 3, 6 },
-    [INSTR_DIV_F]      = { "DIV"       , 0, 3 },
-    [INSTR_ADD_F]      = { "ADD_F"     , 3, 5 },
-    [INSTR_ADD_V]      = { "ADD_V"     , 3, 5 },
-    [INSTR_SUB_F]      = { "SUB_F"     , 3, 5 },
-    [INSTR_SUB_V]      = { "DUB_V"     , 3, 5 },
-    [INSTR_EQ_F]       = { "EQ_F"      , 0, 4 },
-    [INSTR_EQ_V]       = { "EQ_V"      , 0, 4 },
-    [INSTR_EQ_S]       = { "EQ_S"      , 0, 4 },
-    [INSTR_EQ_E]       = { "EQ_E"      , 0, 4 },
-    [INSTR_EQ_FNC]     = { "ES_FNC"    , 0, 6 },
-    [INSTR_NE_F]       = { "NE_F"      , 0, 4 },
-    [INSTR_NE_V]       = { "NE_V"      , 0, 4 },
-    [INSTR_NE_S]       = { "NE_S"      , 0, 4 },
-    [INSTR_NE_E]       = { "NE_E"      , 0, 4 },
-    [INSTR_NE_FNC]     = { "NE_FNC"    , 0, 6 },
-    [INSTR_LE]         = { "LE"        , 0, 2 },
-    [INSTR_GE]         = { "GE"        , 0, 2 },
-    [INSTR_LT]         = { "LT"        , 0, 2 },
-    [INSTR_GT]         = { "GT"        , 0, 2 },
-    [INSTR_LOAD_F]     = { "FIELD_F"   , 0, 7 },
-    [INSTR_LOAD_V]     = { "FIELD_V"   , 0, 7 },
-    [INSTR_LOAD_S]     = { "FIELD_S"   , 0, 7 },
-    [INSTR_LOAD_ENT]   = { "FIELD_ENT" , 0, 9 },
-    [INSTR_LOAD_FLD]   = { "FIELD_FLD" , 0, 9 },
-    [INSTR_LOAD_FNC]   = { "FIELD_FNC" , 0, 9 },
-    [INSTR_ADDRESS]    = { "ADDRESS"   , 0, 7 },
-    [INSTR_STORE_F]    = { "STORE_F"   , 0, 7 },
-    [INSTR_STORE_V]    = { "STORE_V"   , 0, 7 },
-    [INSTR_STORE_S]    = { "STORE_S"   , 0, 7 },
-    [INSTR_STORE_ENT]  = { "STORE_ENT" , 0, 9 },
-    [INSTR_STORE_FLD]  = { "STORE_FLD" , 0, 9 },
-    [INSTR_STORE_FNC]  = { "STORE_FNC" , 0, 9 },
-    [INSTR_STOREP_F]   = { "STOREP_F"  , 0, 8 },
-    [INSTR_STOREP_V]   = { "STOREP_V"  , 0, 8 },
-    [INSTR_STOREP_S]   = { "STOREP_S"  , 0, 8 },
-    [INSTR_STOREP_ENT] = { "STOREP_ENT", 0, 10},
-    [INSTR_STOREP_FLD] = { "STOREP_FLD", 0, 10},
-    [INSTR_STOREP_FNC] = { "STOREP_FNC", 0, 10},
-    [INSTR_RETURN]     = { "RETURN"    , 0, 6 },
-    [INSTR_NOT_F]      = { "NOT_F"     , 0, 5 },
-    [INSTR_NOT_V]      = { "NOT_V"     , 0, 5 },
-    [INSTR_NOT_S]      = { "NOT_S"     , 0, 5 },
-    [INSTR_NOT_ENT]    = { "NOT_ENT"   , 0, 7 },
-    [INSTR_NOT_FNC]    = { "NOT_FNC"   , 0, 7 },
-    [INSTR_IF]         = { "IF"        , 0, 2 },
-    [INSTR_IFNOT]      = { "IFNOT"     , 0, 5 },
-    [INSTR_CALL0]      = { "CALL0"     , 0, 5 },
-    [INSTR_CALL1]      = { "CALL1"     , 0, 5 },
-    [INSTR_CALL2]      = { "CALL2"     , 0, 5 },
-    [INSTR_CALL3]      = { "CALL3"     , 0, 5 },
-    [INSTR_CALL4]      = { "CALL4"     , 0, 5 },
-    [INSTR_CALL5]      = { "CALL5"     , 0, 5 },
-    [INSTR_CALL6]      = { "CALL6"     , 0, 5 },
-    [INSTR_CALL7]      = { "CALL7"     , 0, 5 },
-    [INSTR_CALL8]      = { "CALL8"     , 0, 5 },
-    [INSTR_STATE]      = { "STATE"     , 0, 5 },
-    [INSTR_GOTO]       = { "GOTO"      , 0, 4 },
-    [INSTR_AND]        = { "AND"       , 0, 3 },
-    [INSTR_OR]         = { "OR"        , 0, 2 },
-    [INSTR_BITAND]     = { "BITAND"    , 0, 6 },
-    [INSTR_BITOR]      = { "BITOR"     , 0, 5 }
+} asm_instr[] = {
+    { "DONE"      , 1, 4 },
+    { "MUL_F"     , 3, 5 },
+    { "MUL_V"     , 3, 5 },
+    { "MUL_FV"    , 3, 6 },
+    { "MUL_VF"    , 3, 6 },
+    { "DIV"       , 0, 3 },
+    { "ADD_F"     , 3, 5 },
+    { "ADD_V"     , 3, 5 },
+    { "SUB_F"     , 3, 5 },
+    { "DUB_V"     , 3, 5 },
+    { "EQ_F"      , 0, 4 },
+    { "EQ_V"      , 0, 4 },
+    { "EQ_S"      , 0, 4 },
+    { "EQ_E"      , 0, 4 },
+    { "ES_FNC"    , 0, 6 },
+    { "NE_F"      , 0, 4 },
+    { "NE_V"      , 0, 4 },
+    { "NE_S"      , 0, 4 },
+    { "NE_E"      , 0, 4 },
+    { "NE_FNC"    , 0, 6 },
+    { "LE"        , 0, 2 },
+    { "GE"        , 0, 2 },
+    { "LT"        , 0, 2 },
+    { "GT"        , 0, 2 },
+    { "FIELD_F"   , 0, 7 },
+    { "FIELD_V"   , 0, 7 },
+    { "FIELD_S"   , 0, 7 },
+    { "FIELD_ENT" , 0, 9 },
+    { "FIELD_FLD" , 0, 9 },
+    { "FIELD_FNC" , 0, 9 },
+    { "ADDRESS"   , 0, 7 },
+    { "STORE_F"   , 0, 7 },
+    { "STORE_V"   , 0, 7 },
+    { "STORE_S"   , 0, 7 },
+    { "STORE_ENT" , 0, 9 },
+    { "STORE_FLD" , 0, 9 },
+    { "STORE_FNC" , 0, 9 },
+    { "STOREP_F"  , 0, 8 },
+    { "STOREP_V"  , 0, 8 },
+    { "STOREP_S"  , 0, 8 },
+    { "STOREP_ENT", 0, 10},
+    { "STOREP_FLD", 0, 10},
+    { "STOREP_FNC", 0, 10},
+    { "RETURN"    , 0, 6 },
+    { "NOT_F"     , 0, 5 },
+    { "NOT_V"     , 0, 5 },
+    { "NOT_S"     , 0, 5 },
+    { "NOT_ENT"   , 0, 7 },
+    { "NOT_FNC"   , 0, 7 },
+    { "IF"        , 0, 2 },
+    { "IFNOT"     , 0, 5 },
+    { "CALL0"     , 0, 5 },
+    { "CALL1"     , 0, 5 },
+    { "CALL2"     , 0, 5 },
+    { "CALL3"     , 0, 5 },
+    { "CALL4"     , 0, 5 },
+    { "CALL5"     , 0, 5 },
+    { "CALL6"     , 0, 5 },
+    { "CALL7"     , 0, 5 },
+    { "CALL8"     , 0, 5 },
+    { "STATE"     , 0, 5 },
+    { "GOTO"      , 0, 4 },
+    { "AND"       , 0, 3 },
+    { "OR"        , 0, 2 },
+    { "BITAND"    , 0, 6 },
+    { "BITOR"     , 0, 5 }
 };
 
 void asm_init (const char *, FILE **);
 void asm_close(FILE *);
 void asm_parse(FILE *);
-//======================================================================
-//============================= main.c =================================
-//======================================================================
+/*===================================================================*/
+/*============================= main.c ==============================*/
+/*===================================================================*/
 enum {
     COMPILER_QCC,     /* circa  QuakeC */
     COMPILER_FTEQCC,  /* fteqcc QuakeC */
@@ -574,9 +601,9 @@ extern bool opts_memchk;
 extern bool opts_darkplaces_stringtablebug;
 extern bool opts_omit_nullcode;
 extern int  opts_compiler;
-//======================================================================
-//============================= ast.c ==================================
-//======================================================================
+/*===================================================================*/
+/*============================= ast.c ===============================*/
+/*===================================================================*/
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)                   \
     bool GMQCC_WARN Towner##_##mem##_add(Towner*, Tmem);      \
     bool GMQCC_WARN Towner##_##mem##_remove(Towner*, size_t)
@@ -690,7 +717,7 @@ _MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 enum store_types {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */
-    store_value,  /* unassignable */
+    store_value   /* unassignable */
 };
 
 typedef struct {

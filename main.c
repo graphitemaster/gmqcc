@@ -21,7 +21,6 @@
  * SOFTWARE.
  */
 #include "gmqcc.h"
-// todo CLEANUP this argitem thing
 typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
@@ -39,21 +38,22 @@ static const int usage(const char *const app) {
            "    %s -c<file> -i<file> -oprog.dat -- compile together (allowed multiple -i<file>)\n"
            "    %s -a<file> -i<file> -oprog.dat -- assemble together(allowed multiple -i<file>)\n"
            "    example:\n"
-           "    %s -cfoo.qc -ibar.qc -oqc.dat -afoo.qs -ibar.qs -oqs.dat\n"
-           "    additional flags:\n"
+           "    %s -cfoo.qc -ibar.qc -oqc.dat -afoo.qs -ibar.qs -oqs.dat\n", app, app, app, app, app);
+           
+    printf("    additional flags:\n"
            "        -debug           -- turns on compiler debug messages\n"
            "        -memchk          -- turns on compiler memory leak check\n"
            "        -help            -- prints this help/usage text\n"
-           "        -std             -- select the QuakeC compile type (types below):\n"
-           "            -std=qcc     -- original QuakeC\n"
+           "        -std             -- select the QuakeC compile type (types below):\n");
+           
+    printf("            -std=qcc     -- original QuakeC\n"
            "            -std=ftqecc  -- fteqcc QuakeC\n"
            "            -std=qccx    -- qccx QuakeC\n"
-           "            -std=gmqcc   -- this compiler QuakeC (default selection)\n"
-           "    codegen flags:\n"
+           "            -std=gmqcc   -- this compiler QuakeC (default selection)\n");
+           
+    printf("    codegen flags:\n"
            "        -fdarkplaces-string-table-bug -- patches the string table to work with bugged versions of darkplaces\n"
-           "        -fomit-nullcode               -- omits the generation of null code (will break everywhere see propsal.txt)\n",
-            app,app,app,app,app
-    );
+           "        -fomit-nullcode               -- omits the generation of null code (will break everywhere see propsal.txt)\n");
     return -1;
 }
 
@@ -87,20 +87,25 @@ int main(int argc, char **argv) {
                 return 0;
             }
             #define param_argument(argtype) do {                             \
+                argitem item;                                                \
                 if (argv[1][2]) {                                            \
-                    items_add((argitem){util_strdup(&argv[1][2]), argtype}); \
+                    item.name = util_strdup(&argv[1][2]);                    \
+                    item.type = argtype;                                     \
+                    items_add(item);                                         \
                 } else {                                                     \
                     ++argv;                                                  \
                     --argc;                                                  \
                     if (argc <= 1)                                           \
                         goto clean_params_usage;                             \
-                    items_add((argitem){util_strdup(&argv[1][0]), argtype}); \
-                }                                                            \
+                    item.name = util_strdup(argv[1]);                        \
+                    item.type = argtype;                                     \
+                    items_add(item);                                         \
+                } \
             } while (0)
 
-            case 'c': param_argument(0); break; /* compile  */
-            case 'a': param_argument(1); break; /* assemble */
-            case 'i': param_argument(2); break; /* includes */
+            case 'c': { param_argument(0); break; } /* compile  */
+            case 'a': { param_argument(1); break; } /* assemble */
+            case 'i': { param_argument(2); break; } /* includes */
             #undef parm_argument
             default:
                 if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = true; break; }
@@ -152,13 +157,17 @@ int main(int argc, char **argv) {
         switch (items_data[itr].type) {
             case 0:
                 lex_init (items_data[itr].name, &lex);
-                lex_parse(lex);
-                lex_close(lex);
+                if (lex) {
+                    lex_parse(lex);
+                    lex_close(lex);
+                }
                 break;
             case 1:
                 asm_init (items_data[itr].name, &fpp);
-                asm_parse(fpp);
-                asm_close(fpp);
+                if (fpp) {
+                    asm_parse(fpp);
+                    asm_close(fpp);
+                }
                 break;
         }
     }
@@ -171,6 +180,7 @@ int main(int argc, char **argv) {
 
     util_meminfo();
     return 0;
+    
 clean_params_usage:
     for (itr = 0; itr < items_elements; itr++)
         mem_d(items_data[itr].name);

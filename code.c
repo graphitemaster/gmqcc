@@ -84,6 +84,10 @@ VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_chars     );
 
 void code_init() {
+    prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
+    prog_section_statement empty_statement = {0,{0},{0},{0}};
+    int                    i               = 0;
+    
     /* omit creation of null code */
     if (opts_omit_nullcode)
         return;
@@ -92,10 +96,7 @@ void code_init() {
      * The way progs.dat is suppose to work is odd, there needs to be
      * some null (empty) statements, functions, and 28 globals
      */
-    prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
-    prog_section_statement empty_statement = {0,{0},{0},{0}};
-    int i;
-    for(i = 0; i < 28; i++)
+    for(; i < 28; i++)
         code_globals_add(0);
 
     code_chars_add     ('\0');
@@ -104,6 +105,19 @@ void code_init() {
 }
 
 void code_test() {
+    prog_section_def       d1 = { TYPE_VOID,     28, 1 };
+    prog_section_def       d2 = { TYPE_FUNCTION, 29, 8 };
+    prog_section_def       d3 = { TYPE_STRING,   30, 14};
+    prog_section_function  f1 = { 1, 0, 0, 0, 1,            0,0, {0}};
+    prog_section_function  f2 = {-4, 0, 0, 0, 8,            0,0, {0}};
+    prog_section_function  f3 = { 0, 0, 0, 0, 14+13,        0,0, {0}};
+    prog_section_function  f4 = { 0, 0, 0, 0, 14+13+10,     0,0, {0}};
+    prog_section_function  f5 = { 0, 0, 0, 0, 14+13+10+7,   0,0, {0}};
+    prog_section_function  f6 = { 0, 0, 0, 0, 14+13+10+7+9, 0,0, {0}};
+    prog_section_statement s1 = { INSTR_STORE_F, {30}, {OFS_PARM0}, {0}};
+    prog_section_statement s2 = { INSTR_CALL1,   {29}, {0},         {0}};
+    prog_section_statement s3 = { INSTR_RETURN,  {0},  {0},         {0}};
+    
     code_chars_put("m_init",        0x6);
     code_chars_put("print",         0x5);
     code_chars_put("hello world\n", 0xC);
@@ -117,24 +131,30 @@ void code_test() {
     code_globals_add(14); /* hello world in string table */
 
     /* now the defs */
-    code_defs_add((prog_section_def){.type=TYPE_VOID,    .offset=28/*globals[28]*/, .name=1 }); /* m_init */
-    code_defs_add((prog_section_def){.type=TYPE_FUNCTION,.offset=29/*globals[29]*/, .name=8 }); /* print  */
-    code_defs_add((prog_section_def){.type=TYPE_STRING,  .offset=30/*globals[30]*/, .name=14}); /*hello_world*/
-
-    code_functions_add((prog_section_function){1,  0, 0, 0, .name=1, 0, 0, {0}}); /* m_init */
-    code_functions_add((prog_section_function){-4, 0, 0, 0, .name=8, 0, 0, {0}}); /* print  */
-    code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13,        0,0, {0}}); /* m_keydown */
-    code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10,     0,0, {0}});
-    code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7,   0,0, {0}});
-    code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7+9, 0,0, {0}});
-
-    code_statements_add((prog_section_statement){INSTR_STORE_F, {30}/*30 is hello_world */, {OFS_PARM0}, {0}});
-    code_statements_add((prog_section_statement){INSTR_CALL1,   {29}/*29 is print       */, {0},         {0}});
-    code_statements_add((prog_section_statement){INSTR_RETURN,  {0},                        {0},         {0}});
+    code_defs_add      (d1); /* m_init    */
+    code_defs_add      (d2); /* print     */
+    code_defs_add      (d3); /*hello_world*/
+    code_functions_add (f1); /* m_init    */
+    code_functions_add (f2); /* print     */
+    code_functions_add (f3); /* m_keydown */
+    code_functions_add (f4);
+    code_functions_add (f5);
+    code_functions_add (f6);
+    code_statements_add(s1);
+    code_statements_add(s2);
+    code_statements_add(s3);
 }
 
 void code_write() {
-    prog_header code_header={0};
+    prog_header  code_header  = {0};
+    prog_section statements;
+    prog_section defs;        
+    prog_section fields;      
+    prog_section functions;   
+    prog_section globals;     
+    prog_section strings;
+    FILE        *fp        = NULL;
+    size_t       it        = 1;
 
     /* see proposal.txt */
     if (opts_omit_nullcode) {
@@ -142,14 +162,27 @@ void code_write() {
         code_header.flags  = 1;
     }
 
+    statements.offset = sizeof(prog_header);
+    statements.length = code_statements_elements;
+    defs.offset       = code_header.statements.offset + sizeof(prog_section_statement) * code_statements_elements;
+    defs.length       = code_defs_elements;
+    fields.offset     = code_header.defs.offset       + sizeof(prog_section_def)       * code_defs_elements;
+    fields.length     = code_fields_elements;
+    functions.offset  = code_header.fields.offset     + sizeof(prog_section_field)     * code_fields_elements;
+    functions.length  = code_functions_elements;
+    globals.offset    = code_header.functions.offset  + sizeof(prog_section_function)  * code_functions_elements;
+    globals.length    = code_globals_elements;
+    strings.offset    = code_header.globals.offset    + sizeof(int)                    * code_globals_elements;
+    strings.length    = code_chars_elements;
+
     code_header.version    = 6;
     code_header.crc16      = 0; /* TODO: */
-    code_header.statements = (prog_section){sizeof(prog_header), code_statements_elements };
-    code_header.defs       = (prog_section){code_header.statements.offset + sizeof(prog_section_statement)*code_statements_elements,  code_defs_elements      };
-    code_header.fields     = (prog_section){code_header.defs.offset       + sizeof(prog_section_def)      *code_defs_elements,        code_fields_elements    };
-    code_header.functions  = (prog_section){code_header.fields.offset     + sizeof(prog_section_field)    *code_fields_elements,      code_functions_elements };
-    code_header.globals    = (prog_section){code_header.functions.offset  + sizeof(prog_section_function) *code_functions_elements,   code_globals_elements   };
-    code_header.strings    = (prog_section){code_header.globals.offset    + sizeof(int)                   *code_globals_elements,     code_chars_elements     };
+    code_header.statements = statements;
+    code_header.defs       = defs;
+    code_header.fields     = fields;
+    code_header.functions  = functions;
+    code_header.globals    = globals;
+    code_header.strings    = strings;
     code_header.entfield   = 0; /* TODO: */
 
     if (opts_darkplaces_stringtablebug) {
@@ -162,21 +195,21 @@ void code_write() {
     }
 
     /* ensure all data is in LE format */
-    util_endianswap(&code_header,         1,                        sizeof(prog_header));
-    util_endianswap(code_statements_data, code_statements_elements, sizeof(prog_section_statement));
-    util_endianswap(code_defs_data,       code_defs_elements,       sizeof(prog_section_def));
-    util_endianswap(code_fields_data,     code_fields_elements,     sizeof(prog_section_field));
-    util_endianswap(code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
-    util_endianswap(code_globals_data,    code_globals_elements,    sizeof(int));
+    util_endianswap(&code_header,          1,                        sizeof(prog_header));
+    util_endianswap (code_statements_data, code_statements_elements, sizeof(prog_section_statement));
+    util_endianswap (code_defs_data,       code_defs_elements,       sizeof(prog_section_def));
+    util_endianswap (code_fields_data,     code_fields_elements,     sizeof(prog_section_field));
+    util_endianswap (code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
+    util_endianswap (code_globals_data,    code_globals_elements,    sizeof(int));
 
-    FILE *fp = fopen("program.dat", "wb");
-    fwrite(&code_header,         1, sizeof(prog_header), fp);
-    fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
-    fwrite(code_defs_data,       1, sizeof(prog_section_def)      *code_defs_elements,       fp);
-    fwrite(code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
-    fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
-    fwrite(code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
-    fwrite(code_chars_data,      1, 1                             *code_chars_elements,      fp);
+    fp = fopen("program.dat", "wb");
+    fwrite(&code_header,          1, sizeof(prog_header), fp);
+    fwrite (code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
+    fwrite (code_defs_data,       1, sizeof(prog_section_def)      *code_defs_elements,       fp);
+    fwrite (code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
+    fwrite (code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
+    fwrite (code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
+    fwrite (code_chars_data,      1, 1                             *code_chars_elements,      fp);
 
     util_debug("GEN","HEADER:\n");
     util_debug("GEN","    version:    = %d\n", code_header.version );
@@ -191,22 +224,21 @@ void code_write() {
 
     /* FUNCTIONS */
     util_debug("GEN", "FUNCTIONS:\n");
-    size_t i = 1;
-    for (; i < code_functions_elements; i++) {
-        size_t j = code_functions_data[i].entry;
+    for (; it < code_functions_elements; it++) {
+        size_t j = code_functions_data[it].entry;
         util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize =%0X }\n",
-            code_functions_data[i].entry,
-            code_functions_data[i].firstlocal,
-            code_functions_data[i].locals,
-            code_functions_data[i].profile,
-            code_functions_data[i].name,
-            code_functions_data[i].file,
-            code_functions_data[i].nargs,
-            *((int32_t*)&code_functions_data[i].argsize)
+            code_functions_data[it].entry,
+            code_functions_data[it].firstlocal,
+            code_functions_data[it].locals,
+            code_functions_data[it].profile,
+            code_functions_data[it].name,
+            code_functions_data[it].file,
+            code_functions_data[it].nargs,
+            *((int32_t*)&code_functions_data[it].argsize)
         );
-        util_debug("GEN", "    NAME: %s\n", &code_chars_data[code_functions_data[i].name]);
+        util_debug("GEN", "    NAME: %s\n", &code_chars_data[code_functions_data[it].name]);
         /* Internal functions have no code */
-        if (code_functions_data[i].entry >= 0) {
+        if (code_functions_data[it].entry >= 0) {
             util_debug("GEN", "    CODE:\n");
             for (;;) {
                 if (code_statements_data[j].opcode != INSTR_DONE &&

@@ -77,7 +77,7 @@ void asm_clear() {
  * globals with no assignments are globals.  Function body types
  * are locals.
  */
-static inline bool asm_parse_type(const char *skip, size_t line, asm_state *state) {
+static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state *state) {
     if (!(strstr(skip, "FLOAT:")  == &skip[0]) &&
          (strstr(skip, "VECTOR:") == &skip[0]) &&
          (strstr(skip, "ENTITY:") == &skip[0]) &&
@@ -141,7 +141,7 @@ static inline bool asm_parse_type(const char *skip, size_t line, asm_state *stat
  * names among other things.  Ensures valid name as well, and even
  * internal engine function selection.
  */
-static inline bool asm_parse_func(const char *skip, size_t line, asm_state *state) {
+static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state *state) {
     if (*state == ASM_FUNCTION && (strstr(skip, "FUNCTION:") == &skip[0]))
         return false;
 
@@ -169,6 +169,9 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
          * to determine this.
          */
         if (strchr(name, ',')) {
+            prog_section_function function;
+            prog_section_def      def;
+            
             char *find = strchr(name, ',') + 1;
 
             /* skip whitespace */
@@ -197,21 +200,20 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
              *  global     (optional)
              *  name
              */
-            code_functions_add((prog_section_function){
-                -atoi(find), /* needs to be negated */
-                 0, 0, 0,
-                .name = code_chars_elements,
-                 0, 0,{0}
-            });
-            code_defs_add((prog_section_def){
-                .type   = TYPE_FUNCTION,
-                .offset = code_globals_elements,
-                .name   = code_chars_elements
-            });
-            code_globals_add(code_chars_elements);
-
-            code_chars_put(name, strlen(name));
-            code_chars_add('\0');
+            function.entry      = -atoi(find);
+            function.firstlocal = 0;
+            function.profile    = 0;
+            function.name       = code_chars_elements;
+            function.file       = 0;
+            function.nargs      = 0;
+            def.type            = TYPE_FUNCTION;
+            def.offset          = code_globals_elements;
+            def.name            = code_chars_elements;
+            code_functions_add(function);
+            code_defs_add     (def);
+            code_globals_add  (code_chars_elements);
+            code_chars_put    (name, strlen(name));
+            code_chars_add    ('\0');
 
             /*
              * Sanatize the numerical constant used to select the
@@ -225,7 +227,7 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
                 printf("invalid internal function identifier, must be all numeric\n");
 
         } else {
-            /* TODO: function bodies */
+            printf("Found function %s\n", name);
         }
 
         mem_d(copy);

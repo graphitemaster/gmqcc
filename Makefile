@@ -1,5 +1,5 @@
 CC     ?= clang
-CFLAGS += -Wall -pedantic-errors -std=c99
+CFLAGS += -Wall -pedantic-errors -std=c90
 OBJ     = main.o      \
           lex.o       \
           error.o     \

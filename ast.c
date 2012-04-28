@@ -27,10 +27,10 @@
 #include "gmqcc.h"
 #include "ast.h"
 
-#define ast_instantiate(T, ctx, destroyfn)                    \
-    T *self = (T*)mem_a(sizeof(T));                           \
-    ast_node_init((ast_node*)self, ctx);                      \
-    ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn;
+#define ast_instantiate(T, ctx, destroyfn)                          \
+    T* self = (T*)mem_a(sizeof(T));                                 \
+    ast_node_init((ast_node*)self, ctx);                            \
+    ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
 /* It must not be possible to get here. */
 static void _ast_node_destroy(ast_node *self)
@@ -180,14 +180,14 @@ void ast_block_delete(ast_block *self)
 
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
+    ast_instantiate(ast_function, ctx, ast_function_delete);
+    
     if (!vtype)
         return NULL;
     if (vtype->isconst)
         return NULL;
     if (vtype->vtype != TYPE_FUNCTION)
         return NULL;
-
-    ast_instantiate(ast_function, ctx, ast_function_delete);
 
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
@@ -241,6 +241,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
 
 bool ast_global_codegen(ast_value *self, ir_builder *ir)
 {
+    ir_value *v = NULL;
     if (self->isconst && self->vtype == TYPE_FUNCTION)
     {
         ir_function *func = ir_builder_create_function(ir, self->name);
@@ -252,7 +253,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         return true;
     }
 
-    ir_value *v = ir_builder_create_global(ir, self->name, self->vtype);
+    v = ir_builder_create_global(ir, self->name, self->vtype);
     if (!v)
         return false;
 

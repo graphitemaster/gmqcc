@@ -67,7 +67,7 @@ static void lex_addch(int ch, lex_file *file) {
     if (file->current == sizeof(file->lastok)-1)
         file->lastok[file->current]   = (char)'\0';
 }
-static inline void lex_clear(lex_file *file) {
+static GMQCC_INLINE void lex_clear(lex_file *file) {
     file->current = 0;
 }
 
@@ -342,13 +342,13 @@ void lex_parse(lex_file *file) {
  * recrusion.
  */
 lex_file *lex_include(lex_file *lex, const char *file) {
+    lex_file *set = NULL;
+    
     util_strrq(file);
     if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
         error(lex, ERROR_LEX, "Source file cannot include itself\n");
         exit (-1);
     }
-
-    lex_file *set = NULL;
     lex_init(file, &set);
 
     return set;
