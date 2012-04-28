@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -52,17 +52,17 @@ void typedef_clear() {
 int typedef_add(lex_file *file, const char *from, const char *to) {
     unsigned int  hash = typedef_hash(to);
     typedef_node *find = typedef_table[hash];
-    
+
     if (find)
         return error(file, ERROR_PARSE, "typedef for %s already exists or conflicts\n", to);
-    
+
     /* check if the type exists first */
     if (strncmp(from, "float",  sizeof("float"))  == 0 ||
         strncmp(from, "vector", sizeof("vector")) == 0 ||
         strncmp(from, "string", sizeof("string")) == 0 ||
         strncmp(from, "entity", sizeof("entity")) == 0 ||
         strncmp(from, "void",   sizeof("void"))   == 0) {
-        
+
         typedef_table[hash] = mem_a(sizeof(typedef_node));
         if (typedef_table[hash])
             typedef_table[hash]->name = util_strdup(from);

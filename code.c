@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -32,7 +32,7 @@ typedef struct {
     uint16_t     flags;        /* see propsal.txt         */
     uint16_t     crc16;        /* What is this?           */
     uint16_t     skip;         /* see propsal.txt         */
-    
+
     prog_section statements;   /* prog_section_statement  */
     prog_section defs;         /* prog_section_def        */
     prog_section fields;       /* prog_section_field      */
@@ -45,17 +45,17 @@ typedef struct {
 /*
  * The macros below expand to a typesafe vector implementation, which
  * can be viewed in gmqcc.h
- * 
+ *
  * code_statements_data      -- raw prog_section_statement array
  * code_statements_elements  -- number of elements
  * code_statements_allocated -- size of the array allocated
  * code_statements_add(T)    -- add element (returns -1 on error)
- * 
+ *
  * code_vars_data            -- raw prog_section_var array
  * code_vars_elements        -- number of elements
  * code_vars_allocated       -- size of the array allocated
  * code_vars_add(T)          -- add element (returns -1 on error)
- * 
+ *
  * code_fields_data          -- raw prog_section_field array
  * code_fields_elements      -- number of elements
  * code_fields_allocated     -- size of the array allocated
@@ -65,12 +65,12 @@ typedef struct {
  * code_functions_elements   -- number of elements
  * code_functions_allocated  -- size of the array allocated
  * code_functions_add(T)     -- add element (returns -1 on error)
- * 
+ *
  * code_globals_data         -- raw prog_section_def array
  * code_globals_elements     -- number of elements
  * code_globals_allocated    -- size of the array allocated
  * code_globals_add(T)       -- add element (returns -1 on error)
- * 
+ *
  * code_chars_data           -- raw char* array
  * code_chars_elements       -- number of elements
  * code_chars_allocated      -- size of the array allocated
@@ -87,7 +87,7 @@ void code_init() {
     /* omit creation of null code */
     if (opts_omit_nullcode)
         return;
-        
+
     /*
      * The way progs.dat is suppose to work is odd, there needs to be
      * some null (empty) statements, functions, and 28 globals
@@ -97,13 +97,13 @@ void code_init() {
     int i;
     for(i = 0; i < 28; i++)
         code_globals_add(0);
-        
+
     code_chars_add     ('\0');
     code_functions_add (empty_function);
     code_statements_add(empty_statement);
 }
 
-void code_test() {    
+void code_test() {
     code_chars_put("m_init",        0x6);
     code_chars_put("print",         0x5);
     code_chars_put("hello world\n", 0xC);
@@ -111,23 +111,23 @@ void code_test() {
     code_chars_put("m_draw",        0x6);
     code_chars_put("m_toggle",      0x8);
     code_chars_put("m_shutdown",    0xA);
-    
+
     code_globals_add(1);  /* m_init */
     code_globals_add(2);  /* print  */
     code_globals_add(14); /* hello world in string table */
-    
+
     /* now the defs */
     code_defs_add((prog_section_def){.type=TYPE_VOID,    .offset=28/*globals[28]*/, .name=1 }); /* m_init */
     code_defs_add((prog_section_def){.type=TYPE_FUNCTION,.offset=29/*globals[29]*/, .name=8 }); /* print  */
     code_defs_add((prog_section_def){.type=TYPE_STRING,  .offset=30/*globals[30]*/, .name=14}); /*hello_world*/
-    
+
     code_functions_add((prog_section_function){1,  0, 0, 0, .name=1, 0, 0, {0}}); /* m_init */
     code_functions_add((prog_section_function){-4, 0, 0, 0, .name=8, 0, 0, {0}}); /* print  */
     code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13,        0,0, {0}}); /* m_keydown */
     code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10,     0,0, {0}});
     code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7,   0,0, {0}});
     code_functions_add((prog_section_function){0,  0, 0, 0, .name=14+13+10+7+9, 0,0, {0}});
-    
+
     code_statements_add((prog_section_statement){INSTR_STORE_F, {30}/*30 is hello_world */, {OFS_PARM0}, {0}});
     code_statements_add((prog_section_statement){INSTR_CALL1,   {29}/*29 is print       */, {0},         {0}});
     code_statements_add((prog_section_statement){INSTR_RETURN,  {0},                        {0},         {0}});
@@ -141,7 +141,7 @@ void code_write() {
         code_header.skip   = 28;
         code_header.flags  = 1;
     }
-    
+
     code_header.version    = 6;
     code_header.crc16      = 0; /* TODO: */
     code_header.statements = (prog_section){sizeof(prog_header), code_statements_elements };
@@ -160,7 +160,7 @@ void code_write() {
         code_chars_add('\0'); /* = */
         code_chars_add('\0'); /* P */
     }
-        
+
     /* ensure all data is in LE format */
     util_endianswap(&code_header,         1,                        sizeof(prog_header));
     util_endianswap(code_statements_data, code_statements_elements, sizeof(prog_section_statement));
@@ -168,7 +168,7 @@ void code_write() {
     util_endianswap(code_fields_data,     code_fields_elements,     sizeof(prog_section_field));
     util_endianswap(code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
     util_endianswap(code_globals_data,    code_globals_elements,    sizeof(int));
-    
+
     FILE *fp = fopen("program.dat", "wb");
     fwrite(&code_header,         1, sizeof(prog_header), fp);
     fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
@@ -177,7 +177,7 @@ void code_write() {
     fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
     fwrite(code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
     fwrite(code_chars_data,      1, 1                             *code_chars_elements,      fp);
-    
+
     util_debug("GEN","HEADER:\n");
     util_debug("GEN","    version:    = %d\n", code_header.version );
     util_debug("GEN","    crc16:      = %d\n", code_header.crc16   );
@@ -188,7 +188,7 @@ void code_write() {
     util_debug("GEN","    functions   = {.offset = % 8d, .length = % 8d}\n", code_header.functions .offset, code_header.functions .length);
     util_debug("GEN","    globals     = {.offset = % 8d, .length = % 8d}\n", code_header.globals   .offset, code_header.globals   .length);
     util_debug("GEN","    strings     = {.offset = % 8d, .length = % 8d}\n", code_header.strings   .offset, code_header.strings   .length);
-    
+
     /* FUNCTIONS */
     util_debug("GEN", "FUNCTIONS:\n");
     size_t i = 1;
@@ -222,7 +222,7 @@ void code_write() {
             }
         }
     }
-    
+
     mem_d(code_statements_data);
     mem_d(code_defs_data);
     mem_d(code_fields_data);

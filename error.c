@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -61,7 +61,7 @@ int error(lex_file *file, int status, const char *msg, ...) {
     char      bu[1024*4]; /* enough? */
     char      fu[1024*4]; /* enough? */
     va_list   va;
-    
+
     if (error_total + 1 > error_max) {
         fprintf(stderr, "%d errors and more following, bailing\n", error_total);
         exit (-1);
@@ -83,8 +83,8 @@ int error(lex_file *file, int status, const char *msg, ...) {
 #    ifndef WIN32
     fputs    ("\033[0m", stderr);
 #    endif
-    
+
     fflush   (stderr);
-    
+
     return status;
 }

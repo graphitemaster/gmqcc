@@ -33,7 +33,7 @@ struct memblock_t {
     const char  *file;
     unsigned int line;
     unsigned int byte;
-}; 
+};
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
@@ -127,10 +127,10 @@ char *util_strchp(const char *s, const char *e) {
     if (!s || !e)
         return NULL;
 
-    const char *c = s;    
+    const char *c = s;
     while (c != e)
         c++;
-        
+
     return util_strdup(s);
 }
 
@@ -158,7 +158,7 @@ char *util_strsws(const char *skip) {
     size_t size = 0;
     if (!skip)
         return NULL;
-    
+
     while (*skip == ' ' || *skip == '\t')
         skip++,size++;
     return util_strdup(skip-size);
@@ -324,7 +324,7 @@ static const uint16_t util_crc16_table[] = {
     0x8FD9,     0x9FF8,     0x6E17,     0x7E36,     0x4E55,     0x5E74,
     0x2E93,     0x3EB2,     0x0ED1,     0x1EF0
 };
-    
+
 /*
  * Implements a CRC function for X worth bits using (uint[X]_t)
  * as type. and util_crc[X]_table.

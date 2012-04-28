@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
                     break;
                 }
                 return usage(app);
-                
+
         }
         ++argv;
         --argc;
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
      * options could depend on another option, this is where option
      * validity checking like that would take place.
      */
-    if (opts_memchk && !opts_debug) 
+    if (opts_memchk && !opts_debug)
         printf("Warning: cannot enable -memchk, without -debug.\n");
 
     util_debug("COM", "starting ...\n");
@@ -163,12 +163,12 @@ int main(int argc, char **argv) {
         }
     }
 
-    util_debug("COM", "cleaning ...\n"); 
+    util_debug("COM", "cleaning ...\n");
     /* clean list */
     for (itr = 0; itr < items_elements; itr++)
         mem_d(items_data[itr].name);
     mem_d(items_data);
-    
+
     util_meminfo();
     return 0;
 clean_params_usage:

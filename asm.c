@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -90,7 +90,7 @@ static inline bool asm_parse_type(const char *skip, size_t line, asm_state *stat
             float val1;
             float val2;
             float val3;
-            
+
             const char *find = skip + 7;
             while (*find == ' ' || *find == '\t') find++;
 
@@ -116,7 +116,7 @@ static inline bool asm_parse_type(const char *skip, size_t line, asm_state *stat
             printf("X:[0] = %f\n", val1);
             printf("Y:[1] = %f\n", val2);
             printf("Z:[2] = %f\n", val3);
-            
+
             break;
         }
         /* ENTITY */ case 'E': {
@@ -132,7 +132,7 @@ static inline bool asm_parse_type(const char *skip, size_t line, asm_state *stat
             break;
         }
     }
-    
+
     return false;
 }
 
@@ -170,11 +170,11 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
          */
         if (strchr(name, ',')) {
             char *find = strchr(name, ',') + 1;
-            
+
             /* skip whitespace */
             while (*find == ' ' || *find == '\t')
                 find++;
-            
+
             if (*find != '$') {
                 printf("expected $ for internal function selection, got %s instead\n", find);
                 mem_d(copy);
@@ -189,7 +189,7 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
                 return false;
             }
             *strchr(name, ',')='\0';
-            
+
             /*
              * Now add the following items to the code system:
              *  function
@@ -209,7 +209,7 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
                 .name   = code_chars_elements
             });
             code_globals_add(code_chars_elements);
-            
+
             code_chars_put(name, strlen(name));
             code_chars_add('\0');
 
@@ -223,7 +223,7 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
                 printf("found internal function %s, -%d\n", name, atoi(find));
             else
                 printf("invalid internal function identifier, must be all numeric\n");
-                
+
         } else {
             /* TODO: function bodies */
         }
@@ -249,7 +249,7 @@ void asm_parse(FILE *fp) {
             line++;               \
             util_debug("ASM", x); \
         } while (0); continue
-    
+
     while ((data = asm_getline (&size, fp)) != NULL) {
         char *copy = util_strsws(data); /* skip   whitespace */
               skip = util_strrnl(copy); /* delete newline    */
@@ -263,7 +263,7 @@ void asm_parse(FILE *fp) {
         if (state == ASM_FUNCTION && (
             (strstr(skip, "DONE")   == &skip[0])||
             (strstr(skip, "RETURN") == &skip[0]))) state = ASM_NULL;
-        
+
         /* TODO: everything */
         (void)state;
         asm_end("asm_parse_end\n");
