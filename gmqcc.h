@@ -68,6 +68,11 @@
 #else
 #   define GMQCC_WARN
 #endif
+/*
+ * This is a hack to silent clang regarding empty
+ * body if statements.
+ */
+#define GMQCC_SUPRESS_EMPTY_BODY do { } while (0)
 
 /*
  * stdint.h and inttypes.h -less subset

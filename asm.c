@@ -108,9 +108,9 @@ static inline bool asm_parse_type(const char *skip, size_t line, asm_state *stat
                     Z                                       \
                 }
 
-            PARSE_ELEMENT(find, val1, { if(find) { find+=3; }});
-            PARSE_ELEMENT(find, val2, { if(find) { find+=2; }});
-            PARSE_ELEMENT(find, val3, { if(find) { find+=1; }});
+            PARSE_ELEMENT(find, val1, { if(find) { find +=3; }});
+            PARSE_ELEMENT(find, val2, { if(find) { find +=2; }});
+            PARSE_ELEMENT(find, val3, { if(find) { find +=1; }});
             #undef PARSE_ELEMENT
 
             printf("X:[0] = %f\n", val1);
