@@ -103,8 +103,28 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
         return false;
 
     if (strstr(skip, "FUNCTION:") == &skip[0]) {
-        *state = ASM_FUNCTION; /* update state */
-        /* TODO */
+        char  *copy = util_strsws(skip+10);
+        char  *name = util_strchp(copy, strchr(copy, '\0'));
+
+        /* TODO: failure system, missing name */
+        if (!name) {
+            printf("expected name on function\n");
+            mem_d(copy);
+            mem_d(name);
+            return false;
+        }
+        /* TODO: failure system, invalid name */
+        if (!isalpha(*name) || isupper(*name)) {
+            printf("invalid identifer for function name\n");
+            mem_d(copy);
+            mem_d(name);
+            return false;
+        }
+
+        printf("NAME: %s\n", name);
+
+        mem_d(copy);
+        mem_d(name);
         return true;
     }
     return false;
@@ -117,19 +137,32 @@ void asm_parse(FILE *fp) {
     size_t    size  = 0; /* size of line */
     asm_state state = ASM_NULL;
 
-    #define asm_end(x) do { mem_d(data); line++; printf(x); } while (0); continue
+    #define asm_end(x)            \
+        do {                      \
+            mem_d(data);          \
+            mem_d(copy);          \
+            line++;               \
+            util_debug("ASM", x); \
+        } while (0); continue
     
     while ((data = asm_getline (&size, fp)) != NULL) {
-        data = util_strsws(data,&skip); /* skip   whitespace */
-        data = util_strrnl(data);       /* delete newline    */
+        char *copy = util_strsws(data); /* skip   whitespace */
+              skip = util_strrnl(copy); /* delete newline    */
 
         /* parse type */
-        if(asm_parse_type(skip, line, &state)){ asm_end(""); }
+        if(asm_parse_type(skip, line, &state)){ asm_end("asm_parse_type\n"); }
         /* parse func */
-        if(asm_parse_func(skip, line, &state)){ asm_end(""); }
+        if(asm_parse_func(skip, line, &state)){ asm_end("asm_parse_func\n"); }
+
+        /* statement closure */
+        if (state == ASM_FUNCTION && (
+            (strstr(skip, "DONE")   == &skip[0])||
+            (strstr(skip, "RETURN") == &skip[0]))) state = ASM_NULL;
         
         /* TODO: everything */
         (void)state;
+        asm_end("asm_parse_end\n");
     }
+    #undef asm_end
 	asm_clear();
 }
