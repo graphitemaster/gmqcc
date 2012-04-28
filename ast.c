@@ -54,12 +54,12 @@ static void ast_expression_init(ast_expression *self,
     self->expression.codegen = codegen;
 }
 
-ast_value* ast_value_new(lex_ctx ctx, const char *name, int t, bool keep)
+ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
                         (ast_expression_codegen*)&ast_value_codegen);
-    self->expression.node.keep = keep;
+    self->expression.node.keep = true; /* keep */
 
     self->name = name ? util_strdup(name) : NULL;
     self->vtype = t;
@@ -113,7 +113,7 @@ bool ast_value_set_name(ast_value *self, const char *name)
 }
 
 ast_binary* ast_binary_new(lex_ctx ctx, int op,
-                           ast_value* left, ast_value* right)
+                           ast_expression* left, ast_expression* right)
 {
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binary_codegen);
@@ -133,7 +133,7 @@ void ast_binary_delete(ast_binary *self)
 }
 
 ast_store* ast_store_new(lex_ctx ctx, int op,
-                         ast_value *dest, ast_value *source)
+                         ast_value *dest, ast_expression *source)
 {
     ast_instantiate(ast_store, ctx, ast_store_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_store_codegen);

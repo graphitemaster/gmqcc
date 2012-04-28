@@ -106,7 +106,7 @@ struct ast_value_s
      */
     MEM_VECTOR_MAKE(ast_value*, params);
 };
-ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype, bool keep);
+ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);
 /* This will NOT delete an underlying ast_function */
 void ast_value_delete(ast_value*);
 
@@ -122,14 +122,14 @@ struct ast_binary_s
 {
     ast_expression_common expression;
 
-    int       op;
-    ast_value *left;
-    ast_value *right;
+    int             op;
+    ast_expression *left;
+    ast_expression *right;
 };
 ast_binary* ast_binary_new(lex_ctx    ctx,
                            int        op,
-                           ast_value *left,
-                           ast_value *right);
+                           ast_expression *left,
+                           ast_expression *right);
 void ast_binary_delete(ast_binary*);
 
 /* hmm, seperate functions?
@@ -145,12 +145,12 @@ bool ast_binary_codegen(ast_binary*, ast_function*, ir_value**);
 struct ast_store_s
 {
     ast_expression_common expression;
-    int       op;
-    ast_value *dest;
-    ast_value *source;
+    int             op;
+    ast_value      *dest; /* When we add pointers this might have to change to expression */
+    ast_expression *source;
 };
 ast_store* ast_store_new(lex_ctx ctx, int op,
-                         ast_value *d, ast_value *s);
+                         ast_value *d, ast_expression *s);
 void ast_store_delete(ast_store*);
 
 bool ast_store_codegen(ast_store*, ast_function*, ir_value**);
