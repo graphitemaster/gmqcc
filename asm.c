@@ -161,10 +161,6 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
                 mem_d(name);
                 return false;
             }
-            /* reassign name */
-            mem_d(name);
-            name = util_strchp(name, strchr(name, ','));
-
             /*
              * Now add the following items to the code system:
              *  function

@@ -126,14 +126,12 @@ char *util_strrq(const char *s) {
 char *util_strchp(const char *s, const char *e) {
     if (!s || !e)
         return NULL;
+
+    const char *c = s;    
+    while (c != e)
+        c++;
         
-    size_t m  = 0;
-    char  *c  = util_strdup(s);
-    while (s != e)
-        s++,c++,m++;
-         
-    *c = '\0';
-    return c-m;
+    return util_strdup(s);
 }
 
 /*

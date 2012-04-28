@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
     for (itr = 0; itr < items_elements; itr++)
         mem_d(items_data[itr].name);
     mem_d(items_data);
-
+    
     util_meminfo();
     return 0;
 }
