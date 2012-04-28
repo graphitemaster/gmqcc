@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
                     item.name = util_strdup(argv[1]);                        \
                     item.type = argtype;                                     \
                     items_add(item);                                         \
-                } \
+                }                                                            \
             } while (0)
 
             case 'c': { param_argument(0); break; } /* compile  */
