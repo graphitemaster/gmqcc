@@ -49,7 +49,6 @@ bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
         }                                                            \
         reall = (Twhat*)mem_a(sizeof(Twhat) * self->mem##_alloc);    \
         if (!reall) {                                                \
-            MEM_VECTOR_CLEAR(self, mem);                             \
             return false;                                            \
         }                                                            \
         memcpy(reall, self->mem, sizeof(Twhat) * self->mem##_count); \
