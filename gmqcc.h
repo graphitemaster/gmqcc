@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Dale Weiler, Wolfgang Bumiller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -91,7 +91,7 @@
     typedef int            int16_t;
     typedef unsigned int   uint16_t;
 #endif
-#if   INT_MAX   == 0x7FFFFFFF 
+#if   INT_MAX   == 0x7FFFFFFF
     typedef int            int32_t;
     typedef unsigned int   uint32_t;
 #elif LONG_MAX  == 0x7FFFFFFF
@@ -104,7 +104,7 @@
 #else
     typedef unsigned int   uintptr_t;
     typedef int            intptr_t;
-#endif 
+#endif
 /* Ensure type sizes are correct: */
 typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
 typedef char uint16_size_if_correct [sizeof(uint16_t) == 2?1:-1];
@@ -121,9 +121,9 @@ typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 typedef struct lex_file_t {
     FILE *file;        /* file handler */
     char *name;        /* name of file */
-    char  peek  [5];  
+    char  peek  [5];
     char  lastok[8192];
-    
+
     int   last;    /* last token                   */
     int   current; /* current token                */
     int   length;  /* bytes left to parse          */
@@ -163,7 +163,7 @@ enum {
  * and > the last type token which is TOKEN_VOID
  */
 enum {
-    LEX_COMMENT = 1128, 
+    LEX_COMMENT = 1128,
     LEX_CHRLIT        ,
     LEX_STRLIT        ,
     LEX_IDENT
@@ -222,7 +222,7 @@ void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  int, int);
 
-uint32_t util_crc32(const char *, int, register const short); 
+uint32_t util_crc32(const char *, int, register const short);
 
 #ifdef NOTRACK
 #    define mem_a(x) malloc(x)
@@ -305,7 +305,7 @@ enum {
 
 typedef struct {
     uint16_t opcode;
-    
+
     /* operand 1 */
     union {
         int16_t  s1; /* signed   */
@@ -321,7 +321,7 @@ typedef struct {
         int16_t  s3; /* signed   */
         uint16_t u3; /* unsigned */
     } o3;
-    
+
     /*
      * This is the same as the structure in darkplaces
      * {
@@ -363,8 +363,8 @@ typedef struct {
     uint8_t   argsize[8]; /* size of arguments (keep 8 always?)   */
 } prog_section_function;
 
-/* 
- * Instructions 
+/*
+ * Instructions
  * These are the external instructions supported by the interperter
  * this is what things compile to (from the C code).
  */
@@ -447,7 +447,7 @@ enum {
 /*
  * The symbols below are created by the following
  * expanded macros:
- * 
+ *
  * VECTOR_MAKE(prog_section_statement, code_statements);
  * VECTOR_MAKE(prog_section_def,       code_defs      );
  * VECTOR_MAKE(prog_section_field,     code_fields    );
@@ -486,7 +486,7 @@ void code_init  ();
 //===================================================================
 static const struct {
     const char  *m; /* menomic     */
-    const size_t o; /* operands    */ 
+    const size_t o; /* operands    */
     const size_t l; /* menomic len */
 } const asm_instr[] = {
     [INSTR_DONE]       = { "DONE"      , 1, 4 },

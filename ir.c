@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 
+ * Copyright (C) 2012
  *     Wolfgang Bumiller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
