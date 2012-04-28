@@ -86,20 +86,21 @@ int main(int argc, char **argv) {
                 );
                 return 0;
             }
-#define param_argument(argtype) do {                             \
-    if (argv[1][2])                                              \
-        items_add((argitem){util_strdup(&argv[1][2]), argtype}); \
-    else {                                                       \
-        ++argv; --argc;                                          \
-        if (argc <= 1)                                           \
-            goto clean_params_usage;                             \
-        items_add((argitem){util_strdup(&argv[1][0]), argtype}); \
-    }                                                            \
-} while (0)
+            #define param_argument(argtype) do {                             \
+                if (argv[1][2])                                              \
+                    items_add((argitem){util_strdup(&argv[1][2]), argtype}); \
+                else {                                                       \
+                    ++argv; --argc;                                          \
+                    if (argc <= 1)                                           \
+                        goto clean_params_usage;                             \
+                    items_add((argitem){util_strdup(&argv[1][0]), argtype}); \
+                }                                                            \
+            } while (0)
 
-            case 'c': param_argument(0); break; /* compile */
+            case 'c': param_argument(0); break; /* compile  */
             case 'a': param_argument(1); break; /* assemble */
             case 'i': param_argument(2); break; /* includes */
+            #undef parm_argument
             default:
                 if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = true; break; }
                 if (!strncmp(&argv[1][1], "memchk", 6)) { opts_memchk = true; break; }
