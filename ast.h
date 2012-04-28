@@ -107,6 +107,7 @@ struct ast_value_s
     MEM_VECTOR_MAKE(ast_value*, params);
 };
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype, bool keep);
+/* This will NOT delete an underlying ast_function */
 void ast_value_delete(ast_value*);
 
 bool ast_value_set_name(ast_value*, const char *name);
@@ -192,6 +193,7 @@ struct ast_function_s
     MEM_VECTOR_MAKE(ast_block*, blocks);
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
+/* This will NOT delete the underlying ast_value */
 void ast_function_delete(ast_function*);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);

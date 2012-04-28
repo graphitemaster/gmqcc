@@ -90,6 +90,10 @@ void ast_value_delete(ast_value* self)
         case TYPE_STRING:
             mem_d((void*)self->constval.vstring);
             break;
+        case TYPE_FUNCTION:
+            /* unlink us from the function node */
+            self->constval.vfunc->vtype = NULL;
+            break;
         /* NOTE: delete function? currently collected in
          * the parser structure
          */
@@ -176,11 +180,21 @@ void ast_block_delete(ast_block *self)
 
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
+    if (!vtype)
+        return NULL;
+    if (vtype->isconst)
+        return NULL;
+    if (vtype->vtype != TYPE_FUNCTION)
+        return NULL;
+
     ast_instantiate(ast_function, ctx, ast_function_delete);
 
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
     MEM_VECTOR_INIT(self, blocks);
+
+    vtype->isconst = true;
+    vtype->constval.vfunc = self;
 
     return self;
 }
@@ -192,8 +206,15 @@ void ast_function_delete(ast_function *self)
     size_t i;
     if (self->name)
         mem_d((void*)self->name);
-    if (self->vtype)
-        ast_value_delete(self->vtype);
+    if (self->vtype) {
+        /* ast_value_delete(self->vtype); */
+        self->vtype->isconst = false;
+        self->vtype->constval.vfunc = NULL;
+        /* We use unref - if it was stored in a global table it is supposed
+         * to be deleted from *there*
+         */
+        ast_unref(self->vtype);
+    }
     for (i = 0; i < self->blocks_count; ++i)
         ast_delete(self->blocks[i]);
     MEM_VECTOR_CLEAR(self, blocks);
