@@ -27,12 +27,10 @@
 #include "gmqcc.h"
 #include "ast.h"
 
-#define ast_setfunc(me, fn, what) ( *(void**)&((me)->fn) = what )
-
 #define ast_instantiate(T, ctx, destroyfn)                    \
     T *self = (T*)mem_a(sizeof(T));                           \
     ast_node_init((ast_node*)self, ctx);                      \
-    ast_setfunc(&((ast_node*)self)->node, destroy, destroyfn)
+    ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn;
 
 /* It must not be possible to get here. */
 static void _ast_node_destroy(ast_node *self)
@@ -53,7 +51,7 @@ static void ast_node_init(ast_node *self, lex_ctx ctx)
 static void ast_expression_init(ast_expression *self,
                                 ast_expression_codegen *codegen)
 {
-    ast_setfunc(&self->expression, codegen, codegen);
+    self->expression.codegen = codegen;
 }
 
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int t, bool keep)
