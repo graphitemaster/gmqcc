@@ -228,6 +228,8 @@ uint32_t util_crc32(const char *, int, register const short);
 #endif
 
 /* Builds vector type (usefull for inside structures) */
+#define VECTOR_SNAP(X,Y) X ## Y
+#define VECTOR_FILL(X,Y) VECTOR_SNAP(X,Y)
 #define VECTOR_TYPE(T,N)                                        \
     T*     N##_data      = NULL;                                \
     long   N##_elements  = 0;                                   \
@@ -258,7 +260,8 @@ uint32_t util_crc32(const char *, int, register const short);
         elements--;                                             \
         while (N##_add(*++elements) != -1 && len--);            \
         return N##_elements;                                    \
-    }
+    }                                                           \
+    typedef char VECTOR_FILL(extra_semicolon_,__COUNTER__)
 /* Builds a full vector inspot */
 #define VECTOR_MAKE(T,N) \
     VECTOR_TYPE(T,N);    \
@@ -304,17 +307,17 @@ typedef struct {
     union {
         int16_t  s1; /* signed   */
         uint16_t u1; /* unsigned */
-    };
+    } o1;
     /* operand 2 */
     union {
         int16_t  s2; /* signed   */
         uint16_t u2; /* unsigned */
-    };
+    } o2;
     /* operand 3 */
     union {
         int16_t  s3; /* signed   */
         uint16_t u3; /* unsigned */
-    };
+    } o3;
     
     /*
      * This is the same as the structure in darkplaces
@@ -573,12 +576,12 @@ extern int  opts_compiler;
 //======================================================================
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)                   \
     bool GMQCC_WARN Towner##_##mem##_add(Towner*, Tmem);      \
-    bool GMQCC_WARN Towner##_##mem##_remove(Towner*, size_t);
+    bool GMQCC_WARN Towner##_##mem##_remove(Towner*, size_t)
 
 #define MEM_VECTOR_PROTO_ALL(Towner, Tmem, mem)                    \
-    MEM_VECTOR_PROTO(Towner, Tmem, mem)                            \
+    MEM_VECTOR_PROTO(Towner, Tmem, mem);                           \
     bool GMQCC_WARN Towner##_##mem##_find(Towner*, Tmem, size_t*); \
-    void Towner##_##mem##_clear(Towner*);
+    void Towner##_##mem##_clear(Towner*)
 
 #define MEM_VECTOR_MAKE(Twhat, name) \
     Twhat  *name;                    \
@@ -695,8 +698,8 @@ typedef struct {
  * A shallow copy of a lex_file to remember where which ast node
  * came from.
  */
-typedef struct lex_ctx {
+typedef struct {
     const char *file;
-    size_t     line;
+    size_t      line;
 } lex_ctx;
 #endif

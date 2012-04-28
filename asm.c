@@ -43,7 +43,7 @@ VECTOR_MAKE(globals, assembly_constants);
  */
 static char *const asm_getline(size_t *byte, FILE *fp) {
     char   *line = NULL;
-    ssize_t read = util_getline(&line, byte, fp);
+    size_t  read = util_getline(&line, byte, fp);
     *byte = read;
     if (read == -1) {
         mem_d (line);

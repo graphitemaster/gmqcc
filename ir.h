@@ -65,8 +65,8 @@ ir_value* ir_value_out(struct ir_function_s *owner, const char *name, int st, in
 void      ir_value_delete(ir_value*);
 void      ir_value_set_name(ir_value*, const char *name);
 
-MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads)
-MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes)
+MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads);
+MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes);
 
 bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
 #if 0
@@ -77,7 +77,7 @@ bool GMQCC_WARN ir_value_set_vector(ir_value*, vector v);
 /*bool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*bool   ir_value_set_pointer_i(ir_value*, int i);       */
 
-MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life)
+MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life);
 /* merge an instruction into the life-range */
 /* returns false if the lifepoint was already known */
 bool ir_value_life_merge(ir_value*, size_t);
@@ -112,7 +112,7 @@ typedef struct ir_instr_s
 ir_instr* ir_instr_new(struct ir_block_s *owner, int opcode);
 void      ir_instr_delete(ir_instr*);
 
-MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi)
+MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi);
 bool GMQCC_WARN ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
@@ -142,9 +142,9 @@ void      ir_block_delete(ir_block*);
 
 bool      ir_block_set_label(ir_block*, const char *label);
 
-MEM_VECTOR_PROTO(ir_block, ir_instr*, instr)
-MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, exits)
-MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries)
+MEM_VECTOR_PROTO(ir_block, ir_instr*, instr);
+MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, exits);
+MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries);
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
@@ -172,7 +172,7 @@ bool GMQCC_WARN ir_block_create_if(ir_block*, ir_value *cond,
 bool GMQCC_WARN ir_block_create_jump(ir_block*, ir_block *to);
 bool GMQCC_WARN ir_block_create_goto(ir_block*, ir_block *to);
 
-MEM_VECTOR_PROTO_ALL(ir_block, ir_value*, living)
+MEM_VECTOR_PROTO_ALL(ir_block, ir_value*, living);
 
 void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
@@ -211,8 +211,8 @@ void         ir_function_delete(ir_function*);
 bool GMQCC_WARN ir_function_collect_value(ir_function*, ir_value *value);
 
 bool ir_function_set_name(ir_function*, const char *name);
-MEM_VECTOR_PROTO(ir_function, int, params)
-MEM_VECTOR_PROTO(ir_function, ir_block*, blocks)
+MEM_VECTOR_PROTO(ir_function, int, params);
+MEM_VECTOR_PROTO(ir_function, ir_block*, blocks);
 
 ir_value* ir_function_get_local(ir_function *self, const char *name);
 ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype);
@@ -241,8 +241,8 @@ void        ir_builder_delete(ir_builder*);
 
 bool ir_builder_set_name(ir_builder *self, const char *name);
 
-MEM_VECTOR_PROTO(ir_builder, ir_function*, functions)
-MEM_VECTOR_PROTO(ir_builder, ir_value*, globals)
+MEM_VECTOR_PROTO(ir_builder, ir_function*, functions);
+MEM_VECTOR_PROTO(ir_builder, ir_value*, globals);
 
 ir_function* ir_builder_get_function(ir_builder*, const char *fun);
 ir_function* ir_builder_create_function(ir_builder*, const char *name);

@@ -213,9 +213,9 @@ void code_write() {
                     code_statements_data[j].opcode != INSTR_RETURN)
                     util_debug("GEN", "        %s {0x%05d,0x%05d,0x%05d}\n",
                         asm_instr[code_statements_data[j].opcode].m,
-                        code_statements_data[j].s1,
-                        code_statements_data[j].s2,
-                        code_statements_data[j].s3
+                        code_statements_data[j].o1.s1,
+                        code_statements_data[j].o2.s2,
+                        code_statements_data[j].o3.s3
                     );
                 else break;
                 j++;
