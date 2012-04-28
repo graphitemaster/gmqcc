@@ -45,7 +45,7 @@ ir_builder* ir_builder_new(const char *modulename)
     /* globals which always exist */
 
     /* for now we give it a vector size */
-    ir_builder_create_global(self, "OFS_RETURN", qc_variant);
+    ir_builder_create_global(self, "OFS_RETURN", TYPE_VARIANT);
 
     return self;
 }
@@ -147,7 +147,7 @@ ir_function* ir_function_new(ir_builder* owner)
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
-    self->retype = qc_void;
+    self->retype = TYPE_VOID;
     MEM_VECTOR_INIT(self, params);
     MEM_VECTOR_INIT(self, blocks);
     MEM_VECTOR_INIT(self, values);
@@ -414,7 +414,7 @@ void ir_value_delete(ir_value* self)
     mem_d((void*)self->name);
     if (self->isconst)
     {
-        if (self->vtype == qc_string)
+        if (self->vtype == TYPE_STRING)
             mem_d((void*)self->constval.vstring);
     }
     MEM_VECTOR_CLEAR(self, reads);
@@ -432,7 +432,7 @@ void ir_value_set_name(ir_value *self, const char *name)
 
 bool ir_value_set_float(ir_value *self, float f)
 {
-    if (self->vtype != qc_float)
+    if (self->vtype != TYPE_FLOAT)
         return false;
     self->constval.vfloat = f;
     self->isconst = true;
@@ -441,7 +441,7 @@ bool ir_value_set_float(ir_value *self, float f)
 
 bool ir_value_set_vector(ir_value *self, vector_t v)
 {
-    if (self->vtype != qc_vector)
+    if (self->vtype != TYPE_VECTOR)
         return false;
     self->constval.vvec = v;
     self->isconst = true;
@@ -450,21 +450,23 @@ bool ir_value_set_vector(ir_value *self, vector_t v)
 
 bool ir_value_set_string(ir_value *self, const char *str)
 {
-    if (self->vtype != qc_string)
+    if (self->vtype != TYPE_STRING)
         return false;
     self->constval.vstring = util_strdup(str);
     self->isconst = true;
     return true;
 }
 
+#if 0
 bool ir_value_set_int(ir_value *self, int i)
 {
-    if (self->vtype != qc_int)
+    if (self->vtype != TYPE_INTEGER)
         return false;
     self->constval.vint = i;
     self->isconst = true;
     return true;
 }
+#endif
 
 bool ir_value_lives(ir_value *self, size_t at)
 {
@@ -582,38 +584,38 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
 {
     int op = 0;
     int vtype;
-    if (target->vtype == qc_variant)
+    if (target->vtype == TYPE_VARIANT)
         vtype = what->vtype;
     else
         vtype = target->vtype;
 
     switch (vtype) {
-        case qc_float:
+        case TYPE_FLOAT:
 #if 0
-            if (what->vtype == qc_int)
+            if (what->vtype == TYPE_INTEGER)
                 op = INSTR_CONV_ITOF;
             else
 #endif
                 op = INSTR_STORE_F;
             break;
-        case qc_vector:
+        case TYPE_VECTOR:
             op = INSTR_STORE_V;
             break;
-        case qc_entity:
+        case TYPE_ENTITY:
             op = INSTR_STORE_ENT;
             break;
-        case qc_string:
+        case TYPE_STRING:
             op = INSTR_STORE_S;
             break;
 #if 0
-        case qc_int:
-            if (what->vtype == qc_int)
+        case TYPE_INTEGER:
+            if (what->vtype == TYPE_INTEGER)
                 op = INSTR_CONV_FTOI;
             else
                 op = INSTR_STORE_I;
             break;
 #endif
-        case qc_pointer:
+        case TYPE_POINTER:
 #if 0
             op = INSTR_STORE_I;
 #else
@@ -654,7 +656,7 @@ bool ir_block_create_if(ir_block *self, ir_value *v,
         return false;
     }
     self->final = true;
-    //in = ir_instr_new(self, (v->vtype == qc_string ? INSTR_IF_S : INSTR_IF_F));
+    //in = ir_instr_new(self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));
     in = ir_instr_new(self, VINSTR_COND);
     if (!in)
         return false;
@@ -783,7 +785,7 @@ ir_value* ir_block_create_binop(ir_block *self,
                                 const char *label, int opcode,
                                 ir_value *left, ir_value *right)
 {
-    int ot = qc_void;
+    int ot = TYPE_VOID;
     switch (opcode) {
         case INSTR_ADD_F:
         case INSTR_SUB_F:
@@ -815,7 +817,7 @@ ir_value* ir_block_create_binop(ir_block *self,
         case INSTR_EQ_I:
         case INSTR_NE_I:
 #endif
-            ot = qc_float;
+            ot = TYPE_FLOAT;
             break;
 #if 0
         case INSTR_ADD_I:
@@ -831,7 +833,7 @@ ir_value* ir_block_create_binop(ir_block *self,
         case INSTR_XOR_I:
         case INSTR_RSHIFT_I:
         case INSTR_LSHIFT_I:
-            ot = qc_int;
+            ot = TYPE_INTEGER;
             break;
 #endif
         case INSTR_ADD_V:
@@ -843,27 +845,27 @@ ir_value* ir_block_create_binop(ir_block *self,
         case INSTR_MUL_IV:
         case INSTR_MUL_VI:
 #endif
-            ot = qc_vector;
+            ot = TYPE_VECTOR;
             break;
 #if 0
         case INSTR_ADD_SF:
-            ot = qc_pointer;
+            ot = TYPE_POINTER;
             break;
 #endif
         default:
             // ranges:
             /* boolean operations result in floats */
             if (opcode >= INSTR_EQ_F && opcode <= INSTR_GT)
-                ot = qc_float;
+                ot = TYPE_FLOAT;
             else if (opcode >= INSTR_LE && opcode <= INSTR_GT)
-                ot = qc_float;
+                ot = TYPE_FLOAT;
 #if 0
             else if (opcode >= INSTR_LE_I && opcode <= INSTR_EQ_FI)
-                ot = qc_float;
+                ot = TYPE_FLOAT;
 #endif
             break;
     };
-    if (ot == qc_void) {
+    if (ot == TYPE_VOID) {
         /* The AST or parser were supposed to check this! */
         return NULL;
     }
@@ -906,23 +908,23 @@ ir_value* ir_block_create_add(ir_block *self,
         switch (l) {
             default:
                 return NULL;
-            case qc_float:
+            case TYPE_FLOAT:
                 op = INSTR_ADD_F;
                 break;
 #if 0
-            case qc_int:
+            case TYPE_INTEGER:
                 op = INSTR_ADD_I;
                 break;
 #endif
-            case qc_vector:
+            case TYPE_VECTOR:
                 op = INSTR_ADD_V;
                 break;
         }
     } else {
 #if 0
-        if ( (l == qc_float && r == qc_int) )
+        if ( (l == TYPE_FLOAT && r == TYPE_INTEGER) )
             op = INSTR_ADD_FI;
-        else if ( (l == qc_int && r == qc_float) )
+        else if ( (l == TYPE_INTEGER && r == TYPE_FLOAT) )
             op = INSTR_ADD_IF;
         else
 #endif
@@ -943,23 +945,23 @@ ir_value* ir_block_create_sub(ir_block *self,
         switch (l) {
             default:
                 return NULL;
-            case qc_float:
+            case TYPE_FLOAT:
                 op = INSTR_SUB_F;
                 break;
 #if 0
-            case qc_int:
+            case TYPE_INTEGER:
                 op = INSTR_SUB_I;
                 break;
 #endif
-            case qc_vector:
+            case TYPE_VECTOR:
                 op = INSTR_SUB_V;
                 break;
         }
     } else {
 #if 0
-        if ( (l == qc_float && r == qc_int) )
+        if ( (l == TYPE_FLOAT && r == TYPE_INTEGER) )
             op = INSTR_SUB_FI;
-        else if ( (l == qc_int && r == qc_float) )
+        else if ( (l == TYPE_INTEGER && r == TYPE_FLOAT) )
             op = INSTR_SUB_IF;
         else
 #endif
@@ -980,31 +982,31 @@ ir_value* ir_block_create_mul(ir_block *self,
         switch (l) {
             default:
                 return NULL;
-            case qc_float:
+            case TYPE_FLOAT:
                 op = INSTR_MUL_F;
                 break;
 #if 0
-            case qc_int:
+            case TYPE_INTEGER:
                 op = INSTR_MUL_I;
                 break;
 #endif
-            case qc_vector:
+            case TYPE_VECTOR:
                 op = INSTR_MUL_V;
                 break;
         }
     } else {
-        if ( (l == qc_vector && r == qc_float) )
+        if ( (l == TYPE_VECTOR && r == TYPE_FLOAT) )
             op = INSTR_MUL_VF;
-        else if ( (l == qc_float && r == qc_vector) )
+        else if ( (l == TYPE_FLOAT && r == TYPE_VECTOR) )
             op = INSTR_MUL_FV;
 #if 0
-        else if ( (l == qc_vector && r == qc_int) )
+        else if ( (l == TYPE_VECTOR && r == TYPE_INTEGER) )
             op = INSTR_MUL_VI;
-        else if ( (l == qc_int && r == qc_vector) )
+        else if ( (l == TYPE_INTEGER && r == TYPE_VECTOR) )
             op = INSTR_MUL_IV;
-        else if ( (l == qc_float && r == qc_int) )
+        else if ( (l == TYPE_FLOAT && r == TYPE_INTEGER) )
             op = INSTR_MUL_FI;
-        else if ( (l == qc_int && r == qc_float) )
+        else if ( (l == TYPE_INTEGER && r == TYPE_FLOAT) )
             op = INSTR_MUL_IF;
 #endif
         else
@@ -1025,22 +1027,22 @@ ir_value* ir_block_create_div(ir_block *self,
         switch (l) {
             default:
                 return NULL;
-            case qc_float:
+            case TYPE_FLOAT:
                 op = INSTR_DIV_F;
                 break;
 #if 0
-            case qc_int:
+            case TYPE_INTEGER:
                 op = INSTR_DIV_I;
                 break;
 #endif
         }
     } else {
 #if 0
-        if ( (l == qc_vector && r == qc_float) )
+        if ( (l == TYPE_VECTOR && r == TYPE_FLOAT) )
             op = INSTR_DIV_VF;
-        else if ( (l == qc_float && r == qc_int) )
+        else if ( (l == TYPE_FLOAT && r == TYPE_INTEGER) )
             op = INSTR_DIV_FI;
-        else if ( (l == qc_int && r == qc_float) )
+        else if ( (l == TYPE_INTEGER && r == TYPE_FLOAT) )
             op = INSTR_DIV_IF;
         else
 #endif

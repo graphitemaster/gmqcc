@@ -134,22 +134,6 @@ MEM_VEC_FUNCTIONS(Tself, Twhat, mem)             \
 _MEM_VEC_FUN_CLEAR(Tself, mem)                   \
 _MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 
-enum qc_types {
-    /* Main QC types */
-    qc_void,
-    qc_float,
-    qc_vector,
-    qc_entity,
-    qc_string,
-
-    qc_int,
-
-    /* "virtual" and internal types */
-    qc_pointer,
-    qc_variant, /* eg. OFS_RETURN/PARAM... */
-    qc_function,
-};
-
 enum store_types {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */

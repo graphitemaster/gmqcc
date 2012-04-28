@@ -89,7 +89,7 @@ void ast_value_delete(ast_value* self)
     if (self->isconst) {
         switch (self->vtype)
         {
-        case qc_string:
+        case TYPE_STRING:
             mem_d((void*)self->constval.vstring);
             break;
         /* NOTE: delete function? currently collected in

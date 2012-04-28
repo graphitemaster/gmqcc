@@ -276,7 +276,9 @@ enum {
     TYPE_ENTITY   ,
     TYPE_FIELD    ,
     TYPE_FUNCTION ,
-    TYPE_POINTER
+    TYPE_POINTER  ,
+    /* TYPE_INTEGER  , */
+    TYPE_VARIANT  ,
 };
 
 /*
