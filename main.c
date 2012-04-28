@@ -39,18 +39,18 @@ static const int usage(const char *const app) {
            "    %s -a<file> -i<file> -oprog.dat -- assemble together(allowed multiple -i<file>)\n"
            "    example:\n"
            "    %s -cfoo.qc -ibar.qc -oqc.dat -afoo.qs -ibar.qs -oqs.dat\n", app, app, app, app, app);
-           
+
     printf("    additional flags:\n"
            "        -debug           -- turns on compiler debug messages\n"
            "        -memchk          -- turns on compiler memory leak check\n"
            "        -help            -- prints this help/usage text\n"
            "        -std             -- select the QuakeC compile type (types below):\n");
-           
+
     printf("            -std=qcc     -- original QuakeC\n"
            "            -std=ftqecc  -- fteqcc QuakeC\n"
            "            -std=qccx    -- qccx QuakeC\n"
            "            -std=gmqcc   -- this compiler QuakeC (default selection)\n");
-           
+
     printf("    codegen flags:\n"
            "        -fdarkplaces-string-table-bug -- patches the string table to work with bugged versions of darkplaces\n"
            "        -fomit-nullcode               -- omits the generation of null code (will break everywhere see propsal.txt)\n");
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
 
     util_meminfo();
     return 0;
-    
+
 clean_params_usage:
     for (itr = 0; itr < items_elements; itr++)
         mem_d(items_data[itr].name);

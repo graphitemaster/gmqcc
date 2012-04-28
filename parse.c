@@ -212,7 +212,7 @@ int parse_gen(lex_file *file) {
                             /* add the compile-time constant */
                             {
                                 constant c;
-                                
+
                                 c.name     = util_strdup(name),
                                 c.type     = TYPE_VECTOR,
                                 c.value[0] = compile_calc_x;

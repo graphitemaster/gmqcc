@@ -171,7 +171,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
         if (strchr(name, ',')) {
             prog_section_function function;
             prog_section_def      def;
-            
+
             char *find = strchr(name, ',') + 1;
 
             /* skip whitespace */

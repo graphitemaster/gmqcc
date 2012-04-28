@@ -87,7 +87,7 @@ void code_init() {
     prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
     prog_section_statement empty_statement = {0,{0},{0},{0}};
     int                    i               = 0;
-    
+
     /* omit creation of null code */
     if (opts_omit_nullcode)
         return;
@@ -117,7 +117,7 @@ void code_test() {
     prog_section_statement s1 = { INSTR_STORE_F, {30}, {OFS_PARM0}, {0}};
     prog_section_statement s2 = { INSTR_CALL1,   {29}, {0},         {0}};
     prog_section_statement s3 = { INSTR_RETURN,  {0},  {0},         {0}};
-    
+
     code_chars_put("m_init",        0x6);
     code_chars_put("print",         0x5);
     code_chars_put("hello world\n", 0xC);
@@ -148,10 +148,10 @@ void code_test() {
 void code_write() {
     prog_header  code_header  = {0};
     prog_section statements;
-    prog_section defs;        
-    prog_section fields;      
-    prog_section functions;   
-    prog_section globals;     
+    prog_section defs;
+    prog_section fields;
+    prog_section functions;
+    prog_section globals;
     prog_section strings;
     FILE        *fp        = NULL;
     size_t       it        = 1;

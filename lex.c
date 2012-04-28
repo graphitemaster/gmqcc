@@ -343,7 +343,7 @@ void lex_parse(lex_file *file) {
  */
 lex_file *lex_include(lex_file *lex, const char *file) {
     lex_file *set = NULL;
-    
+
     util_strrq(file);
     if (strncmp(lex->name, file, strlen(lex->name)) == 0) {
         error(lex, ERROR_LEX, "Source file cannot include itself\n");
