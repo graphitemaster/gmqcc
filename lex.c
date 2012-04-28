@@ -139,22 +139,10 @@ static int lex_digraph(lex_file *file, int first) {
 
 static int lex_getch(lex_file *file) {
     int ch = lex_inget(file);
-
-    static int str = 0;
-    switch (ch) {
-        case '?' :
-            return lex_trigraph(file);
-        case '<' :
-        case ':' :
-        case '%' :
-        case '"' : str = !str; if (str) { file->line ++; }
-            return lex_digraph(file, ch);
-            
-        case '\n':
-            if (!str)
-                file->line++;
-    }
-        
+    if (ch == '?')
+        return lex_trigraph(file);
+    if (ch == '<' || ch == ':' || ch == '%')
+        return lex_digraph(file, ch);
     return ch;
 }
 
@@ -283,13 +271,7 @@ int lex_token(lex_file *file) {
     if (ch > 0 && (ch == '_' || isalpha(ch))) {
         lex_clear(file);
         
-        /*
-         * Yes this is dirty, but there is no other _sane_ easy
-         * way to do it, this is what I call defensive programming
-         * if something breaks, add more defense :-)
-         */
-        while (ch >   0   && ch != ' ' && ch != '(' &&
-               ch != '\n' && ch != ';' && ch != ')') {
+        while (ch > 0 && (ch == '_' || isalpha(ch))) {
             lex_addch(ch, file);
             ch = lex_getsource(file);
         }

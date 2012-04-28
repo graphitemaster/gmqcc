@@ -271,8 +271,6 @@ uint32_t util_crc32(const char *, int, register const short);
 #define VECTOR_MAKE(T,N) \
     VECTOR_TYPE(T,N);    \
     VECTOR_CORE(T,N)
-/* Builds a vector add function pointer for inside structures */
-#define VECTOR_IMPL(T,N) int (*N##_add)(T)
 
 //===================================================================
 //=========================== code.c ================================
