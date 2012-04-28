@@ -37,7 +37,7 @@ typedef struct ir_value_s {
     char      *name;
     int       vtype;
     int       store;
-    lex_ctx_t context;
+    lex_ctx   context;
 
     MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
     MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
@@ -47,7 +47,7 @@ typedef struct ir_value_s {
     union {
         float    vfloat;
         int      vint;
-        vector_t vvec;
+        vector   vvec;
         char    *vstring;
         struct ir_value_s *vpointer;
     } constval;
@@ -73,7 +73,7 @@ bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
 bool GMQCC_WARN ir_value_set_int(ir_value*, int i);
 #endif
 bool GMQCC_WARN ir_value_set_string(ir_value*, const char *s);
-bool GMQCC_WARN ir_value_set_vector(ir_value*, vector_t v);
+bool GMQCC_WARN ir_value_set_vector(ir_value*, vector v);
 /*bool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*bool   ir_value_set_pointer_i(ir_value*, int i);       */
 
@@ -97,7 +97,7 @@ typedef struct ir_phi_entry_s
 typedef struct ir_instr_s
 {
     int       opcode;
-    lex_ctx_t context;
+    lex_ctx   context;
     ir_value* (_ops[3]);
     struct ir_block_s* (bops[2]);
 
@@ -121,7 +121,7 @@ void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 typedef struct ir_block_s
 {
     char      *label;
-    lex_ctx_t  context;
+    lex_ctx    context;
     bool       final; /* once a jump is added we're done */
 
     MEM_VECTOR_MAKE(ir_instr*, instr);
@@ -197,7 +197,7 @@ typedef struct ir_function_s
     ir_block*     first;
     ir_block*     last;
 
-    lex_ctx_t     context;
+    lex_ctx       context;
 
     /* for temp allocation */
     size_t run_id;

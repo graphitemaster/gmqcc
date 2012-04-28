@@ -689,7 +689,7 @@ enum store_types {
 
 typedef struct {
     float x, y, z;
-} vector_t;
+} vector;
 
 /*
  * A shallow copy of a lex_file to remember where which ast node
@@ -698,5 +698,5 @@ typedef struct {
 typedef struct lex_ctx {
     const char *file;
     size_t     line;
-} lex_ctx_t;
+} lex_ctx;
 #endif

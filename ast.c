@@ -42,7 +42,7 @@ static void _ast_node_destroy(ast_node *self)
 }
 
 /* Initialize main ast node aprts */
-static void ast_node_init(ast_node *self, lex_ctx_t ctx)
+static void ast_node_init(ast_node *self, lex_ctx ctx)
 {
     self->node.context = ctx;
     self->node.destroy = &_ast_node_destroy;
@@ -56,7 +56,7 @@ static void ast_expression_init(ast_expression *self,
     ast_setfunc(&self->expression, codegen, codegen);
 }
 
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t, bool keep)
+ast_value* ast_value_new(lex_ctx ctx, const char *name, int t, bool keep)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
@@ -110,7 +110,7 @@ bool ast_value_set_name(ast_value *self, const char *name)
     return !!self->name;
 }
 
-ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
+ast_binary* ast_binary_new(lex_ctx ctx, int op,
                            ast_value* left, ast_value* right)
 {
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
@@ -130,7 +130,7 @@ void ast_binary_delete(ast_binary *self)
     mem_d(self);
 }
 
-ast_store* ast_store_new(lex_ctx_t ctx, int op,
+ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *dest, ast_value *source)
 {
     ast_instantiate(ast_store, ctx, ast_store_delete);
@@ -150,7 +150,7 @@ void ast_store_delete(ast_store *self)
     mem_d(self);
 }
 
-ast_block* ast_block_new(lex_ctx_t ctx)
+ast_block* ast_block_new(lex_ctx ctx)
 {
     ast_instantiate(ast_block, ctx, ast_block_delete);
     ast_expression_init((ast_expression*)self,
@@ -176,7 +176,7 @@ void ast_block_delete(ast_block *self)
     mem_d(self);
 }
 
-ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype)
+ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
 

@@ -42,7 +42,7 @@ typedef struct ast_store_s      ast_store;
 typedef void ast_node_delete(ast_node*);
 typedef struct
 {
-    lex_ctx_t        context;
+    lex_ctx          context;
     /* I don't feel comfortable using keywords like 'delete' as names... */
     ast_node_delete *destroy;
     /* keep: if a node contains this node, 'keep'
@@ -93,7 +93,7 @@ struct ast_value_s
     union {
         double        vfloat;
         int           vint;
-        vector_t      vvec;
+        vector        vvec;
         const char   *vstring;
         int           ventity;
         ast_function *vfunc;
@@ -106,7 +106,7 @@ struct ast_value_s
      */
     MEM_VECTOR_MAKE(ast_value*, params);
 };
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int qctype, bool keep);
+ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype, bool keep);
 void ast_value_delete(ast_value*);
 
 bool ast_value_set_name(ast_value*, const char *name);
@@ -125,7 +125,7 @@ struct ast_binary_s
     ast_value *left;
     ast_value *right;
 };
-ast_binary* ast_binary_new(lex_ctx_t  ctx,
+ast_binary* ast_binary_new(lex_ctx    ctx,
                            int        op,
                            ast_value *left,
                            ast_value *right);
@@ -148,7 +148,7 @@ struct ast_store_s
     ast_value *dest;
     ast_value *source;
 };
-ast_store* ast_store_new(lex_ctx_t ctx, int op,
+ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *d, ast_value *s);
 void ast_store_delete(ast_store*);
 
@@ -164,7 +164,7 @@ struct ast_block_s
     MEM_VECTOR_MAKE(ast_value*,      locals);
     MEM_VECTOR_MAKE(ast_expression*, exprs);
 };
-ast_block* ast_block_new(lex_ctx_t ctx);
+ast_block* ast_block_new(lex_ctx ctx);
 void ast_block_delete(ast_block*);
 
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
@@ -191,7 +191,7 @@ struct ast_function_s
 
     MEM_VECTOR_MAKE(ast_block*, blocks);
 };
-ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype);
+ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 void ast_function_delete(ast_function*);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);

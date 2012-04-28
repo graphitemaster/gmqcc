@@ -439,7 +439,7 @@ bool ir_value_set_float(ir_value *self, float f)
     return true;
 }
 
-bool ir_value_set_vector(ir_value *self, vector_t v)
+bool ir_value_set_vector(ir_value *self, vector v)
 {
     if (self->vtype != TYPE_VECTOR)
         return false;
