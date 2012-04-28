@@ -20,8 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef ASTIR_COMMON_H__
-#define ASTIR_COMMON_H__
+#ifndef GMQCC_ASTIR_HDR
+#define GMQCC_ASTIR_HDR
 
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)                   \
     bool GMQCC_WARN Towner##_##mem##_add(Towner*, Tmem);      \
@@ -42,10 +42,11 @@ bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
 {                                                                    \
     Twhat *reall;                                                    \
     if (self->mem##_count == self->mem##_alloc) {                    \
-        if (!self->mem##_alloc)                                      \
+        if (!self->mem##_alloc) {                                    \
             self->mem##_alloc = 16;                                  \
-        else                                                         \
+        } else {                                                     \
             self->mem##_alloc *= 2;                                  \
+        }                                                            \
         reall = (Twhat*)mem_a(sizeof(Twhat) * self->mem##_alloc);    \
         if (!reall) {                                                \
             MEM_VECTOR_CLEAR(self, mem);                             \
@@ -64,17 +65,20 @@ bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
 {                                                                    \
     size_t i;                                                        \
     Twhat *reall;                                                    \
-    if (idx >= self->mem##_count)                                    \
+    if (idx >= self->mem##_count) {                                  \
         return true; /* huh... */                                    \
-    for (i = idx; i < self->mem##_count-1; ++i)                      \
+    }                                                                \
+    for (i = idx; i < self->mem##_count-1; ++i) {                    \
         self->mem[i] = self->mem[i+1];                               \
+    }                                                                \
     self->mem##_count--;                                             \
     if (self->mem##_count < self->mem##_count/2)                     \
     {                                                                \
         self->mem##_alloc /= 2;                                      \
         reall = (Twhat*)mem_a(sizeof(Twhat) * self->mem##_count);    \
-        if (!reall)                                                  \
+        if (!reall) {                                                \
             return false;                                            \
+        }                                                            \
         memcpy(reall, self->mem, sizeof(Twhat) * self->mem##_count); \
         mem_d(self->mem);                                            \
         self->mem = reall;                                           \
@@ -88,8 +92,9 @@ bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
     size_t i;                                                   \
     for (i = 0; i < self->mem##_count; ++i) {                   \
         if (self->mem[i] == obj) {                              \
-            if (idx)                                            \
+            if (idx) {                                          \
                 *idx = i;                                       \
+            }                                                   \
             return true;                                        \
         }                                                       \
     }                                                           \

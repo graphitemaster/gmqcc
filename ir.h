@@ -20,8 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef QCIR_H__
-#define QCIR_H__
+#ifndef GMQCC_IR_HDR
+#define GMQCC_IR_HDR
 
 #include "astir.h"
 
