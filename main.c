@@ -87,10 +87,11 @@ int main(int argc, char **argv) {
                 return 0;
             }
             #define param_argument(argtype) do {                             \
-                if (argv[1][2])                                              \
+                if (argv[1][2]) {                                            \
                     items_add((argitem){util_strdup(&argv[1][2]), argtype}); \
-                else {                                                       \
-                    ++argv; --argc;                                          \
+                } else {                                                     \
+                    ++argv;                                                  \
+                    --argc;                                                  \
                     if (argc <= 1)                                           \
                         goto clean_params_usage;                             \
                     items_add((argitem){util_strdup(&argv[1][0]), argtype}); \
