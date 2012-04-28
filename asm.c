@@ -142,18 +142,33 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
             mem_d(name);
             name = util_strchp(name, strchr(name, ','));
 
-            /* add internal function */
+            /*
+             * Now add the following items to the code system:
+             *  function
+             *  definition (optional)
+             *  global     (optional)
+             *  name
+             */
             code_functions_add((prog_section_function){
                 -atoi(find), /* needs to be negated */
                  0, 0, 0,
                 .name = code_chars_elements,
                  0, 0,{0}
             });
-            /* add name to string table */
+            code_defs_add((prog_section_def){
+                .type   = TYPE_FUNCTION,
+                .offset = code_globals_elements,
+                .name   = code_chars_elements
+            });
+            code_globals_add(code_chars_elements);
+            
             code_chars_put(name, strlen(name));
             code_chars_add('\0');
+
+            /* TODO: sanatize `find` to ensure all numerical digits */
             
             printf("found internal function %s, -%d\n", name, atoi(find));
+        } else {
         }
 
         mem_d(copy);
