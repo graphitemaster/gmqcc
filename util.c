@@ -33,7 +33,7 @@ struct memblock_t {
     const char  *file;
     unsigned int line;
     unsigned int byte;
-};
+}; 
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
@@ -46,6 +46,7 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     util_debug("MEM", "allocation: % 8u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
     mem_at++;
     mem_ab += info->byte;
+
     return data;
 }
 
@@ -57,6 +58,7 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
     mem_db += info->byte;
     mem_dt++;
+
     free(data);
 }
 
@@ -118,6 +120,23 @@ char *util_strrq(char *s) {
 }
 
 /*
+ * Chops a substring from an existing string by creating a
+ * copy of it and null terminating it at the required position.
+ */
+char *util_strchp(const char *s, const char *e) {
+    if (!s || !e)
+        return NULL;
+        
+    size_t m  = 0;
+    char  *c  = util_strdup(s);
+    while (s != e)
+        s++,c++,m++;
+         
+    *c = '\0';
+    return c-m;
+}
+
+/*
  * Remove newline from a string (if it exists).  This is
  * done pointer wise instead of strlen(), and an array
  * access.
@@ -130,6 +149,47 @@ char *util_strrnl(char *src) {
 
     *cpy = '\0';
     return src;
+}
+
+/*
+ * Removes any whitespace prefixed on a string by moving
+ * skipping past it, and stroing the skip distance, so
+ * the string can later be freed (if it was allocated)
+ */
+char *util_strsws(const char *skip) {
+    size_t size = 0;
+    if (!skip)
+        return NULL;
+    
+    while (*skip == ' ' || *skip == '\t')
+        skip++,size++;
+    return util_strdup(skip-size);
+}
+
+/*
+ * Returns true if string is all uppercase, otherwise
+ * it returns false.
+ */
+bool util_strupper(const char *str) {
+    while (*str) {
+        if(!isupper(*str))
+            return false;
+        str++;
+    }
+    return true;
+}
+
+/*
+ * Returns true if string is all digits, otherwise
+ * it returns false.
+ */
+bool util_strdigit(const char *str) {
+    while (*str) {
+        if(!isdigit(*str))
+            return false;
+        str++;
+    }
+    return true;
 }
 
 void util_debug(const char *area, const char *ms, ...) {

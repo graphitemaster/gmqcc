@@ -205,18 +205,21 @@ void code_write() {
             *((int32_t*)&code_functions_data[i].argsize)
         );
         util_debug("GEN", "    NAME: %s\n", &code_chars_data[code_functions_data[i].name]);
-        util_debug("GEN", "    CODE:\n");
-        for (;;) {
-            if (code_statements_data[j].opcode != INSTR_DONE &&
-                code_statements_data[j].opcode != INSTR_RETURN)
-                util_debug("GEN", "        %s {0x%05d,0x%05d,0x%05d}\n",
-                    asm_instr[code_statements_data[j].opcode].m,
-                    code_statements_data[j].s1,
-                    code_statements_data[j].s2,
-                    code_statements_data[j].s3
-                );
-            else break;
-            j++;
+        /* Internal functions have no code */
+        if (code_functions_data[i].entry >= 0) {
+            util_debug("GEN", "    CODE:\n");
+            for (;;) {
+                if (code_statements_data[j].opcode != INSTR_DONE &&
+                    code_statements_data[j].opcode != INSTR_RETURN)
+                    util_debug("GEN", "        %s {0x%05d,0x%05d,0x%05d}\n",
+                        asm_instr[code_statements_data[j].opcode].m,
+                        code_statements_data[j].s1,
+                        code_statements_data[j].s2,
+                        code_statements_data[j].s3
+                    );
+                else break;
+                j++;
+            }
         }
     }
     

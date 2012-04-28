@@ -104,7 +104,6 @@
 typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
 typedef char uint16_size_if_correct [sizeof(uint16_t) == 2?1:-1];
 typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
-//typedef char int8_size_is_correct   [sizeof(int8_t)   == 1?1:-1];
 typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
 typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
 /* intptr_t / uintptr_t correct size check */
@@ -206,9 +205,13 @@ void *util_memory_a      (unsigned int, unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
 void  util_meminfo       ();
 
+bool  util_strupper      (const char *);
+bool  util_strdigit      (const char *);
 char *util_strdup        (const char *);
 char *util_strrq         (char *);
 char *util_strrnl        (char *);
+char *util_strsws        (const char *);
+char *util_strchp        (const char *, const char *);
 void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  int, int);
