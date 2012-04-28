@@ -190,6 +190,8 @@ struct ast_function_s
     ast_value  *vtype;
     const char *name;
 
+    ir_function *ir_func;
+
     MEM_VECTOR_MAKE(ast_block*, blocks);
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);

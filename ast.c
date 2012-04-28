@@ -68,7 +68,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->isconst = false;
     memset(&self->constval, 0, sizeof(self->constval));
 
-    self->ir_v = NULL;
+    self->ir_v    = NULL;
 
     return self;
 }
@@ -193,6 +193,8 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->name = name ? util_strdup(name) : NULL;
     MEM_VECTOR_INIT(self, blocks);
 
+    self->ir_func = NULL;
+
     vtype->isconst = true;
     vtype->constval.vfunc = self;
 
@@ -225,9 +227,76 @@ void ast_function_delete(ast_function *self)
 /* AST codegen aprt
  */
 
-/* Some dummies so it compiles... */
 bool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
 {
+    /* NOTE: This is the codegen for a variable used in an expression.
+     * It is not the codegen to generate the value. For this purpose,
+     * ast_local_codegen and ast_global_codegen are to be used before this
+     * is executed. ast_function_codegen should take care of its locals,
+     * and the ast-user should take care of ast_global_codegen to be used
+     * on all the globals.
+     */
+    return false;
+}
+
+bool ast_global_codegen(ast_value *self, ir_builder *ir)
+{
+    if (self->isconst && self->vtype == TYPE_FUNCTION)
+    {
+        ir_function *func = ir_builder_create_function(ir, self->name);
+        if (!func)
+            return false;
+
+        self->constval.vfunc->ir_func = func;
+        /* The function is filled later on ast_function_codegen... */
+        return true;
+    }
+
+    ir_value *v = ir_builder_create_global(ir, self->name, self->vtype);
+    if (!v)
+        return false;
+
+    if (self->isconst) {
+        switch (self->vtype)
+        {
+            case TYPE_FLOAT:
+                if (!ir_value_set_float(v, self->constval.vfloat))
+                    goto error;
+                break;
+            case TYPE_VECTOR:
+                if (!ir_value_set_vector(v, self->constval.vvec))
+                    goto error;
+                break;
+            case TYPE_STRING:
+                if (!ir_value_set_string(v, self->constval.vstring))
+                    goto error;
+                break;
+            case TYPE_FUNCTION:
+                /* Cannot generate an IR value for a function,
+                 * need a pointer pointing to a function rather.
+                 */
+                goto error;
+            default:
+                printf("TODO: global constant type %i\n", self->vtype);
+                break;
+        }
+    }
+
+    /* link us to the ir_value */
+    self->ir_v = v;
+    return true;
+
+error: /* clean up */
+    ir_value_delete(v);
+    return false;
+}
+
+bool ast_function_codegen(ast_function *self, ir_builder *ir)
+{
+    if (!self->ir_func) {
+        printf("ast_function's related ast_value was not generated yet\n");
+        return false;
+    }
     return false;
 }
 
