@@ -87,9 +87,36 @@ static inline bool asm_parse_type(const char *skip, size_t line, asm_state *stat
     /* TODO: determine if constant, global, or local */
     switch (*skip) {
         /* VECTOR */ case 'V': {
+            float val1;
+            float val2;
+            float val3;
+            
             const char *find = skip + 7;
             while (*find == ' ' || *find == '\t') find++;
-            printf("found VECTOR %s\n", find);
+
+            /*
+             * Parse all three elements of the vector.  This will only
+             * pass the first try if we hit a constant, otherwise it's
+             * a global.
+             */
+            #define PARSE_ELEMENT(X,Y,Z)                    \
+                if (isdigit(*X)  || *X == '-'||*X == '+') { \
+                    bool negated = (*X == '-');             \
+                    if  (negated || *X == '+')   { X++; }   \
+                    Y = (negated)?-atof(X):atof(X);         \
+                    X = strchr(X, ',');                     \
+                    Z                                       \
+                }
+
+            PARSE_ELEMENT(find, val1, { if(find) { find+=3; }});
+            PARSE_ELEMENT(find, val2, { if(find) { find+=2; }});
+            PARSE_ELEMENT(find, val3, { if(find) { find+=1; }});
+            #undef PARSE_ELEMENT
+
+            printf("X:[0] = %f\n", val1);
+            printf("Y:[1] = %f\n", val2);
+            printf("Z:[2] = %f\n", val3);
+            
             break;
         }
         /* ENTITY */ case 'E': {
