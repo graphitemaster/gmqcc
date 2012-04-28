@@ -195,6 +195,7 @@ void  util_memory_d      (void       *, unsigned int, const char *);
 void  util_meminfo       ();
 
 bool  util_strupper      (const char *);
+bool  util_strdigit      (const char *);
 char *util_strdup        (const char *);
 char *util_strrq         (char *);
 char *util_strrnl        (char *);

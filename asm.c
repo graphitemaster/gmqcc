@@ -78,11 +78,34 @@ void asm_clear() {
  * are locals.
  */
 static inline bool asm_parse_type(const char *skip, size_t line, asm_state *state) {
-    if (strstr(skip, "FLOAT:")  == &skip[0]) { return true; }
-    if (strstr(skip, "VECTOR:") == &skip[0]) { return true; }
-    if (strstr(skip, "ENTITY:") == &skip[0]) { return true; }
-    if (strstr(skip, "FIELD:")  == &skip[0]) { return true; }
-    if (strstr(skip, "STRING:") == &skip[0]) { return true; }
+    if (!(strstr(skip, "FLOAT:")  == &skip[0]) &&
+         (strstr(skip, "VECTOR:") == &skip[0]) &&
+         (strstr(skip, "ENTITY:") == &skip[0]) &&
+         (strstr(skip, "FIELD:")  == &skip[0]) &&
+         (strstr(skip, "STRING:") == &skip[0])) return false;
+
+    /* TODO: determine if constant, global, or local */
+    switch (*skip) {
+        /* VECTOR */ case 'V': {
+            const char *find = skip + 7;
+            while (*find == ' ' || *find == '\t') find++;
+            printf("found VECTOR %s\n", find);
+            break;
+        }
+        /* ENTITY */ case 'E': {
+            const char *find = skip + 7;
+            while (*find == ' ' || *find == '\t') find++;
+            printf("found ENTITY %s\n", find);
+            break;
+        }
+        /* STRING */ case 'S': {
+            const char *find = skip + 7;
+            while (*find == ' ' || *find == '\t') find++;
+            printf("found STRING %s\n", find);
+            break;
+        }
+    }
+    
     return false;
 }
 
@@ -165,10 +188,19 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
             code_chars_put(name, strlen(name));
             code_chars_add('\0');
 
-            /* TODO: sanatize `find` to ensure all numerical digits */
-            
-            printf("found internal function %s, -%d\n", name, atoi(find));
+            /*
+             * Sanatize the numerical constant used to select the
+             * internal function.  Must ensure it's all numeric, since
+             * atoi can silently drop characters from a string and still
+             * produce a valid constant that would lead to runtime problems.
+             */
+            if (util_strdigit(find))
+                printf("found internal function %s, -%d\n", name, atoi(find));
+            else
+                printf("invalid internal function identifier, must be all numeric\n");
+                
         } else {
+            /* TODO: function bodies */
         }
 
         mem_d(copy);

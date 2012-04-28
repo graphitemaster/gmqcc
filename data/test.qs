@@ -82,4 +82,7 @@ FUNCTION: pow,            $97
 FUNCTION: findfloat,      $98
 FUNCTION: checkextension, $99
 
-; todo support other crap
+; constants test
+VECTOR: 1, 2, 3
+FLOAT:  1
+STRING: "hello world"

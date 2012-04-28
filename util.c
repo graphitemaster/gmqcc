@@ -179,6 +179,19 @@ bool util_strupper(const char *str) {
     return true;
 }
 
+/*
+ * Returns true if string is all digits, otherwise
+ * it returns false.
+ */
+bool util_strdigit(const char *str) {
+    while (*str) {
+        if(!isdigit(*str))
+            return false;
+        str++;
+    }
+    return true;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
     if (!opts_debug)
         return;
