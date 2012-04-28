@@ -655,17 +655,17 @@ void Tself##_##mem##_clear(Tself *self) \
 {                                       \
     if (!self->mem)                     \
         return;                         \
-    free((void*) self->mem);            \
+    mem_d((void*) self->mem);           \
     self->mem = NULL;                   \
     self->mem##_count = 0;              \
     self->mem##_alloc = 0;              \
 }
 
-#define MEM_VECTOR_CLEAR(owner, mem) \
-    if ((owner)->mem)                \
-        free((void*)((owner)->mem)); \
-    (owner)->mem = NULL;             \
-    (owner)->mem##_count = 0;        \
+#define MEM_VECTOR_CLEAR(owner, mem)  \
+    if ((owner)->mem)                 \
+        mem_d((void*)((owner)->mem)); \
+    (owner)->mem = NULL;              \
+    (owner)->mem##_count = 0;         \
     (owner)->mem##_alloc = 0
 
 #define MEM_VECTOR_INIT(owner, mem) \
