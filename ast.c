@@ -169,12 +169,12 @@ MEM_VEC_FUNCTIONS(ast_block, ast_expression*, exprs)
 void ast_block_delete(ast_block *self)
 {
     size_t i;
-    for (i = 0; i < self->locals_count; ++i)
-        ast_delete(self->locals[i]);
-    MEM_VECTOR_CLEAR(self, locals);
     for (i = 0; i < self->exprs_count; ++i)
         ast_unref(self->exprs[i]);
     MEM_VECTOR_CLEAR(self, exprs);
+    for (i = 0; i < self->locals_count; ++i)
+        ast_delete(self->locals[i]);
+    MEM_VECTOR_CLEAR(self, locals);
     mem_d(self);
 }
 
