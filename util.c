@@ -166,6 +166,19 @@ char *util_strsws(const char *skip) {
     return util_strdup(skip-size);
 }
 
+/*
+ * Returns true if string is all uppercase, otherwise
+ * it returns false.
+ */
+bool util_strupper(const char *str) {
+    while (*str) {
+        if(!isupper(*str))
+            return false;
+        str++;
+    }
+    return true;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
     if (!opts_debug)
         return;

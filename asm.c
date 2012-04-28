@@ -22,40 +22,6 @@
  */
 #include "gmqcc.h"
 /*
- * Some assembler keywords not part of the opcodes above: these are
- * for creating functions, or constants.
- */
-const char *const asm_keys[] = {
-    "FLOAT"    , /* define float  */
-    "VECTOR"   , /* define vector */
-    "ENTITY"   , /* define ent    */
-    "FIELD"    , /* define field  */
-    "STRING"   , /* define string */
-    "FUNCTION"
-};
-
-static char *const asm_getline(size_t *byte, FILE *fp) {
-    char   *line = NULL;
-    ssize_t read = util_getline(&line, byte, fp);
-    *byte = read;
-    if (read == -1) {
-        mem_d (line);
-        return NULL;
-    }
-    return line;
-}
-
-void asm_init(const char *file, FILE **fp) {
-    *fp = fopen(file, "r");
-    code_init();
-}
-
-void asm_close(FILE *fp) {
-    fclose(fp);
-    code_write();
-}
-
-/*
  * Following parse states:
  *     ASM_FUNCTION -- in a function accepting input statements
  *     ....
@@ -71,6 +37,33 @@ typedef struct {
 } globals;
 VECTOR_MAKE(globals, assembly_constants);
 
+/*
+ * Assembly text processing: this handles the internal collection
+ * of text to allow parsing and assemblation.
+ */
+static char *const asm_getline(size_t *byte, FILE *fp) {
+    char   *line = NULL;
+    ssize_t read = util_getline(&line, byte, fp);
+    *byte = read;
+    if (read == -1) {
+        mem_d (line);
+        return NULL;
+    }
+    return line;
+}
+
+/*
+ * Entire external interface for main.c - to perform actual assemblation
+ * of assembly files.
+ */
+void asm_init(const char *file, FILE **fp) {
+    *fp = fopen(file, "r");
+    code_init();
+}
+void asm_close(FILE *fp) {
+    fclose(fp);
+    code_write();
+}
 void asm_clear() {
     size_t i = 0;
     for (; i < assembly_constants_elements; i++)
@@ -114,14 +107,54 @@ static inline bool asm_parse_func(const char *skip, size_t line, asm_state *stat
             return false;
         }
         /* TODO: failure system, invalid name */
-        if (!isalpha(*name) || isupper(*name)) {
+        if (!isalpha(*name) || util_strupper(name)) {
             printf("invalid identifer for function name\n");
             mem_d(copy);
             mem_d(name);
             return false;
         }
 
-        printf("NAME: %s\n", name);
+        /*
+         * Function could be internal function, look for $
+         * to determine this.
+         */
+        if (strchr(name, ',')) {
+            char *find = strchr(name, ',') + 1;
+            
+            /* skip whitespace */
+            while (*find == ' ' || *find == '\t')
+                find++;
+            
+            if (*find != '$') {
+                printf("expected $ for internal function selection, got %s instead\n", find);
+                mem_d(copy);
+                mem_d(name);
+                return false;
+            }
+            find ++;
+            if (!isdigit(*find)) {
+                printf("invalid internal identifier, expected valid number\n");
+                mem_d(copy);
+                mem_d(name);
+                return false;
+            }
+            /* reassign name */
+            mem_d(name);
+            name = util_strchp(name, strchr(name, ','));
+
+            /* add internal function */
+            code_functions_add((prog_section_function){
+                -atoi(find), /* needs to be negated */
+                 0, 0, 0,
+                .name = code_chars_elements,
+                 0, 0,{0}
+            });
+            /* add name to string table */
+            code_chars_put(name, strlen(name));
+            code_chars_add('\0');
+            
+            printf("found internal function %s, -%d\n", name, atoi(find));
+        }
 
         mem_d(copy);
         mem_d(name);
