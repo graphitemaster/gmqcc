@@ -15,34 +15,43 @@ VECTOR_MAKE(ast_function*, functions);
 void testast()
 {
     ast_expression *exp;
+    ast_value      *gfoo    = NULL;
+    ast_value      *gbar    = NULL;
+    ast_value      *const_3 = NULL;
+    ast_value      *const_4 = NULL;
+    ast_value      *vmain   = NULL;
+    ast_function   *fmain   = NULL;
+    ast_block      *ba      = NULL;
+    ast_value      *li      = NULL;
+    
     size_t i;
     lex_ctx ctx;
     ctx.file = NULL;
     ctx.line = 1;
 
     /* globals */
-    ast_value *gfoo = ast_value_new(ctx, "foo", TYPE_FLOAT);
+    gfoo = ast_value_new(ctx, "foo", TYPE_FLOAT);
         assert(gfoo);
     assert(globals_add(gfoo) >= 0);
 
-    ast_value *gbar = ast_value_new(ctx, "bar", TYPE_FLOAT);
+    gbar = ast_value_new(ctx, "bar", TYPE_FLOAT);
         assert(gbar);
     assert(globals_add(gbar) >= 0);
 
-    ast_value *const_3 = ast_value_new(ctx, "3", TYPE_FLOAT);
+    const_3 = ast_value_new(ctx, "3", TYPE_FLOAT);
         assert(const_3);
     assert(globals_add(const_3) >= 0);
     const_3->isconst = true;
     const_3->constval.vfloat = 3.0;
 
-    ast_value *const_4 = ast_value_new(ctx, "4", TYPE_FLOAT);
+    const_4 = ast_value_new(ctx, "4", TYPE_FLOAT);
         assert(const_4);
     assert(globals_add(const_4) >= 0);
     const_4->isconst = true;
     const_4->constval.vfloat = 4.0;
 
     /* defining a function */
-    ast_value *vmain = ast_value_new(ctx, "main", TYPE_FUNCTION);
+    vmain = ast_value_new(ctx, "main", TYPE_FUNCTION);
         assert(vmain);
     assert(globals_add(vmain) >= 0);
     /* This happens in ast_function_new:
@@ -54,17 +63,17 @@ void testast()
      */
 
     /* creating a function body */
-    ast_function *fmain = ast_function_new(ctx, "main", vmain);
+    fmain = ast_function_new(ctx, "main", vmain);
         assert(fmain);
     assert(functions_add(fmain) >= 0);
 
     /* { block */
-    ast_block *ba = ast_block_new(ctx);
+    ba = ast_block_new(ctx);
         assert(ba);
     assert(ast_function_blocks_add(fmain, ba));
 
     /* local variable i */
-    ast_value *li = ast_value_new(ctx, "i", TYPE_FLOAT);
+    li = ast_value_new(ctx, "i", TYPE_FLOAT);
         assert(li);
     assert(ast_block_locals_add(ba, li));
 
