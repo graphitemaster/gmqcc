@@ -12,7 +12,7 @@
 VECTOR_MAKE(ast_value*, globals);
 VECTOR_MAKE(ast_function*, functions);
 
-void testast()
+int main()
 {
     ast_expression *exp;
     ast_value      *gfoo    = NULL;
@@ -117,4 +117,5 @@ void testast()
     }
     if (globals_data)
         mem_d(globals_data);
+    return 0;
 }

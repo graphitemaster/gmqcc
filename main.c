@@ -24,13 +24,6 @@
 typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
-/* global options */
-bool opts_debug                     = false;
-bool opts_memchk                    = false;
-bool opts_darkplaces_stringtablebug = false;
-bool opts_omit_nullcode             = false;
-int  opts_compiler                  = COMPILER_GMQCC;
-
 static const int usage(const char *const app) {
     printf("usage:\n"
            "    %s -c<file>          -oprog.dat -- compile file\n"

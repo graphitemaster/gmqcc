@@ -1,7 +1,6 @@
 CC     ?= clang
 CFLAGS += -Wall -I. -pedantic-errors -std=c90
-OBJ     = main.o      \
-          lex.o       \
+OBJ     = lex.o       \
           error.o     \
           parse.o     \
           typedef.o   \
@@ -10,9 +9,9 @@ OBJ     = main.o      \
           asm.o       \
           ast.o       \
           ir.o
-# ast and ir test
-TEST_AST = test/ast-test.o
-TEST_IR  = test/ir-test.o
+OBJ_A = test/ast-test.o
+OBJ_I = test/ir-test.o
+OBJ_C = main.o
 
 #default is compiler only
 default: gmqcc
@@ -20,14 +19,14 @@ default: gmqcc
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 # test targets
-test_ast: $(TEST_AST) $(OBJ)
+test_ast: $(OBJ_A) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)	
-test_ir:  $(TEST_IR) $(OBJ)
+test_ir:  $(OBJ_I) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 test: test_ast test_ir
 
 # compiler target	
-gmqcc: $(OBJ)
+gmqcc: $(OBJ_C) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 #all target is test and all

@@ -1,6 +1,6 @@
 #include "gmqcc.h"
 #include "ir.h"
-void builder1()
+int main()
 {
 	ir_builder *b  = ir_builder_new("test");
 	ir_value   *va = ir_builder_create_global(b, "a", TYPE_FLOAT);
@@ -101,4 +101,5 @@ void builder1()
 	ir_value_dump_life(la, printf);
 
 	ir_builder_delete(b);
+	return 0;
 }
