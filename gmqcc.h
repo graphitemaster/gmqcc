@@ -318,7 +318,12 @@ uint32_t util_crc32(const char *, int, register const short);
         return N##_elements;                                    \
     }                                                           \
     typedef char VECTOR_FILL(extra_semicolon_,__COUNTER__)
-/* Builds a full vector inspot */
+#define VECTOR_PROT(T,N)                                        \
+    extern T*     N##_data     ;                                \
+    extern long   N##_elements ;                                \
+    extern long   N##_allocated;                                \
+    int           N##_add(T);                                   \
+    int           N##_put(T *, size_t)
 #define VECTOR_MAKE(T,N) \
     VECTOR_TYPE(T,N);    \
     VECTOR_CORE(T,N)
@@ -506,25 +511,13 @@ enum {
  * VECTOR_MAKE(int,                    code_globals   );
  * VECTOR_MAKE(char,                   code_chars     );
  */
-int         code_statements_add(prog_section_statement);
-int         code_defs_add      (prog_section_def);
-int         code_fields_add    (prog_section_field);
-int         code_functions_add (prog_section_function);
-int         code_globals_add   (int);
-int         code_chars_add     (char);
-int         code_statements_put(prog_section_statement*, size_t);
-int         code_defs_put      (prog_section_def*,       size_t);
-int         code_fields_put    (prog_section_field*,     size_t);
-int         code_functions_put (prog_section_function*,  size_t);
-int         code_globals_put   (int*,                    size_t);
-int         code_chars_put     (char*,                   size_t);
-extern long code_statements_elements;
-extern long code_chars_elements;
-extern long code_globals_elements;
-extern int *code_globals_data;
-extern long code_functions_elements;
-extern long code_fields_elements;
-extern long code_defs_elements;
+VECTOR_PROT(prog_section_statement, code_statements);
+VECTOR_PROT(prog_section_statement, code_statements);
+VECTOR_PROT(prog_section_def,       code_defs      );
+VECTOR_PROT(prog_section_field,     code_fields    );
+VECTOR_PROT(prog_section_function,  code_functions );
+VECTOR_PROT(int,                    code_globals   );
+VECTOR_PROT(char,                   code_chars     );
 
 /*
  * code_write -- writes out the compiled file
