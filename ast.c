@@ -80,7 +80,7 @@ void ast_value_delete(ast_value* self)
     if (self->name)
         mem_d((void*)self->name);
     for (i = 0; i < self->params_count; ++i)
-        ast_unref(self->params[i]);
+        ast_value_delete(self->params[i]); /* delete, the ast_function is expected to die first */
     MEM_VECTOR_CLEAR(self, params);
     if (self->next) /* delete, not unref, types are always copied */
         ast_delete(self->next);
