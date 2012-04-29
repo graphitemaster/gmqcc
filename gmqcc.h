@@ -119,9 +119,25 @@
     typedef long           int32_t;
     typedef unsigned long  uint32_t;
 
-    /* bail on 64 bit type! */
-    typedef char           int64_t;
-    typedef char           uint64_t;
+    /*
+     * It's nearly impossible to figure out a 64bit type at
+     * this point without making assumptions about the build
+     * enviroment.  So if clang or gcc is detected use some
+     * compiler builtins to create a 64 signed and unsigned
+     * type.
+     */
+#   if defined(__GNUC__) || defined (__CLANG__)
+        typedef int          int64_t  __attribute__((__mode__(__DI__)));
+        typedef unsigned int uint64_t __attribute__((__mode__(__DI__)));
+#   else
+        /*
+         * Incoorectly size the types so static assertions below will
+         * fail.  There is no valid way to get a 64bit type at this point
+         * without making assumptions of too many things.
+         */
+        typedef char         int64_t;
+        typedef char         uint64_t;
+#   endif
 #endif
 #ifdef _LP64 /* long pointer == 64 */
     typedef unsigned long  uintptr_t;
