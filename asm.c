@@ -33,6 +33,8 @@ typedef enum {
 
 typedef struct {
     char *name;   /* name of constant    */
+    char  type;   /* type, float, vector, string */
+    char  elem;   /* 0=x, 1=y, or 2=Z?   */
     int   offset; /* location in globals */
 } globals;
 VECTOR_MAKE(globals, assembly_constants);
@@ -72,6 +74,28 @@ void asm_clear() {
 }
 
 /*
+ * Dumps all values of all constants and assembly related
+ * information obtained during the assembly procedure.
+ */
+void asm_dumps() {
+    size_t i = 0;
+    for (; i < assembly_constants_elements; i++) {
+        globals *g = &assembly_constants_data[i];
+        switch (g->type) {
+            case TYPE_VECTOR: {
+                util_debug("ASM", "vector %s %c[%f]\n", g->name,
+                    (g->elem == 0) ? 'X' :(
+                    (g->elem == 1) ? 'Y' :
+                    (g->elem == 2) ? 'Z' :' '),
+                    INT2FLT(code_globals_data[g->offset])
+                );
+                break;
+            }
+        }
+    }
+}
+
+/*
  * Parses a type, could be global or not depending on the
  * assembly state: global scope with assignments are constants.
  * globals with no assignments are globals.  Function body types
@@ -87,36 +111,59 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
     /* TODO: determine if constant, global, or local */
     switch (*skip) {
         /* VECTOR */ case 'V': {
-            float val1;
-            float val2;
-            float val3;
+            float   val1;
+            float   val2;
+            float   val3;
+            globals global;
 
-            const char *find = skip + 7;
+            char *find = (char*)skip + 7;
+            char *name = (char*)skip + 7;
             while (*find == ' ' || *find == '\t') find++;
 
-            /*
-             * Parse all three elements of the vector.  This will only
-             * pass the first try if we hit a constant, otherwise it's
-             * a global.
-             */
-            #define PARSE_ELEMENT(X,Y,Z)                    \
-                if (isdigit(*X)  || *X == '-'||*X == '+') { \
-                    bool negated = (*X == '-');             \
-                    if  (negated || *X == '+')   { X++; }   \
-                    Y = (negated)?-atof(X):atof(X);         \
-                    X = strchr(X, ',');                     \
-                    Z                                       \
+            /* constant? */
+            if (strchr(find, ',')) {
+                /* strip name */
+                *strchr((name = util_strdup(find)), ',')='\0';
+                /* find data  */
+                find += strlen(name) + 1;
+                while (*find == ' ' || *find == '\t') find++;
+                /* valid name */
+                if (util_strupper(name) || isdigit(*name)) {
+                    printf("invalid name for vector variable\n");
+                    mem_d(name);
                 }
+                /*
+                 * Parse all three elements of the vector.  This will only
+                 * pass the first try if we hit a constant, otherwise it's
+                 * a global.
+                 */
+                #define PARSE_ELEMENT(X,Y,Z)                    \
+                    if (isdigit(*X)  || *X == '-'||*X == '+') { \
+                        bool negated = (*X == '-');             \
+                        if  (negated || *X == '+')   { X++; }   \
+                        Y = (negated)?-atof(X):atof(X);         \
+                        X = strchr(X, ',');                     \
+                        Z                                       \
+                    }
 
-            PARSE_ELEMENT(find, val1, { if(find) { find +=3; }});
-            PARSE_ELEMENT(find, val2, { if(find) { find +=2; }});
-            PARSE_ELEMENT(find, val3, { if(find) { find +=1; }});
-            #undef PARSE_ELEMENT
-
-            printf("X:[0] = %f\n", val1);
-            printf("Y:[1] = %f\n", val2);
-            printf("Z:[2] = %f\n", val3);
-
+                PARSE_ELEMENT(find, val1, { find ++; while (*find == ' ') { find ++; } });
+                PARSE_ELEMENT(find, val2, { find ++; while (*find == ' ') { find ++; } });
+                PARSE_ELEMENT(find, val3, { find ++; /* no need to do anything here */ });
+                #undef  PARSE_ELEMENT
+                #define BUILD_ELEMENT(X,Y)                 \
+                    global.type   = TYPE_VECTOR;           \
+                    global.name   = util_strdup(name);     \
+                    global.elem   = (X);                   \
+                    global.offset = code_globals_elements; \
+                    assembly_constants_add(global);        \
+                    code_globals_add(FLT2INT(Y))
+                BUILD_ELEMENT(0, val1);
+                BUILD_ELEMENT(1, val2);
+                BUILD_ELEMENT(2, val3);
+                #undef  BUILD_ELEMENT
+            } else {
+                /* TODO global not constant */
+            }
             break;
         }
         /* ENTITY */ case 'E': {
@@ -271,5 +318,6 @@ void asm_parse(FILE *fp) {
         asm_end("asm_parse_end\n");
     }
     #undef asm_end
-	asm_clear();
+        asm_dumps();
+    asm_clear();
 }

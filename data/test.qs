@@ -83,6 +83,6 @@ FUNCTION: findfloat,      $98
 FUNCTION: checkextension, $99
 
 ; constants test
-VECTOR: -1,  +2, 38865.444
-FLOAT:  1
+VECTOR: dude1, -1,  +2, 38865.444
+FLOAT:  dude2, 1
 STRING: "hello world"

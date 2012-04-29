@@ -275,6 +275,14 @@ uint32_t util_crc32(const char *, int, register const short);
 #    define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
 #endif
 
+/*
+ * TODO: make these safer to use.  Currently this only works on
+ * x86 and x86_64, some systems will likely not like this. Such
+ * as BE systems.
+ */
+#define FLT2INT(Y) *((int32_t*)&(Y))
+#define INT2FLT(Y) *((float  *)&(Y))
+
 /* Builds vector type (usefull for inside structures) */
 #define VECTOR_SNAP(X,Y) X ## Y
 #define VECTOR_FILL(X,Y) VECTOR_SNAP(X,Y)
@@ -513,6 +521,7 @@ int         code_chars_put     (char*,                   size_t);
 extern long code_statements_elements;
 extern long code_chars_elements;
 extern long code_globals_elements;
+extern int *code_globals_data;
 extern long code_functions_elements;
 extern long code_fields_elements;
 extern long code_defs_elements;
