@@ -1009,31 +1009,25 @@ on_error:
     return NULL;
 }
 
-ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_value *ent, ir_value *field)
+ir_value* ir_block_create_general_instr(ir_block *self, const char *label,
+                                        int op, ir_value *a, ir_value *b, int outype)
 {
     ir_instr *instr;
     ir_value *out;
 
-    /* Support for various pointer types todo if so desired */
-    if (ent->vtype != TYPE_ENTITY)
-        return NULL;
-
-    if (field->vtype != TYPE_FIELD)
-        return NULL;
-
-    out = ir_value_out(self->owner, label, store_value, TYPE_POINTER);
+    out = ir_value_out(self->owner, label, store_value, outype);
     if (!out)
         return NULL;
 
-    instr = ir_instr_new(self, INSTR_ADDRESS);
+    instr = ir_instr_new(self, op);
     if (!instr) {
         ir_value_delete(out);
         return NULL;
     }
 
     if (!ir_instr_op(instr, 0, out, true) ||
-        !ir_instr_op(instr, 1, ent, false) ||
-        !ir_instr_op(instr, 2, field, false) )
+        !ir_instr_op(instr, 1, a, false) ||
+        !ir_instr_op(instr, 2, b, false) )
     {
         goto on_error;
     }
@@ -1048,12 +1042,20 @@ on_error:
     return NULL;
 }
 
+ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_value *ent, ir_value *field)
+{
+    /* Support for various pointer types todo if so desired */
+    if (ent->vtype != TYPE_ENTITY)
+        return NULL;
+
+    if (field->vtype != TYPE_FIELD)
+        return NULL;
+
+    return ir_block_create_general_instr(self, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
+}
+
 ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_value *ent, ir_value *field, int outype)
 {
-    ir_instr *instr;
-    ir_value *out;
-    int       op;
-
     if (ent->vtype != TYPE_ENTITY)
         return NULL;
 
@@ -1076,31 +1078,7 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_va
             return NULL;
     }
 
-    out = ir_value_out(self->owner, label, store_value, outype);
-    if (!out)
-        return NULL;
-
-    instr = ir_instr_new(self, op);
-    if (!instr) {
-        ir_value_delete(out);
-        return NULL;
-    }
-
-    if (!ir_instr_op(instr, 0, out, true) ||
-        !ir_instr_op(instr, 1, ent, false) ||
-        !ir_instr_op(instr, 2, field, false) )
-    {
-        goto on_error;
-    }
-
-    if (!ir_block_instr_add(self, instr))
-        goto on_error;
-
-    return out;
-on_error:
-    ir_instr_delete(instr);
-    ir_value_delete(out);
-    return NULL;
+    return ir_block_create_general_instr(self, label, op, ent, field, outype);
 }
 
 ir_value* ir_block_create_add(ir_block *self,
