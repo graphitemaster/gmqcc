@@ -982,31 +982,7 @@ ir_value* ir_block_create_binop(ir_block *self,
         return NULL;
     }
 
-    out = ir_value_out(self->owner, label, store_local, ot);
-    if (!out)
-        return NULL;
-
-    in = ir_instr_new(self, opcode);
-    if (!in) {
-        ir_value_delete(out);
-        return NULL;
-    }
-
-    if (!ir_instr_op(in, 0, out, true) ||
-        !ir_instr_op(in, 1, left, false) ||
-        !ir_instr_op(in, 2, right, false) )
-    {
-        goto on_error;
-    }
-
-    if (!ir_block_instr_add(self, in))
-        goto on_error;
-
-    return out;
-on_error:
-    ir_instr_delete(in);
-    ir_value_delete(out);
-    return NULL;
+    return ir_block_create_general_instr(self, label, opcode, left, right, ot);
 }
 
 ir_value* ir_block_create_general_instr(ir_block *self, const char *label,
