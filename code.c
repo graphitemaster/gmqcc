@@ -147,14 +147,14 @@ void code_test() {
 
 void code_write() {
     prog_header  code_header  = {0};
-    prog_section statements;
-    prog_section defs;
-    prog_section fields;
-    prog_section functions;
-    prog_section globals;
-    prog_section strings;
-    FILE        *fp        = NULL;
-    size_t       it        = 1;
+    prog_section statements   = {0};
+    prog_section defs         = {0};
+    prog_section fields       = {0};
+    prog_section functions    = {0};
+    prog_section globals      = {0};
+    prog_section strings      = {0};
+    FILE        *fp           = NULL;
+    size_t       it           = 1;
 
     /* see proposal.txt */
     if (opts_omit_nullcode) {

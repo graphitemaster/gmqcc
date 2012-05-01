@@ -161,6 +161,7 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
                 BUILD_ELEMENT(1, val2);
                 BUILD_ELEMENT(2, val3);
                 #undef  BUILD_ELEMENT
+                mem_d(name);
             } else {
                 /* TODO global not constant */
             }
@@ -261,6 +262,8 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             code_globals_add  (code_chars_elements);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
+            
+            util_debug("ASM", "added internal function %s to function table\n", name);
 
             /*
              * Sanatize the numerical constant used to select the
@@ -274,9 +277,81 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
                 printf("invalid internal function identifier, must be all numeric\n");
 
         } else {
-            printf("Found function %s\n", name);
-        }
+            /*
+             * The function isn't an internal one. Determine the name and
+             * amount of arguments the function accepts by searching for
+             * the `#` (pound sign).
+             */
+            int   args = 0;
+            char *find = strchr(name, '#');
+            char *peek = find;
+            
+            /*
+             * Code structures for filling after determining the correct
+             * information to add to the code write system.
+             */
+            prog_section_function function;
+            prog_section_def      def;
+            if (find) {
+                find ++;
 
+                /* skip whitespace */
+                if (*find == ' ' || *find == '\t')
+                    find++;
+
+                /*
+                 * If the input is larger than eight, it's considered
+                 * invalid and shouldn't be allowed.  The QuakeC VM only
+                 * allows a maximum of eight arguments.
+                 */
+                if (strlen(find) > 1 || *find == '9') {
+                    printf("invalid number of arguments, must be a valid number from 0-8\n");
+                    mem_d(copy);
+                    mem_d(name);
+                    return false;
+                }
+
+                if (*find != '0') {
+                    /*
+                     * if we made it this far we have a valid number for the
+                     * argument count, so fall through a switch statement and
+                     * do it.
+                     */
+                    switch (*find) {
+                        case '8': args++; case '7': args++;
+                        case '6': args++; case '5': args++;
+                        case '4': args++; case '3': args++;
+                        case '2': args++; case '1': args++;
+                    }
+                }
+            } else {
+                printf("missing number of argument count in function %s\n", name);
+            }
+            /* terminate name inspot */
+            *--peek='\0';
+
+            /*
+             * We got valid function structure information now. Lets add
+             * the function to the code writer function table.
+             */
+            function.entry      = code_statements_elements;
+            function.firstlocal = 0;
+            function.profile    = 0;
+            function.name       = code_chars_elements;
+            function.file       = 0;
+            function.nargs      = args;
+            def.type            = TYPE_FUNCTION;
+            def.offset          = code_globals_elements;
+            def.name            = code_chars_elements;
+            code_functions_add(function);
+            code_defs_add     (def);
+            code_globals_add  (code_chars_elements);
+            code_chars_put    (name, strlen(name));
+            code_chars_add    ('\0');
+            
+            util_debug("ASM", "added context function %s to function table\n", name);
+        }
+        
         mem_d(copy);
         mem_d(name);
         return true;
@@ -318,6 +393,6 @@ void asm_parse(FILE *fp) {
         asm_end("asm_parse_end\n");
     }
     #undef asm_end
-        asm_dumps();
+    asm_dumps();
     asm_clear();
 }

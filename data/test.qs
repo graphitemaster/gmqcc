@@ -86,3 +86,6 @@ FUNCTION: checkextension, $99
 VECTOR: dude1, -1,  +2, 38865.444
 FLOAT:  dude2, 1
 STRING: "hello world"
+
+FUNCTION: foo #1
+
