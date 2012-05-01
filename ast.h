@@ -36,6 +36,7 @@ typedef struct ast_function_s   ast_function;
 typedef struct ast_block_s      ast_block;
 typedef struct ast_binary_s     ast_binary;
 typedef struct ast_store_s      ast_store;
+typedef struct ast_entfield_s   ast_entfield;
 
 /* Node interface with common components
  */
@@ -136,6 +137,32 @@ void ast_binary_delete(ast_binary*);
 bool ast_block_codegen(ast_block*, ast_function*, ir_value**);
  */
 bool ast_binary_codegen(ast_binary*, ast_function*, ir_value**);
+
+/* Entity-field
+ *
+ * This must do 2 things:
+ * -) Provide a way to fetch an entity field value. (Rvalue)
+ * -) Provide a pointer to an entity field. (Lvalue)
+ * The problem:
+ * In original QC, there's only a STORE via pointer, but
+ * no LOAD via pointer.
+ * So we must know beforehand if we are going to read or assign
+ * the field.
+ * For this we will have to extend the codegen() functions with
+ * a flag saying whether or not we need an L or an R-value.
+ */
+struct ast_entfield_s
+{
+    ast_expression_common expression;
+    /* The entity can come from an expression of course. */
+    ast_expression *entity;
+    /* As can the field, it just must result in a value of TYPE_FIELD */
+    ast_expression *field;
+};
+ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field);
+void ast_entfield_delete(ast_entfield*);
+
+bool ast_entfield_codegen(ast_entfield*, ast_function*, ir_value**);
 
 /* Store
  *

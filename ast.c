@@ -132,6 +132,24 @@ void ast_binary_delete(ast_binary *self)
     mem_d(self);
 }
 
+ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field)
+{
+    ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_entfield_codegen);
+
+    self->entity = entity;
+    self->field  = field;
+
+    return self;
+}
+
+void ast_entfield_delete(ast_entfield *self)
+{
+    ast_unref(self->entity);
+    ast_unref(self->field);
+    mem_d(self);
+}
+
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *dest, ast_expression *source)
 {
@@ -313,6 +331,11 @@ bool ast_store_codegen(ast_store *self, ast_function *func, ir_value **out)
 }
 
 bool ast_binary_codegen(ast_binary *self, ast_function *func, ir_value **out)
+{
+    return false;
+}
+
+bool ast_entfield_codegen(ast_entfield *self, ast_function *func, ir_value **out)
 {
     return false;
 }
