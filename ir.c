@@ -972,8 +972,8 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_va
         case TYPE_FIELD:   op = INSTR_LOAD_FLD; break;
         case TYPE_ENTITY:  op = INSTR_LOAD_ENT; break;
 #if 0
-        case TYPE_POINTER: op = INSTR_LOAD_I; break;
-        case TYPE_INTEGER: op = INSTR_LOAD_I; break;
+        case TYPE_POINTER: op = INSTR_LOAD_I;   break;
+        case TYPE_INTEGER: op = INSTR_LOAD_I;   break;
 #endif
         default:
             return NULL;
