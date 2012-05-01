@@ -37,6 +37,7 @@ typedef struct ast_block_s      ast_block;
 typedef struct ast_binary_s     ast_binary;
 typedef struct ast_store_s      ast_store;
 typedef struct ast_entfield_s   ast_entfield;
+typedef struct ast_ifthen_s     ast_ifthen;
 
 /* Node interface with common components
  */
@@ -179,6 +180,30 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
 void ast_store_delete(ast_store*);
 
 bool ast_store_codegen(ast_store*, ast_function*, bool lvalue, ir_value**);
+
+/* If
+ *
+ * A general 'if then else' statement, either side can be NULL and will
+ * thus be omitted. It is an error for *both* cases to be NULL at once.
+ *
+ * During its 'codegen' it'll be changing the ast_function's block.
+ *
+ * An if is also an "expression". Its codegen will put NULL into the
+ * output field though. For ternary expressions an ast_ternary will be
+ * added.
+ */
+struct ast_ifthen_s
+{
+    ast_expression_common expression;
+    ast_expression *cond;
+    /* It's all just 'expressions', since an ast_block is one too. */
+    ast_expression *on_true;
+    ast_expression *on_false;
+};
+ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
+void ast_ifthen_delete(ast_ifthen*);
+
+bool ast_ifthen_codegen(ast_ifthen*, ast_function*, bool lvalue, ir_value**);
 
 /* Blocks
  *

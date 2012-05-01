@@ -153,6 +153,31 @@ void ast_entfield_delete(ast_entfield *self)
     mem_d(self);
 }
 
+ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+{
+    ast_instantiate(ast_ifthen, ctx, ast_ifthen_delete);
+    if (!ontrue && !onfalse) {
+        /* because it is invalid */
+        mem_d(self);
+        return NULL;
+    }
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_ifthen_codegen);
+
+    self->cond     = cond;
+    self->on_true  = ontrue;
+    self->on_false = onfalse;
+
+    return self;
+}
+
+void ast_ifthen_delete(ast_ifthen *self)
+{
+    ast_unref(self->cond);
+    ast_unref(self->on_true);
+    ast_unref(self->on_false);
+    mem_d(self);
+}
+
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *dest, ast_expression *source)
 {
@@ -341,5 +366,11 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
 
 bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, ir_value **out)
 {
+    return false;
+}
+
+bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    if (out) *out = NULL;
     return false;
 }
