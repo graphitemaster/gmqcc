@@ -846,7 +846,7 @@ ir_instr* ir_block_create_phi(ir_block *self, const char *label, int ot)
     in = ir_instr_new(self, VINSTR_PHI);
     if (!in)
         return NULL;
-    out = ir_value_out(self->owner, label, store_local, ot);
+    out = ir_value_out(self->owner, label, store_value, ot);
     if (!out) {
         ir_instr_delete(in);
         return NULL;
