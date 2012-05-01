@@ -894,9 +894,6 @@ ir_value* ir_block_create_binop(ir_block *self,
                                 const char *label, int opcode,
                                 ir_value *left, ir_value *right)
 {
-    ir_value *out = NULL;
-    ir_instr *in  = NULL;
-
     int ot = TYPE_VOID;
     switch (opcode) {
         case INSTR_ADD_F:
