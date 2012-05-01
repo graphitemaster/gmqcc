@@ -964,6 +964,10 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_va
     if (ent->vtype != TYPE_ENTITY)
         return NULL;
 
+    /* at some point we could redirect for TYPE_POINTER... but that could lead to carelessness */
+    if (field->vtype != TYPE_FIELD)
+        return NULL;
+
     switch (outype)
     {
         case TYPE_FLOAT:   op = INSTR_LOAD_F;   break;
