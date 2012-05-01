@@ -67,6 +67,7 @@ typedef struct
  */
 typedef bool ast_expression_codegen(ast_expression*,
                                     ast_function*,
+                                    bool lvalue,
                                     ir_value**);
 typedef struct
 {
@@ -113,7 +114,7 @@ void ast_value_delete(ast_value*);
 
 bool ast_value_set_name(ast_value*, const char *name);
 
-bool ast_value_codegen(ast_value*, ast_function*, ir_value**);
+bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
 
 /* Binary
  *
@@ -133,10 +134,7 @@ ast_binary* ast_binary_new(lex_ctx    ctx,
                            ast_expression *right);
 void ast_binary_delete(ast_binary*);
 
-/* hmm, seperate functions?
-bool ast_block_codegen(ast_block*, ast_function*, ir_value**);
- */
-bool ast_binary_codegen(ast_binary*, ast_function*, ir_value**);
+bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
 
 /* Entity-field
  *
@@ -162,7 +160,7 @@ struct ast_entfield_s
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field);
 void ast_entfield_delete(ast_entfield*);
 
-bool ast_entfield_codegen(ast_entfield*, ast_function*, ir_value**);
+bool ast_entfield_codegen(ast_entfield*, ast_function*, bool lvalue, ir_value**);
 
 /* Store
  *
@@ -180,7 +178,7 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *d, ast_expression *s);
 void ast_store_delete(ast_store*);
 
-bool ast_store_codegen(ast_store*, ast_function*, ir_value**);
+bool ast_store_codegen(ast_store*, ast_function*, bool lvalue, ir_value**);
 
 /* Blocks
  *
@@ -198,7 +196,7 @@ void ast_block_delete(ast_block*);
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
 
-bool ast_block_codegen(ast_block*, ast_function*, ir_value**);
+bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
 
 /* Function
  *

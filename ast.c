@@ -249,7 +249,7 @@ void ast_function_delete(ast_function *self)
 /* AST codegen aprt
  */
 
-bool ast_value_codegen(ast_value *self, ast_function *func, ir_value **out)
+bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out)
 {
     /* NOTE: This is the codegen for a variable used in an expression.
      * It is not the codegen to generate the value. For this purpose,
@@ -323,22 +323,22 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     return false;
 }
 
-bool ast_block_codegen(ast_block *self, ast_function *func, ir_value **out)
+bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_value **out)
 {
     return false;
 }
 
-bool ast_store_codegen(ast_store *self, ast_function *func, ir_value **out)
+bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_value **out)
 {
     return false;
 }
 
-bool ast_binary_codegen(ast_binary *self, ast_function *func, ir_value **out)
+bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_value **out)
 {
     return false;
 }
 
-bool ast_entfield_codegen(ast_entfield *self, ast_function *func, ir_value **out)
+bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, ir_value **out)
 {
     return false;
 }
