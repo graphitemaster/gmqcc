@@ -157,6 +157,8 @@ bool GMQCC_WARN ir_block_create_storep(ir_block*, ir_value *target, ir_value *wh
 /* field must be of TYPE_FIELD */
 ir_value* ir_block_create_load_from_ent(ir_block*, const char *label, ir_value *ent, ir_value *field, int outype);
 
+ir_value* ir_block_create_fieldaddress(ir_block*, const char *label, ir_value *entity, ir_value *field);
+
 ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_sub(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_mul(ir_block*, const char *label, ir_value *l, ir_value *r);
