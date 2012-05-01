@@ -608,6 +608,9 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
         case TYPE_STRING:
             op = INSTR_STORE_S;
             break;
+        case TYPE_FIELD:
+            op = INSTR_STORE_FLD;
+            break;
 #if 0
         case TYPE_INTEGER:
             if (what->vtype == TYPE_INTEGER)
@@ -634,16 +637,14 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
 {
     int op = 0;
     int vtype;
-    if (target->vtype == TYPE_VARIANT)
-        vtype = what->vtype;
-    else
-        vtype = target->vtype;
 
-    if (vtype != what->vtype)
-    {
-        /* Cannot implicitly convert when storing through a pointer */
+    if (target->vtype != TYPE_POINTER)
         return false;
-    }
+
+    /* storing using pointer - target is a pointer, type must be
+     * inferred from source
+     */
+    vtype = what->vtype;
 
     switch (vtype) {
         case TYPE_FLOAT:
@@ -657,6 +658,9 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
             break;
         case TYPE_STRING:
             op = INSTR_STOREP_S;
+            break;
+        case TYPE_FIELD:
+            op = INSTR_STOREP_FLD;
             break;
 #if 0
         case TYPE_INTEGER:
