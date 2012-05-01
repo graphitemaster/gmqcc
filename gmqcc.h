@@ -369,13 +369,13 @@ typedef struct {
     } o1;
     /* operand 2 */
     union {
-        int16_t  s2; /* signed   */
-        uint16_t u2; /* unsigned */
+        int16_t  s1; /* signed   */
+        uint16_t u1; /* unsigned */
     } o2;
     /* operand 3 */
     union {
-        int16_t  s3; /* signed   */
-        uint16_t u3; /* unsigned */
+        int16_t  s1; /* signed   */
+        uint16_t u1; /* unsigned */
     } o3;
 
     /*
