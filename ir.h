@@ -83,6 +83,8 @@ MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life);
 bool ir_value_life_merge(ir_value*, size_t);
 /* check if a value lives at a specific point */
 bool ir_value_lives(ir_value*, size_t);
+/* check if the life-range of 2 values overlaps */
+bool ir_values_overlap(ir_value*, ir_value*);
 
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));

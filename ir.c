@@ -558,6 +558,60 @@ bool ir_value_life_merge(ir_value *self, size_t s)
     return ir_value_life_insert(self, i, new_entry);
 }
 
+bool ir_values_overlap(ir_value *a, ir_value *b)
+{
+    /* For any life entry in A see if it overlaps with
+     * any life entry in B.
+     * Note that the life entries are orderes, so we can make a
+     * more efficient algorithm there than naively translating the
+     * statement above.
+     */
+
+    ir_life_entry_t *la, *lb, *enda, *endb;
+
+    /* first of all, if either has no life range, they cannot clash */
+    if (!a->life_count || !b->life_count)
+        return false;
+
+    la = a->life;
+    lb = b->life;
+    enda = la + a->life_count;
+    endb = lb + b->life_count;
+    while (true)
+    {
+        /* check if the entries overlap, for that,
+         * both must start before the other one ends.
+         */
+        if (la->start <= lb->end &&
+            lb->start <= la->end)
+        {
+            return true;
+        }
+
+        /* entries are ordered
+         * one entry is earlier than the other
+         * that earlier entry will be moved forward
+         */
+        if (la->end < lb->end)
+        {
+            /* order: A B, move A forward
+             * check if we hit the end with A
+             */
+            if (++la == enda)
+                break;
+        }
+        else if (lb->end < la->end)
+        {
+            /* order: B A, move B forward
+             * check if we hit the end with B
+             */
+            if (++lb == endb)
+                break;
+        }
+    }
+    return false;
+}
+
 /***********************************************************************
  *IR main operations
  */
