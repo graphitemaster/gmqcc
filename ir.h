@@ -168,7 +168,7 @@ bool GMQCC_WARN ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
 bool GMQCC_WARN ir_block_create_return(ir_block*, ir_value *opt_value);
 
 bool GMQCC_WARN ir_block_create_if(ir_block*, ir_value *cond,
-                             ir_block *ontrue, ir_block *onfalse);
+                                   ir_block *ontrue, ir_block *onfalse);
 /* A 'goto' is an actual 'goto' coded in QC, whereas
  * a 'jump' is a virtual construct which simply names the
  * next block to go to.
