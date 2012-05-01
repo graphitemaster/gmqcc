@@ -150,6 +150,7 @@ ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
 bool GMQCC_WARN ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
 bool GMQCC_WARN ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
+bool GMQCC_WARN ir_block_create_storep(ir_block*, ir_value *target, ir_value *what);
 
 ir_value* ir_block_create_add(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_value* ir_block_create_sub(ir_block*, const char *label, ir_value *l, ir_value *r);

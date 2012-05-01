@@ -623,6 +623,56 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
             op = INSTR_STORE_ENT;
 #endif
             break;
+        default:
+            /* Unknown type */
+            return false;
+    }
+    return ir_block_create_store_op(self, op, target, what);
+}
+
+bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
+{
+    int op = 0;
+    int vtype;
+    if (target->vtype == TYPE_VARIANT)
+        vtype = what->vtype;
+    else
+        vtype = target->vtype;
+
+    if (vtype != what->vtype)
+    {
+        /* Cannot implicitly convert when storing through a pointer */
+        return false;
+    }
+
+    switch (vtype) {
+        case TYPE_FLOAT:
+            op = INSTR_STOREP_F;
+            break;
+        case TYPE_VECTOR:
+            op = INSTR_STOREP_V;
+            break;
+        case TYPE_ENTITY:
+            op = INSTR_STOREP_ENT;
+            break;
+        case TYPE_STRING:
+            op = INSTR_STOREP_S;
+            break;
+#if 0
+        case TYPE_INTEGER:
+            op = INSTR_STOREP_I;
+            break;
+#endif
+        case TYPE_POINTER:
+#if 0
+            op = INSTR_STOREP_I;
+#else
+            op = INSTR_STOREP_ENT;
+#endif
+            break;
+        default:
+            /* Unknown type */
+            return false;
     }
     return ir_block_create_store_op(self, op, target, what);
 }
