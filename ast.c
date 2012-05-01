@@ -330,6 +330,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
 
 bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_value **out)
 {
+    /* NOTE: remember: destination codegen needs to have lvalue=true */
     return false;
 }
 
