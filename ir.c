@@ -1032,6 +1032,7 @@ ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_val
 
 ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_value *ent, ir_value *field, int outype)
 {
+    int op;
     if (ent->vtype != TYPE_ENTITY)
         return NULL;
 
