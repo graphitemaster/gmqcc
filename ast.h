@@ -38,6 +38,7 @@ typedef struct ast_binary_s     ast_binary;
 typedef struct ast_store_s      ast_store;
 typedef struct ast_entfield_s   ast_entfield;
 typedef struct ast_ifthen_s     ast_ifthen;
+typedef struct ast_ternary_s    ast_ternary;
 
 /* Node interface with common components
  */
@@ -204,6 +205,36 @@ ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *on
 void ast_ifthen_delete(ast_ifthen*);
 
 bool ast_ifthen_codegen(ast_ifthen*, ast_function*, bool lvalue, ir_value**);
+
+/* Ternary expressions...
+ *
+ * Contrary to 'if-then-else' nodes, ternary expressions actually
+ * return a value, otherwise they behave the very same way.
+ * The difference in 'codegen' is that it'll return the value of
+ * a PHI node.
+ *
+ * The other difference is that in an ast_ternary, NEITHER side
+ * must be NULL, there's ALWAYS an else branch.
+ *
+ * This is the only ast_node beside ast_value which contains
+ * an ir_value. Theoretically we don't need to remember it though.
+ */
+struct ast_ternary_s
+{
+    ast_expression_common expression;
+    ast_expression *cond;
+    /* It's all just 'expressions', since an ast_block is one too. */
+    ast_expression *on_true;
+    ast_expression *on_false;
+    /* After a ternary expression we find ourselves in a new IR block
+     * and start with a PHI node */
+    ir_value       *phi_out;
+};
+ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
+void ast_ternary_delete(ast_ternary*);
+
+bool ast_ternary_codegen(ast_ternary*, ast_function*, bool lvalue, ir_value**);
+
 
 /* Blocks
  *

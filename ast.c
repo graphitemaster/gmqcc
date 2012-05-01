@@ -178,6 +178,32 @@ void ast_ifthen_delete(ast_ifthen *self)
     mem_d(self);
 }
 
+ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+{
+    ast_instantiate(ast_ternary, ctx, ast_ternary_delete);
+    /* This time NEITHER must be NULL */
+    if (!ontrue || !onfalse) {
+        mem_d(self);
+        return NULL;
+    }
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_ternary_codegen);
+
+    self->cond     = cond;
+    self->on_true  = ontrue;
+    self->on_false = onfalse;
+    self->phi_out  = NULL;
+
+    return self;
+}
+
+void ast_ternary_delete(ast_ternary *self)
+{
+    ast_unref(self->cond);
+    ast_unref(self->on_true);
+    ast_unref(self->on_false);
+    mem_d(self);
+}
+
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *dest, ast_expression *source)
 {
@@ -372,5 +398,19 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)
 {
     if (out) *out = NULL;
+    return false;
+}
+
+bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    /* In theory it shouldn't be possible to pass through a node twice, but
+     * in case we add any kind of optimization pass for the AST itself, it
+     * may still happen, thus we remember a created ir_value and simply return one
+     * if it already exists.
+     */
+    if (self->phi_out) {
+        *out = self->phi_out;
+        return true;
+    }
     return false;
 }
