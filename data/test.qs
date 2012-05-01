@@ -84,7 +84,10 @@ FUNCTION: checkextension, $99
 
 ; constants test
 VECTOR: dude1, -1,  +2, 38865.444
+FLOAT:  dude2, 1
+STRING: "hello world"
+
 FUNCTION: foo #8
 	MUL_F dude1, dude1, dude1
-	CALL1 print, dude1
+	DONE
 
