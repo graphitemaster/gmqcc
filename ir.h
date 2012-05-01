@@ -159,6 +159,9 @@ ir_value* ir_block_create_load_from_ent(ir_block*, const char *label, ir_value *
 
 ir_value* ir_block_create_fieldaddress(ir_block*, const char *label, ir_value *entity, ir_value *field);
 
+/* This is to create an instruction of the form
+ * <outtype>%label := opcode a, b
+ */
 ir_value* ir_block_create_general_instr(ir_block *self, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype);
 
