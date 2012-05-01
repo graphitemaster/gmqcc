@@ -29,6 +29,9 @@
 
 #define ast_instantiate(T, ctx, destroyfn)                          \
     T* self = (T*)mem_a(sizeof(T));                                 \
+    if (!self) {                                                    \
+        return NULL;                                                \
+    }                                                               \
     ast_node_init((ast_node*)self, ctx);                            \
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
