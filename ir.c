@@ -950,8 +950,59 @@ ir_value* ir_block_create_binop(ir_block *self,
 
     return out;
 on_error:
-    ir_value_delete(out);
     ir_instr_delete(in);
+    ir_value_delete(out);
+    return NULL;
+}
+
+ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_value *ent, ir_value *field, int outype)
+{
+    ir_instr *instr;
+    ir_value *out;
+    int       op;
+
+    if (ent->vtype != TYPE_ENTITY)
+        return NULL;
+
+    switch (outype)
+    {
+        case TYPE_FLOAT:   op = INSTR_LOAD_F;   break;
+        case TYPE_VECTOR:  op = INSTR_LOAD_V;   break;
+        case TYPE_STRING:  op = INSTR_LOAD_S;   break;
+        case TYPE_FIELD:   op = INSTR_LOAD_FLD; break;
+        case TYPE_ENTITY:  op = INSTR_LOAD_ENT; break;
+#if 0
+        case TYPE_POINTER: op = INSTR_LOAD_I; break;
+        case TYPE_INTEGER: op = INSTR_LOAD_I; break;
+#endif
+        default:
+            return NULL;
+    }
+
+    out = ir_value_out(self->owner, label, store_local, outype);
+    if (!out)
+        return NULL;
+
+    instr = ir_instr_new(self, op);
+    if (!instr) {
+        ir_value_delete(out);
+        return NULL;
+    }
+
+    if (!ir_instr_op(instr, 0, out, true) ||
+        !ir_instr_op(instr, 0, ent, false) ||
+        !ir_instr_op(instr, 0, field, false))
+    {
+        goto on_error;
+    }
+
+    if (!ir_block_instr_add(self, instr))
+        goto on_error;
+
+    return out;
+on_error:
+    ir_instr_delete(instr);
+    ir_value_delete(out);
     return NULL;
 }
 
