@@ -297,7 +297,10 @@ void ast_function_delete(ast_function *self)
 }
 
 /*********************************************************************/
-/* AST codegen aprt
+/* AST codegen part
+ * by convention you must never pass NULL to the 'ir_value **out'
+ * parameter. If you really don't care about the output, pass a dummy.
+ * But I can't imagine a pituation where the output is truly unnecessary.
  */
 
 bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out)
@@ -353,6 +356,54 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
                  * need a pointer pointing to a function rather.
                  */
                 goto error;
+            default:
+                printf("TODO: global constant type %i\n", self->vtype);
+                break;
+        }
+    }
+
+    /* link us to the ir_value */
+    self->ir_v = v;
+    return true;
+
+error: /* clean up */
+    ir_value_delete(v);
+    return false;
+}
+
+bool ast_local_codegen(ast_value *self, ir_function *func)
+{
+    ir_value *v = NULL;
+    if (self->isconst && self->vtype == TYPE_FUNCTION)
+    {
+        /* Do we allow local functions? I think not...
+         * this is NOT a function pointer atm.
+         */
+        return false;
+    }
+
+    v = ir_function_create_local(func, self->name, self->vtype);
+    if (!v)
+        return false;
+
+    /* A constant local... hmmm...
+     * I suppose the IR will have to deal with this
+     */
+    if (self->isconst) {
+        switch (self->vtype)
+        {
+            case TYPE_FLOAT:
+                if (!ir_value_set_float(v, self->constval.vfloat))
+                    goto error;
+                break;
+            case TYPE_VECTOR:
+                if (!ir_value_set_vector(v, self->constval.vvec))
+                    goto error;
+                break;
+            case TYPE_STRING:
+                if (!ir_value_set_string(v, self->constval.vstring))
+                    goto error;
+                break;
             default:
                 printf("TODO: global constant type %i\n", self->vtype);
                 break;
