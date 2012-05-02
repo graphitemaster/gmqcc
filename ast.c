@@ -446,7 +446,37 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
 bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    return false;
+    size_t i;
+
+    /* We don't use this
+     * Note: an ast-representation using the comma-operator
+     * of the form: (a, b, c) = x should not assign to c...
+     */
+    (void)lvalue;
+
+    /* output is NULL at first, we'll have each expression
+     * assign to out output, thus, a comma-operator represention
+     * using an ast_block will return the last generated value,
+     * so: (b, c) + a  executed both b and c, and returns c,
+     * which is then added to a.
+     */
+    *out = NULL;
+
+    /* generate locals */
+    for (i = 0; i < self->locals_count; ++i)
+    {
+        if (!ast_local_codegen(self->locals[i], func->ir_func))
+            return false;
+    }
+
+    for (i = 0; i < self->exprs_count; ++i)
+    {
+        ast_expression_codegen *gen = self->exprs[i]->expression.codegen;
+        if (!(*gen)(self->exprs[i], func, false, out))
+            return false;
+    }
+
+    return true;
 }
 
 bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_value **out)
