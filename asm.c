@@ -161,6 +161,7 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
                 BUILD_ELEMENT(1, val2);
                 BUILD_ELEMENT(2, val3);
                 #undef  BUILD_ELEMENT
+                mem_d(name);
             } else {
                 /* TODO global not constant */
             }
@@ -189,7 +190,7 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
  * internal engine function selection.
  */
 static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state *state) {
-    if (*state == ASM_FUNCTION && (strstr(skip, "FUNCTION:") == &skip[0]))
+    if (*state == ASM_FUNCTION)
         return false;
 
     if (strstr(skip, "FUNCTION:") == &skip[0]) {
@@ -249,6 +250,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              */
             function.entry      = -atoi(find);
             function.firstlocal = 0;
+            function.locals     = 0;
             function.profile    = 0;
             function.name       = code_chars_elements;
             function.file       = 0;
@@ -256,11 +258,13 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             def.type            = TYPE_FUNCTION;
             def.offset          = code_globals_elements;
             def.name            = code_chars_elements;
+            memset(function.argsize, 0, sizeof(function.argsize));
             code_functions_add(function);
             code_defs_add     (def);
-            code_globals_add  (code_chars_elements);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
+            
+            util_debug("ASM", "added internal function %s to function table\n", name);
 
             /*
              * Sanatize the numerical constant used to select the
@@ -269,19 +273,244 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              * produce a valid constant that would lead to runtime problems.
              */
             if (util_strdigit(find))
-                printf("found internal function %s, -%d\n", name, atoi(find));
+                util_debug("ASM", "found internal function %s, -%d\n", name, atoi(find));
             else
                 printf("invalid internal function identifier, must be all numeric\n");
 
         } else {
-            printf("Found function %s\n", name);
-        }
+            /*
+             * The function isn't an internal one. Determine the name and
+             * amount of arguments the function accepts by searching for
+             * the `#` (pound sign).
+             */
+            int   args = 0;
+            int   size = 0;
+            char *find = strchr(name, '#');
+            char *peek = find;
+            
+            /*
+             * Code structures for filling after determining the correct
+             * information to add to the code write system.
+             */
+            prog_section_function function;
+            prog_section_def      def;
+            if (find) {
+                find ++;
 
+                /* skip whitespace */
+                if (*find == ' ' || *find == '\t')
+                    find++;
+
+                /*
+                 * If the input is larger than eight, it's considered
+                 * invalid and shouldn't be allowed.  The QuakeC VM only
+                 * allows a maximum of eight arguments.
+                 */
+                if (*find == '9') {
+                    printf("invalid number of arguments, must be a valid number from 0-8\n");
+                    mem_d(copy);
+                    mem_d(name);
+                    return false;
+                }
+
+                if (*find != '0') {
+                    /*
+                     * if we made it this far we have a valid number for the
+                     * argument count, so fall through a switch statement and
+                     * do it.
+                     */
+                    switch (*find) {
+                        case '8': args++; case '7': args++;
+                        case '6': args++; case '5': args++;
+                        case '4': args++; case '3': args++;
+                        case '2': args++; case '1': args++;
+                    }
+                }
+                /*
+                 * We need to parse the argument size now by determining
+                 * the argument identifer list used after the amount of
+                 * arguments.
+                 */
+                memset(function.argsize, 0, sizeof(function.argsize));
+                find ++; /* skip the number */
+                while (*find == ' ' || *find == '\t') find++;
+                while (size < args) {
+                    switch (*find) {
+                        case 'V': case 'v': function.argsize[size]=3; break;
+                        case 'S': case 's':
+                        case 'F': case 'f':
+                        case 'E': case 'e': function.argsize[size]=1; break;
+                        case '\0':
+                            printf("missing argument identifer, expected %d\n", args);
+                            return false;
+                        default:
+                            printf("error invalid function argument identifier\n");
+                            return false;
+                    }
+                    size++,find++;
+                }
+                while (*find == ' ' || *find == '\t') find++;
+                if (*find != '\0') {
+                    printf("too many function argument identifers expected %d\n", args);
+                    return false;
+                }
+            } else {
+                printf("missing number of argument count in function %s\n", name);
+                return false;
+            }
+
+            /*
+             * Now we need to strip the name apart into it's exact size
+             * by working in the peek buffer till we hit the name again.
+             */
+            if (*peek == '#') {
+                peek --; /* '#'    */
+                peek --; /* number */
+            }
+            while (*peek == ' ' || *peek == '\t') peek--;
+
+            /*
+             * We're guranteed to be exactly where we need to be in the
+             * peek buffer to null terminate and get our name from name
+             * without any garbage before or after it.
+             */
+            *++peek='\0';
+
+            /*
+             * We got valid function structure information now. Lets add
+             * the function to the code writer function table.
+             */
+            function.entry      = code_statements_elements-1;
+            function.firstlocal = 0;
+            function.locals     = 0;
+            function.profile    = 0;
+            function.name       = code_chars_elements;
+            function.file       = 0;
+            function.nargs      = args;
+            def.type            = TYPE_FUNCTION;
+            def.offset          = code_globals_elements;
+            def.name            = code_chars_elements;
+            code_functions_add(function);
+            code_globals_add(code_statements_elements);
+            code_chars_put    (name, strlen(name));
+            code_chars_add    ('\0');
+
+            /* update assembly state */
+            
+            *state = ASM_FUNCTION;
+            util_debug("ASM", "added context function %s to function table\n", name);
+        }
+        
         mem_d(copy);
         mem_d(name);
         return true;
     }
     return false;
+}
+
+static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state *state) {
+    /*
+     * This parses a valid statement in assembly and adds it to the code
+     * table to be wrote.  This needs to handle correct checking of all
+     * statements to ensure the correct amount of operands are passed to
+     * the menomic.  This must also check for valid function calls (ensure
+     * the names selected exist in the program scope) and ensure the correct
+     * CALL* is used (depending on the amount of arguments the function
+     * is expected to take)
+     */
+    char                  *c = (char*)skip;
+    prog_section_statement s;
+    size_t                 i = 0;
+
+    /*
+     * statements are only allowed when inside a function body
+     * otherwise the assembly is invalid.
+     */
+    if (*state != ASM_FUNCTION)
+        return false;
+
+    /*
+     * Skip any possible whitespace, it's not wanted we're searching
+     * for an instruction.  TODO: recrusive decent parser skip on line
+     * entry instead of pre-op.
+     */
+    while (*skip == ' ' || *skip == '\t')
+        skip++;
+    
+    for (; i < sizeof(asm_instr)/sizeof(*asm_instr); i++) {
+        /*
+         * Iterate all possible instructions and check if the selected
+         * instructure in the input stream `skip` is actually a valid
+         * instruction.
+         */
+        if (!strncmp(skip, asm_instr[i].m, asm_instr[i].l)) {
+            printf("found statement %s\n", asm_instr[i].m);
+            /*
+             * Parse the operands for `i` (the instruction). The order
+             * of asm_instr is in the order of the menomic encoding so
+             * `i` == menomic encoding.
+             */
+            s.opcode = i;
+            switch (asm_instr[i].o) {
+                /*
+                 * Each instruction can have from 0-3 operands; and can
+                 * be used with less or more operands depending on it's
+                 * selected use.
+                 * 
+                 * DONE for example can use either 0 operands, or 1 (to
+                 * emulate the effect of RETURN)
+                 *
+                 * TODO: parse operands correctly figure out what it is
+                 * that the assembly is trying to do, i.e string table
+                 * lookup, function calls etc.
+                 *
+                 * This needs to have a fall state, we start from the
+                 * end of the string and work backwards.
+                 */
+                #define OPFILL(X)                                      \
+                    do {                                               \
+                        size_t w = 0;                                  \
+                        if (!(c = strrchr(c, ','))) {                  \
+                            printf("error, expected more operands\n"); \
+                            return false;                              \
+                        }                                              \
+                        c++;                                           \
+                        w++;                                           \
+                        while (*c == ' ' || *c == '\t') {              \
+                            c++;                                       \
+                            w++;                                       \
+                        }                                              \
+                        X  = (const char*)c;                           \
+                        c -= w;                                        \
+                       *c  = '\0';                                     \
+                        c  = (char*)skip;                              \
+                    } while (0)
+                    
+                case 3: {
+                    const char *data; OPFILL(data);
+                    printf("OP3: %s\n", data);
+                    s.o3.s1 = 0;
+                }
+                case 2: {
+                    const char *data; OPFILL(data);
+                    printf("OP2: %s\n", data);
+                    s.o2.s1 = 0;
+                }
+                case 1: {
+                    while (*c == ' ' || *c == '\t') c++;
+                    c += asm_instr[i].l;
+                    while (*c == ' ' || *c == '\t') c++;
+                    
+                    printf("OP1: %s\n", c);
+                    s.o1.s1 = 0;
+                }
+                #undef OPFILL
+            }
+            /* add the statement now */
+            code_statements_add(s);
+        }
+    }
+    return true;
 }
 
 void asm_parse(FILE *fp) {
@@ -303,21 +532,15 @@ void asm_parse(FILE *fp) {
         char *copy = util_strsws(data); /* skip   whitespace */
               skip = util_strrnl(copy); /* delete newline    */
 
-        /* parse type */
-        if(asm_parse_type(skip, line, &state)){ asm_end("asm_parse_type\n"); }
-        /* parse func */
-        if(asm_parse_func(skip, line, &state)){ asm_end("asm_parse_func\n"); }
+        /* TODO: statement END check */
+        if (state == ASM_FUNCTION)
+            state =  ASM_NULL;
 
-        /* statement closure */
-        if (state == ASM_FUNCTION && (
-            (strstr(skip, "DONE")   == &skip[0])||
-            (strstr(skip, "RETURN") == &skip[0]))) state = ASM_NULL;
-
-        /* TODO: everything */
-        (void)state;
-        asm_end("asm_parse_end\n");
+        if (asm_parse_type(skip, line, &state)){ asm_end("asm_parse_type\n"); }
+        if (asm_parse_func(skip, line, &state)){ asm_end("asm_parse_func\n"); }
+        if (asm_parse_stmt(skip, line, &state)){ asm_end("asm_parse_stmt\n"); }
     }
     #undef asm_end
-        asm_dumps();
+    asm_dumps();
     asm_clear();
 }

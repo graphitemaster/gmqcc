@@ -318,7 +318,7 @@ int lex_token(lex_file *file) {
         #undef TEST_TYPE
         return LEX_IDENT;
     }
-    return ch;
+    return (ch != ' ') ? ch : lex_token(file);
 }
 
 void lex_reset(lex_file *file) {
