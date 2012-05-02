@@ -487,8 +487,32 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
 
 bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    /* NOTE: remember: destination codegen needs to have lvalue=true */
-    return false;
+    ast_expression_codegen *cgen;
+    ir_value *left, *right;
+
+    cgen = self->dest->expression.codegen;
+    /* lvalue! */
+    if (!(*cgen)((ast_expression*)(self->dest), func, true, &left))
+        return false;
+
+    cgen = self->source->expression.codegen;
+    /* rvalue! */
+    if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
+        return false;
+
+    if (!ir_block_create_store_op(func->curblock, self->op, left, right))
+        return false;
+
+    /* Theoretically, an assinment returns its left side as an
+     * lvalue, if we don't need an lvalue though, we return
+     * the right side as an rvalue, otherwise we have to
+     * somehow know whether or not we need to dereference the pointer
+     * on the left side - that is: OP_LOAD if it was an address.
+     * Also: in original QC we cannot OP_LOADP *anyway*.
+     */
+    *out = (lvalue ? left : right);
+
+    return true;
 }
 
 bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_value **out)
