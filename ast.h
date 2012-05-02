@@ -276,11 +276,24 @@ struct ast_function_s
     ir_function *ir_func;
     ir_block    *curblock;
 
+    size_t       labelcount;
+    /* in order for thread safety - for the optional
+     * channel abesed multithreading... keeping a buffer
+     * here to use in ast_function_label.
+     */
+    char         labelbuf[64];
+
     MEM_VECTOR_MAKE(ast_block*, blocks);
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */
 void ast_function_delete(ast_function*);
+/* TODO: for better readability in dumps, this should take some kind of
+ * value prefix...
+ * For "optimized" builds this can just keep returning "foo"...
+ * or whatever...
+ */
+const char* ast_function_label(ast_function*);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);
 
