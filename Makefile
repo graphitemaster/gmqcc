@@ -1,5 +1,5 @@
 CC     ?= clang
-CFLAGS += -Wall -I. -pedantic-errors -std=c90
+CFLAGS += -Wall -I. -pedantic-errors -std=c90 -Wno-attributes
 OBJ     = lex.o       \
           error.o     \
           parse.o     \
@@ -8,7 +8,7 @@ OBJ     = lex.o       \
           code.o      \
           asm.o       \
           ast.o       \
-          ir.o
+          ir.o        
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o
