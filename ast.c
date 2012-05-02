@@ -444,6 +444,12 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     return true;
 }
 
+/* Note, you will not see ast_block_codegen generate ir_blocks.
+ * To the AST and the IR, blocks are 2 different things.
+ * In the AST it represents a block of code, usually enclosed in
+ * curly braces {...}.
+ * While in the IR it represents a block in terms of control-flow.
+ */
 bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_value **out)
 {
     size_t i;
