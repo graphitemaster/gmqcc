@@ -309,7 +309,10 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * and the ast-user should take care of ast_global_codegen to be used
      * on all the globals.
      */
-    return false;
+    if (!self->ir_v)
+        return false;
+    *out = self->ir_v;
+    return true;
 }
 
 bool ast_global_codegen(ast_value *self, ir_builder *ir)
