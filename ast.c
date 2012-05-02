@@ -421,11 +421,19 @@ error: /* clean up */
 
 bool ast_function_codegen(ast_function *self, ir_builder *ir)
 {
+    ir_value *dummy;
+    size_t    i;
     if (!self->ir_func) {
         printf("ast_function's related ast_value was not generated yet\n");
         return false;
     }
-    return false;
+
+    for (i = 0; i < self->blocks_count; ++i) {
+        ast_expression_codegen *gen = self->blocks[i]->expression.codegen;
+        if (!(*gen)((ast_expression*)self->blocks[i], self, false, &dummy))
+            return false;
+    }
+    return true;
 }
 
 bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_value **out)
