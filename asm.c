@@ -284,6 +284,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              * the `#` (pound sign).
              */
             int   args = 0;
+            int   size = 0;
             char *find = strchr(name, '#');
             char *peek = find;
             
@@ -305,7 +306,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
                  * invalid and shouldn't be allowed.  The QuakeC VM only
                  * allows a maximum of eight arguments.
                  */
-                if (strlen(find) > 1 || *find == '9') {
+                if (*find == '9') {
                     printf("invalid number of arguments, must be a valid number from 0-8\n");
                     mem_d(copy);
                     mem_d(name);
@@ -325,8 +326,37 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
                         case '2': args++; case '1': args++;
                     }
                 }
+                /*
+                 * We need to parse the argument size now by determining
+                 * the argument identifer list used after the amount of
+                 * arguments.
+                 */
+                memset(function.argsize, 0, sizeof(function.argsize));
+                find ++; /* skip the number */
+                while (*find == ' ' || *find == '\t') find++;
+                while (size < args) {
+                    switch (*find) {
+                        case 'V': case 'v': function.argsize[size]=3; break;
+                        case 'S': case 's':
+                        case 'F': case 'f':
+                        case 'E': case 'e': function.argsize[size]=1; break;
+                        case '\0':
+                            printf("missing argument identifer, expected %d\n", args);
+                            return false;
+                        default:
+                            printf("error invalid function argument identifier\n");
+                            return false;
+                    }
+                    size++,find++;
+                }
+                while (*find == ' ' || *find == '\t') find++;
+                if (*find != '\0') {
+                    printf("too many function argument identifers expected %d\n", args);
+                    return false;
+                }
             } else {
                 printf("missing number of argument count in function %s\n", name);
+                return false;
             }
 
             /*
@@ -360,7 +390,6 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             def.type            = TYPE_FUNCTION;
             def.offset          = code_globals_elements;
             def.name            = code_chars_elements;
-            memset(function.argsize, 0, sizeof(function.argsize));
             code_functions_add(function);
             code_globals_add(code_statements_elements);
             code_chars_put    (name, strlen(name));

@@ -208,7 +208,7 @@ void code_write() {
     util_debug("GEN", "FUNCTIONS:\n");
     for (; it < code_functions_elements; it++) {
         size_t j = code_functions_data[it].entry;
-        util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize =%0X }\n",
+        util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize ={%d,%d,%d,%d,%d,%d,%d,%d} }\n",
             code_functions_data[it].entry,
             code_functions_data[it].firstlocal,
             code_functions_data[it].locals,
@@ -216,7 +216,15 @@ void code_write() {
             code_functions_data[it].name,
             code_functions_data[it].file,
             code_functions_data[it].nargs,
-            *((int32_t*)&code_functions_data[it].argsize)
+            code_functions_data[it].argsize[0],
+            code_functions_data[it].argsize[1],
+            code_functions_data[it].argsize[2],
+            code_functions_data[it].argsize[3],
+            code_functions_data[it].argsize[4],
+            code_functions_data[it].argsize[5],
+            code_functions_data[it].argsize[6],
+            code_functions_data[it].argsize[7]
+            
         );
         util_debug("GEN", "    NAME: %s\n", &code_chars_data[code_functions_data[it].name]);
         /* Internal functions have no code */
