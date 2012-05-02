@@ -224,7 +224,7 @@ void code_write() {
             code_functions_data[it].argsize[5],
             code_functions_data[it].argsize[6],
             code_functions_data[it].argsize[7]
-            
+
         );
         util_debug("GEN", "    NAME: %s\n", &code_chars_data[code_functions_data[it].name]);
         /* Internal functions have no code */

@@ -23,7 +23,7 @@ int main()
     ast_function   *fmain   = NULL;
     ast_block      *ba      = NULL;
     ast_value      *li      = NULL;
-    
+
     size_t i;
     lex_ctx ctx;
     ctx.file = NULL;

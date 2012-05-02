@@ -263,7 +263,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             code_defs_add     (def);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
-            
+
             util_debug("ASM", "added internal function %s to function table\n", name);
 
             /*
@@ -287,7 +287,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             int   size = 0;
             char *find = strchr(name, '#');
             char *peek = find;
-            
+
             /*
              * Code structures for filling after determining the correct
              * information to add to the code write system.
@@ -396,11 +396,11 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             code_chars_add    ('\0');
 
             /* update assembly state */
-            
+
             *state = ASM_FUNCTION;
             util_debug("ASM", "added context function %s to function table\n", name);
         }
-        
+
         mem_d(copy);
         mem_d(name);
         return true;
@@ -436,7 +436,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
      */
     while (*skip == ' ' || *skip == '\t')
         skip++;
-    
+
     for (; i < sizeof(asm_instr)/sizeof(*asm_instr); i++) {
         /*
          * Iterate all possible instructions and check if the selected
@@ -456,7 +456,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                  * Each instruction can have from 0-3 operands; and can
                  * be used with less or more operands depending on it's
                  * selected use.
-                 * 
+                 *
                  * DONE for example can use either 0 operands, or 1 (to
                  * emulate the effect of RETURN)
                  *
@@ -485,7 +485,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                        *c  = '\0';                                     \
                         c  = (char*)skip;                              \
                     } while (0)
-                    
+
                 case 3: {
                     const char *data; OPFILL(data);
                     printf("OP3: %s\n", data);
@@ -500,7 +500,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                     while (*c == ' ' || *c == '\t') c++;
                     c += asm_instr[i].l;
                     while (*c == ' ' || *c == '\t') c++;
-                    
+
                     printf("OP1: %s\n", c);
                     s.o1.s1 = 0;
                 }

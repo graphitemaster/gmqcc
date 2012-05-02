@@ -8,7 +8,7 @@ OBJ     = lex.o       \
           code.o      \
           asm.o       \
           ast.o       \
-          ir.o        
+          ir.o 
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o
