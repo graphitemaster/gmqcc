@@ -274,6 +274,7 @@ struct ast_function_s
     const char *name;
 
     ir_function *ir_func;
+    ir_block    *curblock;
 
     MEM_VECTOR_MAKE(ast_block*, blocks);
 };

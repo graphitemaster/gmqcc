@@ -267,6 +267,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     MEM_VECTOR_INIT(self, blocks);
 
     self->ir_func = NULL;
+    self->curblock = NULL;
 
     vtype->isconst = true;
     vtype->constval.vfunc = self;
@@ -421,12 +422,19 @@ error: /* clean up */
 
 bool ast_function_codegen(ast_function *self, ir_builder *ir)
 {
-    ir_value *dummy;
+    ir_function *irf;
+    ir_value    *dummy;
     size_t    i;
-    if (!self->ir_func) {
+
+    irf = self->ir_func;
+    if (!irf) {
         printf("ast_function's related ast_value was not generated yet\n");
         return false;
     }
+
+    self->curblock = ir_function_create_block(irf, "entry");
+    if (!self->curblock)
+        return false;
 
     for (i = 0; i < self->blocks_count; ++i) {
         ast_expression_codegen *gen = self->blocks[i]->expression.codegen;
