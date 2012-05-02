@@ -190,7 +190,7 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
  * internal engine function selection.
  */
 static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state *state) {
-    if (*state == ASM_FUNCTION && (strstr(skip, "FUNCTION:") == &skip[0]))
+    if (*state == ASM_FUNCTION)
         return false;
 
     if (strstr(skip, "FUNCTION:") == &skip[0]) {
@@ -272,7 +272,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              * produce a valid constant that would lead to runtime problems.
              */
             if (util_strdigit(find))
-                printf("found internal function %s, -%d\n", name, atoi(find));
+                util_debug("ASM", "found internal function %s, -%d\n", name, atoi(find));
             else
                 printf("invalid internal function identifier, must be all numeric\n");
 
@@ -371,9 +371,24 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
      * CALL* is used (depending on the amount of arguments the function
      * is expected to take)
      */
-    char                  *c = NULL;
+    char                  *c = (char*)skip;
     prog_section_statement s;
     size_t                 i = 0;
+
+    /*
+     * statements are only allowed when inside a function body
+     * otherwise the assembly is invalid.
+     */
+    if (*state != ASM_FUNCTION)
+        return false;
+
+    /*
+     * Skip any possible whitespace, it's not wanted we're searching
+     * for an instruction.  TODO: recrusive decent parser skip on line
+     * entry instead of pre-op.
+     */
+    while (*skip == ' ' || *skip == '\t')
+        skip++;
     
     for (; i < sizeof(asm_instr)/sizeof(*asm_instr); i++) {
         /*
@@ -381,7 +396,8 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
          * instructure in the input stream `skip` is actually a valid
          * instruction.
          */
-        if (strstr(skip, asm_instr[i].m) == &skip[0]) {
+        if (!strncmp(skip, asm_instr[i].m, asm_instr[i].l)) {
+            printf("found statement %s\n", asm_instr[i].m);
             /*
              * Parse the operands for `i` (the instruction). The order
              * of asm_instr is in the order of the menomic encoding so
@@ -396,13 +412,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                  * 
                  * DONE for example can use either 0 operands, or 1 (to
                  * emulate the effect of RETURN)
-                 */
-                default:
-                    skip += asm_instr[i].l+1;
-                    /* skip whitespace */
-                    while (*skip == ' ' || *skip == '\t')
-                        skip++;
-                /*
+                 *
                  * TODO: parse operands correctly figure out what it is
                  * that the assembly is trying to do, i.e string table
                  * lookup, function calls etc.
@@ -410,12 +420,44 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                  * This needs to have a fall state, we start from the
                  * end of the string and work backwards.
                  */
-                case '3':
+                #define OPFILL(X)                                      \
+                    do {                                               \
+                        size_t w = 0;                                  \
+                        if (!(c = strrchr(c, ','))) {                  \
+                            printf("error, expected more operands\n"); \
+                            return false;                              \
+                        }                                              \
+                        c++;                                           \
+                        w++;                                           \
+                        while (*c == ' ' || *c == '\t') {              \
+                            c++;                                       \
+                            w++;                                       \
+                        }                                              \
+                        X  = (const char*)c;                           \
+                        c -= w;                                        \
+                       *c  = '\0';                                     \
+                        c  = (char*)skip;                              \
+                    } while (0)
+                    
+                case 3: {
+                    const char *data; OPFILL(data);
+                    printf("OP3: %s\n", data);
                     s.o3.s1 = 0;
-                case '2':
+                }
+                case 2: {
+                    const char *data; OPFILL(data);
+                    printf("OP2: %s\n", data);
                     s.o2.s1 = 0;
-                case '1':
+                }
+                case 1: {
+                    while (*c == ' ' || *c == '\t') c++;
+                    c += asm_instr[i].l;
+                    while (*c == ' ' || *c == '\t') c++;
+                    
+                    printf("OP1: %s\n", c);
                     s.o1.s1 = 0;
+                }
+                #undef OPFILL
             }
             /* add the statement now */
             code_statements_add(s);
@@ -443,21 +485,9 @@ void asm_parse(FILE *fp) {
         char *copy = util_strsws(data); /* skip   whitespace */
               skip = util_strrnl(copy); /* delete newline    */
 
-        /* parse type */
-        if (asm_parse_type(skip, line, &state)) { asm_end("asm_parse_type\n"); }
-        /* parse func */
-        if (asm_parse_func(skip, line, &state)) { asm_end("asm_parse_func\n"); }
-        /* parse stmt */
-        if (asm_parse_stmt(skip, line, &state)) { asm_end("asm_parse_stmt\n"); }
-
-        /* statement closure */
-        if (state == ASM_FUNCTION && (
-            (strstr(skip, "DONE")   == &skip[0])||
-            (strstr(skip, "RETURN") == &skip[0]))) state = ASM_NULL;
-
-        /* TODO: everything */
-        (void)state;
-        asm_end("asm_parse_end\n");
+        if (asm_parse_type(skip, line, &state)){ asm_end("asm_parse_type\n"); }
+        if (asm_parse_func(skip, line, &state)){ asm_end("asm_parse_func\n"); }
+        if (asm_parse_stmt(skip, line, &state)){ asm_end("asm_parse_stmt\n"); }
     }
     #undef asm_end
     asm_dumps();

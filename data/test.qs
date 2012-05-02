@@ -88,6 +88,6 @@ FLOAT:  dude2, 1
 STRING: "hello world"
 
 FUNCTION: foo #8
-	MUL_F dude1, dude1, dude1
+	MUL_F arg1, arg2, arg3
 	DONE
 
