@@ -28,8 +28,7 @@ typedef struct {
 } prog_section;
 
 typedef struct {
-    uint16_t     version;      /* Program version (6)     */
-    uint16_t     flags;        /* see propsal.txt         */
+    uint32_t     version;      /* Program version (6)     */
     uint16_t     crc16;        /* What is this?           */
     uint16_t     skip;         /* see propsal.txt         */
 
@@ -146,44 +145,27 @@ void code_test() {
 }
 
 void code_write() {
-    prog_header  code_header  = {0};
-    prog_section statements   = {0};
-    prog_section defs         = {0};
-    prog_section fields       = {0};
-    prog_section functions    = {0};
-    prog_section globals      = {0};
-    prog_section strings      = {0};
+    prog_header  code_header;
     FILE        *fp           = NULL;
     size_t       it           = 1;
 
     /* see proposal.txt */
-    if (opts_omit_nullcode) {
-        code_header.skip   = 28;
-        code_header.flags  = 1;
-    }
-
-    statements.offset = sizeof(prog_header);
-    statements.length = code_statements_elements;
-    defs.offset       = code_header.statements.offset + sizeof(prog_section_statement) * code_statements_elements;
-    defs.length       = code_defs_elements;
-    fields.offset     = code_header.defs.offset       + sizeof(prog_section_def)       * code_defs_elements;
-    fields.length     = code_fields_elements;
-    functions.offset  = code_header.fields.offset     + sizeof(prog_section_field)     * code_fields_elements;
-    functions.length  = code_functions_elements;
-    globals.offset    = code_header.functions.offset  + sizeof(prog_section_function)  * code_functions_elements;
-    globals.length    = code_globals_elements;
-    strings.offset    = code_header.globals.offset    + sizeof(int)                    * code_globals_elements;
-    strings.length    = code_chars_elements;
-
-    code_header.version    = 6;
-    code_header.crc16      = 0; /* TODO: */
-    code_header.statements = statements;
-    code_header.defs       = defs;
-    code_header.fields     = fields;
-    code_header.functions  = functions;
-    code_header.globals    = globals;
-    code_header.strings    = strings;
-    code_header.entfield   = 0; /* TODO: */
+    if (opts_omit_nullcode) {}
+    code_header.statements.offset = sizeof(prog_header);
+    code_header.statements.length = code_statements_elements;
+    code_header.defs.offset       = code_header.statements.offset + (sizeof(prog_section_statement) * code_statements_elements);
+    code_header.defs.length       = code_defs_elements;
+    code_header.fields.offset     = code_header.defs.offset       + (sizeof(prog_section_def)       * code_defs_elements);
+    code_header.fields.length     = code_fields_elements;
+    code_header.functions.offset  = code_header.fields.offset     + (sizeof(prog_section_field)     * code_fields_elements);
+    code_header.functions.length  = code_functions_elements;
+    code_header.globals.offset    = code_header.functions.offset  + (sizeof(prog_section_function)  * code_functions_elements);
+    code_header.globals.length    = code_globals_elements;
+    code_header.strings.offset    = code_header.globals.offset    + (sizeof(int32_t)                * code_globals_elements);
+    code_header.strings.length    = code_chars_elements;
+    code_header.version           = 6;
+    code_header.crc16             = 0; /* TODO: */
+    code_header.entfield          = 0; /* TODO: */
 
     if (opts_darkplaces_stringtablebug) {
         util_debug("GEN", "Patching stringtable for -fdarkplaces-stringtablebug\n");
@@ -195,21 +177,21 @@ void code_write() {
     }
 
     /* ensure all data is in LE format */
-    util_endianswap(&code_header,          1,                        sizeof(prog_header));
-    util_endianswap (code_statements_data, code_statements_elements, sizeof(prog_section_statement));
-    util_endianswap (code_defs_data,       code_defs_elements,       sizeof(prog_section_def));
-    util_endianswap (code_fields_data,     code_fields_elements,     sizeof(prog_section_field));
-    util_endianswap (code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
-    util_endianswap (code_globals_data,    code_globals_elements,    sizeof(int));
+    util_endianswap(&code_header,          1,                       sizeof(prog_header));
+    util_endianswap(code_statements_data, code_statements_elements, sizeof(prog_section_statement));
+    util_endianswap(code_defs_data,       code_defs_elements,       sizeof(prog_section_def));
+    util_endianswap(code_fields_data,     code_fields_elements,     sizeof(prog_section_field));
+    util_endianswap(code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
+    util_endianswap(code_globals_data,    code_globals_elements,    sizeof(int32_t));
 
     fp = fopen("program.dat", "wb");
-    fwrite(&code_header,          1, sizeof(prog_header), fp);
-    fwrite (code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
-    fwrite (code_defs_data,       1, sizeof(prog_section_def)      *code_defs_elements,       fp);
-    fwrite (code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
-    fwrite (code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
-    fwrite (code_globals_data,    1, sizeof(int)                   *code_globals_elements,    fp);
-    fwrite (code_chars_data,      1, 1                             *code_chars_elements,      fp);
+    fwrite(&code_header,         1, sizeof(prog_header), fp);
+    fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
+    fwrite(code_defs_data,       1, sizeof(prog_section_def)      *code_defs_elements,       fp);
+    fwrite(code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
+    fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
+    fwrite(code_globals_data,    1, sizeof(int32_t)               *code_globals_elements,    fp);
+    fwrite(code_chars_data,      1, 1                             *code_chars_elements,      fp);
 
     util_debug("GEN","HEADER:\n");
     util_debug("GEN","    version:    = %d\n", code_header.version );

@@ -250,6 +250,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              */
             function.entry      = -atoi(find);
             function.firstlocal = 0;
+            function.locals     = 0;
             function.profile    = 0;
             function.name       = code_chars_elements;
             function.file       = 0;
@@ -257,9 +258,9 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             def.type            = TYPE_FUNCTION;
             def.offset          = code_globals_elements;
             def.name            = code_chars_elements;
+            memset(function.argsize, 0, sizeof(function.argsize));
             code_functions_add(function);
             code_defs_add     (def);
-            code_globals_add  (code_chars_elements);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
             
@@ -327,15 +328,31 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             } else {
                 printf("missing number of argument count in function %s\n", name);
             }
-            /* terminate name inspot */
-            *--peek='\0';
+
+            /*
+             * Now we need to strip the name apart into it's exact size
+             * by working in the peek buffer till we hit the name again.
+             */
+            if (*peek == '#') {
+                peek --; /* '#'    */
+                peek --; /* number */
+            }
+            while (*peek == ' ' || *peek == '\t') peek--;
+
+            /*
+             * We're guranteed to be exactly where we need to be in the
+             * peek buffer to null terminate and get our name from name
+             * without any garbage before or after it.
+             */
+            *++peek='\0';
 
             /*
              * We got valid function structure information now. Lets add
              * the function to the code writer function table.
              */
-            function.entry      = code_statements_elements;
+            function.entry      = code_statements_elements-1;
             function.firstlocal = 0;
+            function.locals     = 0;
             function.profile    = 0;
             function.name       = code_chars_elements;
             function.file       = 0;
@@ -343,13 +360,14 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             def.type            = TYPE_FUNCTION;
             def.offset          = code_globals_elements;
             def.name            = code_chars_elements;
+            memset(function.argsize, 0, sizeof(function.argsize));
             code_functions_add(function);
-            code_defs_add     (def);
-            code_globals_add  (code_chars_elements);
+            code_globals_add(code_statements_elements);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
 
             /* update assembly state */
+            
             *state = ASM_FUNCTION;
             util_debug("ASM", "added context function %s to function table\n", name);
         }
@@ -484,6 +502,10 @@ void asm_parse(FILE *fp) {
     while ((data = asm_getline (&size, fp)) != NULL) {
         char *copy = util_strsws(data); /* skip   whitespace */
               skip = util_strrnl(copy); /* delete newline    */
+
+        /* TODO: statement END check */
+        if (state == ASM_FUNCTION)
+            state =  ASM_NULL;
 
         if (asm_parse_type(skip, line, &state)){ asm_end("asm_parse_type\n"); }
         if (asm_parse_func(skip, line, &state)){ asm_end("asm_parse_func\n"); }

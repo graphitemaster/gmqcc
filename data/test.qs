@@ -82,12 +82,21 @@ FUNCTION: pow,            $97
 FUNCTION: findfloat,      $98
 FUNCTION: checkextension, $99
 
-; constants test
-VECTOR: dude1, -1,  +2, 38865.444
-FLOAT:  dude2, 1
-STRING: "hello world"
 
-FUNCTION: foo #8
-	MUL_F arg1, arg2, arg3
+;code_chars_put("m_init",        0x6);
+;code_chars_put("m_keydown",     0x9);
+;code_chars_put("m_draw",        0x6);
+;code_chars_put("m_toggle",      0x8);
+;code_chars_put("m_shutdown",    0xA);
+
+FUNCTION: m_init     #1
+	DONE
+FUNCTION: m_keydown  #1
+	DONE
+FUNCTION: m_draw     #1
+	DONE
+FUNCTION: m_toggle   #1
+	DONE
+FUNCTION: m_shutdown #1
 	DONE
 
