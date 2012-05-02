@@ -266,6 +266,8 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->name = name ? util_strdup(name) : NULL;
     MEM_VECTOR_INIT(self, blocks);
 
+    self->labelcount = 0;
+
     self->ir_func = NULL;
     self->curblock = NULL;
 
@@ -295,6 +297,13 @@ void ast_function_delete(ast_function *self)
         ast_delete(self->blocks[i]);
     MEM_VECTOR_CLEAR(self, blocks);
     mem_d(self);
+}
+
+const char* ast_function_label(ast_function *self)
+{
+    size_t id = (self->labelcount++);
+    sprintf(self->labelbuf, "label%8u", (unsigned int)id);
+    return self->labelbuf;
 }
 
 /*********************************************************************/
@@ -517,7 +526,30 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
 
 bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    return false;
+    ast_expression_codegen *cgen;
+    ir_value *left, *right;
+
+    /* In the context of a binary operation, we can disregard
+     * the lvalue flag.
+     */
+     (void)lvalue;
+
+    cgen = self->left->expression.codegen;
+    /* lvalue! */
+    if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
+        return false;
+
+    cgen = self->right->expression.codegen;
+    /* rvalue! */
+    if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
+        return false;
+
+    *out = ir_block_create_binop(func->curblock, ast_function_label(func),
+                                 self->op, left, right);
+    if (!*out)
+        return false;
+
+    return true;
 }
 
 bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, ir_value **out)
