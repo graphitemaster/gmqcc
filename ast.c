@@ -240,7 +240,7 @@ void ast_ifthen_delete(ast_ifthen *self)
     ast_unref(self->cond);
     if (self->on_true)
         ast_unref(self->on_true);
-    if (self->on_flase)
+    if (self->on_false)
         ast_unref(self->on_false);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
@@ -277,7 +277,8 @@ ast_loop* ast_loop_new(lex_ctx ctx,
                        ast_expression *initexpr,
                        ast_expression *precond,
                        ast_expression *postcond,
-                       ast_expression *increment)
+                       ast_expression *increment,
+                       ast_expression *body)
 {
     ast_instantiate(ast_loop, ctx, ast_loop_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_loop_codegen);
@@ -286,6 +287,7 @@ ast_loop* ast_loop_new(lex_ctx ctx,
     self->precond   = precond;
     self->postcond  = postcond;
     self->increment = increment;
+    self->body      = body;
 
     return self;
 }
@@ -300,6 +302,8 @@ void ast_loop_delete(ast_loop *self)
         ast_unref(self->postcond);
     if (self->increment)
         ast_unref(self->increment);
+    if (self->body)
+        ast_unref(self->body);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
@@ -372,6 +376,9 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 
     self->ir_func = NULL;
     self->curblock = NULL;
+
+    self->breakblock    = NULL;
+    self->continueblock = NULL;
 
     vtype->isconst = true;
     vtype->constval.vfunc = self;
@@ -918,15 +925,215 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 {
     ast_expression_codegen *cgen;
 
+    ir_value *dummy;
     ir_value *precond;
     ir_value *postcond;
 
-    ir_block *binit;
-    ir_block *bprecond;
-    ir_block *bpostcond;
-    ir_block *bincrement;
+    /* Since we insert some jumps "late" so we have blocks
+     * ordered "nicely", we need to keep track of the actual end-blocks
+     * of expressions to add the jumps to.
+     */
+    ir_block *bbody,      *end_bbody;
+    ir_block *bprecond,   *end_bprecond;
+    ir_block *bpostcond,  *end_bpostcond;
+    ir_block *bincrement, *end_bincrement;
+    ir_block *bout, *bin;
+
+    /* 'break' and 'continue' need to be able to find the right blocks */
+    ir_block *bcontinue = NULL;
+    ir_block *bbreak    = NULL;
+
+    ir_block *old_bcontinue;
+    ir_block *old_bbreak;
 
     (void)lvalue;
+    (void)out;
 
-    return false;
+    /* NOTE:
+     * Should we ever need some kind of block ordering, better make this function
+     * move blocks around than write a block ordering algorithm later... after all
+     * the ast and ir should work together, not against each other.
+     */
+
+    /* initexpr doesn't get its own block, it's pointless, it could create more blocks
+     * anyway if for example it contains a ternary.
+     */
+    if (self->initexpr)
+    {
+        cgen = self->initexpr->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->initexpr), func, false, &dummy))
+            return false;
+    }
+
+    /* Store the block from which we enter this chaos */
+    bin = func->curblock;
+
+    /* The pre-loop condition needs its own block since we
+     * need to be able to jump to the start of that expression.
+     */
+    if (self->precond)
+    {
+        bprecond = ir_function_create_block(func->ir_func, ast_function_label(func, "pre_loop_cond"));
+        if (!bprecond)
+            return false;
+
+        /* the pre-loop-condition the least important place to 'continue' at */
+        bcontinue = bprecond;
+
+        /* enter */
+        func->curblock = bprecond;
+
+        /* generate */
+        cgen = self->precond->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->precond), func, false, &precond))
+            return false;
+
+        end_bprecond = func->curblock;
+    } else {
+        bprecond = end_bprecond = NULL;
+    }
+
+    /* Now the next blocks won't be ordered nicely, but we need to
+     * generate them this early for 'break' and 'continue'.
+     */
+    if (self->increment) {
+        bincrement = ir_function_create_block(func->ir_func, ast_function_label(func, "loop_increment"));
+        if (!bincrement)
+            return false;
+        bcontinue = bincrement; /* increment comes before the pre-loop-condition */
+    } else {
+        bincrement = end_bincrement = NULL;
+    }
+
+    if (self->postcond) {
+        bpostcond = ir_function_create_block(func->ir_func, ast_function_label(func, "post_loop_cond"));
+        if (!bpostcond)
+            return false;
+        bcontinue = bpostcond; /* postcond comes before the increment */
+    } else {
+        bpostcond = end_bpostcond = NULL;
+    }
+
+    bout = ir_function_create_block(func->ir_func, ast_function_label(func, "after_loop"));
+    if (!bout)
+        return false;
+    bbreak = bout;
+
+    /* The loop body... */
+    if (self->body)
+    {
+        bbody = ir_function_create_block(func->ir_func, ast_function_label(func, "loop_body"));
+        if (!bbody)
+            return false;
+
+        /* enter */
+        func->curblock = bbody;
+
+        old_bbreak          = func->breakblock;
+        old_bcontinue       = func->continueblock;
+        func->breakblock    = bbreak;
+        func->continueblock = bcontinue;
+
+        /* generate */
+        cgen = self->body->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->body), func, false, &dummy))
+            return false;
+
+        end_bbody = func->curblock;
+        func->breakblock    = old_bbreak;
+        func->continueblock = old_bcontinue;
+    }
+
+    /* post-loop-condition */
+    if (self->postcond)
+    {
+        /* enter */
+        func->curblock = bpostcond;
+
+        /* generate */
+        cgen = self->postcond->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->postcond), func, false, &postcond))
+            return false;
+
+        end_bpostcond = func->curblock;
+    }
+
+    /* The incrementor */
+    if (self->increment)
+    {
+        /* enter */
+        func->curblock = bincrement;
+
+        /* generate */
+        cgen = self->increment->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->increment), func, false, &dummy))
+            return false;
+
+        end_bincrement = func->curblock;
+    }
+
+    /* Now all blocks are in place */
+    /* From 'bin' we jump to whatever comes first */
+    if (bprecond       && !ir_block_create_jump(bin, bprecond))
+        return false;
+    else if (bbody     && !ir_block_create_jump(bin, bbody))
+        return false;
+    else if (bpostcond && !ir_block_create_jump(bin, bpostcond))
+        return false;
+    else if (             !ir_block_create_jump(bin, bout))
+        return false;
+
+    /* From precond */
+    if (bprecond)
+    {
+        ir_block *ontrue, *onfalse;
+        if      (bbody)      ontrue = bbody;
+        else if (bincrement) ontrue = bincrement;
+        else if (bpostcond)  ontrue = bpostcond;
+        else                 ontrue = bprecond;
+        onfalse = bout;
+        if (!ir_block_create_if(end_bprecond, precond, ontrue, onfalse))
+            return false;
+    }
+
+    /* from body */
+    if (bbody)
+    {
+        if (bincrement     && !ir_block_create_jump(end_bbody, bincrement))
+            return false;
+        else if (bpostcond && !ir_block_create_jump(end_bbody, bpostcond))
+            return false;
+        else if (bprecond  && !ir_block_create_jump(end_bbody, bprecond))
+            return false;
+        else if              (!ir_block_create_jump(end_bbody, bout))
+            return false;
+    }
+
+    /* from increment */
+    if (bincrement)
+    {
+        if (bpostcond      && !ir_block_create_jump(end_bincrement, bpostcond))
+            return false;
+        else if (bprecond  && !ir_block_create_jump(end_bincrement, bprecond))
+            return false;
+        else if (bbody     && !ir_block_create_jump(end_bincrement, bbody))
+            return false;
+        else if              (!ir_block_create_jump(end_bincrement, bout))
+            return false;
+    }
+
+    /* from postcond */
+    if (bpostcond)
+    {
+        ir_block *ontrue, *onfalse;
+        if      (bprecond)   ontrue = bprecond;
+        else if (bbody)      ontrue = bbody;
+        else if (bincrement) ontrue = bincrement;
+        else                 ontrue = bpostcond;
+        onfalse = bout;
+        if (!ir_block_create_if(end_bpostcond, postcond, ontrue, onfalse))
+            return false;
+    }
+
+    return true;
 }

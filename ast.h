@@ -272,12 +272,14 @@ struct ast_loop_s
     ast_expression *precond;
     ast_expression *postcond;
     ast_expression *increment;
+    ast_expression *body;
 };
-ast_loop* ast_loop_new(lex_ctx, ctx,
+ast_loop* ast_loop_new(lex_ctx ctx,
                        ast_expression *initexpr,
                        ast_expression *precond,
                        ast_expression *postcond,
-                       ast_expression *increment);
+                       ast_expression *increment,
+                       ast_expression *body);
 void ast_loop_delete(ast_loop*);
 
 bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
@@ -319,6 +321,8 @@ struct ast_function_s
 
     ir_function *ir_func;
     ir_block    *curblock;
+    ir_block    *breakblock;
+    ir_block    *continueblock;
 
     size_t       labelcount;
     /* in order for thread safety - for the optional
