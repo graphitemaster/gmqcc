@@ -102,11 +102,11 @@ void asm_dumps() {
  * are locals.
  */
 static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state *state) {
-    if (!(strstr(skip, "FLOAT:")  == &skip[0]) &&
-         (strstr(skip, "VECTOR:") == &skip[0]) &&
-         (strstr(skip, "ENTITY:") == &skip[0]) &&
-         (strstr(skip, "FIELD:")  == &skip[0]) &&
-         (strstr(skip, "STRING:") == &skip[0])) return false;
+    if ((strstr(skip, "FLOAT:")  != &skip[0]) &&
+        (strstr(skip, "VECTOR:") != &skip[0]) &&
+        (strstr(skip, "ENTITY:") != &skip[0]) &&
+        (strstr(skip, "FIELD:")  != &skip[0]) &&
+        (strstr(skip, "STRING:") != &skip[0])) return false;
 
     /* TODO: determine if constant, global, or local */
     switch (*skip) {
@@ -194,8 +194,16 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
         return false;
 
     if (strstr(skip, "FUNCTION:") == &skip[0]) {
-        char  *copy = util_strsws(skip+10);
-        char  *name = util_strchp(copy, strchr(copy, '\0'));
+        char  *look = util_strdup(skip+10);
+        char  *copy = look;
+        char  *name = NULL;
+        while(*copy == ' ' || *copy == '\t') copy++;
+
+        /*
+         * Chop the function name out of the string, this allocates
+         * a new string.
+         */
+        name = util_strchp(copy, strchr(copy, '\0'));
 
         /* TODO: failure system, missing name */
         if (!name) {
@@ -380,7 +388,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              * We got valid function structure information now. Lets add
              * the function to the code writer function table.
              */
-            function.entry      = code_statements_elements-1;
+            function.entry      = code_statements_elements;
             function.firstlocal = 0;
             function.locals     = 0;
             function.profile    = 0;
@@ -391,7 +399,7 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             def.offset          = code_globals_elements;
             def.name            = code_chars_elements;
             code_functions_add(function);
-            code_globals_add(code_statements_elements);
+            code_globals_add  (code_statements_elements);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
 
@@ -418,9 +426,18 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
      * CALL* is used (depending on the amount of arguments the function
      * is expected to take)
      */
-    char                  *c = (char*)skip;
+    enum {
+        EXPECT_FUNCTION = 1,
+        EXPECT_VARIABLE = 2,
+        EXPECT_VALUE    = 3
+    };
+    
+    char                  *c      = (char*)skip;
+    size_t                 i      = 0;
+    char                   expect = 0;
     prog_section_statement s;
-    size_t                 i = 0;
+
+    memset(&s, 0, sizeof(s));
 
     /*
      * statements are only allowed when inside a function body
@@ -444,7 +461,36 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
          * instruction.
          */
         if (!strncmp(skip, asm_instr[i].m, asm_instr[i].l)) {
-            printf("found statement %s\n", asm_instr[i].m);
+
+            /*
+             * We hit the end of a function scope, retarget the state
+             * and add a DONE statement to the statment table.
+             */
+            if (i == AINSTR_END) {
+                s.opcode = i;
+                code_statements_add(s);
+                *state = ASM_NULL;
+                return true;
+            }
+
+            /*
+             * Check the instruction type to see what sort of data
+             * it's expected to have.
+             */
+            if (i >= INSTR_CALL0 && i <= INSTR_CALL8)
+                expect = EXPECT_FUNCTION;
+            else
+                expect = EXPECT_VARIABLE;
+            
+            util_debug(
+                "ASM",
+                "found statement %s expecting: `%s` (%ld operands)\n",
+                asm_instr[i].m,
+                (expect == EXPECT_FUNCTION)?"function name":(
+                (expect == EXPECT_VARIABLE)?"variable name":(
+                (expect == EXPECT_VALUE    ?"value"        : "unknown"))),
+                asm_instr[i].o
+            );
             /*
              * Parse the operands for `i` (the instruction). The order
              * of asm_instr is in the order of the menomic encoding so
@@ -485,26 +531,44 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                        *c  = '\0';                                     \
                         c  = (char*)skip;                              \
                     } while (0)
-
-                case 3: {
-                    const char *data; OPFILL(data);
-                    printf("OP3: %s\n", data);
-                    s.o3.s1 = 0;
-                }
-                case 2: {
-                    const char *data; OPFILL(data);
-                    printf("OP2: %s\n", data);
-                    s.o2.s1 = 0;
-                }
+                #define OPEATS(X,Y) X##Y
+                #define OPCCAT(X,Y) OPEATS(X,Y)
+                #define OPLOAD(X,Y)                                                                \
+                    do {                                                                           \
+                        util_debug("ASM", "loading operand data ...\n");                           \
+                        if (expect == EXPECT_VARIABLE) {                                           \
+                            size_t f=0;                                                            \
+                            for (; f<assembly_constants_elements; f++) {                           \
+                                if (!strncmp(assembly_constants_data[f].name, (Y), strlen((Y)))) { \
+                                    (X)=assembly_constants_data[f].offset;                         \
+                                    goto OPCCAT(found, __LINE__);                                  \
+                                }                                                                  \
+                            }                                                                      \
+                            printf("no variable named %s\n", (Y));                                 \
+                            OPCCAT(found,__LINE__) :                                               \
+                            printf("operand loaded for %s\n", (Y));                                \
+                            break;                                                                 \
+                        } else if (expect == EXPECT_FUNCTION) {                                    \
+                            /*                                                                     \
+                             * It's a function call not a variable association with an instruction \
+                             * these are harder to handle.                                         \
+                             */                                                                    \
+                             printf("function calls not implemented, calling `68` for now\n");     \
+                             (X)=68;                                                               \
+                        }                                                                          \
+                    } while (0)
+                case 3: { OPLOAD(s.o3.s1,c); break; }
+                case 2: { OPLOAD(s.o2.s1,c); break; }
                 case 1: {
                     while (*c == ' ' || *c == '\t') c++;
                     c += asm_instr[i].l;
                     while (*c == ' ' || *c == '\t') c++;
-
-                    printf("OP1: %s\n", c);
-                    s.o1.s1 = 0;
+                    OPLOAD(s.o1.s1, c);
+                    break;
                 }
                 #undef OPFILL
+                #undef OPLOAD
+                #undef OPCCAT
             }
             /* add the statement now */
             code_statements_add(s);
@@ -515,7 +579,6 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
 
 void asm_parse(FILE *fp) {
     char     *data  = NULL;
-    char     *skip  = NULL;
     long      line  = 1; /* current line */
     size_t    size  = 0; /* size of line */
     asm_state state = ASM_NULL;
@@ -523,22 +586,21 @@ void asm_parse(FILE *fp) {
     #define asm_end(x)            \
         do {                      \
             mem_d(data);          \
-            mem_d(copy);          \
-            line++;               \
+            line ++;              \
             util_debug("ASM", x); \
         } while (0); continue
 
     while ((data = asm_getline (&size, fp)) != NULL) {
-        char *copy = util_strsws(data); /* skip   whitespace */
-              skip = util_strrnl(copy); /* delete newline    */
-
-        /* TODO: statement END check */
-        if (state == ASM_FUNCTION)
-            state =  ASM_NULL;
-
-        if (asm_parse_type(skip, line, &state)){ asm_end("asm_parse_type\n"); }
-        if (asm_parse_func(skip, line, &state)){ asm_end("asm_parse_func\n"); }
-        if (asm_parse_stmt(skip, line, &state)){ asm_end("asm_parse_stmt\n"); }
+        char   *copy = data;
+        char   *skip = copy;
+        while (*copy == ' ' || *copy == '\t') copy++;
+        while (*skip != '\n')                 skip++;
+        *skip='\0';
+              
+        if (asm_parse_type(copy, line, &state)){ asm_end("asm_parse_type\n"); }
+        if (asm_parse_func(copy, line, &state)){ asm_end("asm_parse_func\n"); }
+        if (asm_parse_stmt(copy, line, &state)){ asm_end("asm_parse_stmt\n"); }
+        asm_end("asm_parse_white\n");
     }
     #undef asm_end
     asm_dumps();

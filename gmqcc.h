@@ -492,7 +492,15 @@ enum {
     INSTR_BITAND,
     INSTR_BITOR,
 
-    /* Virtual instructions used by the IR
+    /*
+     * Virtual instructions used by the assembler
+     * keep at the end but before virtual instructions
+     * for the IR below.
+     */
+    AINSTR_END,
+
+    /*
+     * Virtual instructions used by the IR
      * Keep at the end!
      */
     VINSTR_PHI,
@@ -585,21 +593,22 @@ static const struct {
     { "NOT_FNC"   , 0, 7 },
     { "IF"        , 0, 2 },
     { "IFNOT"     , 0, 5 },
-    { "CALL0"     , 0, 5 },
-    { "CALL1"     , 0, 5 },
-    { "CALL2"     , 0, 5 },
-    { "CALL3"     , 0, 5 },
-    { "CALL4"     , 0, 5 },
-    { "CALL5"     , 0, 5 },
-    { "CALL6"     , 0, 5 },
-    { "CALL7"     , 0, 5 },
-    { "CALL8"     , 0, 5 },
+    { "CALL0"     , 1, 5 },
+    { "CALL1"     , 2, 5 },
+    { "CALL2"     , 3, 5 },
+    { "CALL3"     , 4, 5 },
+    { "CALL4"     , 5, 5 },
+    { "CALL5"     , 6, 5 },
+    { "CALL6"     , 7, 5 },
+    { "CALL7"     , 8, 5 },
+    { "CALL8"     , 9, 5 },
     { "STATE"     , 0, 5 },
     { "GOTO"      , 0, 4 },
     { "AND"       , 0, 3 },
     { "OR"        , 0, 2 },
     { "BITAND"    , 0, 6 },
-    { "BITOR"     , 0, 5 }
+    { "BITOR"     , 0, 5 },
+    { "END"       , 0, 3 } /* virtual assembler instruction */
 };
 
 void asm_init (const char *, FILE **);

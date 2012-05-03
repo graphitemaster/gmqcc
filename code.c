@@ -147,7 +147,7 @@ void code_test() {
 void code_write() {
     prog_header  code_header;
     FILE        *fp           = NULL;
-    size_t       it           = 1;
+    size_t       it           = 2;
 
     /* see proposal.txt */
     if (opts_omit_nullcode) {}
@@ -231,15 +231,17 @@ void code_write() {
         if (code_functions_data[it].entry >= 0) {
             util_debug("GEN", "    CODE:\n");
             for (;;) {
-                if (code_statements_data[j].opcode != INSTR_DONE &&
-                    code_statements_data[j].opcode != INSTR_RETURN)
-                    util_debug("GEN", "        %s {0x%05d,0x%05d,0x%05d}\n",
+                if (code_statements_data[j].opcode != AINSTR_END)
+                    util_debug("GEN", "        %s {0x%05x,0x%05x,0x%05x}\n",
                         asm_instr[code_statements_data[j].opcode].m,
                         code_statements_data[j].o1.s1,
                         code_statements_data[j].o2.s1,
                         code_statements_data[j].o3.s1
                     );
-                else break;
+                else {
+                    util_debug("GEN", "        DONE  {0x00000,0x00000,0x00000}\n");
+                    break;
+                }
                 j++;
             }
         }

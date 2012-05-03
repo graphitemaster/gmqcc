@@ -89,13 +89,22 @@ FUNCTION: checkextension, $99
 ;code_chars_put("m_toggle",      0x8);
 ;code_chars_put("m_shutdown",    0xA);
 
-FUNCTION: m_init     #3VVV    
-	DONE
-FUNCTION: m_keydown  #1S
-	DONE
-FUNCTION: m_draw     #1S
-	DONE
-FUNCTION: m_toggle   #1S
-	DONE
-FUNCTION: m_shutdown #1S
+FUNCTION: m_init     #0
+	CALL0 dprint
+END
 
+FUNCTION: m_keydown  #0
+	CALL0 dprint 
+END
+
+FUNCTION: m_draw     #3VVV
+	CALL0 dprint 
+END
+
+FUNCTION: m_toggle   #1S
+	CALL0 dprint 
+END
+
+FUNCTION: m_shutdown #1S
+	CALL0 dprint 
+END

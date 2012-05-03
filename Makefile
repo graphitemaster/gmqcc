@@ -20,17 +20,17 @@ default: gmqcc
 
 # test targets
 test_ast: $(OBJ_A) $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)	
+	$(CC) -o $@ $^ $(CFLAGS)
 test_ir:  $(OBJ_I) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 test: test_ast test_ir
 
-# compiler target	
+# compiler target
 gmqcc: $(OBJ_C) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 #all target is test and all
 all: test gmqcc
-	
+
 clean:
 	rm -f *.o gmqcc test_ast test_ir test/*.o

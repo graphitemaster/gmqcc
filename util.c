@@ -138,39 +138,6 @@ char *util_strchp(const char *s, const char *e) {
 }
 
 /*
- * Remove newline from a string (if it exists).  This is
- * done pointer wise instead of strlen(), and an array
- * access.
- */
-char *util_strrnl(const char *src) {
-    char   *cpy = NULL;
-
-    if (src) {
-        cpy = (char*)src;
-        while (*cpy && *cpy != '\n')
-            cpy++;
-
-        *cpy = '\0';
-    }
-    return (char*)src;
-}
-
-/*
- * Removes any whitespace prefixed on a string by moving
- * skipping past it, and stroing the skip distance, so
- * the string can later be freed (if it was allocated)
- */
-char *util_strsws(const char *skip) {
-    size_t size = 0;
-    if (!skip)
-        return NULL;
-
-    while (*skip == ' ' || *skip == '\t')
-        skip++,size++;
-    return util_strdup(skip-size);
-}
-
-/*
  * Returns true if string is all uppercase, otherwise
  * it returns false.
  */
