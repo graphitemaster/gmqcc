@@ -1683,10 +1683,13 @@ void ir_function_dump(ir_function *f, char *ind,
 	}
 	if (f->blocks_count)
 	{
-
-		oprintf("%slife passes: %i\n", ind, (int)f->blocks[0]->run_id);
-		for (i = 0; i < f->blocks_count; ++i)
+		oprintf("%slife passes (check): %i\n", ind, (int)f->run_id);
+		for (i = 0; i < f->blocks_count; ++i) {
+		    if (f->blocks[i]->run_id != f->run_id) {
+		        oprintf("%slife pass check fail! %i != %i\n", ind, (int)f->blocks[i]->run_id, (int)f->run_id);
+		    }
 			ir_block_dump(f->blocks[i], ind, oprintf);
+		}
 
 	}
 	ind[strlen(ind)-1] = 0;
