@@ -39,6 +39,7 @@ typedef struct ast_store_s      ast_store;
 typedef struct ast_entfield_s   ast_entfield;
 typedef struct ast_ifthen_s     ast_ifthen;
 typedef struct ast_ternary_s    ast_ternary;
+typedef struct ast_loop_s       ast_loop;
 
 /* Node interface with common components
  */
@@ -241,6 +242,45 @@ void ast_ternary_delete(ast_ternary*);
 
 bool ast_ternary_codegen(ast_ternary*, ast_function*, bool lvalue, ir_value**);
 
+/* A general loop node
+ *
+ * For convenience it contains 4 parts:
+ * -) (ini) = initializing expression
+ * -) (pre) = pre-loop condition
+ * -) (pst) = post-loop condition
+ * -) (inc) = "increment" expression
+ * The following is a psudo-representation of this loop
+ * note that '=>' bears the logical meaning of "implies".
+ * (a => b) equals (!a || b)
+
+{ini};
+while (has_pre => {pre})
+{
+    {body};
+
+continue:      // a 'continue' will jump here
+    if (has_pst => {pst})
+        break;
+
+    {inc};
+}
+ */
+struct ast_loop_s
+{
+    ast_expression_common expression;
+    ast_expression *initexpr;
+    ast_expression *precond;
+    ast_expression *postcond;
+    ast_expression *increment;
+};
+ast_loop* ast_loop_new(lex_ctx, ctx,
+                       ast_expression *initexpr,
+                       ast_expression *precond,
+                       ast_expression *postcond,
+                       ast_expression *increment);
+void ast_loop_delete(ast_loop*);
+
+bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
 
 /* Blocks
  *
