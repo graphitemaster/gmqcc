@@ -368,10 +368,36 @@ void ast_function_delete(ast_function *self)
     mem_d(self);
 }
 
+static void ast_util_hexitoa(char *buf, size_t size, unsigned int num)
+{
+    unsigned int base = 10;
+#define checknul() do { if (size == 1) { *buf = 0; return; } } while (0)
+#define addch(x) do { *buf++ = (x); --size; checknul(); } while (0)
+    if (size < 1)
+        return;
+    checknul();
+    if (!num)
+        addch('0');
+    else {
+        while (num)
+        {
+            int digit = num % base;
+            num /= base;
+            addch('0' + digit);
+        }
+    }
+
+    *buf = 0;
+#undef addch
+#undef checknul
+}
+
 const char* ast_function_label(ast_function *self, const char *prefix)
 {
     size_t id = (self->labelcount++);
-    sprintf(self->labelbuf, "%16s%8u", prefix, (unsigned int)id);
+    size_t len = strlen(prefix);
+    strncpy(self->labelbuf, prefix, sizeof(self->labelbuf));
+    ast_util_hexitoa(self->labelbuf + len, sizeof(self->labelbuf)-len, id);
     return self->labelbuf;
 }
 
