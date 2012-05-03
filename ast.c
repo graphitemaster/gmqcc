@@ -656,8 +656,89 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    if (out) *out = NULL;
-    return false;
+    ast_expression_codegen *cgen;
+
+    ir_value *condval;
+    ir_value *dummy;
+
+    ir_block *cond = func->curblock;
+    ir_block *ontrue;
+    ir_block *onfalse;
+    ir_block *merge;
+
+    /* We don't output any value, thus also don't care about r/lvalue */
+    (void)out;
+    (void)lvalue;
+
+    /* create blocks first, it's nicer if they're ordered */
+
+    if (self->on_true) {
+        /* create on-true block */
+        ontrue = ir_function_create_block(func->ir_func, ast_function_label(func));
+        if (!ontrue)
+            return false;
+    } else
+        ontrue = NULL;
+    
+    if (self->on_false) {
+        /* create on-false block */
+        onfalse = ir_function_create_block(func->ir_func, ast_function_label(func));
+        if (!onfalse)
+            return false;
+    } else
+        onfalse = NULL;
+
+    merge = ir_function_create_block(func->ir_func, ast_function_label(func));
+    if (!merge)
+        return NULL;
+
+    /* generate the condition */
+    func->curblock = cond;
+    cgen = self->cond->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
+        return false;
+
+    if (!ir_block_create_if(cond, condval,
+                            (ontrue  ? ontrue  : merge),
+                            (onfalse ? onfalse : merge)))
+    {
+        return false;
+    }
+
+    /* on-true path */
+    if (ontrue) {
+        /* enter the block */
+        func->curblock = ontrue;
+
+        /* generate */
+        cgen = self->on_true->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->on_true), func, false, &dummy))
+            return false;
+
+        /* jump to merge block */
+        if (!ir_block_create_jump(ontrue, merge))
+            return false;
+    }
+
+    /* on-false path */
+    if (onfalse) {
+        /* enter the block */
+        func->curblock = onfalse;
+
+        /* generate */
+        cgen = self->on_false->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->on_false), func, false, &dummy))
+            return false;
+
+        /* jump to merge block */
+        if (!ir_block_create_jump(ontrue, merge))
+            return false;
+    }
+
+    /* Now enter the merge block */
+    func->curblock = merge;
+
+    return true;
 }
 
 bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_value **out)
