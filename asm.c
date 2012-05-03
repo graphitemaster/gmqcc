@@ -32,12 +32,13 @@ typedef enum {
 } asm_state;
 
 typedef struct {
-    char *name;   /* name of constant    */
-    char  type;   /* type, float, vector, string */
+    char *name;
+    char  type;   /* type, float, vector, string, function*/
     char  elem;   /* 0=x, 1=y, or 2=Z?   */
     int   offset; /* location in globals */
-} globals;
-VECTOR_MAKE(globals, assembly_constants);
+    bool  isconst;
+} asm_sym;
+VECTOR_MAKE(asm_sym, asm_symbols);
 
 /*
  * Assembly text processing: this handles the internal collection
@@ -68,9 +69,9 @@ void asm_close(FILE *fp) {
 }
 void asm_clear() {
     size_t i = 0;
-    for (; i < assembly_constants_elements; i++)
-        mem_d(assembly_constants_data[i].name);
-    mem_d(assembly_constants_data);
+    for (; i < asm_symbols_elements; i++)
+        mem_d(asm_symbols_data[i].name);
+    mem_d(asm_symbols_data);
 }
 
 /*
@@ -79,8 +80,9 @@ void asm_clear() {
  */
 void asm_dumps() {
     size_t i = 0;
-    for (; i < assembly_constants_elements; i++) {
-        globals *g = &assembly_constants_data[i];
+    for (; i < asm_symbols_elements; i++) {
+        asm_sym *g = &asm_symbols_data[i];
+        if (!g->isconst) continue;
         switch (g->type) {
             case TYPE_VECTOR: {
                 util_debug("ASM", "vector %s %c[%f]\n", g->name,
@@ -90,6 +92,9 @@ void asm_dumps() {
                     INT2FLT(code_globals_data[g->offset])
                 );
                 break;
+            }
+            case TYPE_FUNCTION: {
+                util_debug("ASM", "function %s\n", g->name);
             }
         }
     }
@@ -114,7 +119,7 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
             float   val1;
             float   val2;
             float   val3;
-            globals global;
+            asm_sym sym;
 
             char *find = (char*)skip + 7;
             char *name = (char*)skip + 7;
@@ -150,12 +155,12 @@ static GMQCC_INLINE bool asm_parse_type(const char *skip, size_t line, asm_state
                 PARSE_ELEMENT(find, val2, { find ++; while (*find == ' ') { find ++; } });
                 PARSE_ELEMENT(find, val3, { find ++; /* no need to do anything here */ });
                 #undef  PARSE_ELEMENT
-                #define BUILD_ELEMENT(X,Y)                 \
-                    global.type   = TYPE_VECTOR;           \
-                    global.name   = util_strdup(name);     \
-                    global.elem   = (X);                   \
-                    global.offset = code_globals_elements; \
-                    assembly_constants_add(global);        \
+                #define BUILD_ELEMENT(X,Y)              \
+                    sym.type   = TYPE_VECTOR;           \
+                    sym.name   = util_strdup(name);     \
+                    sym.elem   = (X);                   \
+                    sym.offset = code_globals_elements; \
+                    asm_symbols_add(sym);               \
                     code_globals_add(FLT2INT(Y))
                 BUILD_ELEMENT(0, val1);
                 BUILD_ELEMENT(1, val2);
@@ -194,10 +199,13 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
         return false;
 
     if (strstr(skip, "FUNCTION:") == &skip[0]) {
-        char  *look = util_strdup(skip+10);
-        char  *copy = look;
-        char  *name = NULL;
-        while(*copy == ' ' || *copy == '\t') copy++;
+        asm_sym  sym;
+        char    *look = util_strdup(skip+10);
+        char    *copy = look;
+        char    *name = NULL;
+        while  (*copy == ' ' || *copy == '\t') copy++;
+
+        memset(&sym, 0, sizeof(asm_sym));
 
         /*
          * Chop the function name out of the string, this allocates
@@ -225,10 +233,11 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
          * to determine this.
          */
         if (strchr(name, ',')) {
+            char *find = strchr(name, ',') + 1;
             prog_section_function function;
             prog_section_def      def;
-
-            char *find = strchr(name, ',') + 1;
+            memset(&function, 0, sizeof(prog_section_function));
+            memset(&def,      0, sizeof(prog_section_def));
 
             /* skip whitespace */
             while (*find == ' ' || *find == '\t')
@@ -266,11 +275,14 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             def.type            = TYPE_FUNCTION;
             def.offset          = code_globals_elements;
             def.name            = code_chars_elements;
-            memset(function.argsize, 0, sizeof(function.argsize));
             code_functions_add(function);
             code_defs_add     (def);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
+            sym.type   = TYPE_FUNCTION;
+            sym.name   = util_strdup(name);
+            sym.offset = function.entry;
+            asm_symbols_add(sym);
 
             util_debug("ASM", "added internal function %s to function table\n", name);
 
@@ -302,6 +314,8 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
              */
             prog_section_function function;
             prog_section_def      def;
+            memset(&function, 0, sizeof(prog_section_function));
+            memset(&def,      0, sizeof(prog_section_def));
             if (find) {
                 find ++;
 
@@ -402,6 +416,10 @@ static GMQCC_INLINE bool asm_parse_func(const char *skip, size_t line, asm_state
             code_globals_add  (code_statements_elements);
             code_chars_put    (name, strlen(name));
             code_chars_add    ('\0');
+            sym.type   = TYPE_FUNCTION;
+            sym.name   = util_strdup(name);
+            sym.offset = function.entry;
+            asm_symbols_add(sym);
 
             /* update assembly state */
 
@@ -436,8 +454,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
     size_t                 i      = 0;
     char                   expect = 0;
     prog_section_statement s;
-
-    memset(&s, 0, sizeof(s));
+    memset(&s, 0, sizeof(prog_section_statement));
 
     /*
      * statements are only allowed when inside a function body
@@ -484,7 +501,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
             
             util_debug(
                 "ASM",
-                "found statement %s expecting: `%s` (%ld operands)\n",
+                "found statement %s expecting: `%s` (%ld operand(s))\n",
                 asm_instr[i].m,
                 (expect == EXPECT_FUNCTION)?"function name":(
                 (expect == EXPECT_VARIABLE)?"variable name":(
@@ -538,23 +555,37 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                         util_debug("ASM", "loading operand data ...\n");                           \
                         if (expect == EXPECT_VARIABLE) {                                           \
                             size_t f=0;                                                            \
-                            for (; f<assembly_constants_elements; f++) {                           \
-                                if (!strncmp(assembly_constants_data[f].name, (Y), strlen((Y)))) { \
-                                    (X)=assembly_constants_data[f].offset;                         \
-                                    goto OPCCAT(found, __LINE__);                                  \
+                            for (; f<asm_symbols_elements; f++) {                                  \
+                                if (!strncmp(asm_symbols_data[f].name, (Y), strlen(Y)) &&          \
+                                             asm_symbols_data[f].type != TYPE_FUNCTION) {          \
+                                    (X)=asm_symbols_data[f].offset;                                \
+                                    goto OPCCAT(foundv, __LINE__);                                 \
                                 }                                                                  \
                             }                                                                      \
                             printf("no variable named %s\n", (Y));                                 \
-                            OPCCAT(found,__LINE__) :                                               \
-                            printf("operand loaded for %s\n", (Y));                                \
                             break;                                                                 \
+                            OPCCAT(foundv,__LINE__) :                                              \
+                            printf("operand loaded for %s\n", (Y));                                \
                         } else if (expect == EXPECT_FUNCTION) {                                    \
                             /*                                                                     \
                              * It's a function call not a variable association with an instruction \
                              * these are harder to handle.                                         \
                              */                                                                    \
-                             printf("function calls not implemented, calling `68` for now\n");     \
-                             (X)=68;                                                               \
+                            size_t f=0;                                                            \
+                            if (strchr(Y, ' ')) {                                                  \
+                                *strchr(Y, ' ')='\0';                                              \
+                            }                                                                      \
+                            for (; f<asm_symbols_elements; f++) {                                  \
+                                if (!strcnmp(asm_symbols_data[f].name, (Y), strlen(Y)) &&          \
+                                            asm_symbols_data[f].type == TYPE_FUNCTION) {           \
+                                    (X)=asm_symbols_data[f].offset;                                \
+                                    goto OPCCAT(foundf, __LINE__);                                 \
+                                }                                                                  \
+                            }                                                                      \
+                            printf("no function named [%s]\n", (Y));                               \
+                            break;                                                                 \
+                            OPCCAT(foundf,__LINE__) :                                              \
+                            printf("operand loaded for [%s]\n", (Y));                              \
                         }                                                                          \
                     } while (0)
                 case 3: { OPLOAD(s.o3.s1,c); break; }
