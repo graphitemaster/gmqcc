@@ -620,6 +620,7 @@ bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value
 {
     if (target->store == store_value) {
         fprintf(stderr, "cannot store to an SSA value\n");
+        fprintf(stderr, "trying to store: %s <- %s\n", target->name, what->name);
         return false;
     } else {
         ir_instr *in = ir_instr_new(self, op);
@@ -1277,7 +1278,7 @@ static bool ir_block_naive_phi(ir_block *self)
                 if (v->writes[w]->_ops[0] == v)
                     v->writes[w]->_ops[0] = instr->_ops[0];
 
-                if (old->store != store_local)
+                if (old->store != store_value && old->store != store_local)
                 {
                     /* If it originally wrote to a global we need to store the value
                      * there as welli
