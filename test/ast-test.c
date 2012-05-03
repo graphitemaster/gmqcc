@@ -120,6 +120,8 @@ int main()
         if (!ast_function_codegen(functions_data[i], ir)) {
             assert(!"failed to generate function");
         }
+        if (!ir_function_finalize(functions_data[i]->ir_func))
+            assert(!"finalize on function failed...");
     }
 
     /* dump */
