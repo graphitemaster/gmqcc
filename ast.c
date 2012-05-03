@@ -623,7 +623,35 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
 
 bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    return false;
+    ast_expression_codegen *cgen;
+    ir_value *ent, *field;
+
+    /* This function needs to take the 'lvalue' flag into account!
+     * As lvalue we provide a field-pointer, as rvalue we provide the
+     * value in a temp.
+     */
+
+    cgen = self->entity->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->entity), func, false, &ent))
+        return false;
+
+    cgen = self->field->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->field), func, false, &field))
+        return false;
+
+    if (lvalue) {
+        /* address! */
+        *out = ir_block_create_fieldaddress(func->curblock, ast_function_label(func),
+                                            ent, field);
+    } else {
+        *out = ir_block_create_load_from_ent(func->curblock, ast_function_label(func),
+                                             ent, field, self->expression.vtype);
+    }
+    if (!*out)
+        return false;
+
+    /* Hm that should be it... */
+    return true;
 }
 
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)
