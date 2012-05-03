@@ -837,54 +837,55 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         return false;
 
     /* In the following, contraty to ast_ifthen, we assume both paths exist. */
-
-    /* create on-true block */
-    ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_T"));
-    if (!ontrue)
-        return false;
     
-    /* create on-false block */
-    onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_F"));
-    if (!onfalse)
-        return false;
-
-    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_out"));
-    if (!merge)
-        return NULL;
-
     /* generate the condition */
     func->curblock = cond;
     cgen = self->cond->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
         return false;
 
+    /* create on-true block */
+    ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_T"));
+    if (!ontrue)
+        return false;
+    else
+    {
+        /* enter the block */
+        func->curblock = ontrue;
+
+        /* generate */
+        cgen = self->on_true->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->on_true), func, false, &trueval))
+            return false;
+    }
+    
+    /* create on-false block */
+    onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_F"));
+    if (!onfalse)
+        return false;
+    else
+    {
+        /* enter the block */
+        func->curblock = onfalse;
+
+        /* generate */
+        cgen = self->on_false->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->on_false), func, false, &falseval))
+            return false;
+    }
+
+    /* create merge block */
+    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_out"));
+    if (!merge)
+        return NULL;
+    /* jump to merge block */
+    if (!ir_block_create_jump(ontrue, merge))
+        return false;
+    if (!ir_block_create_jump(onfalse, merge))
+        return false;
+
+    /* create if instruction */
     if (!ir_block_create_if(cond, condval, ontrue, onfalse))
-        return false;
-
-    /* on-true path */
-    /* enter the block */
-    func->curblock = ontrue;
-
-    /* generate */
-    cgen = self->on_true->expression.codegen;
-    if (!(*cgen)((ast_expression*)(self->on_true), func, false, &trueval))
-        return false;
-
-    /* jump to merge block */
-    if (!ir_block_create_jump(ontrue, merge))
-        return false;
-
-    /* on-false path */
-    /* enter the block */
-    func->curblock = onfalse;
-
-    /* generate */
-    cgen = self->on_false->expression.codegen;
-    if (!(*cgen)((ast_expression*)(self->on_false), func, false, &falseval))
-        return false;
-
-    /* jump to merge block */
-    if (!ir_block_create_jump(ontrue, merge))
         return false;
 
     /* Now enter the merge block */
