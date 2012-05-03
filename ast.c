@@ -238,8 +238,10 @@ ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *on
 void ast_ifthen_delete(ast_ifthen *self)
 {
     ast_unref(self->cond);
-    ast_unref(self->on_true);
-    ast_unref(self->on_false);
+    if (self->on_true)
+        ast_unref(self->on_true);
+    if (self->on_flase)
+        ast_unref(self->on_false);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
