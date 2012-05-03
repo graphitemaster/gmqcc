@@ -742,43 +742,20 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     (void)out;
     (void)lvalue;
 
-    /* create blocks first, it's nicer if they're ordered */
-
-    if (self->on_true) {
-        /* create on-true block */
-        ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "ontrue"));
-        if (!ontrue)
-            return false;
-    } else
-        ontrue = NULL;
-    
-    if (self->on_false) {
-        /* create on-false block */
-        onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "onfalse"));
-        if (!onfalse)
-            return false;
-    } else
-        onfalse = NULL;
-
-    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "endif"));
-    if (!merge)
-        return NULL;
-
     /* generate the condition */
     func->curblock = cond;
     cgen = self->cond->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
         return false;
 
-    if (!ir_block_create_if(cond, condval,
-                            (ontrue  ? ontrue  : merge),
-                            (onfalse ? onfalse : merge)))
-    {
-        return false;
-    }
-
     /* on-true path */
-    if (ontrue) {
+
+    if (self->on_true) {
+        /* create on-true block */
+        ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "ontrue"));
+        if (!ontrue)
+            return false;
+
         /* enter the block */
         func->curblock = ontrue;
 
@@ -786,14 +763,16 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         cgen = self->on_true->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->on_true), func, false, &dummy))
             return false;
-
-        /* jump to merge block */
-        if (!ir_block_create_jump(ontrue, merge))
-            return false;
-    }
-
+    } else
+        ontrue = NULL;
+    
     /* on-false path */
-    if (onfalse) {
+    if (self->on_false) {
+        /* create on-false block */
+        onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "onfalse"));
+        if (!onfalse)
+            return false;
+
         /* enter the block */
         func->curblock = onfalse;
 
@@ -801,10 +780,27 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         cgen = self->on_false->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->on_false), func, false, &dummy))
             return false;
+    } else
+        onfalse = NULL;
 
-        /* jump to merge block */
-        if (!ir_block_create_jump(ontrue, merge))
-            return false;
+    /* Merge block were they all merge in to */
+    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "endif"));
+    if (!merge)
+        return NULL;
+
+    /* add jumps ot the merge block */
+    if (ontrue && !ir_block_create_jump(ontrue, merge))
+        return false;
+    if (onfalse && !ir_block_create_jump(onfalse, merge))
+        return false;
+
+    /* we create the if here, that way all blocks are ordered :)
+     */
+    if (!ir_block_create_if(cond, condval,
+                            (ontrue  ? ontrue  : merge),
+                            (onfalse ? onfalse : merge)))
+    {
+        return false;
     }
 
     /* Now enter the merge block */
@@ -919,5 +915,17 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
 
 bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value **out)
 {
+    ast_expression_codegen *cgen;
+
+    ir_value *precond;
+    ir_value *postcond;
+
+    ir_block *binit;
+    ir_block *bprecond;
+    ir_block *bpostcond;
+    ir_block *bincrement;
+
+    (void)lvalue;
+
     return false;
 }
