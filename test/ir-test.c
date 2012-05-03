@@ -1,5 +1,12 @@
 #include "gmqcc.h"
 #include "ir.h"
+
+#ifdef assert
+#   undef assert
+#endif
+/* (note: 'do {} while(0)' forces the need for a semicolon after assert() */
+#define assert(x) do { if ( !(x) ) { printf("Assertion failed: %s\n", #x); abort(); } } while(0)
+
 int main()
 {
 	ir_builder *b  = ir_builder_new("test");
@@ -24,44 +31,47 @@ int main()
 	ir_instr    *retphi = NULL;
 	ir_value    *retval = NULL;
 
-	if (!ir_value_set_float(v3, 3.0f)  ||
-	    !ir_value_set_float(vb, 4.0f)  ||
-	    !ir_value_set_float(vc, 10.0f) ||
-	    !ir_value_set_float(vd, 20.0f) )
-	    abort();
+	assert(ir_value_set_float(v3, 3.0f)  );
+	assert(ir_value_set_float(vb, 4.0f)  );
+	assert(ir_value_set_float(vc, 10.0f) );
+	assert(ir_value_set_float(vd, 20.0f) );
 
 	fmain = ir_builder_create_function(b, "main");
+	assert(fmain);
 
 	la = ir_function_create_local(fmain, "loc1", TYPE_FLOAT);
-	(void)la;
+	assert(la);
 
-	bmain = ir_function_create_block(fmain, "top");
-	blt   = ir_function_create_block(fmain, "less");
-	bge   = ir_function_create_block(fmain, "greaterequal");
-	bend  = ir_function_create_block(fmain, "end");
+	assert( bmain = ir_function_create_block(fmain, "top")          );
+	assert( blt   = ir_function_create_block(fmain, "less")         );
+	assert( bge   = ir_function_create_block(fmain, "greaterequal") );
+	assert( bend  = ir_function_create_block(fmain, "end")          );
 
-	if (!ir_block_create_store_op(bmain, INSTR_STORE_F, va, v3)) abort();
-	sum = ir_block_create_add(bmain, "%sum", va, vb);
-	prd = ir_block_create_mul(bmain, "%mul", sum, vc);
-	less = ir_block_create_binop(bmain, "%less",
-	                                       INSTR_LT, prd, vd);
+	assert(ir_block_create_store_op(bmain, INSTR_STORE_F, va, v3));
+	assert( sum  = ir_block_create_add(bmain, "%sum", va, vb)               );
+	assert( prd  = ir_block_create_mul(bmain, "%mul", sum, vc)              );
+	assert( less = ir_block_create_binop(bmain, "%less", INSTR_LT, prd, vd) );
 
-	if (!ir_block_create_if(bmain, less, blt, bge)) abort();
+	assert(ir_block_create_if(bmain, less, blt, bge));
 
 	x1 = ir_block_create_binop(blt, "%x1", INSTR_ADD_F, sum, v3);
-	if (!ir_block_create_goto(blt, bend)) abort();
+	assert(x1);
+	assert(ir_block_create_goto(blt, bend));
 
 	vig = ir_block_create_binop(bge, "%ignore", INSTR_ADD_F, va, vb);
-	if (!ir_block_create_store_op(bge, INSTR_STORE_F, la, vig)) abort();
+	assert(vig);
+	assert(ir_block_create_store_op(bge, INSTR_STORE_F, la, vig));
 	x2 = ir_block_create_binop(bge, "%x2", INSTR_ADD_F, sum, v3);
-	if (!ir_block_create_goto(bge, bend)) abort();
+	assert(x2);
+	assert(ir_block_create_goto(bge, bend));
 
 	retphi = ir_block_create_phi(bend, "%retval", TYPE_FLOAT);
-	if (!ir_phi_add(retphi, blt, x1) ||
-	    !ir_phi_add(retphi, bge, x2) )
-	    abort();
+	assert(retphi);
+	assert(ir_phi_add(retphi, blt, x1));
+	assert(ir_phi_add(retphi, bge, x2));
 	retval = ir_phi_value(retphi);
-	if (!ir_block_create_return(bend, retval)) abort();
+	assert(retval);
+	assert(ir_block_create_return(bend, retval));
 
 	/*
 	printf("%i  should be 1\n", ir_value_life_merge(va, 31));
@@ -88,7 +98,7 @@ int main()
 	*/
 
 	ir_builder_dump(b, printf);
-	if (!ir_function_finalize(fmain)) abort();
+	assert(ir_function_finalize(fmain));
 	ir_builder_dump(b, printf);
 
 	ir_value_dump_life(sum, printf);
