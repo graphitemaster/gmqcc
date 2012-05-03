@@ -743,6 +743,17 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
 
 bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_value **out)
 {
+    ast_expression_codegen *cgen;
+
+    ir_value *condval;
+    ir_value *trueval, *falseval;
+    ir_instr *phi;
+
+    ir_block *cond = func->curblock;
+    ir_block *ontrue;
+    ir_block *onfalse;
+    ir_block *merge;
+
     /* In theory it shouldn't be possible to pass through a node twice, but
      * in case we add any kind of optimization pass for the AST itself, it
      * may still happen, thus we remember a created ir_value and simply return one
@@ -752,5 +763,84 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         *out = self->phi_out;
         return true;
     }
-    return false;
+
+    /* Ternary can never create an lvalue... */
+    if (lvalue)
+        return false;
+
+    /* In the following, contraty to ast_ifthen, we assume both paths exist. */
+
+    /* create on-true block */
+    ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_T"));
+    if (!ontrue)
+        return false;
+    
+    /* create on-false block */
+    onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_F"));
+    if (!onfalse)
+        return false;
+
+    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_out"));
+    if (!merge)
+        return NULL;
+
+    /* generate the condition */
+    func->curblock = cond;
+    cgen = self->cond->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
+        return false;
+
+    if (!ir_block_create_if(cond, condval, ontrue, onfalse))
+        return false;
+
+    /* on-true path */
+    /* enter the block */
+    func->curblock = ontrue;
+
+    /* generate */
+    cgen = self->on_true->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->on_true), func, false, &trueval))
+        return false;
+
+    /* jump to merge block */
+    if (!ir_block_create_jump(ontrue, merge))
+        return false;
+
+    /* on-false path */
+    /* enter the block */
+    func->curblock = onfalse;
+
+    /* generate */
+    cgen = self->on_false->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->on_false), func, false, &falseval))
+        return false;
+
+    /* jump to merge block */
+    if (!ir_block_create_jump(ontrue, merge))
+        return false;
+
+    /* Now enter the merge block */
+    func->curblock = merge;
+
+    /* Here, now, we need a PHI node
+     * but first some sanity checking...
+     */
+    if (trueval->vtype != falseval->vtype) {
+        /* error("ternary with different types on the two sides"); */
+        return false;
+    }
+
+    /* create PHI */
+    phi = ir_block_create_phi(merge, ast_function_label(func, "phi"), trueval->vtype);
+    if (!phi ||
+        !ir_phi_add(phi, ontrue,  trueval) ||
+        !ir_phi_add(phi, onfalse, falseval))
+    {
+        return false;
+    }
+
+    self->phi_out = ir_phi_value(phi);
+    *out = self->phi_out;
+
+    return true;
 }
