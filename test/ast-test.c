@@ -14,6 +14,7 @@ VECTOR_MAKE(ast_function*, functions);
 
 int main()
 {
+    /* AST */
     ast_expression *exp;
     ast_value      *gfoo    = NULL;
     ast_value      *gbar    = NULL;
@@ -23,6 +24,11 @@ int main()
     ast_function   *fmain   = NULL;
     ast_block      *ba      = NULL;
     ast_value      *li      = NULL;
+
+    /* IR */
+    ir_builder     *ir = NULL;
+
+    /* common stuff */
 
     size_t i;
     lex_ctx ctx;
@@ -98,6 +104,29 @@ int main()
     /* } block */
 
     /* Next up: Having the AST generate IR */
+
+    ir = ir_builder_new("ast_test");
+    assert(ir);
+
+    /* gen globals */
+    for (i = 0; i < globals_elements; ++i) {
+        if (!ast_global_codegen(globals_data[i], ir)) {
+            assert(!"failed to generate global");
+        }
+    }
+
+    /* gen functions */
+    for (i = 0; i < functions_elements; ++i) {
+        if (!ast_function_codegen(functions_data[i], ir)) {
+            assert(!"failed to generate function");
+        }
+    }
+
+    /* dump */
+    ir_builder_dump(ir, printf);
+
+    /* ir cleanup */
+    ir_builder_delete(ir);
 
     /* cleanup */
     /* Functions must be deleted FIRST since their expressions
