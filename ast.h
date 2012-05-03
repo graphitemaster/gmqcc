@@ -75,6 +75,8 @@ typedef struct
 {
     ast_node_common         node;
     ast_expression_codegen *codegen;
+    int                     vtype;
+    ast_expression         *next;
 } ast_expression_common;
 
 /* Value
@@ -90,8 +92,10 @@ struct ast_value_s
 
     const char *name;
 
+    /*
     int         vtype;
     ast_value  *next;
+    */
 
     bool isconst;
     union {
@@ -305,8 +309,13 @@ union ast_expression_u
 {
     ast_expression_common expression;
 
-    ast_binary binary;
-    ast_block  block;
+    ast_value    value;
+    ast_binary   binary;
+    ast_block    block;
+    ast_ternary  ternary;
+    ast_ifthen   ifthen;
+    ast_store    store;
+    ast_entfield entfield;
 };
 
 /* Node union

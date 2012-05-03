@@ -55,6 +55,52 @@ static void ast_expression_init(ast_expression *self,
                                 ast_expression_codegen *codegen)
 {
     self->expression.codegen = codegen;
+    self->expression.vtype   = TYPE_VOID;
+    self->expression.next    = NULL;
+}
+
+static void ast_expression_delete(ast_expression *self)
+{
+    if (self->expression.next)
+        ast_delete(self->expression.next);
+}
+
+static void ast_expression_delete_full(ast_expression *self)
+{
+    ast_expression_delete(self);
+    mem_d(self);
+}
+
+static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
+{
+    const ast_expression_common *cpex;
+    ast_expression_common *selfex;
+
+    if (!ex)
+        return NULL;
+    else
+    {
+        ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
+
+        cpex   = &ex->expression;
+        selfex = &self->expression;
+
+        selfex->vtype = cpex->vtype;
+        if (cpex->next)
+        {
+            selfex->next = ast_type_copy(ctx, cpex->next);
+            if (!selfex->next) {
+                mem_d(self);
+                return NULL;
+            }
+        }
+        else
+            selfex->next = NULL;
+
+        /* This may never be codegen()d */
+        selfex->codegen = NULL;
+        return self;
+    }
 }
 
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
@@ -65,8 +111,8 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->expression.node.keep = true; /* keep */
 
     self->name = name ? util_strdup(name) : NULL;
-    self->vtype = t;
-    self->next = NULL;
+    self->expression.vtype = t;
+    self->expression.next  = NULL;
     MEM_VECTOR_INIT(self, params);
     self->isconst = false;
     memset(&self->constval, 0, sizeof(self->constval));
@@ -85,10 +131,8 @@ void ast_value_delete(ast_value* self)
     for (i = 0; i < self->params_count; ++i)
         ast_value_delete(self->params[i]); /* delete, the ast_function is expected to die first */
     MEM_VECTOR_CLEAR(self, params);
-    if (self->next) /* delete, not unref, types are always copied */
-        ast_delete(self->next);
     if (self->isconst) {
-        switch (self->vtype)
+        switch (self->expression.vtype)
         {
         case TYPE_STRING:
             mem_d((void*)self->constval.vstring);
@@ -104,6 +148,7 @@ void ast_value_delete(ast_value* self)
             break;
         }
     }
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
@@ -132,13 +177,32 @@ void ast_binary_delete(ast_binary *self)
 {
     ast_unref(self->left);
     ast_unref(self->right);
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field)
 {
+    const ast_expression *outtype;
+
     ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
+
+    if (field->expression.vtype != TYPE_FIELD) {
+        mem_d(self);
+        return NULL;
+    }
+
+    outtype = field->expression.next;
+    if (!outtype) {
+        mem_d(self);
+        /* Error: field has no type... */
+        return NULL;
+    }
+
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_entfield_codegen);
+
+    self->expression.vtype = outtype->expression.vtype;
+    self->expression.next  = ast_type_copy(ctx, outtype->expression.next);
 
     self->entity = entity;
     self->field  = field;
@@ -150,6 +214,7 @@ void ast_entfield_delete(ast_entfield *self)
 {
     ast_unref(self->entity);
     ast_unref(self->field);
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
@@ -175,6 +240,7 @@ void ast_ifthen_delete(ast_ifthen *self)
     ast_unref(self->cond);
     ast_unref(self->on_true);
     ast_unref(self->on_false);
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
@@ -201,6 +267,7 @@ void ast_ternary_delete(ast_ternary *self)
     ast_unref(self->cond);
     ast_unref(self->on_true);
     ast_unref(self->on_false);
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
@@ -221,6 +288,7 @@ void ast_store_delete(ast_store *self)
 {
     ast_unref(self->dest);
     ast_unref(self->source);
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
@@ -247,6 +315,7 @@ void ast_block_delete(ast_block *self)
     for (i = 0; i < self->locals_count; ++i)
         ast_delete(self->locals[i]);
     MEM_VECTOR_CLEAR(self, locals);
+    ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
@@ -256,7 +325,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 
     if (!vtype ||
         vtype->isconst ||
-        vtype->vtype != TYPE_FUNCTION)
+        vtype->expression.vtype != TYPE_FUNCTION)
     {
         mem_d(self);
         return NULL;
@@ -331,7 +400,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 bool ast_global_codegen(ast_value *self, ir_builder *ir)
 {
     ir_value *v = NULL;
-    if (self->isconst && self->vtype == TYPE_FUNCTION)
+    if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
     {
         ir_function *func = ir_builder_create_function(ir, self->name);
         if (!func)
@@ -342,12 +411,12 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         return true;
     }
 
-    v = ir_builder_create_global(ir, self->name, self->vtype);
+    v = ir_builder_create_global(ir, self->name, self->expression.vtype);
     if (!v)
         return false;
 
     if (self->isconst) {
-        switch (self->vtype)
+        switch (self->expression.vtype)
         {
             case TYPE_FLOAT:
                 if (!ir_value_set_float(v, self->constval.vfloat))
@@ -367,7 +436,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
                  */
                 goto error;
             default:
-                printf("TODO: global constant type %i\n", self->vtype);
+                printf("TODO: global constant type %i\n", self->expression.vtype);
                 break;
         }
     }
@@ -384,7 +453,7 @@ error: /* clean up */
 bool ast_local_codegen(ast_value *self, ir_function *func)
 {
     ir_value *v = NULL;
-    if (self->isconst && self->vtype == TYPE_FUNCTION)
+    if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
     {
         /* Do we allow local functions? I think not...
          * this is NOT a function pointer atm.
@@ -392,7 +461,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func)
         return false;
     }
 
-    v = ir_function_create_local(func, self->name, self->vtype);
+    v = ir_function_create_local(func, self->name, self->expression.vtype);
     if (!v)
         return false;
 
@@ -400,7 +469,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func)
      * I suppose the IR will have to deal with this
      */
     if (self->isconst) {
-        switch (self->vtype)
+        switch (self->expression.vtype)
         {
             case TYPE_FLOAT:
                 if (!ir_value_set_float(v, self->constval.vfloat))
@@ -415,7 +484,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func)
                     goto error;
                 break;
             default:
-                printf("TODO: global constant type %i\n", self->vtype);
+                printf("TODO: global constant type %i\n", self->expression.vtype);
                 break;
         }
     }
