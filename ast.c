@@ -545,6 +545,19 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         if (!(*gen)((ast_expression*)self->blocks[i], self, false, &dummy))
             return false;
     }
+
+    /* TODO: check return types */
+    if (!self->curblock->is_return)
+    {
+        if (!self->vtype->expression.next ||
+            self->vtype->expression.next->expression.vtype == TYPE_VOID)
+            return ir_block_create_return(self->curblock, NULL);
+        else
+        {
+            /* error("missing return"); */
+            return false;
+        }
+    }
     return true;
 }
 
