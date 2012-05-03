@@ -368,10 +368,10 @@ void ast_function_delete(ast_function *self)
     mem_d(self);
 }
 
-const char* ast_function_label(ast_function *self)
+const char* ast_function_label(ast_function *self, const char *prefix)
 {
     size_t id = (self->labelcount++);
-    sprintf(self->labelbuf, "label%8u", (unsigned int)id);
+    sprintf(self->labelbuf, "%16s%8u", prefix, (unsigned int)id);
     return self->labelbuf;
 }
 
@@ -613,7 +613,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
         return false;
 
-    *out = ir_block_create_binop(func->curblock, ast_function_label(func),
+    *out = ir_block_create_binop(func->curblock, ast_function_label(func, "bin"),
                                  self->op, left, right);
     if (!*out)
         return false;
@@ -641,10 +641,10 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 
     if (lvalue) {
         /* address! */
-        *out = ir_block_create_fieldaddress(func->curblock, ast_function_label(func),
+        *out = ir_block_create_fieldaddress(func->curblock, ast_function_label(func, "efa"),
                                             ent, field);
     } else {
-        *out = ir_block_create_load_from_ent(func->curblock, ast_function_label(func),
+        *out = ir_block_create_load_from_ent(func->curblock, ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
     }
     if (!*out)
@@ -674,7 +674,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
 
     if (self->on_true) {
         /* create on-true block */
-        ontrue = ir_function_create_block(func->ir_func, ast_function_label(func));
+        ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "ontrue"));
         if (!ontrue)
             return false;
     } else
@@ -682,13 +682,13 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     
     if (self->on_false) {
         /* create on-false block */
-        onfalse = ir_function_create_block(func->ir_func, ast_function_label(func));
+        onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "onfalse"));
         if (!onfalse)
             return false;
     } else
         onfalse = NULL;
 
-    merge = ir_function_create_block(func->ir_func, ast_function_label(func));
+    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "endif"));
     if (!merge)
         return NULL;
 

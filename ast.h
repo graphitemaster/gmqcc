@@ -297,7 +297,7 @@ void ast_function_delete(ast_function*);
  * For "optimized" builds this can just keep returning "foo"...
  * or whatever...
  */
-const char* ast_function_label(ast_function*);
+const char* ast_function_label(ast_function*, const char *prefix);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);
 
