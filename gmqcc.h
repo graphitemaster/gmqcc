@@ -533,8 +533,9 @@ VECTOR_PROT(char,                   code_chars     );
  * code_write -- writes out the compiled file
  * code_init  -- prepares the code file
  */
-bool code_write (const char *filename);
-void code_init  ();
+bool     code_write     (const char *filename);
+void     code_init      ();
+uint32_t code_genstring (const char *string);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/

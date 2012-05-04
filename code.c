@@ -103,6 +103,16 @@ void code_init() {
     code_statements_add(empty_statement);
 }
 
+uint32_t code_genstring(const char *str)
+{
+    uint32_t off = code_chars_elements;
+    while (*str) {
+        code_chars_add(*str);
+        ++str;
+    }
+    return off;
+}
+
 void code_test() {
     prog_section_def       d1 = { TYPE_VOID,     28, 1 };
     prog_section_def       d2 = { TYPE_FUNCTION, 29, 8 };
