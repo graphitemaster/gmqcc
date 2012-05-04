@@ -949,7 +949,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     ir_block *old_bcontinue;
     ir_block *old_bbreak;
 
-    ir_block *btemp;
+    ir_block *tmpblock;
 
     (void)lvalue;
     (void)out;
@@ -1089,7 +1089,6 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     else                 tmpblock = bout;
     if (!ir_block_create_jump(bin, tmpblock))
         return false;
-    }
 
     /* From precond */
     if (bprecond)
@@ -1113,7 +1112,6 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else                 tmpblock = bout;
         if (!ir_block_create_jump(end_bbody, tmpblock))
             return false;
-        }
     }
 
     /* from increment */
@@ -1125,7 +1123,6 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else                 tmpblock = bout;
         if (!ir_block_create_jump(end_bincrement, tmpblock))
             return false;
-        }
     }
 
     /* from postcond */
