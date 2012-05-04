@@ -949,6 +949,8 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     ir_block *old_bcontinue;
     ir_block *old_bbreak;
 
+    ir_block *btemp;
+
     (void)lvalue;
     (void)out;
 
@@ -1081,14 +1083,13 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 
     /* Now all blocks are in place */
     /* From 'bin' we jump to whatever comes first */
-    if (bprecond       && !ir_block_create_jump(bin, bprecond))
+    if      (bprecond)   tmpblock = bprecond;
+    else if (bbody)      tmpblock = bbody;
+    else if (bpostcond)  tmpblock = bpostcond;
+    else                 tmpblock = bout;
+    if (!ir_block_create_jump(bin, tmpblock))
         return false;
-    else if (bbody     && !ir_block_create_jump(bin, bbody))
-        return false;
-    else if (bpostcond && !ir_block_create_jump(bin, bpostcond))
-        return false;
-    else if (             !ir_block_create_jump(bin, bout))
-        return false;
+    }
 
     /* From precond */
     if (bprecond)
@@ -1106,27 +1107,25 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     /* from body */
     if (bbody)
     {
-        if (bincrement     && !ir_block_create_jump(end_bbody, bincrement))
+        if      (bincrement) tmpblock = bincrement;
+        else if (bpostcond)  tmpblock = bpostcond;
+        else if (bprecond)   tmpblock = bprecond;
+        else                 tmpblock = bout;
+        if (!ir_block_create_jump(end_bbody, tmpblock))
             return false;
-        else if (bpostcond && !ir_block_create_jump(end_bbody, bpostcond))
-            return false;
-        else if (bprecond  && !ir_block_create_jump(end_bbody, bprecond))
-            return false;
-        else if              (!ir_block_create_jump(end_bbody, bout))
-            return false;
+        }
     }
 
     /* from increment */
     if (bincrement)
     {
-        if (bpostcond      && !ir_block_create_jump(end_bincrement, bpostcond))
+        if      (bpostcond)  tmpblock = bpostcond;
+        else if (bprecond)   tmpblock = bprecond;
+        else if (bbody)      tmpblock = bbody;
+        else                 tmpblock = bout;
+        if (!ir_block_create_jump(end_bincrement, tmpblock))
             return false;
-        else if (bprecond  && !ir_block_create_jump(end_bincrement, bprecond))
-            return false;
-        else if (bbody     && !ir_block_create_jump(end_bincrement, bbody))
-            return false;
-        else if              (!ir_block_create_jump(end_bincrement, bout))
-            return false;
+        }
     }
 
     /* from postcond */
