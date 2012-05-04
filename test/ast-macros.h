@@ -1,25 +1,6 @@
 #ifndef TEST_AST_MACROS_HDR
 #define TEST_AST_MACROS_HDR
 
-#if 0
-VAR(TYPE_FLOAT, i);
-VAR(TYPE_FLOAT, x);
-
-VAR(TYPE_FLOAT, f0);
-VAR(TYPE_FLOAT, f1);
-VAR(TYPE_FLOAT, f5);
-
-MKCONSTFLOAT(f0, 0.0);
-MKCONSTFLOAT(f1, 1.0);
-MKCONSTFLOAT(f5, 5.0);
-
-STATE(ASSIGN(STORE_F, i, f0));
-WHILE(BIN(LT, i, f5));
-STATE(ASSIGN(STORE_F, x, BIN(MUL_F, i, f5)));
-STATE(ASSIGN(STORE_F, i, BIN(ADD_F, i, f1)));
-ENDWHILE();
-#endif
-
 #define TESTVARS()   \
 ast_block *curblock; \
 lex_ctx    ctx
