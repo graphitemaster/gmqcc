@@ -1671,9 +1671,96 @@ on_error:
  * Breaking conventions is annoying...
  */
 
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
+{
+    int              nelems;
+    uint32_t        *elems;
+    prog_section_def def;
+
+    def.type = 0;
+    switch (global->vtype)
+    {
+    case TYPE_POINTER:
+        def.type++;
+        def.type++;
+    case TYPE_FIELD:
+        def.type++;
+    case TYPE_ENTITY:
+        def.type++;
+        def.type++;
+    case TYPE_FLOAT:
+        def.type++;
+    case TYPE_STRING:
+        def.type++;
+        nelems = 1;
+        break;
+    case TYPE_VECTOR:
+        def.type = 3;
+        nelems = 3;
+        break;
+    case TYPE_FUNCTION:
+        def.type = 6;
+        nelems = 1;
+        break;
+    default:
+        /* refuse to create 'void' type or any other fancy business. */
+        return false;
+    }
+
+    def.offset = code_globals_allocated;
+    def.name   = code_genstring(global->name);
+
+    if (code_defs_add(def) < 0)
+        return false;
+
+    if (!global->isconst) {
+        int i;
+        for (i = 0; i < nelems; ++i) {
+            if (code_globals_add(0) < 0)
+                return false;
+        }
+    } else {
+        if (global->vtype == TYPE_STRING) {
+            if (code_globals_add(code_genstring(global->constval.vstring)) < 0)
+                return false;
+        } else if (global->vtype == TYPE_FUNCTION) {
+            prog_section_function fun;
+            int i;
+
+            fun.profile    = 0;
+            fun.file = code_cachedstring(global->context.file);
+            fun.name = def.name;
+            for (i = 0; i < 8; ++i)
+                fun.argsize[i] = 0;
+            fun.nargs      = 0;
+            fun.entry      = 0;
+            fun.firstlocal = 0;
+            fun.locals     = 0;
+            code_functions_add(fun);
+        } else {
+            int i;
+            elems = (uint32_t*)&global->constval;
+            for (i = 0; i < nelems; ++i) {
+                if (code_globals_add(elems[i]) < 0)
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool ir_builder_generate(ir_builder *self, const char *filename)
 {
+    size_t i;
+
     code_init();
+
+    for (i = 0; i < self->globals_count; ++i)
+    {
+        if (!ir_builder_gen_global(self, self->globals[i]))
+            return false;
+    }
 
     code_write(filename);
     return false;
