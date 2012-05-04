@@ -1076,6 +1076,9 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         end_bincrement = func->curblock;
     }
 
+    /* In any case now, we continue from the outgoing block */
+    func->curblock = bout;
+
     /* Now all blocks are in place */
     /* From 'bin' we jump to whatever comes first */
     if (bprecond       && !ir_block_create_jump(bin, bprecond))
