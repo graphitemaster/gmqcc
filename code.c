@@ -113,6 +113,22 @@ uint32_t code_genstring(const char *str)
     return off;
 }
 
+uint32_t code_cachedstring(const char *str)
+{
+    size_t s = 0;
+    /* We could implement knuth-morris-pratt or something
+     * and also take substrings, but I'm uncomfortable with
+     * pointing to subparts of strings for the sake of clarity...
+     */
+    while (s < code_chars_elements) {
+        if (!strcmp(str, code_chars_data + s))
+            return s;
+        while (code_chars_data[s]) ++s;
+        ++s;
+    }
+    return code_genstring(str);
+}
+
 void code_test() {
     prog_section_def       d1 = { TYPE_VOID,     28, 1 };
     prog_section_def       d2 = { TYPE_FUNCTION, 29, 8 };
