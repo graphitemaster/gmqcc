@@ -1656,6 +1656,30 @@ on_error:
 }
 
 /***********************************************************************
+ *IR Code-Generation
+ *
+ * Since the IR has the convention of putting 'write' operands
+ * at the beginning, we have to rotate the operands of instructions
+ * properly in order to generate valid QCVM code.
+ *
+ * Having destinations at a fixed position is more convenient. In QC
+ * this is *mostly* OPC,  but FTE adds at least 2 instructions which
+ * read from from OPA,  and store to OPB rather than OPC.   Which is
+ * partially the reason why the implementation of these instructions
+ * in darkplaces has been delayed for so long.
+ *
+ * Breaking conventions is annoying...
+ */
+
+bool ir_builder_generate(ir_builder *self, const char *filename)
+{
+    code_init();
+
+    code_write(filename);
+    return false;
+}
+
+/***********************************************************************
  *IR DEBUG Dump functions...
  */
 

@@ -533,7 +533,7 @@ VECTOR_PROT(char,                   code_chars     );
  * code_write -- writes out the compiled file
  * code_init  -- prepares the code file
  */
-void code_write ();
+bool code_write (const char *filename);
 void code_init  ();
 
 /*===================================================================*/

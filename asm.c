@@ -65,7 +65,7 @@ void asm_init(const char *file, FILE **fp) {
 }
 void asm_close(FILE *fp) {
     fclose(fp);
-    code_write();
+    code_write("program.dat");
 }
 void asm_clear() {
     size_t i = 0;
