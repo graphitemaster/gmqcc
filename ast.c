@@ -939,6 +939,9 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     ir_block *bincrement, *end_bincrement;
     ir_block *bout, *bin;
 
+    /* let's at least move the outgoing block to the end */
+    size_t    bout_id;
+
     /* 'break' and 'continue' need to be able to find the right blocks */
     ir_block *bcontinue = NULL;
     ir_block *bbreak    = NULL;
@@ -1014,6 +1017,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         bpostcond = end_bpostcond = NULL;
     }
 
+    bout_id = func->ir_func->blocks_count;
     bout = ir_function_create_block(func->ir_func, ast_function_label(func, "after_loop"));
     if (!bout)
         return false;
@@ -1133,6 +1137,14 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         onfalse = bout;
         if (!ir_block_create_if(end_bpostcond, postcond, ontrue, onfalse))
             return false;
+    }
+
+    /* Move 'bout' to the end */
+    if (!ir_function_blocks_remove(func->ir_func, bout_id) ||
+        !ir_function_blocks_add(func->ir_func, bout))
+    {
+        ir_block_delete(bout);
+        return false;
     }
 
     return true;
