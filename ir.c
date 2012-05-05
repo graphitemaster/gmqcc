@@ -381,6 +381,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     ir_value *self;
     self = (ir_value*)mem_a(sizeof(*self));
     self->vtype = vtype;
+    self->fieldtype = TYPE_VOID;
     self->store = storetype;
     MEM_VECTOR_INIT(self, reads);
     MEM_VECTOR_INIT(self, writes);
@@ -389,6 +390,9 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->context.line = 0;
     self->name = NULL;
     ir_value_set_name(self, name);
+
+    memset(&self->constval, 0, sizeof(self->constval));
+    memset(&self->code,     0, sizeof(self->code));
 
     MEM_VECTOR_INIT(self, life);
     return self;
@@ -1670,84 +1674,223 @@ on_error:
  *
  * Breaking conventions is annoying...
  */
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global);
+
+static bool gen_global_field(ir_value *global)
+{
+    if (global->isconst)
+    {
+        ir_value *fld = global->constval.vpointer;
+        if (!fld) {
+            printf("Invalid field constant with no field: %s\n", global->name);
+            return false;
+        }
+
+        /* Now, in this case, a relocation would be impossible to code
+         * since it looks like this:
+         * .vector v = origin;     <- parse error, wtf is 'origin'?
+         * .vector origin;
+         *
+         * But we will need a general relocation support later anyway
+         * for functions... might as well support that here.
+         */
+        if (!fld->code.globaladdr) {
+            printf("FIXME: Relocation support\n");
+            return false;
+        }
+
+        /* copy the field's value */
+        global->code.globaladdr = code_globals_add(code_globals_data[fld->code.globaladdr]);
+    }
+    else
+    {
+        prog_section_field fld;
+
+        fld.name = global->code.name;
+        fld.offset = code_fields_elements;
+        fld.type = global->fieldtype;
+
+        if (fld.type == TYPE_VOID) {
+            printf("Field is missing a type: %s\n", global->name);
+            return false;
+        }
+
+        if (code_fields_add(fld) < 0)
+            return false;
+
+        global->code.globaladdr = code_globals_add(fld.offset);
+    }
+    if (global->code.globaladdr < 0)
+        return false;
+    return true;
+}
+
+static bool gen_global_pointer(ir_value *global)
+{
+    if (global->isconst)
+    {
+        ir_value *target = global->constval.vpointer;
+        if (!target) {
+            printf("Invalid pointer constant: %s\n", global->name);
+            /* NULL pointers are pointing to the NULL constant, which also
+             * sits at address 0, but still has an ir_value for itself.
+             */
+            return false;
+        }
+
+        /* Here, relocations ARE possible - in fteqcc-enhanced-qc:
+         * void() foo; <- proto
+         * void() *fooptr = &foo;
+         * void() foo = { code }
+         */
+        if (!target->code.globaladdr) {
+            /* FIXME: Check for the constant nullptr ir_value!
+             * because then code.globaladdr being 0 is valid.
+             */
+            printf("FIXME: Relocation support\n");
+            return false;
+        }
+
+        global->code.globaladdr = code_globals_add(target->code.globaladdr);
+    }
+    else
+    {
+        global->code.globaladdr = code_globals_add(0);
+    }
+    if (global->code.globaladdr < 0)
+        return false;
+    return true;
+}
+
+static bool gen_function_code(ir_function *self)
+{
+    return false;
+}
+
+static bool gen_global_function(ir_builder *ir, ir_value *global)
+{
+    prog_section_function fun;
+    ir_function          *irfun;
+
+    size_t i;
+
+    if (!global->isconst ||
+        !global->constval.vfunc)
+    {
+        printf("Invalid state of function-global: not constant: %s\n", global->name);
+        return false;
+    }
+
+    irfun = global->constval.vfunc;
+
+    fun.name    = global->code.name;
+    fun.file    = code_cachedstring(global->context.file);
+    fun.profile = 0; /* always 0 */
+    fun.nargs   = irfun->params_count;
+
+    for (i = 0;i < 8; ++i) {
+        if (i >= fun.nargs)
+            fun.argsize[i] = 0;
+        else if (irfun->params[i] == TYPE_VECTOR)
+            fun.argsize[i] = 3;
+        else
+            fun.argsize[i] = 1;
+    }
+
+    fun.locals = irfun->locals_count;
+    fun.firstlocal = code_globals_elements;
+    for (i = 0; i < irfun->locals_count; ++i) {
+        if (!ir_builder_gen_global(ir, irfun->locals[i]))
+            return false;
+    }
+
+    fun.entry      = code_statements_elements;
+    if (!gen_function_code(irfun))
+        return false;
+
+    return (code_functions_add(fun) >= 0);
+}
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 {
-    int              nelems;
-    uint32_t        *elems;
+    int32_t         *iptr;
     prog_section_def def;
 
     def.type = 0;
+    def.offset = code_globals_elements;
+    def.name   = global->code.name       = code_genstring(global->name);
+
     switch (global->vtype)
     {
     case TYPE_POINTER:
-        def.type++;
-        def.type++;
+        def.type = 7;
+        if (code_defs_add(def) < 0)
+            return false;
+        return gen_global_pointer(global);
     case TYPE_FIELD:
-        def.type++;
+        def.type = 5;
+        if (code_defs_add(def) < 0)
+            return false;
+        return gen_global_field(global);
     case TYPE_ENTITY:
-        def.type++;
-        def.type++;
+        def.type = 4;
+        if (code_defs_add(def) < 0)
+            return false;
     case TYPE_FLOAT:
-        def.type++;
+    {
+        def.type = 2;
+
+        if (code_defs_add(def) < 0)
+            return false;
+
+        if (global->isconst) {
+            iptr = (int32_t*)&global->constval.vfloat;
+            global->code.globaladdr = code_globals_add(*iptr);
+        } else
+            global->code.globaladdr = code_globals_add(0);
+
+        return global->code.globaladdr >= 0;
+    }
     case TYPE_STRING:
-        def.type++;
-        nelems = 1;
-        break;
+    {
+        def.type = 1;
+        if (code_defs_add(def) < 0)
+            return false;
+        if (global->isconst)
+            global->code.globaladdr = code_globals_add(code_cachedstring(global->constval.vstring));
+        else
+            global->code.globaladdr = code_globals_add(0);
+        return global->code.globaladdr >= 0;
+    }
     case TYPE_VECTOR:
+    {
         def.type = 3;
-        nelems = 3;
-        break;
+
+        if (code_defs_add(def) < 0)
+            return false;
+
+        if (global->isconst) {
+            iptr = (int32_t*)&global->constval.vvec;
+            global->code.globaladdr = code_globals_add(iptr[0]);
+            if (code_globals_add(iptr[1]) < 0 || code_globals_add(iptr[2]) < 0)
+                return false;
+        } else {
+            global->code.globaladdr = code_globals_add(0);
+            if (code_globals_add(0) < 0 || code_globals_add(0) < 0)
+                return false;
+        }
+        return global->code.globaladdr >= 0;
+    }
     case TYPE_FUNCTION:
         def.type = 6;
-        nelems = 1;
-        break;
+        if (code_defs_add(def) < 0)
+            return false;
+        return gen_global_function(self, global);
     default:
         /* refuse to create 'void' type or any other fancy business. */
+        printf("Invalid type for global variable %s\n", global->name);
         return false;
     }
-
-    def.offset = code_globals_allocated;
-    def.name   = code_genstring(global->name);
-
-    if (code_defs_add(def) < 0)
-        return false;
-
-    if (!global->isconst) {
-        int i;
-        for (i = 0; i < nelems; ++i) {
-            if (code_globals_add(0) < 0)
-                return false;
-        }
-    } else {
-        if (global->vtype == TYPE_STRING) {
-            if (code_globals_add(code_genstring(global->constval.vstring)) < 0)
-                return false;
-        } else if (global->vtype == TYPE_FUNCTION) {
-            prog_section_function fun;
-            int i;
-
-            fun.profile    = 0;
-            fun.file = code_cachedstring(global->context.file);
-            fun.name = def.name;
-            for (i = 0; i < 8; ++i)
-                fun.argsize[i] = 0;
-            fun.nargs      = 0;
-            fun.entry      = 0;
-            fun.firstlocal = 0;
-            fun.locals     = 0;
-            code_functions_add(fun);
-        } else {
-            int i;
-            elems = (uint32_t*)&global->constval;
-            for (i = 0; i < nelems; ++i) {
-                if (code_globals_add(elems[i]) < 0)
-                    return false;
-            }
-        }
-    }
-
-    return true;
 }
 
 bool ir_builder_generate(ir_builder *self, const char *filename)
@@ -1755,6 +1898,10 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     size_t i;
 
     code_init();
+
+    /* FIXME: generate TYPE_FUNCTION globals and link them
+     * to their ir_function.
+     */
 
     for (i = 0; i < self->globals_count; ++i)
     {

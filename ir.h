@@ -38,6 +38,8 @@ typedef struct ir_value_s {
     int       vtype;
     int       store;
     lex_ctx   context;
+    /* even the IR knows the subtype of a field */
+    int       fieldtype;
 
     MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
     MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
@@ -50,7 +52,13 @@ typedef struct ir_value_s {
         vector   vvec;
         char    *vstring;
         struct ir_value_s *vpointer;
+        struct ir_function_s *vfunc;
     } constval;
+
+    struct {
+        int32_t globaladdr;
+        int32_t name;
+    } code;
 
     /* For the temp allocator */
     MEM_VECTOR_MAKE(ir_life_entry_t, life);
@@ -265,5 +273,9 @@ ir_value* ir_builder_get_global(ir_builder*, const char *fun);
 ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);
 
 void ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));
+
+/* This code assumes 32 bit floats while generating binary */
+extern int check_int_and_float_size
+[ (sizeof(int32_t) == sizeof(( (ir_value*)(NULL) )->constval.vvec.x)) ? 1 : -1 ];
 
 #endif
