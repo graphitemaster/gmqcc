@@ -163,6 +163,14 @@ bool util_strdigit(const char *str) {
     return true;
 }
 
+bool util_strncmpexact(const char *src, const char *ned, size_t len) {
+    if (!strncmp(src, ned, len)) {
+        if (!src[len])
+            return true;
+    }
+    return false;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
     va_list  va;
     if (!opts_debug)

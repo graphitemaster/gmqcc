@@ -256,6 +256,7 @@ void  util_meminfo       ();
 
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
+bool  util_strncmpexact  (const char *, const char *, size_t);
 char *util_strdup        (const char *);
 char *util_strrq         (const char *);
 char *util_strrnl        (const char *);

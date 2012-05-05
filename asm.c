@@ -576,7 +576,7 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                                 *strchr(Y, ' ')='\0';                                              \
                             }                                                                      \
                             for (; f<asm_symbols_elements; f++) {                                  \
-                                if (!strcnmp(asm_symbols_data[f].name, (Y), strlen(Y)) &&          \
+                                if (!strncmp(asm_symbols_data[f].name, (Y), strlen(Y)) &&          \
                                             asm_symbols_data[f].type == TYPE_FUNCTION) {           \
                                     (X)=asm_symbols_data[f].offset;                                \
                                     goto OPCCAT(foundf, __LINE__);                                 \

@@ -82,29 +82,22 @@ FUNCTION: pow,            $97
 FUNCTION: findfloat,      $98
 FUNCTION: checkextension, $99
 
+FUNCTION: test     #0
+	FLOAT: x, 100
+	FLOAT: y, 200
 
-;code_chars_put("m_init",        0x6);
-;code_chars_put("m_keydown",     0x9);
-;code_chars_put("m_draw",        0x6);
-;code_chars_put("m_toggle",      0x8);
-;code_chars_put("m_shutdown",    0xA);
+	FLOAT: r_mul
+	FLOAT: r_div
+	FLOAT: r_add
+	FLOAT: r_sub
 
-FUNCTION: m_init     #0
-	CALL0 dprint
-END
+	MUL_V x,y,r_mul
+	DIV_V x,y,r_div
+	ADD_V x,y,r_add
+	SUV_V x,y,r_sub
 
-FUNCTION: m_keydown  #0
-	CALL0 dprint 
-END
+	STORE_V r_mul
+	CALL0   dprint
 
-FUNCTION: m_draw     #3VVV
-	CALL0 dprint 
-END
-
-FUNCTION: m_toggle   #1S
-	CALL0 dprint 
-END
-
-FUNCTION: m_shutdown #1S
-	CALL0 dprint 
+	STORE_V
 END

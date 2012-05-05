@@ -101,18 +101,18 @@ int main(int argc, char **argv) {
             case 'i': { param_argument(2); break; } /* includes */
             #undef parm_argument
             default:
-                if (!strncmp(&argv[1][1], "debug" , 5)) { opts_debug  = true; break; }
-                if (!strncmp(&argv[1][1], "memchk", 6)) { opts_memchk = true; break; }
-                if (!strncmp(&argv[1][1], "help",   4)) {
+                if (util_strncmpexact(&argv[1][1], "debug" , 5)) { opts_debug  = true; break; }
+                if (util_strncmpexact(&argv[1][1], "memchk", 6)) { opts_memchk = true; break; }
+                if (util_strncmpexact(&argv[1][1], "help",   4)) {
                     return usage(app);
                     break;
                 }
                 /* compiler type selection */
-                if (!strncmp(&argv[1][1], "std=qcc"   , 7 )) { opts_compiler = COMPILER_QCC;    break; }
-                if (!strncmp(&argv[1][1], "std=fteqcc", 10)) { opts_compiler = COMPILER_FTEQCC; break; }
-                if (!strncmp(&argv[1][1], "std=qccx",   8 )) { opts_compiler = COMPILER_QCCX;   break; }
-                if (!strncmp(&argv[1][1], "std=gmqcc",  9 )) { opts_compiler = COMPILER_GMQCC;  break; }
-                if (!strncmp(&argv[1][1], "std=",       4 )) {
+                if (util_strncmpexact(&argv[1][1], "std=qcc"   , 7 )) { opts_compiler = COMPILER_QCC;    break; }
+                if (util_strncmpexact(&argv[1][1], "std=fteqcc", 10)) { opts_compiler = COMPILER_FTEQCC; break; }
+                if (util_strncmpexact(&argv[1][1], "std=qccx",   8 )) { opts_compiler = COMPILER_QCCX;   break; }
+                if (util_strncmpexact(&argv[1][1], "std=gmqcc",  9 )) { opts_compiler = COMPILER_GMQCC;  break; }
+                if (util_strncmpexact(&argv[1][1], "std=",       4 )) {
                     printf("invalid std selection, supported types:\n"
                            "    -std=qcc     -- original QuakeC\n"
                            "    -std=ftqecc  -- fteqcc QuakeC\n"
@@ -122,28 +122,27 @@ int main(int argc, char **argv) {
                 }
 
                 /* code specific switches */
-                if (!strcmp(&argv[1][1], "fdarkplaces-stringtablebug")) {
+                if (util_strncmpexact(&argv[1][1], "fdarkplaces-stringtablebug", 26)) {
                     opts_darkplaces_stringtablebug = true;
                     break;
                 }
-                if (!strcmp(&argv[1][1], "fomit-nullcode")) {
+                if (util_strncmpexact(&argv[1][1], "fomit-nullcode", 14)) {
                     opts_omit_nullcode = true;
                     break;
                 }
-                return usage(app);
+                return printf("invalid command line argument: %s\n", argv[1]);
 
         }
         ++argv;
         --argc;
     }
-
     /*
      * options could depend on another option, this is where option
      * validity checking like that would take place.
      */
     if (opts_memchk && !opts_debug)
         printf("Warning: cannot enable -memchk, without -debug.\n");
-
+    
     util_debug("COM", "starting ...\n");
     /* multi file multi path compilation system */
     for (; itr < items_elements; itr++) {
