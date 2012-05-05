@@ -939,12 +939,17 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     ir_block *bincrement, *end_bincrement;
     ir_block *bout, *bin;
 
+    /* let's at least move the outgoing block to the end */
+    size_t    bout_id;
+
     /* 'break' and 'continue' need to be able to find the right blocks */
     ir_block *bcontinue = NULL;
     ir_block *bbreak    = NULL;
 
     ir_block *old_bcontinue;
     ir_block *old_bbreak;
+
+    ir_block *tmpblock;
 
     (void)lvalue;
     (void)out;
@@ -1014,6 +1019,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         bpostcond = end_bpostcond = NULL;
     }
 
+    bout_id = func->ir_func->blocks_count;
     bout = ir_function_create_block(func->ir_func, ast_function_label(func, "after_loop"));
     if (!bout)
         return false;
@@ -1072,15 +1078,16 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         end_bincrement = func->curblock;
     }
 
+    /* In any case now, we continue from the outgoing block */
+    func->curblock = bout;
+
     /* Now all blocks are in place */
     /* From 'bin' we jump to whatever comes first */
-    if (bprecond       && !ir_block_create_jump(bin, bprecond))
-        return false;
-    else if (bbody     && !ir_block_create_jump(bin, bbody))
-        return false;
-    else if (bpostcond && !ir_block_create_jump(bin, bpostcond))
-        return false;
-    else if (             !ir_block_create_jump(bin, bout))
+    if      (bprecond)   tmpblock = bprecond;
+    else if (bbody)      tmpblock = bbody;
+    else if (bpostcond)  tmpblock = bpostcond;
+    else                 tmpblock = bout;
+    if (!ir_block_create_jump(bin, tmpblock))
         return false;
 
     /* From precond */
@@ -1099,26 +1106,22 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     /* from body */
     if (bbody)
     {
-        if (bincrement     && !ir_block_create_jump(end_bbody, bincrement))
-            return false;
-        else if (bpostcond && !ir_block_create_jump(end_bbody, bpostcond))
-            return false;
-        else if (bprecond  && !ir_block_create_jump(end_bbody, bprecond))
-            return false;
-        else if              (!ir_block_create_jump(end_bbody, bout))
+        if      (bincrement) tmpblock = bincrement;
+        else if (bpostcond)  tmpblock = bpostcond;
+        else if (bprecond)   tmpblock = bprecond;
+        else                 tmpblock = bout;
+        if (!ir_block_create_jump(end_bbody, tmpblock))
             return false;
     }
 
     /* from increment */
     if (bincrement)
     {
-        if (bpostcond      && !ir_block_create_jump(end_bincrement, bpostcond))
-            return false;
-        else if (bprecond  && !ir_block_create_jump(end_bincrement, bprecond))
-            return false;
-        else if (bbody     && !ir_block_create_jump(end_bincrement, bbody))
-            return false;
-        else if              (!ir_block_create_jump(end_bincrement, bout))
+        if      (bpostcond)  tmpblock = bpostcond;
+        else if (bprecond)   tmpblock = bprecond;
+        else if (bbody)      tmpblock = bbody;
+        else                 tmpblock = bout;
+        if (!ir_block_create_jump(end_bincrement, tmpblock))
             return false;
     }
 
@@ -1133,6 +1136,14 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         onfalse = bout;
         if (!ir_block_create_if(end_bpostcond, postcond, ontrue, onfalse))
             return false;
+    }
+
+    /* Move 'bout' to the end */
+    if (!ir_function_blocks_remove(func->ir_func, bout_id) ||
+        !ir_function_blocks_add(func->ir_func, bout))
+    {
+        ir_block_delete(bout);
+        return false;
     }
 
     return true;
