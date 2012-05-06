@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
                     opts_omit_nullcode = true;
                     break;
                 }
-                return printf("invalid command line argument: %s\n", argv[1]);
+                return printf("invalid command line argument: %s\n",argv[1]);
 
         }
         ++argv;

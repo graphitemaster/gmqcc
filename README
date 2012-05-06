@@ -1,58 +1,140 @@
-This is my work in progress Quake C compiler. There are very few _good_ QC
+This is a work in progress Quake C compiler. There are very few good QC
 compilers out there on the internet that can be used in the opensource
 community.  There are a lot of mediocre compilers, but no one wants those.
 This is the solution for that, for once a proper Quake C compiler that is
-capable of doing proper optimization.  The design so far of this compiler
-is basic, because it doesn't actually compile code yet.
+capable of doing proper optimization.
 
-gmqcc.h
-	This is the common header with all definitions, structures, and
-	constants for everything.
+The compiler is intended to implement modern day compiler design princibles
+and support modifications through extensions that are provided for the
+user through a low-level syntax specific-language inside the language itself
+to implement language functionality.
 
-error.c
-	This is the error subsystem, this handles the output of good detailed
-	error messages (not currently, but will), with colors and such.
+The design goals of the compiler are very large, it's intended the compiler
+supports a multitude of things, these things along with the status of
+completeness is represented below in a table.
+
++-------------------+-----------------------------+------------------+
+|     Feature       |  What's it for?             | Complete Factor  |
++-------------------+-----------------------------+------------------+
+. Lexical analysis  .  Tokenization               .       90%        .
+.-------------------.-----------------------------.------------------.
+. Tokenization      .  Parsing                    .       90%        .
+.-------------------.-----------------------------.------------------.
+. Parsing / SYA     .  AST Generation             .       09%        .
+.-------------------.-----------------------------.------------------.
+. AST Generation    .  IR  Generation             .       ??%        .
+.-------------------.-----------------------------.------------------.
+. IR  Generation    .  Code Generation            .       ??%        .
+.-------------------.-----------------------------.------------------.
+. Code Generation   .  Binary Generation          .       ??%        .
+.-------------------.-----------------------------.------------------.
+. Binary Generation .  Binary                     .      100%        .
++-------------------+-----------------------------+------------------+
+
+Design tree:
+	The compiler is intended to work in the following order:
+		Lexical analysis ->
+			Tokenization ->
+				Parsing:
+					Operator precedence:
+						Shynting yard algorithm
+					Inline assembly:
+						 Usage of the assembler subsystem:
+						 	top-down parsing and assemblation no optimization
+					Other parsing:
+						recrusive decent
+				->
+					Abstract syntax tree generation ->
+						Immediate representation (SSA):
+							Optimizations:
+								Constant propagation
+								Value range propogation
+								Sparse conditional constant propagation (possibly?)
+									Dead code elimination
+									Constant folding
+								Global value numbering
+								Partial redundancy elimination
+								Strength reduction
+								Common subexpression elimination
+								Peephole optimizations
+								Loop-invariant code motion
+								Inline expansion
+								Constant folding
+								Induction variable recognition and elimination
+								Dead store elimination
+								Jump threading
+						->
+							Code Generation:
+								Optimizations:
+									Rematerialization
+									Code Factoring
+									Recrusion Elimination
+									Loop unrolling
+									Deforestation
+							->
+								Binary Generation
+
+File tree and explination:
+	gmqcc.h
+		This is the common header with all definitions, structures, and
+		constants for everything.
+
+	error.c
+		This is the error subsystem, this handles the output of good detailed
+		error messages (not currently, but will), with colors and such.
 	
-lex.c
-	This is the lexer, a very small basic step-seek lexer that can be easily
-	changed to add new tokens, very retargetable.
-	
-main.c
-	This is the core compiler entry, handles switches (will) to toggle on
-	and off certian compiler features.
-	
-parse.c
-	This is the parser which goes over all tokens and generates a parse tree
-	and check for syntax correctness.
-	
-typedef.c
-	This is the typedef system, this is a seperate file because it's a lot more
-	complicated than it sounds.  This handles all typedefs, and even recrusive
-	typedefs.
-	
-util.c
-	These are utilities for the compiler, some things in here include a
-	allocator used for debugging, and some string functions.
-	
-assembler.c
-	This implements support for assembling Quake assembler (which doesn't
-	actually exist untill now: documentation of the Quake assembler is below.
-	This also implements (will) inline assembly for the C compiler.
-	
-README
-	This is the file you're currently reading
-	
-Makefile
-	The makefile, when sources are added you should add them to the SRC=
-	line otherwise the build will not pick it up.  Trivial stuff, small
-	easy to manage makefile, no need to complicate it.
-	Some targets:
-		#make gmqcc
-			Builds gmqcc, creating a gmqcc binary file in the current
-			directory as the makefile.
-			
-		#make clean
-			Cleans the build files left behind by a previous build
+	lex.c
+		This is the lexer, a very small basic step-seek lexer that can be easily
+		changed to add new tokens, very retargetable.
+		
+	main.c
+		This is the core compiler entry, handles switches (will) to toggle on
+		and off certian compiler features.
+		
+	parse.c
+		This is the parser which goes over all tokens and generates a parse tree
+		and check for syntax correctness.
+		
+	typedef.c
+		This is the typedef system, this is a seperate file because it's a lot more
+		complicated than it sounds.  This handles all typedefs, and even recrusive
+		typedefs.
+		
+	util.c
+		These are utilities for the compiler, some things in here include a
+		allocator used for debugging, and some string functions.
+		
+	assembler.c
+		This implements support for assembling Quake assembler (which doesn't
+		actually exist untill now: documentation of the Quake assembler is below.
+		This also implements (will) inline assembly for the C compiler.
+		
+	README
+		This is the file you're currently reading
+		
+	Makefile
+		The makefile, when sources are added you should add them to the SRC=
+		line otherwise the build will not pick it up.  Trivial stuff, small
+		easy to manage makefile, no need to complicate it.
+		Some targets:
+			#make gmqcc
+				Builds gmqcc, creating a `gmqcc` binary file in the current
+				directory as the makefile.
+			#make test
+				Builds the ir and ast tests, creating a `test_ir` and `test_ast`
+				binary file in the current directory as the makefile.
+			#make test_ir
+				Builds the ir test, creating a `test_ir` binary file in the
+				current directory as the makefile.
+			#make test_ast
+				Builds the asr test, creating a `test_ast` binary file in the
+				current directory as the makefile.
+			#make clean
+				Cleans the build files left behind by a previous build, as
+				well as all the binary files.
+			#make all
+				Builds the tests and the compiler binary all in the current
+				directory of the makefile.
 
 ////////////////////////////////////////////////////////////////////////
 ///////////////////// Quake Assembler Documentation ////////////////////
@@ -135,7 +217,7 @@ Misc:
 	
 	Examples:
 		AUTHOR: "Dale Weiler"
-		AUTHOR: "John Doe"
+		AUTHOR: "Wolfgang Bumiller"
 		
 	Colons exist for the sole reason of not having to use spaces after
 	keyword usage (however spaces are allowed).  To understand the

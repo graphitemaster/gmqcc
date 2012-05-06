@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+
 #define GMQCC_VERSION_MAJOR 0
 #define GMQCC_VERSION_MINOR 1
 #define GMQCC_VERSION_PATCH 0

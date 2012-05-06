@@ -164,11 +164,7 @@ bool util_strdigit(const char *str) {
 }
 
 bool util_strncmpexact(const char *src, const char *ned, size_t len) {
-    if (!strncmp(src, ned, len)) {
-        if (!src[len])
-            return true;
-    }
-    return false;
+    return (!strncmp(src, ned, len) && !src[len]);
 }
 
 void util_debug(const char *area, const char *ms, ...) {
