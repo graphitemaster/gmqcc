@@ -34,6 +34,9 @@ ir_builder* ir_builder_new(const char *modulename)
     ir_builder* self;
 
     self = (ir_builder*)mem_a(sizeof(*self));
+    if (!self)
+        return NULL;
+
     MEM_VECTOR_INIT(self, functions);
     MEM_VECTOR_INIT(self, globals);
     self->name = NULL;
@@ -140,6 +143,10 @@ ir_function* ir_function_new(ir_builder* owner)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
+
+    if (!self)
+        return NULL;
+
     self->name = NULL;
     if (!ir_function_set_name(self, "<@unnamed>")) {
         mem_d(self);
@@ -252,6 +259,11 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
 {
     ir_block *self;
     self = (ir_block*)mem_a(sizeof(*self));
+    if (!self)
+        return NULL;
+
+    memset(self, 0, sizeof(*self));
+
     self->label = NULL;
     if (!ir_block_set_label(self, name)) {
         mem_d(self);
@@ -269,6 +281,9 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     self->is_return = false;
     self->run_id = 0;
     MEM_VECTOR_INIT(self, living);
+
+    self->generated = false;
+
     return self;
 }
 MEM_VEC_FUNCTIONS(ir_block, ir_instr*, instr)
@@ -305,6 +320,9 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
 {
     ir_instr *self;
     self = (ir_instr*)mem_a(sizeof(*self));
+    if (!self)
+        return NULL;
+
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
