@@ -1937,8 +1937,10 @@ static bool gen_function_code(ir_function *self)
     if (block->generated)
         return true;
 
-    if (!gen_blocks_recursive(self, block))
+    if (!gen_blocks_recursive(self, block)) {
+        printf("failed to generate blocks for '%s'\n", self->name);
         return false;
+    }
     return true;
 }
 
@@ -1975,13 +1977,17 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     fun.locals = irfun->locals_count;
     fun.firstlocal = code_globals_elements;
     for (i = 0; i < irfun->locals_count; ++i) {
-        if (!ir_builder_gen_global(ir, irfun->locals[i]))
+        if (!ir_builder_gen_global(ir, irfun->locals[i])) {
+            printf("Failed to generate global %s\n", irfun->locals[i]);
             return false;
+        }
     }
 
     fun.entry      = code_statements_elements;
-    if (!gen_function_code(irfun))
+    if (!gen_function_code(irfun)) {
+        printf("Failed to generate code for function %s\n", irfun->name);
         return false;
+    }
 
     return (code_functions_add(fun) >= 0);
 }
@@ -2081,6 +2087,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
             return false;
     }
 
+    printf("writing '%s'...\n", filename);
     return code_write(filename);
 }
 
