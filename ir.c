@@ -2052,6 +2052,12 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
         if (code_defs_add(def) < 0)
             return false;
         return gen_global_function(self, global);
+    case TYPE_VARIANT:
+        /* assume biggest type */
+            global->code.globaladdr = code_globals_add(0);
+            code_globals_add(0);
+            code_globals_add(0);
+            return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
         printf("Invalid type for global variable %s\n", global->name);
@@ -2075,8 +2081,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
             return false;
     }
 
-    code_write(filename);
-    return false;
+    return code_write(filename);
 }
 
 /***********************************************************************

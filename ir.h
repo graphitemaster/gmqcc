@@ -275,6 +275,8 @@ ir_function* ir_builder_create_function(ir_builder*, const char *name);
 ir_value* ir_builder_get_global(ir_builder*, const char *fun);
 ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);
 
+bool ir_builder_generate(ir_builder *self, const char *filename);
+
 void ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));
 
 /* This code assumes 32 bit floats while generating binary */

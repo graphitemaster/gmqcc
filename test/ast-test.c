@@ -192,7 +192,7 @@ STATE(ASSIGN(STORE_F, vi, BIN(ADD_F, vi, f1)));
 ENDWHILE();
 
 ENDFUNCTION(main);
-    
+
     ir = ir_builder_new("ast_test");
     assert(ir);
 
@@ -215,6 +215,10 @@ ENDFUNCTION(main);
 
     /* dump */
     ir_builder_dump(ir, printf);
+
+    /* Now create a file */
+    if (!ir_builder_generate(ir, "test_ast.dat"))
+        printf("*** failed to generate code\n");
 
     /* ir cleanup */
     ir_builder_delete(ir);
