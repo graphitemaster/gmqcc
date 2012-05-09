@@ -215,12 +215,12 @@ bool code_write(const char *filename) {
         return false;
 
     if (1 != fwrite(&code_header,         sizeof(prog_header), 1, fp) ||
-        1 != fwrite(code_statements_data, sizeof(prog_section_statement)*code_statements_elements, 1, fp) ||
-        1 != fwrite(code_defs_data,       sizeof(prog_section_def)      *code_defs_elements,       1, fp) ||
-        1 != fwrite(code_fields_data,     sizeof(prog_section_field)    *code_fields_elements,     1, fp) ||
-        1 != fwrite(code_functions_data,  sizeof(prog_section_function) *code_functions_elements,  1, fp) ||
-        1 != fwrite(code_globals_data,    sizeof(int32_t)               *code_globals_elements,    1, fp) ||
-        1 != fwrite(code_chars_data,      1                             *code_chars_elements,      1, fp))
+        code_statements_elements != fwrite(code_statements_data, sizeof(prog_section_statement), code_statements_elements, fp) ||
+        code_defs_elements       != fwrite(code_defs_data,       sizeof(prog_section_def)      , code_defs_elements      , fp) ||
+        code_fields_elements     != fwrite(code_fields_data,     sizeof(prog_section_field)    , code_fields_elements    , fp) ||
+        code_functions_elements  != fwrite(code_functions_data,  sizeof(prog_section_function) , code_functions_elements , fp) ||
+        code_globals_elements    != fwrite(code_globals_data,    sizeof(int32_t)               , code_globals_elements   , fp) ||
+        code_chars_elements      != fwrite(code_chars_data,      1                             , code_chars_elements     , fp))
     {
         fclose(fp);
         return false;
