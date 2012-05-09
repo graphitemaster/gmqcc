@@ -1816,30 +1816,25 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     int32_t         *iptr;
     prog_section_def def;
 
-    def.type = 0;
+    def.type = global->vtype;
     def.offset = code_globals_elements;
     def.name   = global->code.name       = code_genstring(global->name);
 
     switch (global->vtype)
     {
     case TYPE_POINTER:
-        def.type = 7;
         if (code_defs_add(def) < 0)
             return false;
         return gen_global_pointer(global);
     case TYPE_FIELD:
-        def.type = 5;
         if (code_defs_add(def) < 0)
             return false;
         return gen_global_field(global);
     case TYPE_ENTITY:
-        def.type = 4;
         if (code_defs_add(def) < 0)
             return false;
     case TYPE_FLOAT:
     {
-        def.type = 2;
-
         if (code_defs_add(def) < 0)
             return false;
 
@@ -1853,7 +1848,6 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     }
     case TYPE_STRING:
     {
-        def.type = 1;
         if (code_defs_add(def) < 0)
             return false;
         if (global->isconst)
@@ -1864,8 +1858,6 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     }
     case TYPE_VECTOR:
     {
-        def.type = 3;
-
         if (code_defs_add(def) < 0)
             return false;
 
@@ -1882,7 +1874,6 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
         return global->code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
-        def.type = 6;
         if (code_defs_add(def) < 0)
             return false;
         return gen_global_function(self, global);
