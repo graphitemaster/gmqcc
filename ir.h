@@ -145,6 +145,9 @@ typedef struct ir_block_s
     size_t run_id;
 
     struct ir_function_s *owner;
+
+    bool   generated;
+    size_t code_start;
 } ir_block;
 
 ir_block* ir_block_new(struct ir_function_s *owner, const char *label);

@@ -1780,9 +1780,166 @@ static bool gen_global_pointer(ir_value *global)
     return true;
 }
 
+static bool gen_blocks_recursive(ir_function *func, ir_block *block)
+{
+    prog_section_statement stmt;
+    prog_section_statement *stptr;
+    ir_instr *instr;
+    ir_block *target;
+    ir_block *ontrue;
+    ir_block *onfalse;
+    size_t    stidx;
+    size_t    i;
+
+tailcall:
+    block->generated = true;
+    block->code_start = code_statements_elements;
+    for (i = 0; i < block->instr_count; ++i)
+    {
+        instr = block->instr[i];
+
+        if (instr->opcode == VINSTR_PHI) {
+            printf("cannot generate virtual instruction (phi)\n");
+            return false;
+        }
+
+        if (instr->opcode == VINSTR_JUMP) {
+            target = instr->bops[0];
+            /* for uncoditional jumps, if the target hasn't been generated
+             * yet, we generate them right here.
+             */
+            if (!target->generated) {
+                block = target;
+                goto tailcall;
+            }
+
+            /* otherwise we generate a jump instruction */
+            stmt.opcode = INSTR_GOTO;
+            stmt.o1.s1 = (target->code_start-1) - code_statements_elements;
+            stmt.o2.s1 = 0;
+            stmt.o3.s1 = 0;
+            if (code_statements_add(stmt) < 0)
+                return false;
+
+            /* no further instructions can be in this block */
+            return true;
+        }
+
+        if (instr->opcode == VINSTR_COND) {
+            ontrue  = instr->bops[0];
+            onfalse = instr->bops[1];
+            /* TODO: have the AST signal which block should
+             * come first: eg. optimize IFs without ELSE...
+             */
+
+            stmt.o1.s1 = instr->_ops[0]->code.globaladdr;
+
+            stmt.o3.s1 = 0;
+            if (ontrue->generated) {
+                stmt.opcode = INSTR_IF;
+                stmt.o2.s1 = (ontrue->code_start-1) - code_statements_elements;
+                if (code_statements_add(stmt) < 0)
+                    return false;
+            }
+            if (onfalse->generated) {
+                stmt.opcode = INSTR_IFNOT;
+                stmt.o2.s1 = (onfalse->code_start-1) - code_statements_elements;
+                if (code_statements_add(stmt) < 0)
+                    return false;
+            }
+            if (!ontrue->generated) {
+                if (onfalse->generated) {
+                    block = ontrue;
+                    goto tailcall;
+                }
+            }
+            if (!onfalse->generated) {
+                if (ontrue->generated) {
+                    block = onfalse;
+                    goto tailcall;
+                }
+            }
+            /* neither ontrue nor onfalse exist */
+            stmt.opcode = INSTR_IFNOT;
+            stidx = code_statements_elements - 1;
+            if (code_statements_add(stmt) < 0)
+                return false;
+            stptr = &code_statements_data[stidx];
+            /* on false we jump, so add ontrue-path */
+            if (!gen_blocks_recursive(func, ontrue))
+                return false;
+            /* fixup the jump address */
+            stptr->o2.s1 = (ontrue->code_start-1) - (stidx+1);
+            /* generate onfalse path */
+            if (onfalse->generated) {
+                /* may have been generated in the previous recursive call */
+                stmt.opcode = INSTR_GOTO;
+                stmt.o2.s1 = 0;
+                stmt.o3.s1 = 0;
+                stmt.o1.s1 = (onfalse->code_start-1) - code_statements_elements;
+                return (code_statements_add(stmt) >= 0);
+            }
+            /* if not, generate now */
+            block = onfalse;
+            goto tailcall;
+        }
+
+        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+            printf("TODO: call instruction\n");
+            return false;
+        }
+
+        if (instr->opcode == INSTR_STATE) {
+            printf("TODO: state instruction\n");
+            return false;
+        }
+
+        stmt.opcode = instr->opcode;
+        stmt.o1.u1 = 0;
+        stmt.o2.u1 = 0;
+        stmt.o3.u1 = 0;
+
+        /* This is the general order of operands */
+        if (instr->_ops[0])
+            stmt.o3.u1 = instr->_ops[0]->code.globaladdr;
+
+        if (instr->_ops[1])
+            stmt.o1.u1 = instr->_ops[1]->code.globaladdr;
+
+        if (instr->_ops[2])
+            stmt.o2.u1 = instr->_ops[2]->code.globaladdr;
+
+        if (stmt.opcode == INSTR_RETURN)
+        {
+            stmt.o1.u1 = stmt.o3.u1;
+            stmt.o3.u1 = 0;
+        }
+
+        if (code_statements_add(stmt) < 0)
+            return false;
+    }
+    return true;
+}
+
 static bool gen_function_code(ir_function *self)
 {
-    return false;
+    ir_block *block;
+
+    /* Starting from entry point, we generate blocks "as they come"
+     * for now. Dead blocks will not be translated obviously.
+     */
+    if (!self->blocks_count) {
+        printf("Function '%s' declared without body.\n", self->name);
+        return false;
+    }
+
+    block = self->blocks[0];
+    if (block->generated)
+        return true;
+
+    if (!gen_blocks_recursive(self, block))
+        return false;
+    return true;
 }
 
 static bool gen_global_function(ir_builder *ir, ir_value *global)
