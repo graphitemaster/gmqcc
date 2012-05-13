@@ -1978,7 +1978,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     fun.firstlocal = code_globals_elements;
     for (i = 0; i < irfun->locals_count; ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i])) {
-            printf("Failed to generate global %s\n", irfun->locals[i]);
+            printf("Failed to generate global %s\n", irfun->locals[i]->name);
             return false;
         }
     }
