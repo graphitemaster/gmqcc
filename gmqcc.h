@@ -56,8 +56,8 @@
 #   if __STDC_VERSION__ < 199901L && __GNUC__ < 3
         typedef int  _Bool
 #   else
-		typedef _Bool bool;
-#	endif
+        typedef _Bool bool;
+#   endif
 #   endif /* !__cplusplus */
 
 /*
