@@ -29,14 +29,16 @@
  * intereting like colors for the console.
  */
 #ifndef WIN32
-#    define CON_BLACK   30
-#    define CON_RED     31
-#    define CON_GREEN   32
-#    define CON_BROWN   33
-#    define CON_BLUE    34
-#    define CON_MAGENTA 35
-#    define CON_CYAN    36
-#    define CON_WHITE   37
+enum {
+    CON_BLACK   = 30,
+    CON_RED,
+    CON_GREEN,
+    CON_BROWN,
+    CON_BLUE,
+    CON_MAGENTA,
+    CON_CYAN ,
+    CON_WHITE
+};
 static const int error_color[] = {
     CON_RED,
     CON_CYAN,
