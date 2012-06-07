@@ -124,7 +124,6 @@ static int lex_trigraph(lex_file *file) {
         default:
             lex_unget('?', file);
             lex_unget(ch , file);
-            return '?';
     }
     return '?';
 }
