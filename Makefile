@@ -18,8 +18,7 @@ ifeq ($(CC), clang)
 		-Wno-missing-noreturn \
 		-Wno-ignored-qualifiers \
 		-Wno-unused-macros \
-		-Wno-format-nonliteral \
-		-Wno-shadow
+		-Wno-format-nonliteral
 
 endif
 OBJ     = lex.o       \
