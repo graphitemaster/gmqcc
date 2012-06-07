@@ -34,6 +34,9 @@ ir_builder* ir_builder_new(const char *modulename)
     ir_builder* self;
 
     self = (ir_builder*)mem_a(sizeof(*self));
+    if (!self)
+        return NULL;
+
     MEM_VECTOR_INIT(self, functions);
     MEM_VECTOR_INIT(self, globals);
     self->name = NULL;
@@ -140,6 +143,10 @@ ir_function* ir_function_new(ir_builder* owner)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
+
+    if (!self)
+        return NULL;
+
     self->name = NULL;
     if (!ir_function_set_name(self, "<@unnamed>")) {
         mem_d(self);
@@ -252,6 +259,11 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
 {
     ir_block *self;
     self = (ir_block*)mem_a(sizeof(*self));
+    if (!self)
+        return NULL;
+
+    memset(self, 0, sizeof(*self));
+
     self->label = NULL;
     if (!ir_block_set_label(self, name)) {
         mem_d(self);
@@ -269,6 +281,9 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     self->is_return = false;
     self->run_id = 0;
     MEM_VECTOR_INIT(self, living);
+
+    self->generated = false;
+
     return self;
 }
 MEM_VEC_FUNCTIONS(ir_block, ir_instr*, instr)
@@ -305,6 +320,9 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
 {
     ir_instr *self;
     self = (ir_instr*)mem_a(sizeof(*self));
+    if (!self)
+        return NULL;
+
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
@@ -381,6 +399,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     ir_value *self;
     self = (ir_value*)mem_a(sizeof(*self));
     self->vtype = vtype;
+    self->fieldtype = TYPE_VOID;
     self->store = storetype;
     MEM_VECTOR_INIT(self, reads);
     MEM_VECTOR_INIT(self, writes);
@@ -389,6 +408,9 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->context.line = 0;
     self->name = NULL;
     ir_value_set_name(self, name);
+
+    memset(&self->constval, 0, sizeof(self->constval));
+    memset(&self->code,     0, sizeof(self->code));
 
     MEM_VECTOR_INIT(self, life);
     return self;
@@ -1653,6 +1675,420 @@ on_error:
     MEM_VECTOR_CLEAR(&new_reads, v);
 #endif
     return false;
+}
+
+/***********************************************************************
+ *IR Code-Generation
+ *
+ * Since the IR has the convention of putting 'write' operands
+ * at the beginning, we have to rotate the operands of instructions
+ * properly in order to generate valid QCVM code.
+ *
+ * Having destinations at a fixed position is more convenient. In QC
+ * this is *mostly* OPC,  but FTE adds at least 2 instructions which
+ * read from from OPA,  and store to OPB rather than OPC.   Which is
+ * partially the reason why the implementation of these instructions
+ * in darkplaces has been delayed for so long.
+ *
+ * Breaking conventions is annoying...
+ */
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global);
+
+static bool gen_global_field(ir_value *global)
+{
+    if (global->isconst)
+    {
+        ir_value *fld = global->constval.vpointer;
+        if (!fld) {
+            printf("Invalid field constant with no field: %s\n", global->name);
+            return false;
+        }
+
+        /* Now, in this case, a relocation would be impossible to code
+         * since it looks like this:
+         * .vector v = origin;     <- parse error, wtf is 'origin'?
+         * .vector origin;
+         *
+         * But we will need a general relocation support later anyway
+         * for functions... might as well support that here.
+         */
+        if (!fld->code.globaladdr) {
+            printf("FIXME: Relocation support\n");
+            return false;
+        }
+
+        /* copy the field's value */
+        global->code.globaladdr = code_globals_add(code_globals_data[fld->code.globaladdr]);
+    }
+    else
+    {
+        prog_section_field fld;
+
+        fld.name = global->code.name;
+        fld.offset = code_fields_elements;
+        fld.type = global->fieldtype;
+
+        if (fld.type == TYPE_VOID) {
+            printf("Field is missing a type: %s\n", global->name);
+            return false;
+        }
+
+        if (code_fields_add(fld) < 0)
+            return false;
+
+        global->code.globaladdr = code_globals_add(fld.offset);
+    }
+    if (global->code.globaladdr < 0)
+        return false;
+    return true;
+}
+
+static bool gen_global_pointer(ir_value *global)
+{
+    if (global->isconst)
+    {
+        ir_value *target = global->constval.vpointer;
+        if (!target) {
+            printf("Invalid pointer constant: %s\n", global->name);
+            /* NULL pointers are pointing to the NULL constant, which also
+             * sits at address 0, but still has an ir_value for itself.
+             */
+            return false;
+        }
+
+        /* Here, relocations ARE possible - in fteqcc-enhanced-qc:
+         * void() foo; <- proto
+         * void() *fooptr = &foo;
+         * void() foo = { code }
+         */
+        if (!target->code.globaladdr) {
+            /* FIXME: Check for the constant nullptr ir_value!
+             * because then code.globaladdr being 0 is valid.
+             */
+            printf("FIXME: Relocation support\n");
+            return false;
+        }
+
+        global->code.globaladdr = code_globals_add(target->code.globaladdr);
+    }
+    else
+    {
+        global->code.globaladdr = code_globals_add(0);
+    }
+    if (global->code.globaladdr < 0)
+        return false;
+    return true;
+}
+
+static bool gen_blocks_recursive(ir_function *func, ir_block *block)
+{
+    prog_section_statement stmt;
+    prog_section_statement *stptr;
+    ir_instr *instr;
+    ir_block *target;
+    ir_block *ontrue;
+    ir_block *onfalse;
+    size_t    stidx;
+    size_t    i;
+
+tailcall:
+    block->generated = true;
+    block->code_start = code_statements_elements;
+    for (i = 0; i < block->instr_count; ++i)
+    {
+        instr = block->instr[i];
+
+        if (instr->opcode == VINSTR_PHI) {
+            printf("cannot generate virtual instruction (phi)\n");
+            return false;
+        }
+
+        if (instr->opcode == VINSTR_JUMP) {
+            target = instr->bops[0];
+            /* for uncoditional jumps, if the target hasn't been generated
+             * yet, we generate them right here.
+             */
+            if (!target->generated) {
+                block = target;
+                goto tailcall;
+            }
+
+            /* otherwise we generate a jump instruction */
+            stmt.opcode = INSTR_GOTO;
+            stmt.o1.s1 = (target->code_start-1) - code_statements_elements;
+            stmt.o2.s1 = 0;
+            stmt.o3.s1 = 0;
+            if (code_statements_add(stmt) < 0)
+                return false;
+
+            /* no further instructions can be in this block */
+            return true;
+        }
+
+        if (instr->opcode == VINSTR_COND) {
+            ontrue  = instr->bops[0];
+            onfalse = instr->bops[1];
+            /* TODO: have the AST signal which block should
+             * come first: eg. optimize IFs without ELSE...
+             */
+
+            stmt.o1.s1 = instr->_ops[0]->code.globaladdr;
+
+            stmt.o3.s1 = 0;
+            if (ontrue->generated) {
+                stmt.opcode = INSTR_IF;
+                stmt.o2.s1 = (ontrue->code_start-1) - code_statements_elements;
+                if (code_statements_add(stmt) < 0)
+                    return false;
+            }
+            if (onfalse->generated) {
+                stmt.opcode = INSTR_IFNOT;
+                stmt.o2.s1 = (onfalse->code_start-1) - code_statements_elements;
+                if (code_statements_add(stmt) < 0)
+                    return false;
+            }
+            if (!ontrue->generated) {
+                if (onfalse->generated) {
+                    block = ontrue;
+                    goto tailcall;
+                }
+            }
+            if (!onfalse->generated) {
+                if (ontrue->generated) {
+                    block = onfalse;
+                    goto tailcall;
+                }
+            }
+            /* neither ontrue nor onfalse exist */
+            stmt.opcode = INSTR_IFNOT;
+            stidx = code_statements_elements - 1;
+            if (code_statements_add(stmt) < 0)
+                return false;
+            stptr = &code_statements_data[stidx];
+            /* on false we jump, so add ontrue-path */
+            if (!gen_blocks_recursive(func, ontrue))
+                return false;
+            /* fixup the jump address */
+            stptr->o2.s1 = (ontrue->code_start-1) - (stidx+1);
+            /* generate onfalse path */
+            if (onfalse->generated) {
+                /* may have been generated in the previous recursive call */
+                stmt.opcode = INSTR_GOTO;
+                stmt.o2.s1 = 0;
+                stmt.o3.s1 = 0;
+                stmt.o1.s1 = (onfalse->code_start-1) - code_statements_elements;
+                return (code_statements_add(stmt) >= 0);
+            }
+            /* if not, generate now */
+            block = onfalse;
+            goto tailcall;
+        }
+
+        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+            printf("TODO: call instruction\n");
+            return false;
+        }
+
+        if (instr->opcode == INSTR_STATE) {
+            printf("TODO: state instruction\n");
+            return false;
+        }
+
+        stmt.opcode = instr->opcode;
+        stmt.o1.u1 = 0;
+        stmt.o2.u1 = 0;
+        stmt.o3.u1 = 0;
+
+        /* This is the general order of operands */
+        if (instr->_ops[0])
+            stmt.o3.u1 = instr->_ops[0]->code.globaladdr;
+
+        if (instr->_ops[1])
+            stmt.o1.u1 = instr->_ops[1]->code.globaladdr;
+
+        if (instr->_ops[2])
+            stmt.o2.u1 = instr->_ops[2]->code.globaladdr;
+
+        if (stmt.opcode == INSTR_RETURN)
+        {
+            stmt.o1.u1 = stmt.o3.u1;
+            stmt.o3.u1 = 0;
+        }
+
+        if (code_statements_add(stmt) < 0)
+            return false;
+    }
+    return true;
+}
+
+static bool gen_function_code(ir_function *self)
+{
+    ir_block *block;
+
+    /* Starting from entry point, we generate blocks "as they come"
+     * for now. Dead blocks will not be translated obviously.
+     */
+    if (!self->blocks_count) {
+        printf("Function '%s' declared without body.\n", self->name);
+        return false;
+    }
+
+    block = self->blocks[0];
+    if (block->generated)
+        return true;
+
+    if (!gen_blocks_recursive(self, block)) {
+        printf("failed to generate blocks for '%s'\n", self->name);
+        return false;
+    }
+    return true;
+}
+
+static bool gen_global_function(ir_builder *ir, ir_value *global)
+{
+    prog_section_function fun;
+    ir_function          *irfun;
+
+    size_t i;
+
+    if (!global->isconst ||
+        !global->constval.vfunc)
+    {
+        printf("Invalid state of function-global: not constant: %s\n", global->name);
+        return false;
+    }
+
+    irfun = global->constval.vfunc;
+
+    fun.name    = global->code.name;
+    fun.file    = code_cachedstring(global->context.file);
+    fun.profile = 0; /* always 0 */
+    fun.nargs   = irfun->params_count;
+
+    for (i = 0;i < 8; ++i) {
+        if (i >= fun.nargs)
+            fun.argsize[i] = 0;
+        else if (irfun->params[i] == TYPE_VECTOR)
+            fun.argsize[i] = 3;
+        else
+            fun.argsize[i] = 1;
+    }
+
+    fun.locals = irfun->locals_count;
+    fun.firstlocal = code_globals_elements;
+    for (i = 0; i < irfun->locals_count; ++i) {
+        if (!ir_builder_gen_global(ir, irfun->locals[i])) {
+            printf("Failed to generate global %s\n", irfun->locals[i]->name);
+            return false;
+        }
+    }
+
+    fun.entry      = code_statements_elements;
+    if (!gen_function_code(irfun)) {
+        printf("Failed to generate code for function %s\n", irfun->name);
+        return false;
+    }
+
+    return (code_functions_add(fun) >= 0);
+}
+
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
+{
+    int32_t         *iptr;
+    prog_section_def def;
+
+    def.type = global->vtype;
+    def.offset = code_globals_elements;
+    def.name   = global->code.name       = code_genstring(global->name);
+
+    switch (global->vtype)
+    {
+    case TYPE_POINTER:
+        if (code_defs_add(def) < 0)
+            return false;
+        return gen_global_pointer(global);
+    case TYPE_FIELD:
+        if (code_defs_add(def) < 0)
+            return false;
+        return gen_global_field(global);
+    case TYPE_ENTITY:
+        if (code_defs_add(def) < 0)
+            return false;
+    case TYPE_FLOAT:
+    {
+        if (code_defs_add(def) < 0)
+            return false;
+
+        if (global->isconst) {
+            iptr = (int32_t*)&global->constval.vfloat;
+            global->code.globaladdr = code_globals_add(*iptr);
+        } else
+            global->code.globaladdr = code_globals_add(0);
+
+        return global->code.globaladdr >= 0;
+    }
+    case TYPE_STRING:
+    {
+        if (code_defs_add(def) < 0)
+            return false;
+        if (global->isconst)
+            global->code.globaladdr = code_globals_add(code_cachedstring(global->constval.vstring));
+        else
+            global->code.globaladdr = code_globals_add(0);
+        return global->code.globaladdr >= 0;
+    }
+    case TYPE_VECTOR:
+    {
+        if (code_defs_add(def) < 0)
+            return false;
+
+        if (global->isconst) {
+            iptr = (int32_t*)&global->constval.vvec;
+            global->code.globaladdr = code_globals_add(iptr[0]);
+            if (code_globals_add(iptr[1]) < 0 || code_globals_add(iptr[2]) < 0)
+                return false;
+        } else {
+            global->code.globaladdr = code_globals_add(0);
+            if (code_globals_add(0) < 0 || code_globals_add(0) < 0)
+                return false;
+        }
+        return global->code.globaladdr >= 0;
+    }
+    case TYPE_FUNCTION:
+        if (code_defs_add(def) < 0)
+            return false;
+        return gen_global_function(self, global);
+    case TYPE_VARIANT:
+        /* assume biggest type */
+            global->code.globaladdr = code_globals_add(0);
+            code_globals_add(0);
+            code_globals_add(0);
+            return true;
+    default:
+        /* refuse to create 'void' type or any other fancy business. */
+        printf("Invalid type for global variable %s\n", global->name);
+        return false;
+    }
+}
+
+bool ir_builder_generate(ir_builder *self, const char *filename)
+{
+    size_t i;
+
+    code_init();
+
+    /* FIXME: generate TYPE_FUNCTION globals and link them
+     * to their ir_function.
+     */
+
+    for (i = 0; i < self->globals_count; ++i)
+    {
+        if (!ir_builder_gen_global(self, self->globals[i]))
+            return false;
+    }
+
+    printf("writing '%s'...\n", filename);
+    return code_write(filename);
 }
 
 /***********************************************************************

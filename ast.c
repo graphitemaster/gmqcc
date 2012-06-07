@@ -36,7 +36,7 @@
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
 /* It must not be possible to get here. */
-static void _ast_node_destroy(ast_node *self)
+static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
     fprintf(stderr, "ast node missing destroy()\n");
     abort();
@@ -925,31 +925,31 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 {
     ast_expression_codegen *cgen;
 
-    ir_value *dummy;
-    ir_value *precond;
-    ir_value *postcond;
+    ir_value *dummy      = NULL;
+    ir_value *precond    = NULL;
+    ir_value *postcond   = NULL;
 
     /* Since we insert some jumps "late" so we have blocks
      * ordered "nicely", we need to keep track of the actual end-blocks
      * of expressions to add the jumps to.
      */
-    ir_block *bbody,      *end_bbody;
-    ir_block *bprecond,   *end_bprecond;
-    ir_block *bpostcond,  *end_bpostcond;
-    ir_block *bincrement, *end_bincrement;
-    ir_block *bout, *bin;
+    ir_block *bbody      = NULL, *end_bbody      = NULL;
+    ir_block *bprecond   = NULL, *end_bprecond   = NULL;
+    ir_block *bpostcond  = NULL, *end_bpostcond  = NULL;
+    ir_block *bincrement = NULL, *end_bincrement = NULL;
+    ir_block *bout       = NULL, *bin            = NULL;
 
     /* let's at least move the outgoing block to the end */
     size_t    bout_id;
 
     /* 'break' and 'continue' need to be able to find the right blocks */
-    ir_block *bcontinue = NULL;
-    ir_block *bbreak    = NULL;
+    ir_block *bcontinue     = NULL;
+    ir_block *bbreak        = NULL;
 
-    ir_block *old_bcontinue;
-    ir_block *old_bbreak;
+    ir_block *old_bcontinue = NULL;
+    ir_block *old_bbreak    = NULL;
 
-    ir_block *tmpblock;
+    ir_block *tmpblock      = NULL;
 
     (void)lvalue;
     (void)out;

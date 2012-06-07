@@ -52,11 +52,16 @@
 #   endif /* !true  */
 #   define false (0)
 #   define true  (1)
-#   define bool _Bool
-#   if __STDC_VERSION__ < 199901L && __GNUC__ < 3
-        typedef int  _Bool
-#   endif
-#   endif /* !__cplusplus */
+#   ifdef __STDC_VERSION__
+#       if __STDC_VERSION__ < 199901L && __GNUC__ < 3
+            typedef int  bool;
+#       else
+            typedef _Bool bool;
+#       endif
+#   else
+        typedef int bool;
+#   endif /* !__STDC_VERSION__ */
+#endif    /* !__cplusplus      */
 
 /*
  * Of some functions which are generated we want to make sure
@@ -79,18 +84,34 @@
  * like gcc and clang might have an inline attribute we can
  * use if present.
  */
-#if __STDC_VERSION__ < 199901L
-#   if defined(__GNUC__) || defined (__CLANG__)
-#       if __GNUC__ < 2
-#           define GMQCC_INLINE
+#ifdef __STDC_VERSION__
+#    if __STDC_VERSION__ < 199901L
+#       if defined(__GNUC__) || defined (__CLANG__)
+#           if __GNUC__ < 2
+#               define GMQCC_INLINE
+#           else
+#               define GMQCC_INLINE __attribute__ ((always_inline))
+#           endif
 #       else
-#           define GMQCC_INLINE __attribute__ ((always_inline))
+#           define GMQCC_INLINE
 #       endif
-#   else
-#       define GMQCC_INLINE
-#   endif
+#    else
+#       define GMQCC_INLINE inline
+#    endif
 #else
-#   define GMQCC_INLINE inline
+#    define GMQCC_INLINE
+#endif /* !__STDC_VERSION__ */
+
+/*
+ * noreturn is present in GCC and clang
+ * it's required for _ast_node_destory otherwise -Wmissing-noreturn
+ * in clang complains about there being no return since abort() is
+ * called.
+ */
+#if (defined(__GNUC__) && __GNUC__ >= 2) || defined(__CLANG__)
+#    define GMQCC_NORETURN __attribute__ ((noreturn))
+#else
+#    define GMQCC_NORETURN
 #endif
 
 /*
@@ -135,8 +156,8 @@
          * fail.  There is no valid way to get a 64bit type at this point
          * without making assumptions of too many things.
          */
-        typedef char         int64_t;
-        typedef char         uint64_t;
+        typedef struct { char _fail : 0; } int64_t;
+        typedef struct { char _fail : 0; } uint64_t;
 #   endif
 #endif
 #ifdef _LP64 /* long pointer == 64 */
@@ -148,7 +169,7 @@
 #endif
 /* Ensure type sizes are correct: */
 typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
-typedef char uint16_size_if_correct [sizeof(uint16_t) == 2?1:-1];
+typedef char uint16_size_is_correct [sizeof(uint16_t) == 2?1:-1];
 typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
 typedef char uint64_size_is_correct [sizeof(uint64_t) == 8?1:-1];
 typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
@@ -532,8 +553,10 @@ VECTOR_PROT(char,                   code_chars     );
  * code_write -- writes out the compiled file
  * code_init  -- prepares the code file
  */
-void code_write ();
-void code_init  ();
+bool     code_write       (const char *filename);
+void     code_init        ();
+uint32_t code_genstring   (const char *string);
+uint32_t code_cachedstring(const char *string);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/

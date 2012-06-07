@@ -24,7 +24,7 @@
 typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
-static const int usage(const char *const app) {
+static int usage(const char *app) {
     printf("usage:\n"
            "    %s -c<file>          -oprog.dat -- compile file\n"
            "    %s -a<file>          -oprog.dat -- assemble file\n"
@@ -105,7 +105,6 @@ int main(int argc, char **argv) {
                 if (util_strncmpexact(&argv[1][1], "memchk", 6)) { opts_memchk = true; break; }
                 if (util_strncmpexact(&argv[1][1], "help",   4)) {
                     return usage(app);
-                    break;
                 }
                 /* compiler type selection */
                 if (util_strncmpexact(&argv[1][1], "std=qcc"   , 7 )) { opts_compiler = COMPILER_QCC;    break; }

@@ -1,5 +1,21 @@
 CC     ?= clang
-CFLAGS += -Wall -I. -pedantic-errors -std=c90 -Wno-attributes
+CFLAGS += -Wall -I. -pedantic-errors -std=c90
+
+#turn on tons of warnings if clang is present
+ifeq ($(CC), clang)
+	CFLAGS +=                  \
+		-Weverything                  \
+		-Wno-missing-prototypes       \
+		-Wno-unused-parameter         \
+		-Wno-sign-compare             \
+		-Wno-implicit-fallthrough     \
+		-Wno-sign-conversion          \
+		-Wno-conversion               \
+		-Wno-disabled-macro-expansion \
+		-Wno-padded                   \
+		-Wno-format-nonliteral
+
+endif
 OBJ     = lex.o       \
           error.o     \
           parse.o     \
@@ -34,3 +50,5 @@ all: test gmqcc
 
 clean:
 	rm -f *.o gmqcc test_ast test_ir test/*.o
+	
+

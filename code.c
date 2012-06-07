@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012
- *     Dale Weiler
+ *     Dale Weiler, Wolfgang Bumiller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -103,6 +103,32 @@ void code_init() {
     code_statements_add(empty_statement);
 }
 
+uint32_t code_genstring(const char *str)
+{
+    uint32_t off = code_chars_elements;
+    while (*str) {
+        code_chars_add(*str);
+        ++str;
+    }
+    return off;
+}
+
+uint32_t code_cachedstring(const char *str)
+{
+    size_t s = 0;
+    /* We could implement knuth-morris-pratt or something
+     * and also take substrings, but I'm uncomfortable with
+     * pointing to subparts of strings for the sake of clarity...
+     */
+    while (s < code_chars_elements) {
+        if (!strcmp(str, code_chars_data + s))
+            return s;
+        while (code_chars_data[s]) ++s;
+        ++s;
+    }
+    return code_genstring(str);
+}
+
 void code_test() {
     prog_section_def       d1 = { TYPE_VOID,     28, 1 };
     prog_section_def       d2 = { TYPE_FUNCTION, 29, 8 };
@@ -144,7 +170,7 @@ void code_test() {
     code_statements_add(s3);
 }
 
-void code_write() {
+bool code_write(const char *filename) {
     prog_header  code_header;
     FILE        *fp           = NULL;
     size_t       it           = 2;
@@ -184,14 +210,21 @@ void code_write() {
     util_endianswap(code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
     util_endianswap(code_globals_data,    code_globals_elements,    sizeof(int32_t));
 
-    fp = fopen("program.dat", "wb");
-    fwrite(&code_header,         1, sizeof(prog_header), fp);
-    fwrite(code_statements_data, 1, sizeof(prog_section_statement)*code_statements_elements, fp);
-    fwrite(code_defs_data,       1, sizeof(prog_section_def)      *code_defs_elements,       fp);
-    fwrite(code_fields_data,     1, sizeof(prog_section_field)    *code_fields_elements,     fp);
-    fwrite(code_functions_data,  1, sizeof(prog_section_function) *code_functions_elements,  fp);
-    fwrite(code_globals_data,    1, sizeof(int32_t)               *code_globals_elements,    fp);
-    fwrite(code_chars_data,      1, 1                             *code_chars_elements,      fp);
+    fp = fopen(filename, "wb");
+    if (!fp)
+        return false;
+
+    if (1 != fwrite(&code_header,         sizeof(prog_header), 1, fp) ||
+        code_statements_elements != fwrite(code_statements_data, sizeof(prog_section_statement), code_statements_elements, fp) ||
+        code_defs_elements       != fwrite(code_defs_data,       sizeof(prog_section_def)      , code_defs_elements      , fp) ||
+        code_fields_elements     != fwrite(code_fields_data,     sizeof(prog_section_field)    , code_fields_elements    , fp) ||
+        code_functions_elements  != fwrite(code_functions_data,  sizeof(prog_section_function) , code_functions_elements , fp) ||
+        code_globals_elements    != fwrite(code_globals_data,    sizeof(int32_t)               , code_globals_elements   , fp) ||
+        code_chars_elements      != fwrite(code_chars_data,      1                             , code_chars_elements     , fp))
+    {
+        fclose(fp);
+        return false;
+    }
 
     util_debug("GEN","HEADER:\n");
     util_debug("GEN","    version:    = %d\n", code_header.version );
@@ -254,4 +287,5 @@ void code_write() {
     mem_d(code_globals_data);
     mem_d(code_chars_data);
     fclose(fp);
+    return true;
 }

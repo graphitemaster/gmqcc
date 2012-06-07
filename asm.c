@@ -44,7 +44,7 @@ VECTOR_MAKE(asm_sym, asm_symbols);
  * Assembly text processing: this handles the internal collection
  * of text to allow parsing and assemblation.
  */
-static char *const asm_getline(size_t *byte, FILE *fp) {
+static char* asm_getline(size_t *byte, FILE *fp) {
     char   *line = NULL;
     size_t  read = util_getline(&line, byte, fp);
     *byte = read;
@@ -65,7 +65,7 @@ void asm_init(const char *file, FILE **fp) {
 }
 void asm_close(FILE *fp) {
     fclose(fp);
-    code_write();
+    code_write("program.dat");
 }
 void asm_clear() {
     size_t i = 0;
@@ -530,24 +530,6 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                  * This needs to have a fall state, we start from the
                  * end of the string and work backwards.
                  */
-                #define OPFILL(X)                                      \
-                    do {                                               \
-                        size_t w = 0;                                  \
-                        if (!(c = strrchr(c, ','))) {                  \
-                            printf("error, expected more operands\n"); \
-                            return false;                              \
-                        }                                              \
-                        c++;                                           \
-                        w++;                                           \
-                        while (*c == ' ' || *c == '\t') {              \
-                            c++;                                       \
-                            w++;                                       \
-                        }                                              \
-                        X  = (const char*)c;                           \
-                        c -= w;                                        \
-                       *c  = '\0';                                     \
-                        c  = (char*)skip;                              \
-                    } while (0)
                 #define OPEATS(X,Y) X##Y
                 #define OPCCAT(X,Y) OPEATS(X,Y)
                 #define OPLOAD(X,Y)                                                                \
@@ -597,7 +579,6 @@ static GMQCC_INLINE bool asm_parse_stmt(const char *skip, size_t line, asm_state
                     OPLOAD(s.o1.s1, c);
                     break;
                 }
-                #undef OPFILL
                 #undef OPLOAD
                 #undef OPCCAT
             }
