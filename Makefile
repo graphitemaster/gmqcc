@@ -3,17 +3,16 @@ CFLAGS += -Wall -I. -pedantic-errors -std=c90
 
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
-	CFLAGS += \
-		-Weverything \
-		-Wno-missing-prototypes \
-		-Wno-unused-parameter \
-		-Wno-sign-compare \
-		-Wno-implicit-fallthrough \
-		-Wno-sign-conversion \
-		-Wno-conversion \
+	CFLAGS +=                  \
+		-Weverything                  \
+		-Wno-missing-prototypes       \
+		-Wno-unused-parameter         \
+		-Wno-sign-compare             \
+		-Wno-implicit-fallthrough     \
+		-Wno-sign-conversion          \
+		-Wno-conversion               \
 		-Wno-disabled-macro-expansion \
-		-Wno-padded \
-		-Wno-undef \
+		-Wno-padded                   \
 		-Wno-format-nonliteral
 
 endif

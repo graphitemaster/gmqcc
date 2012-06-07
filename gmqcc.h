@@ -53,12 +53,16 @@
 #   endif /* !true  */
 #   define false (0)
 #   define true  (1)
-#   if __STDC_VERSION__ < 199901L && __GNUC__ < 3
-        typedef int  _Bool
+#   ifdef __STDC_VERSION__
+#       if __STDC_VERSION__ < 199901L && __GNUC__ < 3
+            typedef int  bool;
+#       else
+            typedef _Bool bool;
+#       endif
 #   else
-        typedef _Bool bool;
-#   endif
-#   endif /* !__cplusplus */
+        typedef int bool;
+#   endif /* !__STDC_VERSION__ */
+#endif    /* !__cplusplus      */
 
 /*
  * Of some functions which are generated we want to make sure
@@ -81,19 +85,23 @@
  * like gcc and clang might have an inline attribute we can
  * use if present.
  */
-#if __STDC_VERSION__ < 199901L
-#   if defined(__GNUC__) || defined (__CLANG__)
-#       if __GNUC__ < 2
-#           define GMQCC_INLINE
+#ifdef __STDC_VERSION__
+#    if __STDC_VERSION__ < 199901L
+#       if defined(__GNUC__) || defined (__CLANG__)
+#           if __GNUC__ < 2
+#               define GMQCC_INLINE
+#           else
+#               define GMQCC_INLINE __attribute__ ((always_inline))
+#           endif
 #       else
-#           define GMQCC_INLINE __attribute__ ((always_inline))
+#           define GMQCC_INLINE
 #       endif
-#   else
-#       define GMQCC_INLINE
-#   endif
+#    else
+#       define GMQCC_INLINE inline
+#    endif
 #else
-#   define GMQCC_INLINE inline
-#endif
+#    define GMQCC_INLINE
+#endif /* !__STDC_VERSION__ */
 
 /*
  * noreturn is present in GCC and clang
