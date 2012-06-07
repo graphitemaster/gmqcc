@@ -14,7 +14,6 @@ ifeq ($(CC), clang)
 		-Wno-disabled-macro-expansion \
 		-Wno-padded \
 		-Wno-undef \
-		-Wno-conditional-uninitialized \
 		-Wno-format-nonliteral
 
 endif
