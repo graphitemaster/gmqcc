@@ -44,7 +44,7 @@ VECTOR_MAKE(asm_sym, asm_symbols);
  * Assembly text processing: this handles the internal collection
  * of text to allow parsing and assemblation.
  */
-static char *const asm_getline(size_t *byte, FILE *fp) {
+static char* asm_getline(size_t *byte, FILE *fp) {
     char   *line = NULL;
     size_t  read = util_getline(&line, byte, fp);
     *byte = read;

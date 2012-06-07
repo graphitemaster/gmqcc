@@ -15,8 +15,6 @@ ifeq ($(CC), clang)
 		-Wno-padded \
 		-Wno-undef \
 		-Wno-conditional-uninitialized \
-		-Wno-missing-noreturn \
-		-Wno-ignored-qualifiers \
 		-Wno-format-nonliteral
 
 endif

@@ -24,7 +24,7 @@
 typedef struct { char *name, type; } argitem;
 VECTOR_MAKE(argitem, items);
 
-static const int usage(const char *const app) {
+static int usage(const char *app) {
     printf("usage:\n"
            "    %s -c<file>          -oprog.dat -- compile file\n"
            "    %s -a<file>          -oprog.dat -- assemble file\n"

@@ -36,7 +36,7 @@
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
 /* It must not be possible to get here. */
-static void _ast_node_destroy(ast_node *self)
+static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
     fprintf(stderr, "ast node missing destroy()\n");
     abort();

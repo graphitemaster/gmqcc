@@ -96,6 +96,18 @@
 #endif
 
 /*
+ * noreturn is present in GCC and clang
+ * it's required for _ast_node_destory otherwise -Wmissing-noreturn
+ * in clang complains about there being no return since abort() is
+ * called.
+ */
+#if (defined(__GNUC__) && __GNUC__ >= 2) || defined(__CLANG__)
+#    define GMQCC_NORETURN __attribute__ ((noreturn))
+#else
+#    define GMQCC_NORETURN
+#endif
+
+/*
  * stdint.h and inttypes.h -less subset
  * for systems that don't have it, which we must
  * assume is all systems. (int8_t not required)
