@@ -772,7 +772,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
             return false;
     } else
         ontrue = NULL;
-    
+
     /* on-false path */
     if (self->on_false) {
         /* create on-false block */
@@ -793,7 +793,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     /* Merge block were they all merge in to */
     merge = ir_function_create_block(func->ir_func, ast_function_label(func, "endif"));
     if (!merge)
-        return NULL;
+        return false;
 
     /* add jumps ot the merge block */
     if (ontrue && !ir_block_create_jump(ontrue, merge))
@@ -844,7 +844,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         return false;
 
     /* In the following, contraty to ast_ifthen, we assume both paths exist. */
-    
+
     /* generate the condition */
     func->curblock = cond;
     cgen = self->cond->expression.codegen;
@@ -865,7 +865,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         if (!(*cgen)((ast_expression*)(self->on_true), func, false, &trueval))
             return false;
     }
-    
+
     /* create on-false block */
     onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_F"));
     if (!onfalse)
@@ -884,7 +884,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     /* create merge block */
     merge = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_out"));
     if (!merge)
-        return NULL;
+        return false;
     /* jump to merge block */
     if (!ir_block_create_jump(ontrue, merge))
         return false;
