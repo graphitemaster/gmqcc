@@ -110,6 +110,7 @@ uint32_t code_genstring(const char *str)
         code_chars_add(*str);
         ++str;
     }
+    code_chars_add(0);
     return off;
 }
 
