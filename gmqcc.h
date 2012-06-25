@@ -353,6 +353,8 @@ uint32_t util_crc32(const char *, int, register const short);
 /*===================================================================*/
 /*=========================== code.c ================================*/
 /*===================================================================*/
+
+/* Note: if you change the order, fix type_sizeof in ir.c */
 enum {
     TYPE_VOID     ,
     TYPE_STRING   ,
@@ -363,8 +365,12 @@ enum {
     TYPE_FUNCTION ,
     TYPE_POINTER  ,
     /* TYPE_INTEGER  , */
-    TYPE_VARIANT
+    TYPE_VARIANT  ,
+
+    TYPE_COUNT
 };
+
+extern size_t type_sizeof[TYPE_COUNT];
 
 /*
  * Each paramater incerements by 3 since vector types hold

@@ -26,6 +26,25 @@
 #include "ir.h"
 
 /***********************************************************************
+ * Type sizes used at multiple points in the IR codegen
+ */
+
+size_t type_sizeof[TYPE_COUNT] = {
+    1, /* TYPE_VOID     */
+    1, /* TYPE_STRING   */
+    1, /* TYPE_FLOAT    */
+    3, /* TYPE_VECTOR   */
+    1, /* TYPE_ENTITY   */
+    1, /* TYPE_FIELD    */
+    1, /* TYPE_FUNCTION */
+    1, /* TYPE_POINTER  */
+#if 0
+    1, /* TYPE_INTEGER  */
+#endif
+    3, /* TYPE_VARIANT  */
+};
+
+/***********************************************************************
  *IR Builder
  */
 
@@ -1513,14 +1532,11 @@ MEM_VEC_FUNCTIONS(function_allocator, size_t,    positions)
 static bool function_allocator_alloc(function_allocator *alloc, const ir_value *var)
 {
     ir_value *slot;
-    size_t vsize = 1;
+    size_t vsize = type_sizeof[var->vtype];
 
     slot = ir_value_var("reg", store_global, var->vtype);
     if (!slot)
         return false;
-
-    if (slot->vtype == TYPE_VECTOR || slot->vtype == TYPE_VARIANT)
-        vsize = 3;
 
     if (!ir_value_life_merge_into(slot, var))
         goto localerror;
@@ -1578,8 +1594,8 @@ bool ir_function_allocate_locals(ir_function *self)
                 goto error;
 
             /* adjust size for this slot */
-            if (v->vtype == TYPE_VECTOR || v->vtype == TYPE_VARIANT)
-                alloc.sizes[a] = 3;
+            if (alloc.sizes[a] < type_sizeof[v->vtype])
+                alloc.sizes[a] = type_sizeof[v->vtype];
 
             self->values[i]->code.local = a;
             break;
@@ -1990,7 +2006,6 @@ static bool gen_global_pointer(ir_value *global)
 static bool gen_blocks_recursive(ir_function *func, ir_block *block)
 {
     prog_section_statement stmt;
-    prog_section_statement *stptr;
     ir_instr *instr;
     ir_block *target;
     ir_block *ontrue;
@@ -2022,7 +2037,7 @@ tailcall:
 
             /* otherwise we generate a jump instruction */
             stmt.opcode = INSTR_GOTO;
-            stmt.o1.s1 = (target->code_start-1) - code_statements_elements;
+            stmt.o1.s1 = (target->code_start) - code_statements_elements;
             stmt.o2.s1 = 0;
             stmt.o3.s1 = 0;
             if (code_statements_add(stmt) < 0)
@@ -2040,8 +2055,9 @@ tailcall:
              */
 
             stmt.o1.u1 = instr->_ops[0]->code.globaladdr;
-
+            stmt.o2.u1 = 0;
             stmt.o3.s1 = 0;
+
             if (ontrue->generated) {
                 stmt.opcode = INSTR_IF;
                 stmt.o2.s1 = (ontrue->code_start-1) - code_statements_elements;
@@ -2068,22 +2084,23 @@ tailcall:
             }
             /* neither ontrue nor onfalse exist */
             stmt.opcode = INSTR_IFNOT;
-            stidx = code_statements_elements - 1;
+            stidx = code_statements_elements;
             if (code_statements_add(stmt) < 0)
                 return false;
-            stptr = &code_statements_data[stidx];
             /* on false we jump, so add ontrue-path */
             if (!gen_blocks_recursive(func, ontrue))
                 return false;
             /* fixup the jump address */
-            stptr->o2.s1 = (ontrue->code_start-1) - (stidx+1);
+            code_statements_data[stidx].o2.s1 = code_statements_elements - stidx;
             /* generate onfalse path */
             if (onfalse->generated) {
+                /* fixup the jump address */
+                code_statements_data[stidx].o2.s1 = (onfalse->code_start) - (stidx);
                 /* may have been generated in the previous recursive call */
                 stmt.opcode = INSTR_GOTO;
+                stmt.o1.s1 = (onfalse->code_start) - code_statements_elements;
                 stmt.o2.s1 = 0;
                 stmt.o3.s1 = 0;
-                stmt.o1.s1 = (onfalse->code_start-1) - code_statements_elements;
                 return (code_statements_add(stmt) >= 0);
             }
             /* if not, generate now */
@@ -2166,6 +2183,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     ir_function          *irfun;
 
     size_t i;
+    size_t local_var_end;
 
     if (!global->isconst ||
         !global->constval.vfunc)
@@ -2191,12 +2209,29 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     }
 
     fun.firstlocal = code_globals_elements;
-    fun.locals = irfun->locals_count;
+    fun.locals     = irfun->allocated_locals + irfun->locals_count;
+
+    local_var_end = 0;
     for (i = 0; i < irfun->locals_count; ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i])) {
             printf("Failed to generate global %s\n", irfun->locals[i]->name);
             return false;
         }
+    }
+    if (irfun->locals_count) {
+        ir_value *last = irfun->locals[irfun->locals_count-1];
+        local_var_end = last->code.globaladdr;
+        local_var_end += type_sizeof[last->vtype];
+    }
+    for (i = 0; i < irfun->values_count; ++i)
+    {
+        /* generate code.globaladdr for ssa values */
+        ir_value *v = irfun->values[i];
+        v->code.globaladdr = local_var_end + v->code.local;
+    }
+    for (i = 0; i < irfun->locals_count; ++i) {
+        /* fill the locals with zeros */
+        code_globals_add(0);
     }
 
     fun.entry      = code_statements_elements;
