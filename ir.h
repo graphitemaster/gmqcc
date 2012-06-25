@@ -59,7 +59,7 @@ typedef struct ir_value_s {
         int32_t globaladdr;
         int32_t name;
         /* filled by the local-allocator */
-        int32_t slot;
+        int32_t local;
     } code;
 
     /* For the temp allocator */
@@ -221,6 +221,8 @@ typedef struct ir_function_s
 
     /* locally defined variables */
     MEM_VECTOR_MAKE(ir_value*, locals);
+
+    size_t allocated_locals;
 
     ir_block*     first;
     ir_block*     last;

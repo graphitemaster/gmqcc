@@ -1581,11 +1581,11 @@ bool ir_function_allocate_locals(ir_function *self)
             if (v->vtype == TYPE_VECTOR || v->vtype == TYPE_VARIANT)
                 alloc.sizes[a] = 3;
 
-            self->values[i]->code.slot = a;
+            self->values[i]->code.local = a;
             break;
         }
         if (a >= alloc.locals_count) {
-            self->values[i]->code.slot = alloc.locals_count;
+            self->values[i]->code.local = alloc.locals_count;
             if (!function_allocator_alloc(&alloc, v))
                 goto error;
         }
@@ -1602,9 +1602,11 @@ bool ir_function_allocate_locals(ir_function *self)
             goto error;
     }
 
+    self->allocated_locals = pos + alloc.sizes[alloc.sizes_count-1];
+
     /* Take over the actual slot positions */
     for (i = 0; i < self->values_count; ++i)
-        self->values[i]->code.slot = alloc.positions[self->values[i]->code.slot];
+        self->values[i]->code.local = alloc.positions[self->values[i]->code.local];
 
     goto cleanup;
 
