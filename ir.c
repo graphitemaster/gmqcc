@@ -438,7 +438,8 @@ ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int 
 
 void ir_value_delete(ir_value* self)
 {
-    mem_d((void*)self->name);
+    if (self->name)
+        mem_d((void*)self->name);
     if (self->isconst)
     {
         if (self->vtype == TYPE_STRING)
@@ -661,7 +662,7 @@ bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
     return true;
 }
 
-bool ir_values_overlap(ir_value *a, ir_value *b)
+bool ir_values_overlap(const ir_value *a, const ir_value *b)
 {
     /* For any life entry in A see if it overlaps with
      * any life entry in B.
@@ -700,7 +701,7 @@ bool ir_values_overlap(ir_value *a, ir_value *b)
          * one entry is earlier than the other
          * that earlier entry will be moved forward
          */
-        if (la->end < lb->end)
+        if (la->start < lb->start)
         {
             /* order: A B, move A forward
              * check if we hit the end with A
@@ -708,7 +709,7 @@ bool ir_values_overlap(ir_value *a, ir_value *b)
             if (++la == enda)
                 break;
         }
-        else if (lb->end < la->end)
+        else if (lb->start < la->start)
         {
             /* order: B A, move B forward
              * check if we hit the end with B
@@ -1500,9 +1501,128 @@ bool ir_function_calculate_liferanges(ir_function *self)
  * we can allocate their global-positions.
  * This is the counterpart to register-allocation in register machines.
  */
+typedef struct {
+    MEM_VECTOR_MAKE(ir_value*, locals);
+    MEM_VECTOR_MAKE(size_t,    sizes);
+    MEM_VECTOR_MAKE(size_t,    positions);
+} function_allocator;
+MEM_VEC_FUNCTIONS(function_allocator, ir_value*, locals)
+MEM_VEC_FUNCTIONS(function_allocator, size_t,    sizes)
+MEM_VEC_FUNCTIONS(function_allocator, size_t,    positions)
+
+static bool function_allocator_alloc(function_allocator *alloc, const ir_value *var)
+{
+    ir_value *slot;
+    size_t vsize = 1;
+
+    slot = ir_value_var("reg", store_global, var->vtype);
+    if (!slot)
+        return false;
+
+    if (slot->vtype == TYPE_VECTOR || slot->vtype == TYPE_VARIANT)
+        vsize = 3;
+
+    if (!ir_value_life_merge_into(slot, var))
+        goto localerror;
+
+    if (!function_allocator_locals_add(alloc, slot))
+        goto localerror;
+
+    if (!function_allocator_sizes_add(alloc, vsize))
+        goto localerror;
+
+    return true;
+
+localerror:
+    ir_value_delete(slot);
+    return false;
+}
+
 bool ir_function_allocate_locals(ir_function *self)
 {
-    return true;
+    size_t i, a;
+    bool   retval = true;
+    size_t pos;
+
+    ir_value *slot;
+    const ir_value *v;
+
+    function_allocator alloc;
+
+    MEM_VECTOR_INIT(&alloc, locals);
+    MEM_VECTOR_INIT(&alloc, sizes);
+    MEM_VECTOR_INIT(&alloc, positions);
+
+    for (i = 0; i < self->locals_count; ++i)
+    {
+        if (!function_allocator_alloc(&alloc, self->locals[i]))
+            goto error;
+    }
+
+    /* Allocate a slot for any value that still exists */
+    for (i = 0; i < self->values_count; ++i)
+    {
+        v = self->values[i];
+
+        if (!v->life_count)
+            continue;
+
+        for (a = 0; a < alloc.locals_count; ++a)
+        {
+            slot = alloc.locals[a];
+
+            if (ir_values_overlap(v, slot)) {
+                printf("over\n");
+                continue;
+            }
+                printf("not\n");
+
+            if (!ir_value_life_merge_into(slot, v))
+                goto error;
+
+            /* adjust size for this slot */
+            if (v->vtype == TYPE_VECTOR || v->vtype == TYPE_VARIANT)
+                alloc.sizes[a] = 3;
+
+            self->values[i]->code.slot = a;
+            break;
+        }
+        if (a >= alloc.locals_count) {
+            self->values[i]->code.slot = alloc.locals_count;
+            if (!function_allocator_alloc(&alloc, v))
+                goto error;
+        }
+    }
+
+    /* Adjust slot positions based on sizes */
+    if (!function_allocator_positions_add(&alloc, 0))
+        goto error;
+
+    for (i = 1; i < alloc.sizes_count; ++i)
+    {
+        pos = alloc.positions[i-1] + alloc.sizes[i-1];
+        if (!function_allocator_positions_add(&alloc, pos))
+            goto error;
+    }
+
+    /* Take over the actual slot positions */
+    for (i = 0; i < self->values_count; ++i)
+        self->values[i]->code.slot = alloc.positions[self->values[i]->code.slot];
+
+    for (i = 0; i < self->values_count; ++i)
+        printf("Value %s at slot %i\n", self->values[i]->name,
+                                        self->values[i]->code.slot);
+    goto cleanup;
+
+error:
+    retval = false;
+cleanup:
+    for (i = 0; i < alloc.locals_count; ++i)
+        ir_value_delete(alloc.locals[i]);
+    MEM_VECTOR_CLEAR(&alloc, locals);
+    MEM_VECTOR_CLEAR(&alloc, sizes);
+    MEM_VECTOR_CLEAR(&alloc, positions);
+    return retval;
 }
 
 /* Get information about which operand

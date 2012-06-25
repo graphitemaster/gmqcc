@@ -58,6 +58,8 @@ typedef struct ir_value_s {
     struct {
         int32_t globaladdr;
         int32_t name;
+        /* filled by the local-allocator */
+        int32_t slot;
     } code;
 
     /* For the temp allocator */
@@ -93,7 +95,7 @@ bool ir_value_life_merge_into(ir_value*, const ir_value*);
 /* check if a value lives at a specific point */
 bool ir_value_lives(ir_value*, size_t);
 /* check if the life-range of 2 values overlaps */
-bool ir_values_overlap(ir_value*, ir_value*);
+bool ir_values_overlap(const ir_value*, const ir_value*);
 
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));
