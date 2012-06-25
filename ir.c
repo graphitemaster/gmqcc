@@ -1832,7 +1832,7 @@ tailcall:
              * come first: eg. optimize IFs without ELSE...
              */
 
-            stmt.o1.s1 = instr->_ops[0]->code.globaladdr;
+            stmt.o1.u1 = instr->_ops[0]->code.globaladdr;
 
             stmt.o3.s1 = 0;
             if (ontrue->generated) {
