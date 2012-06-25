@@ -1909,9 +1909,18 @@ tailcall:
         if (instr->_ops[2])
             stmt.o2.u1 = instr->_ops[2]->code.globaladdr;
 
-        if (stmt.opcode == INSTR_RETURN)
+        if (stmt.opcode == INSTR_RETURN || stmt.opcode == INSTR_DONE)
         {
             stmt.o1.u1 = stmt.o3.u1;
+            stmt.o3.u1 = 0;
+        }
+        else if ((stmt.opcode >= INSTR_STORE_F    &&
+                  stmt.opcode <= INSTR_STORE_FNC)    ||
+                 (stmt.opcode >= INSTR_NOT_F      &&
+                  stmt.opcode <= INSTR_NOT_FNC))
+        {
+            /* 2-operand instructions with A -> B */
+            stmt.o2.u1 = stmt.o3.u1;
             stmt.o3.u1 = 0;
         }
 
@@ -1997,7 +2006,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     int32_t         *iptr;
     prog_section_def def;
 
-    def.type = global->vtype;
+    def.type   = global->vtype;
     def.offset = code_globals_elements;
     def.name   = global->code.name       = code_genstring(global->name);
 
@@ -2012,8 +2021,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             return false;
         return gen_global_field(global);
     case TYPE_ENTITY:
-        if (code_defs_add(def) < 0)
-            return false;
+        /* fall through */
     case TYPE_FLOAT:
     {
         if (code_defs_add(def) < 0)
@@ -2057,6 +2065,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     case TYPE_FUNCTION:
         if (code_defs_add(def) < 0)
             return false;
+        code_globals_add(code_functions_elements);
         return gen_global_function(self, global);
     case TYPE_VARIANT:
         /* assume biggest type */
@@ -2081,10 +2090,22 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
      * to their ir_function.
      */
 
+    for (i = 0; i < self->functions_count; ++i)
+    {
+        ir_value    *funval;
+        ir_function *fun = self->functions[i];
+
+        funval = ir_builder_create_global(self, fun->name, TYPE_FUNCTION);
+        funval->isconst = true;
+        funval->constval.vfunc = fun;
+        funval->context = fun->context;
+    }
+
     for (i = 0; i < self->globals_count; ++i)
     {
-        if (!ir_builder_gen_global(self, self->globals[i]))
+        if (!ir_builder_gen_global(self, self->globals[i])) {
             return false;
+        }
     }
 
     printf("writing '%s'...\n", filename);
