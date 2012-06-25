@@ -138,6 +138,7 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
 bool ir_function_naive_phi(ir_function*);
 void ir_function_enumerate(ir_function*);
 bool ir_function_calculate_liferanges(ir_function*);
+bool ir_function_allocate_locals(ir_function*);
 
 ir_function* ir_function_new(ir_builder* owner)
 {
@@ -222,6 +223,9 @@ bool ir_function_finalize(ir_function *self)
     ir_function_enumerate(self);
 
     if (!ir_function_calculate_liferanges(self))
+        return false;
+
+    if (!ir_function_allocate_locals(self))
         return false;
     return true;
 }
@@ -1414,6 +1418,16 @@ bool ir_function_calculate_liferanges(ir_function *self)
     return true;
 }
 
+/* Local-value allocator
+ * After finishing creating the liferange of all values used in a function
+ * we can allocate their global-positions.
+ * This is the counterpart to register-allocation in register machines.
+ */
+bool ir_function_allocate_locals(ir_function *self)
+{
+    return false;
+}
+
 /* Get information about which operand
  * is read from, or written to.
  */
@@ -1983,8 +1997,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
             fun.argsize[i] = 1;
     }
 
-    fun.locals = irfun->locals_count;
     fun.firstlocal = code_globals_elements;
+    fun.locals = irfun->locals_count;
     for (i = 0; i < irfun->locals_count; ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i])) {
             printf("Failed to generate global %s\n", irfun->locals[i]->name);
