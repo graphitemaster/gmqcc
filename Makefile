@@ -28,6 +28,7 @@ OBJ     = lex.o       \
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o
+OBJ_X = exec.o util.o
 
 #default is compiler only
 default: gmqcc
@@ -38,6 +39,8 @@ default: gmqcc
 test_ast: $(OBJ_A) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 test_ir:  $(OBJ_I) $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
+qcvm:     $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS)
 test: test_ast test_ir
 
