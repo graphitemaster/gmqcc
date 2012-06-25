@@ -15,6 +15,9 @@ ast_value *name
 #define VAR(type, name) \
 name = ast_value_new(ctx, #name, type)
 
+#define VARnamed(type, name, varname) \
+name = ast_value_new(ctx, #varname, type)
+
 #define MKGLOBAL(name) \
 assert(globals_add(name) >= 0)
 
@@ -58,7 +61,7 @@ do {                                                            \
     ast_function *func_##name;                                  \
     ast_block    *my_funcblock;                                 \
     DEFVAR(var_##name);                                         \
-    VAR(TYPE_FUNCTION, var_##name);                             \
+    VARnamed(TYPE_FUNCTION, var_##name, name);                  \
     MKGLOBAL(var_##name);                                       \
     func_##name = ast_function_new(ctx, #name, var_##name);     \
     assert(functions_add(func_##name) >= 0);                    \
@@ -66,7 +69,7 @@ do {                                                            \
     assert(my_funcblock);                                       \
     assert(ast_function_blocks_add(func_##name, my_funcblock)); \
     curblock = my_funcblock;
-    
+
 #define MKLOCAL(var) \
     assert(ast_block_locals_add(curblock, var))
 

@@ -168,7 +168,7 @@ int main()
     DEFVAR(f0);
     DEFVAR(f1);
     DEFVAR(f5);
-    
+
     TESTINIT();
 VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
