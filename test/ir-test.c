@@ -9,12 +9,18 @@
 
 int main()
 {
+    int lf;
+
 	ir_builder *b  = ir_builder_new("test");
 	ir_value   *va = ir_builder_create_global(b, "a", TYPE_FLOAT);
 	ir_value   *v3 = ir_builder_create_global(b, "const_f_3", TYPE_FLOAT);
 	ir_value   *vb = ir_builder_create_global(b, "b", TYPE_FLOAT);
 	ir_value   *vc = ir_builder_create_global(b, "c", TYPE_FLOAT);
 	ir_value   *vd = ir_builder_create_global(b, "d", TYPE_FLOAT);
+
+	ir_value   *life1  = ir_builder_create_global(b, "life1", TYPE_FLOAT);
+	ir_value   *life2  = ir_builder_create_global(b, "life2", TYPE_FLOAT);
+	ir_value   *life3  = ir_builder_create_global(b, "life3", TYPE_FLOAT);
 
 	ir_function *fmain  = NULL;
 	ir_value    *la     = NULL;
@@ -109,6 +115,35 @@ int main()
 	ir_value_dump_life(retval, printf);
 	ir_value_dump_life(vig, printf);
 	ir_value_dump_life(la, printf);
+
+	ir_value_life_merge_into(retval, vig);
+	ir_value_dump_life(retval, printf);
+	ir_value_life_merge(x1, 12);
+	ir_value_life_merge(x1, 13);
+	ir_value_life_merge(x1, 14);
+	ir_value_life_merge_into(retval, x1);
+	ir_value_dump_life(retval, printf);
+	ir_value_life_merge(x1, 20);
+	ir_value_life_merge(x1, 21);
+	ir_value_life_merge(x1, 22);
+	ir_value_life_merge_into(retval, x1);
+	ir_value_dump_life(retval, printf);
+	ir_value_life_merge(x2, 1);
+	ir_value_life_merge(x2, 2);
+	ir_value_life_merge_into(retval, x2);
+	ir_value_dump_life(retval, printf);
+	for (lf = 4; lf <= 15; ++lf)
+	    ir_value_life_merge(life1, lf);
+	ir_value_life_merge_into(retval, life1);
+	ir_value_dump_life(retval, printf);
+	for (lf = 17; lf <= 18; ++lf)
+	    ir_value_life_merge(life2, lf);
+	ir_value_life_merge_into(retval, life2);
+	ir_value_dump_life(retval, printf);
+	for (lf = 2; lf <= 29; ++lf)
+	    ir_value_life_merge(life3, lf);
+	ir_value_life_merge_into(retval, life3);
+	ir_value_dump_life(retval, printf);
 
 	ir_builder_delete(b);
 	return 0;

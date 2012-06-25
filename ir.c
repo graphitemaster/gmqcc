@@ -584,6 +584,83 @@ bool ir_value_life_merge(ir_value *self, size_t s)
     return ir_value_life_insert(self, i, new_entry);
 }
 
+bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
+{
+    size_t i, myi;
+
+    if (!other->life_count)
+        return true;
+
+    if (!self->life_count) {
+        for (i = 0; i < other->life_count; ++i) {
+            if (!ir_value_life_add(self, other->life[i]))
+                return false;
+        }
+        return true;
+    }
+
+    myi = 0;
+    for (i = 0; i < other->life_count; ++i)
+    {
+        const ir_life_entry_t *life = &other->life[i];
+        while (true)
+        {
+            ir_life_entry_t *entry = &self->life[myi];
+
+            if (life->end+1 < entry->start)
+            {
+                /* adding an interval before entry */
+                if (!ir_value_life_insert(self, myi, *life))
+                    return false;
+                ++myi;
+                break;
+            }
+
+            if (life->start <  entry->start &&
+                life->end   >= entry->start)
+            {
+                /* starts earlier and overlaps */
+                entry->start = life->start;
+            }
+
+            if (life->end     >  entry->end &&
+                life->start-1 <= entry->end)
+            {
+                /* ends later and overlaps */
+                entry->end = life->end;
+            }
+
+            /* see if our change combines it with the next ranges */
+            while (myi+1 < self->life_count &&
+                   entry->end+1 >= self->life[1+myi].start)
+            {
+                /* overlaps with (myi+1) */
+                if (entry->end < self->life[1+myi].end)
+                    entry->end = self->life[1+myi].end;
+                if (!ir_value_life_remove(self, myi+1))
+                    return false;
+                entry = &self->life[myi];
+            }
+
+            /* see if we're after the entry */
+            if (life->start > entry->end)
+            {
+                ++myi;
+                /* append if we're at the end */
+                if (myi >= self->life_count) {
+                    if (!ir_value_life_add(self, *life))
+                        return false;
+                    break;
+                }
+                /* otherweise check the next range */
+                continue;
+            }
+            break;
+        }
+    }
+    return true;
+}
+
 bool ir_values_overlap(ir_value *a, ir_value *b)
 {
     /* For any life entry in A see if it overlaps with
@@ -1425,7 +1502,7 @@ bool ir_function_calculate_liferanges(ir_function *self)
  */
 bool ir_function_allocate_locals(ir_function *self)
 {
-    return false;
+    return true;
 }
 
 /* Get information about which operand

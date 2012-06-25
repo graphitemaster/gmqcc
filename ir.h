@@ -89,6 +89,7 @@ MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life);
 /* merge an instruction into the life-range */
 /* returns false if the lifepoint was already known */
 bool ir_value_life_merge(ir_value*, size_t);
+bool ir_value_life_merge_into(ir_value*, const ir_value*);
 /* check if a value lives at a specific point */
 bool ir_value_lives(ir_value*, size_t);
 /* check if the life-range of 2 values overlaps */
