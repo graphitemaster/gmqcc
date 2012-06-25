@@ -1571,11 +1571,8 @@ bool ir_function_allocate_locals(ir_function *self)
         {
             slot = alloc.locals[a];
 
-            if (ir_values_overlap(v, slot)) {
-                printf("over\n");
+            if (ir_values_overlap(v, slot))
                 continue;
-            }
-                printf("not\n");
 
             if (!ir_value_life_merge_into(slot, v))
                 goto error;
@@ -1609,9 +1606,6 @@ bool ir_function_allocate_locals(ir_function *self)
     for (i = 0; i < self->values_count; ++i)
         self->values[i]->code.slot = alloc.positions[self->values[i]->code.slot];
 
-    for (i = 0; i < self->values_count; ++i)
-        printf("Value %s at slot %i\n", self->values[i]->name,
-                                        self->values[i]->code.slot);
     goto cleanup;
 
 error:
