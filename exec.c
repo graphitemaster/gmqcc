@@ -2,6 +2,47 @@
 
 #define QCVM_EXECUTOR
 
+#define _MEM_VEC_FUN_APPEND(Tself, Twhat, mem)                       \
+bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
+{                                                                    \
+    Twhat *reall;                                                    \
+    if (s->mem##_count+c >= s->mem##_alloc) {                        \
+        if (!s->mem##_alloc) {                                       \
+            s->mem##_alloc = c < 16 ? 16 : c;                        \
+        } else {                                                     \
+            s->mem##_alloc *= 2;                                     \
+            if (s->mem##_count+c >= s->mem##_alloc) {                \
+                s->mem##_alloc = s->mem##_count+c;                   \
+            }                                                        \
+        }                                                            \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);       \
+        if (!reall) {                                                \
+            return false;                                            \
+        }                                                            \
+        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);       \
+        mem_d(s->mem);                                               \
+        s->mem = reall;                                              \
+    }                                                                \
+    memcpy(&s->mem[s->mem##_count], p, c*sizeof(*p));                \
+    s->mem##_count += c;                                             \
+    return true;                                                     \
+}
+
+#define _MEM_VEC_FUN_RESIZE(Tself, Twhat, mem)                   \
+bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
+{                                                                \
+    Twhat *reall;                                                \
+    reall = (Twhat*)mem_a(sizeof(Twhat) * c);                    \
+    if (c > s->mem##_count) {                                    \
+        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
+    } else {                                                     \
+        memcpy(reall, s->mem, sizeof(Twhat) * c);                \
+    }                                                            \
+    s->mem##_count = c;                                          \
+    s->mem##_alloc = c;                                          \
+    return true;                                                 \
+}
+
 /* darkplaces has (or will have) a 64 bit prog loader
  * where the 32 bit qc program is autoconverted on load.
  * Since we may want to support that as well, let's redefine
@@ -36,17 +77,46 @@ typedef prog_section_both      prog_def;
 typedef prog_section_function  prog_function;
 typedef prog_section_statement prog_statement;
 
+enum {
+    VMERR_OK,
+    VMERR_TEMPSTRING_ALLOC,
+
+    VMERR_END
+};
+
 typedef struct {
     char           *filename;
 
-    prog_statement *code;
-    prog_def       *defs;
-    prog_def       *fields;
-    prog_function  *functions;
-    char           *strings;
-    qcint          *globals;
-    qcint          *entitydata;
+    MEM_VECTOR_MAKE(prog_statement, code);
+    MEM_VECTOR_MAKE(prog_def,       defs);
+    MEM_VECTOR_MAKE(prog_def,       fields);
+    MEM_VECTOR_MAKE(prog_function,  functions);
+    MEM_VECTOR_MAKE(char,           strings);
+    MEM_VECTOR_MAKE(qcint,          globals);
+    MEM_VECTOR_MAKE(qcint,          entitydata);
+
+    size_t tempstring_start;
+    size_t tempstring_at;
+
+    qcint  vmerror;
+
+    MEM_VECTOR_MAKE(qcint,  localstack);
+    MEM_VECTOR_MAKE(size_t, localsp);
 } qc_program;
+MEM_VEC_FUNCTIONS(qc_program, prog_statement, code)
+MEM_VEC_FUNCTIONS(qc_program, prog_def,       defs)
+MEM_VEC_FUNCTIONS(qc_program, prog_def,       fields)
+MEM_VEC_FUNCTIONS(qc_program, prog_function,  functions)
+MEM_VEC_FUNCTIONS(qc_program, char,           strings)
+_MEM_VEC_FUN_APPEND(qc_program, char, strings)
+_MEM_VEC_FUN_RESIZE(qc_program, char, strings)
+MEM_VEC_FUNCTIONS(qc_program, qcint,          globals)
+MEM_VEC_FUNCTIONS(qc_program, qcint,          entitydata)
+
+MEM_VEC_FUNCTIONS(qc_program,   qcint, localstack)
+_MEM_VEC_FUN_APPEND(qc_program, qcint, localstack)
+_MEM_VEC_FUN_RESIZE(qc_program, qcint, localstack)
+MEM_VEC_FUNCTIONS(qc_program,   size_t, localsp)
 
 qc_program* prog_load(const char *filename)
 {
@@ -87,6 +157,8 @@ qc_program* prog_load(const char *filename)
         perror("fseek");                                                         \
         goto error;                                                              \
     }                                                                            \
+    prog->progvar##_alloc = header.hdrvar.length;                                \
+    prog->progvar##_count = header.hdrvar.length;                                \
     prog->progvar = (type*)mem_a(header.hdrvar.length * sizeof(*prog->progvar)); \
     if (!prog->progvar)                                                          \
         goto error;                                                              \
@@ -106,6 +178,12 @@ qc_program* prog_load(const char *filename)
 
     fclose(file);
 
+    /* Add tempstring area */
+    prog->tempstring_start = prog->strings_count;
+    prog->tempstring_at    = prog->strings_count;
+    if (!qc_program_strings_resize(prog, prog->strings_count + 16*1024))
+        goto error;
+
     return prog;
 
 error:
@@ -123,24 +201,73 @@ error:
 
 void prog_delete(qc_program *prog)
 {
-    if (prog->filename)   mem_d(prog->filename);
-    if (prog->code)       mem_d(prog->code);
-    if (prog->defs)       mem_d(prog->defs);
-    if (prog->fields)     mem_d(prog->fields);
-    if (prog->functions)  mem_d(prog->functions);
-    if (prog->strings)    mem_d(prog->strings);
-    if (prog->globals)    mem_d(prog->globals);
-    if (prog->entitydata) mem_d(prog->entitydata);
+    if (prog->filename) mem_d(prog->filename);
+    MEM_VECTOR_CLEAR(prog, code);
+    MEM_VECTOR_CLEAR(prog, defs);
+    MEM_VECTOR_CLEAR(prog, fields);
+    MEM_VECTOR_CLEAR(prog, functions);
+    MEM_VECTOR_CLEAR(prog, strings);
+    MEM_VECTOR_CLEAR(prog, globals);
+    MEM_VECTOR_CLEAR(prog, entitydata);
+    MEM_VECTOR_CLEAR(prog, localstack);
+    MEM_VECTOR_CLEAR(prog, localsp);
     mem_d(prog);
 }
+
+/***********************************************************************
+ * VM code
+ */
+
+char* prog_getstring(qc_program *prog, qcint str)
+{
+    if (str < 0 || str >= prog->strings_count)
+        return prog->strings;
+    return prog->strings + str;
+}
+
+qcint prog_tempstring(qc_program *prog, const char *_str)
+{
+    /* we don't access it, but the macro-generated functions don't use
+     * const
+     */
+    char *str = (char*)_str;
+
+    size_t len = strlen(str);
+    size_t at = prog->tempstring_at;
+
+    /* when we reach the end we start over */
+    if (at + len >= prog->strings_count)
+        at = prog->tempstring_start;
+
+    /* when it doesn't fit, reallocate */
+    if (at + len >= prog->strings_count)
+    {
+        prog->strings_count = at;
+        if (!qc_program_strings_append(prog, str, len+1)) {
+            prog->vmerror = VMERR_TEMPSTRING_ALLOC;
+            return 0;
+        }
+        return at;
+    }
+
+    /* when it fits, just copy */
+    memcpy(prog->strings + at, str, len+1);
+    prog->tempstring_at += len+1;
+    return at;
+}
+
+/***********************************************************************
+ * main for when building the standalone executor
+ */
 
 #if defined(QCVM_EXECUTOR)
 int main(int argc, char **argv)
 {
+    size_t      i;
     qc_program *prog;
 
     if (argc != 2) {
-        printf("usage: %s prog.dat\n", argv[0]);
+        printf("usage: %s file\n", argv[0]);
         exit(1);
     }
 
@@ -148,6 +275,9 @@ int main(int argc, char **argv)
     if (!prog) {
         printf("failed to load program '%s'\n", argv[1]);
         exit(1);
+    }
+
+    for (i = 0; i < prog->functions_count; ++i) {
     }
 
     prog_delete(prog);
