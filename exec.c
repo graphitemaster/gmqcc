@@ -277,7 +277,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    for (i = 0; i < prog->functions_count; ++i) {
+    for (i = 1; i < prog->functions_count; ++i) {
+        printf("Found function: %s\n", prog_getstring(prog, prog->functions[i].name));
     }
 
     prog_delete(prog);
