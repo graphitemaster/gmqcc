@@ -264,6 +264,7 @@ qcint prog_tempstring(qc_program *prog, const char *_str)
 int main(int argc, char **argv)
 {
     size_t      i;
+    qcint       fnmain = -1;
     qc_program *prog;
 
     if (argc != 2) {
@@ -278,8 +279,16 @@ int main(int argc, char **argv)
     }
 
     for (i = 1; i < prog->functions_count; ++i) {
-        printf("Found function: %s\n", prog_getstring(prog, prog->functions[i].name));
+        const char *name = prog_getstring(prog, prog->functions[i].name);
+        printf("Found function: %s\n", name);
+        if (!strcmp(name, "main"))
+            fnmain = (qcint)i;
     }
+    if (fnmain > 0)
+    {
+    }
+    else
+        printf("No main function found\n");
 
     prog_delete(prog);
     return 0;
