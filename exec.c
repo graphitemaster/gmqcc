@@ -2,8 +2,6 @@
 
 #include "exec.h"
 
-#define QCVM_EXECUTOR
-
 qc_program* prog_load(const char *filename)
 {
     qc_program *prog;

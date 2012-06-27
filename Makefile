@@ -28,12 +28,15 @@ OBJ     = lex.o       \
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o
-OBJ_X = exec.o util.o
+OBJ_X = exec-standalone.o util.o
 
 #default is compiler only
 default: gmqcc
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
+
+exec-standalone.o: exec.c
+	$(CC) -c $< -o $@ $(CFLAGS) -DQCVM_EXECUTOR=1
 
 # test targets
 test_ast: $(OBJ_A) $(OBJ)
@@ -43,6 +46,7 @@ test_ir:  $(OBJ_I) $(OBJ)
 qcvm:     $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS)
 exec.o: qcvm_execprogram.h
+exec-standalone.o: qcvm_execprogram.h
 test: test_ast test_ir
 
 # compiler target
