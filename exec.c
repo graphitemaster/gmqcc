@@ -437,7 +437,7 @@ static void prog_print_statement(qc_program *prog, prog_statement *st)
     }
 }
 
-qcint prog_enterfunction(qc_program *prog, prog_function *func)
+static qcint prog_enterfunction(qc_program *prog, prog_function *func)
 {
     qc_exec_stack st;
     prog_function *cur = NULL;
@@ -468,7 +468,7 @@ qcint prog_enterfunction(qc_program *prog, prog_function *func)
     return func->entry;
 }
 
-qcint prog_leavefunction(qc_program *prog)
+static qcint prog_leavefunction(qc_program *prog)
 {
     qc_exec_stack st = prog->stack[prog->stack_count-1];
     if (!qc_program_stack_remove(prog, prog->stack_count-1)) {
