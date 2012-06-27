@@ -45,10 +45,6 @@ typedef union {
 typedef char qcfloat_size_is_correct [sizeof(qcfloat) == 4 ?1:-1];
 typedef char qcint_size_is_correct   [sizeof(qcint)   == 4 ?1:-1];
 
-typedef prog_section_both      prog_def;
-typedef prog_section_function  prog_function;
-typedef prog_section_statement prog_statement;
-
 enum {
     VMERR_OK,
     VMERR_TEMPSTRING_ALLOC,
@@ -56,7 +52,7 @@ enum {
     VMERR_END
 };
 
-#define JUMPS_DEFAULT 1000000
+#define VM_JUMPS_DEFAULT 1000000
 
 /* execute-flags */
 #define VMXF_DEFAULT 0x0000     /* default flags - nothing */
@@ -68,21 +64,21 @@ struct qc_program_s;
 typedef int (*prog_builtin)(struct qc_program_s *prog);
 
 typedef struct {
-    qcint          stmt;
-    size_t         localsp;
-    prog_function *function;
+    qcint                  stmt;
+    size_t                 localsp;
+    prog_section_function *function;
 } qc_exec_stack;
 
 typedef struct qc_program_s {
     char           *filename;
 
-    MEM_VECTOR_MAKE(prog_statement, code);
-    MEM_VECTOR_MAKE(prog_def,       defs);
-    MEM_VECTOR_MAKE(prog_def,       fields);
-    MEM_VECTOR_MAKE(prog_function,  functions);
-    MEM_VECTOR_MAKE(char,           strings);
-    MEM_VECTOR_MAKE(qcint,          globals);
-    MEM_VECTOR_MAKE(qcint,          entitydata);
+    MEM_VECTOR_MAKE(prog_section_statement, code);
+    MEM_VECTOR_MAKE(prog_section_def,       defs);
+    MEM_VECTOR_MAKE(prog_section_def,       fields);
+    MEM_VECTOR_MAKE(prog_section_function,  functions);
+    MEM_VECTOR_MAKE(char,                   strings);
+    MEM_VECTOR_MAKE(qcint,                  globals);
+    MEM_VECTOR_MAKE(qcint,                  entitydata);
 
     size_t tempstring_start;
     size_t tempstring_at;
@@ -104,19 +100,19 @@ typedef struct qc_program_s {
 
     int    argc; /* current arg count for debugging */
 } qc_program;
-MEM_VEC_FUNCTIONS(qc_program, prog_statement, code)
-MEM_VEC_FUNCTIONS(qc_program, prog_def,       defs)
-MEM_VEC_FUNCTIONS(qc_program, prog_def,       fields)
-MEM_VEC_FUNCTIONS(qc_program, prog_function,  functions)
-MEM_VEC_FUNCTIONS(qc_program, char,           strings)
-_MEM_VEC_FUN_APPEND(qc_program, char, strings)
-_MEM_VEC_FUN_RESIZE(qc_program, char, strings)
-MEM_VEC_FUNCTIONS(qc_program, qcint,          globals)
-MEM_VEC_FUNCTIONS(qc_program, qcint,          entitydata)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_statement, code)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_def,       defs)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_def,       fields)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_function,  functions)
+MEM_VEC_FUNCTIONS(qc_program,   char,                   strings)
+_MEM_VEC_FUN_APPEND(qc_program, char,                   strings)
+_MEM_VEC_FUN_RESIZE(qc_program, char,                   strings)
+MEM_VEC_FUNCTIONS(qc_program,   qcint,                  globals)
+MEM_VEC_FUNCTIONS(qc_program,   qcint,                  entitydata)
 
-MEM_VEC_FUNCTIONS(qc_program,   qcint, localstack)
-_MEM_VEC_FUN_APPEND(qc_program, qcint, localstack)
-_MEM_VEC_FUN_RESIZE(qc_program, qcint, localstack)
+MEM_VEC_FUNCTIONS(qc_program,   qcint,         localstack)
+_MEM_VEC_FUN_APPEND(qc_program, qcint,         localstack)
+_MEM_VEC_FUN_RESIZE(qc_program, qcint,         localstack)
 MEM_VEC_FUNCTIONS(qc_program,   qc_exec_stack, stack)
 
 MEM_VEC_FUNCTIONS(qc_program,   size_t, profile)
@@ -125,12 +121,12 @@ _MEM_VEC_FUN_RESIZE(qc_program, size_t, profile)
 qc_program* prog_load(const char *filename);
 void        prog_delete(qc_program *prog);
 
-bool prog_exec(qc_program *prog, prog_function *func, size_t flags, long maxjumps);
+bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
 
-char*     prog_getstring(qc_program *prog, qcint str);
-prog_def* prog_entfield(qc_program *prog, qcint off);
-prog_def* prog_getdef(qc_program *prog, qcint off);
-qcany*    prog_getedict(qc_program *prog, qcint e);
-qcint     prog_tempstring(qc_program *prog, const char *_str);
+char*             prog_getstring (qc_program *prog, qcint str);
+prog_section_def* prog_entfield  (qc_program *prog, qcint off);
+prog_section_def* prog_getdef    (qc_program *prog, qcint off);
+qcany*            prog_getedict  (qc_program *prog, qcint e);
+qcint             prog_tempstring(qc_program *prog, const char *_str);
 
 #endif /* GMQCC_EXEC_HDR */

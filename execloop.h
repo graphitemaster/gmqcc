@@ -50,7 +50,7 @@
 
 		while (1)
 		{
-		    prog_function  *newf;
+		    prog_section_function  *newf;
 		    qcany          *ed;
 		    qcany          *ptr;
 

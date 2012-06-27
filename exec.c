@@ -71,10 +71,10 @@ qc_program* prog_load(const char *filename)
     }
 #define read_data1(x, y) read_data(x, x, y)
 
-    read_data (statements, code, prog_statement);
-    read_data1(defs,             prog_def);
-    read_data1(fields,           prog_def);
-    read_data1(functions,        prog_function);
+    read_data (statements, code, prog_section_statement);
+    read_data1(defs,             prog_section_def);
+    read_data1(fields,           prog_section_def);
+    read_data1(functions,        prog_section_function);
     read_data1(strings,          char);
     read_data1(globals,          qcint);
 
@@ -132,7 +132,7 @@ char* prog_getstring(qc_program *prog, qcint str)
     return prog->strings + str;
 }
 
-prog_def* prog_entfield(qc_program *prog, qcint off)
+prog_section_def* prog_entfield(qc_program *prog, qcint off)
 {
     size_t i;
     for (i = 0; i < prog->fields_count; ++i) {
@@ -142,7 +142,7 @@ prog_def* prog_entfield(qc_program *prog, qcint off)
     return NULL;
 }
 
-prog_def* prog_getdef(qc_program *prog, qcint off)
+prog_section_def* prog_getdef(qc_program *prog, qcint off)
 {
     size_t i;
     for (i = 0; i < prog->defs_count; ++i) {
@@ -191,7 +191,7 @@ qcint prog_tempstring(qc_program *prog, const char *_str)
 static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
 {
     static char spaces[16+1] = "            ";
-    prog_def *def;
+    prog_section_def *def;
     qcany    *value;
     int       len;
 
@@ -236,7 +236,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
     }
 }
 
-static void prog_print_statement(qc_program *prog, prog_statement *st)
+static void prog_print_statement(qc_program *prog, prog_section_statement *st)
 {
     if (st->opcode >= (sizeof(asm_instr)/sizeof(asm_instr[0]))) {
         printf("<illegal instruction %d>\n", st->opcode);
@@ -296,10 +296,10 @@ static void prog_print_statement(qc_program *prog, prog_statement *st)
     }
 }
 
-static qcint prog_enterfunction(qc_program *prog, prog_function *func)
+static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
 {
     qc_exec_stack st;
-    prog_function *cur = NULL;
+    prog_section_function *cur = NULL;
 
     if (prog->stack_count)
         cur = prog->stack[prog->stack_count-1].function;
@@ -345,10 +345,10 @@ static qcint prog_leavefunction(qc_program *prog)
     return st.stmt;
 }
 
-bool prog_exec(qc_program *prog, prog_function *func, size_t flags, long maxjumps)
+bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps)
 {
     long jumpcount = 0;
-    prog_statement *st;
+    prog_section_statement *st;
 
     st = prog->code + prog_enterfunction(prog, func);
     --st;
@@ -421,7 +421,7 @@ int main(int argc, char **argv)
     }
     if (fnmain > 0)
     {
-        prog_exec(prog, &prog->functions[fnmain], VMXF_TRACE, JUMPS_DEFAULT);
+        prog_exec(prog, &prog->functions[fnmain], VMXF_TRACE, VM_JUMPS_DEFAULT);
     }
     else
         printf("No main function found\n");
