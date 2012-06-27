@@ -45,8 +45,8 @@ test_ir:  $(OBJ_I) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 qcvm:     $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS)
-exec.o: qcvm_execprogram.h
-exec-standalone.o: qcvm_execprogram.h
+exec.o: execloop.h
+exec-standalone.o: execloop.h
 test: test_ast test_ir
 
 # compiler target
