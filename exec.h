@@ -77,9 +77,10 @@ enum {
 
 #define JUMPS_DEFAULT 1000000
 
-#define VMXF_DEFAULT 0x0000
-#define VMXF_TRACE   0x0001
-#define VMXF_PROFILE 0x0002
+/* execute-flags */
+#define VMXF_DEFAULT 0x0000     /* default flags - nothing */
+#define VMXF_TRACE   0x0001     /* trace: print statements before executing */
+#define VMXF_PROFILE 0x0002     /* profile: increment the profile counters */
 
 struct qc_program_s;
 
