@@ -2,56 +2,6 @@
 
 #define QCVM_EXECUTOR
 
-#define _MEM_VEC_FUN_APPEND(Tself, Twhat, mem)                       \
-bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
-{                                                                    \
-    Twhat *reall;                                                    \
-    if (s->mem##_count+c >= s->mem##_alloc) {                        \
-        if (!s->mem##_alloc) {                                       \
-            s->mem##_alloc = c < 16 ? 16 : c;                        \
-        } else {                                                     \
-            s->mem##_alloc *= 2;                                     \
-            if (s->mem##_count+c >= s->mem##_alloc) {                \
-                s->mem##_alloc = s->mem##_count+c;                   \
-            }                                                        \
-        }                                                            \
-        reall = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);       \
-        if (!reall) {                                                \
-            return false;                                            \
-        }                                                            \
-        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);       \
-        mem_d(s->mem);                                               \
-        s->mem = reall;                                              \
-    }                                                                \
-    memcpy(&s->mem[s->mem##_count], p, c*sizeof(*p));                \
-    s->mem##_count += c;                                             \
-    return true;                                                     \
-}
-
-#define _MEM_VEC_FUN_RESIZE(Tself, Twhat, mem)                   \
-bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
-{                                                                \
-    Twhat *reall;                                                \
-    if (c > s->mem##_alloc) {                                    \
-        reall = (Twhat*)mem_a(sizeof(Twhat) * c);                \
-        if (!reall) { return false; }                            \
-        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
-        s->mem##_alloc = c;                                      \
-        mem_d(s->mem);                                           \
-        s->mem = reall;                                          \
-        return true;                                             \
-    }                                                            \
-    s->mem##_count = c;                                          \
-    if (c < (s->mem##_alloc / 2)) {                              \
-        reall = (Twhat*)mem_a(sizeof(Twhat) * c);                \
-        if (!reall) { return false; }                            \
-        memcpy(reall, s->mem, sizeof(Twhat) * c);                \
-        mem_d(s->mem);                                           \
-        s->mem = reall;                                          \
-    }                                                            \
-    return true;                                                 \
-}
-
 /* darkplaces has (or will have) a 64 bit prog loader
  * where the 32 bit qc program is autoconverted on load.
  * Since we may want to support that as well, let's redefine
