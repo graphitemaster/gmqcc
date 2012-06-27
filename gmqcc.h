@@ -372,6 +372,25 @@ enum {
 
 extern size_t type_sizeof[TYPE_COUNT];
 
+typedef struct {
+    uint32_t offset;      /* Offset in file of where data begins  */
+    uint32_t length;      /* Length of section (how many of)      */
+} prog_section;
+
+typedef struct {
+    uint32_t     version;      /* Program version (6)     */
+    uint16_t     crc16;        /* What is this?           */
+    uint16_t     skip;         /* see propsal.txt         */
+
+    prog_section statements;   /* prog_section_statement  */
+    prog_section defs;         /* prog_section_def        */
+    prog_section fields;       /* prog_section_field      */
+    prog_section functions;    /* prog_section_function   */
+    prog_section strings;      /* What is this?           */
+    prog_section globals;      /* What is this?           */
+    uint32_t     entfield;     /* Number of entity fields */
+} prog_header;
+
 /*
  * Each paramater incerements by 3 since vector types hold
  * 3 components (x,y,z).

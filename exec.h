@@ -45,25 +45,6 @@ typedef union {
 typedef char qcfloat_size_is_correct [sizeof(qcfloat) == 4 ?1:-1];
 typedef char qcint_size_is_correct   [sizeof(qcint)   == 4 ?1:-1];
 
-typedef struct {
-    uint32_t offset;
-    uint32_t length;
-} prog_section;
-
-typedef struct {
-    uint32_t     version;
-    uint16_t     crc16;
-    uint16_t     skip;
-
-    prog_section statements;
-    prog_section defs;
-    prog_section fields;
-    prog_section functions;
-    prog_section strings;
-    prog_section globals;
-    uint32_t     entfield;
-} prog_header;
-
 typedef prog_section_both      prog_def;
 typedef prog_section_function  prog_function;
 typedef prog_section_statement prog_statement;
