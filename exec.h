@@ -143,4 +143,12 @@ _MEM_VEC_FUN_RESIZE(qc_program, size_t, profile)
 qc_program* prog_load(const char *filename);
 void        prog_delete(qc_program *prog);
 
+bool prog_exec(qc_program *prog, prog_function *func, size_t flags, long maxjumps);
+
+char*     prog_getstring(qc_program *prog, qcint str);
+prog_def* prog_entfield(qc_program *prog, qcint off);
+prog_def* prog_getdef(qc_program *prog, qcint off);
+qcany*    prog_getedict(qc_program *prog, qcint e);
+qcint     prog_tempstring(qc_program *prog, const char *_str);
+
 #endif /* GMQCC_EXEC_HDR */
