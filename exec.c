@@ -32,14 +32,23 @@ bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
 bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
 {                                                                \
     Twhat *reall;                                                \
-    reall = (Twhat*)mem_a(sizeof(Twhat) * c);                    \
-    if (c > s->mem##_count) {                                    \
+    if (c > s->mem##_alloc) {                                    \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * c);                \
+        if (!reall) { return false; }                            \
         memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
-    } else {                                                     \
-        memcpy(reall, s->mem, sizeof(Twhat) * c);                \
+        s->mem##_alloc = c;                                      \
+        mem_d(s->mem);                                           \
+        s->mem = reall;                                          \
+        return true;                                             \
     }                                                            \
     s->mem##_count = c;                                          \
-    s->mem##_alloc = c;                                          \
+    if (c < (s->mem##_alloc / 2)) {                              \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * c);                \
+        if (!reall) { return false; }                            \
+        memcpy(reall, s->mem, sizeof(Twhat) * c);                \
+        mem_d(s->mem);                                           \
+        s->mem = reall;                                          \
+    }                                                            \
     return true;                                                 \
 }
 
