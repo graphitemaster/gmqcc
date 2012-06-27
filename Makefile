@@ -57,6 +57,6 @@ gmqcc: $(OBJ_C) $(OBJ)
 all: test gmqcc
 
 clean:
-	rm -f *.o gmqcc test_ast test_ir test/*.o
+	rm -f *.o gmqcc qcvm test_ast test_ir test/*.o
 	
 
