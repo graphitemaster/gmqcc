@@ -359,28 +359,28 @@ bool prog_exec(qc_program *prog, prog_function *func, size_t flags, long maxjump
         {
 #define QCVM_PROFILE 0
 #define QCVM_TRACE   0
-#           include "qcvm_execprogram.h"
+#           include "execloop.h"
             break;
         }
         case (VMXF_TRACE):
         {
 #define QCVM_PROFILE 0
 #define QCVM_TRACE   1
-#           include "qcvm_execprogram.h"
+#           include "execloop.h"
             break;
         }
         case (VMXF_PROFILE):
         {
 #define QCVM_PROFILE 1
 #define QCVM_TRACE   0
-#           include "qcvm_execprogram.h"
+#           include "execloop.h"
             break;
         }
         case (VMXF_TRACE|VMXF_PROFILE):
         {
 #define QCVM_PROFILE 1
 #define QCVM_TRACE   1
-#           include "qcvm_execprogram.h"
+#           include "execloop.h"
             break;
         }
     };
