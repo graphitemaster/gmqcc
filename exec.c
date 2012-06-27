@@ -1,6 +1,20 @@
+#include <errno.h>
+#include <string.h>
+#include <stdarg.h>
+
 #include "gmqcc.h"
 
 #include "exec.h"
+
+static void loaderror(const char *fmt, ...)
+{
+    int     err = errno;
+    va_list ap;
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    printf(": %s\n", strerror(err));
+}
 
 qc_program* prog_load(const char *filename)
 {
@@ -13,14 +27,13 @@ qc_program* prog_load(const char *filename)
         return NULL;
 
     if (fread(&header, sizeof(header), 1, file) != 1) {
-        perror("read");
+        loaderror("failed to read header from '%s'", filename);
         fclose(file);
         return NULL;
     }
 
     if (header.version != 6) {
-        printf("header says this is a version %i progs, we need version 6\n",
-               header.version);
+        loaderror("header says this is a version %i progs, we need version 6\n", header.version);
         fclose(file);
         return NULL;
     }
@@ -36,11 +49,14 @@ qc_program* prog_load(const char *filename)
     prog->entityfields = header.entfield;
 
     prog->filename = util_strdup(filename);
-    if (!prog->filename)
+    if (!prog->filename) {
+        loaderror("failed to store program name");
         goto error;
+    }
+
 #define read_data(hdrvar, progvar, type)                                         \
     if (fseek(file, header.hdrvar.offset, SEEK_SET) != 0) {                      \
-        perror("fseek");                                                         \
+        loaderror("seek failed");                                                \
         goto error;                                                              \
     }                                                                            \
     prog->progvar##_alloc = header.hdrvar.length;                                \
@@ -50,7 +66,7 @@ qc_program* prog_load(const char *filename)
         goto error;                                                              \
     if (fread(prog->progvar, sizeof(*prog->progvar), header.hdrvar.length, file) \
         != header.hdrvar.length) {                                               \
-        perror("read");                                                          \
+        loaderror("read failed");                                                \
         goto error;                                                              \
     }
 #define read_data1(x, y) read_data(x, x, y)
