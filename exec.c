@@ -4,7 +4,23 @@
 
 #include "gmqcc.h"
 
-#include "exec.h"
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_statement, code)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_def,       defs)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_def,       fields)
+MEM_VEC_FUNCTIONS(qc_program,   prog_section_function,  functions)
+MEM_VEC_FUNCTIONS(qc_program,   char,                   strings)
+_MEM_VEC_FUN_APPEND(qc_program, char,                   strings)
+_MEM_VEC_FUN_RESIZE(qc_program, char,                   strings)
+MEM_VEC_FUNCTIONS(qc_program,   qcint,                  globals)
+MEM_VEC_FUNCTIONS(qc_program,   qcint,                  entitydata)
+
+MEM_VEC_FUNCTIONS(qc_program,   qcint,         localstack)
+_MEM_VEC_FUN_APPEND(qc_program, qcint,         localstack)
+_MEM_VEC_FUN_RESIZE(qc_program, qcint,         localstack)
+MEM_VEC_FUNCTIONS(qc_program,   qc_exec_stack, stack)
+
+MEM_VEC_FUNCTIONS(qc_program,   size_t, profile)
+_MEM_VEC_FUN_RESIZE(qc_program, size_t, profile)
 
 static void loaderror(const char *fmt, ...)
 {
