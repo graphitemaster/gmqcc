@@ -43,7 +43,7 @@ typedef union {
 } qcany;
 
 typedef char qcfloat_size_is_correct [sizeof(qcfloat) == 4 ?1:-1];
-typedef char qcint_size_is_correct   [sizeof(int)     == 4 ?1:-1];
+typedef char qcint_size_is_correct   [sizeof(qcint)   == 4 ?1:-1];
 
 typedef struct {
     uint32_t offset;
