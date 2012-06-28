@@ -40,6 +40,8 @@ typedef struct ir_value_s {
     lex_ctx   context;
     /* even the IR knows the subtype of a field */
     int       fieldtype;
+    /* and the output type of a function */
+    int       outtype;
 
     MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
     MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
@@ -100,6 +102,13 @@ bool ir_values_overlap(const ir_value*, const ir_value*);
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));
 
+/* A vector of IR values */
+typedef struct {
+    MEM_VECTOR_MAKE(ir_value*, v);
+} ir_value_vector;
+MEM_VECTOR_PROTO(ir_value_vector, ir_value*, v);
+
+/* PHI data */
 typedef struct ir_phi_entry_s
 {
     ir_value          *value;
@@ -128,6 +137,8 @@ void      ir_instr_delete(ir_instr*);
 
 MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi);
 bool GMQCC_WARN ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
+
+MEM_VECTOR_PROTO(ir_value, ir_value*, params);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 
@@ -187,6 +198,9 @@ ir_value* ir_block_create_div(ir_block*, const char *label, ir_value *l, ir_valu
 ir_instr* ir_block_create_phi(ir_block*, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
 bool GMQCC_WARN ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
+ir_instr* ir_block_create_call(ir_block*, const char *label, ir_value *func, int otype);
+ir_value* ir_call_value(ir_instr*);
+bool GMQCC_WARN ir_call_param(ir_instr*, ir_value*);
 
 bool GMQCC_WARN ir_block_create_return(ir_block*, ir_value *opt_value);
 

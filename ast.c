@@ -1177,5 +1177,52 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value **out)
 {
     /* TODO: call ir codegen */
+    ast_expression_codegen *cgen;
+    ir_value_vector         params;
+    ir_instr               *callinstr;
+    size_t i;
+
+    ir_value *funval = NULL;
+
+    /* return values are never rvalues */
+    (void)lvalue;
+
+    cgen = self->func->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->func), func, false, &funval))
+        return false;
+    if (!funval)
+        return false;
+
+    MEM_VECTOR_INIT(&params, v);
+
+    /* parameters */
+    for (i = 0; i < self->params_count; ++i)
+    {
+        ir_value *param;
+        ast_expression *expr = self->params[i];
+
+        cgen = expr->expression.codegen;
+        if (!(*cgen)(expr, func, false, &param))
+            goto error;
+        if (!param)
+            goto error;
+        if (!ir_value_vector_v_add(&params, param))
+            goto error;
+    }
+
+    callinstr = ir_block_create_call(func->curblock, ast_function_label(func, "call"), funval, funval->outtype);
+    if (!callinstr)
+        goto error;
+
+    for (i = 0; i < params.v_count; ++i) {
+        if (!ir_call_param(callinstr, params.v[i]))
+            goto error;
+    }
+
+    *out = ir_call_value(callinstr);
+
+    return true;
+error:
+    MEM_VECTOR_CLEAR(&params, v);
     return false;
 }

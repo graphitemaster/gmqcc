@@ -44,6 +44,8 @@ size_t type_sizeof[TYPE_COUNT] = {
     3, /* TYPE_VARIANT  */
 };
 
+MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
+
 /***********************************************************************
  *IR Builder
  */
@@ -362,6 +364,7 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
     return self;
 }
 MEM_VEC_FUNCTIONS(ir_instr, ir_phi_entry_t, phi)
+MEM_VEC_FUNCTIONS(ir_instr, ir_value*, params)
 
 void ir_instr_delete(ir_instr *self)
 {
@@ -432,6 +435,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self = (ir_value*)mem_a(sizeof(*self));
     self->vtype = vtype;
     self->fieldtype = TYPE_VOID;
+    self->outtype = TYPE_VOID;
     self->store = storetype;
     MEM_VECTOR_INIT(self, reads);
     MEM_VECTOR_INIT(self, writes);
@@ -1024,6 +1028,47 @@ bool ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
     if (!ir_value_reads_add(v, self))
         return false;
     return ir_instr_phi_add(self, pe);
+}
+
+/* call related code */
+ir_instr* ir_block_create_call(ir_block *self, const char *label, ir_value *func, int ot)
+{
+    ir_value *out;
+    ir_instr *in;
+    in = ir_instr_new(self, INSTR_CALL0);
+    if (!in)
+        return NULL;
+    out = ir_value_out(self->owner, label, store_value, ot);
+    if (!out) {
+        ir_instr_delete(in);
+        return NULL;
+    }
+    if (!ir_instr_op(in, 0, out, true) ||
+        !ir_instr_op(in, 1, func, false) ||
+        !ir_block_instr_add(self, in))
+    {
+        ir_instr_delete(in);
+        ir_value_delete(out);
+        return NULL;
+    }
+    return in;
+}
+
+ir_value* ir_call_value(ir_instr *self)
+{
+    return self->_ops[0];
+}
+
+bool ir_call_param(ir_instr* self, ir_value *v)
+{
+    if (!ir_instr_params_add(self, v))
+        return false;
+    if (!ir_value_reads_add(v, self)) {
+        if (!ir_instr_params_remove(self, self->params_count-1))
+            GMQCC_SUPRESS_EMPTY_BODY;
+        return false;
+    }
+    return true;
 }
 
 /* binary op related code */
