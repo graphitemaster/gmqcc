@@ -356,6 +356,7 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
     self->bops[0] = NULL;
     self->bops[1] = NULL;
     MEM_VECTOR_INIT(self, phi);
+    MEM_VECTOR_INIT(self, params);
 
     self->eid = 0;
     return self;
@@ -379,6 +380,14 @@ void ir_instr_delete(ir_instr *self)
             if (ir_value_reads_remove (self->phi[i].value, idx)) GMQCC_SUPRESS_EMPTY_BODY;
     }
     MEM_VECTOR_CLEAR(self, phi);
+    for (i = 0; i < self->params_count; ++i) {
+        size_t idx;
+        if (ir_value_writes_find(self->params[i], self, &idx))
+            if (ir_value_writes_remove(self->params[i], idx)) GMQCC_SUPRESS_EMPTY_BODY;
+        if (ir_value_reads_find(self->params[i], self, &idx))
+            if (ir_value_reads_remove (self->params[i], idx)) GMQCC_SUPRESS_EMPTY_BODY;
+    }
+    MEM_VECTOR_CLEAR(self, params);
     if (ir_instr_op(self, 0, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
     if (ir_instr_op(self, 1, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
     if (ir_instr_op(self, 2, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
@@ -2109,6 +2118,9 @@ tailcall:
         }
 
         if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+            /* Trivial call translation:
+             * copy all params to OFS_PARM*
+             */
             printf("TODO: call instruction\n");
             return false;
         }

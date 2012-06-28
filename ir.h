@@ -115,6 +115,7 @@ typedef struct ir_instr_s
     struct ir_block_s* (bops[2]);
 
     MEM_VECTOR_MAKE(ir_phi_entry_t, phi);
+    MEM_VECTOR_MAKE(ir_value*, params);
 
     /* For the temp-allocation */
     size_t eid;
