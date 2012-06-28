@@ -308,6 +308,31 @@ void ast_loop_delete(ast_loop *self)
     mem_d(self);
 }
 
+ast_call* ast_call_new(lex_ctx ctx,
+                       ast_expression *funcexpr)
+{
+    ast_instantiate(ast_call, ctx, ast_call_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_call_codegen);
+
+    MEM_VECTOR_INIT(self, params);
+
+    return self;
+}
+
+void ast_call_delete(ast_call *self)
+{
+    size_t i;
+    for (i = 0; i < self->params_count; ++i)
+        ast_unref(self->params[i]);
+    MEM_VECTOR_CLEAR(self, params);
+
+    if (self->func)
+        ast_unref(self->func);
+
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *dest, ast_expression *source)
 {
@@ -1147,4 +1172,10 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     }
 
     return true;
+}
+
+bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    /* TODO: call ir codegen */
+    return false;
 }

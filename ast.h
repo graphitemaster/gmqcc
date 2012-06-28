@@ -40,6 +40,7 @@ typedef struct ast_entfield_s   ast_entfield;
 typedef struct ast_ifthen_s     ast_ifthen;
 typedef struct ast_ternary_s    ast_ternary;
 typedef struct ast_loop_s       ast_loop;
+typedef struct ast_call_s       ast_call;
 
 /* Node interface with common components
  */
@@ -283,6 +284,29 @@ ast_loop* ast_loop_new(lex_ctx ctx,
 void ast_loop_delete(ast_loop*);
 
 bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
+
+/* CALL node
+ *
+ * Contains an ast_expression as target, rather than an ast_function/value.
+ * Since it's how QC works, every ast_function has an ast_value
+ * associated anyway - in other words, the VM contains function
+ * pointers for every function anyway. Thus, this node will call
+ * expression.
+ * Additionally it contains a list of ast_expressions as parameters.
+ * Since calls can return values, an ast_call is also an ast_expression.
+ */
+struct ast_call_s
+{
+    ast_expression_common expression;
+    ast_expression *func;
+    MEM_VECTOR_MAKE(ast_expression*, params);
+};
+ast_call* ast_call_new(lex_ctx ctx,
+                       ast_expression *funcexpr);
+void ast_call_delete(ast_call*);
+bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
+
+MEM_VECTOR_PROTO(ast_call, ast_expression*, params);
 
 /* Blocks
  *
