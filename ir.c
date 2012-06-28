@@ -1665,6 +1665,10 @@ bool ir_function_allocate_locals(ir_function *self)
     if (!function_allocator_positions_add(&alloc, 0))
         goto error;
 
+    if (alloc.sizes_count)
+        pos = alloc.positions[0] + alloc.sizes[0];
+    else
+        pos = 0;
     for (i = 1; i < alloc.sizes_count; ++i)
     {
         pos = alloc.positions[i-1] + alloc.sizes[i-1];
