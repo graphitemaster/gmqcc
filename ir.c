@@ -378,22 +378,22 @@ void ir_instr_delete(ir_instr *self)
     for (i = 0; i < self->phi_count; ++i) {
         size_t idx;
         if (ir_value_writes_find(self->phi[i].value, self, &idx))
-            if (ir_value_writes_remove(self->phi[i].value, idx)) GMQCC_SUPRESS_EMPTY_BODY;
+            if (ir_value_writes_remove(self->phi[i].value, idx)) GMQCC_SUPPRESS_EMPTY_BODY;
         if (ir_value_reads_find(self->phi[i].value, self, &idx))
-            if (ir_value_reads_remove (self->phi[i].value, idx)) GMQCC_SUPRESS_EMPTY_BODY;
+            if (ir_value_reads_remove (self->phi[i].value, idx)) GMQCC_SUPPRESS_EMPTY_BODY;
     }
     MEM_VECTOR_CLEAR(self, phi);
     for (i = 0; i < self->params_count; ++i) {
         size_t idx;
         if (ir_value_writes_find(self->params[i], self, &idx))
-            if (ir_value_writes_remove(self->params[i], idx)) GMQCC_SUPRESS_EMPTY_BODY;
+            if (ir_value_writes_remove(self->params[i], idx)) GMQCC_SUPPRESS_EMPTY_BODY;
         if (ir_value_reads_find(self->params[i], self, &idx))
-            if (ir_value_reads_remove (self->params[i], idx)) GMQCC_SUPRESS_EMPTY_BODY;
+            if (ir_value_reads_remove (self->params[i], idx)) GMQCC_SUPPRESS_EMPTY_BODY;
     }
     MEM_VECTOR_CLEAR(self, params);
-    if (ir_instr_op(self, 0, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
-    if (ir_instr_op(self, 1, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
-    if (ir_instr_op(self, 2, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
+    if (ir_instr_op(self, 0, NULL, false)) GMQCC_SUPPRESS_EMPTY_BODY;
+    if (ir_instr_op(self, 1, NULL, false)) GMQCC_SUPPRESS_EMPTY_BODY;
+    if (ir_instr_op(self, 2, NULL, false)) GMQCC_SUPPRESS_EMPTY_BODY;
     mem_d(self);
 }
 
@@ -1065,7 +1065,7 @@ bool ir_call_param(ir_instr* self, ir_value *v)
         return false;
     if (!ir_value_reads_add(v, self)) {
         if (!ir_instr_params_remove(self, self->params_count-1))
-            GMQCC_SUPRESS_EMPTY_BODY;
+            GMQCC_SUPPRESS_EMPTY_BODY;
         return false;
     }
     return true;

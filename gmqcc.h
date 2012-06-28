@@ -77,7 +77,7 @@
  * This is a hack to silent clang regarding empty
  * body if statements.
  */
-#define GMQCC_SUPRESS_EMPTY_BODY do { } while (0)
+#define GMQCC_SUPPRESS_EMPTY_BODY do { } while (0)
 
 /*
  * Inline is not supported in < C90, however some compilers
