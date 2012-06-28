@@ -2120,6 +2120,14 @@ tailcall:
         if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
             /* Trivial call translation:
              * copy all params to OFS_PARM*
+             *
+             * NOTES on how to do it better without much trouble:
+             * -) The liferanges!
+             *      Simply check the liferange of all parameters for
+             *      other CALLs. For each param with no CALL in its
+             *      liferange, we can store it in an OFS_PARM at
+             *      generation already. This would even include later
+             *      reuse.... probably... :)
              */
             printf("TODO: call instruction\n");
             return false;
