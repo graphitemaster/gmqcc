@@ -1031,14 +1031,14 @@ bool ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 }
 
 /* call related code */
-ir_instr* ir_block_create_call(ir_block *self, const char *label, ir_value *func, int ot)
+ir_instr* ir_block_create_call(ir_block *self, const char *label, ir_value *func)
 {
     ir_value *out;
     ir_instr *in;
     in = ir_instr_new(self, INSTR_CALL0);
     if (!in)
         return NULL;
-    out = ir_value_out(self->owner, label, store_value, ot);
+    out = ir_value_out(self->owner, label, store_value, func->outtype);
     if (!out) {
         ir_instr_delete(in);
         return NULL;

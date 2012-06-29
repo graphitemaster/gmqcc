@@ -1210,7 +1210,7 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
             goto error;
     }
 
-    callinstr = ir_block_create_call(func->curblock, ast_function_label(func, "call"), funval, funval->outtype);
+    callinstr = ir_block_create_call(func->curblock, ast_function_label(func, "call"), funval);
     if (!callinstr)
         goto error;
 
