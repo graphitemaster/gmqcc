@@ -315,23 +315,47 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
 static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
 {
     qc_exec_stack st;
-    prog_section_function *cur = NULL;
-
-    if (prog->stack_count)
-        cur = prog->stack[prog->stack_count-1].function;
+    size_t p, parampos;
 
     /* back up locals */
     st.localsp  = prog->localstack_count;
     st.stmt     = prog->statement;
     st.function = func;
 
-    if (cur)
+#ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS
+    if (prog->stack_count)
     {
-        qcint *globals = prog->globals + cur->firstlocal;
-        if (!qc_program_localstack_append(prog, globals, cur->locals))
+        prog_section_function *cur;
+        cur = prog->stack[prog->stack_count-1].function;
+        if (cur)
+        {
+            qcint *globals = prog->globals + cur->firstlocal;
+            if (!qc_program_localstack_append(prog, globals, cur->locals))
+            {
+                printf("out of memory\n");
+                exit(1);
+            }
+        }
+    }
+#else
+    {
+        qcint *globals = prog->globals + func->firstlocal;
+        if (!qc_program_localstack_append(prog, globals, func->locals))
         {
             printf("out of memory\n");
             exit(1);
+        }
+    }
+#endif
+
+    /* copy parameters */
+    parampos = func->firstlocal;
+    for (p = 0; p < func->nargs; ++p)
+    {
+        size_t s;
+        for (s = 0; s < func->argsize[p]; ++s) {
+            prog->globals[parampos] = prog->globals[OFS_PARM0 + 3*p + s];
+            ++parampos;
         }
     }
 
@@ -345,17 +369,32 @@ static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
 
 static qcint prog_leavefunction(qc_program *prog)
 {
-    qc_exec_stack st = prog->stack[prog->stack_count-1];
-    if (!qc_program_stack_remove(prog, prog->stack_count-1)) {
-        printf("out of memory\n");
-        exit(1);
-    }
+    prog_section_function *prev = NULL;
+    size_t oldsp;
 
-    if (st.localsp != prog->localstack_count) {
-        if (!qc_program_localstack_resize(prog, st.localsp)) {
+    qc_exec_stack st = prog->stack[prog->stack_count-1];
+
+#ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS
+    if (prog->stack_count > 1) {
+        prev  = prog->stack[prog->stack_count-2].function;
+        oldsp = prog->stack[prog->stack_count-2].localsp;
+    }
+#else
+    prev  = prog->stack[prog->stack_count-1].function;
+    oldsp = prog->stack[prog->stack_count-1].localsp;
+#endif
+    if (prev) {
+        qcint *globals = prog->globals + prev->firstlocal;
+        memcpy(globals, prog->localstack + oldsp, prev->locals);
+        if (!qc_program_localstack_resize(prog, oldsp)) {
             printf("out of memory\n");
             exit(1);
         }
+    }
+
+    if (!qc_program_stack_remove(prog, prog->stack_count-1)) {
+        printf("out of memory\n");
+        exit(1);
     }
 
     return st.stmt;
