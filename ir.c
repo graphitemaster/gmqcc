@@ -2184,6 +2184,8 @@ tailcall:
         if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
             /* Trivial call translation:
              * copy all params to OFS_PARM*
+             * if the output's storetype is not store_return,
+             * add append a STORE instruction!
              *
              * NOTES on how to do it better without much trouble:
              * -) The liferanges!
