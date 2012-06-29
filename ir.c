@@ -1053,7 +1053,7 @@ ir_instr* ir_block_create_call(ir_block *self, const char *label, ir_value *func
     in = ir_instr_new(self, INSTR_CALL0);
     if (!in)
         return NULL;
-    out = ir_value_out(self->owner, label, store_value, func->outtype);
+    out = ir_value_out(self->owner, label, store_return, func->outtype);
     if (!out) {
         ir_instr_delete(in);
         return NULL;
