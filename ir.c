@@ -124,6 +124,18 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
         ir_function_delete(fn);
         return NULL;
     }
+
+    fn->value = ir_builder_create_global(self, fn->name, TYPE_FUNCTION);
+    if (!fn->value) {
+        ir_function_delete(fn);
+        return NULL;
+    }
+
+    fn->value->isconst = true;
+    fn->value->outtype = outtype;
+    fn->value->constval.vfunc = fn;
+    fn->value->context = fn->context;
+
     return fn;
 }
 
@@ -178,6 +190,7 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->outtype = outtype;
+    self->value = NULL;
     MEM_VECTOR_INIT(self, params);
     MEM_VECTOR_INIT(self, blocks);
     MEM_VECTOR_INIT(self, values);
@@ -216,6 +229,8 @@ void ir_function_delete(ir_function *self)
     for (i = 0; i != self->locals_count; ++i)
         ir_value_delete(self->locals[i]);
     MEM_VECTOR_CLEAR(self, locals);
+
+    /* self->value is deleted by the builder */
 
     mem_d(self);
 }
@@ -2396,21 +2411,6 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     size_t i;
 
     code_init();
-
-    /* FIXME: generate TYPE_FUNCTION globals and link them
-     * to their ir_function.
-     */
-
-    for (i = 0; i < self->functions_count; ++i)
-    {
-        ir_value    *funval;
-        ir_function *fun = self->functions[i];
-
-        funval = ir_builder_create_global(self, fun->name, TYPE_FUNCTION);
-        funval->isconst = true;
-        funval->constval.vfunc = fun;
-        funval->context = fun->context;
-    }
 
     for (i = 0; i < self->globals_count; ++i)
     {

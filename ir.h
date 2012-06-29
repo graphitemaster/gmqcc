@@ -228,6 +228,8 @@ typedef struct ir_function_s
     MEM_VECTOR_MAKE(int, params);
     MEM_VECTOR_MAKE(ir_block*, blocks);
 
+    ir_value *value;
+
     /* values generated from operations
      * which might get optimized away, so anything
      * in there needs to be deleted in the dtor.
