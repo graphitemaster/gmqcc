@@ -56,18 +56,21 @@ do {                                                   \
     STATE(loop);                                               \
 } while(0)
 
-#define FUNCTION(name)                                          \
-do {                                                            \
-    ast_function *func_##name;                                  \
-    ast_block    *my_funcblock;                                 \
-    DEFVAR(var_##name);                                         \
-    VARnamed(TYPE_FUNCTION, var_##name, name);                  \
-    MKGLOBAL(var_##name);                                       \
-    func_##name = ast_function_new(ctx, #name, var_##name);     \
-    assert(functions_add(func_##name) >= 0);                    \
-    my_funcblock = ast_block_new(ctx);                          \
-    assert(my_funcblock);                                       \
-    assert(ast_function_blocks_add(func_##name, my_funcblock)); \
+#define FUNCTION(name, outtype)                                   \
+do {                                                              \
+    ast_function *func_##name;                                    \
+    ast_block    *my_funcblock;                                   \
+    DEFVAR(var_##name);                                           \
+    DEFVAR(return_##name);                                        \
+    VARnamed(TYPE_FUNCTION, var_##name, name);                    \
+    VARnamed(outtype, return_##name, "#returntype");              \
+    var_##name->expression.next = (ast_expression*)return_##name; \
+    MKGLOBAL(var_##name);                                         \
+    func_##name = ast_function_new(ctx, #name, var_##name);       \
+    assert(functions_add(func_##name) >= 0);                      \
+    my_funcblock = ast_block_new(ctx);                            \
+    assert(my_funcblock);                                         \
+    assert(ast_function_blocks_add(func_##name, my_funcblock));   \
     curblock = my_funcblock;
 
 #define MKLOCAL(var) \

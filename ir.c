@@ -110,14 +110,14 @@ ir_function* ir_builder_get_function(ir_builder *self, const char *name)
     return NULL;
 }
 
-ir_function* ir_builder_create_function(ir_builder *self, const char *name)
+ir_function* ir_builder_create_function(ir_builder *self, const char *name, int outtype)
 {
     ir_function *fn = ir_builder_get_function(self, name);
     if (fn) {
         return NULL;
     }
 
-    fn = ir_function_new(self);
+    fn = ir_function_new(self, outtype);
     if (!ir_function_set_name(fn, name) ||
         !ir_builder_functions_add(self, fn) )
     {
@@ -161,7 +161,7 @@ void ir_function_enumerate(ir_function*);
 bool ir_function_calculate_liferanges(ir_function*);
 bool ir_function_allocate_locals(ir_function*);
 
-ir_function* ir_function_new(ir_builder* owner)
+ir_function* ir_function_new(ir_builder* owner, int outtype)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
@@ -177,7 +177,7 @@ ir_function* ir_function_new(ir_builder* owner)
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
-    self->retype = TYPE_VOID;
+    self->outtype = outtype;
     MEM_VECTOR_INIT(self, params);
     MEM_VECTOR_INIT(self, blocks);
     MEM_VECTOR_INIT(self, values);

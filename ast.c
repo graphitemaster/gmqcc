@@ -493,7 +493,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
     ir_value *v = NULL;
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
     {
-        ir_function *func = ir_builder_create_function(ir, self->name);
+        ir_function *func = ir_builder_create_function(ir, self->name, self->expression.next->expression.vtype);
         if (!func)
             return false;
 

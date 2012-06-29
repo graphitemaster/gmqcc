@@ -224,7 +224,7 @@ void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 typedef struct ir_function_s
 {
     char *name;
-    int   retype;
+    int   outtype;
     MEM_VECTOR_MAKE(int, params);
     MEM_VECTOR_MAKE(ir_block*, blocks);
 
@@ -250,7 +250,7 @@ typedef struct ir_function_s
     struct ir_builder_s *owner;
 } ir_function;
 
-ir_function* ir_function_new(struct ir_builder_s *owner);
+ir_function* ir_function_new(struct ir_builder_s *owner, int returntype);
 void         ir_function_delete(ir_function*);
 
 bool GMQCC_WARN ir_function_collect_value(ir_function*, ir_value *value);
@@ -290,7 +290,7 @@ MEM_VECTOR_PROTO(ir_builder, ir_function*, functions);
 MEM_VECTOR_PROTO(ir_builder, ir_value*, globals);
 
 ir_function* ir_builder_get_function(ir_builder*, const char *fun);
-ir_function* ir_builder_create_function(ir_builder*, const char *name);
+ir_function* ir_builder_create_function(ir_builder*, const char *name, int outtype);
 
 ir_value* ir_builder_get_global(ir_builder*, const char *fun);
 ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);
