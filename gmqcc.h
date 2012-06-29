@@ -586,7 +586,7 @@ static const struct {
     { "EQ_V"      , 0, 4 },
     { "EQ_S"      , 0, 4 },
     { "EQ_E"      , 0, 4 },
-    { "ES_FNC"    , 0, 6 },
+    { "EQ_FNC"    , 0, 6 },
     { "NE_F"      , 0, 4 },
     { "NE_V"      , 0, 4 },
     { "NE_S"      , 0, 4 },
