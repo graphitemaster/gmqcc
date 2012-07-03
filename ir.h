@@ -81,6 +81,7 @@ MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads);
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes);
 
 bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
+bool GMQCC_WARN ir_value_set_func(ir_value*, int f);
 #if 0
 bool GMQCC_WARN ir_value_set_int(ir_value*, int i);
 #endif
@@ -227,6 +228,8 @@ typedef struct ir_function_s
     int   outtype;
     MEM_VECTOR_MAKE(int, params);
     MEM_VECTOR_MAKE(ir_block*, blocks);
+
+    int builtin;
 
     ir_value *value;
 

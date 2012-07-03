@@ -206,6 +206,7 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self->context.line = 0;
     self->outtype = outtype;
     self->value = NULL;
+    self->builtin = 0;
     MEM_VECTOR_INIT(self, params);
     MEM_VECTOR_INIT(self, blocks);
     MEM_VECTOR_INIT(self, values);
@@ -217,6 +218,7 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
 MEM_VEC_FUNCTIONS(ir_function, ir_value*, values)
 MEM_VEC_FUNCTIONS(ir_function, ir_block*, blocks)
 MEM_VEC_FUNCTIONS(ir_function, ir_value*, locals)
+MEM_VEC_FUNCTIONS(ir_function, int,       params)
 
 bool ir_function_set_name(ir_function *self, const char *name)
 {
@@ -268,6 +270,9 @@ ir_block* ir_function_create_block(ir_function *self, const char *label)
 
 bool ir_function_finalize(ir_function *self)
 {
+    if (self->builtin)
+        return true;
+
     if (!ir_function_naive_phi(self))
         return false;
 
@@ -525,6 +530,15 @@ bool ir_value_set_float(ir_value *self, float f)
     if (self->vtype != TYPE_FLOAT)
         return false;
     self->constval.vfloat = f;
+    self->isconst = true;
+    return true;
+}
+
+bool ir_value_set_func(ir_value *self, int f)
+{
+    if (self->vtype != TYPE_FUNCTION)
+        return false;
+    self->constval.vint = f;
     self->isconst = true;
     return true;
 }
@@ -2321,8 +2335,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     size_t i;
     size_t local_var_end;
 
-    if (!global->isconst ||
-        !global->constval.vfunc)
+    if (!global->isconst || (!global->constval.vfunc))
     {
         printf("Invalid state of function-global: not constant: %s\n", global->name);
         return false;
@@ -2370,10 +2383,14 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         code_globals_add(0);
     }
 
-    fun.entry      = code_statements_elements;
-    if (!gen_function_code(irfun)) {
-        printf("Failed to generate code for function %s\n", irfun->name);
-        return false;
+    if (irfun->builtin)
+        fun.entry = irfun->builtin;
+    else {
+        fun.entry = code_statements_elements;
+        if (!gen_function_code(irfun)) {
+            printf("Failed to generate code for function %s\n", irfun->name);
+            return false;
+        }
     }
 
     return (code_functions_add(fun) >= 0);

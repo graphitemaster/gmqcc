@@ -56,8 +56,33 @@ do {                                                   \
     STATE(loop);                                               \
 } while(0)
 
+#define BUILTIN(name, outtype, number)                              \
+do {                                                                \
+    ast_function *func_##name;                                      \
+    ast_function *thisfunc;                                         \
+    DEFVAR(return_##name);                                          \
+    VARnamed(TYPE_FUNCTION, name, name);                            \
+    VARnamed(outtype, return_##name, "#returntype");                \
+    name->expression.next = (ast_expression*)return_##name;         \
+    MKGLOBAL(name);                                                 \
+    func_##name = ast_function_new(ctx, #name, name);               \
+    thisfunc = func_##name;                                         \
+    (void)thisfunc;                                                 \
+    assert(functions_add(func_##name) >= 0);                        \
+    func_##name->builtin = number;
+
+#define ENDBUILTIN() } while(0)
+
+#define PARAM(ptype, name)                           \
+do {                                                 \
+    DEFVAR(parm);                                    \
+    VARnamed(ptype, parm, name);                     \
+    assert(ast_function_params_add(thisfunc, parm)); \
+} while(0)
+
 #define FUNCTION(name, outtype)                                   \
 do {                                                              \
+    ast_function *thisfunc;                                       \
     ast_function *func_##name;                                    \
     ast_block    *my_funcblock;                                   \
     DEFVAR(var_##name);                                           \
@@ -67,6 +92,8 @@ do {                                                              \
     var_##name->expression.next = (ast_expression*)return_##name; \
     MKGLOBAL(var_##name);                                         \
     func_##name = ast_function_new(ctx, #name, var_##name);       \
+    thisfunc = func_##name;                                       \
+    (void)thisfunc;                                               \
     assert(functions_add(func_##name) >= 0);                      \
     my_funcblock = ast_block_new(ctx);                            \
     assert(my_funcblock);                                         \

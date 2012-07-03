@@ -27,6 +27,13 @@ int main()
     DEFVAR(f0);
     DEFVAR(f1);
     DEFVAR(f5);
+    DEFVAR(print);
+
+#if 0
+    BUILTIN(print, TYPE_VOID, -1);
+    PARAM(TYPE_STRING, text);
+    ENDBUILTIN();
+#endif
 
     TESTINIT();
 VAR(TYPE_FLOAT, f0);

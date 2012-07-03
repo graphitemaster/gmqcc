@@ -396,8 +396,10 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
     MEM_VECTOR_INIT(self, blocks);
+    MEM_VECTOR_INIT(self, params);
 
     self->labelcount = 0;
+    self->builtin = 0;
 
     self->ir_func = NULL;
     self->curblock = NULL;
@@ -412,6 +414,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 }
 
 MEM_VEC_FUNCTIONS(ast_function, ast_block*, blocks)
+MEM_VEC_FUNCTIONS(ast_function, ast_value*, params)
 
 void ast_function_delete(ast_function *self)
 {
@@ -430,6 +433,9 @@ void ast_function_delete(ast_function *self)
     for (i = 0; i < self->blocks_count; ++i)
         ast_delete(self->blocks[i]);
     MEM_VECTOR_CLEAR(self, blocks);
+    for (i = 0; i < self->params_count; ++i)
+        ast_delete(self->params[i]);
+    MEM_VECTOR_CLEAR(self, params);
     mem_d(self);
 }
 
@@ -522,10 +528,11 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
                     goto error;
                 break;
             case TYPE_FUNCTION:
+                printf("global of type function not properly generated\n");
+                goto error;
                 /* Cannot generate an IR value for a function,
                  * need a pointer pointing to a function rather.
                  */
-                goto error;
             default:
                 printf("TODO: global constant type %i\n", self->expression.vtype);
                 break;
@@ -599,6 +606,17 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     if (!irf) {
         printf("ast_function's related ast_value was not generated yet\n");
         return false;
+    }
+
+    for (i = 0; i < self->params_count; ++i)
+    {
+        if (!ir_function_params_add(irf, self->params[i]->expression.vtype))
+            return false;
+    }
+
+    if (self->builtin) {
+        irf->builtin = self->builtin;
+        return true;
     }
 
     self->curblock = ir_function_create_block(irf, "entry");
