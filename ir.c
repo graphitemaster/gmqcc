@@ -44,6 +44,21 @@ size_t type_sizeof[TYPE_COUNT] = {
     3, /* TYPE_VARIANT  */
 };
 
+uint16_t type_store_instr[TYPE_COUNT] = {
+    INSTR_STORE_F, /* should use I when having integer support */
+    INSTR_STORE_S,
+    INSTR_STORE_F,
+    INSTR_STORE_V,
+    INSTR_STORE_ENT,
+    INSTR_STORE_FLD,
+    INSTR_STORE_FNC,
+    INSTR_STORE_ENT, /* should use I */
+#if 0
+    INSTR_STORE_ENT, /* integer type */
+#endif
+    INSTR_STORE_V, /* variant, should never be accessed */
+};
+
 MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
 
 /***********************************************************************

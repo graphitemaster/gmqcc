@@ -371,6 +371,7 @@ enum {
 };
 
 extern size_t type_sizeof[TYPE_COUNT];
+extern uint16_t type_store_instr[TYPE_COUNT];
 
 /*
  * Each paramater incerements by 3 since vector types hold
