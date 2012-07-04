@@ -491,8 +491,10 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * and the ast-user should take care of ast_global_codegen to be used
      * on all the globals.
      */
-    if (!self->ir_v)
+    if (!self->ir_v) {
+        printf("ast_value used before generated (%s)\n", self->name);
         return false;
+    }
     *out = self->ir_v;
     return true;
 }
@@ -507,6 +509,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
             return false;
 
         self->constval.vfunc->ir_func = func;
+        self->ir_v = func->value;
         /* The function is filled later on ast_function_codegen... */
         return true;
     }
