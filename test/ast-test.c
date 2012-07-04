@@ -29,6 +29,8 @@ int main()
     DEFVAR(f5);
     DEFVAR(print);
 
+    /* opts_debug = true; */
+
 #if 0
     BUILTIN(print, TYPE_VOID, -1);
     PARAM(TYPE_STRING, text);
@@ -43,19 +45,22 @@ MKCONSTFLOAT(f0, 0.0);
 MKCONSTFLOAT(f1, 1.0);
 MKCONSTFLOAT(f5, 5.0);
 
+FUNCTION(foo, TYPE_VOID);
+ENDFUNCTION(foo);
+
 FUNCTION(main, TYPE_VOID);
 
-VAR(TYPE_FLOAT, vi);
-VAR(TYPE_FLOAT, vx);
+    VAR(TYPE_FLOAT, vi);
+    VAR(TYPE_FLOAT, vx);
 
-MKLOCAL(vi);
-MKLOCAL(vx);
+    MKLOCAL(vi);
+    MKLOCAL(vx);
 
-STATE(ASSIGN(STORE_F, vi, f0));
-WHILE(BIN(LT, vi, f5));
-STATE(ASSIGN(STORE_F, vx, BIN(MUL_F, vi, f5)));
-STATE(ASSIGN(STORE_F, vi, BIN(ADD_F, vi, f1)));
-ENDWHILE();
+    STATE(ASSIGN(STORE_F, vi, f0));
+    WHILE(BIN(LT, vi, f5));
+        STATE(ASSIGN(STORE_F, vx, BIN(MUL_F, vi, f5)));
+        STATE(ASSIGN(STORE_F, vi, BIN(ADD_F, vi, f1)));
+    ENDWHILE();
 
 ENDFUNCTION(main);
 

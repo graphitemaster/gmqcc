@@ -2310,6 +2310,7 @@ tailcall:
 static bool gen_function_code(ir_function *self)
 {
     ir_block *block;
+    prog_section_statement stmt;
 
     /* Starting from entry point, we generate blocks "as they come"
      * for now. Dead blocks will not be translated obviously.
@@ -2327,6 +2328,14 @@ static bool gen_function_code(ir_function *self)
         printf("failed to generate blocks for '%s'\n", self->name);
         return false;
     }
+
+    /* otherwise code_write crashes since it debug-prints functions until AINSTR_END */
+    stmt.opcode = AINSTR_END;
+    stmt.o1.u1 = 0;
+    stmt.o2.u1 = 0;
+    stmt.o3.u1 = 0;
+    if (code_statements_add(stmt) < 0)
+        return false;
     return true;
 }
 
