@@ -31,11 +31,9 @@ int main()
 
     /* opts_debug = true; */
 
-#if 0
-    BUILTIN(print, TYPE_VOID, -1);
-    PARAM(TYPE_STRING, text);
-    ENDBUILTIN();
-#endif
+BUILTIN(print, TYPE_VOID, -1);
+PARAM(TYPE_STRING, text);
+ENDBUILTIN();
 
     TESTINIT();
 VAR(TYPE_FLOAT, f0);
