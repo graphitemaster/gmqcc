@@ -316,6 +316,8 @@ ast_call* ast_call_new(lex_ctx ctx,
 
     MEM_VECTOR_INIT(self, params);
 
+    self->func = funcexpr;
+
     return self;
 }
 MEM_VEC_FUNCTIONS(ast_call, ast_expression*, params)
