@@ -1663,6 +1663,9 @@ bool ir_function_allocate_locals(ir_function *self)
 
     function_allocator alloc;
 
+    if (!self->locals_count)
+        return true;
+
     MEM_VECTOR_INIT(&alloc, locals);
     MEM_VECTOR_INIT(&alloc, sizes);
     MEM_VECTOR_INIT(&alloc, positions);
