@@ -318,6 +318,7 @@ ast_call* ast_call_new(lex_ctx ctx,
 
     return self;
 }
+MEM_VEC_FUNCTIONS(ast_call, ast_expression*, params)
 
 void ast_call_delete(ast_call *self)
 {
