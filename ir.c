@@ -2472,6 +2472,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     case TYPE_FUNCTION:
         if (code_defs_add(def) < 0)
             return false;
+        global->code.globaladdr = code_globals_elements;
         code_globals_add(code_functions_elements);
         return gen_global_function(self, global);
     case TYPE_VARIANT:
