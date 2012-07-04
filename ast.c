@@ -640,7 +640,9 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     {
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
+        {
             return ir_block_create_return(self->curblock, NULL);
+        }
         else
         {
             /* error("missing return"); */
