@@ -2263,7 +2263,7 @@ tailcall:
                 if (code_statements_add(stmt) < 0)
                     return false;
             }
-            return false;
+            return true;
         }
 
         if (instr->opcode == INSTR_STATE) {
