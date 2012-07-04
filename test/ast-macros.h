@@ -47,6 +47,17 @@ do {                                             \
 #define BIN(op, a, b) \
 (ast_expression*)ast_binary_new(ctx, INSTR_##op, (ast_expression*)(a), (ast_expression*)(b))
 
+#define CALL(what)                                             \
+do {                                                           \
+    ast_call *call = ast_call_new(ctx, (ast_expression*)what); \
+
+#define CALLPARAM(x)                                       \
+    assert(ast_call_params_add(call, (ast_expression*)x));
+
+#define ENDCALL()                                \
+    STATE(call);                                 \
+} while(0)
+
 #define WHILE(cond)                                    \
 do {                                                   \
     ast_expression *wh_cond = (ast_expression*)(cond); \

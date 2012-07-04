@@ -63,6 +63,10 @@ FUNCTION(main, TYPE_VOID);
         STATE(ASSIGN(STORE_F, vi, BIN(ADD_F, vi, f1)));
     ENDWHILE();
 
+    CALL(print)
+    CALLPARAM(sHello)
+    ENDCALL();
+
 ENDFUNCTION(main);
 
     ir = ir_builder_new("ast_test");
