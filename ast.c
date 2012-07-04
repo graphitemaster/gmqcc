@@ -1194,7 +1194,6 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 
 bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    /* TODO: call ir codegen */
     ast_expression_codegen *cgen;
     ir_value_vector         params;
     ir_instr               *callinstr;

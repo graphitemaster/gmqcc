@@ -27,6 +27,7 @@ int main()
     DEFVAR(f0);
     DEFVAR(f1);
     DEFVAR(f5);
+    DEFVAR(sHello);
     DEFVAR(print);
 
     /* opts_debug = true; */
@@ -39,9 +40,11 @@ ENDBUILTIN();
 VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
 VAR(TYPE_FLOAT, f5);
+VAR(TYPE_STRING, sHello);
 MKCONSTFLOAT(f0, 0.0);
 MKCONSTFLOAT(f1, 1.0);
 MKCONSTFLOAT(f5, 5.0);
+MKCONSTSTRING(sHello, "Hello, World\n");
 
 FUNCTION(foo, TYPE_VOID);
 ENDFUNCTION(foo);

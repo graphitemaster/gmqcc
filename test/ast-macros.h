@@ -28,6 +28,13 @@ do {                               \
     MKGLOBAL(name);                \
 } while(0)
 
+#define MKCONSTSTRING(name, value)               \
+do {                                             \
+    name->isconst = true;                        \
+    name->constval.vstring = util_strdup(value); \
+    MKGLOBAL(name);                              \
+} while(0)
+
 #define STATE(a)                                 \
 do {                                             \
     ast_expression *exp = (ast_expression*)(a);  \
