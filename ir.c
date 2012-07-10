@@ -41,7 +41,9 @@ size_t type_sizeof[TYPE_COUNT] = {
 #if 0
     1, /* TYPE_INTEGER  */
 #endif
-    3, /* TYPE_VARIANT  */
+    4, /* TYPE_QUATERNION */
+    16, /* TYPE_MATRIX */
+    16, /* TYPE_VARIANT  */
 };
 
 uint16_t type_store_instr[TYPE_COUNT] = {
@@ -54,9 +56,12 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_FNC,
     INSTR_STORE_ENT, /* should use I */
 #if 0
-    INSTR_STORE_ENT, /* integer type */
+    INSTR_STORE_I, /* integer type */
 #endif
-    INSTR_STORE_V, /* variant, should never be accessed */
+    INSTR_STORE_Q,
+    INSTR_STORE_M,
+
+    INSTR_STORE_M, /* variant, should never be accessed */
 };
 
 MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
@@ -552,6 +557,24 @@ bool ir_value_set_vector(ir_value *self, vector v)
     return true;
 }
 
+bool ir_value_set_quaternion(ir_value *self, quaternion v)
+{
+    if (self->vtype != TYPE_QUATERNION)
+        return false;
+    self->constval.vquat = v;
+    self->isconst = true;
+    return true;
+}
+
+bool ir_value_set_matrix(ir_value *self, matrix v)
+{
+    if (self->vtype != TYPE_MATRIX)
+        return false;
+    self->constval.vmat = v;
+    self->isconst = true;
+    return true;
+}
+
 bool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != TYPE_STRING)
@@ -866,6 +889,12 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
             op = INSTR_STORE_ENT;
 #endif
             break;
+        case TYPE_QUATERNION:
+            op = INSTR_STORE_Q;
+            break;
+        case TYPE_MATRIX:
+            op = INSTR_STORE_M;
+            break;
         default:
             /* Unknown type */
             return false;
@@ -913,6 +942,12 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
 #else
             op = INSTR_STOREP_ENT;
 #endif
+            break;
+        case TYPE_QUATERNION:
+            op = INSTR_STOREP_Q;
+            break;
+        case TYPE_MATRIX:
+            op = INSTR_STOREP_M;
             break;
         default:
             /* Unknown type */
@@ -1175,7 +1210,6 @@ ir_value* ir_block_create_binop(ir_block *self,
         case INSTR_ADD_V:
         case INSTR_SUB_V:
         case INSTR_MUL_VF:
-        case INSTR_MUL_FV:
 #if 0
         case INSTR_DIV_VF:
         case INSTR_MUL_IV:
@@ -1275,6 +1309,8 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_va
         case TYPE_POINTER: op = INSTR_LOAD_I;   break;
         case TYPE_INTEGER: op = INSTR_LOAD_I;   break;
 #endif
+        case TYPE_QUATERNION: op = INSTR_LOAD_Q; break;
+        case TYPE_MATRIX:     op = INSTR_LOAD_M; break;
         default:
             return NULL;
     }
@@ -1378,12 +1414,22 @@ ir_value* ir_block_create_mul(ir_block *self,
             case TYPE_VECTOR:
                 op = INSTR_MUL_V;
                 break;
+            case TYPE_QUATERNION:
+                op = INSTR_MUL_Q;
+                break;
+            case TYPE_MATRIX:
+                op = INSTR_MUL_M;
+                break;
         }
     } else {
         if ( (l == TYPE_VECTOR && r == TYPE_FLOAT) )
             op = INSTR_MUL_VF;
         else if ( (l == TYPE_FLOAT && r == TYPE_VECTOR) )
             op = INSTR_MUL_FV;
+        else if ( (l == TYPE_QUATERNION && r == TYPE_FLOAT) )
+            op = INSTR_MUL_QF;
+        else if ( (l == TYPE_MATRIX && r == TYPE_FLOAT) )
+            op = INSTR_MUL_MF;
 #if 0
         else if ( (l == TYPE_VECTOR && r == TYPE_INTEGER) )
             op = INSTR_MUL_VI;
@@ -2363,10 +2409,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     for (i = 0;i < 8; ++i) {
         if (i >= fun.nargs)
             fun.argsize[i] = 0;
-        else if (irfun->params[i] == TYPE_VECTOR)
-            fun.argsize[i] = 3;
         else
-            fun.argsize[i] = 1;
+            fun.argsize[i] = type_sizeof[irfun->params[i]];
     }
 
     fun.firstlocal = code_globals_elements;
@@ -2453,19 +2497,32 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
         return global->code.globaladdr >= 0;
     }
     case TYPE_VECTOR:
+    case TYPE_QUATERNION:
+    case TYPE_MATRIX:
     {
+        size_t d;
         if (code_defs_add(def) < 0)
             return false;
 
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vvec;
             global->code.globaladdr = code_globals_add(iptr[0]);
-            if (code_globals_add(iptr[1]) < 0 || code_globals_add(iptr[2]) < 0)
+            if (global->code.globaladdr < 0)
                 return false;
+            for (d = 1; d < type_sizeof(global->vtype); ++d)
+            {
+                if (code_globals_add(iptr[d]) < 0)
+                    return false;
+            }
         } else {
             global->code.globaladdr = code_globals_add(0);
-            if (code_globals_add(0) < 0 || code_globals_add(0) < 0)
+            if (global->code.globaladdr < 0)
                 return false;
+            for (d = 1; d < type_sizeof(global->vtype); ++d)
+            {
+                if (code_globals_add(0) < 0)
+                    return false;
+            }
         }
         return global->code.globaladdr >= 0;
     }
@@ -2652,6 +2709,7 @@ void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
 {
 	if (v->isconst) {
 		switch (v->vtype) {
+		    default:
 			case TYPE_VOID:
 				oprintf("(void)");
 				break;
