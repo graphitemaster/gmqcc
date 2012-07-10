@@ -2363,10 +2363,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     for (i = 0;i < 8; ++i) {
         if (i >= fun.nargs)
             fun.argsize[i] = 0;
-        else if (irfun->params[i] == TYPE_VECTOR)
-            fun.argsize[i] = 3;
         else
-            fun.argsize[i] = 1;
+            fun.argsize[i] = type_sizeof[irfun->params[i]];
     }
 
     fun.firstlocal = code_globals_elements;
@@ -2454,18 +2452,29 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     }
     case TYPE_VECTOR:
     {
+        size_t d;
         if (code_defs_add(def) < 0)
             return false;
 
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vvec;
             global->code.globaladdr = code_globals_add(iptr[0]);
-            if (code_globals_add(iptr[1]) < 0 || code_globals_add(iptr[2]) < 0)
+            if (global->code.globaladdr < 0)
                 return false;
+            for (d = 1; d < type_sizeof[global->vtype]; ++d)
+            {
+                if (code_globals_add(iptr[d]) < 0)
+                    return false;
+            }
         } else {
             global->code.globaladdr = code_globals_add(0);
-            if (code_globals_add(0) < 0 || code_globals_add(0) < 0)
+            if (global->code.globaladdr < 0)
                 return false;
+            for (d = 1; d < type_sizeof[global->vtype]; ++d)
+            {
+                if (code_globals_add(0) < 0)
+                    return false;
+            }
         }
         return global->code.globaladdr >= 0;
     }
