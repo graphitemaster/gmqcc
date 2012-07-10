@@ -2509,7 +2509,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             global->code.globaladdr = code_globals_add(iptr[0]);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof(global->vtype); ++d)
+            for (d = 1; d < jype_sizeof[global->vtype]; ++d)
             {
                 if (code_globals_add(iptr[d]) < 0)
                     return false;
@@ -2518,7 +2518,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             global->code.globaladdr = code_globals_add(0);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof(global->vtype); ++d)
+            for (d = 1; d < type_sizeof[global->vtype]; ++d)
             {
                 if (code_globals_add(0) < 0)
                     return false;
