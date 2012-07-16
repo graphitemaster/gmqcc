@@ -17,14 +17,13 @@ ifeq ($(CC), clang)
 
 endif
 OBJ     = \
-          error.o     \
           util.o      \
           code.o      \
           ast.o       \
           ir.o
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
-OBJ_C = main.o
+OBJ_C = main.o lexer.o parser.o
 
 #default is compiler only
 default: gmqcc

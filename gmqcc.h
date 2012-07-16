@@ -180,95 +180,6 @@ typedef char uintptr_size_is_correct[sizeof(intptr_t) == sizeof(int*)?1:-1];
 typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 
 /*===================================================================*/
-/*============================ lex.c ================================*/
-/*===================================================================*/
-typedef struct lex_file_t {
-    FILE *file;        /* file handler */
-    char *name;        /* name of file */
-    char  peek  [5];
-    char  lastok[8192];
-
-    int   last;    /* last token                   */
-    int   current; /* current token                */
-    int   length;  /* bytes left to parse          */
-    int   size;    /* never changes (size of file) */
-    int   line;    /* what line are we on?         */
-} lex_file;
-
-/*
- * It's important that this table never exceed 32 keywords, the ascii
- * table starts at 33 (and we don't want conflicts)
- */
-enum {
-    TOKEN_DO       ,
-    TOKEN_ELSE     ,
-    TOKEN_IF       ,
-    TOKEN_WHILE    ,
-    TOKEN_BREAK    ,
-    TOKEN_CONTINUE ,
-    TOKEN_RETURN   ,
-    TOKEN_GOTO     ,
-    TOKEN_FOR      ,   /* extension */
-    TOKEN_TYPEDEF  ,   /* extension */
-
-    /* ensure the token types are out of the  */
-    /* bounds of anyothers that may conflict. */
-    TOKEN_FLOAT    = 110,
-    TOKEN_VECTOR        ,
-    TOKEN_STRING        ,
-    TOKEN_ENTITY        ,
-    TOKEN_VOID
-};
-
-/*
- * Lexer state constants, these are numbers for where exactly in
- * the lexing the lexer is at. Or where it decided to stop if a lexer
- * error occurs.  These numbers must be > where the ascii-table ends
- * and > the last type token which is TOKEN_VOID
- */
-enum {
-    LEX_COMMENT = 1128,
-    LEX_CHRLIT        ,
-    LEX_STRLIT        ,
-    LEX_IDENT
-};
-
-int       lex_token  (lex_file *);
-void      lex_reset  (lex_file *);
-void      lex_close  (lex_file *);
-void      lex_parse  (lex_file *);
-lex_file *lex_include(lex_file *, const char *);
-void      lex_init   (const char *, lex_file **);
-
-/*===================================================================*/
-/*========================== error.c ================================*/
-/*===================================================================*/
-#define ERROR_LEX      (SHRT_MAX+0)
-#define ERROR_PARSE    (SHRT_MAX+1)
-#define ERROR_INTERNAL (SHRT_MAX+2)
-#define ERROR_COMPILER (SHRT_MAX+3)
-#define ERROR_PREPRO   (SHRT_MAX+4)
-int error(lex_file *, int, const char *, ...);
-
-/*===================================================================*/
-/*========================== parse.c ================================*/
-/*===================================================================*/
-int parse_gen(lex_file *);
-
-/*===================================================================*/
-/*========================== typedef.c ==============================*/
-/*===================================================================*/
-typedef struct typedef_node_t {
-    char      *name;
-} typedef_node;
-
-void          typedef_init();
-void          typedef_clear();
-typedef_node *typedef_find(const char *);
-int           typedef_add (lex_file *file, const char *, const char *);
-
-
-/*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
 void *util_memory_a      (unsigned int, unsigned int, const char *);
@@ -364,7 +275,7 @@ enum {
     TYPE_FIELD    ,
     TYPE_FUNCTION ,
     TYPE_POINTER  ,
-    /* TYPE_INTEGER  , */
+    TYPE_INTEGER  ,
     TYPE_QUATERNION  ,
     TYPE_MATRIX  ,
     TYPE_VARIANT  ,

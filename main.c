@@ -21,19 +21,18 @@
  * SOFTWARE.
  */
 #include "gmqcc.h"
-typedef struct { char *name, type; } argitem;
-VECTOR_MAKE(argitem, items);
 
+bool parser_compile(const char *filename);
 int main(int argc, char **argv) {
-    size_t itr;
-
     util_debug("COM", "starting ...\n");
 
+    if (argc == 2) {
+        if (!parser_compile(argv[1])) {
+            printf("There were compile errors\n");
+        }
+    }
+
     util_debug("COM", "cleaning ...\n");
-    /* clean list */
-    for (itr = 0; itr < items_elements; itr++)
-        mem_d(items_data[itr].name);
-    mem_d(items_data);
 
     util_meminfo();
     return 0;
