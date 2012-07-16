@@ -64,6 +64,24 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_M, /* variant, should never be accessed */
 };
 
+uint16_t type_store_instr[TYPE_COUNT] = {
+    INSTR_STOREP_F, /* should use I when having integer support */
+    INSTR_STOREP_S,
+    INSTR_STOREP_F,
+    INSTR_STOREP_V,
+    INSTR_STOREP_ENT,
+    INSTR_STOREP_FLD,
+    INSTR_STOREP_FNC,
+    INSTR_STOREP_ENT, /* should use I */
+#if 0
+    INSTR_STOREP_ENT, /* integer type */
+#endif
+    INSTR_STOREP_Q,
+    INSTR_STOREP_M,
+
+    INSTR_STOREP_M, /* variant, should never be accessed */
+};
+
 MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
 
 /***********************************************************************
@@ -853,52 +871,14 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
     else
         vtype = target->vtype;
 
-    switch (vtype) {
-        case TYPE_FLOAT:
 #if 0
-            if (what->vtype == TYPE_INTEGER)
-                op = INSTR_CONV_ITOF;
-            else
+    if      (vtype == TYPE_FLOAT   && what->vtype == TYPE_INTEGER)
+        op = INSTR_CONV_ITOF;
+    else if (vtype == TYPE_INTEGER && what->vtype == TYPE_FLOAT)
+        op = INSTR_CONV_FTOI;
 #endif
-                op = INSTR_STORE_F;
-            break;
-        case TYPE_VECTOR:
-            op = INSTR_STORE_V;
-            break;
-        case TYPE_ENTITY:
-            op = INSTR_STORE_ENT;
-            break;
-        case TYPE_STRING:
-            op = INSTR_STORE_S;
-            break;
-        case TYPE_FIELD:
-            op = INSTR_STORE_FLD;
-            break;
-#if 0
-        case TYPE_INTEGER:
-            if (what->vtype == TYPE_INTEGER)
-                op = INSTR_CONV_FTOI;
-            else
-                op = INSTR_STORE_I;
-            break;
-#endif
-        case TYPE_POINTER:
-#if 0
-            op = INSTR_STORE_I;
-#else
-            op = INSTR_STORE_ENT;
-#endif
-            break;
-        case TYPE_QUATERNION:
-            op = INSTR_STORE_Q;
-            break;
-        case TYPE_MATRIX:
-            op = INSTR_STORE_M;
-            break;
-        default:
-            /* Unknown type */
-            return false;
-    }
+        op = type_store_instr[vtype];
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -915,44 +895,7 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
      */
     vtype = what->vtype;
 
-    switch (vtype) {
-        case TYPE_FLOAT:
-            op = INSTR_STOREP_F;
-            break;
-        case TYPE_VECTOR:
-            op = INSTR_STOREP_V;
-            break;
-        case TYPE_ENTITY:
-            op = INSTR_STOREP_ENT;
-            break;
-        case TYPE_STRING:
-            op = INSTR_STOREP_S;
-            break;
-        case TYPE_FIELD:
-            op = INSTR_STOREP_FLD;
-            break;
-#if 0
-        case TYPE_INTEGER:
-            op = INSTR_STOREP_I;
-            break;
-#endif
-        case TYPE_POINTER:
-#if 0
-            op = INSTR_STOREP_I;
-#else
-            op = INSTR_STOREP_ENT;
-#endif
-            break;
-        case TYPE_QUATERNION:
-            op = INSTR_STOREP_Q;
-            break;
-        case TYPE_MATRIX:
-            op = INSTR_STOREP_M;
-            break;
-        default:
-            /* Unknown type */
-            return false;
-    }
+    op = type_storep_instr[vtype];
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -2509,7 +2452,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             global->code.globaladdr = code_globals_add(iptr[0]);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < jype_sizeof[global->vtype]; ++d)
+            for (d = 1; d < type_sizeof[global->vtype]; ++d)
             {
                 if (code_globals_add(iptr[d]) < 0)
                     return false;
