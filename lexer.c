@@ -559,20 +559,25 @@ int lex_do(lex_file *lex)
 		lex->tok->ttype = TOKEN_IDENT;
 
 		v = lex->tok->value;
-		if (!strcmp(v, "void") ||
-		    !strcmp(v, "int") ||
-		    !strcmp(v, "float") ||
-		    !strcmp(v, "vector") )
-		{
+		if (!strcmp(v, "void")) {
 			lex->tok->ttype = TOKEN_TYPENAME;
-			switch (v[1]) {
-				case 'o': lex->tok->constval.t = TYPE_VOID;    break;
-				case 'n': lex->tok->constval.t = TYPE_INTEGER; break;
-				case 'l': lex->tok->constval.t = TYPE_FLOAT;   break;
-				case 'e': lex->tok->constval.t = TYPE_VECTOR;  break;
-			}
-		}
-		else if (!strcmp(v, "for") ||
+		    lex->tok->constval.t = TYPE_VOID;
+		} else if (!strcmp(v, "int")) {
+			lex->tok->ttype = TOKEN_TYPENAME;
+		    lex->tok->constval.t = TYPE_INTEGER;
+		} else if (!strcmp(v, "float")) {
+			lex->tok->ttype = TOKEN_TYPENAME;
+		    lex->tok->constval.t = TYPE_FLOAT;
+		} else if (!strcmp(v, "string")) {
+			lex->tok->ttype = TOKEN_TYPENAME;
+		    lex->tok->constval.t = TYPE_STRING;
+		} else if (!strcmp(v, "entity")) {
+			lex->tok->ttype = TOKEN_TYPENAME;
+		    lex->tok->constval.t = TYPE_ENTITY;
+		} else if (!strcmp(v, "vector")) {
+			lex->tok->ttype = TOKEN_TYPENAME;
+		    lex->tok->constval.t = TYPE_VECTOR;
+		} else if (!strcmp(v, "for") ||
 		         !strcmp(v, "while") ||
 		         !strcmp(v, "do"))
 			lex->tok->ttype = TOKEN_KEYWORD;
