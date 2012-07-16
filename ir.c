@@ -59,6 +59,21 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_V, /* variant, should never be accessed */
 };
 
+uint16_t type_store_instr[TYPE_COUNT] = {
+    INSTR_STOREP_F, /* should use I when having integer support */
+    INSTR_STOREP_S,
+    INSTR_STOREP_F,
+    INSTR_STOREP_V,
+    INSTR_STOREP_ENT,
+    INSTR_STOREP_FLD,
+    INSTR_STOREP_FNC,
+    INSTR_STOREP_ENT, /* should use I */
+#if 0
+    INSTR_STOREP_ENT, /* integer type */
+#endif
+    INSTR_STOREP_V, /* variant, should never be accessed */
+};
+
 MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
 
 /***********************************************************************
@@ -835,7 +850,6 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
         op = INSTR_CONV_ITOF;
     else if (vtype == TYPE_INTEGER && what->vtype == TYPE_FLOAT)
         op = INSTR_CONV_FTOI;
-    else
 #endif
         op = type_store_instr[vtype];
 
@@ -855,41 +869,7 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
      */
     vtype = what->vtype;
 
-    op = type_store_instr[vtype] + (INSTR_STOREP_F - INSTR_STORE_F);
-#if 0
-    switch (vtype) {
-        case TYPE_FLOAT:
-            op = INSTR_STOREP_F;
-            break;
-        case TYPE_VECTOR:
-            op = INSTR_STOREP_V;
-            break;
-        case TYPE_ENTITY:
-            op = INSTR_STOREP_ENT;
-            break;
-        case TYPE_STRING:
-            op = INSTR_STOREP_S;
-            break;
-        case TYPE_FIELD:
-            op = INSTR_STOREP_FLD;
-            break;
-#if 0
-        case TYPE_INTEGER:
-            op = INSTR_STOREP_I;
-            break;
-#endif
-        case TYPE_POINTER:
-#if 0
-            op = INSTR_STOREP_I;
-#else
-            op = INSTR_STOREP_ENT;
-#endif
-            break;
-        default:
-            /* Unknown type */
-            return false;
-    }
-#endif
+    op = type_storep_instr[vtype];
 
     return ir_block_create_store_op(self, op, target, what);
 }
