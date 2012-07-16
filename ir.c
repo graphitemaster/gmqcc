@@ -830,46 +830,15 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
     else
         vtype = target->vtype;
 
-    switch (vtype) {
-        case TYPE_FLOAT:
 #if 0
-            if (what->vtype == TYPE_INTEGER)
-                op = INSTR_CONV_ITOF;
-            else
+    if      (vtype == TYPE_FLOAT   && what->vtype == TYPE_INTEGER)
+        op = INSTR_CONV_ITOF;
+    else if (vtype == TYPE_INTEGER && what->vtype == TYPE_FLOAT)
+        op = INSTR_CONV_FTOI;
+    else
 #endif
-                op = INSTR_STORE_F;
-            break;
-        case TYPE_VECTOR:
-            op = INSTR_STORE_V;
-            break;
-        case TYPE_ENTITY:
-            op = INSTR_STORE_ENT;
-            break;
-        case TYPE_STRING:
-            op = INSTR_STORE_S;
-            break;
-        case TYPE_FIELD:
-            op = INSTR_STORE_FLD;
-            break;
-#if 0
-        case TYPE_INTEGER:
-            if (what->vtype == TYPE_INTEGER)
-                op = INSTR_CONV_FTOI;
-            else
-                op = INSTR_STORE_I;
-            break;
-#endif
-        case TYPE_POINTER:
-#if 0
-            op = INSTR_STORE_I;
-#else
-            op = INSTR_STORE_ENT;
-#endif
-            break;
-        default:
-            /* Unknown type */
-            return false;
-    }
+        op = type_store_instr[vtype];
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -886,6 +855,8 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
      */
     vtype = what->vtype;
 
+    op = type_store_instr[vtype] + (INSTR_STOREP_F - INSTR_STORE_F);
+#if 0
     switch (vtype) {
         case TYPE_FLOAT:
             op = INSTR_STOREP_F;
@@ -918,6 +889,8 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
             /* Unknown type */
             return false;
     }
+#endif
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
