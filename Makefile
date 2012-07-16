@@ -16,15 +16,12 @@ ifeq ($(CC), clang)
 		-Wno-format-nonliteral
 
 endif
-OBJ     = lex.o       \
+OBJ     = \
           error.o     \
-          parse.o     \
-          typedef.o   \
           util.o      \
           code.o      \
-          asm.o       \
           ast.o       \
-          ir.o 
+          ir.o
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o
