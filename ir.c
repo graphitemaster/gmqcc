@@ -59,7 +59,7 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_V, /* variant, should never be accessed */
 };
 
-uint16_t type_store_instr[TYPE_COUNT] = {
+uint16_t type_storep_instr[TYPE_COUNT] = {
     INSTR_STOREP_F, /* should use I when having integer support */
     INSTR_STOREP_S,
     INSTR_STOREP_F,
