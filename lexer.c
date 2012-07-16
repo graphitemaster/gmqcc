@@ -579,7 +579,9 @@ int lex_do(lex_file *lex)
 		    lex->tok->constval.t = TYPE_VECTOR;
 		} else if (!strcmp(v, "for") ||
 		         !strcmp(v, "while") ||
-		         !strcmp(v, "do"))
+		         !strcmp(v, "do")    ||
+		         !strcmp(v, "var")   ||
+		         !strcmp(v, "const"))
 			lex->tok->ttype = TOKEN_KEYWORD;
 
 		return lex->tok->ttype;
