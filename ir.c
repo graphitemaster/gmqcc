@@ -579,7 +579,7 @@ bool ir_value_set_quaternion(ir_value *self, quaternion v)
 {
     if (self->vtype != TYPE_QUATERNION)
         return false;
-    self->constval.vquat = v;
+    memcpy(&self->constval.vquat, v, sizeof(self->constval.vquat));
     self->isconst = true;
     return true;
 }
@@ -588,7 +588,7 @@ bool ir_value_set_matrix(ir_value *self, matrix v)
 {
     if (self->vtype != TYPE_MATRIX)
         return false;
-    self->constval.vmat = v;
+    memcpy(&self->constval.vmat, v, sizeof(self->constval.vmat));
     self->isconst = true;
     return true;
 }
