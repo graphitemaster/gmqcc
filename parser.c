@@ -9,9 +9,11 @@ typedef struct {
     int      tok;
 
     MEM_VECTOR_MAKE(ast_value*, globals);
+    MEM_VECTOR_MAKE(ast_function*, functions);
 } parser_t;
 
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, globals)
+MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
 void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -125,6 +127,7 @@ bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
+        ast_function *func = NULL;
         lex_ctx ctx = parser_ctx(parser);
         ast_value *var = parser_parse_type(parser);
         if (!var)
@@ -145,6 +148,35 @@ bool parser_do(parser_t *parser)
             parseerror(parser, "failed to set variable name\n");
             ast_value_delete(var);
             return false;
+        }
+
+        if (var->params_count) {
+            /* a function was defined */
+            ast_value *fval;
+
+            /* turn var into a value of TYPE_FUNCTION, with the old var
+             * as return type
+             */
+            fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
+            func = ast_function_new(ctx, var->name, fval);
+            if (!fval || !func) {
+                ast_value_delete(var);
+                if (fval) ast_value_delete(fval);
+                if (func) ast_function_delete(func);
+                return false;
+            }
+
+            fval->expression.next = (ast_expression*)var;
+            MEM_VECTOR_MOVE(var, params, func, params);
+
+            if (!parser_t_functions_add(parser, func)) {
+                ast_value_delete(var);
+                if (fval) ast_value_delete(fval);
+                if (func) ast_function_delete(func);
+                return false;
+            }
+
+            var = fval;
         }
 
         if (!parser_t_globals_add(parser, var) ||
@@ -169,27 +201,27 @@ bool parser_do(parser_t *parser)
             return false;
 
         if (parser->tok == '#') {
-            /* builtin function */
-            ast_function *func;
-            ast_value    *fval;
+            if (!func) {
+                parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
+                return false;
+            }
             if (!parser_next(parser)) {
                 parseerror(parser, "expected builtin number");
                 return false;
             }
-
-            fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
-            func = ast_function_new(ctx, var->name, fval);
-            if (!fval || !func) {
-                if (fval) ast_value_delete(fval);
-                if (func) ast_function_delete(func);
+            if (parser->tok != TOKEN_INTCONST) {
+                parseerror(parser, "builtin number must be an integer constant");
+                return false;
+            }
+            if (parser_token(parser)->constval.i <= 0) {
+                parseerror(parser, "builtin number must be positive integer greater than zero");
                 return false;
             }
 
-            fval->expression.next = (ast_expression*)var;
-            MEM_VECTOR_MOVE(var, params, fval, params);
-
-            /* replace the variable */
-            parser->globals[parser->globals_count-1] = fval;
+            if (func)
+                func->builtin = parser_token(parser)->constval.i;
+        } else if (parser->tok == '{') {
+            /* function body */
         } else {
             parseerror(parser, "TODO, const assignment");
         }
@@ -270,6 +302,14 @@ bool parser_compile(const char *filename)
     for (i = 0; i < parser->globals_count; ++i) {
         if (!ast_global_codegen(parser->globals[i], ir)) {
             printf("failed to generate global %s\n", parser->globals[i]->name);
+        }
+    }
+    for (i = 0; i < parser->functions_count; ++i) {
+        if (!ast_function_codegen(parser->functions[i], ir)) {
+            printf("failed to generate function %s\n", parser->functions[i]->name);
+        }
+        if (!ir_function_finalize(parser->functions[i]->ir_func)) {
+            printf("failed to finalize function %s\n", parser->functions[i]->name);
         }
     }
 
