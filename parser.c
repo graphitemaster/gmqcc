@@ -153,13 +153,19 @@ bool parser_do(parser_t *parser)
         if (!parser_next(parser))
             return false;
 
-        if (parser->tok == ';')
-            return parser_next(parser);
+        if (parser->tok == ';') {
+            if (!parser_next(parser))
+                return parser->tok == TOKEN_EOF;
+            return true;
+        }
 
         if (parser->tok != '=') {
             parseerror(parser, "expected '=' or ';'");
             return false;
         }
+
+        if (!parser_next(parser))
+            return false;
 
         /* '=' found, assign... */
         parseerror(parser, "TODO, const assignment");
@@ -210,8 +216,9 @@ bool parser_compile(const char *filename)
         {
             if (!parser_do(parser)) {
                 if (parser->tok == TOKEN_EOF)
-                    break;
-                printf("parse error\n");
+                    parseerror(parser, "unexpected eof");
+                else
+                    parseerror(parser, "parse error\n");
                 lex_close(parser->lex);
                 mem_d(parser);
                 return false;
