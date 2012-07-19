@@ -92,6 +92,9 @@ ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
                 return NULL;
             }
 
+            if (parser->tok == ')')
+                break;
+
             param = parser_parse_type(parser, &dummy);
             (void)dummy;
 
