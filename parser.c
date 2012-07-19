@@ -125,6 +125,7 @@ bool parser_compile(const char *filename)
 {
     size_t i;
     parser_t *parser;
+    ir_builder *ir;
 
     parser = (parser_t*)mem_a(sizeof(parser_t));
     if (!parser)
@@ -157,6 +158,22 @@ bool parser_compile(const char *filename)
     }
 
     lex_close(parser->lex);
+
+    ir = ir_builder_new("gmqcc_out");
+    if (!ir) {
+        printf("failed to allocate builder\n");
+        goto cleanup;
+    }
+
+    for (i = 0; i < parser->globals_count; ++i) {
+        if (!ast_global_codegen(parser->globals[i], ir)) {
+            printf("failed to generate global %s\n", parser->globals[i]->name);
+        }
+    }
+
+    ir_builder_dump(ir, printf);
+
+cleanup:
     for (i = 0; i < parser->globals_count; ++i) {
         ast_value_delete(parser->globals[i]);
     }
