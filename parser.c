@@ -173,11 +173,15 @@ bool parser_body_do(parser_t *parser, ast_block *block)
 
 ast_block* parser_parse_block(parser_t *parser)
 {
-    ast_block *block;
+    size_t oldblocklocal;
+    ast_block *block = NULL;
+
+    oldblocklocal = parser->blocklocal;
+    parser->blocklocal = parser->locals_count;
 
     if (!parser_next(parser)) { /* skip the '{' */
         parseerror(parser, "expected function body");
-        return NULL;
+        goto cleanup;
     }
 
     block = ast_block_new(parser_ctx(parser));
@@ -189,9 +193,13 @@ ast_block* parser_parse_block(parser_t *parser)
 
         if (!parser_body_do(parser, block)) {
             ast_block_delete(block);
-            return NULL;
+            block = NULL;
+            goto cleanup;
         }
     }
+
+cleanup:
+    parser->blocklocal = oldblocklocal;
     return block;
 }
 
