@@ -134,6 +134,11 @@ ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
     return var;
 }
 
+bool parser_parse_body(parser_t *parser)
+{
+    return false;
+}
+
 bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
@@ -233,6 +238,12 @@ bool parser_do(parser_t *parser)
             func->builtin = -parser_token(parser)->constval.i;
         } else if (parser->tok == '{') {
             /* function body */
+            bool ret;
+            ast_function *old = parser->function;
+            parser->function = func;
+            ret = parser_parse_body(parser);
+            parser->function = old;
+            return ret;
         } else {
             parseerror(parser, "TODO, const assignment");
         }
