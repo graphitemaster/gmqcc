@@ -240,6 +240,8 @@ bool parser_do(parser_t *parser)
             return false;
         }
 
+        (void)parser_next(parser);
+
         return true;
     }
     else if (parser->tok == TOKEN_KEYWORD)
