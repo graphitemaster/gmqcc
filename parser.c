@@ -174,7 +174,7 @@ bool parser_do(parser_t *parser)
             }
 
             fval->expression.next = (ast_expression*)var;
-            MEM_VECTOR_MOVE(var, params, func, params);
+            MEM_VECTOR_MOVE(var, params, fval, params);
 
             if (!parser_t_functions_add(parser, func)) {
                 ast_value_delete(var);

@@ -77,6 +77,7 @@ do {                                                   \
 #define BUILTIN(name, outtype, number)                              \
 do {                                                                \
     ast_function *func_##name;                                      \
+    ast_value    *thisfuncval;                                      \
     ast_function *thisfunc;                                         \
     DEFVAR(return_##name);                                          \
     VARnamed(TYPE_FUNCTION, name, name);                            \
@@ -86,6 +87,8 @@ do {                                                                \
     func_##name = ast_function_new(ctx, #name, name);               \
     thisfunc = func_##name;                                         \
     (void)thisfunc;                                                 \
+    thisfuncval = name;                                             \
+    (void)thisfuncval;                                              \
     assert(functions_add(func_##name) >= 0);                        \
     func_##name->builtin = number;
 
@@ -95,7 +98,7 @@ do {                                                                \
 do {                                                 \
     DEFVAR(parm);                                    \
     VARnamed(ptype, parm, name);                     \
-    assert(ast_function_params_add(thisfunc, parm)); \
+    assert(ast_value_params_add(thisfuncval, parm)); \
 } while(0)
 
 #define FUNCTION(name, outtype)                                   \
