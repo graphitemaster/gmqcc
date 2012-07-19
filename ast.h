@@ -116,6 +116,8 @@ struct ast_value_s
      */
     MEM_VECTOR_MAKE(ast_value*, params);
 };
+MEM_VECTOR_PROTO(ast_value, ast_value*, params);
+
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);
 /* This will NOT delete an underlying ast_function */
 void ast_value_delete(ast_value*);
@@ -358,7 +360,6 @@ struct ast_function_s
     char         labelbuf[64];
 
     MEM_VECTOR_MAKE(ast_block*, blocks);
-    MEM_VECTOR_MAKE(ast_value*, params);
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */
@@ -369,7 +370,6 @@ void ast_function_delete(ast_function*);
 const char* ast_function_label(ast_function*, const char *prefix);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);
-MEM_VECTOR_PROTO(ast_function, ast_value*, params);
 
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
 

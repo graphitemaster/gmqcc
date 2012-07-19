@@ -399,7 +399,6 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
     MEM_VECTOR_INIT(self, blocks);
-    MEM_VECTOR_INIT(self, params);
 
     self->labelcount = 0;
     self->builtin = 0;
@@ -417,7 +416,6 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 }
 
 MEM_VEC_FUNCTIONS(ast_function, ast_block*, blocks)
-MEM_VEC_FUNCTIONS(ast_function, ast_value*, params)
 
 void ast_function_delete(ast_function *self)
 {
@@ -436,9 +434,6 @@ void ast_function_delete(ast_function *self)
     for (i = 0; i < self->blocks_count; ++i)
         ast_delete(self->blocks[i]);
     MEM_VECTOR_CLEAR(self, blocks);
-    for (i = 0; i < self->params_count; ++i)
-        ast_delete(self->params[i]);
-    MEM_VECTOR_CLEAR(self, params);
     mem_d(self);
 }
 
@@ -614,9 +609,9 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return false;
     }
 
-    for (i = 0; i < self->params_count; ++i)
+    for (i = 0; i < self->vtype->params_count; ++i)
     {
-        if (!ir_function_params_add(irf, self->params[i]->expression.vtype))
+        if (!ir_function_params_add(irf, self->vtype->params[i]->expression.vtype))
             return false;
     }
 
