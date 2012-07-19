@@ -10,6 +10,8 @@ typedef struct {
 
     MEM_VECTOR_MAKE(ast_value*, globals);
     MEM_VECTOR_MAKE(ast_function*, functions);
+
+    ast_function *function;
 } parser_t;
 
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, globals)
@@ -274,6 +276,8 @@ bool parser_compile(const char *filename)
     parser = (parser_t*)mem_a(sizeof(parser_t));
     if (!parser)
         return false;
+
+    memset(&parser, 0, sizeof(parser));
 
     MEM_VECTOR_INIT(parser, globals);
     parser->lex = lex_open(filename);
