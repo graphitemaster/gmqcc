@@ -717,6 +717,16 @@ void Tself##_##mem##_clear(Tself *self) \
     (owner)->mem##_alloc = 0;       \
 }
 
+#define MEM_VECTOR_MOVE(from, mem, to, tm)   \
+{                                            \
+    (to)->tm = (from)->mem;                  \
+    (to)->tm##_count = (from)->mem##_count;  \
+    (to)->tm##_alloc = (from)->mem##_alloc;  \
+    (from)->mem = NULL;                      \
+    (from)->mem##_count = 0;                 \
+    (from)->mem##_alloc = 0;                 \
+}
+
 #define MEM_VEC_FUNCTIONS(Tself, Twhat, mem) \
 _MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)       \
 _MEM_VEC_FUN_ADD(Tself, Twhat, mem)

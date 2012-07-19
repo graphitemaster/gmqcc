@@ -60,15 +60,73 @@ ast_value* parser_find_global(parser_t *parser, const char *name)
     return NULL;
 }
 
+typedef struct {
+    MEM_VECTOR_MAKE(ast_value*, p);
+} paramlist_t;
+MEM_VEC_FUNCTIONS(paramlist_t, ast_value*, p)
+
+ast_value *parser_parse_type(parser_t *parser)
+{
+    paramlist_t params;
+    ast_value *var;
+    lex_ctx   ctx = parser_ctx(parser);
+    int vtype = parser_token(parser)->constval.t;
+
+    MEM_VECTOR_INIT(&params, p);
+
+    if (!parser_next(parser))
+        return NULL;
+
+    if (parser->tok == '(') {
+        while (true) {
+            ast_value *param;
+
+            if (!parser_next(parser)) {
+                MEM_VECTOR_CLEAR(&params, p);
+                return NULL;
+            }
+
+            param = parser_parse_type(parser);
+            if (!param) {
+                MEM_VECTOR_CLEAR(&params, p);
+                return NULL;
+            }
+
+            if (!paramlist_t_p_add(&params, param)) {
+                MEM_VECTOR_CLEAR(&params, p);
+                parseerror(parser, "Out of memory while parsing typename");
+                return NULL;
+            }
+
+            if (parser->tok == ',')
+                continue;
+            if (parser->tok == ')')
+                break;
+            MEM_VECTOR_CLEAR(&params, p);
+            parseerror(parser, "Unexpected token");
+            return NULL;
+        }
+        if (!parser_next(parser)) {
+            MEM_VECTOR_CLEAR(&params, p);
+            return NULL;
+        }
+    }
+
+    var = ast_value_new(ctx, "<unnamed>", vtype);
+    if (!var) {
+        MEM_VECTOR_CLEAR(&params, p);
+        return NULL;
+    }
+    MEM_VECTOR_MOVE(&params, p, var, params);
+    return var;
+}
+
 bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
-        ast_value *var;
-        int       vtype = parser->lex->tok->constval.t;
-
-        /* Declaring a variable */
-        if (!parser_next(parser))
+        ast_value *var = parser_parse_type(parser);
+        if (!var)
             return false;
 
         if (parser->tok != TOKEN_IDENT) {
@@ -76,14 +134,18 @@ bool parser_do(parser_t *parser)
             return false;
         }
 
-        var = parser_find_global(parser, parser_tokval(parser));
-
-        if (var) {
+        if (parser_find_global(parser, parser_tokval(parser))) {
+            ast_value_delete(var);
             parseerror(parser, "global already exists: %s\n", parser_tokval(parser));
             return false;
         }
 
-        var = ast_value_new(parser_ctx(parser), parser_tokval(parser), vtype);
+        if (!ast_value_set_name(var, parser_tokval(parser))) {
+            parseerror(parser, "failed to set variable name\n");
+            ast_value_delete(var);
+            return false;
+        }
+
         if (!parser_t_globals_add(parser, var))
             return false;
 
