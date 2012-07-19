@@ -219,7 +219,7 @@ bool parser_do(parser_t *parser)
             }
 
             if (func)
-                func->builtin = parser_token(parser)->constval.i;
+                func->builtin = -parser_token(parser)->constval.i;
         } else if (parser->tok == '{') {
             /* function body */
         } else {
