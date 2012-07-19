@@ -146,6 +146,8 @@ bool parser_compile(const char *filename)
         while (parser->tok != TOKEN_EOF && parser->tok < TOKEN_ERROR)
         {
             if (!parser_do(parser)) {
+                if (parser->tok == TOKEN_EOF)
+                    break;
                 printf("parse error\n");
                 lex_close(parser->lex);
                 mem_d(parser);
