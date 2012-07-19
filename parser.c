@@ -67,7 +67,7 @@ typedef struct {
 } paramlist_t;
 MEM_VEC_FUNCTIONS(paramlist_t, ast_value*, p)
 
-ast_value *parser_parse_type(parser_t *parser)
+ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
 {
     paramlist_t params;
     ast_value *var;
@@ -76,19 +76,25 @@ ast_value *parser_parse_type(parser_t *parser)
 
     MEM_VECTOR_INIT(&params, p);
 
+    *isfunc = false;
+
     if (!parser_next(parser))
         return NULL;
 
     if (parser->tok == '(') {
+        *isfunc = true;
         while (true) {
             ast_value *param;
+            bool dummy;
 
             if (!parser_next(parser)) {
                 MEM_VECTOR_CLEAR(&params, p);
                 return NULL;
             }
 
-            param = parser_parse_type(parser);
+            param = parser_parse_type(parser, &dummy);
+            (void)dummy;
+
             if (!param) {
                 MEM_VECTOR_CLEAR(&params, p);
                 return NULL;
@@ -127,9 +133,10 @@ bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
+        bool isfunc = false;
         ast_function *func = NULL;
         lex_ctx ctx = parser_ctx(parser);
-        ast_value *var = parser_parse_type(parser);
+        ast_value *var = parser_parse_type(parser, &isfunc);
         if (!var)
             return false;
 
@@ -150,7 +157,7 @@ bool parser_do(parser_t *parser)
             return false;
         }
 
-        if (var->params_count) {
+        if (isfunc) {
             /* a function was defined */
             ast_value *fval;
 
