@@ -2549,6 +2549,10 @@ void ir_function_dump(ir_function *f, char *ind,
                       int (*oprintf)(const char*, ...))
 {
 	size_t i;
+	if (f->builtin != 0) {
+	    oprintf("%sfunction %s = builtin %i\n", ind, f->name, -f->builtin);
+	    return;
+	}
 	oprintf("%sfunction %s\n", ind, f->name);
 	strncat(ind, "\t", IND_BUFSZ);
 	if (f->locals_count)
