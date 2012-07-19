@@ -125,6 +125,7 @@ bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
+        lex_ctx ctx = parser_ctx(parser);
         ast_value *var = parser_parse_type(parser);
         if (!var)
             return false;
@@ -146,12 +147,12 @@ bool parser_do(parser_t *parser)
             return false;
         }
 
-        if (!parser_t_globals_add(parser, var))
+        if (!parser_t_globals_add(parser, var) ||
+            !parser_next(parser))
+        {
+            ast_value_delete(var);
             return false;
-
-        /* Constant assignment */
-        if (!parser_next(parser))
-            return false;
+        }
 
         if (parser->tok == ';') {
             if (!parser_next(parser))
@@ -167,9 +168,41 @@ bool parser_do(parser_t *parser)
         if (!parser_next(parser))
             return false;
 
-        /* '=' found, assign... */
-        parseerror(parser, "TODO, const assignment");
-        return false;
+        if (parser->tok == '#') {
+            /* builtin function */
+            ast_function *func;
+            ast_value    *fval;
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected builtin number");
+                return false;
+            }
+
+            fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
+            func = ast_function_new(ctx, var->name, fval);
+            if (!fval || !func) {
+                if (fval) ast_value_delete(fval);
+                if (func) ast_function_delete(func);
+                return false;
+            }
+
+            fval->expression.next = (ast_expression*)var;
+            MEM_VECTOR_MOVE(var, params, fval, params);
+
+            /* replace the variable */
+            parser->globals[parser->globals_count-1] = fval;
+        } else {
+            parseerror(parser, "TODO, const assignment");
+        }
+
+        if (!parser_next(parser))
+            return false;
+
+        if (parser->tok != ';') {
+            parseerror(parser, "expected semicolon");
+            return false;
+        }
+
+        return true;
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {

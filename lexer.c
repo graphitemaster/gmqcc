@@ -466,6 +466,8 @@ int lex_do(lex_file *lex)
 
 		case ',':
 
+		case '#':
+
 			return (lex->tok->ttype = ch);
 		default:
 			break;
