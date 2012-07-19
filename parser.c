@@ -208,7 +208,7 @@ bool parser_do(parser_t *parser)
             return false;
 
         if (parser->tok == '#') {
-            if (!func) {
+            if (!isfunc || !func) {
                 parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
                 return false;
             }
@@ -225,8 +225,7 @@ bool parser_do(parser_t *parser)
                 return false;
             }
 
-            if (func)
-                func->builtin = -parser_token(parser)->constval.i;
+            func->builtin = -parser_token(parser)->constval.i;
         } else if (parser->tok == '{') {
             /* function body */
         } else {
