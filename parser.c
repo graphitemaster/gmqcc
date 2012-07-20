@@ -159,6 +159,12 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
     return var;
 }
 
+static bool parser_expression(parser_t *parser, ast_block *block)
+{
+    parseerror(parser, "TODO: statements/expressions");
+    return false;
+}
+
 static bool parser_variable(parser_t *parser, bool global);
 static bool parser_body_do(parser_t *parser, ast_block *block)
 {
@@ -173,9 +179,8 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
     {
         /* a block */
     }
-
-    parseerror(parser, "expected statement");
-    return false;
+    else
+        return parser_expression(parser_t *parser, ast_block *block);
 }
 
 static ast_block* parser_parse_block(parser_t *parser)
