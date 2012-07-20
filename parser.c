@@ -181,7 +181,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
 
 typedef struct
 {
-    int etype; /* 0 = expression, others are operators */
+    size_t etype; /* 0 = expression, others are operators */
     ast_expression* out;
 } sy_elem;
 typedef struct
@@ -199,6 +199,18 @@ static sy_elem syexp(ast_expression *v) {
     return e;
 }
 static sy_elem syval(ast_value *v) { return syexp((ast_expression*)v); }
+
+static sy_elem syop(const oper_info *op) {
+    sy_elem e;
+    e.etype = 1 + (op - operators);
+    e.out = NULL;
+    return e;
+}
+
+static bool parser_sy_pop(parser_t *parser, shynt *sy)
+{
+    return true;
+}
 
 static ast_expression* parser_expression(parser_t *parser)
 {
@@ -258,6 +270,8 @@ static ast_expression* parser_expression(parser_t *parser)
             } else {
                 /* classify the operator */
                 /* TODO: suffix operators */
+                const oper_info *op;
+                const oper_info *olast = NULL;
                 size_t o;
                 for (o = 0; o < operator_count; ++o) {
                     if (!(operators[o].flags & OP_PREFIX) &&
@@ -271,6 +285,23 @@ static ast_expression* parser_expression(parser_t *parser)
                     /* no operator found... must be the end of the statement */
                     break;
                 }
+                /* found an operator */
+                op = &operators[o];
+
+                if (sy.ops_count)
+                    olast = &operators[sy.ops[sy.ops_count-1].etype-1];
+
+                while (olast && (
+                        (op->prec < olast->prec) ||
+                        (op->assoc == ASSOC_LEFT && op->prec <= olast->prec) ) )
+                {
+                    if (!parser_sy_pop(parser, &sy))
+                        goto onerr;
+                    olast = sy.ops_count ? (&operators[sy.ops[sy.ops_count-1].etype-1]) : NULL;
+                }
+
+                if (!shynt_ops_add(&sy, syop(op)))
+                    goto onerr;
             }
             wantop = false;
             parser->lex->flags.noops = true;
@@ -280,7 +311,17 @@ static ast_expression* parser_expression(parser_t *parser)
         }
     }
 
+    while (sy.ops_count) {
+        if (!parser_sy_pop(parser, &sy))
+            goto onerr;
+    }
+
     parser->lex->flags.noops = true;
+    if (!sy.out_count) {
+        parseerror(parser, "empty expression");
+        expr = NULL;
+    } else
+        expr = sy.out[0].out;
     MEM_VECTOR_CLEAR(&sy, out);
     MEM_VECTOR_CLEAR(&sy, ops);
     return expr;
