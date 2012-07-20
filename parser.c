@@ -209,10 +209,35 @@ static sy_elem syop(const oper_info *op) {
 
 static bool parser_sy_pop(parser_t *parser, shynt *sy)
 {
+    const oper_info *op;
+    ast_expression *vals[3];
+    size_t i;
+
     if (!sy->ops_count) {
         parseerror(parser, "internal error: missing operator");
         return false;
     }
+
+    op = &operators[sy->ops[sy->ops_count-1].etype - 1];
+
+    if (sy->out_count < op->operands) {
+        parseerror(parser, "internal error: not enough operands");
+        return false;
+    }
+
+    sy->ops_count--;
+
+    sy->out_count -= op->operands;
+    for (i = 0; i < op->operands; ++i)
+        vals[i] = sy->out[sy->out_count+i].out;
+
+    switch (op->id)
+    {
+        default:
+            parseerror(parser, "internal error: unhandled operand");
+            return false;
+    }
+
     return true;
 }
 

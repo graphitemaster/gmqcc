@@ -117,6 +117,7 @@ enum {
 
 typedef struct {
     const char   *op;
+    unsigned int operands;
     unsigned int id;
     unsigned int assoc;
     unsigned int prec;
@@ -128,60 +129,60 @@ typedef struct {
 #define opid3(a,b,c) ((a<<16)|(b<<8)|c)
 
 static const oper_info operators[] = {
-    { "++",  opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
-    { "--",  opid3('S','-','-'), ASSOC_LEFT,  16, OP_SUFFIX},
+    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
+    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  16, OP_SUFFIX},
 
-    { ".",   opid1('.'),         ASSOC_LEFT,  15, 0 },
+    { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
 
-    { "!",   opid2('!', 'P'),    ASSOC_RIGHT, 14, 0 },
-    { "~",   opid2('~', 'P'),    ASSOC_RIGHT, 14, 0 },
-    { "+",   opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
-    { "-",   opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
-    { "++",  opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX },
-    { "--",  opid3('-','-','P'), ASSOC_RIGHT, 14, OP_PREFIX },
-/*  { "&",   opid2('&','P'),     ASSOC_RIGHT, 14, OP_PREFIX }, */
+    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, 0 },
+    { "~",   1, opid2('~', 'P'),    ASSOC_RIGHT, 14, 0 },
+    { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX },
+    { "--",  1, opid3('-','-','P'), ASSOC_RIGHT, 14, OP_PREFIX },
+/*  { "&",   1, opid2('&','P'),     ASSOC_RIGHT, 14, OP_PREFIX }, */
 
-    { "*",   opid1('*'),         ASSOC_LEFT,  13, 0 },
-    { "/",   opid1('/'),         ASSOC_LEFT,  13, 0 },
-    { "%",   opid1('%'),         ASSOC_LEFT,  13, 0 },
+    { "*",   2, opid1('*'),         ASSOC_LEFT,  13, 0 },
+    { "/",   2, opid1('/'),         ASSOC_LEFT,  13, 0 },
+    { "%",   2, opid1('%'),         ASSOC_LEFT,  13, 0 },
 
-    { "+",   opid1('+'),         ASSOC_LEFT,  12, 0 },
-    { "-",   opid1('-'),         ASSOC_LEFT,  12, 0 },
+    { "+",   2, opid1('+'),         ASSOC_LEFT,  12, 0 },
+    { "-",   2, opid1('-'),         ASSOC_LEFT,  12, 0 },
 
-    { "<<",  opid2('<','<'),     ASSOC_LEFT,  11, 0 },
-    { ">>",  opid2('>','>'),     ASSOC_LEFT,  11, 0 },
+    { "<<",  2, opid2('<','<'),     ASSOC_LEFT,  11, 0 },
+    { ">>",  2, opid2('>','>'),     ASSOC_LEFT,  11, 0 },
 
-    { "<",   opid1('<'),         ASSOC_LEFT,  10, 0 },
-    { ">",   opid1('>'),         ASSOC_LEFT,  10, 0 },
-    { "<=",  opid2('<','='),     ASSOC_LEFT,  10, 0 },
-    { ">=",  opid2('>','='),     ASSOC_LEFT,  10, 0 },
+    { "<",   2, opid1('<'),         ASSOC_LEFT,  10, 0 },
+    { ">",   2, opid1('>'),         ASSOC_LEFT,  10, 0 },
+    { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0 },
+    { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0 },
 
-    { "==",  opid2('=','='),     ASSOC_LEFT,  9,  0 },
-    { "!=",  opid2('!','='),     ASSOC_LEFT,  9,  0 },
+    { "==",  2, opid2('=','='),     ASSOC_LEFT,  9,  0 },
+    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  9,  0 },
 
-    { "&",   opid1('&'),         ASSOC_LEFT,  8,  0 },
+    { "&",   2, opid1('&'),         ASSOC_LEFT,  8,  0 },
 
-    { "^",   opid1('^'),         ASSOC_LEFT,  7,  0 },
+    { "^",   2, opid1('^'),         ASSOC_LEFT,  7,  0 },
 
-    { "|",   opid1('|'),         ASSOC_LEFT,  6,  0 },
+    { "|",   2, opid1('|'),         ASSOC_LEFT,  6,  0 },
 
-    { "&&",  opid2('&','&'),     ASSOC_LEFT,  5,  0 },
+    { "&&",  2, opid2('&','&'),     ASSOC_LEFT,  5,  0 },
 
-    { "||",  opid2('|','|'),     ASSOC_LEFT,  4,  0 },
+    { "||",  2, opid2('|','|'),     ASSOC_LEFT,  4,  0 },
 
-    { "?",   opid2('?',':'),     ASSOC_RIGHT, 3,  0 },
+    { "?",   3, opid2('?',':'),     ASSOC_RIGHT, 3,  0 },
 
-    { "=",   opid1('='),         ASSOC_RIGHT, 2,  0 },
-    { "+=",  opid2('+','='),     ASSOC_RIGHT, 2,  0 },
-    { "-=",  opid2('-','='),     ASSOC_RIGHT, 2,  0 },
-    { "*=",  opid2('*','='),     ASSOC_RIGHT, 2,  0 },
-    { "/=",  opid2('/','='),     ASSOC_RIGHT, 2,  0 },
-    { "%=",  opid2('%','='),     ASSOC_RIGHT, 2,  0 },
-    { ">>=", opid3('>','>','='), ASSOC_RIGHT, 2,  0 },
-    { "<<=", opid3('<','<','='), ASSOC_RIGHT, 2,  0 },
-    { "&=",  opid2('&','='),     ASSOC_RIGHT, 2,  0 },
-    { "^=",  opid2('^','='),     ASSOC_RIGHT, 2,  0 },
-    { "|=",  opid2('|','='),     ASSOC_RIGHT, 2,  0 },
+    { "=",   2, opid1('='),         ASSOC_RIGHT, 2,  0 },
+    { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 2,  0 },
+    { "-=",  2, opid2('-','='),     ASSOC_RIGHT, 2,  0 },
+    { "*=",  2, opid2('*','='),     ASSOC_RIGHT, 2,  0 },
+    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 2,  0 },
+    { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 2,  0 },
+    { ">>=", 2, opid3('>','>','='), ASSOC_RIGHT, 2,  0 },
+    { "<<=", 2, opid3('<','<','='), ASSOC_RIGHT, 2,  0 },
+    { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 2,  0 },
+    { "^=",  2, opid2('^','='),     ASSOC_RIGHT, 2,  0 },
+    { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 2,  0 },
 };
 const size_t operator_count = (sizeof(operators) / sizeof(operators[0]));
 
