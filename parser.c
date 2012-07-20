@@ -10,6 +10,7 @@ typedef struct {
 
     MEM_VECTOR_MAKE(ast_value*, globals);
     MEM_VECTOR_MAKE(ast_function*, functions);
+    MEM_VECTOR_MAKE(ast_value*, imm_float);
 
     ast_function *function;
     MEM_VECTOR_MAKE(ast_value*, locals);
@@ -17,6 +18,7 @@ typedef struct {
 } parser_t;
 
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, globals)
+MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_float)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, locals)
 MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
@@ -56,6 +58,24 @@ token *parser_lift(parser_t *parser)
 #define parser_tokval(p) (p->lex->tok->value)
 #define parser_token(p)  (p->lex->tok)
 #define parser_ctx(p)    (p->lex->tok->ctx)
+
+ast_value* parser_const_float(parser_t *parser, double d)
+{
+    size_t i;
+    ast_value *out;
+    for (i = 0; i < parser->imm_float_count; ++i) {
+        if (parser->imm_float[i]->constval.vfloat == d)
+            return parser->imm_float[i];
+    }
+    out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_FLOAT);
+    out->isconst = true;
+    out->constval.vfloat = d;
+    if (!parser_t_imm_float_add(parser, out)) {
+        ast_value_delete(out);
+        return NULL;
+    }
+    return out;
+}
 
 ast_value* parser_find_global(parser_t *parser, const char *name)
 {
@@ -168,15 +188,60 @@ typedef struct
 {
     MEM_VECTOR_MAKE(sy_elem, out);
     MEM_VECTOR_MAKE(sy_elem, ops);
-} shyntingyard;
+} shynt;
+MEM_VEC_FUNCTIONS(shynt, sy_elem, out)
+MEM_VEC_FUNCTIONS(shynt, sy_elem, ops)
+
+static sy_elem syexp(ast_expression *v) {
+    sy_elem e;
+    e.etype = 0;
+    e.out = v;
+    return e;
+}
+static sy_elem syval(ast_value *v) { return syexp((ast_expression*)v); }
 
 static bool parser_expression(parser_t *parser, ast_block *block)
 {
-    shyntingyard sy;
+    shynt sy;
 
     MEM_VECTOR_INIT(&sy, out);
     MEM_VECTOR_INIT(&sy, ops);
 
+    if (parser->tok == TOKEN_IDENT)
+    {
+        /* variable */
+        ast_value *var = parser_find_var(parser, parser_tokval(parser));
+        if (!var) {
+            parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+            goto onerr;
+        }
+        if (!shynt_out_add(&sy, syval(var))) {
+            parseerror(parser, "out of memory");
+            goto onerr;
+        }
+    } else if (parser->tok == TOKEN_FLOATCONST) {
+        ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
+        if (!val)
+            return false;
+        if (!shynt_out_add(&sy, syval(val))) {
+            parseerror(parser, "out of memory");
+            goto onerr;
+        }
+    } else if (parser->tok == TOKEN_INTCONST) {
+        ast_value *val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
+        if (!val)
+            return false;
+        if (!shynt_out_add(&sy, syval(val))) {
+            parseerror(parser, "out of memory");
+            goto onerr;
+        }
+    }
+
+    MEM_VECTOR_CLEAR(&sy, out);
+    MEM_VECTOR_CLEAR(&sy, ops);
+    return true;
+
+onerr:
     MEM_VECTOR_CLEAR(&sy, out);
     MEM_VECTOR_CLEAR(&sy, ops);
     return false;
@@ -488,6 +553,11 @@ bool parser_compile(const char *filename)
         goto cleanup;
     }
 
+    for (i = 0; i < parser->imm_float_count; ++i) {
+        if (!ast_global_codegen(parser->imm_float[i], ir)) {
+            printf("failed to generate global %s\n", parser->imm_float[i]->name);
+        }
+    }
     for (i = 0; i < parser->globals_count; ++i) {
         if (!ast_global_codegen(parser->globals[i], ir)) {
             printf("failed to generate global %s\n", parser->globals[i]->name);
