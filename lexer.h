@@ -184,7 +184,7 @@ static const oper_info operators[] = {
     { "^=",  2, opid2('^','='),     ASSOC_RIGHT, 2,  0 },
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 2,  0 },
 };
-const size_t operator_count = (sizeof(operators) / sizeof(operators[0]));
+static const size_t operator_count = (sizeof(operators) / sizeof(operators[0]));
 
 typedef struct
 {
