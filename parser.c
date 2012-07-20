@@ -209,6 +209,10 @@ static sy_elem syop(const oper_info *op) {
 
 static bool parser_sy_pop(parser_t *parser, shynt *sy)
 {
+    if (!sy->ops_count) {
+        parseerror(parser, "internal error: missing operator");
+        return false;
+    }
     return true;
 }
 
