@@ -170,6 +170,18 @@ ast_binary* ast_binary_new(lex_ctx ctx, int op,
     self->left = left;
     self->right = right;
 
+    if (op >= INSTR_EQ_F && op <= INSTR_GT)
+        self->expression.vtype = TYPE_FLOAT;
+    else if (op == INSTR_AND || op == INSTR_OR ||
+             op == INSTR_BITAND || op == INSTR_BITOR)
+        self->expression.vtype = TYPE_FLOAT;
+    else if (op == INSTR_MUL_VF || op == INSTR_MUL_FV)
+        self->expression.vtype = TYPE_VECTOR;
+    else if (op == INSTR_MUL_V)
+        self->expression.vtype = TYPE_FLOAT;
+    else
+        self->expression.vtype = left->expression.vtype;
+
     return self;
 }
 

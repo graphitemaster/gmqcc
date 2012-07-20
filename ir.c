@@ -1175,6 +1175,7 @@ ir_value* ir_block_create_binop(ir_block *self,
         case INSTR_ADD_V:
         case INSTR_SUB_V:
         case INSTR_MUL_VF:
+        case INSTR_MUL_FV:
 #if 0
         case INSTR_DIV_VF:
         case INSTR_MUL_IV:
