@@ -91,7 +91,7 @@ typedef struct {
 } paramlist_t;
 MEM_VEC_FUNCTIONS(paramlist_t, ast_value*, p)
 
-ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
+static ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
 {
     paramlist_t params;
     ast_value *var;
@@ -156,11 +156,15 @@ ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
     return var;
 }
 
-bool parser_body_do(parser_t *parser, ast_block *block)
+static bool parser_variable(parser_t *parser, bool global);
+static bool parser_body_do(parser_t *parser, ast_block *block)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
         /* local variable */
+        if (!parser_variable(parser, false))
+            return false;
+        return true;
     }
     else if (parser->tok == '{')
     {
@@ -171,7 +175,7 @@ bool parser_body_do(parser_t *parser, ast_block *block)
     return false;
 }
 
-ast_block* parser_parse_block(parser_t *parser)
+static ast_block* parser_parse_block(parser_t *parser)
 {
     size_t oldblocklocal;
     ast_block *block = NULL;
@@ -198,12 +202,19 @@ ast_block* parser_parse_block(parser_t *parser)
         }
     }
 
+    if (parser->tok != '}') {
+        ast_block_delete(block);
+        block = NULL;
+    } else {
+        (void)parser_next(parser);
+    }
+
 cleanup:
     parser->blocklocal = oldblocklocal;
     return block;
 }
 
-bool parser_variable(parser_t *parser, bool global)
+static bool parser_variable(parser_t *parser, bool global)
 {
     bool isfunc = false;
     ast_function *func = NULL;
@@ -352,7 +363,7 @@ bool parser_variable(parser_t *parser, bool global)
     return true;
 }
 
-bool parser_do(parser_t *parser)
+static bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
