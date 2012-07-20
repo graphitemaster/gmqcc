@@ -200,51 +200,96 @@ static sy_elem syexp(ast_expression *v) {
 }
 static sy_elem syval(ast_value *v) { return syexp((ast_expression*)v); }
 
-static bool parser_expression(parser_t *parser, ast_block *block)
+static ast_expression* parser_expression(parser_t *parser)
 {
+    ast_expression *expr = NULL;
     shynt sy;
+    bool wantop = false;
 
     MEM_VECTOR_INIT(&sy, out);
     MEM_VECTOR_INIT(&sy, ops);
 
-    if (parser->tok == TOKEN_IDENT)
+    while (true)
     {
-        /* variable */
-        ast_value *var = parser_find_var(parser, parser_tokval(parser));
-        if (!var) {
-            parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
-            goto onerr;
-        }
-        if (!shynt_out_add(&sy, syval(var))) {
-            parseerror(parser, "out of memory");
-            goto onerr;
-        }
-    } else if (parser->tok == TOKEN_FLOATCONST) {
-        ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
-        if (!val)
-            return false;
-        if (!shynt_out_add(&sy, syval(val))) {
-            parseerror(parser, "out of memory");
-            goto onerr;
-        }
-    } else if (parser->tok == TOKEN_INTCONST) {
-        ast_value *val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
-        if (!val)
-            return false;
-        if (!shynt_out_add(&sy, syval(val))) {
-            parseerror(parser, "out of memory");
-            goto onerr;
+        if (!wantop)
+        {
+            if (parser->tok == TOKEN_IDENT)
+            {
+                /* variable */
+                ast_value *var = parser_find_var(parser, parser_tokval(parser));
+                if (!var) {
+                    parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                    goto onerr;
+                }
+                if (!shynt_out_add(&sy, syval(var))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            } else if (parser->tok == TOKEN_FLOATCONST) {
+                ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
+                if (!val)
+                    return false;
+                if (!shynt_out_add(&sy, syval(val))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            } else if (parser->tok == TOKEN_INTCONST) {
+                ast_value *val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
+                if (!val)
+                    return false;
+                if (!shynt_out_add(&sy, syval(val))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            } else {
+                /* TODO: prefix operators */
+                parseerror(parser, "expected statement");
+                goto onerr;
+            }
+            wantop = true;
+            parser->lex->flags.noops = false;
+            if (!parser_next(parser)) {
+                goto onerr;
+            }
+        } else {
+            if (parser->tok != TOKEN_OPERATOR) {
+                parseerror(parser, "expected operator or end of statement");
+                goto onerr;
+            } else {
+                /* classify the operator */
+                /* TODO: suffix operators */
+                size_t o;
+                for (o = 0; o < operator_count; ++o) {
+                    if (!(operators[o].flags & OP_PREFIX) &&
+                        !(operators[o].flags & OP_SUFFIX) && /* remove this */
+                        !strcmp(parser_tokval(parser), operators[o].op))
+                    {
+                        break;
+                    }
+                }
+                if (o == operator_count) {
+                    /* no operator found... must be the end of the statement */
+                    break;
+                }
+            }
+            wantop = false;
+            parser->lex->flags.noops = true;
+            if (!parser_next(parser)) {
+                goto onerr;
+            }
         }
     }
 
+    parser->lex->flags.noops = true;
     MEM_VECTOR_CLEAR(&sy, out);
     MEM_VECTOR_CLEAR(&sy, ops);
-    return true;
+    return expr;
 
 onerr:
+    parser->lex->flags.noops = true;
     MEM_VECTOR_CLEAR(&sy, out);
     MEM_VECTOR_CLEAR(&sy, ops);
-    return false;
+    return NULL;
 }
 
 static bool parser_variable(parser_t *parser, bool global);
@@ -264,7 +309,14 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
         return false;
     }
     else
-        return parser_expression(parser, block);
+    {
+        ast_expression *exp = parser_expression(parser);
+        if (!exp)
+            return false;
+        if (!ast_block_exprs_add(block, exp))
+            return false;
+        return true;
+    }
 }
 
 static ast_block* parser_parse_block(parser_t *parser)
