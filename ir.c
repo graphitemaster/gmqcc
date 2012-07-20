@@ -29,6 +29,23 @@
  * Type sizes used at multiple points in the IR codegen
  */
 
+const char *type_name[TYPE_COUNT] = {
+    "void",
+    "string",
+    "float",
+    "vector",
+    "entity",
+    "field",
+    "function",
+    "pointer",
+#if 0
+    "integer",
+#endif
+    "quaternion",
+    "matrix",
+    "variant"
+};
+
 size_t type_sizeof[TYPE_COUNT] = {
     1, /* TYPE_VOID     */
     1, /* TYPE_STRING   */

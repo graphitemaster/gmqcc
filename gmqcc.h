@@ -283,6 +283,8 @@ enum {
     TYPE_COUNT
 };
 
+extern const char *type_name[TYPE_COUNT];
+
 extern size_t type_sizeof[TYPE_COUNT];
 extern uint16_t type_store_instr[TYPE_COUNT];
 /* could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
