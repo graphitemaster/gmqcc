@@ -159,9 +159,26 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
     return var;
 }
 
+typedef struct
+{
+    int etype; /* 0 = expression, others are operators */
+    ast_expression* out;
+} sy_elem;
+typedef struct
+{
+    MEM_VECTOR_MAKE(sy_elem, out);
+    MEM_VECTOR_MAKE(sy_elem, ops);
+} shyntingyard;
+
 static bool parser_expression(parser_t *parser, ast_block *block)
 {
-    parseerror(parser, "TODO: statements/expressions");
+    shyntingyard sy;
+
+    MEM_VECTOR_INIT(&sy, out);
+    MEM_VECTOR_INIT(&sy, ops);
+
+    MEM_VECTOR_CLEAR(&sy, out);
+    MEM_VECTOR_CLEAR(&sy, ops);
     return false;
 }
 
@@ -178,9 +195,11 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
     else if (parser->tok == '{')
     {
         /* a block */
+        parseerror(parser, "TODO: inner blocks");
+        return false;
     }
     else
-        return parser_expression(parser_t *parser, ast_block *block);
+        return parser_expression(parser, block);
 }
 
 static ast_block* parser_parse_block(parser_t *parser)

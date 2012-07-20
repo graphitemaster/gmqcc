@@ -117,66 +117,67 @@ enum {
 
 typedef struct {
     const char   *op;
+    unsigned int id;
     unsigned int assoc;
     unsigned int prec;
     unsigned int flags;
 } oper_info;
 
 static const oper_info operators[] = {
-    { "++",  ASSOC_LEFT,  16, OP_SUFFIX},
-    { "--",  ASSOC_LEFT,  16, OP_SUFFIX},
+    { "++",    1, ASSOC_LEFT,  16, OP_SUFFIX},
+    { "--",    2, ASSOC_LEFT,  16, OP_SUFFIX},
 
-    { ".",   ASSOC_LEFT,  15, 0 },
+    { ".",    10, ASSOC_LEFT,  15, 0 },
 
-    { "!",   ASSOC_RIGHT, 14, 0 },
-    { "~",   ASSOC_RIGHT, 14, 0 },
-    { "+",   ASSOC_RIGHT, 14, OP_PREFIX },
-    { "-",   ASSOC_RIGHT, 14, OP_PREFIX },
-    { "++",  ASSOC_RIGHT, 14, OP_PREFIX },
-    { "--",  ASSOC_RIGHT, 14, OP_PREFIX },
-/*  { "&",   ASSOC_RIGHT, 14, OP_PREFIX }, */
+    { "!",    21, ASSOC_RIGHT, 14, 0 },
+    { "~",    22, ASSOC_RIGHT, 14, 0 },
+    { "+",    23, ASSOC_RIGHT, 14, OP_PREFIX },
+    { "-",    24, ASSOC_RIGHT, 14, OP_PREFIX },
+    { "++",   25, ASSOC_RIGHT, 14, OP_PREFIX },
+    { "--",   26, ASSOC_RIGHT, 14, OP_PREFIX },
+/*  { "&",    27, ASSOC_RIGHT, 14, OP_PREFIX }, */
 
-    { "*",   ASSOC_LEFT,  13, 0 },
-    { "/",   ASSOC_LEFT,  13, 0 },
-    { "%",   ASSOC_LEFT,  13, 0 },
+    { "*",    30, ASSOC_LEFT,  13, 0 },
+    { "/",    31, ASSOC_LEFT,  13, 0 },
+    { "%",    32, ASSOC_LEFT,  13, 0 },
 
-    { "+",   ASSOC_LEFT,  12, 0 },
-    { "-",   ASSOC_LEFT,  12, 0 },
+    { "+",    40, ASSOC_LEFT,  12, 0 },
+    { "-",    41, ASSOC_LEFT,  12, 0 },
 
-    { "<<",  ASSOC_LEFT,  11, 0 },
-    { ">>",  ASSOC_LEFT,  11, 0 },
+    { "<<",   50, ASSOC_LEFT,  11, 0 },
+    { ">>",   51, ASSOC_LEFT,  11, 0 },
 
-    { "<",   ASSOC_LEFT,  10, 0 },
-    { ">",   ASSOC_LEFT,  10, 0 },
-    { "<=",  ASSOC_LEFT,  10, 0 },
-    { ">=",  ASSOC_LEFT,  10, 0 },
+    { "<",    60, ASSOC_LEFT,  10, 0 },
+    { ">",    61, ASSOC_LEFT,  10, 0 },
+    { "<=",   62, ASSOC_LEFT,  10, 0 },
+    { ">=",   63, ASSOC_LEFT,  10, 0 },
 
-    { "==",  ASSOC_LEFT,  9,  0 },
-    { "!=",  ASSOC_LEFT,  9,  0 },
+    { "==",   70, ASSOC_LEFT,  9,  0 },
+    { "!=",   71, ASSOC_LEFT,  9,  0 },
 
-    { "&",   ASSOC_LEFT,  8,  0 },
+    { "&",    80, ASSOC_LEFT,  8,  0 },
 
-    { "^",   ASSOC_LEFT,  7,  0 },
+    { "^",    90, ASSOC_LEFT,  7,  0 },
 
-    { "|",   ASSOC_LEFT,  6,  0 },
+    { "|",   100, ASSOC_LEFT,  6,  0 },
 
-    { "&&",  ASSOC_LEFT,  5,  0 },
+    { "&&",  110, ASSOC_LEFT,  5,  0 },
 
-    { "||",  ASSOC_LEFT,  4,  0 },
+    { "||",  120, ASSOC_LEFT,  4,  0 },
 
-    { "?",   ASSOC_RIGHT, 3,  0 },
+    { "?",   130, ASSOC_RIGHT, 3,  0 },
 
-    { "=",   ASSOC_RIGHT, 2,  0 },
-    { "+=",  ASSOC_RIGHT, 2,  0 },
-    { "-=",  ASSOC_RIGHT, 2,  0 },
-    { "*=",  ASSOC_RIGHT, 2,  0 },
-    { "/=",  ASSOC_RIGHT, 2,  0 },
-    { "%=",  ASSOC_RIGHT, 2,  0 },
-    { ">>=", ASSOC_RIGHT, 2,  0 },
-    { "<<=", ASSOC_RIGHT, 2,  0 },
-    { "&=",  ASSOC_RIGHT, 2,  0 },
-    { "^=",  ASSOC_RIGHT, 2,  0 },
-    { "|=",  ASSOC_RIGHT, 2,  0 },
+    { "=",   140, ASSOC_RIGHT, 2,  0 },
+    { "+=",  141, ASSOC_RIGHT, 2,  0 },
+    { "-=",  142, ASSOC_RIGHT, 2,  0 },
+    { "*=",  143, ASSOC_RIGHT, 2,  0 },
+    { "/=",  144, ASSOC_RIGHT, 2,  0 },
+    { "%=",  145, ASSOC_RIGHT, 2,  0 },
+    { ">>=", 146, ASSOC_RIGHT, 2,  0 },
+    { "<<=", 147, ASSOC_RIGHT, 2,  0 },
+    { "&=",  148, ASSOC_RIGHT, 2,  0 },
+    { "^=",  149, ASSOC_RIGHT, 2,  0 },
+    { "|=",  150, ASSOC_RIGHT, 2,  0 },
 };
 
 typedef struct
