@@ -510,8 +510,10 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
     }
 
     v = ir_builder_create_global(ir, self->name, self->expression.vtype);
-    if (!v)
+    if (!v) {
+        printf("ir_builder_create_global failed\n");
         return false;
+    }
 
     if (self->isconst) {
         switch (self->expression.vtype)

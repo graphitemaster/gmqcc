@@ -206,9 +206,14 @@ ir_value* ir_builder_get_global(ir_builder *self, const char *name)
 
 ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype)
 {
-    ir_value *ve = ir_builder_get_global(self, name);
-    if (ve) {
-        return NULL;
+    ir_value *ve;
+
+    if (name && name[0] != '#')
+    {
+        ve = ir_builder_get_global(self, name);
+        if (ve) {
+            return NULL;
+        }
     }
 
     ve = ir_value_var(name, store_global, vtype);
