@@ -224,8 +224,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
     lex_ctx ctx;
-    ast_expression *out;
-    ast_expression *vals[3];
+    ast_expression *out = NULL;
+    ast_expression *exprs[3];
+    ast_value      *vars[3];
     size_t i;
 
     if (!sy->ops_count) {
@@ -237,16 +238,19 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ctx = sy->ops[sy->ops_count-1].ctx;
 
     if (sy->out_count < op->operands) {
-        parseerror(parser, "internal error: not enough operands");
+        parseerror(parser, "internal error: not enough operands: %i", sy->out_count);
         return false;
     }
 
     sy->ops_count--;
 
     sy->out_count -= op->operands;
-    for (i = 0; i < op->operands; ++i)
-        vals[i] = sy->out[sy->out_count+i].out;
+    for (i = 0; i < op->operands; ++i) {
+        exprs[i] = sy->out[sy->out_count+i].out;
+        vars[i]  = sy->out[sy->out_count+i].value;
+    }
 
+    printf("Applying operator %s\n", op->op);
     switch (op->id)
     {
         default:
@@ -254,97 +258,109 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             return false;
 
         case opid1('+'):
-            if (vals[0]->expression.vtype != vals[1]->expression.vtype) {
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
                 parseerror(parser, "Cannot add type %s and %s",
-                           type_name[vals[0]->expression.vtype],
-                           type_name[vals[1]->expression.vtype]);
-                break;
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
             }
-            switch (vals[0]->expression.vtype) {
+            switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, vals[0], vals[1]);
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, vals[0], vals[1]);
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
                     parseerror(parser, "Cannot add type %s and %s",
-                               type_name[vals[0]->expression.vtype],
-                               type_name[vals[1]->expression.vtype]);
+                               type_name[exprs[0]->expression.vtype],
+                               type_name[exprs[1]->expression.vtype]);
                     return false;
             };
             break;
         case opid1('-'):
-            if (vals[0]->expression.vtype != vals[1]->expression.vtype) {
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
                 parseerror(parser, "Cannot subtract type %s from %s",
-                           type_name[vals[1]->expression.vtype],
-                           type_name[vals[0]->expression.vtype]);
-                break;
+                           type_name[exprs[1]->expression.vtype],
+                           type_name[exprs[0]->expression.vtype]);
+                return false;
             }
-            switch (vals[0]->expression.vtype) {
+            switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, vals[0], vals[1]);
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, vals[0], vals[1]);
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                     break;
                 default:
                     parseerror(parser, "Cannot add type %s from %s",
-                               type_name[vals[1]->expression.vtype],
-                               type_name[vals[0]->expression.vtype]);
+                               type_name[exprs[1]->expression.vtype],
+                               type_name[exprs[0]->expression.vtype]);
                     return false;
             };
             break;
         case opid1('*'):
-            if (vals[0]->expression.vtype != vals[1]->expression.vtype &&
-                vals[0]->expression.vtype != TYPE_VECTOR &&
-                vals[0]->expression.vtype != TYPE_FLOAT &&
-                vals[1]->expression.vtype != TYPE_VECTOR &&
-                vals[1]->expression.vtype != TYPE_FLOAT)
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype &&
+                exprs[0]->expression.vtype != TYPE_VECTOR &&
+                exprs[0]->expression.vtype != TYPE_FLOAT &&
+                exprs[1]->expression.vtype != TYPE_VECTOR &&
+                exprs[1]->expression.vtype != TYPE_FLOAT)
             {
                 parseerror(parser, "Cannot multiply type %s from %s",
-                           type_name[vals[1]->expression.vtype],
-                           type_name[vals[0]->expression.vtype]);
-                break;
+                           type_name[exprs[1]->expression.vtype],
+                           type_name[exprs[0]->expression.vtype]);
+                return false;
             }
-            switch (vals[0]->expression.vtype) {
+            switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
-                    if (vals[1]->expression.vtype == TYPE_VECTOR)
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, vals[0], vals[1]);
+                    if (exprs[1]->expression.vtype == TYPE_VECTOR)
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
                     else
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, vals[0], vals[1]);
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
-                    if (vals[1]->expression.vtype == TYPE_FLOAT)
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, vals[0], vals[1]);
+                    if (exprs[1]->expression.vtype == TYPE_FLOAT)
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
                     else
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, vals[0], vals[1]);
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                     break;
                 default:
                     parseerror(parser, "Cannot add type %s from %s",
-                               type_name[vals[1]->expression.vtype],
-                               type_name[vals[0]->expression.vtype]);
+                               type_name[exprs[1]->expression.vtype],
+                               type_name[exprs[0]->expression.vtype]);
                     return false;
             };
             break;
         case opid1('/'):
-            if (vals[0]->expression.vtype != vals[1]->expression.vtype ||
-                vals[0]->expression.vtype != TYPE_FLOAT)
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
+                exprs[0]->expression.vtype != TYPE_FLOAT)
             {
                 parseerror(parser, "Cannot divide types %s and %s",
-                           type_name[vals[0]->expression.vtype],
-                           type_name[vals[1]->expression.vtype]);
-                break;
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, vals[0], vals[1]);
+            out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
             break;
 
 
         case opid1('='):
+            if (!vars[0]) {
+                parseerror(parser, "Cannot assign to non-variable");
+                return false;
+            }
+            out = (ast_expression*)ast_store_new(ctx,
+                                                 type_store_instr[vars[0]->expression.vtype],
+                                                 vars[0], exprs[1]);
             break;
     }
 
-    sy->ops[sy->ops_count++] = syexp(ctx, out);
+    if (!out) {
+        parseerror(parser, "failed to apply operand %s", op->op);
+        return false;
+    }
+
+    sy->out[sy->out_count++] = syexp(ctx, out);
     return true;
 }
 
@@ -373,6 +389,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                printf("Added: %s\n", var->name);
             } else if (parser->tok == TOKEN_FLOATCONST) {
                 ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
                 if (!val)
@@ -389,6 +406,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                printf("Added: %i\n", parser_token(parser)->constval.i);
             } else {
                 /* TODO: prefix operators */
                 parseerror(parser, "expected statement");
@@ -396,9 +414,6 @@ static ast_expression* parser_expression(parser_t *parser)
             }
             wantop = true;
             parser->lex->flags.noops = false;
-            if (!parser_next(parser)) {
-                goto onerr;
-            }
         } else {
             if (parser->tok != TOKEN_OPERATOR) {
                 parseerror(parser, "expected operator or end of statement");
@@ -438,13 +453,22 @@ static ast_expression* parser_expression(parser_t *parser)
 
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
                     goto onerr;
+                printf("Added op %s\n", op->op);
             }
             wantop = false;
             parser->lex->flags.noops = true;
-            if (!parser_next(parser)) {
-                goto onerr;
-            }
         }
+        if (!parser_next(parser)) {
+            goto onerr;
+        }
+        if (parser->tok == ';') {
+            printf("End of statement\n");
+            break;
+        }
+    }
+    if (!parser_next(parser)) {
+        parseerror(parser, "Unexpected end of file");
+        goto onerr;
     }
 
     while (sy.ops_count) {
@@ -469,13 +493,13 @@ onerr:
     return NULL;
 }
 
-static bool parser_variable(parser_t *parser, bool global);
+static bool parser_variable(parser_t *parser, ast_block *localblock);
 static bool parser_body_do(parser_t *parser, ast_block *block)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
         /* local variable */
-        if (!parser_variable(parser, false))
+        if (!parser_variable(parser, block))
             return false;
         return true;
     }
@@ -535,7 +559,7 @@ cleanup:
     return block;
 }
 
-static bool parser_variable(parser_t *parser, bool global)
+static bool parser_variable(parser_t *parser, ast_block *localblock)
 {
     bool          isfunc = false;
     ast_function *func = NULL;
@@ -564,13 +588,13 @@ static bool parser_variable(parser_t *parser, bool global)
             return false;
         }
 
-        if (global && parser_find_global(parser, parser_tokval(parser))) {
+        if (!localblock && parser_find_global(parser, parser_tokval(parser))) {
             ast_value_delete(var);
             parseerror(parser, "global already exists: %s\n", parser_tokval(parser));
             return false;
         }
 
-        if (!global && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
+        if (localblock && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
             ast_value_delete(var);
             parseerror(parser, "local variable already exists: %s\n", parser_tokval(parser));
             return false;
@@ -611,9 +635,15 @@ static bool parser_variable(parser_t *parser, bool global)
             var = fval;
         }
 
-        if ( ( global && !parser_t_globals_add(parser, var)) ||
-             (!global && !parser_t_locals_add(parser, var)) )
+        if ( (!localblock && !parser_t_globals_add(parser, var)) ||
+             ( localblock && !parser_t_locals_add(parser, var)) )
         {
+            ast_value_delete(var);
+            return false;
+        }
+        if (localblock && !ast_block_locals_add(localblock, var))
+        {
+            parser->locals_count--;
             ast_value_delete(var);
             return false;
         }
@@ -643,7 +673,7 @@ static bool parser_variable(parser_t *parser, bool global)
             return false;
 
         if (parser->tok == '#') {
-            if (!global) {
+            if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
                 return false;
             }
@@ -670,7 +700,7 @@ static bool parser_variable(parser_t *parser, bool global)
             ast_block *block;
             ast_function *old = parser->function;
 
-            if (!global) {
+            if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");
                 return false;
             }
@@ -714,7 +744,7 @@ static bool parser_do(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
-        return parser_variable(parser, true);
+        return parser_variable(parser, NULL);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
