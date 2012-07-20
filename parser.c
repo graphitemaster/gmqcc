@@ -91,19 +91,17 @@ typedef struct {
 } paramlist_t;
 MEM_VEC_FUNCTIONS(paramlist_t, ast_value*, p)
 
-static ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
+static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc)
 {
     paramlist_t params;
     ast_value *var;
     lex_ctx   ctx = parser_ctx(parser);
-    int vtype = parser_token(parser)->constval.t;
+    int vtype = basetype;
+    int temptype;
 
     MEM_VECTOR_INIT(&params, p);
 
     *isfunc = false;
-
-    if (!parser_next(parser))
-        return NULL;
 
     if (parser->tok == '(') {
         *isfunc = true;
@@ -119,7 +117,12 @@ static ast_value *parser_parse_type(parser_t *parser, bool *isfunc)
             if (parser->tok == ')')
                 break;
 
-            param = parser_parse_type(parser, &dummy);
+            temptype = parser_token(parser)->constval.t;
+            if (!parser_next(parser)) {
+                MEM_VECTOR_CLEAR(&params, p);
+                return NULL;
+            }
+            param = parser_parse_type(parser, temptype, &dummy);
             (void)dummy;
 
             if (!param) {
@@ -216,151 +219,177 @@ cleanup:
 
 static bool parser_variable(parser_t *parser, bool global)
 {
-    bool isfunc = false;
+    bool          isfunc = false;
     ast_function *func = NULL;
-    lex_ctx ctx = parser_ctx(parser);
-    ast_value *var = parser_parse_type(parser, &isfunc);
-    if (!var)
-        return false;
+    lex_ctx       ctx;
+    ast_value    *var;
 
-    if (parser->tok != TOKEN_IDENT) {
-        parseerror(parser, "expected variable name\n");
-        return false;
-    }
+    int basetype = parser_token(parser)->constval.t;
 
-    if (global && parser_find_global(parser, parser_tokval(parser))) {
-        ast_value_delete(var);
-        parseerror(parser, "global already exists: %s\n", parser_tokval(parser));
-        return false;
-    }
-
-    if (!global && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
-        ast_value_delete(var);
-        parseerror(parser, "local variable already exists: %s\n", parser_tokval(parser));
-        return false;
-    }
-
-    if (!ast_value_set_name(var, parser_tokval(parser))) {
-        parseerror(parser, "failed to set variable name\n");
-        ast_value_delete(var);
-        return false;
-    }
-
-    if (isfunc) {
-        /* a function was defined */
-        ast_value *fval;
-
-        /* turn var into a value of TYPE_FUNCTION, with the old var
-         * as return type
-         */
-        fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
-        func = ast_function_new(ctx, var->name, fval);
-        if (!fval || !func) {
-            ast_value_delete(var);
-            if (fval) ast_value_delete(fval);
-            if (func) ast_function_delete(func);
-            return false;
-        }
-
-        fval->expression.next = (ast_expression*)var;
-        MEM_VECTOR_MOVE(var, params, fval, params);
-
-        if (!parser_t_functions_add(parser, func)) {
-            ast_value_delete(var);
-            if (fval) ast_value_delete(fval);
-            if (func) ast_function_delete(func);
-            return false;
-        }
-
-        var = fval;
-    }
-
-    if ( ( global && !parser_t_globals_add(parser, var)) ||
-         (!global && !parser_t_locals_add(parser, var)) )
+    while (true)
     {
-        ast_value_delete(var);
-        return false;
-    }
-
-    if (!parser_next(parser)) {
-        ast_value_delete(var);
-        return false;
-    }
-
-    if (parser->tok == ';') {
-        if (!parser_next(parser))
-            return parser->tok == TOKEN_EOF;
-        return true;
-    }
-
-    if (parser->tok != '=') {
-        parseerror(parser, "expected '=' or ';'");
-        return false;
-    }
-
-    if (!parser_next(parser))
-        return false;
-
-    if (parser->tok == '#') {
-        if (!global) {
-            parseerror(parser, "cannot declare builtins within functions");
+        if (!parser_next(parser)) { /* skip basetype or comma */
+            parseerror(parser, "expected variable declaration");
             return false;
         }
-        if (!isfunc || !func) {
-            parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
+
+        isfunc = false;
+        func = NULL;
+        ctx = parser_ctx(parser);
+        var = parser_parse_type(parser, basetype, &isfunc);
+
+        if (!var)
+            return false;
+
+        if (parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected variable name\n");
             return false;
         }
+
+        if (global && parser_find_global(parser, parser_tokval(parser))) {
+            ast_value_delete(var);
+            parseerror(parser, "global already exists: %s\n", parser_tokval(parser));
+            return false;
+        }
+
+        if (!global && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
+            ast_value_delete(var);
+            parseerror(parser, "local variable already exists: %s\n", parser_tokval(parser));
+            return false;
+        }
+
+        if (!ast_value_set_name(var, parser_tokval(parser))) {
+            parseerror(parser, "failed to set variable name\n");
+            ast_value_delete(var);
+            return false;
+        }
+
+        if (isfunc) {
+            /* a function was defined */
+            ast_value *fval;
+
+            /* turn var into a value of TYPE_FUNCTION, with the old var
+             * as return type
+             */
+            fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
+            func = ast_function_new(ctx, var->name, fval);
+            if (!fval || !func) {
+                ast_value_delete(var);
+                if (fval) ast_value_delete(fval);
+                if (func) ast_function_delete(func);
+                return false;
+            }
+
+            fval->expression.next = (ast_expression*)var;
+            MEM_VECTOR_MOVE(var, params, fval, params);
+
+            if (!parser_t_functions_add(parser, func)) {
+                ast_value_delete(var);
+                if (fval) ast_value_delete(fval);
+                if (func) ast_function_delete(func);
+                return false;
+            }
+
+            var = fval;
+        }
+
+        if ( ( global && !parser_t_globals_add(parser, var)) ||
+             (!global && !parser_t_locals_add(parser, var)) )
+        {
+            ast_value_delete(var);
+            return false;
+        }
+
         if (!parser_next(parser)) {
-            parseerror(parser, "expected builtin number");
-            return false;
-        }
-        if (parser->tok != TOKEN_INTCONST) {
-            parseerror(parser, "builtin number must be an integer constant");
-            return false;
-        }
-        if (parser_token(parser)->constval.i <= 0) {
-            parseerror(parser, "builtin number must be positive integer greater than zero");
+            ast_value_delete(var);
             return false;
         }
 
-        func->builtin = -parser_token(parser)->constval.i;
-    } else if (parser->tok == '{') {
-        /* function body */
-        ast_block *block;
-        ast_function *old = parser->function;
+        if (parser->tok == ';') {
+            if (!parser_next(parser))
+                return parser->tok == TOKEN_EOF;
+            return true;
+        }
 
-        if (!global) {
-            parseerror(parser, "cannot declare functions within functions");
+        if (parser->tok == ',') {
+            /* another var */
+            continue;
+        }
+
+        if (parser->tok != '=') {
+            parseerror(parser, "expected '=' or ';'");
             return false;
         }
 
-        parser->function = func;
-        block = parser_parse_block(parser);
-        parser->function = old;
-
-        if (!block)
+        if (!parser_next(parser))
             return false;
 
-        if (!ast_function_blocks_add(func, block)) {
-            ast_block_delete(block);
+        if (parser->tok == '#') {
+            if (!global) {
+                parseerror(parser, "cannot declare builtins within functions");
+                return false;
+            }
+            if (!isfunc || !func) {
+                parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
+                return false;
+            }
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected builtin number");
+                return false;
+            }
+            if (parser->tok != TOKEN_INTCONST) {
+                parseerror(parser, "builtin number must be an integer constant");
+                return false;
+            }
+            if (parser_token(parser)->constval.i <= 0) {
+                parseerror(parser, "builtin number must be positive integer greater than zero");
+                return false;
+            }
+
+            func->builtin = -parser_token(parser)->constval.i;
+        } else if (parser->tok == '{') {
+            /* function body */
+            ast_block *block;
+            ast_function *old = parser->function;
+
+            if (!global) {
+                parseerror(parser, "cannot declare functions within functions");
+                return false;
+            }
+
+            parser->function = func;
+            block = parser_parse_block(parser);
+            parser->function = old;
+
+            if (!block)
+                return false;
+
+            if (!ast_function_blocks_add(func, block)) {
+                ast_block_delete(block);
+                return false;
+            }
+            return true;
+        } else {
+            parseerror(parser, "TODO, const assignment");
+        }
+
+        if (!parser_next(parser))
+            return false;
+
+        if (parser->tok == ',') {
+            /* another */
+            continue;
+        }
+
+        if (parser->tok != ';') {
+            parseerror(parser, "expected semicolon");
             return false;
         }
+
+        (void)parser_next(parser);
+
         return true;
-    } else {
-        parseerror(parser, "TODO, const assignment");
     }
-
-    if (!parser_next(parser))
-        return false;
-
-    if (parser->tok != ';') {
-        parseerror(parser, "expected semicolon");
-        return false;
-    }
-
-    (void)parser_next(parser);
-
-    return true;
 }
 
 static bool parser_do(parser_t *parser)
