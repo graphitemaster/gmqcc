@@ -123,61 +123,65 @@ typedef struct {
     unsigned int flags;
 } oper_info;
 
+#define opid1(a) (a)
+#define opid2(a,b) ((a<<8)|b)
+#define opid3(a,b,c) ((a<<16)|(b<<8)|c)
+
 static const oper_info operators[] = {
-    { "++",    1, ASSOC_LEFT,  16, OP_SUFFIX},
-    { "--",    2, ASSOC_LEFT,  16, OP_SUFFIX},
+    { "++",  opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
+    { "--",  opid3('S','-','-'), ASSOC_LEFT,  16, OP_SUFFIX},
 
-    { ".",    10, ASSOC_LEFT,  15, 0 },
+    { ".",   opid1('.'),         ASSOC_LEFT,  15, 0 },
 
-    { "!",    21, ASSOC_RIGHT, 14, 0 },
-    { "~",    22, ASSOC_RIGHT, 14, 0 },
-    { "+",    23, ASSOC_RIGHT, 14, OP_PREFIX },
-    { "-",    24, ASSOC_RIGHT, 14, OP_PREFIX },
-    { "++",   25, ASSOC_RIGHT, 14, OP_PREFIX },
-    { "--",   26, ASSOC_RIGHT, 14, OP_PREFIX },
-/*  { "&",    27, ASSOC_RIGHT, 14, OP_PREFIX }, */
+    { "!",   opid2('!', 'P'),    ASSOC_RIGHT, 14, 0 },
+    { "~",   opid2('~', 'P'),    ASSOC_RIGHT, 14, 0 },
+    { "+",   opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "-",   opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "++",  opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX },
+    { "--",  opid3('-','-','P'), ASSOC_RIGHT, 14, OP_PREFIX },
+/*  { "&",   opid2('&','P'),     ASSOC_RIGHT, 14, OP_PREFIX }, */
 
-    { "*",    30, ASSOC_LEFT,  13, 0 },
-    { "/",    31, ASSOC_LEFT,  13, 0 },
-    { "%",    32, ASSOC_LEFT,  13, 0 },
+    { "*",   opid1('*'),         ASSOC_LEFT,  13, 0 },
+    { "/",   opid1('/'),         ASSOC_LEFT,  13, 0 },
+    { "%",   opid1('%'),         ASSOC_LEFT,  13, 0 },
 
-    { "+",    40, ASSOC_LEFT,  12, 0 },
-    { "-",    41, ASSOC_LEFT,  12, 0 },
+    { "+",   opid1('+'),         ASSOC_LEFT,  12, 0 },
+    { "-",   opid1('-'),         ASSOC_LEFT,  12, 0 },
 
-    { "<<",   50, ASSOC_LEFT,  11, 0 },
-    { ">>",   51, ASSOC_LEFT,  11, 0 },
+    { "<<",  opid2('<','<'),     ASSOC_LEFT,  11, 0 },
+    { ">>",  opid2('>','>'),     ASSOC_LEFT,  11, 0 },
 
-    { "<",    60, ASSOC_LEFT,  10, 0 },
-    { ">",    61, ASSOC_LEFT,  10, 0 },
-    { "<=",   62, ASSOC_LEFT,  10, 0 },
-    { ">=",   63, ASSOC_LEFT,  10, 0 },
+    { "<",   opid1('<'),         ASSOC_LEFT,  10, 0 },
+    { ">",   opid1('>'),         ASSOC_LEFT,  10, 0 },
+    { "<=",  opid2('<','='),     ASSOC_LEFT,  10, 0 },
+    { ">=",  opid2('>','='),     ASSOC_LEFT,  10, 0 },
 
-    { "==",   70, ASSOC_LEFT,  9,  0 },
-    { "!=",   71, ASSOC_LEFT,  9,  0 },
+    { "==",  opid2('=','='),     ASSOC_LEFT,  9,  0 },
+    { "!=",  opid2('!','='),     ASSOC_LEFT,  9,  0 },
 
-    { "&",    80, ASSOC_LEFT,  8,  0 },
+    { "&",   opid1('&'),         ASSOC_LEFT,  8,  0 },
 
-    { "^",    90, ASSOC_LEFT,  7,  0 },
+    { "^",   opid1('^'),         ASSOC_LEFT,  7,  0 },
 
-    { "|",   100, ASSOC_LEFT,  6,  0 },
+    { "|",   opid1('|'),         ASSOC_LEFT,  6,  0 },
 
-    { "&&",  110, ASSOC_LEFT,  5,  0 },
+    { "&&",  opid2('&','&'),     ASSOC_LEFT,  5,  0 },
 
-    { "||",  120, ASSOC_LEFT,  4,  0 },
+    { "||",  opid2('|','|'),     ASSOC_LEFT,  4,  0 },
 
-    { "?",   130, ASSOC_RIGHT, 3,  0 },
+    { "?",   opid2('?',':'),     ASSOC_RIGHT, 3,  0 },
 
-    { "=",   140, ASSOC_RIGHT, 2,  0 },
-    { "+=",  141, ASSOC_RIGHT, 2,  0 },
-    { "-=",  142, ASSOC_RIGHT, 2,  0 },
-    { "*=",  143, ASSOC_RIGHT, 2,  0 },
-    { "/=",  144, ASSOC_RIGHT, 2,  0 },
-    { "%=",  145, ASSOC_RIGHT, 2,  0 },
-    { ">>=", 146, ASSOC_RIGHT, 2,  0 },
-    { "<<=", 147, ASSOC_RIGHT, 2,  0 },
-    { "&=",  148, ASSOC_RIGHT, 2,  0 },
-    { "^=",  149, ASSOC_RIGHT, 2,  0 },
-    { "|=",  150, ASSOC_RIGHT, 2,  0 },
+    { "=",   opid1('='),         ASSOC_RIGHT, 2,  0 },
+    { "+=",  opid2('+','='),     ASSOC_RIGHT, 2,  0 },
+    { "-=",  opid2('-','='),     ASSOC_RIGHT, 2,  0 },
+    { "*=",  opid2('*','='),     ASSOC_RIGHT, 2,  0 },
+    { "/=",  opid2('/','='),     ASSOC_RIGHT, 2,  0 },
+    { "%=",  opid2('%','='),     ASSOC_RIGHT, 2,  0 },
+    { ">>=", opid3('>','>','='), ASSOC_RIGHT, 2,  0 },
+    { "<<=", opid3('<','<','='), ASSOC_RIGHT, 2,  0 },
+    { "&=",  opid2('&','='),     ASSOC_RIGHT, 2,  0 },
+    { "^=",  opid2('^','='),     ASSOC_RIGHT, 2,  0 },
+    { "|=",  opid2('|','='),     ASSOC_RIGHT, 2,  0 },
 };
 
 typedef struct
