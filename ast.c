@@ -633,7 +633,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     if (!self->builtin && self->vtype->params_count != self->params_count) {
         printf("ast_function's parameter variables doesn't match the declared parameter count\n");
-        printf("%i != %i\n", self->vtype->params_count, self->params_count);
+        printf("%i != %i\n", (int)self->vtype->params_count, (int)self->params_count);
         return false;
     }
 
