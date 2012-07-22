@@ -781,6 +781,7 @@ _MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 enum store_types {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */
+    store_param,  /* parameters, they are locals with a fixed position */
     store_value,  /* unassignable */
     store_return  /* unassignable, at OFS_RETURN */
 };

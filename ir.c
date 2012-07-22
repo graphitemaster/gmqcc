@@ -1457,7 +1457,7 @@ static bool ir_block_naive_phi(ir_block *self)
                 if (v->writes[w]->_ops[0] == v)
                     v->writes[w]->_ops[0] = instr->_ops[0];
 
-                if (old->store != store_value && old->store != store_local)
+                if (old->store != store_value && old->store != store_local && old->store != store_param)
                 {
                     /* If it originally wrote to a global we need to store the value
                      * there as welli
@@ -1837,8 +1837,11 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             value = instr->_ops[o];
 
             /* We only care about locals */
+            /* we also calculate parameter liferanges so that locals
+             * can take up parameter slots */
             if (value->store != store_value &&
-                value->store != store_local)
+                value->store != store_local &&
+                value->store != store_param)
                 continue;
 
             /* read operands */
