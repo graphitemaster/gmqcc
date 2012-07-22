@@ -341,14 +341,21 @@ ir_value* ir_function_get_local(ir_function *self, const char *name)
     return NULL;
 }
 
-ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype)
+ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param)
 {
     ir_value *ve = ir_function_get_local(self, name);
     if (ve) {
         return NULL;
     }
 
-    ve = ir_value_var(name, store_local, vtype);
+    if (param &&
+        self->locals_count &&
+        self->locals[self->locals_count-1]->store != store_param) {
+        printf("cannot add parameters after adding locals\n");
+        return NULL;
+    }
+
+    ve = ir_value_var(name, (param ? store_param : store_local), vtype);
     if (!ir_function_locals_add(self, ve)) {
         ir_value_delete(ve);
         return NULL;
@@ -1516,7 +1523,7 @@ static bool ir_block_naive_phi(ir_block *self)
                 if (v->writes[w]->_ops[0] == v)
                     v->writes[w]->_ops[0] = instr->_ops[0];
 
-                if (old->store != store_value && old->store != store_local)
+                if (old->store != store_value && old->store != store_local && old->store != store_param)
                 {
                     /* If it originally wrote to a global we need to store the value
                      * there as welli
@@ -1896,8 +1903,11 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             value = instr->_ops[o];
 
             /* We only care about locals */
+            /* we also calculate parameter liferanges so that locals
+             * can take up parameter slots */
             if (value->store != store_value &&
-                value->store != store_local)
+                value->store != store_local &&
+                value->store != store_param)
                 continue;
 
             /* read operands */
@@ -2420,6 +2430,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 {
+    size_t           i;
     int32_t         *iptr;
     prog_section_def def;
 
@@ -2501,8 +2512,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     case TYPE_VARIANT:
         /* assume biggest type */
             global->code.globaladdr = code_globals_add(0);
-            code_globals_add(0);
-            code_globals_add(0);
+            for (i = 1; i < type_sizeof[TYPE_VARIANT]; ++i)
+                code_globals_add(0);
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */

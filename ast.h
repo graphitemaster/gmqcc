@@ -127,7 +127,7 @@ void ast_value_delete(ast_value*);
 bool ast_value_set_name(ast_value*, const char *name);
 
 bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
-bool ast_local_codegen(ast_value *self, ir_function *func);
+bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
 bool ast_global_codegen(ast_value *self, ir_builder *ir);
 
 /* Binary
@@ -362,6 +362,14 @@ struct ast_function_s
     char         labelbuf[64];
 
     MEM_VECTOR_MAKE(ast_block*, blocks);
+
+    /* contrary to the params in ast_value, these are the parameter variables
+     * which are to be used in expressions.
+     * The ast_value for the function contains only the parameter types used
+     * to generate ast_calls, and ast_call contains the parameter values
+     * used in that call.
+     */
+    MEM_VECTOR_MAKE(ast_value*, params);
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */
@@ -372,6 +380,7 @@ void ast_function_delete(ast_function*);
 const char* ast_function_label(ast_function*, const char *prefix);
 
 MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);
+MEM_VECTOR_PROTO(ast_function, ast_value*, params);
 
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
 
