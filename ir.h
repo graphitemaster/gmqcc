@@ -265,7 +265,7 @@ MEM_VECTOR_PROTO(ir_function, int, params);
 MEM_VECTOR_PROTO(ir_function, ir_block*, blocks);
 
 ir_value* ir_function_get_local(ir_function *self, const char *name);
-ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype);
+ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param);
 
 bool GMQCC_WARN ir_function_finalize(ir_function*);
 /*

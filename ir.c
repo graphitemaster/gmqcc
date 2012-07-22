@@ -311,14 +311,21 @@ ir_value* ir_function_get_local(ir_function *self, const char *name)
     return NULL;
 }
 
-ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype)
+ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param)
 {
     ir_value *ve = ir_function_get_local(self, name);
     if (ve) {
         return NULL;
     }
 
-    ve = ir_value_var(name, store_local, vtype);
+    if (param &&
+        self->locals_count &&
+        self->locals[self->locals_count-1]->store != store_param) {
+        printf("cannot add parameters after adding locals\n");
+        return NULL;
+    }
+
+    ve = ir_value_var(name, (param ? store_param : store_local), vtype);
     if (!ir_function_locals_add(self, ve)) {
         ir_value_delete(ve);
         return NULL;

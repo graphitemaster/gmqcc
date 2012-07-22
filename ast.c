@@ -557,7 +557,7 @@ error: /* clean up */
     return false;
 }
 
-bool ast_local_codegen(ast_value *self, ir_function *func)
+bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
@@ -568,7 +568,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func)
         return false;
     }
 
-    v = ir_function_create_local(func, self->name, self->expression.vtype);
+    v = ir_function_create_local(func, self->name, self->expression.vtype, param);
     if (!v)
         return false;
 
@@ -617,9 +617,21 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return false;
     }
 
+    if (!self->builtin && self->vtype->params_count != self->params_count) {
+        printf("ast_function's parameter variables doesn't match the declared parameter count\n");
+        printf("%i != %i\n", self->vtype->params_count, self->params_count);
+        return false;
+    }
+
+    /* fill the parameter list */
     for (i = 0; i < self->vtype->params_count; ++i)
     {
         if (!ir_function_params_add(irf, self->vtype->params[i]->expression.vtype))
+            return false;
+    }
+    /* generate the parameter locals */
+    for (i = 0; i < self->params_count; ++i) {
+        if (!ast_local_codegen(self->params[i], self->ir_func, true))
             return false;
     }
 
@@ -682,7 +694,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     /* generate locals */
     for (i = 0; i < self->locals_count; ++i)
     {
-        if (!ast_local_codegen(self->locals[i], func->ir_func))
+        if (!ast_local_codegen(self->locals[i], func->ir_func, false))
             return false;
     }
 
