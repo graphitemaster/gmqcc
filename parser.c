@@ -182,6 +182,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
 typedef struct
 {
     size_t etype; /* 0 = expression, others are operators */
+    int             paren;
     ast_expression *out;
     ast_value      *value; /* need to know if we can assign */
     lex_ctx ctx;
@@ -200,6 +201,7 @@ static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     e.out   = v;
     e.value = NULL;
     e.ctx   = ctx;
+    e.paren = 0;
     return e;
 }
 static sy_elem syval(lex_ctx ctx, ast_value *v) {
@@ -208,6 +210,7 @@ static sy_elem syval(lex_ctx ctx, ast_value *v) {
     e.out   = (ast_expression*)v;
     e.value = v;
     e.ctx   = ctx;
+    e.paren = 0;
     return e;
 }
 
@@ -217,6 +220,17 @@ static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     e.out   = NULL;
     e.value = NULL;
     e.ctx   = ctx;
+    e.paren = 0;
+    return e;
+}
+
+static sy_elem syparen(lex_ctx ctx, int p) {
+    sy_elem e;
+    e.etype = 0;
+    e.out   = NULL;
+    e.value = NULL;
+    e.ctx   = ctx;
+    e.paren = p;
     return e;
 }
 
@@ -231,6 +245,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
     if (!sy->ops_count) {
         parseerror(parser, "internal error: missing operator");
+        return false;
+    }
+
+    if (sy->ops[sy->ops_count-1].paren) {
+        parseerror(parser, "unmatched parenthesis");
         return false;
     }
 
@@ -377,6 +396,7 @@ static ast_expression* parser_expression(parser_t *parser)
     {
         if (!wantop)
         {
+            bool nextwant = true;
             if (parser->tok == TOKEN_IDENT)
             {
                 /* variable */
@@ -390,7 +410,8 @@ static ast_expression* parser_expression(parser_t *parser)
                     goto onerr;
                 }
                 printf("Added: %s\n", var->name);
-            } else if (parser->tok == TOKEN_FLOATCONST) {
+            }
+            else if (parser->tok == TOKEN_FLOATCONST) {
                 ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
                 if (!val)
                     return false;
@@ -398,7 +419,8 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
-            } else if (parser->tok == TOKEN_INTCONST) {
+            }
+            else if (parser->tok == TOKEN_INTCONST) {
                 ast_value *val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
                 if (!val)
                     return false;
@@ -407,18 +429,48 @@ static ast_expression* parser_expression(parser_t *parser)
                     goto onerr;
                 }
                 printf("Added: %i\n", parser_token(parser)->constval.i);
-            } else {
+            }
+            else if (parser->tok == '(') {
+                nextwant = false; /* not expecting an operator next */
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            }
+            else {
                 /* TODO: prefix operators */
                 parseerror(parser, "expected statement");
                 goto onerr;
             }
-            wantop = true;
-            parser->lex->flags.noops = false;
+            wantop = nextwant;
+            parser->lex->flags.noops = !wantop;
         } else {
-            if (parser->tok != TOKEN_OPERATOR) {
+            if (parser->tok == ')') {
+                /* we do expect an operator next */
+                /* closing an opening paren */
+                printf("Applying closing paren\n");
+                if (!sy.ops_count) {
+                    parseerror(parser, "unmatched closing paren");
+                    goto onerr;
+                }
+                if (sy.ops[sy.ops_count-1].paren == 1) {
+                    parseerror(parser, "empty parenthesis expression");
+                    goto onerr;
+                }
+                while (sy.ops_count) {
+                    if (sy.ops[sy.ops_count-1].paren == 1) {
+                        sy.ops_count--;
+                        break;
+                    }
+                    if (!parser_sy_pop(parser, &sy))
+                        goto onerr;
+                }
+            }
+            else if (parser->tok != TOKEN_OPERATOR) {
                 parseerror(parser, "expected operator or end of statement");
                 goto onerr;
-            } else {
+            }
+            else {
                 /* classify the operator */
                 /* TODO: suffix operators */
                 const oper_info *op;
@@ -439,7 +491,7 @@ static ast_expression* parser_expression(parser_t *parser)
                 /* found an operator */
                 op = &operators[o];
 
-                if (sy.ops_count)
+                if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
                     olast = &operators[sy.ops[sy.ops_count-1].etype-1];
 
                 while (olast && (
@@ -448,7 +500,8 @@ static ast_expression* parser_expression(parser_t *parser)
                 {
                     if (!parser_sy_pop(parser, &sy))
                         goto onerr;
-                    olast = sy.ops_count ? (&operators[sy.ops[sy.ops_count-1].etype-1]) : NULL;
+                    if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
+                        olast = &operators[sy.ops[sy.ops_count-1].etype-1];
                 }
 
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
