@@ -399,7 +399,6 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->vtype = vtype;
     self->name = name ? util_strdup(name) : NULL;
     MEM_VECTOR_INIT(self, blocks);
-    MEM_VECTOR_INIT(self, params);
 
     self->labelcount = 0;
     self->builtin = 0;
@@ -417,7 +416,6 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 }
 
 MEM_VEC_FUNCTIONS(ast_function, ast_block*, blocks)
-MEM_VEC_FUNCTIONS(ast_function, ast_value*, params)
 
 void ast_function_delete(ast_function *self)
 {
@@ -436,12 +434,6 @@ void ast_function_delete(ast_function *self)
     for (i = 0; i < self->blocks_count; ++i)
         ast_delete(self->blocks[i]);
     MEM_VECTOR_CLEAR(self, blocks);
-    /* ast_delete, not unref, there must only have been references
-     * to the parameter values inside the blocks deleted above.
-     */
-    for (i = 0; i < self->params_count; ++i)
-        ast_delete(self->params[i]);
-    MEM_VECTOR_CLEAR(self, params);
     mem_d(self);
 }
 
@@ -617,22 +609,15 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return false;
     }
 
-    if (!self->builtin && self->vtype->params_count != self->params_count) {
-        printf("ast_function's parameter variables doesn't match the declared parameter count\n");
-        printf("%i != %i\n", (int)self->vtype->params_count, (int)self->params_count);
-        return false;
-    }
-
     /* fill the parameter list */
     for (i = 0; i < self->vtype->params_count; ++i)
     {
         if (!ir_function_params_add(irf, self->vtype->params[i]->expression.vtype))
             return false;
-    }
-    /* generate the parameter locals */
-    for (i = 0; i < self->params_count; ++i) {
-        if (!ast_local_codegen(self->params[i], self->ir_func, true))
-            return false;
+        if (!self->builtin) {
+            if (!ast_local_codegen(self->vtype->params[i], self->ir_func, true))
+                return false;
+        }
     }
 
     if (self->builtin) {
