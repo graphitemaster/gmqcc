@@ -2371,6 +2371,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 {
+    size_t           i;
     int32_t         *iptr;
     prog_section_def def;
 
@@ -2450,8 +2451,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     case TYPE_VARIANT:
         /* assume biggest type */
             global->code.globaladdr = code_globals_add(0);
-            code_globals_add(0);
-            code_globals_add(0);
+            for (i = 1; i < type_sizeof[TYPE_VARIANT]; ++i)
+                code_globals_add(0);
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
