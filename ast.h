@@ -168,6 +168,24 @@ void ast_unary_delete(ast_unary*);
 
 bool ast_unary_codegen(ast_unary*, ast_function*, bool lvalue, ir_value**);
 
+/* Return
+ *
+ * Make sure 'return' only happens at the end of a block, otherwise the IR
+ * will refuse to create further instructions.
+ * This should be honored by the parser.
+ */
+struct ast_return_s
+{
+    ast_expression_common expression;
+    ast_expression *operand;
+};
+ast_return* ast_return_new(lex_ctx    ctx,
+                           int        op,
+                           ast_expression *expr);
+void ast_return_delete(ast_return*);
+
+bool ast_return_codegen(ast_return*, ast_function*, bool lvalue, ir_value**);
+
 /* Entity-field
  *
  * This must do 2 things:

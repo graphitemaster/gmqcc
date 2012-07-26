@@ -200,6 +200,24 @@ void ast_unary_delete(ast_unary *self)
     mem_d(self);
 }
 
+ast_return* ast_return_new(lex_ctx ctx, int op,
+                         ast_expression *expr)
+{
+    ast_instantiate(ast_return, ctx, ast_return_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);
+
+    self->operand = expr;
+
+    return self;
+}
+
+void ast_return_delete(ast_return *self)
+{
+    ast_unref(self->operand);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field)
 {
     const ast_expression *outtype;
@@ -785,9 +803,30 @@ bool ast_unary_codegen(ast_unary *self, ast_function *func, bool lvalue, ir_valu
     if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
         return false;
 
-    *out = ir_block_create_unary(func->curblock, ast_function_label(func, "bin"),
+    *out = ir_block_create_unary(func->curblock, ast_function_label(func, "unary"),
                                  self->op, operand);
     if (!*out)
+        return false;
+
+    return true;
+}
+
+bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+    ir_value *operand;
+
+    /* In the context of a return operation, we can disregard
+     * the lvalue flag.
+     */
+    (void)lvalue;
+
+    cgen = self->operand->expression.codegen;
+    /* lvalue! */
+    if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
+        return false;
+
+    if (!ir_block_create_return(func->curblock, operand))
         return false;
 
     return true;
