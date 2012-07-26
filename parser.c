@@ -560,8 +560,15 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
     {
         if (!strcmp(parser_tokval(parser), "return"))
         {
-            ast_expression *exp = parser_expression(parser);
+            ast_expression *exp;
             ast_return *ret;
+
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected return expression");
+                return false;
+            }
+
+            exp = parser_expression(parser);
             if (!exp)
                 return false;
             ret = ast_return_new(exp->expression.node.context, exp);
