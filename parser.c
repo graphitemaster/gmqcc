@@ -556,6 +556,26 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
             return false;
         return true;
     }
+    else if (parser->tok == TOKEN_KEYWORD)
+    {
+        if (!strcmp(parser_tokval(parser), "return"))
+        {
+            ast_expression *exp = parser_expression(parser);
+            ast_return *ret;
+            if (!exp)
+                return false;
+            ret = ast_return_new(exp->expression.node.context, exp);
+            if (!ret) {
+                ast_delete(exp);
+                return false;
+            }
+            if (!ast_block_exprs_add(block, (ast_expression*)ret)) {
+                ast_delete(ret);
+                return false;
+            }
+            return true;
+        }
+    }
     else if (parser->tok == '{')
     {
         /* a block */
@@ -567,8 +587,10 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
         ast_expression *exp = parser_expression(parser);
         if (!exp)
             return false;
-        if (!ast_block_exprs_add(block, exp))
+        if (!ast_block_exprs_add(block, exp)) {
+            ast_delete(exp);
             return false;
+        }
         return true;
     }
 }
