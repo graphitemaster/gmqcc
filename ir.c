@@ -2287,10 +2287,8 @@ tailcall:
             stmt.o1.u1 = stmt.o3.u1;
             stmt.o3.u1 = 0;
         }
-        else if ((stmt.opcode >= INSTR_STORE_F    &&
-                  stmt.opcode <= INSTR_STORE_FNC)    ||
-                 (stmt.opcode >= INSTR_NOT_F      &&
-                  stmt.opcode <= INSTR_NOT_FNC))
+        else if (stmt.opcode >= INSTR_STORE_F &&
+                 stmt.opcode <= INSTR_STORE_FNC)
         {
             /* 2-operand instructions with A -> B */
             stmt.o2.u1 = stmt.o3.u1;
