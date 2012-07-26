@@ -1169,6 +1169,39 @@ ir_value* ir_block_create_binop(ir_block *self,
     return ir_block_create_general_instr(self, label, opcode, left, right, ot);
 }
 
+ir_value* ir_block_create_unary(ir_block *self,
+                                const char *label, int opcode,
+                                ir_value *operand)
+{
+    int ot = TYPE_FLOAT;
+    switch (opcode) {
+        case INSTR_NOT_F:
+        case INSTR_NOT_V:
+        case INSTR_NOT_S:
+        case INSTR_NOT_ENT:
+        case INSTR_NOT_FNC:
+#if 0
+        case INSTR_NOT_I:
+#endif
+            ot = TYPE_FLOAT;
+            break;
+        /* QC doesn't have other unary operations. We expect extensions to fill
+         * the above list, otherwise we assume out-type = in-type, eg for an
+         * unary minus
+         */
+        default:
+            ot = operand->vtype;
+            break;
+    };
+    if (ot == TYPE_VOID) {
+        /* The AST or parser were supposed to check this! */
+        return NULL;
+    }
+
+    /* let's use the general instruction creator and pass NULL for OPB */
+    return ir_block_create_general_instr(self, label, opcode, operand, NULL, ot);
+}
+
 ir_value* ir_block_create_general_instr(ir_block *self, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype)
 {

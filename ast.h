@@ -41,6 +41,8 @@ typedef struct ast_ifthen_s     ast_ifthen;
 typedef struct ast_ternary_s    ast_ternary;
 typedef struct ast_loop_s       ast_loop;
 typedef struct ast_call_s       ast_call;
+typedef struct ast_unary_s      ast_unary;
+typedef struct ast_return_s     ast_return;
 
 /* Node interface with common components
  */
@@ -147,6 +149,24 @@ ast_binary* ast_binary_new(lex_ctx    ctx,
 void ast_binary_delete(ast_binary*);
 
 bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
+
+/* Unary
+ *
+ * Regular unary expressions: not,neg
+ */
+struct ast_unary_s
+{
+    ast_expression_common expression;
+
+    int             op;
+    ast_expression *operand;
+};
+ast_unary* ast_unary_new(lex_ctx    ctx,
+                         int        op,
+                         ast_expression *expr);
+void ast_unary_delete(ast_unary*);
+
+bool ast_unary_codegen(ast_unary*, ast_function*, bool lvalue, ir_value**);
 
 /* Entity-field
  *
