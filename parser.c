@@ -575,11 +575,13 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
             }
             return true;
         }
+        parseerror(parser, "Unexpected keyword");
+        return false;
     }
     else if (parser->tok == '{')
     {
         /* a block */
-        parseerror(parser, "TODO: inner blocks");
+        parseerror(parser, "TODO: inner blocks: %s", parser_tokval(parser));
         return false;
     }
     else
@@ -593,7 +595,6 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
         }
         return true;
     }
-    return false;
 }
 
 static ast_block* parser_parse_block(parser_t *parser)
