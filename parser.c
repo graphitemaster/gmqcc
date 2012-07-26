@@ -118,6 +118,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
     lex_ctx   ctx = parser_ctx(parser);
     int vtype = basetype;
     int temptype;
+    size_t i;
 
     MEM_VECTOR_INIT(&params, p);
 
@@ -129,54 +130,56 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
             ast_value *param;
             bool dummy;
 
-            if (!parser_next(parser)) {
-                MEM_VECTOR_CLEAR(&params, p);
-                return NULL;
-            }
+            if (!parser_next(parser))
+                goto on_error;
 
             if (parser->tok == ')')
                 break;
 
             temptype = parser_token(parser)->constval.t;
-            if (!parser_next(parser)) {
-                MEM_VECTOR_CLEAR(&params, p);
-                return NULL;
-            }
+            if (!parser_next(parser))
+                goto on_error;
+
             param = parser_parse_type(parser, temptype, &dummy);
             (void)dummy;
 
-            if (!param) {
-                MEM_VECTOR_CLEAR(&params, p);
-                return NULL;
+            if (!param)
+                goto on_error;
+
+            if (parser->tok == TOKEN_IDENT) {
+                /* named parameter */
+                if (!ast_value_set_name(param, parser_tokval(parser)))
+                    goto on_error;
+                if (!parser_next(parser))
+                    goto on_error;
             }
 
             if (!paramlist_t_p_add(&params, param)) {
-                MEM_VECTOR_CLEAR(&params, p);
                 parseerror(parser, "Out of memory while parsing typename");
-                return NULL;
+                goto on_error;
             }
 
             if (parser->tok == ',')
                 continue;
             if (parser->tok == ')')
                 break;
-            MEM_VECTOR_CLEAR(&params, p);
             parseerror(parser, "Unexpected token");
-            return NULL;
+            goto on_error;
         }
-        if (!parser_next(parser)) {
-            MEM_VECTOR_CLEAR(&params, p);
-            return NULL;
-        }
+        if (!parser_next(parser))
+            goto on_error;
     }
 
     var = ast_value_new(ctx, "<unnamed>", vtype);
-    if (!var) {
-        MEM_VECTOR_CLEAR(&params, p);
-        return NULL;
-    }
+    if (!var)
+        goto on_error;
     MEM_VECTOR_MOVE(&params, p, var, params);
     return var;
+on_error:
+    for (i = 0; i < params.p_count; ++i)
+        ast_value_delete(params.p[i]);
+    MEM_VECTOR_CLEAR(&params, p);
+    return NULL;
 }
 
 typedef struct
