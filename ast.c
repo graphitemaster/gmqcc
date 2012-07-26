@@ -212,8 +212,7 @@ void ast_unary_delete(ast_unary *self)
     mem_d(self);
 }
 
-ast_return* ast_return_new(lex_ctx ctx, int op,
-                         ast_expression *expr)
+ast_return* ast_return_new(lex_ctx ctx, ast_expression *expr)
 {
     ast_instantiate(ast_return, ctx, ast_return_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);

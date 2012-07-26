@@ -182,7 +182,6 @@ struct ast_return_s
     ast_expression *operand;
 };
 ast_return* ast_return_new(lex_ctx    ctx,
-                           int        op,
                            ast_expression *expr);
 void ast_return_delete(ast_return*);
 
