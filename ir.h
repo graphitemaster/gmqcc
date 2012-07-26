@@ -181,6 +181,8 @@ MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries);
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
+ir_value* ir_block_create_unary(ir_block*, const char *label, int op,
+                                ir_value *operand);
 bool GMQCC_WARN ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
 bool GMQCC_WARN ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
 bool GMQCC_WARN ir_block_create_storep(ir_block*, ir_value *target, ir_value *what);
