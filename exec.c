@@ -22,6 +22,8 @@ MEM_VEC_FUNCTIONS(qc_program,   qc_exec_stack, stack)
 MEM_VEC_FUNCTIONS(qc_program,   size_t, profile)
 MEM_VEC_FUN_RESIZE(qc_program,  size_t, profile)
 
+MEM_VEC_FUNCTIONS(qc_program,   prog_builtin, builtins)
+
 static void loaderror(const char *fmt, ...)
 {
     int     err = errno;
@@ -134,6 +136,11 @@ void prog_delete(qc_program *prog)
     MEM_VECTOR_CLEAR(prog, localstack);
     MEM_VECTOR_CLEAR(prog, stack);
     MEM_VECTOR_CLEAR(prog, profile);
+
+    if (prog->builtins_alloc) {
+        MEM_VECTOR_CLEAR(prog, builtins);
+    }
+    /* otherwise the builtins were statically allocated */
     mem_d(prog);
 }
 
@@ -451,6 +458,19 @@ cleanup:
  */
 
 #if defined(QCVM_EXECUTOR)
+static int qc_print(qc_program *prog)
+{
+    qcany *str = (qcany*)(prog->globals + OFS_PARM0);
+    printf("%s", prog_getstring(prog, str->string));
+    return 0;
+}
+
+static prog_builtin qc_builtins[] = {
+    NULL,
+    &qc_print
+};
+static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
+
 int main(int argc, char **argv)
 {
     size_t      i;
@@ -467,6 +487,10 @@ int main(int argc, char **argv)
         printf("failed to load program '%s'\n", argv[1]);
         exit(1);
     }
+
+    prog->builtins       = qc_builtins;
+    prog->builtins_count = qc_builtins_count;
+    prog->builtins_alloc = 0;
 
     for (i = 1; i < prog->functions_count; ++i) {
         const char *name = prog_getstring(prog, prog->functions[i].name);
