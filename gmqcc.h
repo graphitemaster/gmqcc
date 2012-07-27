@@ -294,6 +294,25 @@ extern uint16_t type_store_instr[TYPE_COUNT];
  */
 extern uint16_t type_storep_instr[TYPE_COUNT];
 
+typedef struct {
+    uint32_t offset;      /* Offset in file of where data begins  */
+    uint32_t length;      /* Length of section (how many of)      */
+} prog_section;
+
+typedef struct {
+    uint32_t     version;      /* Program version (6)     */
+    uint16_t     crc16;        /* What is this?           */
+    uint16_t     skip;         /* see propsal.txt         */
+
+    prog_section statements;   /* prog_section_statement  */
+    prog_section defs;         /* prog_section_def        */
+    prog_section fields;       /* prog_section_field      */
+    prog_section functions;    /* prog_section_function   */
+    prog_section strings;      /* What is this?           */
+    prog_section globals;      /* What is this?           */
+    uint32_t     entfield;     /* Number of entity fields */
+} prog_header;
+
 /*
  * Each paramater incerements by 3 since vector types hold
  * 3 components (x,y,z).
@@ -694,6 +713,56 @@ bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
     return false;                                               \
 }
 
+#define MEM_VEC_FUN_APPEND(Tself, Twhat, mem)                        \
+bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
+{                                                                    \
+    Twhat *reall;                                                    \
+    if (s->mem##_count+c >= s->mem##_alloc) {                        \
+        if (!s->mem##_alloc) {                                       \
+            s->mem##_alloc = c < 16 ? 16 : c;                        \
+        } else {                                                     \
+            s->mem##_alloc *= 2;                                     \
+            if (s->mem##_count+c >= s->mem##_alloc) {                \
+                s->mem##_alloc = s->mem##_count+c;                   \
+            }                                                        \
+        }                                                            \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);       \
+        if (!reall) {                                                \
+            return false;                                            \
+        }                                                            \
+        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);       \
+        mem_d(s->mem);                                               \
+        s->mem = reall;                                              \
+    }                                                                \
+    memcpy(&s->mem[s->mem##_count], p, c*sizeof(*p));                \
+    s->mem##_count += c;                                             \
+    return true;                                                     \
+}
+
+#define MEM_VEC_FUN_RESIZE(Tself, Twhat, mem)                    \
+bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
+{                                                                \
+    Twhat *reall;                                                \
+    if (c > s->mem##_alloc) {                                    \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * c);                \
+        if (!reall) { return false; }                            \
+        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
+        s->mem##_alloc = c;                                      \
+        mem_d(s->mem);                                           \
+        s->mem = reall;                                          \
+        return true;                                             \
+    }                                                            \
+    s->mem##_count = c;                                          \
+    if (c < (s->mem##_alloc / 2)) {                              \
+        reall = (Twhat*)mem_a(sizeof(Twhat) * c);                \
+        if (!reall) { return false; }                            \
+        memcpy(reall, s->mem, sizeof(Twhat) * c);                \
+        mem_d(s->mem);                                           \
+        s->mem = reall;                                          \
+    }                                                            \
+    return true;                                                 \
+}
+
 #define MEM_VEC_FUN_CLEAR(Tself, mem)   \
 void Tself##_##mem##_clear(Tself *self) \
 {                                       \
@@ -766,4 +835,97 @@ typedef struct {
     const char *file;
     size_t      line;
 } lex_ctx;
+
+/*===================================================================*/
+/*============================= exec.c ==============================*/
+/*===================================================================*/
+
+/* darkplaces has (or will have) a 64 bit prog loader
+ * where the 32 bit qc program is autoconverted on load.
+ * Since we may want to support that as well, let's redefine
+ * float and int here.
+ */
+typedef float   qcfloat;
+typedef int32_t qcint;
+
+typedef union {
+    qcint   _int;
+    qcint    string;
+    qcint    function;
+    qcint    edict;
+    qcfloat _float;
+    qcfloat vector[3];
+    qcint   ivector[3];
+} qcany;
+
+typedef char qcfloat_size_is_correct [sizeof(qcfloat) == 4 ?1:-1];
+typedef char qcint_size_is_correct   [sizeof(qcint)   == 4 ?1:-1];
+
+enum {
+    VMERR_OK,
+    VMERR_TEMPSTRING_ALLOC,
+
+    VMERR_END
+};
+
+#define VM_JUMPS_DEFAULT 1000000
+
+/* execute-flags */
+#define VMXF_DEFAULT 0x0000     /* default flags - nothing */
+#define VMXF_TRACE   0x0001     /* trace: print statements before executing */
+#define VMXF_PROFILE 0x0002     /* profile: increment the profile counters */
+
+struct qc_program_s;
+
+typedef int (*prog_builtin)(struct qc_program_s *prog);
+
+typedef struct {
+    qcint                  stmt;
+    size_t                 localsp;
+    prog_section_function *function;
+} qc_exec_stack;
+
+typedef struct qc_program_s {
+    char           *filename;
+
+    MEM_VECTOR_MAKE(prog_section_statement, code);
+    MEM_VECTOR_MAKE(prog_section_def,       defs);
+    MEM_VECTOR_MAKE(prog_section_def,       fields);
+    MEM_VECTOR_MAKE(prog_section_function,  functions);
+    MEM_VECTOR_MAKE(char,                   strings);
+    MEM_VECTOR_MAKE(qcint,                  globals);
+    MEM_VECTOR_MAKE(qcint,                  entitydata);
+
+    size_t tempstring_start;
+    size_t tempstring_at;
+
+    qcint  vmerror;
+
+    MEM_VECTOR_MAKE(size_t, profile);
+
+    MEM_VECTOR_MAKE(prog_builtin, builtins);
+
+    /* size_t ip; */
+    qcint  entities;
+    size_t entityfields;
+    bool   allowworldwrites;
+
+    MEM_VECTOR_MAKE(qcint,         localstack);
+    MEM_VECTOR_MAKE(qc_exec_stack, stack);
+    size_t statement;
+
+    int    argc; /* current arg count for debugging */
+} qc_program;
+
+qc_program* prog_load(const char *filename);
+void        prog_delete(qc_program *prog);
+
+bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
+
+char*             prog_getstring (qc_program *prog, qcint str);
+prog_section_def* prog_entfield  (qc_program *prog, qcint off);
+prog_section_def* prog_getdef    (qc_program *prog, qcint off);
+qcany*            prog_getedict  (qc_program *prog, qcint e);
+qcint             prog_tempstring(qc_program *prog, const char *_str);
+
 #endif

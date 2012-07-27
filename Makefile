@@ -24,17 +24,25 @@ OBJ     = \
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o lexer.o parser.o
+OBJ_X = exec-standalone.o util.o
 
 #default is compiler only
 default: gmqcc
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
+exec-standalone.o: exec.c
+	$(CC) -c $< -o $@ $(CFLAGS) -DQCVM_EXECUTOR=1
+
 # test targets
 test_ast: $(OBJ_A) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 test_ir:  $(OBJ_I) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
+qcvm:     $(OBJ_X)
+	$(CC) -o $@ $^ $(CFLAGS)
+exec.o: execloop.h
+exec-standalone.o: execloop.h
 test: test_ast test_ir
 
 # compiler target
@@ -45,6 +53,6 @@ gmqcc: $(OBJ_C) $(OBJ)
 all: test gmqcc
 
 clean:
-	rm -f *.o gmqcc test_ast test_ir test/*.o
+	rm -f *.o gmqcc qcvm test_ast test_ir test/*.o
 	
 
