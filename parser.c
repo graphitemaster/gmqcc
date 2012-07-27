@@ -451,7 +451,20 @@ static ast_expression* parser_expression(parser_t *parser)
             wantop = nextwant;
             parser->lex->flags.noops = !wantop;
         } else {
-            if (parser->tok == ')') {
+            if (parser->tok == '(') {
+                /* we expected an operator, this is the function-call operator */
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f'))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            }
+            else if (parser->tok == ',') {
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), ','))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            }
+            else if (parser->tok == ')') {
                 /* we do expect an operator next */
                 /* closing an opening paren */
                 if (!sy.ops_count) {
