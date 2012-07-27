@@ -1056,7 +1056,7 @@ static bool parser_do(parser_t *parser)
     return true;
 }
 
-bool parser_compile(const char *filename)
+bool parser_compile(const char *filename, const char *datfile)
 {
     size_t i;
     parser_t *parser;
@@ -1134,6 +1134,11 @@ bool parser_compile(const char *filename)
     }
 
     ir_builder_dump(ir, printf);
+
+    if (!ir_builder_generate(ir, datfile))
+        printf("*** failed to generate output file\n");
+
+    ir_builder_delete(ir);
 
 cleanup:
     for (i = 0; i < parser->globals_count; ++i) {
