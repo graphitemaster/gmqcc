@@ -11,6 +11,7 @@ typedef struct {
     MEM_VECTOR_MAKE(ast_value*, globals);
     MEM_VECTOR_MAKE(ast_function*, functions);
     MEM_VECTOR_MAKE(ast_value*, imm_float);
+    MEM_VECTOR_MAKE(ast_value*, imm_string);
 
     ast_function *function;
     MEM_VECTOR_MAKE(ast_value*, locals);
@@ -19,6 +20,7 @@ typedef struct {
 
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, globals)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_float)
+MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_string)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, locals)
 MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
@@ -71,6 +73,24 @@ ast_value* parser_const_float(parser_t *parser, double d)
     out->isconst = true;
     out->constval.vfloat = d;
     if (!parser_t_imm_float_add(parser, out)) {
+        ast_value_delete(out);
+        return NULL;
+    }
+    return out;
+}
+
+ast_value* parser_const_string(parser_t *parser, const char *str)
+{
+    size_t i;
+    ast_value *out;
+    for (i = 0; i < parser->imm_string_count; ++i) {
+        if (!strcmp(parser->imm_string[i]->constval.vstring, str))
+            return parser->imm_string[i];
+    }
+    out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
+    out->isconst = true;
+    out->constval.vstring = util_strdup(str);
+    if (!parser_t_imm_string_add(parser, out)) {
         ast_value_delete(out);
         return NULL;
     }
@@ -585,6 +605,15 @@ static ast_expression* parser_expression(parser_t *parser)
                     goto onerr;
                 }
             }
+            else if (parser->tok == TOKEN_STRINGCONST) {
+                ast_value *val = parser_const_string(parser, parser_tokval(parser));
+                if (!val)
+                    return false;
+                if (!shunt_out_add(&sy, syexp(parser_ctx(parser), (ast_expression*)val))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+            }
             else if (parser->tok == '(') {
                 nextwant = false; /* not expecting an operator next */
                 if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1, 0))) {
@@ -1049,6 +1078,11 @@ bool parser_compile(const char *filename)
     for (i = 0; i < parser->imm_float_count; ++i) {
         if (!ast_global_codegen(parser->imm_float[i], ir)) {
             printf("failed to generate global %s\n", parser->imm_float[i]->name);
+        }
+    }
+    for (i = 0; i < parser->imm_string_count; ++i) {
+        if (!ast_global_codegen(parser->imm_string[i], ir)) {
+            printf("failed to generate global %s\n", parser->imm_string[i]->name);
         }
     }
     for (i = 0; i < parser->globals_count; ++i) {
