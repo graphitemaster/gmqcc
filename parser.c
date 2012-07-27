@@ -97,9 +97,9 @@ ast_value* parser_find_local(parser_t *parser, const char *name, size_t upto)
             return parser->locals[i];
     }
     fun = parser->function->vtype;
-    for (i = 0; i < fun->params_count; ++i) {
-        if (!strcmp(fun->params[i]->name, name))
-            return fun->params[i];
+    for (i = 0; i < fun->expression.params_count; ++i) {
+        if (!strcmp(fun->expression.params[i]->name, name))
+            return fun->expression.params[i];
     }
     return NULL;
 }
@@ -179,7 +179,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
     var = ast_value_new(ctx, "<unnamed>", vtype);
     if (!var)
         goto on_error;
-    MEM_VECTOR_MOVE(&params, p, var, params);
+    MEM_VECTOR_MOVE(&params, p, &var->expression, params);
     return var;
 on_error:
     for (i = 0; i < params.p_count; ++i)
@@ -502,16 +502,13 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     }
 
     if (!fun->expression.next) {
-        parseerror(parser, "could not determine function parameters");
+        parseerror(parser, "could not determine function return type");
         return false;
     } else {
-        /*
-        ast_value *v = (ast_value*)(fun->expression.next);
-        if (v->params_count != paramcount) {
-            parseerror(parser, "expected %i parameters, got %i", (int)v->params_count, paramcount);
+        if (fun->expression.params_count != paramcount) {
+            parseerror(parser, "expected %i parameters, got %i", (int)fun->expression.params_count, paramcount);
             return false;
         }
-        */
     }
 
     return true;
@@ -860,7 +857,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             }
 
             fval->expression.next = (ast_expression*)var;
-            MEM_VECTOR_MOVE(var, params, fval, params);
+            MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
 
             if (!parser_t_functions_add(parser, func)) {
                 ast_value_delete(var);
