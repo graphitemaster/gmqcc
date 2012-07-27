@@ -194,6 +194,7 @@ typedef struct
     int             paren;
     ast_expression *out;
     ast_value      *value; /* need to know if we can assign */
+    ast_block      *block; /* for commas and function calls */
     lex_ctx ctx;
 } sy_elem;
 typedef struct
@@ -209,6 +210,7 @@ static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     e.etype = 0;
     e.out   = v;
     e.value = NULL;
+    e.block = NULL;
     e.ctx   = ctx;
     e.paren = 0;
     return e;
@@ -218,6 +220,18 @@ static sy_elem syval(lex_ctx ctx, ast_value *v) {
     e.etype = 0;
     e.out   = (ast_expression*)v;
     e.value = v;
+    e.block = NULL;
+    e.ctx   = ctx;
+    e.paren = 0;
+    return e;
+}
+
+static sy_elem syblock(lex_ctx ctx, ast_block *v) {
+    sy_elem e;
+    e.etype = 0;
+    e.out   = (ast_expression*)v;
+    e.value = NULL;
+    e.block = v;
     e.ctx   = ctx;
     e.paren = 0;
     return e;
@@ -228,6 +242,7 @@ static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     e.etype = 1 + (op - operators);
     e.out   = NULL;
     e.value = NULL;
+    e.block = NULL;
     e.ctx   = ctx;
     e.paren = 0;
     return e;
@@ -238,6 +253,7 @@ static sy_elem syparen(lex_ctx ctx, int p) {
     e.etype = 0;
     e.out   = NULL;
     e.value = NULL;
+    e.block = NULL;
     e.ctx   = ctx;
     e.paren = p;
     return e;
@@ -250,6 +266,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ast_expression *out = NULL;
     ast_expression *exprs[3];
     ast_value      *vars[3];
+    ast_block      *blocks[3];
     size_t i;
 
     if (!sy->ops_count) {
@@ -274,8 +291,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
     sy->out_count -= op->operands;
     for (i = 0; i < op->operands; ++i) {
-        exprs[i] = sy->out[sy->out_count+i].out;
-        vars[i]  = sy->out[sy->out_count+i].value;
+        exprs[i]  = sy->out[sy->out_count+i].out;
+        vars[i]   = sy->out[sy->out_count+i].value;
+        blocks[i] = sy->out[sy->out_count+i].block;
     }
 
     switch (op->id)
@@ -283,6 +301,23 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         default:
             parseerror(parser, "internal error: unhandled operand");
             return false;
+
+        case opid1(','):
+            if (blocks[0]) {
+                if (!ast_block_exprs_add(blocks[0], exprs[1]))
+                    return false;
+            } else {
+                blocks[0] = ast_block_new(ctx);
+                if (!ast_block_exprs_add(blocks[0], exprs[0]) ||
+                    !ast_block_exprs_add(blocks[0], exprs[1]))
+                {
+                    return false;
+                }
+            }
+            if (!ast_block_set_type(blocks[0], exprs[1]))
+                return false;
+            out = blocks[0];
+            break;
 
         case opid1('+'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
