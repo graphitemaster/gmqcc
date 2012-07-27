@@ -296,6 +296,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         blocks[i] = sy->out[sy->out_count+i].block;
     }
 
+    if (blocks[0] && !blocks[0]->exprs_count && op->id != opid1(',')) {
+        parseerror(parser, "internal error: operator cannot be applied on empty blocks");
+        return false;
+    }
+
     switch (op->id)
     {
         default:
@@ -438,6 +443,37 @@ static bool parser_close_paren(parser_t *parser, shunt *sy)
         return false;
     }
     while (sy->ops_count) {
+        if (sy->ops[sy->ops_count-1].paren == 'f') {
+            /* was a function call */
+            ast_block      *params;
+            ast_expression *fun;
+            ast_call       *call;
+            sy->ops_count--;
+            if (sy->out_count < 2) {
+                parseerror(parser, "internal error: function call needs function and parameter list...");
+                return false;
+            }
+            sy->out_count -= 2;
+            fun    = sy->out[sy->out_count+0].out;
+            params = sy->out[sy->out_count+1].block;
+            if (!params) {
+                parseerror(parser, "function call needs a parameter-list as 2nd operand");
+                return false;
+            }
+            if (fun->expression.vtype != TYPE_FUNCTION) {
+                parseerror(parser, "not a function");
+                return false;
+            }
+            call = ast_call_new(sy->ops[sy->ops_count].ctx, fun);
+            if (!call) {
+                parseerror(parser, "out of memory");
+                return false;
+            }
+            MEM_VECTOR_MOVE(params, exprs, call, params);
+            ast_delete(params);
+            sy->out[sy->out_count++] = syexp(call->expression.node.context, (ast_expression*)call);
+            break;
+        }
         if (sy->ops[sy->ops_count-1].paren == 1) {
             sy->ops_count--;
             break;
@@ -510,7 +546,18 @@ static ast_expression* parser_expression(parser_t *parser)
         } else {
             if (parser->tok == '(') {
                 /* we expected an operator, this is the function-call operator */
+                ast_block *empty;
                 if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f'))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+                empty = ast_block_new(parser_ctx(parser));
+                if (!empty) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
+                if (!shunt_out_add(&sy, syblock(parser_ctx(parser), empty))) {
+                    ast_block_delete(empty);
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
