@@ -632,7 +632,7 @@ extern int  opts_compiler;
     size_t name##_count;             \
     size_t name##_alloc
 
-#define _MEM_VEC_FUN_ADD(Tself, Twhat, mem)                          \
+#define MEM_VEC_FUN_ADD(Tself, Twhat, mem)                           \
 bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
 {                                                                    \
     Twhat *reall;                                                    \
@@ -654,7 +654,7 @@ bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
     return true;                                                     \
 }
 
-#define _MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)                       \
+#define MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)                        \
 bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
 {                                                                    \
     size_t i;                                                        \
@@ -679,7 +679,7 @@ bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
     return true;                                                     \
 }
 
-#define _MEM_VEC_FUN_FIND(Tself, Twhat, mem)                    \
+#define MEM_VEC_FUN_FIND(Tself, Twhat, mem)                     \
 bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
 {                                                               \
     size_t i;                                                   \
@@ -694,7 +694,7 @@ bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
     return false;                                               \
 }
 
-#define _MEM_VEC_FUN_CLEAR(Tself, mem)  \
+#define MEM_VEC_FUN_CLEAR(Tself, mem)   \
 void Tself##_##mem##_clear(Tself *self) \
 {                                       \
     if (!self->mem)                     \
@@ -730,13 +730,13 @@ void Tself##_##mem##_clear(Tself *self) \
 }
 
 #define MEM_VEC_FUNCTIONS(Tself, Twhat, mem) \
-_MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)       \
-_MEM_VEC_FUN_ADD(Tself, Twhat, mem)
+MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)        \
+MEM_VEC_FUN_ADD(Tself, Twhat, mem)
 
 #define MEM_VEC_FUNCTIONS_ALL(Tself, Twhat, mem) \
 MEM_VEC_FUNCTIONS(Tself, Twhat, mem)             \
-_MEM_VEC_FUN_CLEAR(Tself, mem)                   \
-_MEM_VEC_FUN_FIND(Tself, Twhat, mem)
+MEM_VEC_FUN_CLEAR(Tself, mem)                    \
+MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 
 enum store_types {
     store_global,
