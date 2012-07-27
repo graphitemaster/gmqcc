@@ -359,6 +359,7 @@ struct ast_block_s
 };
 ast_block* ast_block_new(lex_ctx ctx);
 void ast_block_delete(ast_block*);
+bool ast_block_set_type(ast_block*, ast_expression *from);
 
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
