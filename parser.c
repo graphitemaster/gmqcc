@@ -441,6 +441,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     ast_call       *call;
 
     size_t          fid;
+    size_t          paramcount;
 
     sy->ops_count--;
     fid = sy->ops[sy->ops_count].off;
@@ -469,18 +470,21 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 
     if (fid+1 == sy->out_count) {
         /* no arguments */
+        paramcount = 0;
     } else if (fid+2 == sy->out_count) {
         ast_block *params;
         sy->out_count--;
         params = sy->out[sy->out_count].block;
         if (!params) {
             /* 1 param */
+            paramcount = 1;
             if (!ast_call_params_add(call, sy->out[sy->out_count].out)) {
                 ast_delete(sy->out[sy->out_count].out);
                 parseerror(parser, "out of memory");
                 return false;
             }
         } else {
+            paramcount = params->exprs_count;
             MEM_VECTOR_MOVE(params, exprs, call, params);
             ast_delete(params);
         }
@@ -491,6 +495,25 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 
     /* overwrite fid, the function, with a call */
     sy->out[fid] = syexp(call->expression.node.context, (ast_expression*)call);
+
+    if (fun->expression.vtype != TYPE_FUNCTION) {
+        parseerror(parser, "not a function");
+        return false;
+    }
+
+    if (!fun->expression.next) {
+        parseerror(parser, "could not determine function parameters");
+        return false;
+    } else {
+        /*
+        ast_value *v = (ast_value*)(fun->expression.next);
+        if (v->params_count != paramcount) {
+            parseerror(parser, "expected %i parameters, got %i", (int)v->params_count, paramcount);
+            return false;
+        }
+        */
+    }
+
     return true;
 }
 
