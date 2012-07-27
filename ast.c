@@ -57,12 +57,18 @@ static void ast_expression_init(ast_expression *self,
     self->expression.codegen = codegen;
     self->expression.vtype   = TYPE_VOID;
     self->expression.next    = NULL;
+    MEM_VECTOR_INIT(&self->expression, params);
 }
 
 static void ast_expression_delete(ast_expression *self)
 {
+    size_t i;
     if (self->expression.next)
         ast_delete(self->expression.next);
+    for (i = 0; i < self->expression.params_count; ++i) {
+        ast_delete(self->expression.params[i]);
+    }
+    MEM_VECTOR_CLEAR(&self->expression, params);
 }
 
 static void ast_expression_delete_full(ast_expression *self)
@@ -71,9 +77,26 @@ static void ast_expression_delete_full(ast_expression *self)
     mem_d(self);
 }
 
+MEM_VEC_FUNCTIONS(ast_expression_common, ast_value*, params)
+
+static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
+static ast_value* ast_value_copy(const ast_value *self)
+{
+    ast_value *cp = ast_value_new(self->expression.node.context, self->name, self->expression.vtype);
+    if (self->expression.next) {
+        cp->expression.next = ast_type_copy(self->expression.node.context, self->expression.next);
+        if (!cp->expression.next) {
+            ast_value_delete(cp);
+            return NULL;
+        }
+    }
+    return cp;
+}
+
 static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
 {
-    const ast_expression_common *cpex;
+    size_t i;
+    const ast_expression_common *fromex;
     ast_expression_common *selfex;
 
     if (!ex)
@@ -82,23 +105,32 @@ static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
     {
         ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
 
-        cpex   = &ex->expression;
+        fromex   = &ex->expression;
         selfex = &self->expression;
 
-        selfex->vtype = cpex->vtype;
-        if (cpex->next)
+        /* This may never be codegen()d */
+        selfex->codegen = NULL;
+
+        selfex->vtype = fromex->vtype;
+        if (fromex->next)
         {
-            selfex->next = ast_type_copy(ctx, cpex->next);
+            selfex->next = ast_type_copy(ctx, fromex->next);
             if (!selfex->next) {
-                mem_d(self);
+                ast_expression_delete_full(self);
                 return NULL;
             }
         }
         else
             selfex->next = NULL;
 
-        /* This may never be codegen()d */
-        selfex->codegen = NULL;
+        for (i = 0; i < fromex->params_count; ++i) {
+            ast_value *v = ast_value_copy(fromex->params[i]);
+            if (!v || !ast_expression_common_params_add(selfex, v)) {
+                ast_expression_delete_full(self);
+                return NULL;
+            }
+        }
+
         return self;
     }
 }
@@ -113,7 +145,6 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->name = name ? util_strdup(name) : NULL;
     self->expression.vtype = t;
     self->expression.next  = NULL;
-    MEM_VECTOR_INIT(self, params);
     self->isconst = false;
     memset(&self->constval, 0, sizeof(self->constval));
 
@@ -121,16 +152,11 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 
     return self;
 }
-MEM_VEC_FUNCTIONS(ast_value, ast_value*, params)
 
 void ast_value_delete(ast_value* self)
 {
-    size_t i;
     if (self->name)
         mem_d((void*)self->name);
-    for (i = 0; i < self->params_count; ++i)
-        ast_value_delete(self->params[i]); /* delete, the ast_function is expected to die first */
-    MEM_VECTOR_CLEAR(self, params);
     if (self->isconst) {
         switch (self->expression.vtype)
         {
@@ -150,6 +176,11 @@ void ast_value_delete(ast_value* self)
     }
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
+}
+
+bool GMQCC_WARN ast_value_params_add(ast_value *self, ast_value *p)
+{
+    return ast_expression_common_params_add(&self->expression, p);
 }
 
 bool ast_value_set_name(ast_value *self, const char *name)
@@ -650,6 +681,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 {
     ir_function *irf;
     ir_value    *dummy;
+    ast_expression_common *ec;
     size_t    i;
 
     irf = self->ir_func;
@@ -659,12 +691,13 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     }
 
     /* fill the parameter list */
-    for (i = 0; i < self->vtype->params_count; ++i)
+    ec = &self->vtype->expression;
+    for (i = 0; i < ec->params_count; ++i)
     {
-        if (!ir_function_params_add(irf, self->vtype->params[i]->expression.vtype))
+        if (!ir_function_params_add(irf, ec->params[i]->expression.vtype))
             return false;
         if (!self->builtin) {
-            if (!ast_local_codegen(self->vtype->params[i], self->ir_func, true))
+            if (!ast_local_codegen(ec->params[i], self->ir_func, true))
                 return false;
         }
     }
@@ -1339,6 +1372,7 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
 
     *out = ir_call_value(callinstr);
 
+    MEM_VECTOR_CLEAR(&params, v);
     return true;
 error:
     MEM_VECTOR_CLEAR(&params, v);
