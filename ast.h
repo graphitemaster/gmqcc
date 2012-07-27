@@ -81,7 +81,9 @@ typedef struct
     ast_expression_codegen *codegen;
     int                     vtype;
     ast_expression         *next;
+    MEM_VECTOR_MAKE(ast_value*, params);
 } ast_expression_common;
+MEM_VECTOR_PROTO(ast_expression_common, ast_value*, params);
 
 /* Value
  *
@@ -114,13 +116,7 @@ struct ast_value_s
     } constval;
 
     ir_value *ir_v;
-
-    /* if vtype is qc_function, params contain parameters, and
-     * 'next' the return type.
-     */
-    MEM_VECTOR_MAKE(ast_value*, params);
 };
-MEM_VECTOR_PROTO(ast_value, ast_value*, params);
 
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);
 /* This will NOT delete an underlying ast_function */
@@ -131,6 +127,8 @@ bool ast_value_set_name(ast_value*, const char *name);
 bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
 bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
 bool ast_global_codegen(ast_value *self, ir_builder *ir);
+
+bool GMQCC_WARN ast_value_params_add(ast_value*, ast_value*);
 
 /* Binary
  *
