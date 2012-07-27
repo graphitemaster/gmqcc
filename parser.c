@@ -278,7 +278,6 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         vars[i]  = sy->out[sy->out_count+i].value;
     }
 
-    printf("Applying operator %s\n", op->op);
     switch (op->id)
     {
         default:
@@ -418,7 +417,6 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
-                printf("Added: %s\n", var->name);
             }
             else if (parser->tok == TOKEN_FLOATCONST) {
                 ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
@@ -437,7 +435,6 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
-                printf("Added: %i\n", parser_token(parser)->constval.i);
             }
             else if (parser->tok == '(') {
                 nextwant = false; /* not expecting an operator next */
@@ -457,7 +454,6 @@ static ast_expression* parser_expression(parser_t *parser)
             if (parser->tok == ')') {
                 /* we do expect an operator next */
                 /* closing an opening paren */
-                printf("Applying closing paren\n");
                 if (!sy.ops_count) {
                     parseerror(parser, "unmatched closing paren");
                     goto onerr;
@@ -515,7 +511,6 @@ static ast_expression* parser_expression(parser_t *parser)
 
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
                     goto onerr;
-                printf("Added op %s\n", op->op);
             }
             wantop = false;
             parser->lex->flags.noops = true;
@@ -524,7 +519,6 @@ static ast_expression* parser_expression(parser_t *parser)
             goto onerr;
         }
         if (parser->tok == ';') {
-            printf("End of statement\n");
             break;
         }
     }
