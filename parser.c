@@ -316,8 +316,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             if (!ast_block_set_type(blocks[0], exprs[1]))
                 return false;
-            out = blocks[0];
-            break;
+
+            sy->out[sy->out_count++] = syblock(ctx, blocks[0]);
+            return true;
 
         case opid1('+'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
