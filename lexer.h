@@ -183,6 +183,8 @@ static const oper_info operators[] = {
     { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 2,  0 },
     { "^=",  2, opid2('^','='),     ASSOC_RIGHT, 2,  0 },
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 2,  0 },
+
+    { ",",   2, opid1(','),         ASSOC_LEFT,  1,  0 }
 };
 static const size_t operator_count = (sizeof(operators) / sizeof(operators[0]));
 
