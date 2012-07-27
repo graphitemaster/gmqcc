@@ -40,6 +40,9 @@ typedef struct ast_entfield_s   ast_entfield;
 typedef struct ast_ifthen_s     ast_ifthen;
 typedef struct ast_ternary_s    ast_ternary;
 typedef struct ast_loop_s       ast_loop;
+typedef struct ast_call_s       ast_call;
+typedef struct ast_unary_s      ast_unary;
+typedef struct ast_return_s     ast_return;
 
 /* Node interface with common components
  */
@@ -78,7 +81,9 @@ typedef struct
     ast_expression_codegen *codegen;
     int                     vtype;
     ast_expression         *next;
+    MEM_VECTOR_MAKE(ast_value*, params);
 } ast_expression_common;
+MEM_VECTOR_PROTO(ast_expression_common, ast_value*, params);
 
 /* Value
  *
@@ -109,12 +114,8 @@ struct ast_value_s
     } constval;
 
     ir_value *ir_v;
-
-    /* if vtype is qc_function, params contain parameters, and
-     * 'next' the return type.
-     */
-    MEM_VECTOR_MAKE(ast_value*, params);
 };
+
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);
 /* This will NOT delete an underlying ast_function */
 void ast_value_delete(ast_value*);
@@ -122,8 +123,10 @@ void ast_value_delete(ast_value*);
 bool ast_value_set_name(ast_value*, const char *name);
 
 bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
-bool ast_local_codegen(ast_value *self, ir_function *func);
+bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
 bool ast_global_codegen(ast_value *self, ir_builder *ir);
+
+bool GMQCC_WARN ast_value_params_add(ast_value*, ast_value*);
 
 /* Binary
  *
@@ -144,6 +147,41 @@ ast_binary* ast_binary_new(lex_ctx    ctx,
 void ast_binary_delete(ast_binary*);
 
 bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
+
+/* Unary
+ *
+ * Regular unary expressions: not,neg
+ */
+struct ast_unary_s
+{
+    ast_expression_common expression;
+
+    int             op;
+    ast_expression *operand;
+};
+ast_unary* ast_unary_new(lex_ctx    ctx,
+                         int        op,
+                         ast_expression *expr);
+void ast_unary_delete(ast_unary*);
+
+bool ast_unary_codegen(ast_unary*, ast_function*, bool lvalue, ir_value**);
+
+/* Return
+ *
+ * Make sure 'return' only happens at the end of a block, otherwise the IR
+ * will refuse to create further instructions.
+ * This should be honored by the parser.
+ */
+struct ast_return_s
+{
+    ast_expression_common expression;
+    ast_expression *operand;
+};
+ast_return* ast_return_new(lex_ctx    ctx,
+                           ast_expression *expr);
+void ast_return_delete(ast_return*);
+
+bool ast_return_codegen(ast_return*, ast_function*, bool lvalue, ir_value**);
 
 /* Entity-field
  *
@@ -284,6 +322,29 @@ void ast_loop_delete(ast_loop*);
 
 bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
 
+/* CALL node
+ *
+ * Contains an ast_expression as target, rather than an ast_function/value.
+ * Since it's how QC works, every ast_function has an ast_value
+ * associated anyway - in other words, the VM contains function
+ * pointers for every function anyway. Thus, this node will call
+ * expression.
+ * Additionally it contains a list of ast_expressions as parameters.
+ * Since calls can return values, an ast_call is also an ast_expression.
+ */
+struct ast_call_s
+{
+    ast_expression_common expression;
+    ast_expression *func;
+    MEM_VECTOR_MAKE(ast_expression*, params);
+};
+ast_call* ast_call_new(lex_ctx ctx,
+                       ast_expression *funcexpr);
+void ast_call_delete(ast_call*);
+bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
+
+MEM_VECTOR_PROTO(ast_call, ast_expression*, params);
+
 /* Blocks
  *
  */
@@ -296,6 +357,7 @@ struct ast_block_s
 };
 ast_block* ast_block_new(lex_ctx ctx);
 void ast_block_delete(ast_block*);
+bool ast_block_set_type(ast_block*, ast_expression *from);
 
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
@@ -318,6 +380,8 @@ struct ast_function_s
 
     ast_value  *vtype;
     const char *name;
+
+    int builtin;
 
     ir_function *ir_func;
     ir_block    *curblock;

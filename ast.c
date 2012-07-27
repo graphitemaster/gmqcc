@@ -57,12 +57,18 @@ static void ast_expression_init(ast_expression *self,
     self->expression.codegen = codegen;
     self->expression.vtype   = TYPE_VOID;
     self->expression.next    = NULL;
+    MEM_VECTOR_INIT(&self->expression, params);
 }
 
 static void ast_expression_delete(ast_expression *self)
 {
+    size_t i;
     if (self->expression.next)
         ast_delete(self->expression.next);
+    for (i = 0; i < self->expression.params_count; ++i) {
+        ast_delete(self->expression.params[i]);
+    }
+    MEM_VECTOR_CLEAR(&self->expression, params);
 }
 
 static void ast_expression_delete_full(ast_expression *self)
@@ -71,9 +77,26 @@ static void ast_expression_delete_full(ast_expression *self)
     mem_d(self);
 }
 
+MEM_VEC_FUNCTIONS(ast_expression_common, ast_value*, params)
+
+static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
+static ast_value* ast_value_copy(const ast_value *self)
+{
+    ast_value *cp = ast_value_new(self->expression.node.context, self->name, self->expression.vtype);
+    if (self->expression.next) {
+        cp->expression.next = ast_type_copy(self->expression.node.context, self->expression.next);
+        if (!cp->expression.next) {
+            ast_value_delete(cp);
+            return NULL;
+        }
+    }
+    return cp;
+}
+
 static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
 {
-    const ast_expression_common *cpex;
+    size_t i;
+    const ast_expression_common *fromex;
     ast_expression_common *selfex;
 
     if (!ex)
@@ -82,23 +105,32 @@ static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
     {
         ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
 
-        cpex   = &ex->expression;
+        fromex   = &ex->expression;
         selfex = &self->expression;
 
-        selfex->vtype = cpex->vtype;
-        if (cpex->next)
+        /* This may never be codegen()d */
+        selfex->codegen = NULL;
+
+        selfex->vtype = fromex->vtype;
+        if (fromex->next)
         {
-            selfex->next = ast_type_copy(ctx, cpex->next);
+            selfex->next = ast_type_copy(ctx, fromex->next);
             if (!selfex->next) {
-                mem_d(self);
+                ast_expression_delete_full(self);
                 return NULL;
             }
         }
         else
             selfex->next = NULL;
 
-        /* This may never be codegen()d */
-        selfex->codegen = NULL;
+        for (i = 0; i < fromex->params_count; ++i) {
+            ast_value *v = ast_value_copy(fromex->params[i]);
+            if (!v || !ast_expression_common_params_add(selfex, v)) {
+                ast_expression_delete_full(self);
+                return NULL;
+            }
+        }
+
         return self;
     }
 }
@@ -113,7 +145,6 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->name = name ? util_strdup(name) : NULL;
     self->expression.vtype = t;
     self->expression.next  = NULL;
-    MEM_VECTOR_INIT(self, params);
     self->isconst = false;
     memset(&self->constval, 0, sizeof(self->constval));
 
@@ -121,16 +152,11 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 
     return self;
 }
-MEM_VEC_FUNCTIONS(ast_value, ast_value*, params)
 
 void ast_value_delete(ast_value* self)
 {
-    size_t i;
     if (self->name)
         mem_d((void*)self->name);
-    for (i = 0; i < self->params_count; ++i)
-        ast_value_delete(self->params[i]); /* delete, the ast_function is expected to die first */
-    MEM_VECTOR_CLEAR(self, params);
     if (self->isconst) {
         switch (self->expression.vtype)
         {
@@ -150,6 +176,11 @@ void ast_value_delete(ast_value* self)
     }
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
+}
+
+bool GMQCC_WARN ast_value_params_add(ast_value *self, ast_value *p)
+{
+    return ast_expression_common_params_add(&self->expression, p);
 }
 
 bool ast_value_set_name(ast_value *self, const char *name)
@@ -177,6 +208,42 @@ void ast_binary_delete(ast_binary *self)
 {
     ast_unref(self->left);
     ast_unref(self->right);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
+ast_unary* ast_unary_new(lex_ctx ctx, int op,
+                         ast_expression *expr)
+{
+    ast_instantiate(ast_unary, ctx, ast_unary_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_unary_codegen);
+
+    self->op = op;
+    self->operand = expr;
+
+    return self;
+}
+
+void ast_unary_delete(ast_unary *self)
+{
+    ast_unref(self->operand);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
+ast_return* ast_return_new(lex_ctx ctx, ast_expression *expr)
+{
+    ast_instantiate(ast_return, ctx, ast_return_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);
+
+    self->operand = expr;
+
+    return self;
+}
+
+void ast_return_delete(ast_return *self)
+{
+    ast_unref(self->operand);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
@@ -308,6 +375,34 @@ void ast_loop_delete(ast_loop *self)
     mem_d(self);
 }
 
+ast_call* ast_call_new(lex_ctx ctx,
+                       ast_expression *funcexpr)
+{
+    ast_instantiate(ast_call, ctx, ast_call_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_call_codegen);
+
+    MEM_VECTOR_INIT(self, params);
+
+    self->func = funcexpr;
+
+    return self;
+}
+MEM_VEC_FUNCTIONS(ast_call, ast_expression*, params)
+
+void ast_call_delete(ast_call *self)
+{
+    size_t i;
+    for (i = 0; i < self->params_count; ++i)
+        ast_unref(self->params[i]);
+    MEM_VECTOR_CLEAR(self, params);
+
+    if (self->func)
+        ast_unref(self->func);
+
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_value *dest, ast_expression *source)
 {
@@ -356,6 +451,19 @@ void ast_block_delete(ast_block *self)
     mem_d(self);
 }
 
+bool ast_block_set_type(ast_block *self, ast_expression *from)
+{
+    if (self->expression.next)
+        ast_delete(self->expression.next);
+    self->expression.vtype = from->expression.vtype;
+    if (from->expression.next) {
+        self->expression.next = ast_type_copy(self->expression.node.context, from->expression.next);
+        if (!self->expression.next)
+            return false;
+    }
+    return true;
+}
+
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
@@ -373,6 +481,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     MEM_VECTOR_INIT(self, blocks);
 
     self->labelcount = 0;
+    self->builtin = 0;
 
     self->ir_func = NULL;
     self->curblock = NULL;
@@ -457,8 +566,10 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * and the ast-user should take care of ast_global_codegen to be used
      * on all the globals.
      */
-    if (!self->ir_v)
+    if (!self->ir_v) {
+        printf("ast_value used before generated (%s)\n", self->name);
         return false;
+    }
     *out = self->ir_v;
     return true;
 }
@@ -468,11 +579,12 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
     ir_value *v = NULL;
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
     {
-        ir_function *func = ir_builder_create_function(ir, self->name);
+        ir_function *func = ir_builder_create_function(ir, self->name, self->expression.next->expression.vtype);
         if (!func)
             return false;
 
         self->constval.vfunc->ir_func = func;
+        self->ir_v = func->value;
         /* The function is filled later on ast_function_codegen... */
         return true;
     }
@@ -497,10 +609,11 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
                     goto error;
                 break;
             case TYPE_FUNCTION:
+                printf("global of type function not properly generated\n");
+                goto error;
                 /* Cannot generate an IR value for a function,
                  * need a pointer pointing to a function rather.
                  */
-                goto error;
             default:
                 printf("TODO: global constant type %i\n", self->expression.vtype);
                 break;
@@ -516,7 +629,7 @@ error: /* clean up */
     return false;
 }
 
-bool ast_local_codegen(ast_value *self, ir_function *func)
+bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
@@ -527,7 +640,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func)
         return false;
     }
 
-    v = ir_function_create_local(func, self->name, self->expression.vtype);
+    v = ir_function_create_local(func, self->name, self->expression.vtype, param);
     if (!v)
         return false;
 
@@ -568,12 +681,30 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 {
     ir_function *irf;
     ir_value    *dummy;
+    ast_expression_common *ec;
     size_t    i;
 
     irf = self->ir_func;
     if (!irf) {
         printf("ast_function's related ast_value was not generated yet\n");
         return false;
+    }
+
+    /* fill the parameter list */
+    ec = &self->vtype->expression;
+    for (i = 0; i < ec->params_count; ++i)
+    {
+        if (!ir_function_params_add(irf, ec->params[i]->expression.vtype))
+            return false;
+        if (!self->builtin) {
+            if (!ast_local_codegen(ec->params[i], self->ir_func, true))
+                return false;
+        }
+    }
+
+    if (self->builtin) {
+        irf->builtin = self->builtin;
+        return true;
     }
 
     self->curblock = ir_function_create_block(irf, "entry");
@@ -591,7 +722,9 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     {
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
+        {
             return ir_block_create_return(self->curblock, NULL);
+        }
         else
         {
             /* error("missing return"); */
@@ -628,7 +761,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     /* generate locals */
     for (i = 0; i < self->locals_count; ++i)
     {
-        if (!ast_local_codegen(self->locals[i], func->ir_func))
+        if (!ast_local_codegen(self->locals[i], func->ir_func, false))
             return false;
     }
 
@@ -695,6 +828,50 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     *out = ir_block_create_binop(func->curblock, ast_function_label(func, "bin"),
                                  self->op, left, right);
     if (!*out)
+        return false;
+
+    return true;
+}
+
+bool ast_unary_codegen(ast_unary *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+    ir_value *operand;
+
+    /* In the context of a unary operation, we can disregard
+     * the lvalue flag.
+     */
+    (void)lvalue;
+
+    cgen = self->operand->expression.codegen;
+    /* lvalue! */
+    if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
+        return false;
+
+    *out = ir_block_create_unary(func->curblock, ast_function_label(func, "unary"),
+                                 self->op, operand);
+    if (!*out)
+        return false;
+
+    return true;
+}
+
+bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+    ir_value *operand;
+
+    /* In the context of a return operation, we can disregard
+     * the lvalue flag.
+     */
+    (void)lvalue;
+
+    cgen = self->operand->expression.codegen;
+    /* lvalue! */
+    if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
+        return false;
+
+    if (!ir_block_create_return(func->curblock, operand))
         return false;
 
     return true;
@@ -1147,4 +1324,57 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     }
 
     return true;
+}
+
+bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+    ir_value_vector         params;
+    ir_instr               *callinstr;
+    size_t i;
+
+    ir_value *funval = NULL;
+
+    /* return values are never rvalues */
+    (void)lvalue;
+
+    cgen = self->func->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->func), func, false, &funval))
+        return false;
+    if (!funval)
+        return false;
+
+    MEM_VECTOR_INIT(&params, v);
+
+    /* parameters */
+    for (i = 0; i < self->params_count; ++i)
+    {
+        ir_value *param;
+        ast_expression *expr = self->params[i];
+
+        cgen = expr->expression.codegen;
+        if (!(*cgen)(expr, func, false, &param))
+            goto error;
+        if (!param)
+            goto error;
+        if (!ir_value_vector_v_add(&params, param))
+            goto error;
+    }
+
+    callinstr = ir_block_create_call(func->curblock, ast_function_label(func, "call"), funval);
+    if (!callinstr)
+        goto error;
+
+    for (i = 0; i < params.v_count; ++i) {
+        if (!ir_call_param(callinstr, params.v[i]))
+            goto error;
+    }
+
+    *out = ir_call_value(callinstr);
+
+    MEM_VECTOR_CLEAR(&params, v);
+    return true;
+error:
+    MEM_VECTOR_CLEAR(&params, v);
+    return false;
 }

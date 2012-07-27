@@ -77,7 +77,7 @@
  * This is a hack to silent clang regarding empty
  * body if statements.
  */
-#define GMQCC_SUPRESS_EMPTY_BODY do { } while (0)
+#define GMQCC_SUPPRESS_EMPTY_BODY do { } while (0)
 
 /*
  * Inline is not supported in < C90, however some compilers
@@ -371,6 +371,13 @@ enum {
 };
 
 extern size_t type_sizeof[TYPE_COUNT];
+extern uint16_t type_store_instr[TYPE_COUNT];
+/* could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
+ * but this breaks when TYPE_INTEGER is added, since with the enhanced
+ * instruction set, the old ones are left untouched, thus the _I instructions
+ * are at a seperate place.
+ */
+extern uint16_t type_storep_instr[TYPE_COUNT];
 
 typedef struct {
     uint32_t offset;      /* Offset in file of where data begins  */
@@ -605,7 +612,7 @@ static const struct {
     { "EQ_V"      , 0, 4 },
     { "EQ_S"      , 0, 4 },
     { "EQ_E"      , 0, 4 },
-    { "ES_FNC"    , 0, 6 },
+    { "EQ_FNC"    , 0, 6 },
     { "NE_F"      , 0, 4 },
     { "NE_V"      , 0, 4 },
     { "NE_S"      , 0, 4 },
@@ -694,7 +701,7 @@ extern int  opts_compiler;
     size_t name##_count;             \
     size_t name##_alloc
 
-#define _MEM_VEC_FUN_ADD(Tself, Twhat, mem)                          \
+#define MEM_VEC_FUN_ADD(Tself, Twhat, mem)                           \
 bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
 {                                                                    \
     Twhat *reall;                                                    \
@@ -716,7 +723,7 @@ bool GMQCC_WARN Tself##_##mem##_add(Tself *self, Twhat f)            \
     return true;                                                     \
 }
 
-#define _MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)                       \
+#define MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)                        \
 bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
 {                                                                    \
     size_t i;                                                        \
@@ -741,7 +748,7 @@ bool GMQCC_WARN Tself##_##mem##_remove(Tself *self, size_t idx)      \
     return true;                                                     \
 }
 
-#define _MEM_VEC_FUN_FIND(Tself, Twhat, mem)                    \
+#define MEM_VEC_FUN_FIND(Tself, Twhat, mem)                     \
 bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
 {                                                               \
     size_t i;                                                   \
@@ -756,7 +763,7 @@ bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
     return false;                                               \
 }
 
-#define _MEM_VEC_FUN_APPEND(Tself, Twhat, mem)                       \
+#define MEM_VEC_FUN_APPEND(Tself, Twhat, mem)                        \
 bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
 {                                                                    \
     Twhat *reall;                                                    \
@@ -782,7 +789,7 @@ bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
     return true;                                                     \
 }
 
-#define _MEM_VEC_FUN_RESIZE(Tself, Twhat, mem)                   \
+#define MEM_VEC_FUN_RESIZE(Tself, Twhat, mem)                    \
 bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
 {                                                                \
     Twhat *reall;                                                \
@@ -806,7 +813,7 @@ bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
     return true;                                                 \
 }
 
-#define _MEM_VEC_FUN_CLEAR(Tself, mem)  \
+#define MEM_VEC_FUN_CLEAR(Tself, mem)   \
 void Tself##_##mem##_clear(Tself *self) \
 {                                       \
     if (!self->mem)                     \
@@ -832,18 +839,20 @@ void Tself##_##mem##_clear(Tself *self) \
 }
 
 #define MEM_VEC_FUNCTIONS(Tself, Twhat, mem) \
-_MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)       \
-_MEM_VEC_FUN_ADD(Tself, Twhat, mem)
+MEM_VEC_FUN_REMOVE(Tself, Twhat, mem)        \
+MEM_VEC_FUN_ADD(Tself, Twhat, mem)
 
 #define MEM_VEC_FUNCTIONS_ALL(Tself, Twhat, mem) \
 MEM_VEC_FUNCTIONS(Tself, Twhat, mem)             \
-_MEM_VEC_FUN_CLEAR(Tself, mem)                   \
-_MEM_VEC_FUN_FIND(Tself, Twhat, mem)
+MEM_VEC_FUN_CLEAR(Tself, mem)                    \
+MEM_VEC_FUN_FIND(Tself, Twhat, mem)
 
 enum store_types {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */
-    store_value   /* unassignable */
+    store_param,  /* parameters, they are locals with a fixed position */
+    store_value,  /* unassignable */
+    store_return  /* unassignable, at OFS_RETURN */
 };
 
 typedef struct {

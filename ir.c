@@ -44,6 +44,38 @@ size_t type_sizeof[TYPE_COUNT] = {
     3, /* TYPE_VARIANT  */
 };
 
+uint16_t type_store_instr[TYPE_COUNT] = {
+    INSTR_STORE_F, /* should use I when having integer support */
+    INSTR_STORE_S,
+    INSTR_STORE_F,
+    INSTR_STORE_V,
+    INSTR_STORE_ENT,
+    INSTR_STORE_FLD,
+    INSTR_STORE_FNC,
+    INSTR_STORE_ENT, /* should use I */
+#if 0
+    INSTR_STORE_ENT, /* integer type */
+#endif
+    INSTR_STORE_V, /* variant, should never be accessed */
+};
+
+uint16_t type_storep_instr[TYPE_COUNT] = {
+    INSTR_STOREP_F, /* should use I when having integer support */
+    INSTR_STOREP_S,
+    INSTR_STOREP_F,
+    INSTR_STOREP_V,
+    INSTR_STOREP_ENT,
+    INSTR_STOREP_FLD,
+    INSTR_STOREP_FNC,
+    INSTR_STOREP_ENT, /* should use I */
+#if 0
+    INSTR_STOREP_ENT, /* integer type */
+#endif
+    INSTR_STOREP_V, /* variant, should never be accessed */
+};
+
+MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
+
 /***********************************************************************
  *IR Builder
  */
@@ -108,20 +140,32 @@ ir_function* ir_builder_get_function(ir_builder *self, const char *name)
     return NULL;
 }
 
-ir_function* ir_builder_create_function(ir_builder *self, const char *name)
+ir_function* ir_builder_create_function(ir_builder *self, const char *name, int outtype)
 {
     ir_function *fn = ir_builder_get_function(self, name);
     if (fn) {
         return NULL;
     }
 
-    fn = ir_function_new(self);
+    fn = ir_function_new(self, outtype);
     if (!ir_function_set_name(fn, name) ||
         !ir_builder_functions_add(self, fn) )
     {
         ir_function_delete(fn);
         return NULL;
     }
+
+    fn->value = ir_builder_create_global(self, fn->name, TYPE_FUNCTION);
+    if (!fn->value) {
+        ir_function_delete(fn);
+        return NULL;
+    }
+
+    fn->value->isconst = true;
+    fn->value->outtype = outtype;
+    fn->value->constval.vfunc = fn;
+    fn->value->context = fn->context;
+
     return fn;
 }
 
@@ -159,7 +203,7 @@ void ir_function_enumerate(ir_function*);
 bool ir_function_calculate_liferanges(ir_function*);
 bool ir_function_allocate_locals(ir_function*);
 
-ir_function* ir_function_new(ir_builder* owner)
+ir_function* ir_function_new(ir_builder* owner, int outtype)
 {
     ir_function *self;
     self = (ir_function*)mem_a(sizeof(*self));
@@ -175,7 +219,9 @@ ir_function* ir_function_new(ir_builder* owner)
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
-    self->retype = TYPE_VOID;
+    self->outtype = outtype;
+    self->value = NULL;
+    self->builtin = 0;
     MEM_VECTOR_INIT(self, params);
     MEM_VECTOR_INIT(self, blocks);
     MEM_VECTOR_INIT(self, values);
@@ -187,6 +233,7 @@ ir_function* ir_function_new(ir_builder* owner)
 MEM_VEC_FUNCTIONS(ir_function, ir_value*, values)
 MEM_VEC_FUNCTIONS(ir_function, ir_block*, blocks)
 MEM_VEC_FUNCTIONS(ir_function, ir_value*, locals)
+MEM_VEC_FUNCTIONS(ir_function, int,       params)
 
 bool ir_function_set_name(ir_function *self, const char *name)
 {
@@ -215,6 +262,8 @@ void ir_function_delete(ir_function *self)
         ir_value_delete(self->locals[i]);
     MEM_VECTOR_CLEAR(self, locals);
 
+    /* self->value is deleted by the builder */
+
     mem_d(self);
 }
 
@@ -236,6 +285,9 @@ ir_block* ir_function_create_block(ir_function *self, const char *label)
 
 bool ir_function_finalize(ir_function *self)
 {
+    if (self->builtin)
+        return true;
+
     if (!ir_function_naive_phi(self))
         return false;
 
@@ -259,14 +311,21 @@ ir_value* ir_function_get_local(ir_function *self, const char *name)
     return NULL;
 }
 
-ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype)
+ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param)
 {
     ir_value *ve = ir_function_get_local(self, name);
     if (ve) {
         return NULL;
     }
 
-    ve = ir_value_var(name, store_local, vtype);
+    if (param &&
+        self->locals_count &&
+        self->locals[self->locals_count-1]->store != store_param) {
+        printf("cannot add parameters after adding locals\n");
+        return NULL;
+    }
+
+    ve = ir_value_var(name, (param ? store_param : store_local), vtype);
     if (!ir_function_locals_add(self, ve)) {
         ir_value_delete(ve);
         return NULL;
@@ -356,11 +415,13 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
     self->bops[0] = NULL;
     self->bops[1] = NULL;
     MEM_VECTOR_INIT(self, phi);
+    MEM_VECTOR_INIT(self, params);
 
     self->eid = 0;
     return self;
 }
 MEM_VEC_FUNCTIONS(ir_instr, ir_phi_entry_t, phi)
+MEM_VEC_FUNCTIONS(ir_instr, ir_value*, params)
 
 void ir_instr_delete(ir_instr *self)
 {
@@ -374,14 +435,22 @@ void ir_instr_delete(ir_instr *self)
     for (i = 0; i < self->phi_count; ++i) {
         size_t idx;
         if (ir_value_writes_find(self->phi[i].value, self, &idx))
-            if (ir_value_writes_remove(self->phi[i].value, idx)) GMQCC_SUPRESS_EMPTY_BODY;
+            if (ir_value_writes_remove(self->phi[i].value, idx)) GMQCC_SUPPRESS_EMPTY_BODY;
         if (ir_value_reads_find(self->phi[i].value, self, &idx))
-            if (ir_value_reads_remove (self->phi[i].value, idx)) GMQCC_SUPRESS_EMPTY_BODY;
+            if (ir_value_reads_remove (self->phi[i].value, idx)) GMQCC_SUPPRESS_EMPTY_BODY;
     }
     MEM_VECTOR_CLEAR(self, phi);
-    if (ir_instr_op(self, 0, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
-    if (ir_instr_op(self, 1, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
-    if (ir_instr_op(self, 2, NULL, false)) GMQCC_SUPRESS_EMPTY_BODY;
+    for (i = 0; i < self->params_count; ++i) {
+        size_t idx;
+        if (ir_value_writes_find(self->params[i], self, &idx))
+            if (ir_value_writes_remove(self->params[i], idx)) GMQCC_SUPPRESS_EMPTY_BODY;
+        if (ir_value_reads_find(self->params[i], self, &idx))
+            if (ir_value_reads_remove (self->params[i], idx)) GMQCC_SUPPRESS_EMPTY_BODY;
+    }
+    MEM_VECTOR_CLEAR(self, params);
+    if (ir_instr_op(self, 0, NULL, false)) GMQCC_SUPPRESS_EMPTY_BODY;
+    if (ir_instr_op(self, 1, NULL, false)) GMQCC_SUPPRESS_EMPTY_BODY;
+    if (ir_instr_op(self, 2, NULL, false)) GMQCC_SUPPRESS_EMPTY_BODY;
     mem_d(self);
 }
 
@@ -423,6 +492,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self = (ir_value*)mem_a(sizeof(*self));
     self->vtype = vtype;
     self->fieldtype = TYPE_VOID;
+    self->outtype = TYPE_VOID;
     self->store = storetype;
     MEM_VECTOR_INIT(self, reads);
     MEM_VECTOR_INIT(self, writes);
@@ -482,6 +552,15 @@ bool ir_value_set_float(ir_value *self, float f)
     if (self->vtype != TYPE_FLOAT)
         return false;
     self->constval.vfloat = f;
+    self->isconst = true;
+    return true;
+}
+
+bool ir_value_set_func(ir_value *self, int f)
+{
+    if (self->vtype != TYPE_FUNCTION)
+        return false;
+    self->constval.vint = f;
     self->isconst = true;
     return true;
 }
@@ -773,46 +852,14 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
     else
         vtype = target->vtype;
 
-    switch (vtype) {
-        case TYPE_FLOAT:
 #if 0
-            if (what->vtype == TYPE_INTEGER)
-                op = INSTR_CONV_ITOF;
-            else
+    if      (vtype == TYPE_FLOAT   && what->vtype == TYPE_INTEGER)
+        op = INSTR_CONV_ITOF;
+    else if (vtype == TYPE_INTEGER && what->vtype == TYPE_FLOAT)
+        op = INSTR_CONV_FTOI;
 #endif
-                op = INSTR_STORE_F;
-            break;
-        case TYPE_VECTOR:
-            op = INSTR_STORE_V;
-            break;
-        case TYPE_ENTITY:
-            op = INSTR_STORE_ENT;
-            break;
-        case TYPE_STRING:
-            op = INSTR_STORE_S;
-            break;
-        case TYPE_FIELD:
-            op = INSTR_STORE_FLD;
-            break;
-#if 0
-        case TYPE_INTEGER:
-            if (what->vtype == TYPE_INTEGER)
-                op = INSTR_CONV_FTOI;
-            else
-                op = INSTR_STORE_I;
-            break;
-#endif
-        case TYPE_POINTER:
-#if 0
-            op = INSTR_STORE_I;
-#else
-            op = INSTR_STORE_ENT;
-#endif
-            break;
-        default:
-            /* Unknown type */
-            return false;
-    }
+        op = type_store_instr[vtype];
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -829,38 +876,8 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
      */
     vtype = what->vtype;
 
-    switch (vtype) {
-        case TYPE_FLOAT:
-            op = INSTR_STOREP_F;
-            break;
-        case TYPE_VECTOR:
-            op = INSTR_STOREP_V;
-            break;
-        case TYPE_ENTITY:
-            op = INSTR_STOREP_ENT;
-            break;
-        case TYPE_STRING:
-            op = INSTR_STOREP_S;
-            break;
-        case TYPE_FIELD:
-            op = INSTR_STOREP_FLD;
-            break;
-#if 0
-        case TYPE_INTEGER:
-            op = INSTR_STOREP_I;
-            break;
-#endif
-        case TYPE_POINTER:
-#if 0
-            op = INSTR_STOREP_I;
-#else
-            op = INSTR_STOREP_ENT;
-#endif
-            break;
-        default:
-            /* Unknown type */
-            return false;
-    }
+    op = type_storep_instr[vtype];
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -1017,6 +1034,47 @@ bool ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
     return ir_instr_phi_add(self, pe);
 }
 
+/* call related code */
+ir_instr* ir_block_create_call(ir_block *self, const char *label, ir_value *func)
+{
+    ir_value *out;
+    ir_instr *in;
+    in = ir_instr_new(self, INSTR_CALL0);
+    if (!in)
+        return NULL;
+    out = ir_value_out(self->owner, label, store_return, func->outtype);
+    if (!out) {
+        ir_instr_delete(in);
+        return NULL;
+    }
+    if (!ir_instr_op(in, 0, out, true) ||
+        !ir_instr_op(in, 1, func, false) ||
+        !ir_block_instr_add(self, in))
+    {
+        ir_instr_delete(in);
+        ir_value_delete(out);
+        return NULL;
+    }
+    return in;
+}
+
+ir_value* ir_call_value(ir_instr *self)
+{
+    return self->_ops[0];
+}
+
+bool ir_call_param(ir_instr* self, ir_value *v)
+{
+    if (!ir_instr_params_add(self, v))
+        return false;
+    if (!ir_value_reads_add(v, self)) {
+        if (!ir_instr_params_remove(self, self->params_count-1))
+            GMQCC_SUPPRESS_EMPTY_BODY;
+        return false;
+    }
+    return true;
+}
+
 /* binary op related code */
 
 ir_value* ir_block_create_binop(ir_block *self,
@@ -1109,6 +1167,39 @@ ir_value* ir_block_create_binop(ir_block *self,
     }
 
     return ir_block_create_general_instr(self, label, opcode, left, right, ot);
+}
+
+ir_value* ir_block_create_unary(ir_block *self,
+                                const char *label, int opcode,
+                                ir_value *operand)
+{
+    int ot = TYPE_FLOAT;
+    switch (opcode) {
+        case INSTR_NOT_F:
+        case INSTR_NOT_V:
+        case INSTR_NOT_S:
+        case INSTR_NOT_ENT:
+        case INSTR_NOT_FNC:
+#if 0
+        case INSTR_NOT_I:
+#endif
+            ot = TYPE_FLOAT;
+            break;
+        /* QC doesn't have other unary operations. We expect extensions to fill
+         * the above list, otherwise we assume out-type = in-type, eg for an
+         * unary minus
+         */
+        default:
+            ot = operand->vtype;
+            break;
+    };
+    if (ot == TYPE_VOID) {
+        /* The AST or parser were supposed to check this! */
+        return NULL;
+    }
+
+    /* let's use the general instruction creator and pass NULL for OPB */
+    return ir_block_create_general_instr(self, label, opcode, operand, NULL, ot);
 }
 
 ir_value* ir_block_create_general_instr(ir_block *self, const char *label,
@@ -1406,7 +1497,7 @@ static bool ir_block_naive_phi(ir_block *self)
                 if (v->writes[w]->_ops[0] == v)
                     v->writes[w]->_ops[0] = instr->_ops[0];
 
-                if (old->store != store_value && old->store != store_local)
+                if (old->store != store_value && old->store != store_local && old->store != store_param)
                 {
                     /* If it originally wrote to a global we need to store the value
                      * there as welli
@@ -1565,6 +1656,9 @@ bool ir_function_allocate_locals(ir_function *self)
 
     function_allocator alloc;
 
+    if (!self->locals_count)
+        return true;
+
     MEM_VECTOR_INIT(&alloc, locals);
     MEM_VECTOR_INIT(&alloc, sizes);
     MEM_VECTOR_INIT(&alloc, positions);
@@ -1611,6 +1705,10 @@ bool ir_function_allocate_locals(ir_function *self)
     if (!function_allocator_positions_add(&alloc, 0))
         goto error;
 
+    if (alloc.sizes_count)
+        pos = alloc.positions[0] + alloc.sizes[0];
+    else
+        pos = 0;
     for (i = 1; i < alloc.sizes_count; ++i)
     {
         pos = alloc.positions[i-1] + alloc.sizes[i-1];
@@ -1779,8 +1877,11 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             value = instr->_ops[o];
 
             /* We only care about locals */
+            /* we also calculate parameter liferanges so that locals
+             * can take up parameter slots */
             if (value->store != store_value &&
-                value->store != store_local)
+                value->store != store_local &&
+                value->store != store_param)
                 continue;
 
             /* read operands */
@@ -2109,8 +2210,56 @@ tailcall:
         }
 
         if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
-            printf("TODO: call instruction\n");
-            return false;
+            /* Trivial call translation:
+             * copy all params to OFS_PARM*
+             * if the output's storetype is not store_return,
+             * add append a STORE instruction!
+             *
+             * NOTES on how to do it better without much trouble:
+             * -) The liferanges!
+             *      Simply check the liferange of all parameters for
+             *      other CALLs. For each param with no CALL in its
+             *      liferange, we can store it in an OFS_PARM at
+             *      generation already. This would even include later
+             *      reuse.... probably... :)
+             */
+            size_t p;
+            ir_value *retvalue;
+
+            for (p = 0; p < instr->params_count; ++p)
+            {
+                ir_value *param = instr->params[p];
+
+                stmt.opcode = INSTR_STORE_F;
+                stmt.o3.u1 = 0;
+
+                stmt.opcode = type_store_instr[param->vtype];
+                stmt.o1.u1 = param->code.globaladdr;
+                stmt.o2.u1 = OFS_PARM0 + 3 * p;
+                if (code_statements_add(stmt) < 0)
+                    return false;
+            }
+            stmt.opcode = INSTR_CALL0 + instr->params_count;
+            if (stmt.opcode > INSTR_CALL8)
+                stmt.opcode = INSTR_CALL8;
+            stmt.o1.u1 = instr->_ops[1]->code.globaladdr;
+            stmt.o2.u1 = 0;
+            stmt.o3.u1 = 0;
+            if (code_statements_add(stmt) < 0)
+                return false;
+
+            retvalue = instr->_ops[0];
+            if (retvalue && retvalue->store != store_return && retvalue->life_count)
+            {
+                /* not to be kept in OFS_RETURN */
+                stmt.opcode = type_store_instr[retvalue->vtype];
+                stmt.o1.u1 = OFS_RETURN;
+                stmt.o2.u1 = retvalue->code.globaladdr;
+                stmt.o3.u1 = 0;
+                if (code_statements_add(stmt) < 0)
+                    return false;
+            }
+            continue;
         }
 
         if (instr->opcode == INSTR_STATE) {
@@ -2138,10 +2287,8 @@ tailcall:
             stmt.o1.u1 = stmt.o3.u1;
             stmt.o3.u1 = 0;
         }
-        else if ((stmt.opcode >= INSTR_STORE_F    &&
-                  stmt.opcode <= INSTR_STORE_FNC)    ||
-                 (stmt.opcode >= INSTR_NOT_F      &&
-                  stmt.opcode <= INSTR_NOT_FNC))
+        else if (stmt.opcode >= INSTR_STORE_F &&
+                 stmt.opcode <= INSTR_STORE_FNC)
         {
             /* 2-operand instructions with A -> B */
             stmt.o2.u1 = stmt.o3.u1;
@@ -2157,6 +2304,7 @@ tailcall:
 static bool gen_function_code(ir_function *self)
 {
     ir_block *block;
+    prog_section_statement stmt;
 
     /* Starting from entry point, we generate blocks "as they come"
      * for now. Dead blocks will not be translated obviously.
@@ -2174,6 +2322,14 @@ static bool gen_function_code(ir_function *self)
         printf("failed to generate blocks for '%s'\n", self->name);
         return false;
     }
+
+    /* otherwise code_write crashes since it debug-prints functions until AINSTR_END */
+    stmt.opcode = AINSTR_END;
+    stmt.o1.u1 = 0;
+    stmt.o2.u1 = 0;
+    stmt.o3.u1 = 0;
+    if (code_statements_add(stmt) < 0)
+        return false;
     return true;
 }
 
@@ -2185,8 +2341,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     size_t i;
     size_t local_var_end;
 
-    if (!global->isconst ||
-        !global->constval.vfunc)
+    if (!global->isconst || (!global->constval.vfunc))
     {
         printf("Invalid state of function-global: not constant: %s\n", global->name);
         return false;
@@ -2202,10 +2357,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     for (i = 0;i < 8; ++i) {
         if (i >= fun.nargs)
             fun.argsize[i] = 0;
-        else if (irfun->params[i] == TYPE_VECTOR)
-            fun.argsize[i] = 3;
         else
-            fun.argsize[i] = 1;
+            fun.argsize[i] = type_sizeof[irfun->params[i]];
     }
 
     fun.firstlocal = code_globals_elements;
@@ -2234,10 +2387,14 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         code_globals_add(0);
     }
 
-    fun.entry      = code_statements_elements;
-    if (!gen_function_code(irfun)) {
-        printf("Failed to generate code for function %s\n", irfun->name);
-        return false;
+    if (irfun->builtin)
+        fun.entry = irfun->builtin;
+    else {
+        fun.entry = code_statements_elements;
+        if (!gen_function_code(irfun)) {
+            printf("Failed to generate code for function %s\n", irfun->name);
+            return false;
+        }
     }
 
     return (code_functions_add(fun) >= 0);
@@ -2245,6 +2402,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 {
+    size_t           i;
     int32_t         *iptr;
     prog_section_def def;
 
@@ -2289,31 +2447,43 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     }
     case TYPE_VECTOR:
     {
+        size_t d;
         if (code_defs_add(def) < 0)
             return false;
 
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vvec;
             global->code.globaladdr = code_globals_add(iptr[0]);
-            if (code_globals_add(iptr[1]) < 0 || code_globals_add(iptr[2]) < 0)
+            if (global->code.globaladdr < 0)
                 return false;
+            for (d = 1; d < type_sizeof[global->vtype]; ++d)
+            {
+                if (code_globals_add(iptr[d]) < 0)
+                    return false;
+            }
         } else {
             global->code.globaladdr = code_globals_add(0);
-            if (code_globals_add(0) < 0 || code_globals_add(0) < 0)
+            if (global->code.globaladdr < 0)
                 return false;
+            for (d = 1; d < type_sizeof[global->vtype]; ++d)
+            {
+                if (code_globals_add(0) < 0)
+                    return false;
+            }
         }
         return global->code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
         if (code_defs_add(def) < 0)
             return false;
+        global->code.globaladdr = code_globals_elements;
         code_globals_add(code_functions_elements);
         return gen_global_function(self, global);
     case TYPE_VARIANT:
         /* assume biggest type */
             global->code.globaladdr = code_globals_add(0);
-            code_globals_add(0);
-            code_globals_add(0);
+            for (i = 1; i < type_sizeof[TYPE_VARIANT]; ++i)
+                code_globals_add(0);
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
@@ -2327,21 +2497,6 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     size_t i;
 
     code_init();
-
-    /* FIXME: generate TYPE_FUNCTION globals and link them
-     * to their ir_function.
-     */
-
-    for (i = 0; i < self->functions_count; ++i)
-    {
-        ir_value    *funval;
-        ir_function *fun = self->functions[i];
-
-        funval = ir_builder_create_global(self, fun->name, TYPE_FUNCTION);
-        funval->isconst = true;
-        funval->constval.vfunc = fun;
-        funval->context = fun->context;
-    }
 
     for (i = 0; i < self->globals_count; ++i)
     {
@@ -2398,6 +2553,10 @@ void ir_function_dump(ir_function *f, char *ind,
                       int (*oprintf)(const char*, ...))
 {
 	size_t i;
+	if (f->builtin != 0) {
+	    oprintf("%sfunction %s = builtin %i\n", ind, f->name, -f->builtin);
+	    return;
+	}
 	oprintf("%sfunction %s\n", ind, f->name);
 	strncat(ind, "\t", IND_BUFSZ);
 	if (f->locals_count)

@@ -40,6 +40,8 @@ typedef struct ir_value_s {
     lex_ctx   context;
     /* even the IR knows the subtype of a field */
     int       fieldtype;
+    /* and the output type of a function */
+    int       outtype;
 
     MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
     MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
@@ -79,6 +81,7 @@ MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads);
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes);
 
 bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
+bool GMQCC_WARN ir_value_set_func(ir_value*, int f);
 #if 0
 bool GMQCC_WARN ir_value_set_int(ir_value*, int i);
 #endif
@@ -100,6 +103,13 @@ bool ir_values_overlap(const ir_value*, const ir_value*);
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));
 
+/* A vector of IR values */
+typedef struct {
+    MEM_VECTOR_MAKE(ir_value*, v);
+} ir_value_vector;
+MEM_VECTOR_PROTO(ir_value_vector, ir_value*, v);
+
+/* PHI data */
 typedef struct ir_phi_entry_s
 {
     ir_value          *value;
@@ -115,6 +125,7 @@ typedef struct ir_instr_s
     struct ir_block_s* (bops[2]);
 
     MEM_VECTOR_MAKE(ir_phi_entry_t, phi);
+    MEM_VECTOR_MAKE(ir_value*, params);
 
     /* For the temp-allocation */
     size_t eid;
@@ -127,6 +138,8 @@ void      ir_instr_delete(ir_instr*);
 
 MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi);
 bool GMQCC_WARN ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
+
+MEM_VECTOR_PROTO(ir_value, ir_value*, params);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 
@@ -164,6 +177,8 @@ MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries);
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
+ir_value* ir_block_create_unary(ir_block*, const char *label, int op,
+                                ir_value *operand);
 bool GMQCC_WARN ir_block_create_store_op(ir_block*, int op, ir_value *target, ir_value *what);
 bool GMQCC_WARN ir_block_create_store(ir_block*, ir_value *target, ir_value *what);
 bool GMQCC_WARN ir_block_create_storep(ir_block*, ir_value *target, ir_value *what);
@@ -186,6 +201,9 @@ ir_value* ir_block_create_div(ir_block*, const char *label, ir_value *l, ir_valu
 ir_instr* ir_block_create_phi(ir_block*, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
 bool GMQCC_WARN ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
+ir_instr* ir_block_create_call(ir_block*, const char *label, ir_value *func);
+ir_value* ir_call_value(ir_instr*);
+bool GMQCC_WARN ir_call_param(ir_instr*, ir_value*);
 
 bool GMQCC_WARN ir_block_create_return(ir_block*, ir_value *opt_value);
 
@@ -209,9 +227,13 @@ void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 typedef struct ir_function_s
 {
     char *name;
-    int   retype;
+    int   outtype;
     MEM_VECTOR_MAKE(int, params);
     MEM_VECTOR_MAKE(ir_block*, blocks);
+
+    int builtin;
+
+    ir_value *value;
 
     /* values generated from operations
      * which might get optimized away, so anything
@@ -235,7 +257,7 @@ typedef struct ir_function_s
     struct ir_builder_s *owner;
 } ir_function;
 
-ir_function* ir_function_new(struct ir_builder_s *owner);
+ir_function* ir_function_new(struct ir_builder_s *owner, int returntype);
 void         ir_function_delete(ir_function*);
 
 bool GMQCC_WARN ir_function_collect_value(ir_function*, ir_value *value);
@@ -245,7 +267,7 @@ MEM_VECTOR_PROTO(ir_function, int, params);
 MEM_VECTOR_PROTO(ir_function, ir_block*, blocks);
 
 ir_value* ir_function_get_local(ir_function *self, const char *name);
-ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype);
+ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param);
 
 bool GMQCC_WARN ir_function_finalize(ir_function*);
 /*
@@ -275,7 +297,7 @@ MEM_VECTOR_PROTO(ir_builder, ir_function*, functions);
 MEM_VECTOR_PROTO(ir_builder, ir_value*, globals);
 
 ir_function* ir_builder_get_function(ir_builder*, const char *fun);
-ir_function* ir_builder_create_function(ir_builder*, const char *name);
+ir_function* ir_builder_create_function(ir_builder*, const char *name, int outtype);
 
 ir_value* ir_builder_get_global(ir_builder*, const char *fun);
 ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);

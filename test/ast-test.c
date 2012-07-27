@@ -27,28 +27,45 @@ int main()
     DEFVAR(f0);
     DEFVAR(f1);
     DEFVAR(f5);
+    DEFVAR(sHello);
+    DEFVAR(print);
+
+    /* opts_debug = true; */
+
+BUILTIN(print, TYPE_VOID, -1);
+PARAM(TYPE_STRING, text);
+ENDBUILTIN();
 
     TESTINIT();
 VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
 VAR(TYPE_FLOAT, f5);
+VAR(TYPE_STRING, sHello);
 MKCONSTFLOAT(f0, 0.0);
 MKCONSTFLOAT(f1, 1.0);
 MKCONSTFLOAT(f5, 5.0);
+MKCONSTSTRING(sHello, "Hello, World\n");
 
-FUNCTION(main);
+FUNCTION(foo, TYPE_VOID);
+ENDFUNCTION(foo);
 
-VAR(TYPE_FLOAT, vi);
-VAR(TYPE_FLOAT, vx);
+FUNCTION(main, TYPE_VOID);
 
-MKLOCAL(vi);
-MKLOCAL(vx);
+    VAR(TYPE_FLOAT, vi);
+    VAR(TYPE_FLOAT, vx);
 
-STATE(ASSIGN(STORE_F, vi, f0));
-WHILE(BIN(LT, vi, f5));
-STATE(ASSIGN(STORE_F, vx, BIN(MUL_F, vi, f5)));
-STATE(ASSIGN(STORE_F, vi, BIN(ADD_F, vi, f1)));
-ENDWHILE();
+    MKLOCAL(vi);
+    MKLOCAL(vx);
+
+    STATE(ASSIGN(STORE_F, vi, f0));
+    WHILE(BIN(LT, vi, f5));
+        STATE(ASSIGN(STORE_F, vx, BIN(MUL_F, vi, f5)));
+        STATE(ASSIGN(STORE_F, vi, BIN(ADD_F, vi, f1)));
+    ENDWHILE();
+
+    CALL(print)
+    CALLPARAM(sHello)
+    ENDCALL();
 
 ENDFUNCTION(main);
 
