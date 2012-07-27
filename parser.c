@@ -90,10 +90,16 @@ ast_value* parser_find_global(parser_t *parser, const char *name)
 ast_value* parser_find_local(parser_t *parser, const char *name, size_t upto)
 {
     size_t i;
+    ast_value *fun;
     for (i = parser->locals_count; i > upto;) {
         --i;
         if (!strcmp(parser->locals[i]->name, name))
             return parser->locals[i];
+    }
+    fun = parser->function->vtype;
+    for (i = 0; i < fun->params_count; ++i) {
+        if (!strcmp(fun->params[i]->name, name))
+            return fun->params[i];
     }
     return NULL;
 }
