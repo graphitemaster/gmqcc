@@ -192,6 +192,7 @@ typedef struct
 {
     size_t etype; /* 0 = expression, others are operators */
     int             paren;
+    size_t          off;
     ast_expression *out;
     ast_value      *value; /* need to know if we can assign */
     ast_block      *block; /* for commas and function calls */
@@ -248,9 +249,10 @@ static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     return e;
 }
 
-static sy_elem syparen(lex_ctx ctx, int p) {
+static sy_elem syparen(lex_ctx ctx, int p, size_t off) {
     sy_elem e;
     e.etype = 0;
+    e.off   = off;
     e.out   = NULL;
     e.value = NULL;
     e.block = NULL;
@@ -432,7 +434,67 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     return true;
 }
 
-static bool parser_close_paren(parser_t *parser, shunt *sy)
+static bool parser_close_call(parser_t *parser, shunt *sy)
+{
+    /* was a function call */
+    ast_expression *fun;
+    ast_call       *call;
+
+    size_t          fid;
+
+    sy->ops_count--;
+    fid = sy->ops[sy->ops_count].off;
+
+    /* out[fid] is the function
+     * everything above is parameters...
+     * 0 params = nothing
+     * 1 params = ast_expression
+     * more = ast_block
+     */
+
+    if (sy->out_count < 1 || sy->out_count <= fid) {
+        parseerror(parser, "internal error: function call needs function and parameter list...");
+        return false;
+    }
+
+    fun = sy->out[fid].out;
+
+    call = ast_call_new(sy->ops[sy->ops_count].ctx, fun);
+    if (!call) {
+        parseerror(parser, "out of memory");
+        return false;
+    }
+
+    printf("fid = %i, out_count = %i\n", (int)fid, (int)sy->out_count);
+
+    if (fid+1 == sy->out_count) {
+        /* no arguments */
+    } else if (fid+2 == sy->out_count) {
+        ast_block *params;
+        sy->out_count--;
+        params = sy->out[sy->out_count].block;
+        if (!params) {
+            /* 1 param */
+            if (!ast_call_params_add(call, sy->out[sy->out_count].out)) {
+                ast_delete(sy->out[sy->out_count].out);
+                parseerror(parser, "out of memory");
+                return false;
+            }
+        } else {
+            MEM_VECTOR_MOVE(params, exprs, call, params);
+            ast_delete(params);
+        }
+    } else {
+        parseerror(parser, "invalid function call");
+        return false;
+    }
+
+    /* overwrite fid, the function, with a call */
+    sy->out[fid] = syexp(call->expression.node.context, (ast_expression*)call);
+    return true;
+}
+
+static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
 {
     if (!sy->ops_count) {
         parseerror(parser, "unmatched closing paren");
@@ -444,39 +506,13 @@ static bool parser_close_paren(parser_t *parser, shunt *sy)
     }
     while (sy->ops_count) {
         if (sy->ops[sy->ops_count-1].paren == 'f') {
-            /* was a function call */
-            ast_block      *params;
-            ast_expression *fun;
-            ast_call       *call;
-            sy->ops_count--;
-            if (sy->out_count < 2) {
-                parseerror(parser, "internal error: function call needs function and parameter list...");
+            if (!parser_close_call(parser, sy))
                 return false;
-            }
-            sy->out_count -= 2;
-            fun    = sy->out[sy->out_count+0].out;
-            params = sy->out[sy->out_count+1].block;
-            if (!params) {
-                parseerror(parser, "function call needs a parameter-list as 2nd operand");
-                return false;
-            }
-            if (fun->expression.vtype != TYPE_FUNCTION) {
-                parseerror(parser, "not a function");
-                return false;
-            }
-            call = ast_call_new(sy->ops[sy->ops_count].ctx, fun);
-            if (!call) {
-                parseerror(parser, "out of memory");
-                return false;
-            }
-            MEM_VECTOR_MOVE(params, exprs, call, params);
-            ast_delete(params);
-            sy->out[sy->out_count++] = syexp(call->expression.node.context, (ast_expression*)call);
             break;
         }
         if (sy->ops[sy->ops_count-1].paren == 1) {
             sy->ops_count--;
-            break;
+            return !functions_only;
         }
         if (!parser_sy_pop(parser, sy))
             return false;
@@ -531,10 +567,15 @@ static ast_expression* parser_expression(parser_t *parser)
             }
             else if (parser->tok == '(') {
                 nextwant = false; /* not expecting an operator next */
-                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1))) {
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1, 0))) {
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+            }
+            else if (parser->tok == ')') {
+                /* allowed for function calls */
+                if (!parser_close_paren(parser, &sy, true))
+                    goto onerr;
             }
             else {
                 /* TODO: prefix operators */
@@ -546,18 +587,7 @@ static ast_expression* parser_expression(parser_t *parser)
         } else {
             if (parser->tok == '(') {
                 /* we expected an operator, this is the function-call operator */
-                ast_block *empty;
-                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f'))) {
-                    parseerror(parser, "out of memory");
-                    goto onerr;
-                }
-                empty = ast_block_new(parser_ctx(parser));
-                if (!empty) {
-                    parseerror(parser, "out of memory");
-                    goto onerr;
-                }
-                if (!shunt_out_add(&sy, syblock(parser_ctx(parser), empty))) {
-                    ast_block_delete(empty);
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
@@ -565,7 +595,7 @@ static ast_expression* parser_expression(parser_t *parser)
             else if (parser->tok == ')') {
                 /* we do expect an operator next */
                 /* closing an opening paren */
-                if (!parser_close_paren(parser, &sy))
+                if (!parser_close_paren(parser, &sy, false))
                     goto onerr;
             }
             else if (parser->tok != TOKEN_OPERATOR) {
