@@ -391,6 +391,27 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     return true;
 }
 
+static bool parser_close_paren(parser_t *parser, shunt *sy)
+{
+    if (!sy->ops_count) {
+        parseerror(parser, "unmatched closing paren");
+        return false;
+    }
+    if (sy->ops[sy->ops_count-1].paren == 1) {
+        parseerror(parser, "empty parenthesis expression");
+        return false;
+    }
+    while (sy->ops_count) {
+        if (sy->ops[sy->ops_count-1].paren == 1) {
+            sy->ops_count--;
+            break;
+        }
+        if (!parser_sy_pop(parser, sy))
+            return false;
+    }
+    return true;
+}
+
 static ast_expression* parser_expression(parser_t *parser)
 {
     ast_expression *expr = NULL;
@@ -461,22 +482,8 @@ static ast_expression* parser_expression(parser_t *parser)
             else if (parser->tok == ')') {
                 /* we do expect an operator next */
                 /* closing an opening paren */
-                if (!sy.ops_count) {
-                    parseerror(parser, "unmatched closing paren");
+                if (!parser_close_paren(parser, &sy))
                     goto onerr;
-                }
-                if (sy.ops[sy.ops_count-1].paren == 1) {
-                    parseerror(parser, "empty parenthesis expression");
-                    goto onerr;
-                }
-                while (sy.ops_count) {
-                    if (sy.ops[sy.ops_count-1].paren == 1) {
-                        sy.ops_count--;
-                        break;
-                    }
-                    if (!parser_sy_pop(parser, &sy))
-                        goto onerr;
-                }
             }
             else if (parser->tok != TOKEN_OPERATOR) {
                 parseerror(parser, "expected operator or end of statement");
