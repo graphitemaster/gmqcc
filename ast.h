@@ -396,13 +396,6 @@ struct ast_function_s
     char         labelbuf[64];
 
     MEM_VECTOR_MAKE(ast_block*, blocks);
-
-    /* contrary to the params in ast_value, these are the parameter variables
-     * which are to be used in expressions.
-     * The ast_value for the function contains only the parameter types used
-     * to generate ast_calls, and ast_call contains the parameter values
-     * used in that call.
-     */
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */
