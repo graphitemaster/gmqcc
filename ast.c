@@ -432,6 +432,19 @@ void ast_block_delete(ast_block *self)
     mem_d(self);
 }
 
+bool ast_block_set_type(ast_block *self, ast_expression *from)
+{
+    if (self->expression.next)
+        ast_delete(self->expression.next);
+    self->expression.vtype = from->expression.vtype;
+    if (from->expression.next) {
+        self->expression.next = ast_type_copy(self->expression.node.context, from->expression.next);
+        if (!self->expression.next)
+            return false;
+    }
+    return true;
+}
+
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
