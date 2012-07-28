@@ -370,3 +370,31 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
     *pos = '\0';
     return (ret = pos - *lineptr);
 }
+
+size_t util_strtocmd(const char *in, char *out, size_t outsz) {
+    size_t sz = 1;
+    for (; *in && sz < outsz; ++in, ++out, ++sz) {
+        if (*in == '-')
+            *out = '_';
+        else if (isalpha(*in) && !isupper(*in))
+            *out = *in + 'A' - 'a';
+        else
+            *out = *in;
+    }
+    *out = 0;
+    return sz-1;
+}
+
+size_t util_strtononcmd(const char *, char *, size_t) {
+    size_t sz = 1;
+    for (; *in && sz < outsz; ++in, ++out, ++sz) {
+        if (*in == '_')
+            *out = '-';
+        else if (isalpha(*in) && isupper(*in))
+            *out = *in + 'a' - 'A';
+        else
+            *out = *in;
+    }
+    *out = 0;
+    return sz-1;
+}

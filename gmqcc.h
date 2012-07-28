@@ -287,6 +287,9 @@ void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  int, int);
 
+size_t util_strtocmd    (const char *, char *, size_t);
+size_t util_strtononcmd (const char *, char *, size_t);
+
 uint32_t util_crc32(const char *, int, register const short);
 
 #ifdef NOTRACK
