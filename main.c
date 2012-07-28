@@ -308,6 +308,11 @@ static bool options_parse(int argc, char **argv) {
     return true;
 }
 
+bool parser_init();
+bool parser_compile(const char *filename);
+bool parser_finish(const char *output);
+void parser_cleanup();
+
 int main(int argc, char **argv) {
     size_t itr;
     app_name = argv[0];
@@ -326,6 +331,13 @@ int main(int argc, char **argv) {
     printf("optimization level = %i\n", (int)opts_O);
     printf("standard = %i\n", opts_standard);
 
+    if (!parser_init()) {
+        printf("failed to initialize parser\n");
+        goto cleanup;
+    }
+
+    util_debug("COM", "starting ...\n");
+
     if (items_elements) {
         printf("Mode: manual\n");
         printf("There are %lu items to compile:\n", (unsigned long)items_elements);
@@ -336,16 +348,22 @@ int main(int argc, char **argv) {
                      (items_data[itr].type == TYPE_ASM ? "asm" :
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
-        }
-    } else {
-        printf("Mode: progs.src\n");
-    }
 
-    util_debug("COM", "starting ...\n");
+            if (!parser_compile(items_data[itr].filename))
+                goto cleanup;
+        }
+
+        parser_finish(opts_output);
+    } else {
+        printf("Mode: progs.src - not implemented\n");
+    }
 
     /* stuff */
 
+cleanup:
     util_debug("COM", "cleaning ...\n");
+
+    parser_cleanup();
 
     util_meminfo();
     return 0;

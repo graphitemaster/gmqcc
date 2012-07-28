@@ -1051,12 +1051,10 @@ static bool parser_do(parser_t *parser)
     return true;
 }
 
-bool parser_compile(const char *filename, const char *datfile)
-{
-    size_t i;
-    parser_t *parser;
-    ir_builder *ir;
+static parser_t *parser;
 
+bool parser_init()
+{
     parser = (parser_t*)mem_a(sizeof(parser_t));
     if (!parser)
         return false;
@@ -1065,8 +1063,12 @@ bool parser_compile(const char *filename, const char *datfile)
 
     MEM_VECTOR_INIT(parser, globals);
     MEM_VECTOR_INIT(parser, locals);
-    parser->lex = lex_open(filename);
+    return true;
+}
 
+bool parser_compile(const char *filename)
+{
+    parser->lex = lex_open(filename);
     if (!parser->lex) {
         printf("failed to open file \"%s\"\n", filename);
         return false;
@@ -1093,54 +1095,12 @@ bool parser_compile(const char *filename, const char *datfile)
 
     lex_close(parser->lex);
 
-    if (!parser->errors)
-    {
-        ir = ir_builder_new("gmqcc_out");
-        if (!ir) {
-            printf("failed to allocate builder\n");
-            goto cleanup;
-        }
+    return !parser->errors;
+}
 
-        for (i = 0; i < parser->imm_float_count; ++i) {
-            if (!ast_global_codegen(parser->imm_float[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_float[i]->name);
-            }
-        }
-        for (i = 0; i < parser->imm_string_count; ++i) {
-            if (!ast_global_codegen(parser->imm_string[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_string[i]->name);
-            }
-        }
-        for (i = 0; i < parser->imm_vector_count; ++i) {
-            if (!ast_global_codegen(parser->imm_vector[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_vector[i]->name);
-            }
-        }
-        for (i = 0; i < parser->globals_count; ++i) {
-            if (!ast_global_codegen(parser->globals[i], ir)) {
-                printf("failed to generate global %s\n", parser->globals[i]->name);
-            }
-        }
-        for (i = 0; i < parser->functions_count; ++i) {
-            if (!ast_function_codegen(parser->functions[i], ir)) {
-                printf("failed to generate function %s\n", parser->functions[i]->name);
-            }
-            if (!ir_function_finalize(parser->functions[i]->ir_func)) {
-                printf("failed to finalize function %s\n", parser->functions[i]->name);
-            }
-        }
-
-        ir_builder_dump(ir, printf);
-
-        if (!ir_builder_generate(ir, datfile))
-            printf("*** failed to generate output file\n");
-
-        ir_builder_delete(ir);
-    } else {
-        printf("*** there were compile errors\n");
-    }
-
-cleanup:
+void parser_cleanup()
+{
+    size_t i;
     for (i = 0; i < parser->functions_count; ++i) {
         ast_delete(parser->functions[i]);
     }
@@ -1159,5 +1119,74 @@ cleanup:
     MEM_VECTOR_CLEAR(parser, globals);
 
     mem_d(parser);
-    return true;
+}
+
+bool parser_finish(const char *output)
+{
+    size_t i;
+    ir_builder *ir;
+
+    if (!parser->errors)
+    {
+        ir = ir_builder_new("gmqcc_out");
+        if (!ir) {
+            printf("failed to allocate builder\n");
+            return false;
+        }
+
+        for (i = 0; i < parser->imm_float_count; ++i) {
+            if (!ast_global_codegen(parser->imm_float[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_float[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->imm_string_count; ++i) {
+            if (!ast_global_codegen(parser->imm_string[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_string[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->imm_vector_count; ++i) {
+            if (!ast_global_codegen(parser->imm_vector[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_vector[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->globals_count; ++i) {
+            if (!ast_global_codegen(parser->globals[i], ir)) {
+                printf("failed to generate global %s\n", parser->globals[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->functions_count; ++i) {
+            if (!ast_function_codegen(parser->functions[i], ir)) {
+                printf("failed to generate function %s\n", parser->functions[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+            if (!ir_function_finalize(parser->functions[i]->ir_func)) {
+                printf("failed to finalize function %s\n", parser->functions[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+
+        ir_builder_dump(ir, printf);
+
+        if (!ir_builder_generate(ir, output)) {
+            printf("*** failed to generate output file\n");
+            ir_builder_delete(ir);
+            return false;
+        }
+
+        ir_builder_delete(ir);
+        return true;
+    }
+
+    printf("*** there were compile errors\n");
+    return false;
 }
