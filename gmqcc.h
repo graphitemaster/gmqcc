@@ -987,12 +987,14 @@ typedef struct {
 /*===================================================================*/
 /* list of -f flags, like -fdarkplaces-string-table-bug */
 enum {
+    OVERLAP_LOCALS,
     DP_STRING_TABLE_BUG,
     OMIT_NULLBYTES,
 
     NUM_F_FLAGS
 };
 static const opt_flag_def opt_flag_list[] = {
+    { "overlap-locals",              LONGBIT(OVERLAP_LOCALS)      },
     { "darkplaces-string-table-bug", LONGBIT(DP_STRING_TABLE_BUG) },
     { "omit-nullbytes",              LONGBIT(OMIT_NULLBYTES)      }
 };
