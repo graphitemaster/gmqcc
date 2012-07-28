@@ -1,0 +1,43 @@
+.\" Process with groff -man -Tascii file.3
+.TH GMQCC 1 2012-07-12 "" "gmqcc Manual"
+.SH NAME
+gmqcc \- A Quake C compiler which tries to reduce suckiness.
+.SH SYNOPSIS
+.B gmqcc
+[\fIOPTIONS\fR] [\fIfiles...\fR]
+.SH DESCRIPTION
+Traditionally, a QC compiler reads the file \fIprogs.src\fR which
+in its first line contains the output filename, and the rest is a
+list of QC source files that are to be compiled in order.
+\fBgmqcc\fR optionally takes options to specify the output and
+input files on the commandline, and also accepts assembly files.
+.SH OPTIONS
+\fBgmqcc\fR mostly tries to mimick gcc's commandline handling, though
+there are also traditional long-options available.
+.TP
+.B "-h, --help"
+Show a usage message and exit.
+.TP
+.BI "-o, --output=" filename
+Specify the output filename. Defaults to progs.dat. This will overwrite
+the output file listed in a \fIprogs.src\fR file in case such a file is used.
+.TP
+.BI "-O" n
+Specify the optimization level, similar to gcc.
+.TP
+.BI "-a" filename
+Append the specified files to the list of files to assemble using the QC-Assembler.
+.TP
+.BI "-s" filename
+Append the specified file which is to be interpreted as a \fIprogs.src\fR file.
+.TP
+.BI "-std=" standard
+Use the specified standard for parsing QC code. The following standards are available:
+.IR gmqcc , qcc , fteqcc
+.TP
+.B -fdarkplaces-string-table-bug
+Patch the output file to work around a string-table bug in certain darkplaces versions.
+.TP
+.B -fomit-nullbytes
+Changes the output format to be more efficient. Requires a patched engine. See the
+proposal for a better file structure in the gmqcc source tree.
