@@ -178,7 +178,13 @@ static bool options_parse(int argc, char **argv) {
 
                 /* handle all -fflags */
                 case 'f':
-                    if (!strncmp(argv[0]+2, "no-", 3)) {
+                    if (!strcmp(argv[0]+2, "help")) {
+                        printf("Possible flags:\n");
+                        for (itr = 0; itr < opt_flag_list_count; ++itr)
+                            printf(" -f%s\n", opt_flag_list[itr].name);
+                        exit(0);
+                    }
+                    else if (!strncmp(argv[0]+2, "no-", 3)) {
                         if (!options_setflag(argv[0]+5, false)) {
                             printf("unknown flag: %s\n", argv[0]+2);
                             return false;
@@ -190,7 +196,13 @@ static bool options_parse(int argc, char **argv) {
                     }
                     break;
                 case 'W':
-                    if (!strcmp(argv[0]+2, "all")) {
+                    if (!strcmp(argv[0]+2, "help")) {
+                        printf("Possible warnings:\n");
+                        for (itr = 0; itr < opt_warn_list_count; ++itr)
+                            printf(" -W%s\n", opt_warn_list[itr].name);
+                        exit(0);
+                    }
+                    else if (!strcmp(argv[0]+2, "all")) {
                         for (itr = 0; itr < sizeof(opt_warn)/sizeof(opt_warn[0]); ++itr)
                             opt_warn[itr] = 0xFFFFFFFFL;
                         break;
