@@ -68,36 +68,6 @@ static int usage() {
     return -1;
 }
 
-static void strtocmd(char *str)
-{
-    for(; *str; ++str) {
-        if (*str == '-') {
-            *str = '_';
-            continue;
-        }
-        if (isalpha(*str) && !isupper(*str)) {
-            *str += 'A' - 'a';
-            continue;
-        }
-    }
-}
-
-static void strtononcmd(char *buf, const char *str)
-{
-    for(; *str; ++buf, ++str) {
-        if (*str == '_') {
-            *buf = '-';
-            continue;
-        }
-        if (isalpha(*str) && isupper(*str)) {
-            *buf = *str + 'a' - 'A';
-            continue;
-        }
-        *buf = *str;
-    }
-    *buf = 0;
-}
-
 static bool options_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def *list, size_t listsize) {
     size_t i;
 
@@ -223,11 +193,11 @@ static bool options_parse(int argc, char **argv) {
 
                 /* handle all -fflags */
                 case 'f':
-                    strtocmd(argv[0]+2);
+                    util_strtocmd(argv[0]+2, argv[0]+2, strlen(argv[0]+2)+1);
                     if (!strcmp(argv[0]+2, "HELP")) {
                         printf("Possible flags:\n");
                         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
-                            strtononcmd(buffer, opts_flag_list[itr].name);
+                            util_strtononcmd(opts_flag_list[itr].name, buffer, sizeof(buffer));
                             printf(" -f%s\n", buffer);
                         }
                         exit(0);
@@ -244,11 +214,11 @@ static bool options_parse(int argc, char **argv) {
                     }
                     break;
                 case 'W':
-                    strtocmd(argv[0]+2);
+                    util_strtocmd(argv[0]+2, argv[0]+2, strlen(argv[0]+2)+1);
                     if (!strcmp(argv[0]+2, "HELP")) {
                         printf("Possible warnings:\n");
                         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
-                            strtononcmd(buffer, opts_warn_list[itr].name);
+                            util_strtononcmd(opts_warn_list[itr].name, buffer, sizeof(buffer));
                             printf(" -W%s\n", buffer);
                         }
                         exit(0);
