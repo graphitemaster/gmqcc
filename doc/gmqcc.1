@@ -35,6 +35,12 @@ Append the specified file which is to be interpreted as a \fIprogs.src\fR file.
 Use the specified standard for parsing QC code. The following standards are available:
 .IR gmqcc , qcc , fteqcc
 .TP
+.BI -W warning "\fR, " "" -Wno- warning
+Enable or disable a warning.
+.TP
+.B -Wall
+Enable all warnings. Overrides preceding -W parameters.
+.TP
 .B -fdarkplaces-string-table-bug
 Patch the output file to work around a string-table bug in certain darkplaces versions.
 .TP

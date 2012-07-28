@@ -23,6 +23,7 @@
 #include "gmqcc.h"
 
 uint32_t    opt_flags[1 + (NUM_F_FLAGS / 32)];
+uint32_t    opt_warn [1 + (NUM_W_FLAGS / 32)];
 
 uint32_t    opt_O        = 1;
 const char *opt_output   = "progs.dat";
@@ -44,12 +45,15 @@ static int usage() {
            "  -o, --output=file      output file, defaults to progs.dat\n"
            "  -a filename            add an asm file to be assembled\n"
            "  -s filename            add a progs.src file to be used\n");
-    printf("  -fflag                 enable a flag\n"
-           "  -fno-flag              disable a flag\n"
+    printf("  -f<flag>               enable a flag\n"
+           "  -fno-<flag>            disable a flag\n"
            "  -std standard          select one of the following standards\n"
            "       -std=qcc          original QuakeC\n"
            "       -std=fteqcc       fteqcc QuakeC\n"
            "       -std=gmqcc        this compiler (default)\n");
+    printf("  -W <warning>           enable a warning\n"
+           "  -W no-<warning>        disable a warning\n"
+           "  -Wall                  enable all warnings\n");
     printf("\n");
     printf("flags:\n"
            "  -fdarkplaces-string-table-bug\n"
@@ -60,27 +64,33 @@ static int usage() {
     return -1;
 }
 
-static bool options_setflag(const char *name, bool on) {
+static bool options_setflag_all(const char *name, bool on, uint32_t *flags, const opt_flag_def *list, size_t listsize) {
     size_t i;
 
-    for (i = 0; i < opt_flag_list_count; ++i) {
-        if (!strcmp(name, opt_flag_list[i].name)) {
-            longbit lb = opt_flag_list[i].bit;
+    for (i = 0; i < listsize; ++i) {
+        if (!strcmp(name, list[i].name)) {
+            longbit lb = list[i].bit;
 #if 0
             if (on)
-                opt_flags[lb.idx] |= (1<<(lb.bit));
+                flags[lb.idx] |= (1<<(lb.bit));
             else
-                opt_flags[lb.idx] &= ~(1<<(lb.bit));
+                flags[lb.idx] &= ~(1<<(lb.bit));
 #else
             if (on)
-                opt_flags[0] |= (1<<lb);
+                flags[0] |= (1<<lb);
             else
-                opt_flags[0] &= ~(1<<(lb));
+                flags[0] &= ~(1<<(lb));
 #endif
             return true;
         }
     }
     return false;
+}
+static bool options_setflag(const char *name, bool on) {
+    return options_setflag_all(name, on, opt_flags, opt_flag_list, opt_flag_list_count);
+}
+static bool options_setwarn(const char *name, bool on) {
+    return options_setflag_all(name, on, opt_warn, opt_warn_list, opt_warn_list_count);
 }
 
 static bool options_witharg(int *argc_, char ***argv_, char **out) {
@@ -135,6 +145,7 @@ static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, cha
 
 static bool options_parse(int argc, char **argv) {
     bool argend = false;
+    size_t itr;
     while (!argend && argc > 1) {
         char *argarg;
         argitem item;
@@ -175,6 +186,23 @@ static bool options_parse(int argc, char **argv) {
                     }
                     else if (!options_setflag(argv[0]+2, true)) {
                         printf("unknown flag: %s\n", argv[0]+2);
+                        return false;
+                    }
+                    break;
+                case 'W':
+                    if (!strcmp(argv[0]+2, "all")) {
+                        for (itr = 0; itr < sizeof(opt_warn)/sizeof(opt_warn[0]); ++itr)
+                            opt_warn[itr] = 0xFFFFFFFFL;
+                        break;
+                    }
+                    if (!strncmp(argv[0]+2, "no-", 3)) {
+                        if (!options_setwarn(argv[0]+5, false)) {
+                            printf("unknown warning: %s\n", argv[0]+2);
+                            return false;
+                        }
+                    }
+                    else if (!options_setwarn(argv[0]+2, true)) {
+                        printf("unknown warning: %s\n", argv[0]+2);
                         return false;
                     }
                     break;
@@ -257,6 +285,9 @@ int main(int argc, char **argv) {
 
     for (itr = 0; itr < opt_flag_list_count; ++itr) {
         printf("Flag %s = %i\n", opt_flag_list[itr].name, OPT_FLAG(itr));
+    }
+    for (itr = 0; itr < opt_warn_list_count; ++itr) {
+        printf("Warning %s = %i\n", opt_warn_list[itr].name, OPT_WARN(itr));
     }
     printf("output = %s\n", opt_output);
     printf("optimization level = %i\n", (int)opt_O);

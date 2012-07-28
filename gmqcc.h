@@ -994,9 +994,20 @@ enum {
 };
 static const opt_flag_def opt_flag_list[] = {
     { "darkplaces-string-table-bug", LONGBIT(DP_STRING_TABLE_BUG) },
-    { "omit-nullbytes",              LONGBIT(OMIT_NULLBYTES)      },
+    { "omit-nullbytes",              LONGBIT(OMIT_NULLBYTES)      }
 };
 static const size_t opt_flag_list_count = sizeof(opt_flag_list) / sizeof(opt_flag_list[0]);
+
+enum {
+    WARN_UNUSED_VARIABLE,
+
+    NUM_W_FLAGS
+};
+static const opt_flag_def opt_warn_list[] = {
+    /* only contains single flags, no groups like 'all' */
+    { "unused-variable",             LONGBIT(WARN_UNUSED_VARIABLE) }
+};
+static const size_t opt_warn_list_count = sizeof(opt_warn_list) / sizeof(opt_warn_list[0]);
 
 /* other options: */
 extern uint32_t    opt_O;      /* -Ox */
@@ -1012,5 +1023,7 @@ enum {
 /*===================================================================*/
 #define OPT_FLAG(i) (!! (opt_flags[(i)/32] & (1<< ((i)%32))))
 extern uint32_t opt_flags[1 + (NUM_F_FLAGS / 32)];
+#define OPT_WARN(i) (!! (opt_warn[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opt_warn[1 + (NUM_W_FLAGS / 32)];
 
 #endif
