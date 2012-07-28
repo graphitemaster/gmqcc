@@ -17,6 +17,8 @@ typedef struct {
     ast_function *function;
     MEM_VECTOR_MAKE(ast_value*, locals);
     size_t blocklocal;
+
+    size_t errors;
 } parser_t;
 
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, globals)
@@ -29,6 +31,8 @@ MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 void parseerror(parser_t *parser, const char *fmt, ...)
 {
 	va_list ap;
+
+	parser->errors++;
 
     if (parser)
 	    printf("error %s:%lu: ", parser->lex->tok->ctx.file, (unsigned long)parser->lex->tok->ctx.line);
@@ -506,8 +510,6 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     }
 
-    printf("fid = %i, out_count = %i\n", (int)fid, (int)sy->out_count);
-
     if (fid+1 == sy->out_count) {
         /* no arguments */
         paramcount = 0;
@@ -768,25 +770,39 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
     {
         if (!strcmp(parser_tokval(parser), "return"))
         {
-            ast_expression *exp;
-            ast_return *ret;
+            ast_expression *exp = NULL;
+            ast_return     *ret = NULL;
+            ast_value      *expected = parser->function->vtype;
 
             if (!parser_next(parser)) {
                 parseerror(parser, "expected return expression");
                 return false;
             }
 
-            exp = parser_expression(parser);
-            if (!exp)
-                return false;
-            ret = ast_return_new(exp->expression.node.context, exp);
-            if (!ret) {
-                ast_delete(exp);
-                return false;
-            }
-            if (!ast_block_exprs_add(block, (ast_expression*)ret)) {
-                ast_delete(ret);
-                return false;
+            if (parser->tok != ';') {
+                exp = parser_expression(parser);
+                if (!exp)
+                    return false;
+
+                if (exp->expression.vtype != expected->expression.next->expression.vtype) {
+                    parseerror(parser, "return with invalid expression");
+                }
+
+                ret = ast_return_new(exp->expression.node.context, exp);
+                if (!ret) {
+                    ast_delete(exp);
+                    return false;
+                }
+
+                if (!ast_block_exprs_add(block, (ast_expression*)ret)) {
+                    ast_delete(ret);
+                    return false;
+                }
+            } else if (!parser_next(parser)) {
+                parseerror(parser, "expected semicolon");
+                if (expected->expression.next->expression.vtype != TYPE_VOID) {
+                    parseerror(parser, "return without value");
+                }
             }
             return true;
         }
@@ -1098,51 +1114,68 @@ bool parser_compile(const char *filename, const char *datfile)
 
     lex_close(parser->lex);
 
-    ir = ir_builder_new("gmqcc_out");
-    if (!ir) {
-        printf("failed to allocate builder\n");
-        goto cleanup;
-    }
+    if (!parser->errors)
+    {
+        ir = ir_builder_new("gmqcc_out");
+        if (!ir) {
+            printf("failed to allocate builder\n");
+            goto cleanup;
+        }
 
-    for (i = 0; i < parser->imm_float_count; ++i) {
-        if (!ast_global_codegen(parser->imm_float[i], ir)) {
-            printf("failed to generate global %s\n", parser->imm_float[i]->name);
+        for (i = 0; i < parser->imm_float_count; ++i) {
+            if (!ast_global_codegen(parser->imm_float[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_float[i]->name);
+            }
         }
-    }
-    for (i = 0; i < parser->imm_string_count; ++i) {
-        if (!ast_global_codegen(parser->imm_string[i], ir)) {
-            printf("failed to generate global %s\n", parser->imm_string[i]->name);
+        for (i = 0; i < parser->imm_string_count; ++i) {
+            if (!ast_global_codegen(parser->imm_string[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_string[i]->name);
+            }
         }
-    }
-    for (i = 0; i < parser->imm_vector_count; ++i) {
-        if (!ast_global_codegen(parser->imm_vector[i], ir)) {
-            printf("failed to generate global %s\n", parser->imm_vector[i]->name);
+        for (i = 0; i < parser->imm_vector_count; ++i) {
+            if (!ast_global_codegen(parser->imm_vector[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_vector[i]->name);
+            }
         }
-    }
-    for (i = 0; i < parser->globals_count; ++i) {
-        if (!ast_global_codegen(parser->globals[i], ir)) {
-            printf("failed to generate global %s\n", parser->globals[i]->name);
+        for (i = 0; i < parser->globals_count; ++i) {
+            if (!ast_global_codegen(parser->globals[i], ir)) {
+                printf("failed to generate global %s\n", parser->globals[i]->name);
+            }
         }
-    }
-    for (i = 0; i < parser->functions_count; ++i) {
-        if (!ast_function_codegen(parser->functions[i], ir)) {
-            printf("failed to generate function %s\n", parser->functions[i]->name);
+        for (i = 0; i < parser->functions_count; ++i) {
+            if (!ast_function_codegen(parser->functions[i], ir)) {
+                printf("failed to generate function %s\n", parser->functions[i]->name);
+            }
+            if (!ir_function_finalize(parser->functions[i]->ir_func)) {
+                printf("failed to finalize function %s\n", parser->functions[i]->name);
+            }
         }
-        if (!ir_function_finalize(parser->functions[i]->ir_func)) {
-            printf("failed to finalize function %s\n", parser->functions[i]->name);
-        }
-    }
 
-    ir_builder_dump(ir, printf);
+        ir_builder_dump(ir, printf);
 
-    if (!ir_builder_generate(ir, datfile))
-        printf("*** failed to generate output file\n");
+        if (!ir_builder_generate(ir, datfile))
+            printf("*** failed to generate output file\n");
 
-    ir_builder_delete(ir);
+        ir_builder_delete(ir);
+    } else {
+        printf("*** there were compile errors\n");
+    }
 
 cleanup:
+    for (i = 0; i < parser->functions_count; ++i) {
+        ast_delete(parser->functions[i]);
+    }
+    for (i = 0; i < parser->imm_vector_count; ++i) {
+        ast_delete(parser->imm_vector[i]);
+    }
+    for (i = 0; i < parser->imm_string_count; ++i) {
+        ast_delete(parser->imm_string[i]);
+    }
+    for (i = 0; i < parser->imm_float_count; ++i) {
+        ast_delete(parser->imm_float[i]);
+    }
     for (i = 0; i < parser->globals_count; ++i) {
-        ast_value_delete(parser->globals[i]);
+        ast_delete(parser->globals[i]);
     }
     MEM_VECTOR_CLEAR(parser, globals);
 
