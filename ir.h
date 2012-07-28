@@ -286,6 +286,7 @@ typedef struct ir_builder_s
     char *name;
     MEM_VECTOR_MAKE(ir_function*, functions);
     MEM_VECTOR_MAKE(ir_value*, globals);
+    MEM_VECTOR_MAKE(ir_value*, fields);
 } ir_builder;
 
 ir_builder* ir_builder_new(const char *modulename);
@@ -295,12 +296,15 @@ bool ir_builder_set_name(ir_builder *self, const char *name);
 
 MEM_VECTOR_PROTO(ir_builder, ir_function*, functions);
 MEM_VECTOR_PROTO(ir_builder, ir_value*, globals);
+MEM_VECTOR_PROTO(ir_builder, ir_value*, fields);
 
 ir_function* ir_builder_get_function(ir_builder*, const char *fun);
 ir_function* ir_builder_create_function(ir_builder*, const char *name, int outtype);
 
 ir_value* ir_builder_get_global(ir_builder*, const char *fun);
 ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);
+ir_value* ir_builder_get_field(ir_builder*, const char *fun);
+ir_value* ir_builder_create_field(ir_builder*, const char *name, int vtype);
 
 bool ir_builder_generate(ir_builder *self, const char *filename);
 

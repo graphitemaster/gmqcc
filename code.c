@@ -63,6 +63,8 @@ VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_chars     );
 
+uint32_t                            code_entfields;
+
 void code_init() {
     prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
     prog_section_statement empty_statement = {0,{0},{0},{0}};
@@ -82,6 +84,8 @@ void code_init() {
     code_chars_add     ('\0');
     code_functions_add (empty_function);
     code_statements_add(empty_statement);
+
+    code_entfields = 0;
 }
 
 uint32_t code_genstring(const char *str)
@@ -152,6 +156,13 @@ void code_test() {
     code_statements_add(s3);
 }
 
+qcint code_alloc_field (size_t qcsize)
+{
+    qcint pos = (qcint)code_entfields;
+    code_entfields += qcsize;
+    return pos;
+}
+
 bool code_write(const char *filename) {
     prog_header  code_header;
     FILE        *fp           = NULL;
@@ -173,7 +184,7 @@ bool code_write(const char *filename) {
     code_header.strings.length    = code_chars_elements;
     code_header.version           = 6;
     code_header.crc16             = 0; /* TODO: */
-    code_header.entfield          = 0; /* TODO: */
+    code_header.entfield          = code_entfields;
 
     if (OPTS_FLAG(DARKPLACES_STRING_TABLE_BUG)) {
         util_debug("GEN", "Patching stringtable for -fdarkplaces-stringtablebug\n");

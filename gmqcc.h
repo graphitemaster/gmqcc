@@ -584,6 +584,9 @@ VECTOR_PROT(prog_section_function,  code_functions );
 VECTOR_PROT(int,                    code_globals   );
 VECTOR_PROT(char,                   code_chars     );
 
+typedef float   qcfloat;
+typedef int32_t qcint;
+
 /*
  * code_write -- writes out the compiled file
  * code_init  -- prepares the code file
@@ -592,6 +595,7 @@ bool     code_write       (const char *filename);
 void     code_init        ();
 uint32_t code_genstring   (const char *string);
 uint32_t code_cachedstring(const char *string);
+qcint    code_alloc_field (size_t qcsize);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/
@@ -866,9 +870,6 @@ typedef struct {
  * Since we may want to support that as well, let's redefine
  * float and int here.
  */
-typedef float   qcfloat;
-typedef int32_t qcint;
-
 typedef union {
     qcint   _int;
     qcint    string;
