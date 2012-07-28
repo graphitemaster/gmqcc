@@ -198,6 +198,9 @@ void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  int, int);
 
+size_t util_strtocmd    (const char *, char *, size_t);
+size_t util_strtononcmd (const char *, char *, size_t);
+
 uint32_t util_crc32(const char *, int, register const short);
 
 #ifdef NOTRACK
@@ -621,20 +624,6 @@ void asm_init (const char *, FILE **);
 void asm_close(FILE *);
 void asm_parse(FILE *);
 /*===================================================================*/
-/*============================= main.c ==============================*/
-/*===================================================================*/
-enum {
-    COMPILER_QCC,     /* circa  QuakeC */
-    COMPILER_FTEQCC,  /* fteqcc QuakeC */
-    COMPILER_QCCX,    /* qccx   QuakeC */
-    COMPILER_GMQCC    /* this   QuakeC */
-};
-extern bool opts_debug;
-extern bool opts_memchk;
-extern bool opts_darkplaces_stringtablebug;
-extern bool opts_omit_nullcode;
-extern int  opts_compiler;
-/*===================================================================*/
 /*============================= ast.c ===============================*/
 /*===================================================================*/
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)                   \
@@ -927,5 +916,76 @@ prog_section_def* prog_entfield  (qc_program *prog, qcint off);
 prog_section_def* prog_getdef    (qc_program *prog, qcint off);
 qcany*            prog_getedict  (qc_program *prog, qcint e);
 qcint             prog_tempstring(qc_program *prog, const char *_str);
+
+/*===================================================================*/
+/*======================= main.c commandline ========================*/
+/*===================================================================*/
+
+#if 0
+/* Helpers to allow for a whole lot of flags. Otherwise we'd limit
+ * to 32 or 64 -f options...
+ */
+typedef struct {
+    size_t  idx; /* index into an array of 32 bit words */
+    uint8_t bit; /* index _into_ the 32 bit word, thus just uint8 */
+} longbit;
+#define LONGBIT(bit) { ((bit)/32), ((bit)%32) }
+#else
+typedef uint32_t longbit;
+#define LONGBIT(bit) (bit)
+#endif
+
+/* Used to store the list of flags with names */
+typedef struct {
+    const char *name;
+    longbit    bit;
+} opts_flag_def;
+
+/*===================================================================*/
+/* list of -f flags, like -fdarkplaces-string-table-bug */
+enum {
+# define GMQCC_DEFINE_FLAG(X) X,
+#  include "flags.def"
+# undef GMQCC_DEFINE_FLAG
+    COUNT_FLAGS
+};
+static const opts_flag_def opts_flag_list[] = {
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+#  include "flags.def"
+# undef GMQCC_DEFINE_FLAG
+    { NULL, LONGBIT(0) }
+};
+
+enum {
+# define GMQCC_DEFINE_FLAG(X) X,
+#  include "warns.def"
+# undef GMQCC_DEFINE_FLAG
+    COUNT_WARNINGS
+};
+static const opts_flag_def opts_warn_list[] = {
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+#  include "warns.def"
+# undef GMQCC_DEFINE_FLAG
+    { NULL, LONGBIT(0) }
+};
+
+/* other options: */
+enum {
+    COMPILER_QCC,     /* circa  QuakeC */
+    COMPILER_FTEQCC,  /* fteqcc QuakeC */
+    COMPILER_QCCX,    /* qccx   QuakeC */
+    COMPILER_GMQCC    /* this   QuakeC */
+};
+extern uint32_t    opts_O;      /* -Ox */
+extern const char *opts_output; /* -o file */
+extern int         opts_standard;
+extern bool        opts_debug;
+extern bool        opts_memchk;
+
+/*===================================================================*/
+#define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opts_flags[1 + (COUNT_FLAGS / 32)];
+#define OPTS_WARN(i) (!! (opts_warn[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opts_warn[1 + (COUNT_WARNINGS / 32)];
 
 #endif
