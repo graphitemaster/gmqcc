@@ -218,11 +218,11 @@ struct ast_store_s
 {
     ast_expression_common expression;
     int             op;
-    ast_value      *dest; /* When we add pointers this might have to change to expression */
+    ast_expression *dest;
     ast_expression *source;
 };
 ast_store* ast_store_new(lex_ctx ctx, int op,
-                         ast_value *d, ast_expression *s);
+                         ast_expression *d, ast_expression *s);
 void ast_store_delete(ast_store*);
 
 bool ast_store_codegen(ast_store*, ast_function*, bool lvalue, ir_value**);
