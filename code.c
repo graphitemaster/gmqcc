@@ -69,7 +69,7 @@ void code_init() {
     int                    i               = 0;
 
     /* omit creation of null code */
-    if (opts_omit_nullcode)
+    if (OPTS_FLAG(OMIT_NULL_BYTES))
         return;
 
     /*
@@ -158,7 +158,7 @@ bool code_write(const char *filename) {
     size_t       it           = 2;
 
     /* see proposal.txt */
-    if (opts_omit_nullcode) {}
+    if (OPTS_FLAG(OMIT_NULL_BYTES)) {}
     code_header.statements.offset = sizeof(prog_header);
     code_header.statements.length = code_statements_elements;
     code_header.defs.offset       = code_header.statements.offset + (sizeof(prog_section_statement) * code_statements_elements);
@@ -175,7 +175,7 @@ bool code_write(const char *filename) {
     code_header.crc16             = 0; /* TODO: */
     code_header.entfield          = 0; /* TODO: */
 
-    if (opts_darkplaces_stringtablebug) {
+    if (OPTS_FLAG(DARKPLACES_STRING_TABLE_BUG)) {
         util_debug("GEN", "Patching stringtable for -fdarkplaces-stringtablebug\n");
 
         /* >= + P */

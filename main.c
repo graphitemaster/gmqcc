@@ -22,12 +22,14 @@
  */
 #include "gmqcc.h"
 
-uint32_t    opt_flags[1 + (COUNT_FLAGS / 32)];
-uint32_t    opt_warn [1 + (COUNT_WARNINGS / 32)];
+uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
+uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
 
-uint32_t    opt_O        = 1;
-const char *opt_output   = "progs.dat";
-int         opt_standard = STD_DEF;
+uint32_t    opts_O        = 1;
+const char *opts_output   = "progs.dat";
+int         opts_standard = COMPILER_GMQCC;
+bool        opts_debug    = false;
+bool        opts_memchk   = false;
 
 typedef struct { char *filename; int type; } argitem;
 VECTOR_MAKE(argitem, items);
@@ -42,7 +44,9 @@ static int usage() {
     printf("usage: %s [options] [files...]", app_name);
     printf("options:\n"
            "  -h, --help             show this help message\n"
-           "  -o, --output=file      output file, defaults to progs.dat\n"
+           "  -debug                 turns on compiler debug messages\n"
+           "  -memchk                turns on compiler memory leak check\n");
+    printf("  -o, --output=file      output file, defaults to progs.dat\n"
            "  -a filename            add an asm file to be assembled\n"
            "  -s filename            add a progs.src file to be used\n");
     printf("  -f<flag>               enable a flag\n"
@@ -94,7 +98,7 @@ static void strtononcmd(char *buf, const char *str)
     *buf = 0;
 }
 
-static bool options_setflag_all(const char *name, bool on, uint32_t *flags, const opt_flag_def *list, size_t listsize) {
+static bool options_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def *list, size_t listsize) {
     size_t i;
 
     for (i = 0; i < listsize; ++i) {
@@ -117,10 +121,10 @@ static bool options_setflag_all(const char *name, bool on, uint32_t *flags, cons
     return false;
 }
 static bool options_setflag(const char *name, bool on) {
-    return options_setflag_all(name, on, opt_flags, opt_flag_list, COUNT_FLAGS);
+    return options_setflag_all(name, on, opts_flags, opts_flag_list, COUNT_FLAGS);
 }
 static bool options_setwarn(const char *name, bool on) {
-    return options_setflag_all(name, on, opt_warn, opt_warn_list, COUNT_WARNINGS);
+    return options_setflag_all(name, on, opts_warn, opts_warn_list, COUNT_WARNINGS);
 }
 
 static bool options_witharg(int *argc_, char ***argv_, char **out) {
@@ -188,15 +192,25 @@ static bool options_parse(int argc, char **argv) {
     /* All gcc-type long options */
             if (options_long_gcc("std", &argc, &argv, &argarg)) {
                 if      (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default"))
-                    opt_standard = STD_DEF;
+                    opts_standard = COMPILER_GMQCC;
                 else if (!strcmp(argarg, "qcc"))
-                    opt_standard = STD_QCC;
+                    opts_standard = COMPILER_QCC;
                 else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc"))
-                    opt_standard = STD_FTE;
+                    opts_standard = COMPILER_FTEQCC;
+                else if (!strcmp(argarg, "qccx"))
+                    opts_standard = COMPILER_QCCX;
                 else {
                     printf("Unknown standard: %s\n", argarg);
                     return false;
                 }
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "debug")) {
+                opts_debug = true;
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "memchk")) {
+                opts_memchk = true;
                 continue;
             }
 
@@ -213,7 +227,7 @@ static bool options_parse(int argc, char **argv) {
                     if (!strcmp(argv[0]+2, "HELP")) {
                         printf("Possible flags:\n");
                         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
-                            strtononcmd(buffer, opt_flag_list[itr].name);
+                            strtononcmd(buffer, opts_flag_list[itr].name);
                             printf(" -f%s\n", buffer);
                         }
                         exit(0);
@@ -234,14 +248,14 @@ static bool options_parse(int argc, char **argv) {
                     if (!strcmp(argv[0]+2, "HELP")) {
                         printf("Possible warnings:\n");
                         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
-                            strtononcmd(buffer, opt_warn_list[itr].name);
+                            strtononcmd(buffer, opts_warn_list[itr].name);
                             printf(" -W%s\n", buffer);
                         }
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "all")) {
-                        for (itr = 0; itr < sizeof(opt_warn)/sizeof(opt_warn[0]); ++itr)
-                            opt_warn[itr] = 0xFFFFFFFFL;
+                        for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
+                            opts_warn[itr] = 0xFFFFFFFFL;
                         break;
                     }
                     if (!strncmp(argv[0]+2, "no-", 3)) {
@@ -261,7 +275,7 @@ static bool options_parse(int argc, char **argv) {
                         printf("option -O requires a numerical argument\n");
                         return false;
                     }
-                    opt_O = atoi(argarg);
+                    opts_O = atoi(argarg);
                     break;
 
                 case 'o':
@@ -269,7 +283,7 @@ static bool options_parse(int argc, char **argv) {
                         printf("option -o requires an argument: the output file name\n");
                         return false;
                     }
-                    opt_output = argarg;
+                    opts_output = argarg;
                     break;
 
                 case 'a':
@@ -298,7 +312,7 @@ static bool options_parse(int argc, char **argv) {
                     else {
             /* All long options with arguments */
                         if (options_long_witharg("output", &argc, &argv, &argarg))
-                            opt_output = argarg;
+                            opts_output = argarg;
                         else
                         {
                             printf("Unknown parameter: %s\n", argv[0]);
@@ -333,14 +347,14 @@ int main(int argc, char **argv) {
     }
 
     for (itr = 0; itr < COUNT_FLAGS; ++itr) {
-        printf("Flag %s = %i\n", opt_flag_list[itr].name, OPT_FLAG(itr));
+        printf("Flag %s = %i\n", opts_flag_list[itr].name, OPTS_FLAG(itr));
     }
     for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
-        printf("Warning %s = %i\n", opt_warn_list[itr].name, OPT_WARN(itr));
+        printf("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
     }
-    printf("output = %s\n", opt_output);
-    printf("optimization level = %i\n", (int)opt_O);
-    printf("standard = %i\n", opt_standard);
+    printf("output = %s\n", opts_output);
+    printf("optimization level = %i\n", (int)opts_O);
+    printf("standard = %i\n", opts_standard);
 
     if (items_elements) {
         printf("Mode: manual\n");

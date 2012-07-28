@@ -370,11 +370,3 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
     *pos = '\0';
     return (ret = pos - *lineptr);
 }
-
-/* TODO: opts.c? when it gets large enugh */
-/* global options */
-bool opts_debug                     = false;
-bool opts_memchk                    = false;
-bool opts_darkplaces_stringtablebug = false;
-bool opts_omit_nullcode             = false;
-int  opts_compiler                  = COMPILER_GMQCC;

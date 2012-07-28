@@ -671,20 +671,6 @@ void asm_init (const char *, FILE **);
 void asm_close(FILE *);
 void asm_parse(FILE *);
 /*===================================================================*/
-/*============================= main.c ==============================*/
-/*===================================================================*/
-enum {
-    COMPILER_QCC,     /* circa  QuakeC */
-    COMPILER_FTEQCC,  /* fteqcc QuakeC */
-    COMPILER_QCCX,    /* qccx   QuakeC */
-    COMPILER_GMQCC    /* this   QuakeC */
-};
-extern bool opts_debug;
-extern bool opts_memchk;
-extern bool opts_darkplaces_stringtablebug;
-extern bool opts_omit_nullcode;
-extern int  opts_compiler;
-/*===================================================================*/
 /*============================= ast.c ===============================*/
 /*===================================================================*/
 #define MEM_VECTOR_PROTO(Towner, Tmem, mem)                   \
@@ -982,7 +968,7 @@ typedef uint32_t longbit;
 typedef struct {
     const char *name;
     longbit    bit;
-} opt_flag_def;
+} opts_flag_def;
 
 /*===================================================================*/
 /* list of -f flags, like -fdarkplaces-string-table-bug */
@@ -992,7 +978,7 @@ enum {
 # undef GMQCC_DEFINE_FLAG
     COUNT_FLAGS
 };
-static const opt_flag_def opt_flag_list[] = {
+static const opts_flag_def opts_flag_list[] = {
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
 #  include "flags.def"
 # undef GMQCC_DEFINE_FLAG
@@ -1005,7 +991,7 @@ enum {
 # undef GMQCC_DEFINE_FLAG
     COUNT_WARNINGS
 };
-static const opt_flag_def opt_warn_list[] = {
+static const opts_flag_def opts_warn_list[] = {
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
 #  include "warns.def"
 # undef GMQCC_DEFINE_FLAG
@@ -1013,20 +999,22 @@ static const opt_flag_def opt_warn_list[] = {
 };
 
 /* other options: */
-extern uint32_t    opt_O;      /* -Ox */
-extern const char *opt_output; /* -o file */
-extern int         opt_standard;
-
 enum {
-    STD_DEF,
-    STD_QCC,
-    STD_FTE
+    COMPILER_QCC,     /* circa  QuakeC */
+    COMPILER_FTEQCC,  /* fteqcc QuakeC */
+    COMPILER_QCCX,    /* qccx   QuakeC */
+    COMPILER_GMQCC    /* this   QuakeC */
 };
+extern uint32_t    opts_O;      /* -Ox */
+extern const char *opts_output; /* -o file */
+extern int         opts_standard;
+extern bool        opts_debug;
+extern bool        opts_memchk;
 
 /*===================================================================*/
-#define OPT_FLAG(i) (!! (opt_flags[(i)/32] & (1<< ((i)%32))))
-extern uint32_t opt_flags[1 + (COUNT_FLAGS / 32)];
-#define OPT_WARN(i) (!! (opt_warn[(i)/32] & (1<< ((i)%32))))
-extern uint32_t opt_warn[1 + (COUNT_WARNINGS / 32)];
+#define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opts_flags[1 + (COUNT_FLAGS / 32)];
+#define OPTS_WARN(i) (!! (opts_warn[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opts_warn[1 + (COUNT_WARNINGS / 32)];
 
 #endif
