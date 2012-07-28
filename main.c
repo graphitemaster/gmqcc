@@ -51,8 +51,8 @@ static int usage() {
            "       -std=qcc          original QuakeC\n"
            "       -std=fteqcc       fteqcc QuakeC\n"
            "       -std=gmqcc        this compiler (default)\n");
-    printf("  -W <warning>           enable a warning\n"
-           "  -W no-<warning>        disable a warning\n"
+    printf("  -W<warning>            enable a warning\n"
+           "  -Wno-<warning>         disable a warning\n"
            "  -Wall                  enable all warnings\n");
     printf("\n");
     printf("flags:\n"
