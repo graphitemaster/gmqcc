@@ -1001,6 +1001,13 @@ static const size_t opt_flag_list_count = sizeof(opt_flag_list) / sizeof(opt_fla
 /* other options: */
 extern uint32_t    opt_O;      /* -Ox */
 extern const char *opt_output; /* -o file */
+extern int         opt_standard;
+
+enum {
+    STD_DEF,
+    STD_QCC,
+    STD_FTE
+};
 
 /*===================================================================*/
 #define OPT_FLAG(i) (!! (opt_flags[(i)/32] & (1<< ((i)%32))))

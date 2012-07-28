@@ -23,11 +23,40 @@
 #include "gmqcc.h"
 
 uint32_t    opt_flags[1 + (NUM_F_FLAGS / 32)];
-uint32_t    opt_O = 1;
-const char *opt_output = "progs.dat";
+
+uint32_t    opt_O        = 1;
+const char *opt_output   = "progs.dat";
+int         opt_standard = STD_DEF;
+
+typedef struct { char *filename; int type; } argitem;
+VECTOR_MAKE(argitem, items);
+
+#define TYPE_QC  0
+#define TYPE_ASM 1
+#define TYPE_SRC 2
+
+static const char *app_name;
 
 static int usage() {
-    printf("Usage:\n");
+    printf("usage: %s [options] [files...]", app_name);
+    printf("options:\n"
+           "  -h, --help             show this help message\n"
+           "  -o, --output=file      output file, defaults to progs.dat\n"
+           "  -a filename            add an asm file to be assembled\n"
+           "  -s filename            add a progs.src file to be used\n");
+    printf("  -fflag                 enable a flag\n"
+           "  -fno-flag              disable a flag\n"
+           "  -std standard          select one of the following standards\n"
+           "       -std=qcc          original QuakeC\n"
+           "       -std=fteqcc       fteqcc QuakeC\n"
+           "       -std=gmqcc        this compiler (default)\n");
+    printf("\n");
+    printf("flags:\n"
+           "  -fdarkplaces-string-table-bug\n"
+           "            patch the string table to work with some bugged darkplaces versions\n"
+           "  -fomit-nullbytes\n"
+           "            omits certain null-bytes for a smaller output - requires a patched engine\n"
+           );
     return -1;
 }
 
@@ -72,23 +101,23 @@ static bool options_witharg(int *argc_, char ***argv_, char **out) {
     return true;
 }
 
-static bool options_long_witharg(const char *optname, int *argc_, char ***argv_, char **out) {
+static bool options_long_witharg_all(const char *optname, int *argc_, char ***argv_, char **out, int ds, bool split) {
     int  argc   = *argc_;
     char **argv = *argv_;
 
     size_t len = strlen(optname);
 
-    if (strncmp(argv[0]+2, optname, len))
+    if (strncmp(argv[0]+ds, optname, len))
         return false;
 
     /* it's --optname, check how the parameter is supplied */
-    if (argv[0][2+len] == '=') {
+    if (argv[0][ds+len] == '=') {
         /* using --opt=param */
-        *out = argv[0]+2+len+1;
+        *out = argv[0]+ds+len+1;
         return true;
     }
 
-    if (argc < 2) /* no parameter was provided */
+    if (!split || argc < ds) /* no parameter was provided, or only single-arg form accepted */
         return false;
 
     /* using --opt param */
@@ -97,12 +126,38 @@ static bool options_long_witharg(const char *optname, int *argc_, char ***argv_,
     ++*argv_;
     return true;
 }
+static bool options_long_witharg(const char *optname, int *argc_, char ***argv_, char **out) {
+    return options_long_witharg_all(optname, argc_, argv_, out, 2, true);
+}
+static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, char **out) {
+    return options_long_witharg_all(optname, argc_, argv_, out, 1, false);
+}
 
 static bool options_parse(int argc, char **argv) {
     bool argend = false;
-    while (!argend && argc) {
+    while (!argend && argc > 1) {
         char *argarg;
+        argitem item;
+
+        ++argv;
+        --argc;
+
         if (argv[0][0] == '-') {
+    /* All gcc-type long options */
+            if (options_long_gcc("std", &argc, &argv, &argarg)) {
+                if      (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default"))
+                    opt_standard = STD_DEF;
+                else if (!strcmp(argarg, "qcc"))
+                    opt_standard = STD_QCC;
+                else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc"))
+                    opt_standard = STD_FTE;
+                else {
+                    printf("Unknown standard: %s\n", argarg);
+                    return false;
+                }
+                continue;
+            }
+
             switch (argv[0][1]) {
                 /* -h, show usage but exit with 0 */
                 case 'h':
@@ -140,6 +195,18 @@ static bool options_parse(int argc, char **argv) {
                     opt_output = argarg;
                     break;
 
+                case 'a':
+                case 's':
+                    item.type = argv[0][1] == 'a' ? TYPE_ASM : TYPE_SRC;
+                    if (!options_witharg(&argc, &argv, &argarg)) {
+                        printf("option -a requires a filename %s\n",
+                                (argv[0][1] == 'a' ? "containing QC-asm" : "containing a progs.src formatted list"));
+                        return false;
+                    }
+                    item.filename = argarg;
+                    items_add(item);
+                    break;
+
                 case '-':
                     if (!argv[0][2]) {
                         /* anything following -- is considered a non-option argument */
@@ -164,19 +231,26 @@ static bool options_parse(int argc, char **argv) {
                     break;
 
                 default:
-                    break;
+                    printf("Unknown parameter: %s\n", argv[0]);
+                    return false;
             }
         }
-        ++argv;
-        --argc;
+        else
+        {
+            /* it's a QC filename */
+            argitem item;
+            item.filename = argv[0];
+            item.type     = TYPE_QC;
+            items_add(item);
+        }
     }
     return true;
 }
 
 int main(int argc, char **argv) {
-    /* char     *app = &argv[0][0]; */
+    app_name = argv[0];
 
-    if (!options_parse(argc-1, argv+1)) {
+    if (!options_parse(argc, argv)) {
         return usage();
     }
 
