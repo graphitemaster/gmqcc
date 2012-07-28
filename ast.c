@@ -404,7 +404,7 @@ void ast_call_delete(ast_call *self)
 }
 
 ast_store* ast_store_new(lex_ctx ctx, int op,
-                         ast_value *dest, ast_expression *source)
+                         ast_expression *dest, ast_expression *source)
 {
     ast_instantiate(ast_store, ctx, ast_store_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_store_codegen);
