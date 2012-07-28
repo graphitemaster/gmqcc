@@ -42,7 +42,7 @@ do {                                             \
 } while(0)
 
 #define ASSIGN(op, a, b) \
-(ast_expression*)ast_store_new(ctx, INSTR_##op, (a), (ast_expression*)(b))
+(ast_expression*)ast_store_new(ctx, INSTR_##op, (ast_expression*)(a), (ast_expression*)(b))
 
 #define BIN(op, a, b) \
 (ast_expression*)ast_binary_new(ctx, INSTR_##op, (ast_expression*)(a), (ast_expression*)(b))
