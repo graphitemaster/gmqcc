@@ -238,7 +238,6 @@ typedef struct
     int             paren;
     size_t          off;
     ast_expression *out;
-    ast_value      *value; /* need to know if we can assign */
     ast_block      *block; /* for commas and function calls */
     lex_ctx ctx;
 } sy_elem;
@@ -254,17 +253,6 @@ static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     sy_elem e;
     e.etype = 0;
     e.out   = v;
-    e.value = NULL;
-    e.block = NULL;
-    e.ctx   = ctx;
-    e.paren = 0;
-    return e;
-}
-static sy_elem syval(lex_ctx ctx, ast_value *v) {
-    sy_elem e;
-    e.etype = 0;
-    e.out   = (ast_expression*)v;
-    e.value = v;
     e.block = NULL;
     e.ctx   = ctx;
     e.paren = 0;
@@ -275,7 +263,6 @@ static sy_elem syblock(lex_ctx ctx, ast_block *v) {
     sy_elem e;
     e.etype = 0;
     e.out   = (ast_expression*)v;
-    e.value = NULL;
     e.block = v;
     e.ctx   = ctx;
     e.paren = 0;
@@ -286,7 +273,6 @@ static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     sy_elem e;
     e.etype = 1 + (op - operators);
     e.out   = NULL;
-    e.value = NULL;
     e.block = NULL;
     e.ctx   = ctx;
     e.paren = 0;
@@ -298,7 +284,6 @@ static sy_elem syparen(lex_ctx ctx, int p, size_t off) {
     e.etype = 0;
     e.off   = off;
     e.out   = NULL;
-    e.value = NULL;
     e.block = NULL;
     e.ctx   = ctx;
     e.paren = p;
@@ -311,7 +296,6 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     lex_ctx ctx;
     ast_expression *out = NULL;
     ast_expression *exprs[3];
-    ast_value      *vars[3];
     ast_block      *blocks[3];
     size_t i;
 
@@ -338,7 +322,6 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     sy->out_count -= op->operands;
     for (i = 0; i < op->operands; ++i) {
         exprs[i]  = sy->out[sy->out_count+i].out;
-        vars[i]   = sy->out[sy->out_count+i].value;
         blocks[i] = sy->out[sy->out_count+i].block;
     }
 
@@ -459,13 +442,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
 
         case opid1('='):
-            if (!vars[0]) {
-                parseerror(parser, "Cannot assign to non-variable");
-                return false;
-            }
             out = (ast_expression*)ast_store_new(ctx,
-                                                 type_store_instr[vars[0]->expression.vtype],
-                                                 vars[0], exprs[1]);
+                                                 type_store_instr[exprs[0]->expression.vtype],
+                                                 exprs[0], exprs[1]);
             break;
     }
 
@@ -604,7 +583,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     goto onerr;
                 }
-                if (!shunt_out_add(&sy, syval(parser_ctx(parser), var))) {
+                if (!shunt_out_add(&sy, syexp(parser_ctx(parser), (ast_expression*)var))) {
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
