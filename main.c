@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 
     if (items_elements) {
         printf("Mode: manual\n");
-        printf("There are %i items to compile:\n", items_elements);
+        printf("There are %lu items to compile:\n", (unsigned long)items_elements);
         for (itr = 0; itr < items_elements; ++itr) {
             printf("  item: %s (%s)\n",
                    items_data[itr].filename,
