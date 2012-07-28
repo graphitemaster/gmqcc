@@ -385,7 +385,7 @@ size_t util_strtocmd(const char *in, char *out, size_t outsz) {
     return sz-1;
 }
 
-size_t util_strtononcmd(const char *, char *, size_t) {
+size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
     size_t sz = 1;
     for (; *in && sz < outsz; ++in, ++out, ++sz) {
         if (*in == '_')
