@@ -960,4 +960,50 @@ prog_section_def* prog_getdef    (qc_program *prog, qcint off);
 qcany*            prog_getedict  (qc_program *prog, qcint e);
 qcint             prog_tempstring(qc_program *prog, const char *_str);
 
+/*===================================================================*/
+/*======================= main.c commandline ========================*/
+/*===================================================================*/
+
+#if 0
+/* Helpers to allow for a whole lot of flags. Otherwise we'd limit
+ * to 32 or 64 -f options...
+ */
+typedef struct {
+    size_t  idx; /* index into an array of 32 bit words */
+    uint8_t bit; /* index _into_ the 32 bit word, thus just uint8 */
+} longbit;
+#define LONGBIT(bit) { ((bit)/32), ((bit)%32) }
+#else
+typedef uint32_t longbit;
+#define LONGBIT(bit) (bit)
+#endif
+
+/* Used to store the list of flags with names */
+typedef struct {
+    const char *name;
+    longbit    bit;
+} opt_flag_def;
+
+/*===================================================================*/
+/* list of -f flags, like -fdarkplaces-string-table-bug */
+enum {
+    DP_STRING_TABLE_BUG,
+    OMIT_NULLBYTES,
+
+    NUM_F_FLAGS
+};
+static const opt_flag_def opt_flag_list[] = {
+    { "darkplaces-string-table-bug", LONGBIT(DP_STRING_TABLE_BUG) },
+    { "omit-nullbytes",              LONGBIT(OMIT_NULLBYTES)      },
+};
+static const size_t opt_flag_list_count = sizeof(opt_flag_list) / sizeof(opt_flag_list[0]);
+
+/* other options: */
+extern uint32_t    opt_O;      /* -Ox */
+extern const char *opt_output; /* -o file */
+
+/*===================================================================*/
+#define OPT_FLAG(i) (!! (opt_flags[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opt_flags[1 + (NUM_F_FLAGS / 32)];
+
 #endif
