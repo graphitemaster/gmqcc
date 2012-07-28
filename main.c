@@ -248,10 +248,33 @@ static bool options_parse(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+    size_t itr;
     app_name = argv[0];
 
     if (!options_parse(argc, argv)) {
         return usage();
+    }
+
+    for (itr = 0; itr < opt_flag_list_count; ++itr) {
+        printf("Flag %s = %i\n", opt_flag_list[itr].name, OPT_FLAG(itr));
+    }
+    printf("output = %s\n", opt_output);
+    printf("optimization level = %i\n", (int)opt_O);
+    printf("standard = %i\n", opt_standard);
+
+    if (items_elements) {
+        printf("Mode: manual\n");
+        printf("There are %i items to compile:\n", items_elements);
+        for (itr = 0; itr < items_elements; ++itr) {
+            printf("  item: %s (%s)\n",
+                   items_data[itr].filename,
+                   ( (items_data[itr].type == TYPE_QC ? "qc" :
+                     (items_data[itr].type == TYPE_ASM ? "asm" :
+                     (items_data[itr].type == TYPE_SRC ? "progs.src" :
+                     ("unknown"))))));
+        }
+    } else {
+        printf("Mode: progs.src\n");
     }
 
     util_debug("COM", "starting ...\n");
