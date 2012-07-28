@@ -1270,6 +1270,8 @@ on_error:
 
 ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_value *ent, ir_value *field)
 {
+    ir_value *v;
+
     /* Support for various pointer types todo if so desired */
     if (ent->vtype != TYPE_ENTITY)
         return NULL;
@@ -1277,7 +1279,9 @@ ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_val
     if (field->vtype != TYPE_FIELD)
         return NULL;
 
-    return ir_block_create_general_instr(self, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
+    v = ir_block_create_general_instr(self, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
+    v->fieldtype = field->fieldtype;
+    return v;
 }
 
 ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_value *ent, ir_value *field, int outype)
