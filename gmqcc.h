@@ -987,29 +987,30 @@ typedef struct {
 /*===================================================================*/
 /* list of -f flags, like -fdarkplaces-string-table-bug */
 enum {
-    OVERLAP_LOCALS,
-    DP_STRING_TABLE_BUG,
-    OMIT_NULLBYTES,
-
-    NUM_F_FLAGS
+# define GMQCC_DEFINE_FLAG(X) X,
+#  include "flags.def"
+# undef GMQCC_DEFINE_FLAG
+    COUNT_FLAGS
 };
 static const opt_flag_def opt_flag_list[] = {
-    { "overlap-locals",              LONGBIT(OVERLAP_LOCALS)      },
-    { "darkplaces-string-table-bug", LONGBIT(DP_STRING_TABLE_BUG) },
-    { "omit-nullbytes",              LONGBIT(OMIT_NULLBYTES)      }
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+#  include "flags.def"
+# undef GMQCC_DEFINE_FLAG
+    { NULL, LONGBIT(0) }
 };
-static const size_t opt_flag_list_count = sizeof(opt_flag_list) / sizeof(opt_flag_list[0]);
 
 enum {
-    WARN_UNUSED_VARIABLE,
-
-    NUM_W_FLAGS
+# define GMQCC_DEFINE_FLAG(X) X,
+#  include "warns.def"
+# undef GMQCC_DEFINE_FLAG
+    COUNT_WARNINGS
 };
 static const opt_flag_def opt_warn_list[] = {
-    /* only contains single flags, no groups like 'all' */
-    { "unused-variable",             LONGBIT(WARN_UNUSED_VARIABLE) }
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+#  include "warns.def"
+# undef GMQCC_DEFINE_FLAG
+    { NULL, LONGBIT(0) }
 };
-static const size_t opt_warn_list_count = sizeof(opt_warn_list) / sizeof(opt_warn_list[0]);
 
 /* other options: */
 extern uint32_t    opt_O;      /* -Ox */
@@ -1024,8 +1025,8 @@ enum {
 
 /*===================================================================*/
 #define OPT_FLAG(i) (!! (opt_flags[(i)/32] & (1<< ((i)%32))))
-extern uint32_t opt_flags[1 + (NUM_F_FLAGS / 32)];
+extern uint32_t opt_flags[1 + (COUNT_FLAGS / 32)];
 #define OPT_WARN(i) (!! (opt_warn[(i)/32] & (1<< ((i)%32))))
-extern uint32_t opt_warn[1 + (NUM_W_FLAGS / 32)];
+extern uint32_t opt_warn[1 + (COUNT_WARNINGS / 32)];
 
 #endif

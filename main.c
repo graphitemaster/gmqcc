@@ -22,8 +22,8 @@
  */
 #include "gmqcc.h"
 
-uint32_t    opt_flags[1 + (NUM_F_FLAGS / 32)];
-uint32_t    opt_warn [1 + (NUM_W_FLAGS / 32)];
+uint32_t    opt_flags[1 + (COUNT_FLAGS / 32)];
+uint32_t    opt_warn [1 + (COUNT_WARNINGS / 32)];
 
 uint32_t    opt_O        = 1;
 const char *opt_output   = "progs.dat";
@@ -64,6 +64,36 @@ static int usage() {
     return -1;
 }
 
+static void strtocmd(char *str)
+{
+    for(; *str; ++str) {
+        if (*str == '-') {
+            *str = '_';
+            continue;
+        }
+        if (isalpha(*str) && !isupper(*str)) {
+            *str += 'A' - 'a';
+            continue;
+        }
+    }
+}
+
+static void strtononcmd(char *buf, const char *str)
+{
+    for(; *str; ++buf, ++str) {
+        if (*str == '_') {
+            *buf = '-';
+            continue;
+        }
+        if (isalpha(*str) && isupper(*str)) {
+            *buf = *str + 'a' - 'A';
+            continue;
+        }
+        *buf = *str;
+    }
+    *buf = 0;
+}
+
 static bool options_setflag_all(const char *name, bool on, uint32_t *flags, const opt_flag_def *list, size_t listsize) {
     size_t i;
 
@@ -87,10 +117,10 @@ static bool options_setflag_all(const char *name, bool on, uint32_t *flags, cons
     return false;
 }
 static bool options_setflag(const char *name, bool on) {
-    return options_setflag_all(name, on, opt_flags, opt_flag_list, opt_flag_list_count);
+    return options_setflag_all(name, on, opt_flags, opt_flag_list, COUNT_FLAGS);
 }
 static bool options_setwarn(const char *name, bool on) {
-    return options_setflag_all(name, on, opt_warn, opt_warn_list, opt_warn_list_count);
+    return options_setflag_all(name, on, opt_warn, opt_warn_list, COUNT_WARNINGS);
 }
 
 static bool options_witharg(int *argc_, char ***argv_, char **out) {
@@ -146,6 +176,7 @@ static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, cha
 static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
+    char buffer[1024];
     while (!argend && argc > 1) {
         char *argarg;
         argitem item;
@@ -178,13 +209,16 @@ static bool options_parse(int argc, char **argv) {
 
                 /* handle all -fflags */
                 case 'f':
-                    if (!strcmp(argv[0]+2, "help")) {
+                    strtocmd(argv[0]+2);
+                    if (!strcmp(argv[0]+2, "HELP")) {
                         printf("Possible flags:\n");
-                        for (itr = 0; itr < opt_flag_list_count; ++itr)
-                            printf(" -f%s\n", opt_flag_list[itr].name);
+                        for (itr = 0; itr < COUNT_FLAGS; ++itr) {
+                            strtononcmd(buffer, opt_flag_list[itr].name);
+                            printf(" -f%s\n", buffer);
+                        }
                         exit(0);
                     }
-                    else if (!strncmp(argv[0]+2, "no-", 3)) {
+                    else if (!strncmp(argv[0]+2, "NO-", 3)) {
                         if (!options_setflag(argv[0]+5, false)) {
                             printf("unknown flag: %s\n", argv[0]+2);
                             return false;
@@ -196,10 +230,13 @@ static bool options_parse(int argc, char **argv) {
                     }
                     break;
                 case 'W':
-                    if (!strcmp(argv[0]+2, "help")) {
+                    strtocmd(argv[0]+2);
+                    if (!strcmp(argv[0]+2, "HELP")) {
                         printf("Possible warnings:\n");
-                        for (itr = 0; itr < opt_warn_list_count; ++itr)
-                            printf(" -W%s\n", opt_warn_list[itr].name);
+                        for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
+                            strtononcmd(buffer, opt_warn_list[itr].name);
+                            printf(" -W%s\n", buffer);
+                        }
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "all")) {
@@ -295,10 +332,10 @@ int main(int argc, char **argv) {
         return usage();
     }
 
-    for (itr = 0; itr < opt_flag_list_count; ++itr) {
+    for (itr = 0; itr < COUNT_FLAGS; ++itr) {
         printf("Flag %s = %i\n", opt_flag_list[itr].name, OPT_FLAG(itr));
     }
-    for (itr = 0; itr < opt_warn_list_count; ++itr) {
+    for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
         printf("Warning %s = %i\n", opt_warn_list[itr].name, OPT_WARN(itr));
     }
     printf("output = %s\n", opt_output);
