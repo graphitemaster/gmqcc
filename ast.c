@@ -32,7 +32,7 @@
     if (!self) {                                                    \
         return NULL;                                                \
     }                                                               \
-    ast_node_init((ast_node*)self, ctx);                            \
+    ast_node_init((ast_node*)self, ctx, TYPE_##T);                  \
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
 /* It must not be possible to get here. */
@@ -43,11 +43,12 @@ static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 }
 
 /* Initialize main ast node aprts */
-static void ast_node_init(ast_node *self, lex_ctx ctx)
+static void ast_node_init(ast_node *self, lex_ctx ctx, int nodetype)
 {
     self->node.context = ctx;
     self->node.destroy = &_ast_node_destroy;
     self->node.keep    = false;
+    self->node.nodetype = nodetype;
 }
 
 /* General expression initialization */
