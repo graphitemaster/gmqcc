@@ -342,7 +342,7 @@ uint32_t util_crc32(const char *, int, register const short);
         while (N##_add(*++elements) != -1 && len--);            \
         return N##_elements;                                    \
     }                                                           \
-    typedef char VECTOR_FILL(extra_semicolon_,__COUNTER__)
+    typedef char VECTOR_FILL(extra_semicolon_##N,__COUNTER__)
 #define VECTOR_PROT(T,N)                                        \
     extern T*     N##_data     ;                                \
     extern long   N##_elements ;                                \
