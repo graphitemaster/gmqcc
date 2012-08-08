@@ -308,6 +308,22 @@ static bool options_parse(int argc, char **argv) {
     return true;
 }
 
+static void options_setflag(uint32_t *flags, size_t idx, bool on)
+{
+    longbit lb = LONGBIT(idx);
+#if 0
+    if (on)
+        flags[lb.idx] |= (1<<(lb.bit));
+    else
+        flags[lb.idx] &= ~(1<<(lb.bit));
+#else
+    if (on)
+        flags[0] |= (1<<(lb));
+    else
+        flags[0] &= ~(1<<(lb));
+#endif
+}
+
 bool parser_init();
 bool parser_compile(const char *filename);
 bool parser_finish(const char *output);
@@ -316,6 +332,9 @@ void parser_cleanup();
 int main(int argc, char **argv) {
     size_t itr;
     app_name = argv[0];
+
+    /* default options / warn flags */
+    options_setflag(opts_warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
 
     if (!options_parse(argc, argv)) {
         return usage();

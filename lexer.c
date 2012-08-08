@@ -24,6 +24,25 @@ void lexerror(lex_file *lex, const char *fmt, ...)
 	printf("\n");
 }
 
+void lexwarn(lex_file *lex, int warn, const char *fmt, ...)
+{
+	va_list ap;
+
+	if (!OPTS_WARN(warn))
+	    return;
+
+	if (lex)
+		printf("warning %s:%lu: ", lex->name, (unsigned long)lex->sline);
+	else
+		printf("warning: ");
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+
+	printf("\n");
+}
+
 token* token_new()
 {
 	token *tok = (token*)mem_a(sizeof(token));
@@ -333,10 +352,6 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 		if (ch == quote)
 			return TOKEN_STRINGCONST;
 
-		if (!lex_tokench(lex, ch))
-			return (lex->tok->ttype = TOKEN_FATAL);
-
-		/* as lexer we only care about \" to not terminate the string prematurely */
 		if (ch == '\\') {
 			ch = lex_getch(lex);
 			if (ch == EOF) {
@@ -344,10 +359,28 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 				lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
 				return (lex->tok->ttype = TOKEN_ERROR);
 			}
-			/* so we just add the next character no matter what it actually is */
+
+            switch (ch) {
+            case '\\': break;
+            case 'a':  ch = '\a'; break;
+            case 'b':  ch = '\b'; break;
+            case 'r':  ch = '\r'; break;
+            case 'n':  ch = '\n'; break;
+            case 't':  ch = '\t'; break;
+            case 'f':  ch = '\f'; break;
+            case 'v':  ch = '\v'; break;
+            default:
+                lexwarn(lex, WARN_UNKNOWN_CONTROL_SEQUENCE, "unrecognized control sequence: \\%c", ch);
+			    /* so we just add the character plus backslash no matter what it actually is */
+			    if (!lex_tokench(lex, '\\'))
+				    return (lex->tok->ttype = TOKEN_FATAL);
+            }
+            /* add the character finally */
 			if (!lex_tokench(lex, ch))
 				return (lex->tok->ttype = TOKEN_FATAL);
 		}
+		else if (!lex_tokench(lex, ch))
+			return (lex->tok->ttype = TOKEN_FATAL);
 	}
 	lexerror(lex, "unexpected end of file within string constant");
 	lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
