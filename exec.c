@@ -458,6 +458,9 @@ cleanup:
  */
 
 #if defined(QCVM_EXECUTOR)
+bool        opts_debug    = false;
+bool        opts_memchk   = false;
+
 static int qc_print(qc_program *prog)
 {
     qcany *str = (qcany*)(prog->globals + OFS_PARM0);
