@@ -308,7 +308,7 @@ static bool options_parse(int argc, char **argv) {
     return true;
 }
 
-static void options_setflag(uint32_t *flags, size_t idx, bool on)
+static void options_set(uint32_t *flags, size_t idx, bool on)
 {
     longbit lb = LONGBIT(idx);
 #if 0
@@ -334,7 +334,7 @@ int main(int argc, char **argv) {
     app_name = argv[0];
 
     /* default options / warn flags */
-    options_setflag(opts_warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
+    options_set(opts_warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
