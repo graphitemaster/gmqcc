@@ -519,6 +519,11 @@ bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
  *IR Value
  */
 
+int32_t ir_value_code_addr(const ir_value *self)
+{
+    return self->code.globaladdr + self->code.addroffset;
+}
+
 ir_value* ir_value_var(const char *name, int storetype, int vtype)
 {
     ir_value *self;
@@ -541,6 +546,27 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     MEM_VECTOR_INIT(self, life);
     return self;
 }
+
+ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
+{
+    ir_value *m;
+    if (member >= 3)
+        return NULL;
+
+    if (self->members[member])
+        return self->members[member];
+
+    m = ir_value_var(self->name, self->store, TYPE_FLOAT);
+    if (!m)
+        return NULL;
+    m->context = self->context;
+
+    self->members[member] = m;
+    m->code.addroffset = member;
+
+    return m;
+}
+
 MEM_VEC_FUNCTIONS(ir_value, ir_life_entry_t, life)
 MEM_VEC_FUNCTIONS_ALL(ir_value, ir_instr*, reads)
 MEM_VEC_FUNCTIONS_ALL(ir_value, ir_instr*, writes)
@@ -560,12 +586,17 @@ ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int 
 
 void ir_value_delete(ir_value* self)
 {
+    size_t i;
     if (self->name)
         mem_d((void*)self->name);
     if (self->isconst)
     {
         if (self->vtype == TYPE_STRING)
             mem_d((void*)self->constval.vstring);
+    }
+    for (i = 0; i < 3; ++i) {
+        if (self->members[i])
+            ir_value_delete(self->members[i]);
     }
     MEM_VECTOR_CLEAR(self, reads);
     MEM_VECTOR_CLEAR(self, writes);
@@ -2178,7 +2209,7 @@ tailcall:
              * come first: eg. optimize IFs without ELSE...
              */
 
-            stmt.o1.u1 = instr->_ops[0]->code.globaladdr;
+            stmt.o1.u1 = ir_value_code_addr(instr->_ops[0]);
             stmt.o2.u1 = 0;
             stmt.o3.s1 = 0;
 
@@ -2257,7 +2288,7 @@ tailcall:
                 stmt.o3.u1 = 0;
 
                 stmt.opcode = type_store_instr[param->vtype];
-                stmt.o1.u1 = param->code.globaladdr;
+                stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
                 if (code_statements_add(stmt) < 0)
                     return false;
@@ -2265,7 +2296,7 @@ tailcall:
             stmt.opcode = INSTR_CALL0 + instr->params_count;
             if (stmt.opcode > INSTR_CALL8)
                 stmt.opcode = INSTR_CALL8;
-            stmt.o1.u1 = instr->_ops[1]->code.globaladdr;
+            stmt.o1.u1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.u1 = 0;
             stmt.o3.u1 = 0;
             if (code_statements_add(stmt) < 0)
@@ -2277,7 +2308,7 @@ tailcall:
                 /* not to be kept in OFS_RETURN */
                 stmt.opcode = type_store_instr[retvalue->vtype];
                 stmt.o1.u1 = OFS_RETURN;
-                stmt.o2.u1 = retvalue->code.globaladdr;
+                stmt.o2.u1 = ir_value_code_addr(retvalue);
                 stmt.o3.u1 = 0;
                 if (code_statements_add(stmt) < 0)
                     return false;
@@ -2297,13 +2328,13 @@ tailcall:
 
         /* This is the general order of operands */
         if (instr->_ops[0])
-            stmt.o3.u1 = instr->_ops[0]->code.globaladdr;
+            stmt.o3.u1 = ir_value_code_addr(instr->_ops[0]);
 
         if (instr->_ops[1])
-            stmt.o1.u1 = instr->_ops[1]->code.globaladdr;
+            stmt.o1.u1 = ir_value_code_addr(instr->_ops[1]);
 
         if (instr->_ops[2])
-            stmt.o2.u1 = instr->_ops[2]->code.globaladdr;
+            stmt.o2.u1 = ir_value_code_addr(instr->_ops[2]);
 
         if (stmt.opcode == INSTR_RETURN || stmt.opcode == INSTR_DONE)
         {

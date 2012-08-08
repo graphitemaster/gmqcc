@@ -286,6 +286,32 @@ void ast_entfield_delete(ast_entfield *self)
     mem_d(self);
 }
 
+ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field)
+{
+    ast_instantiate(ast_member, ctx, ast_member_delete);
+    if (field >= 3) {
+        mem_d(self);
+        return NULL;
+    }
+
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_member_codegen);
+
+    self->expression.vtype = TYPE_FLOAT;
+    self->expression.next  = NULL;
+
+    self->owner = owner;
+    self->field = field;
+
+    return self;
+}
+
+void ast_member_delete(ast_member *self)
+{
+    ast_unref(self->owner);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
 {
     ast_instantiate(ast_ifthen, ctx, ast_ifthen_delete);
@@ -909,6 +935,23 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 
     /* Hm that should be it... */
     return true;
+}
+
+bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+    ir_value *vec, *field;
+
+    cgen = self->owner->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->owner), func, true, &vec))
+        return false;
+
+    if (vec->vtype != TYPE_VECTOR)
+        return false;
+
+    *out = ir_value_vector_member(vec, self->field);
+
+    return (*out != NULL);
 }
 
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)
