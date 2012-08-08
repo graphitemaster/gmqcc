@@ -202,7 +202,7 @@ static bool options_parse(int argc, char **argv) {
                         }
                         exit(0);
                     }
-                    else if (!strncmp(argv[0]+2, "NO-", 3)) {
+                    else if (!strncmp(argv[0]+2, "NO_", 3)) {
                         if (!options_setflag(argv[0]+5, false)) {
                             printf("unknown flag: %s\n", argv[0]+2);
                             return false;
@@ -223,12 +223,12 @@ static bool options_parse(int argc, char **argv) {
                         }
                         exit(0);
                     }
-                    else if (!strcmp(argv[0]+2, "all")) {
+                    else if (!strcmp(argv[0]+2, "ALL")) {
                         for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
                             opts_warn[itr] = 0xFFFFFFFFL;
                         break;
                     }
-                    if (!strncmp(argv[0]+2, "no-", 3)) {
+                    if (!strncmp(argv[0]+2, "NO_", 3)) {
                         if (!options_setwarn(argv[0]+5, false)) {
                             printf("unknown warning: %s\n", argv[0]+2);
                             return false;
