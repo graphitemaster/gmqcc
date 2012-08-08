@@ -990,13 +990,13 @@ static const opts_flag_def opts_flag_list[] = {
 };
 
 enum {
-# define GMQCC_DEFINE_FLAG(X) X,
+# define GMQCC_DEFINE_FLAG(X) WARN_##X,
 #  include "warns.def"
 # undef GMQCC_DEFINE_FLAG
     COUNT_WARNINGS
 };
 static const opts_flag_def opts_warn_list[] = {
-# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
 #  include "warns.def"
 # undef GMQCC_DEFINE_FLAG
     { NULL, LONGBIT(0) }
