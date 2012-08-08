@@ -115,6 +115,7 @@ ir_builder* ir_builder_new(const char *modulename)
 
     MEM_VECTOR_INIT(self, functions);
     MEM_VECTOR_INIT(self, globals);
+    MEM_VECTOR_INIT(self, fields);
     self->name = NULL;
     if (!ir_builder_set_name(self, modulename)) {
         mem_d(self);
@@ -130,6 +131,7 @@ ir_builder* ir_builder_new(const char *modulename)
 }
 
 MEM_VEC_FUNCTIONS(ir_builder, ir_value*, globals)
+MEM_VEC_FUNCTIONS(ir_builder, ir_value*, fields)
 MEM_VEC_FUNCTIONS(ir_builder, ir_function*, functions)
 
 void ir_builder_delete(ir_builder* self)
@@ -143,7 +145,11 @@ void ir_builder_delete(ir_builder* self)
     for (i = 0; i != self->globals_count; ++i) {
         ir_value_delete(self->globals[i]);
     }
-    MEM_VECTOR_CLEAR(self, globals);
+    MEM_VECTOR_CLEAR(self, fields);
+    for (i = 0; i != self->fields_count; ++i) {
+        ir_value_delete(self->fields[i]);
+    }
+    MEM_VECTOR_CLEAR(self, fields);
     mem_d(self);
 }
 
@@ -218,6 +224,33 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
 
     ve = ir_value_var(name, store_global, vtype);
     if (!ir_builder_globals_add(self, ve)) {
+        ir_value_delete(ve);
+        return NULL;
+    }
+    return ve;
+}
+
+ir_value* ir_builder_get_field(ir_builder *self, const char *name)
+{
+    size_t i;
+    for (i = 0; i < self->fields_count; ++i) {
+        if (!strcmp(self->fields[i]->name, name))
+            return self->fields[i];
+    }
+    return NULL;
+}
+
+
+ir_value* ir_builder_create_field(ir_builder *self, const char *name, int vtype)
+{
+    ir_value *ve = ir_builder_get_field(self, name);
+    if (ve) {
+        return NULL;
+    }
+
+    ve = ir_value_var(name, store_global, TYPE_FIELD);
+    ve->fieldtype = vtype;
+    if (!ir_builder_fields_add(self, ve)) {
         ir_value_delete(ve);
         return NULL;
     }
@@ -1284,6 +1317,8 @@ on_error:
 
 ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_value *ent, ir_value *field)
 {
+    ir_value *v;
+
     /* Support for various pointer types todo if so desired */
     if (ent->vtype != TYPE_ENTITY)
         return NULL;
@@ -1291,7 +1326,9 @@ ir_value* ir_block_create_fieldaddress(ir_block *self, const char *label, ir_val
     if (field->vtype != TYPE_FIELD)
         return NULL;
 
-    return ir_block_create_general_instr(self, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
+    v = ir_block_create_general_instr(self, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
+    v->fieldtype = field->fieldtype;
+    return v;
 }
 
 ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_value *ent, ir_value *field, int outype)
@@ -2105,21 +2142,7 @@ static bool gen_global_field(ir_value *global)
     }
     else
     {
-        prog_section_field fld;
-
-        fld.name = global->code.name;
-        fld.offset = code_fields_elements;
-        fld.type = global->fieldtype;
-
-        if (fld.type == TYPE_VOID) {
-            printf("Field is missing a type: %s\n", global->name);
-            return false;
-        }
-
-        if (code_fields_add(fld) < 0)
-            return false;
-
-        global->code.globaladdr = code_globals_add(fld.offset);
+        global->code.globaladdr = code_globals_add(0);
     }
     if (global->code.globaladdr < 0)
         return false;
@@ -2553,11 +2576,49 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     }
 }
 
+static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
+{
+    prog_section_def def;
+    prog_section_field fld;
+
+    def.type   = field->vtype;
+    def.offset = code_globals_elements;
+    def.name   = field->code.name = code_genstring(field->name);
+
+    if (code_defs_add(def) < 0)
+        return false;
+
+    fld.name = def.name;
+    fld.offset = code_fields_elements;
+    fld.type = field->fieldtype;
+
+    if (fld.type == TYPE_VOID) {
+        printf("field is missing a type: %s - don't know its size\n", field->name);
+        return false;
+    }
+
+    if (code_fields_add(fld) < 0)
+        return false;
+
+    if (!code_globals_add(code_alloc_field(type_sizeof[field->fieldtype])))
+        return false;
+
+    field->code.globaladdr = code_globals_add(fld.offset);
+    return field->code.globaladdr >= 0;
+}
+
 bool ir_builder_generate(ir_builder *self, const char *filename)
 {
     size_t i;
 
     code_init();
+
+    for (i = 0; i < self->fields_count; ++i)
+    {
+        if (!ir_builder_gen_field(self, self->fields[i])) {
+            return false;
+        }
+    }
 
     for (i = 0; i < self->globals_count; ++i)
     {

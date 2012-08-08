@@ -12,6 +12,15 @@
 VECTOR_MAKE(ast_value*, globals);
 VECTOR_MAKE(ast_function*, functions);
 
+uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
+uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
+
+uint32_t    opts_O        = 1;
+const char *opts_output   = "progs.dat";
+int         opts_standard = COMPILER_GMQCC;
+bool        opts_debug    = false;
+bool        opts_memchk   = false;
+
 #include "ast-macros.h"
 
 int main()

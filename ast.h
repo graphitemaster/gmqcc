@@ -44,6 +44,25 @@ typedef struct ast_call_s       ast_call;
 typedef struct ast_unary_s      ast_unary;
 typedef struct ast_return_s     ast_return;
 
+enum {
+    TYPE_ast_node,
+    TYPE_ast_expression,
+    TYPE_ast_value,
+    TYPE_ast_function,
+    TYPE_ast_block,
+    TYPE_ast_binary,
+    TYPE_ast_store,
+    TYPE_ast_entfield,
+    TYPE_ast_ifthen,
+    TYPE_ast_ternary,
+    TYPE_ast_loop,
+    TYPE_ast_call,
+    TYPE_ast_unary,
+    TYPE_ast_return
+};
+
+#define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (t) )
+
 /* Node interface with common components
  */
 typedef void ast_node_delete(ast_node*);
@@ -52,6 +71,7 @@ typedef struct
     lex_ctx          context;
     /* I don't feel comfortable using keywords like 'delete' as names... */
     ast_node_delete *destroy;
+    int              nodetype;
     /* keep: if a node contains this node, 'keep'
      * prevents its dtor from destroying this node as well.
      */
