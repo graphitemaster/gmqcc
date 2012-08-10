@@ -5,27 +5,32 @@
 #include "lexer.h"
 
 typedef struct {
+    char *name;
+    ast_expression *var;
+} varentry_t;
+
+typedef struct {
     lex_file *lex;
     int      tok;
 
-    MEM_VECTOR_MAKE(ast_value*, globals);
+    MEM_VECTOR_MAKE(varentry_t, globals);
     MEM_VECTOR_MAKE(ast_function*, functions);
     MEM_VECTOR_MAKE(ast_value*, imm_float);
     MEM_VECTOR_MAKE(ast_value*, imm_string);
     MEM_VECTOR_MAKE(ast_value*, imm_vector);
 
     ast_function *function;
-    MEM_VECTOR_MAKE(ast_value*, locals);
+    MEM_VECTOR_MAKE(varentry_t, locals);
     size_t blocklocal;
 
     size_t errors;
 } parser_t;
 
-MEM_VEC_FUNCTIONS(parser_t, ast_value*, globals)
+MEM_VEC_FUNCTIONS(parser_t, varentry_t, globals)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_float)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_string)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_vector)
-MEM_VEC_FUNCTIONS(parser_t, ast_value*, locals)
+MEM_VEC_FUNCTIONS(parser_t, varentry_t, locals)
 MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
 void parseerror(parser_t *parser, const char *fmt, ...)
@@ -121,36 +126,36 @@ ast_value* parser_const_vector(parser_t *parser, vector v)
     return out;
 }
 
-ast_value* parser_find_global(parser_t *parser, const char *name)
+ast_expression* parser_find_global(parser_t *parser, const char *name)
 {
     size_t i;
     for (i = 0; i < parser->globals_count; ++i) {
-        if (!strcmp(parser->globals[i]->name, name))
-            return parser->globals[i];
+        if (!strcmp(parser->globals[i].name, name))
+            return parser->globals[i].var;
     }
     return NULL;
 }
 
-ast_value* parser_find_local(parser_t *parser, const char *name, size_t upto)
+ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upto)
 {
     size_t i;
     ast_value *fun;
     for (i = parser->locals_count; i > upto;) {
         --i;
-        if (!strcmp(parser->locals[i]->name, name))
-            return parser->locals[i];
+        if (!strcmp(parser->locals[i].name, name))
+            return parser->locals[i].var;
     }
     fun = parser->function->vtype;
     for (i = 0; i < fun->expression.params_count; ++i) {
         if (!strcmp(fun->expression.params[i]->name, name))
-            return fun->expression.params[i];
+            return (ast_expression*)(fun->expression.params[i]);
     }
     return NULL;
 }
 
-ast_value* parser_find_var(parser_t *parser, const char *name)
+ast_expression* parser_find_var(parser_t *parser, const char *name)
 {
-    ast_value *v;
+    ast_expression *v;
     v         = parser_find_local(parser, name, 0);
     if (!v) v = parser_find_global(parser, name);
     return v;
@@ -578,12 +583,12 @@ static ast_expression* parser_expression(parser_t *parser)
             if (parser->tok == TOKEN_IDENT)
             {
                 /* variable */
-                ast_value *var = parser_find_var(parser, parser_tokval(parser));
+                ast_expression *var = parser_find_var(parser, parser_tokval(parser));
                 if (!var) {
                     parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     goto onerr;
                 }
-                if (!shunt_out_add(&sy, syexp(parser_ctx(parser), (ast_expression*)var))) {
+                if (!shunt_out_add(&sy, syexp(parser_ctx(parser), var))) {
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
@@ -846,12 +851,19 @@ cleanup:
     return block;
 }
 
+static void parser_pop_local(parser_t *parser)
+{
+    parser->locals_count--;
+    mem_d(parser->locals[parser->locals_count].name);
+}
+
 static bool parser_variable(parser_t *parser, ast_block *localblock)
 {
     bool          isfunc = false;
     ast_function *func = NULL;
     lex_ctx       ctx;
     ast_value    *var;
+    varentry_t    varent;
 
     int basetype = parser_token(parser)->constval.t;
 
@@ -922,15 +934,51 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             var = fval;
         }
 
-        if ( (!localblock && !parser_t_globals_add(parser, var)) ||
-             ( localblock && !parser_t_locals_add(parser, var)) )
+        varent.name = util_strdup(var->name);
+        varent.var = (ast_expression*)var;
+        if (var->expression.vtype == TYPE_VECTOR)
         {
-            ast_value_delete(var);
-            return false;
+            size_t len = strlen(varent.name);
+            varentry_t vx, vy, vz;
+            vx.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 0);
+            vy.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 1);
+            vz.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 2);
+            vx.name = mem_a(len+3);
+            vy.name = mem_a(len+3);
+            vz.name = mem_a(len+3);
+            strcpy(vx.name, varent.name);
+            strcpy(vy.name, varent.name);
+            strcpy(vz.name, varent.name);
+            vx.name[len] = vy.name[len] = vz.name[len] = '_';
+            vx.name[len+1] = 'x';
+            vy.name[len+1] = 'y';
+            vz.name[len+1] = 'z';
+            vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
+
+            if (!localblock) {
+                (void)!parser_t_globals_add(parser, varent);
+                (void)!parser_t_globals_add(parser, vx);
+                (void)!parser_t_globals_add(parser, vy);
+                (void)!parser_t_globals_add(parser, vz);
+            } else {
+                (void)!parser_t_locals_add(parser, varent);
+                (void)!parser_t_locals_add(parser, vx);
+                (void)!parser_t_locals_add(parser, vy);
+                (void)!parser_t_locals_add(parser, vz);
+            }
+        }
+        else
+        {
+            if ( (!localblock && !parser_t_globals_add(parser, varent)) ||
+                 ( localblock && !parser_t_locals_add(parser, varent)) )
+            {
+                ast_value_delete(var);
+                return false;
+            }
         }
         if (localblock && !ast_block_locals_add(localblock, var))
         {
-            parser->locals_count--;
+            parser_pop_local(parser);
             ast_value_delete(var);
             return false;
         }
@@ -1114,7 +1162,8 @@ void parser_cleanup()
         ast_delete(parser->imm_float[i]);
     }
     for (i = 0; i < parser->globals_count; ++i) {
-        ast_delete(parser->globals[i]);
+        ast_delete(parser->globals[i].var);
+        mem_d(parser->globals[i].name);
     }
     MEM_VECTOR_CLEAR(parser, globals);
 
@@ -1156,8 +1205,10 @@ bool parser_finish(const char *output)
             }
         }
         for (i = 0; i < parser->globals_count; ++i) {
-            if (!ast_global_codegen(parser->globals[i], ir)) {
-                printf("failed to generate global %s\n", parser->globals[i]->name);
+            if (!ast_istype(parser->globals[i].var, ast_value))
+                continue;
+            if (!ast_global_codegen((ast_value*)(parser->globals[i].var), ir)) {
+                printf("failed to generate global %s\n", parser->globals[i].name);
                 ir_builder_delete(ir);
                 return false;
             }
