@@ -43,6 +43,7 @@ typedef struct ast_loop_s       ast_loop;
 typedef struct ast_call_s       ast_call;
 typedef struct ast_unary_s      ast_unary;
 typedef struct ast_return_s     ast_return;
+typedef struct ast_member_s     ast_member;
 
 enum {
     TYPE_ast_node,
@@ -58,7 +59,8 @@ enum {
     TYPE_ast_loop,
     TYPE_ast_call,
     TYPE_ast_unary,
-    TYPE_ast_return
+    TYPE_ast_return,
+    TYPE_ast_member
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (t) )
@@ -230,6 +232,22 @@ ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expressi
 void ast_entfield_delete(ast_entfield*);
 
 bool ast_entfield_codegen(ast_entfield*, ast_function*, bool lvalue, ir_value**);
+
+/* Member access:
+ *
+ * For now used for vectors. If we get structs or unions
+ * we can have them handled here as well.
+ */
+struct ast_member_s
+{
+    ast_expression_common expression;
+    ast_expression *owner;
+    unsigned int    field;
+};
+ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field);
+void ast_member_delete(ast_member*);
+
+bool ast_member_codegen(ast_member*, ast_function*, bool lvalue, ir_value**);
 
 /* Store
  *

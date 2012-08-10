@@ -64,11 +64,18 @@ typedef struct ir_value_s {
         int32_t name;
         /* filled by the local-allocator */
         int32_t local;
+        /* added for members */
+        int32_t addroffset;
     } code;
+
+    /* for acessing vectors */
+    struct ir_value_s *members[3];
 
     /* For the temp allocator */
     MEM_VECTOR_MAKE(ir_life_entry_t, life);
 } ir_value;
+
+int32_t ir_value_code_addr(const ir_value*);
 
 /* ir_value can be a variable, or created by an operation */
 ir_value* ir_value_var(const char *name, int st, int vtype);
@@ -78,6 +85,7 @@ ir_value* ir_value_var(const char *name, int st, int vtype);
 ir_value* ir_value_out(struct ir_function_s *owner, const char *name, int st, int vtype);
 void      ir_value_delete(ir_value*);
 void      ir_value_set_name(ir_value*, const char *name);
+ir_value* ir_value_vector_member(ir_value*, unsigned int member);
 
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads);
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes);
