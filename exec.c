@@ -584,8 +584,11 @@ bool        opts_memchk   = false;
 
 static int qc_print(qc_program *prog)
 {
-    qcany *str = (qcany*)(prog->globals + OFS_PARM0);
-    printf("%s", prog_getstring(prog, str->string));
+    size_t i;
+    for (i = 0; i < prog->argc; ++i) {
+        qcany *str = (qcany*)(prog->globals + OFS_PARM0 + 3*i);
+        printf("%s", prog_getstring(prog, str->string));
+    }
     return 0;
 }
 
@@ -656,6 +659,7 @@ int main(int argc, char **argv)
         if (!strcmp(name, "main"))
             fnmain = (qcint)i;
     }
+    printf("Entity field space: %i\n", (int)prog->entityfields);
     if (fnmain > 0)
     {
         prog_exec(prog, &prog->functions[fnmain], VMXF_TRACE, VM_JUMPS_DEFAULT);
