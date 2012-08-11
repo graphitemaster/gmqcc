@@ -549,6 +549,14 @@ bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
  *IR Value
  */
 
+void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
+{
+    self->code.globaladdr = gaddr;
+    if (self->members[0]) self->members[0]->code.globaladdr = gaddr;
+    if (self->members[1]) self->members[1]->code.globaladdr = gaddr;
+    if (self->members[2]) self->members[2]->code.globaladdr = gaddr;
+}
+
 int32_t ir_value_code_addr(const ir_value *self)
 {
     return self->code.globaladdr + self->code.addroffset;
@@ -2169,11 +2177,11 @@ static bool gen_global_field(ir_value *global)
         }
 
         /* copy the field's value */
-        global->code.globaladdr = code_globals_add(code_globals_data[fld->code.globaladdr]);
+        ir_value_code_setaddr(global, code_globals_add(code_globals_data[fld->code.globaladdr]));
     }
     else
     {
-        global->code.globaladdr = code_globals_add(0);
+        ir_value_code_setaddr(global, code_globals_add(0));
     }
     if (global->code.globaladdr < 0)
         return false;
@@ -2206,11 +2214,11 @@ static bool gen_global_pointer(ir_value *global)
             return false;
         }
 
-        global->code.globaladdr = code_globals_add(target->code.globaladdr);
+        ir_value_code_setaddr(global, code_globals_add(target->code.globaladdr));
     }
     else
     {
-        global->code.globaladdr = code_globals_add(0);
+        ir_value_code_setaddr(global, code_globals_add(0));
     }
     if (global->code.globaladdr < 0)
         return false;
@@ -2493,7 +2501,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     {
         /* generate code.globaladdr for ssa values */
         ir_value *v = irfun->values[i];
-        v->code.globaladdr = local_var_end + v->code.local;
+        ir_value_code_setaddr(v, local_var_end + v->code.local);
     }
     for (i = 0; i < irfun->locals_count; ++i) {
         /* fill the locals with zeros */
@@ -2542,9 +2550,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vfloat;
-            global->code.globaladdr = code_globals_add(*iptr);
+            ir_value_code_setaddr(global, code_globals_add(*iptr));
         } else
-            global->code.globaladdr = code_globals_add(0);
+            ir_value_code_setaddr(global, code_globals_add(0));
 
         return global->code.globaladdr >= 0;
     }
@@ -2553,9 +2561,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
         if (code_defs_add(def) < 0)
             return false;
         if (global->isconst)
-            global->code.globaladdr = code_globals_add(code_cachedstring(global->constval.vstring));
+            ir_value_code_setaddr(global, code_globals_add(code_cachedstring(global->constval.vstring)));
         else
-            global->code.globaladdr = code_globals_add(0);
+            ir_value_code_setaddr(global, code_globals_add(0));
         return global->code.globaladdr >= 0;
     }
     case TYPE_VECTOR:
@@ -2568,7 +2576,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vvec;
-            global->code.globaladdr = code_globals_add(iptr[0]);
+            ir_value_code_setaddr(global, code_globals_add(iptr[0]));
             if (global->code.globaladdr < 0)
                 return false;
             for (d = 1; d < type_sizeof[global->vtype]; ++d)
@@ -2577,7 +2585,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
                     return false;
             }
         } else {
-            global->code.globaladdr = code_globals_add(0);
+            ir_value_code_setaddr(global, code_globals_add(0));
             if (global->code.globaladdr < 0)
                 return false;
             for (d = 1; d < type_sizeof[global->vtype]; ++d)
@@ -2591,12 +2599,12 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     case TYPE_FUNCTION:
         if (code_defs_add(def) < 0)
             return false;
-        global->code.globaladdr = code_globals_elements;
+        ir_value_code_setaddr(global, code_globals_elements);
         code_globals_add(code_functions_elements);
         return gen_global_function(self, global);
     case TYPE_VARIANT:
         /* assume biggest type */
-            global->code.globaladdr = code_globals_add(0);
+            ir_value_code_setaddr(global, code_globals_add(0));
             for (i = 1; i < type_sizeof[TYPE_VARIANT]; ++i)
                 code_globals_add(0);
             return true;
@@ -2634,7 +2642,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     if (!code_globals_add(code_alloc_field(type_sizeof[field->fieldtype])))
         return false;
 
-    field->code.globaladdr = code_globals_add(fld.offset);
+    ir_value_code_setaddr(field, code_globals_add(fld.offset));
     return field->code.globaladdr >= 0;
 }
 

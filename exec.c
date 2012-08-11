@@ -255,7 +255,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
         vtype = def->type;
     }
     else
-        len = printf("[#%u] ", glob);
+        len = printf("[@%u] ", glob);
 
     switch (vtype) {
         case TYPE_VOID:
