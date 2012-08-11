@@ -10,6 +10,7 @@
 #define assert(x) do { if ( !(x) ) { printf("Assertion failed: %s\n", #x); abort(); } } while(0)
 
 VECTOR_MAKE(ast_value*, globals);
+VECTOR_MAKE(ast_value*, fields);
 VECTOR_MAKE(ast_function*, functions);
 
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
@@ -39,6 +40,8 @@ int main()
     DEFVAR(sHello);
     DEFVAR(print);
 
+    DEFVAR(mema);
+
     /* opts_debug = true; */
 
 BUILTIN(print, TYPE_VOID, -1);
@@ -50,6 +53,7 @@ VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
 VAR(TYPE_FLOAT, f5);
 VAR(TYPE_STRING, sHello);
+FIELD(TYPE_FLOAT, mema);
 MKCONSTFLOAT(f0, 0.0);
 MKCONSTFLOAT(f1, 1.0);
 MKCONSTFLOAT(f5, 5.0);
@@ -81,6 +85,12 @@ ENDFUNCTION(main);
     ir = ir_builder_new("ast_test");
     assert(ir);
 
+    /* gen fields */
+    for (i = 0; i < fields_elements; ++i) {
+        if (!ast_global_codegen(fields_data[i], ir)) {
+            assert(!"failed to generate field");
+        }
+    }
     /* gen globals */
     for (i = 0; i < globals_elements; ++i) {
         if (!ast_global_codegen(globals_data[i], ir)) {

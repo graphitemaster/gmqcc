@@ -21,6 +21,17 @@ name = ast_value_new(ctx, #varname, type)
 #define MKGLOBAL(name) \
 assert(globals_add(name) >= 0)
 
+#define FIELD(type, name) \
+name = ast_value_new(ctx, #name, TYPE_FIELD);                  \
+do {                                                           \
+    ast_value *field_##name = ast_value_new(ctx, #name, type); \
+    name->expression.next = (ast_expression*)field_##name;     \
+    MKFIELD(name);                                             \
+} while (0)
+
+#define MKFIELD(name) \
+assert(fields_add(name) >= 0)
+
 #define MKCONSTFLOAT(name, value)  \
 do {                               \
     name->isconst = true;          \
