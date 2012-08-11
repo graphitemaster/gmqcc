@@ -646,6 +646,15 @@ bool ir_value_set_vector(ir_value *self, vector v)
     return true;
 }
 
+bool ir_value_set_field(ir_value *self, ir_value *fld)
+{
+    if (self->vtype != TYPE_FIELD)
+        return false;
+    self->constval.vpointer = fld;
+    self->isconst = true;
+    return true;
+}
+
 bool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != TYPE_STRING)
