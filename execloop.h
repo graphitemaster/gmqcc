@@ -271,7 +271,7 @@
 					PRVM_ERROR ("%s Progs attempted to read an out of bounds edict number", PRVM_NAME);
 					goto cleanup;
 				}
-				if (OPB->_int < 0 || OPB->_int + 3 >= prog->entityfields)
+				if (OPB->_int < 0 || OPB->_int + 3 > prog->entityfields)
 				{
 					PRVM_ERROR("%s attempted to read an invalid field in an edict (%i)", PRVM_NAME, OPB->_int);
 					goto cleanup;
