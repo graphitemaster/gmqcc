@@ -70,6 +70,9 @@ do {                                             \
 #define ENTFIELD(a, b) \
 (ast_expression*)ast_entfield_new(ctx, (ast_expression*)(a), (ast_expression*)(b))
 
+#define VECMEM(vec, mem) \
+(ast_expression*)ast_member_new(ctx, (ast_expression*)(vec), (mem))
+
 #define CALL(what)                                             \
 do {                                                           \
     ast_call *call = ast_call_new(ctx, (ast_expression*)what); \

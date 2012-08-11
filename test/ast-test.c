@@ -131,6 +131,14 @@ FUNCTION(main, TYPE_VOID);
         CALLPARAM(sNL)
         ENDCALL();
     );
+    CALL(ftos)
+    CALLPARAM(ENTFIELD(pawn, VECMEM(memv, 2)))
+    ENDCALLWITH(output,
+        CALL(print)
+        CALLPARAM(output)
+        CALLPARAM(sNL)
+        ENDCALL();
+    );
 
 ENDFUNCTION(main);
 
