@@ -16,7 +16,7 @@
 #endif
 
 #if !defined(PRVM_ERROR)
-#   define PRVM_ERROR printf
+#   define PRVM_ERROR prog->vmerror++, printvmerr
 #endif
 
 #if !defined(PRVM_NAME)
@@ -357,6 +357,8 @@
 				}
 				else
 					st = prog->code + PROG_ENTERFUNCTION(newf);
+				if (prog->vmerror)
+				    goto cleanup;
 				break;
 
 			case INSTR_DONE:

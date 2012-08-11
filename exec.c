@@ -13,6 +13,7 @@ MEM_VEC_FUN_APPEND(qc_program,  char,                   strings)
 MEM_VEC_FUN_RESIZE(qc_program,  char,                   strings)
 MEM_VEC_FUNCTIONS(qc_program,   qcint,                  globals)
 MEM_VEC_FUNCTIONS(qc_program,   qcint,                  entitydata)
+MEM_VEC_FUNCTIONS(qc_program,   bool,                   entitypool)
 
 MEM_VEC_FUNCTIONS(qc_program,   qcint,         localstack)
 MEM_VEC_FUN_APPEND(qc_program,  qcint,         localstack)
@@ -34,10 +35,20 @@ static void loaderror(const char *fmt, ...)
     printf(": %s\n", strerror(err));
 }
 
+static void printvmerr(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    putchar('\n');
+}
+
 qc_program* prog_load(const char *filename)
 {
     qc_program *prog;
     prog_header header;
+    size_t      i;
     FILE *file;
 
     file = fopen(filename, "rb");
@@ -108,6 +119,18 @@ qc_program* prog_load(const char *filename)
     if (!qc_program_strings_resize(prog, prog->strings_count + 16*1024))
         goto error;
 
+    /* spawn the world entity */
+    if (!qc_program_entitypool_add(prog, true)) {
+        loaderror("failed to allocate world entity\n");
+        goto error;
+    }
+    for (i = 0; i < prog->entityfields; ++i) {
+        if (!qc_program_entitydata_add(prog, 0)) {
+            loaderror("failed to allocate world data\n");
+            goto error;
+        }
+    }
+
     return prog;
 
 error:
@@ -119,6 +142,7 @@ error:
     if (prog->strings)    mem_d(prog->strings);
     if (prog->globals)    mem_d(prog->globals);
     if (prog->entitydata) mem_d(prog->entitydata);
+    if (prog->entitypool) mem_d(prog->entitypool);
     mem_d(prog);
     return NULL;
 }
@@ -133,6 +157,7 @@ void prog_delete(qc_program *prog)
     MEM_VECTOR_CLEAR(prog, strings);
     MEM_VECTOR_CLEAR(prog, globals);
     MEM_VECTOR_CLEAR(prog, entitydata);
+    MEM_VECTOR_CLEAR(prog, entitypool);
     MEM_VECTOR_CLEAR(prog, localstack);
     MEM_VECTOR_CLEAR(prog, stack);
     MEM_VECTOR_CLEAR(prog, profile);
@@ -177,7 +202,57 @@ prog_section_def* prog_getdef(qc_program *prog, qcint off)
 
 qcany* prog_getedict(qc_program *prog, qcint e)
 {
-    return (qcany*)(prog->entitydata + (prog->entityfields + e));
+    if (e >= prog->entitypool_count) {
+        prog->vmerror++;
+        printf("Accessing out of bounds edict %i\n", (int)e);
+        e = 0;
+    }
+    return (qcany*)(prog->entitydata + (prog->entityfields * e));
+}
+
+qcint prog_spawn_entity(qc_program *prog)
+{
+    size_t i;
+    qcint  e;
+    for (e = 0; e < (qcint)prog->entitypool_count; ++e) {
+        if (!prog->entitypool[e]) {
+            char *data = (char*)(prog->entitydata + (prog->entityfields * e));
+            memset(data, 0, prog->entityfields * sizeof(qcint));
+            return e;
+        }
+    }
+    if (!qc_program_entitypool_add(prog, true)) {
+        prog->vmerror++;
+        printf("Failed to allocate entity\n");
+        return 0;
+    }
+    for (i = 0; i < prog->entityfields; ++i) {
+        if (!qc_program_entitydata_add(prog, 0)) {
+            printf("Failed to allocate entity\n");
+            return 0;
+        }
+    }
+    return e;
+}
+
+void prog_free_entity(qc_program *prog, qcint e)
+{
+    if (!e) {
+        prog->vmerror++;
+        printf("Trying to free world entity\n");
+        return;
+    }
+    if (e >= prog->entitypool_count) {
+        prog->vmerror++;
+        printf("Trying to free out of bounds entity\n");
+        return;
+    }
+    if (!prog->entitypool[e]) {
+        prog->vmerror++;
+        printf("Double free on entity\n");
+        return;
+    }
+    prog->entitypool[e] = false;
 }
 
 qcint prog_tempstring(qc_program *prog, const char *_str)
@@ -439,6 +514,8 @@ bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long
     long jumpcount = 0;
     prog_section_statement *st;
 
+    prog->vmerror = 0;
+
     st = prog->code + prog_enterfunction(prog, func);
     --st;
     switch (flags)
@@ -477,6 +554,8 @@ bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long
 cleanup:
     prog->localstack_count = 0;
     prog->stack_count = 0;
+    if (prog->vmerror)
+        return false;
     return true;
 }
 
@@ -488,6 +567,19 @@ cleanup:
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
 
+#define CheckArgs(num) do {                                                    \
+    if (prog->argc != (num)) {                                                 \
+        prog->vmerror++;                                                       \
+        printf("ERROR: invalid number of arguments for %s: %i, expected %i\n", \
+        __FUNCTION__, prog->argc, (num));                                      \
+        return -1;                                                             \
+    }                                                                          \
+} while (0)
+
+#define GetGlobal(idx) ((qcany*)(prog->globals + (idx)))
+#define GetArg(num) GetGlobal(OFS_PARM0 + 3*(num))
+#define Return(any) *(GetGlobal(OFS_RETURN)) = (any)
+
 static int qc_print(qc_program *prog)
 {
     qcany *str = (qcany*)(prog->globals + OFS_PARM0);
@@ -495,9 +587,43 @@ static int qc_print(qc_program *prog)
     return 0;
 }
 
+static int qc_ftos(qc_program *prog)
+{
+    char buffer[512];
+    qcany *num;
+    qcany str;
+    CheckArgs(1);
+    num = GetArg(0);
+    snprintf(buffer, sizeof(buffer), "%g", num->_float);
+    str.string = prog_tempstring(prog, buffer);
+    Return(str);
+    return 0;
+}
+
+static int qc_spawn(qc_program *prog)
+{
+    qcany ent;
+    CheckArgs(0);
+    ent.edict = prog_spawn_entity(prog);
+    Return(ent);
+    return (ent.edict ? 0 : -1);
+}
+
+static int qc_kill(qc_program *prog)
+{
+    qcany *ent;
+    CheckArgs(1);
+    ent = GetArg(0);
+    prog_free_entity(prog, ent->edict);
+    return 0;
+}
+
 static prog_builtin qc_builtins[] = {
     NULL,
-    &qc_print
+    &qc_print,
+    &qc_ftos,
+    &qc_spawn,
+    &qc_kill
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
