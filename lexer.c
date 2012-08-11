@@ -623,6 +623,8 @@ int lex_do(lex_file *lex)
 		} else if (!strcmp(v, "for")  ||
 		         !strcmp(v, "while")  ||
 		         !strcmp(v, "do")     ||
+		         !strcmp(v, "if")     ||
+		         !strcmp(v, "else")   ||
 		         !strcmp(v, "var")    ||
 		         !strcmp(v, "return") ||
 		         !strcmp(v, "const"))
