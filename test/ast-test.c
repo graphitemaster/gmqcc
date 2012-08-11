@@ -39,8 +39,11 @@ int main()
     DEFVAR(f5);
     DEFVAR(sHello);
     DEFVAR(print);
+    DEFVAR(ftos);
+    DEFVAR(spawn);
 
     DEFVAR(mema);
+    DEFVAR(pawn);
 
     /* opts_debug = true; */
 
@@ -48,12 +51,22 @@ BUILTIN(print, TYPE_VOID, -1);
 PARAM(TYPE_STRING, text);
 ENDBUILTIN();
 
+BUILTIN(ftos, TYPE_STRING, -2);
+PARAM(TYPE_FLOAT, value);
+ENDBUILTIN();
+
+BUILTIN(spawn, TYPE_ENTITY, -3);
+ENDBUILTIN();
+
     TESTINIT();
 VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
 VAR(TYPE_FLOAT, f5);
 VAR(TYPE_STRING, sHello);
+VAR(TYPE_ENTITY, pawn);
+
 FIELD(TYPE_FLOAT, mema);
+
 MKCONSTFLOAT(f0, 0.0);
 MKCONSTFLOAT(f1, 1.0);
 MKCONSTFLOAT(f5, 5.0);
@@ -78,6 +91,19 @@ FUNCTION(main, TYPE_VOID);
 
     CALL(print)
     CALLPARAM(sHello)
+    ENDCALL();
+
+    CALL(spawn)
+    ENDCALLWITH(newent, STATE(ASSIGN(STORE_ENT, pawn, newent)));
+
+    STATE(ASSIGN(STORE_F, ENTFIELD(pawn, mema), f5));
+
+    CALL(ftos)
+    CALLPARAM(ENTFIELD(pawn, mema))
+    ENDCALLWITH(output, STATE(ASSIGN(STORE_F, vi, output)));
+
+    CALL(print)
+    CALLPARAM(vi)
     ENDCALL();
 
 ENDFUNCTION(main);

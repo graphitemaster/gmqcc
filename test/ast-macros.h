@@ -58,6 +58,9 @@ do {                                             \
 #define BIN(op, a, b) \
 (ast_expression*)ast_binary_new(ctx, INSTR_##op, (ast_expression*)(a), (ast_expression*)(b))
 
+#define ENTFIELD(a, b) \
+(ast_expression*)ast_entfield_new(ctx, (ast_expression*)(a), (ast_expression*)(b))
+
 #define CALL(what)                                             \
 do {                                                           \
     ast_call *call = ast_call_new(ctx, (ast_expression*)what); \
@@ -67,6 +70,13 @@ do {                                                           \
 
 #define ENDCALL()                                \
     STATE(call);                                 \
+} while(0)
+
+#define ENDCALLWITH(as, where)                      \
+    {                                               \
+        ast_expression *as = (ast_expression*)call; \
+        where;                                      \
+    }                                               \
 } while(0)
 
 #define WHILE(cond)                                    \
