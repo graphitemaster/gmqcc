@@ -940,7 +940,7 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_value **out)
 {
     ast_expression_codegen *cgen;
-    ir_value *vec, *field;
+    ir_value *vec;
 
     cgen = self->owner->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->owner), func, true, &vec))
