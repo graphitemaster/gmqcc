@@ -529,6 +529,8 @@ void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
 
 int32_t ir_value_code_addr(const ir_value *self)
 {
+    if (self->store == store_return)
+        return OFS_RETURN + self->code.addroffset;
     return self->code.globaladdr + self->code.addroffset;
 }
 
