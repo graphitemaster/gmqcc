@@ -2659,6 +2659,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     if (code_fields_add(fld) < 0)
         return false;
 
+    ir_value_code_setaddr(field, code_globals_elements);
     if (!code_globals_add(fld.offset))
         return false;
     if (fld.type == TYPE_VECTOR) {
@@ -2668,7 +2669,6 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
             return false;
     }
 
-    ir_value_code_setaddr(field, code_globals_add(fld.offset));
     return field->code.globaladdr >= 0;
 }
 
