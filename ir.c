@@ -2150,10 +2150,18 @@ static bool gen_global_field(ir_value *global)
 
         /* copy the field's value */
         ir_value_code_setaddr(global, code_globals_add(code_globals_data[fld->code.globaladdr]));
+        if (global->fieldtype == TYPE_VECTOR) {
+            code_globals_add(code_globals_data[fld->code.globaladdr]+1);
+            code_globals_add(code_globals_data[fld->code.globaladdr]+2);
+        }
     }
     else
     {
         ir_value_code_setaddr(global, code_globals_add(0));
+        if (global->fieldtype == TYPE_VECTOR) {
+            code_globals_add(0);
+            code_globals_add(0);
+        }
     }
     if (global->code.globaladdr < 0)
         return false;
