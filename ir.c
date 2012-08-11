@@ -906,22 +906,26 @@ bool ir_values_overlap(const ir_value *a, const ir_value *b)
 
 bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
 {
-    if (target->store == store_value) {
+    ir_instr *in = ir_instr_new(self, op);
+    if (!in)
+        return false;
+
+    if (target->store == store_value &&
+        (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC))
+    {
         fprintf(stderr, "cannot store to an SSA value\n");
         fprintf(stderr, "trying to store: %s <- %s\n", target->name, what->name);
+        fprintf(stderr, "instruction: %s\n", asm_instr[op].m);
         return false;
-    } else {
-        ir_instr *in = ir_instr_new(self, op);
-        if (!in)
-            return false;
-        if (!ir_instr_op(in, 0, target, true) ||
-            !ir_instr_op(in, 1, what, false)  ||
-            !ir_block_instr_add(self, in) )
-        {
-            return false;
-        }
-        return true;
     }
+
+    if (!ir_instr_op(in, 0, target, true) ||
+        !ir_instr_op(in, 1, what, false)  ||
+        !ir_block_instr_add(self, in) )
+    {
+        return false;
+    }
+    return true;
 }
 
 bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
