@@ -13,7 +13,10 @@ typedef struct {
     lex_file *lex;
     int      tok;
 
+    int      fieldsize;
+
     MEM_VECTOR_MAKE(varentry_t, globals);
+    MEM_VECTOR_MAKE(varentry_t, fields);
     MEM_VECTOR_MAKE(ast_function*, functions);
     MEM_VECTOR_MAKE(ast_value*, imm_float);
     MEM_VECTOR_MAKE(ast_value*, imm_string);
@@ -27,6 +30,7 @@ typedef struct {
 } parser_t;
 
 MEM_VEC_FUNCTIONS(parser_t, varentry_t, globals)
+MEM_VEC_FUNCTIONS(parser_t, varentry_t, fields)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_float)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_string)
 MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_vector)
@@ -124,6 +128,16 @@ ast_value* parser_const_vector(parser_t *parser, vector v)
         return NULL;
     }
     return out;
+}
+
+ast_expression* parser_find_field(parser_t *parser, const char *name)
+{
+    size_t i;
+    for (i = 0; i < parser->fields_count; ++i) {
+        if (!strcmp(parser->fields[i].name, name))
+            return parser->fields[i].var;
+    }
+    return NULL;
 }
 
 ast_expression* parser_find_global(parser_t *parser, const char *name)
@@ -1186,8 +1200,103 @@ static bool parser_do(parser_t *parser)
     }
     else if (parser->tok == '.')
     {
+        ast_value *var;
+        ast_value *fld;
+        bool       isfunc = false;
+        int        basetype;
+        lex_ctx    ctx = parser_ctx(parser);
+        varentry_t varent;
+
         /* entity-member declaration */
-        return false;
+        if (!parser_next(parser) || parser->tok != TOKEN_TYPENAME) {
+            parseerror(parser, "expected member variable definition");
+            return false;
+        }
+
+        /* remember the base/return type */
+        basetype = parser_token(parser)->constval.t;
+
+        /* parse into the declaration */
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected field def");
+            return false;
+        }
+
+        /* parse the field type fully */
+        var = parser_parse_type(parser, basetype, &isfunc);
+        if (!var)
+            return false;
+
+        /* now the field name */
+        if (parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected field name");
+            ast_delete(var);
+            return false;
+        }
+
+        /* check for an existing field
+         * in original qc we also have to check for an existing
+         * global named like the field
+         */
+        if (opts_standard == COMPILER_QCC) {
+            if (parser_find_global(parser, parser_tokval(parser))) {
+                parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+                ast_delete(var);
+                return false;
+            }
+        }
+        if (parser_find_field(parser, parser_tokval(parser))) {
+            parseerror(parser, "field %s already exists", parser_tokval(parser));
+            ast_delete(var);
+            return false;
+        }
+
+        /* if it was a function, turn it into a function */
+        if (isfunc) {
+            ast_value *fval;
+            /* turn var into a value of TYPE_FUNCTION, with the old var
+             * as return type
+             */
+            fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
+            if (!fval) {
+                ast_value_delete(var);
+                ast_value_delete(fval);
+                return false;
+            }
+
+            fval->expression.next = (ast_expression*)var;
+            MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
+
+            var = fval;
+        }
+
+        /* turn it into a field */
+        fld = ast_value_new(ctx, parser_tokval(parser), TYPE_FIELD);
+        fld->expression.next = (ast_expression*)var;
+
+        varent.var = (ast_expression*)fld;
+        if (var->expression.vtype == TYPE_VECTOR)
+        {
+            /* create _x, _y and _z fields as well */
+            parseerror(parser, "TODO: vector field members (_x,_y,_z)");
+            ast_delete(fld);
+            return false;
+        }
+
+        varent.name = util_strdup(fld->name);
+        (void)!parser_t_fields_add(parser, varent);
+
+        /* end with a semicolon */
+        if (!parser_next(parser) || parser->tok != ';') {
+            parseerror(parser, "semicolon expected");
+            return false;
+        }
+
+        /* skip the semicolon */
+        if (!parser_next(parser))
+            return parser->tok == TOKEN_EOF;
+
+        return true;
     }
     else
     {
@@ -1300,6 +1409,32 @@ bool parser_finish(const char *output)
                 printf("failed to generate global %s\n", parser->imm_vector[i]->name);
                 ir_builder_delete(ir);
                 return false;
+            }
+        }
+        for (i = 0; i < parser->fields_count; ++i) {
+            ast_value *field;
+            bool isconst;
+            if (!ast_istype(parser->fields[i].var, ast_value))
+                continue;
+            field = (ast_value*)parser->fields[i].var;
+            isconst = field->isconst;
+            field->isconst = false;
+            if (!ast_global_codegen((ast_value*)field, ir)) {
+                printf("failed to generate field %s\n", field->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+            if (isconst) {
+                ir_value *ifld;
+                ast_expression *subtype;
+                field->isconst = true;
+                subtype = field->expression.next;
+                ifld = ir_builder_create_field(ir, field->name, subtype->expression.vtype);
+                if (subtype->expression.vtype == TYPE_FIELD)
+                    ifld->fieldtype = subtype->expression.next->expression.vtype;
+                else if (subtype->expression.vtype == TYPE_FUNCTION)
+                    ifld->outtype = subtype->expression.next->expression.vtype;
+                (void)!ir_value_set_field(field->ir_v, ifld);
             }
         }
         for (i = 0; i < parser->globals_count; ++i) {
