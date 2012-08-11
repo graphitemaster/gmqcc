@@ -216,7 +216,7 @@
 				ptr->_int = OPA->_int;
 				break;
 			case INSTR_STOREP_V:
-				if (OPB->_int < 0 || OPB->_int + 3 >= prog->entitydata_count)
+				if (OPB->_int < 0 || OPB->_int + 2 >= prog->entitydata_count)
 				{
 					PRVM_ERROR("%s attempted to write to an out of bounds edict (%i)", PRVM_NAME, OPB->_int);
 					goto cleanup;
