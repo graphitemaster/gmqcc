@@ -100,11 +100,19 @@ FUNCTION(main, TYPE_VOID);
     STATE(ASSIGN(STOREP_F, ENTFIELD(pawn, mema), f5));
     CALL(ftos)
     CALLPARAM(ENTFIELD(pawn, mema))
+#if 0
     ENDCALLWITH(output, STATE(ASSIGN(STORE_F, vi, output)));
 
     CALL(print)
     CALLPARAM(vi)
     ENDCALL();
+#else
+    ENDCALLWITH(output,
+        CALL(print)
+        CALLPARAM(output)
+        ENDCALL();
+    );
+#endif
 
 ENDFUNCTION(main);
 
