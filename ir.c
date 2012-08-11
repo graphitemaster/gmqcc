@@ -2570,13 +2570,42 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
     def.type   = field->vtype;
     def.offset = code_globals_elements;
-    def.name   = field->code.name = code_genstring(field->name);
+
+    /* create a global named the same as the field */
+    if (opts_standard == COMPILER_GMQCC) {
+        /* in our standard, the global gets a dot prefix */
+        size_t len = strlen(field->name);
+        char name[1024];
+
+        /* we really don't want to have to allocate this, and 1024
+         * bytes is more than enough for a variable/field name
+         */
+        if (len+2 >= sizeof(name)) {
+            printf("invalid field name size: %u\n", (unsigned int)len);
+            return false;
+        }
+
+        name[0] = '.';
+        strcpy(name+1, field->name); /* no strncpy - we used strlen above */
+        name[len+1] = 0;
+
+        def.name = code_genstring(name);
+        fld.name = def.name + 1; /* we reuse that string table entry */
+    } else {
+        /* in plain QC, there cannot be a global with the same name,
+         * and so we also name the global the same.
+         * FIXME: fteqcc should create a global as well
+         * check if it actually uses the same name. Probably does
+         */
+        def.name = code_genstring(field->name);
+        fld.name = def.name;
+    }
+
+    field->code.name = def.name;
 
     if (code_defs_add(def) < 0)
         return false;
 
-    fld.name = def.name;
-    fld.offset = code_fields_elements;
     fld.type = field->fieldtype;
 
     if (fld.type == TYPE_VOID) {
@@ -2584,10 +2613,12 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
         return false;
     }
 
+    fld.offset = code_alloc_field(type_sizeof[field->fieldtype]);
+
     if (code_fields_add(fld) < 0)
         return false;
 
-    if (!code_globals_add(code_alloc_field(type_sizeof[field->fieldtype])))
+    if (!code_globals_add(fld.offset))
         return false;
 
     ir_value_code_setaddr(field, code_globals_add(fld.offset));
