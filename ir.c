@@ -963,6 +963,11 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
 #endif
         op = type_store_instr[vtype];
 
+    if (OPTS_FLAG(ADJUST_VECTOR_FIELDS)) {
+        if (op == INSTR_STORE_FLD && what->fieldtype == TYPE_VECTOR)
+            op = INSTR_STORE_V;
+    }
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -980,6 +985,10 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
     vtype = what->vtype;
 
     op = type_storep_instr[vtype];
+    if (OPTS_FLAG(ADJUST_VECTOR_FIELDS)) {
+        if (op == INSTR_STOREP_FLD && what->fieldtype == TYPE_VECTOR)
+            op = INSTR_STOREP_V;
+    }
 
     return ir_block_create_store_op(self, op, target, what);
 }
