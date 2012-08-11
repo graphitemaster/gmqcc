@@ -616,6 +616,18 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         return true;
     }
 
+    if (self->expression.vtype == TYPE_FIELD) {
+        v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
+        if (!v)
+            return false;
+        if (self->isconst) {
+            printf("TODO: constant field pointers with value\n");
+            goto error;
+        }
+        self->ir_v = v;
+        return true;
+    }
+
     v = ir_builder_create_global(ir, self->name, self->expression.vtype);
     if (!v)
         return false;
