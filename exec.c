@@ -211,6 +211,32 @@ qcint prog_tempstring(qc_program *prog, const char *_str)
     return at;
 }
 
+static int print_escaped_string(const char *str)
+{
+    int len = 2;
+    putchar('"');
+    while (*str) {
+        switch (*str) {
+            case '\a': len += 2; putchar('\\'); putchar('a'); break;
+            case '\b': len += 2; putchar('\\'); putchar('b'); break;
+            case '\r': len += 2; putchar('\\'); putchar('r'); break;
+            case '\n': len += 2; putchar('\\'); putchar('n'); break;
+            case '\t': len += 2; putchar('\\'); putchar('t'); break;
+            case '\f': len += 2; putchar('\\'); putchar('f'); break;
+            case '\v': len += 2; putchar('\\'); putchar('v'); break;
+            case '\\': len += 2; putchar('\\'); putchar('\\'); break;
+            case '"':  len += 2; putchar('\\'); putchar('"'); break;
+            default:
+                ++len;
+                putchar(*str);
+                break;
+        }
+        ++str;
+    }
+    putchar('"');
+    return len;
+}
+
 static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
 {
     static char spaces[16+1] = "            ";
@@ -245,7 +271,8 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
                                          value->vector[2]);
             break;
         case TYPE_STRING:
-            len += printf("\"%s\",", prog_getstring(prog, value->string));
+            len += print_escaped_string(prog_getstring(prog, value->string));
+            /* len += printf("\"%s\",", prog_getstring(prog, value->string)); */
             break;
         case TYPE_FLOAT:
         default:
@@ -265,7 +292,7 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
         printf("<illegal instruction %d>\n", st->opcode);
         return;
     }
-    printf("%-12s", asm_instr[st->opcode].m);
+    printf(" <> %-12s", asm_instr[st->opcode].m);
     if (st->opcode >= INSTR_IF &&
         st->opcode <= INSTR_IFNOT)
     {
