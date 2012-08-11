@@ -497,6 +497,8 @@ int lex_do(lex_file *lex)
 		case '[':
 		case ']':
 
+		case '.':
+
 		case '#':
 
 			return (lex->tok->ttype = ch);
