@@ -566,13 +566,29 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     if (self->members[member])
         return self->members[member];
 
-    m = ir_value_var(self->name, self->store, TYPE_FLOAT);
-    if (!m)
-        return NULL;
-    m->context = self->context;
+    if (self->vtype == TYPE_VECTOR)
+    {
+        m = ir_value_var(self->name, self->store, TYPE_FLOAT);
+        if (!m)
+            return NULL;
+        m->context = self->context;
 
-    self->members[member] = m;
-    m->code.addroffset = member;
+        self->members[member] = m;
+        m->code.addroffset = member;
+    }
+    else if (self->vtype == TYPE_FIELD)
+    {
+        if (self->fieldtype != TYPE_VECTOR)
+            return NULL;
+        m = ir_value_var(self->name, self->store, TYPE_FIELD);
+        if (!m)
+            return NULL;
+        m->fieldtype = TYPE_FLOAT;
+        m->context = self->context;
+
+        self->members[member] = m;
+        m->code.addroffset = member;
+    }
 
     return m;
 }
@@ -2628,6 +2644,12 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
     if (!code_globals_add(fld.offset))
         return false;
+    if (fld.type == TYPE_VECTOR) {
+        if (!code_globals_add(fld.offset+1))
+            return false;
+        if (!code_globals_add(fld.offset+2))
+            return false;
+    }
 
     ir_value_code_setaddr(field, code_globals_add(fld.offset));
     return field->code.globaladdr >= 0;
