@@ -741,13 +741,18 @@ onerr:
 }
 
 static bool parser_variable(parser_t *parser, ast_block *localblock);
-static bool parser_body_do(parser_t *parser, ast_block *block)
+static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
 {
     if (parser->tok == TOKEN_TYPENAME)
     {
         /* local variable */
+        if (!block) {
+            parseerror(parser, "cannot declare a variable from here");
+            return false;
+        }
         if (!parser_variable(parser, block))
             return false;
+        *out = NULL;
         return true;
     }
     else if (parser->tok == TOKEN_KEYWORD)
@@ -778,10 +783,7 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
                     return false;
                 }
 
-                if (!ast_block_exprs_add(block, (ast_expression*)ret)) {
-                    ast_delete(ret);
-                    return false;
-                }
+                *out = (ast_expression*)ret;
             } else if (!parser_next(parser)) {
                 parseerror(parser, "expected semicolon");
                 if (expected->expression.next->expression.vtype != TYPE_VOID) {
@@ -804,10 +806,7 @@ static bool parser_body_do(parser_t *parser, ast_block *block)
         ast_expression *exp = parser_expression(parser);
         if (!exp)
             return false;
-        if (!ast_block_exprs_add(block, exp)) {
-            ast_delete(exp);
-            return false;
-        }
+        *out = exp;
         return true;
     }
 }
@@ -829,10 +828,19 @@ static ast_block* parser_parse_block(parser_t *parser)
 
     while (parser->tok != TOKEN_EOF && parser->tok < TOKEN_ERROR)
     {
+        ast_expression *expr;
         if (parser->tok == '}')
             break;
 
-        if (!parser_body_do(parser, block)) {
+        if (!parser_parse_statement(parser, block, &expr)) {
+            ast_block_delete(block);
+            block = NULL;
+            goto cleanup;
+        }
+        if (!expr)
+            continue;
+        if (!ast_block_exprs_add(block, expr)) {
+            ast_delete(expr);
             ast_block_delete(block);
             block = NULL;
             goto cleanup;
@@ -849,6 +857,16 @@ static ast_block* parser_parse_block(parser_t *parser)
 cleanup:
     parser->blocklocal = oldblocklocal;
     return block;
+}
+
+static ast_expression* parser_parse_statement_or_block(parser_t *parser)
+{
+    ast_expression *expr;
+    if (parser->tok == '{')
+        return (ast_expression*)parser_parse_block(parser);
+    if (!parser_parse_statement(parser, NULL, &expr))
+        return NULL;
+    return expr;
 }
 
 static void parser_pop_local(parser_t *parser)
