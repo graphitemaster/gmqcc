@@ -46,6 +46,15 @@ do {                                             \
     MKGLOBAL(name);                              \
 } while(0)
 
+#define MKCONSTVECTOR(name, valx, valy, valz) \
+do {                                          \
+    name->isconst = true;                     \
+    name->constval.vvec.x = (valx);           \
+    name->constval.vvec.y = (valy);           \
+    name->constval.vvec.z = (valz);           \
+    MKGLOBAL(name);                           \
+} while(0)
+
 #define STATE(a)                                 \
 do {                                             \
     ast_expression *exp = (ast_expression*)(a);  \
