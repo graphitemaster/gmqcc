@@ -741,6 +741,7 @@ onerr:
 }
 
 static bool parser_variable(parser_t *parser, ast_block *localblock);
+static ast_block* parser_parse_block(parser_t *parser);
 static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
 {
     if (parser->tok == TOKEN_TYPENAME)
@@ -797,9 +798,12 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
     }
     else if (parser->tok == '{')
     {
-        /* a block */
-        parseerror(parser, "TODO: inner blocks: %s", parser_tokval(parser));
-        return false;
+        ast_block *inner;
+        inner = parser_parse_block(parser);
+        if (!inner)
+            return false;
+        *out = (ast_expression*)inner;
+        return true;
     }
     else
     {
@@ -809,6 +813,12 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
         *out = exp;
         return true;
     }
+}
+
+static void parser_pop_local(parser_t *parser)
+{
+    parser->locals_count--;
+    mem_d(parser->locals[parser->locals_count].name);
 }
 
 static ast_block* parser_parse_block(parser_t *parser)
@@ -856,6 +866,9 @@ static ast_block* parser_parse_block(parser_t *parser)
 
 cleanup:
     parser->blocklocal = oldblocklocal;
+    /* unroll the local vector */
+    while (parser->locals_count > parser->blocklocal)
+        parser_pop_local(parser);
     return block;
 }
 
@@ -867,12 +880,6 @@ static ast_expression* parser_parse_statement_or_block(parser_t *parser)
     if (!parser_parse_statement(parser, NULL, &expr))
         return NULL;
     return expr;
-}
-
-static void parser_pop_local(parser_t *parser)
-{
-    parser->locals_count--;
-    mem_d(parser->locals[parser->locals_count].name);
 }
 
 static bool parser_variable(parser_t *parser, ast_block *localblock)
