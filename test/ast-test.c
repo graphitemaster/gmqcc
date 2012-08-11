@@ -63,7 +63,6 @@ VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
 VAR(TYPE_FLOAT, f5);
 VAR(TYPE_STRING, sHello);
-VAR(TYPE_ENTITY, pawn);
 
 FIELD(TYPE_FLOAT, mema);
 
@@ -79,9 +78,11 @@ FUNCTION(main, TYPE_VOID);
 
     VAR(TYPE_FLOAT, vi);
     VAR(TYPE_FLOAT, vx);
+    VAR(TYPE_ENTITY, pawn);
 
     MKLOCAL(vi);
     MKLOCAL(vx);
+    MKLOCAL(pawn);
 
     STATE(ASSIGN(STORE_F, vi, f0));
     WHILE(BIN(LT, vi, f5));
@@ -96,8 +97,7 @@ FUNCTION(main, TYPE_VOID);
     CALL(spawn)
     ENDCALLWITH(newent, STATE(ASSIGN(STORE_ENT, pawn, newent)));
 
-    STATE(ASSIGN(STORE_F, ENTFIELD(pawn, mema), f5));
-
+    STATE(ASSIGN(STOREP_F, ENTFIELD(pawn, mema), f5));
     CALL(ftos)
     CALLPARAM(ENTFIELD(pawn, mema))
     ENDCALLWITH(output, STATE(ASSIGN(STORE_F, vi, output)));
