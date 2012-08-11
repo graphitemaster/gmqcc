@@ -232,7 +232,7 @@
 			case INSTR_ADDRESS:
 				if (OPA->edict < 0 || OPA->edict >= prog->entities)
 				{
-					PRVM_ERROR ("%s Progs attempted to address an out of bounds edict number", PRVM_NAME);
+					PRVM_ERROR ("%s Progs attempted to address an out of bounds edict number %i", PRVM_NAME, OPA->edict);
 					goto cleanup;
 				}
 				if ((unsigned int)(OPB->_int) >= (unsigned int)(prog->entityfields))

@@ -130,6 +130,7 @@ qc_program* prog_load(const char *filename)
             goto error;
         }
     }
+    prog->entities = 1;
 
     return prog;
 
@@ -226,6 +227,7 @@ qcint prog_spawn_entity(qc_program *prog)
         printf("Failed to allocate entity\n");
         return 0;
     }
+    prog->entities++;
     for (i = 0; i < prog->entityfields; ++i) {
         if (!qc_program_entitydata_add(prog, 0)) {
             printf("Failed to allocate entity\n");
