@@ -589,6 +589,11 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
         self->members[member] = m;
         m->code.addroffset = member;
     }
+    else
+    {
+        printf("invalid member access on %s\n", self->name);
+        return NULL;
+    }
 
     return m;
 }
