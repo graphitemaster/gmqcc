@@ -2717,175 +2717,175 @@ const char *qc_opname(int op)
 
 void ir_builder_dump(ir_builder *b, int (*oprintf)(const char*, ...))
 {
-	size_t i;
-	char indent[IND_BUFSZ];
-	indent[0] = '\t';
-	indent[1] = 0;
+    size_t i;
+    char indent[IND_BUFSZ];
+    indent[0] = '\t';
+    indent[1] = 0;
 
-	oprintf("module %s\n", b->name);
-	for (i = 0; i < b->globals_count; ++i)
-	{
-		oprintf("global ");
-		if (b->globals[i]->isconst)
-			oprintf("%s = ", b->globals[i]->name);
-		ir_value_dump(b->globals[i], oprintf);
-		oprintf("\n");
-	}
-	for (i = 0; i < b->functions_count; ++i)
-		ir_function_dump(b->functions[i], indent, oprintf);
-	oprintf("endmodule %s\n", b->name);
+    oprintf("module %s\n", b->name);
+    for (i = 0; i < b->globals_count; ++i)
+    {
+        oprintf("global ");
+        if (b->globals[i]->isconst)
+            oprintf("%s = ", b->globals[i]->name);
+        ir_value_dump(b->globals[i], oprintf);
+        oprintf("\n");
+    }
+    for (i = 0; i < b->functions_count; ++i)
+        ir_function_dump(b->functions[i], indent, oprintf);
+    oprintf("endmodule %s\n", b->name);
 }
 
 void ir_function_dump(ir_function *f, char *ind,
                       int (*oprintf)(const char*, ...))
 {
-	size_t i;
-	if (f->builtin != 0) {
-	    oprintf("%sfunction %s = builtin %i\n", ind, f->name, -f->builtin);
-	    return;
-	}
-	oprintf("%sfunction %s\n", ind, f->name);
-	strncat(ind, "\t", IND_BUFSZ);
-	if (f->locals_count)
-	{
-		oprintf("%s%i locals:\n", ind, (int)f->locals_count);
-		for (i = 0; i < f->locals_count; ++i) {
-			oprintf("%s\t", ind);
-			ir_value_dump(f->locals[i], oprintf);
-			oprintf("\n");
-		}
-	}
-	if (f->blocks_count)
-	{
-		oprintf("%slife passes (check): %i\n", ind, (int)f->run_id);
-		for (i = 0; i < f->blocks_count; ++i) {
-		    if (f->blocks[i]->run_id != f->run_id) {
-		        oprintf("%slife pass check fail! %i != %i\n", ind, (int)f->blocks[i]->run_id, (int)f->run_id);
-		    }
-			ir_block_dump(f->blocks[i], ind, oprintf);
-		}
+    size_t i;
+    if (f->builtin != 0) {
+        oprintf("%sfunction %s = builtin %i\n", ind, f->name, -f->builtin);
+        return;
+    }
+    oprintf("%sfunction %s\n", ind, f->name);
+    strncat(ind, "\t", IND_BUFSZ);
+    if (f->locals_count)
+    {
+        oprintf("%s%i locals:\n", ind, (int)f->locals_count);
+        for (i = 0; i < f->locals_count; ++i) {
+            oprintf("%s\t", ind);
+            ir_value_dump(f->locals[i], oprintf);
+            oprintf("\n");
+        }
+    }
+    if (f->blocks_count)
+    {
+        oprintf("%slife passes (check): %i\n", ind, (int)f->run_id);
+        for (i = 0; i < f->blocks_count; ++i) {
+            if (f->blocks[i]->run_id != f->run_id) {
+                oprintf("%slife pass check fail! %i != %i\n", ind, (int)f->blocks[i]->run_id, (int)f->run_id);
+            }
+            ir_block_dump(f->blocks[i], ind, oprintf);
+        }
 
-	}
-	ind[strlen(ind)-1] = 0;
-	oprintf("%sendfunction %s\n", ind, f->name);
+    }
+    ind[strlen(ind)-1] = 0;
+    oprintf("%sendfunction %s\n", ind, f->name);
 }
 
 void ir_block_dump(ir_block* b, char *ind,
                    int (*oprintf)(const char*, ...))
 {
-	size_t i;
-	oprintf("%s:%s\n", ind, b->label);
-	strncat(ind, "\t", IND_BUFSZ);
+    size_t i;
+    oprintf("%s:%s\n", ind, b->label);
+    strncat(ind, "\t", IND_BUFSZ);
 
-	for (i = 0; i < b->instr_count; ++i)
-		ir_instr_dump(b->instr[i], ind, oprintf);
-	ind[strlen(ind)-1] = 0;
+    for (i = 0; i < b->instr_count; ++i)
+        ir_instr_dump(b->instr[i], ind, oprintf);
+    ind[strlen(ind)-1] = 0;
 }
 
 void dump_phi(ir_instr *in, char *ind,
               int (*oprintf)(const char*, ...))
 {
-	size_t i;
-	oprintf("%s <- phi ", in->_ops[0]->name);
-	for (i = 0; i < in->phi_count; ++i)
-	{
-		oprintf("([%s] : %s) ", in->phi[i].from->label,
-		                        in->phi[i].value->name);
-	}
-	oprintf("\n");
+    size_t i;
+    oprintf("%s <- phi ", in->_ops[0]->name);
+    for (i = 0; i < in->phi_count; ++i)
+    {
+        oprintf("([%s] : %s) ", in->phi[i].from->label,
+                                in->phi[i].value->name);
+    }
+    oprintf("\n");
 }
 
 void ir_instr_dump(ir_instr *in, char *ind,
                        int (*oprintf)(const char*, ...))
 {
-	size_t i;
-	const char *comma = NULL;
+    size_t i;
+    const char *comma = NULL;
 
-	oprintf("%s (%i) ", ind, (int)in->eid);
+    oprintf("%s (%i) ", ind, (int)in->eid);
 
-	if (in->opcode == VINSTR_PHI) {
-		dump_phi(in, ind, oprintf);
-		return;
-	}
+    if (in->opcode == VINSTR_PHI) {
+        dump_phi(in, ind, oprintf);
+        return;
+    }
 
-	strncat(ind, "\t", IND_BUFSZ);
+    strncat(ind, "\t", IND_BUFSZ);
 
-	if (in->_ops[0] && (in->_ops[1] || in->_ops[2])) {
-		ir_value_dump(in->_ops[0], oprintf);
-		if (in->_ops[1] || in->_ops[2])
-			oprintf(" <- ");
-	}
-	oprintf("%s\t", qc_opname(in->opcode));
-	if (in->_ops[0] && !(in->_ops[1] || in->_ops[2])) {
-		ir_value_dump(in->_ops[0], oprintf);
-		comma = ",\t";
-	}
-	else
-	{
-		for (i = 1; i != 3; ++i) {
-			if (in->_ops[i]) {
-				if (comma)
-					oprintf(comma);
-				ir_value_dump(in->_ops[i], oprintf);
-				comma = ",\t";
-			}
-		}
-	}
-	if (in->bops[0]) {
-		if (comma)
-			oprintf(comma);
-		oprintf("[%s]", in->bops[0]->label);
-		comma = ",\t";
-	}
-	if (in->bops[1])
-		oprintf("%s[%s]", comma, in->bops[1]->label);
-	oprintf("\n");
-	ind[strlen(ind)-1] = 0;
+    if (in->_ops[0] && (in->_ops[1] || in->_ops[2])) {
+        ir_value_dump(in->_ops[0], oprintf);
+        if (in->_ops[1] || in->_ops[2])
+            oprintf(" <- ");
+    }
+    oprintf("%s\t", qc_opname(in->opcode));
+    if (in->_ops[0] && !(in->_ops[1] || in->_ops[2])) {
+        ir_value_dump(in->_ops[0], oprintf);
+        comma = ",\t";
+    }
+    else
+    {
+        for (i = 1; i != 3; ++i) {
+            if (in->_ops[i]) {
+                if (comma)
+                    oprintf(comma);
+                ir_value_dump(in->_ops[i], oprintf);
+                comma = ",\t";
+            }
+        }
+    }
+    if (in->bops[0]) {
+        if (comma)
+            oprintf(comma);
+        oprintf("[%s]", in->bops[0]->label);
+        comma = ",\t";
+    }
+    if (in->bops[1])
+        oprintf("%s[%s]", comma, in->bops[1]->label);
+    oprintf("\n");
+    ind[strlen(ind)-1] = 0;
 }
 
 void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
 {
-	if (v->isconst) {
-		switch (v->vtype) {
-			case TYPE_VOID:
-				oprintf("(void)");
-				break;
-			case TYPE_FLOAT:
-				oprintf("%g", v->constval.vfloat);
-				break;
-			case TYPE_VECTOR:
-				oprintf("'%g %g %g'",
-				        v->constval.vvec.x,
-				        v->constval.vvec.y,
-				        v->constval.vvec.z);
-				break;
-			case TYPE_ENTITY:
-				oprintf("(entity)");
-				break;
-			case TYPE_STRING:
-				oprintf("\"%s\"", v->constval.vstring);
-				break;
+    if (v->isconst) {
+        switch (v->vtype) {
+            case TYPE_VOID:
+                oprintf("(void)");
+                break;
+            case TYPE_FLOAT:
+                oprintf("%g", v->constval.vfloat);
+                break;
+            case TYPE_VECTOR:
+                oprintf("'%g %g %g'",
+                        v->constval.vvec.x,
+                        v->constval.vvec.y,
+                        v->constval.vvec.z);
+                break;
+            case TYPE_ENTITY:
+                oprintf("(entity)");
+                break;
+            case TYPE_STRING:
+                oprintf("\"%s\"", v->constval.vstring);
+                break;
 #if 0
-			case TYPE_INTEGER:
-				oprintf("%i", v->constval.vint);
-				break;
+            case TYPE_INTEGER:
+                oprintf("%i", v->constval.vint);
+                break;
 #endif
-			case TYPE_POINTER:
-				oprintf("&%s",
-					v->constval.vpointer->name);
-				break;
-		}
-	} else {
-		oprintf("%s", v->name);
-	}
+            case TYPE_POINTER:
+                oprintf("&%s",
+                    v->constval.vpointer->name);
+                break;
+        }
+    } else {
+        oprintf("%s", v->name);
+    }
 }
 
 void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...))
 {
-	size_t i;
-	oprintf("Life of %s:\n", self->name);
-	for (i = 0; i < self->life_count; ++i)
-	{
-		oprintf(" + [%i, %i]\n", self->life[i].start, self->life[i].end);
-	}
+    size_t i;
+    oprintf("Life of %s:\n", self->name);
+    for (i = 0; i < self->life_count; ++i)
+    {
+        oprintf(" + [%i, %i]\n", self->life[i].start, self->life[i].end);
+    }
 }
