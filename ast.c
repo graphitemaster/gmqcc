@@ -315,7 +315,7 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
         return NULL;
     }
 
-    if (owner->expression.vtype != TYPE_FLOAT &&
+    if (owner->expression.vtype != TYPE_VECTOR &&
         owner->expression.vtype != TYPE_FIELD) {
         printf("ast_member on an invalid owner of type %i\n", (int)owner->expression.vtype);
         mem_d(self);
