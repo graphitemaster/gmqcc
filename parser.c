@@ -13,8 +13,6 @@ typedef struct {
     lex_file *lex;
     int      tok;
 
-    int      fieldsize;
-
     MEM_VECTOR_MAKE(varentry_t, globals);
     MEM_VECTOR_MAKE(varentry_t, fields);
     MEM_VECTOR_MAKE(ast_function*, functions);
@@ -952,10 +950,10 @@ static ast_block* parser_parse_block(parser_t *parser)
     }
 
 cleanup:
-    parser->blocklocal = oldblocklocal;
-    /* unroll the local vector */
     while (parser->locals_count > parser->blocklocal)
         parser_pop_local(parser);
+    parser->blocklocal = oldblocklocal;
+    /* unroll the local vector */
     return block;
 }
 
