@@ -211,6 +211,18 @@ ast_binary* ast_binary_new(lex_ctx ctx, int op,
     self->left = left;
     self->right = right;
 
+    if (op >= INSTR_EQ_F && op <= INSTR_GT)
+        self->expression.vtype = TYPE_FLOAT;
+    else if (op == INSTR_AND || op == INSTR_OR ||
+             op == INSTR_BITAND || op == INSTR_BITOR)
+        self->expression.vtype = TYPE_FLOAT;
+    else if (op == INSTR_MUL_VF || op == INSTR_MUL_FV)
+        self->expression.vtype = TYPE_VECTOR;
+    else if (op == INSTR_MUL_V)
+        self->expression.vtype = TYPE_FLOAT;
+    else
+        self->expression.vtype = left->expression.vtype;
+
     return self;
 }
 
@@ -650,8 +662,10 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
     }
 
     v = ir_builder_create_global(ir, self->name, self->expression.vtype);
-    if (!v)
+    if (!v) {
+        printf("ir_builder_create_global failed\n");
         return false;
+    }
 
     if (self->isconst) {
         switch (self->expression.vtype)
