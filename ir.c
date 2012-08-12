@@ -559,6 +559,8 @@ void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
 
 int32_t ir_value_code_addr(const ir_value *self)
 {
+    if (self->store == store_return)
+        return OFS_RETURN + self->code.addroffset;
     return self->code.globaladdr + self->code.addroffset;
 }
 
@@ -594,13 +596,29 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     if (self->members[member])
         return self->members[member];
 
-    m = ir_value_var(self->name, self->store, TYPE_FLOAT);
-    if (!m)
-        return NULL;
-    m->context = self->context;
+    if (self->vtype == TYPE_VECTOR)
+    {
+        m = ir_value_var(self->name, self->store, TYPE_FLOAT);
+        if (!m)
+            return NULL;
+        m->context = self->context;
 
-    self->members[member] = m;
-    m->code.addroffset = member;
+        self->members[member] = m;
+        m->code.addroffset = member;
+    }
+    else if (self->vtype == TYPE_FIELD)
+    {
+        if (self->fieldtype != TYPE_VECTOR)
+            return NULL;
+        m = ir_value_var(self->name, self->store, TYPE_FIELD);
+        if (!m)
+            return NULL;
+        m->fieldtype = TYPE_FLOAT;
+        m->context = self->context;
+
+        self->members[member] = m;
+        m->code.addroffset = member;
+    }
 
     return m;
 }
@@ -690,6 +708,15 @@ bool ir_value_set_matrix(ir_value *self, matrix v)
     if (self->vtype != TYPE_MATRIX)
         return false;
     memcpy(&self->constval.vmat, v, sizeof(self->constval.vmat));
+    self->isconst = true;
+    return true;
+}
+
+bool ir_value_set_field(ir_value *self, ir_value *fld)
+{
+    if (self->vtype != TYPE_FIELD)
+        return false;
+    self->constval.vpointer = fld;
     self->isconst = true;
     return true;
 }
@@ -945,22 +972,26 @@ bool ir_values_overlap(const ir_value *a, const ir_value *b)
 
 bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
 {
-    if (target->store == store_value) {
+    ir_instr *in = ir_instr_new(self, op);
+    if (!in)
+        return false;
+
+    if (target->store == store_value &&
+        (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC))
+    {
         fprintf(stderr, "cannot store to an SSA value\n");
         fprintf(stderr, "trying to store: %s <- %s\n", target->name, what->name);
+        fprintf(stderr, "instruction: %s\n", asm_instr[op].m);
         return false;
-    } else {
-        ir_instr *in = ir_instr_new(self, op);
-        if (!in)
-            return false;
-        if (!ir_instr_op(in, 0, target, true) ||
-            !ir_instr_op(in, 1, what, false)  ||
-            !ir_block_instr_add(self, in) )
-        {
-            return false;
-        }
-        return true;
     }
+
+    if (!ir_instr_op(in, 0, target, true) ||
+        !ir_instr_op(in, 1, what, false)  ||
+        !ir_block_instr_add(self, in) )
+    {
+        return false;
+    }
+    return true;
 }
 
 bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
@@ -980,6 +1011,11 @@ bool ir_block_create_store(ir_block *self, ir_value *target, ir_value *what)
 #endif
         op = type_store_instr[vtype];
 
+    if (OPTS_FLAG(ADJUST_VECTOR_FIELDS)) {
+        if (op == INSTR_STORE_FLD && what->fieldtype == TYPE_VECTOR)
+            op = INSTR_STORE_V;
+    }
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -997,6 +1033,11 @@ bool ir_block_create_storep(ir_block *self, ir_value *target, ir_value *what)
     vtype = what->vtype;
 
     op = type_storep_instr[vtype];
+    if (OPTS_FLAG(ADJUST_VECTOR_FIELDS)) {
+        if (op == INSTR_STOREP_FLD && what->fieldtype == TYPE_VECTOR)
+            op = INSTR_STOREP_V;
+    }
+
     return ir_block_create_store_op(self, op, target, what);
 }
 
@@ -2178,10 +2219,18 @@ static bool gen_global_field(ir_value *global)
 
         /* copy the field's value */
         ir_value_code_setaddr(global, code_globals_add(code_globals_data[fld->code.globaladdr]));
+        if (global->fieldtype == TYPE_VECTOR) {
+            code_globals_add(code_globals_data[fld->code.globaladdr]+1);
+            code_globals_add(code_globals_data[fld->code.globaladdr]+2);
+        }
     }
     else
     {
         ir_value_code_setaddr(global, code_globals_add(0));
+        if (global->fieldtype == TYPE_VECTOR) {
+            code_globals_add(0);
+            code_globals_add(0);
+        }
     }
     if (global->code.globaladdr < 0)
         return false;
@@ -2408,8 +2457,10 @@ tailcall:
             stmt.o1.u1 = stmt.o3.u1;
             stmt.o3.u1 = 0;
         }
-        else if (stmt.opcode >= INSTR_STORE_F &&
-                 stmt.opcode <= INSTR_STORE_FNC)
+        else if ((stmt.opcode >= INSTR_STORE_F &&
+                  stmt.opcode <= INSTR_STORE_FNC) ||
+                 (stmt.opcode >= INSTR_STOREP_F &&
+                  stmt.opcode <= INSTR_STOREP_FNC))
         {
             /* 2-operand instructions with A -> B */
             stmt.o2.u1 = stmt.o3.u1;
@@ -2622,13 +2673,42 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
     def.type   = field->vtype;
     def.offset = code_globals_elements;
-    def.name   = field->code.name = code_genstring(field->name);
+
+    /* create a global named the same as the field */
+    if (opts_standard == COMPILER_GMQCC) {
+        /* in our standard, the global gets a dot prefix */
+        size_t len = strlen(field->name);
+        char name[1024];
+
+        /* we really don't want to have to allocate this, and 1024
+         * bytes is more than enough for a variable/field name
+         */
+        if (len+2 >= sizeof(name)) {
+            printf("invalid field name size: %u\n", (unsigned int)len);
+            return false;
+        }
+
+        name[0] = '.';
+        strcpy(name+1, field->name); /* no strncpy - we used strlen above */
+        name[len+1] = 0;
+
+        def.name = code_genstring(name);
+        fld.name = def.name + 1; /* we reuse that string table entry */
+    } else {
+        /* in plain QC, there cannot be a global with the same name,
+         * and so we also name the global the same.
+         * FIXME: fteqcc should create a global as well
+         * check if it actually uses the same name. Probably does
+         */
+        def.name = code_genstring(field->name);
+        fld.name = def.name;
+    }
+
+    field->code.name = def.name;
 
     if (code_defs_add(def) < 0)
         return false;
 
-    fld.name = def.name;
-    fld.offset = code_fields_elements;
     fld.type = field->fieldtype;
 
     if (fld.type == TYPE_VOID) {
@@ -2636,13 +2716,21 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
         return false;
     }
 
+    fld.offset = code_alloc_field(type_sizeof[field->fieldtype]);
+
     if (code_fields_add(fld) < 0)
         return false;
 
-    if (!code_globals_add(code_alloc_field(type_sizeof[field->fieldtype])))
+    ir_value_code_setaddr(field, code_globals_elements);
+    if (!code_globals_add(fld.offset))
         return false;
+    if (fld.type == TYPE_VECTOR) {
+        if (!code_globals_add(fld.offset+1))
+            return false;
+        if (!code_globals_add(fld.offset+2))
+            return false;
+    }
 
-    ir_value_code_setaddr(field, code_globals_add(fld.offset));
     return field->code.globaladdr >= 0;
 }
 

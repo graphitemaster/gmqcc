@@ -97,6 +97,7 @@ bool GMQCC_WARN ir_value_set_int(ir_value*, int i);
 #endif
 bool GMQCC_WARN ir_value_set_string(ir_value*, const char *s);
 bool GMQCC_WARN ir_value_set_vector(ir_value*, vector v);
+bool GMQCC_WARN ir_value_set_field(ir_value*, ir_value *fld);
 /*bool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*bool   ir_value_set_pointer_i(ir_value*, int i);       */
 bool GMQCC_WARN ir_value_set_quaternion(ir_value*, quaternion v);

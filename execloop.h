@@ -16,7 +16,7 @@
 #endif
 
 #if !defined(PRVM_ERROR)
-#   define PRVM_ERROR printf
+#   define PRVM_ERROR prog->vmerror++, printvmerr
 #endif
 
 #if !defined(PRVM_NAME)
@@ -216,7 +216,7 @@
 				ptr->_int = OPA->_int;
 				break;
 			case INSTR_STOREP_V:
-				if (OPB->_int < 0 || OPB->_int + 3 >= prog->entitydata_count)
+				if (OPB->_int < 0 || OPB->_int + 2 >= prog->entitydata_count)
 				{
 					PRVM_ERROR("%s attempted to write to an out of bounds edict (%i)", PRVM_NAME, OPB->_int);
 					goto cleanup;
@@ -232,7 +232,7 @@
 			case INSTR_ADDRESS:
 				if (OPA->edict < 0 || OPA->edict >= prog->entities)
 				{
-					PRVM_ERROR ("%s Progs attempted to address an out of bounds edict number", PRVM_NAME);
+					PRVM_ERROR ("%s Progs attempted to address an out of bounds edict number %i", PRVM_NAME, OPA->edict);
 					goto cleanup;
 				}
 				if ((unsigned int)(OPB->_int) >= (unsigned int)(prog->entityfields))
@@ -271,7 +271,7 @@
 					PRVM_ERROR ("%s Progs attempted to read an out of bounds edict number", PRVM_NAME);
 					goto cleanup;
 				}
-				if (OPB->_int < 0 || OPB->_int + 3 >= prog->entityfields)
+				if (OPB->_int < 0 || OPB->_int + 3 > prog->entityfields)
 				{
 					PRVM_ERROR("%s attempted to read an invalid field in an edict (%i)", PRVM_NAME, OPB->_int);
 					goto cleanup;
@@ -357,6 +357,8 @@
 				}
 				else
 					st = prog->code + PROG_ENTERFUNCTION(newf);
+				if (prog->vmerror)
+				    goto cleanup;
 				break;
 
 			case INSTR_DONE:

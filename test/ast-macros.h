@@ -21,6 +21,17 @@ name = ast_value_new(ctx, #varname, type)
 #define MKGLOBAL(name) \
 assert(globals_add(name) >= 0)
 
+#define FIELD(type, name) \
+name = ast_value_new(ctx, #name, TYPE_FIELD);                  \
+do {                                                           \
+    ast_value *field_##name = ast_value_new(ctx, #name, type); \
+    name->expression.next = (ast_expression*)field_##name;     \
+    MKFIELD(name);                                             \
+} while (0)
+
+#define MKFIELD(name) \
+assert(fields_add(name) >= 0)
+
 #define MKCONSTFLOAT(name, value)  \
 do {                               \
     name->isconst = true;          \
@@ -35,6 +46,15 @@ do {                                             \
     MKGLOBAL(name);                              \
 } while(0)
 
+#define MKCONSTVECTOR(name, valx, valy, valz) \
+do {                                          \
+    name->isconst = true;                     \
+    name->constval.vvec.x = (valx);           \
+    name->constval.vvec.y = (valy);           \
+    name->constval.vvec.z = (valz);           \
+    MKGLOBAL(name);                           \
+} while(0)
+
 #define STATE(a)                                 \
 do {                                             \
     ast_expression *exp = (ast_expression*)(a);  \
@@ -47,6 +67,12 @@ do {                                             \
 #define BIN(op, a, b) \
 (ast_expression*)ast_binary_new(ctx, INSTR_##op, (ast_expression*)(a), (ast_expression*)(b))
 
+#define ENTFIELD(a, b) \
+(ast_expression*)ast_entfield_new(ctx, (ast_expression*)(a), (ast_expression*)(b))
+
+#define VECMEM(vec, mem) \
+(ast_expression*)ast_member_new(ctx, (ast_expression*)(vec), (mem))
+
 #define CALL(what)                                             \
 do {                                                           \
     ast_call *call = ast_call_new(ctx, (ast_expression*)what); \
@@ -56,6 +82,13 @@ do {                                                           \
 
 #define ENDCALL()                                \
     STATE(call);                                 \
+} while(0)
+
+#define ENDCALLWITH(as, where)                      \
+    {                                               \
+        ast_expression *as = (ast_expression*)call; \
+        where;                                      \
+    }                                               \
 } while(0)
 
 #define WHILE(cond)                                    \

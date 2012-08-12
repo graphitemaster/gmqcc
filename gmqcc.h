@@ -885,6 +885,7 @@ typedef struct qc_program_s {
     MEM_VECTOR_MAKE(char,                   strings);
     MEM_VECTOR_MAKE(qcint,                  globals);
     MEM_VECTOR_MAKE(qcint,                  entitydata);
+    MEM_VECTOR_MAKE(bool,                   entitypool);
 
     size_t tempstring_start;
     size_t tempstring_at;

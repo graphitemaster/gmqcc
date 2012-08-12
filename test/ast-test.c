@@ -10,6 +10,7 @@
 #define assert(x) do { if ( !(x) ) { printf("Assertion failed: %s\n", #x); abort(); } } while(0)
 
 VECTOR_MAKE(ast_value*, globals);
+VECTOR_MAKE(ast_value*, fields);
 VECTOR_MAKE(ast_function*, functions);
 
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
@@ -36,8 +37,18 @@ int main()
     DEFVAR(f0);
     DEFVAR(f1);
     DEFVAR(f5);
+    DEFVAR(cv3x4x5);
+    DEFVAR(cv1x1x1);
     DEFVAR(sHello);
+    DEFVAR(sNL);
     DEFVAR(print);
+    DEFVAR(ftos);
+    DEFVAR(spawn);
+
+    DEFVAR(mema);
+    DEFVAR(memb);
+    DEFVAR(memv);
+    DEFVAR(pawn);
 
     /* opts_debug = true; */
 
@@ -45,26 +56,48 @@ BUILTIN(print, TYPE_VOID, -1);
 PARAM(TYPE_STRING, text);
 ENDBUILTIN();
 
+BUILTIN(ftos, TYPE_STRING, -2);
+PARAM(TYPE_FLOAT, value);
+ENDBUILTIN();
+
+BUILTIN(spawn, TYPE_ENTITY, -3);
+ENDBUILTIN();
+
     TESTINIT();
 VAR(TYPE_FLOAT, f0);
 VAR(TYPE_FLOAT, f1);
 VAR(TYPE_FLOAT, f5);
 VAR(TYPE_STRING, sHello);
+VAR(TYPE_STRING, sNL);
+VAR(TYPE_VECTOR, cv3x4x5);
+VAR(TYPE_VECTOR, cv1x1x1);
+
+FIELD(TYPE_FLOAT, mema);
+FIELD(TYPE_FLOAT, memb);
+FIELD(TYPE_VECTOR, memv);
+
 MKCONSTFLOAT(f0, 0.0);
 MKCONSTFLOAT(f1, 1.0);
 MKCONSTFLOAT(f5, 5.0);
 MKCONSTSTRING(sHello, "Hello, World\n");
+MKCONSTSTRING(sNL, "\n");
+MKCONSTVECTOR(cv3x4x5, 3, 4, 5);
+MKCONSTVECTOR(cv1x1x1, 1, 1, 1);
 
 FUNCTION(foo, TYPE_VOID);
 ENDFUNCTION(foo);
+
+#define PRINTNL() do { CALL(print) CALLPARAM(sNL) ENDCALL(); } while(0)
 
 FUNCTION(main, TYPE_VOID);
 
     VAR(TYPE_FLOAT, vi);
     VAR(TYPE_FLOAT, vx);
+    VAR(TYPE_ENTITY, pawn);
 
     MKLOCAL(vi);
     MKLOCAL(vx);
+    MKLOCAL(pawn);
 
     STATE(ASSIGN(STORE_F, vi, f0));
     WHILE(BIN(LT, vi, f5));
@@ -76,11 +109,48 @@ FUNCTION(main, TYPE_VOID);
     CALLPARAM(sHello)
     ENDCALL();
 
+    CALL(spawn)
+    ENDCALLWITH(newent, STATE(ASSIGN(STORE_ENT, pawn, newent)));
+
+    STATE(ASSIGN(STOREP_F, ENTFIELD(pawn, mema), f5));
+    STATE(ASSIGN(STOREP_F, ENTFIELD(pawn, memb), f1));
+    STATE(ASSIGN(STOREP_V, ENTFIELD(pawn, memv), cv3x4x5));
+    CALL(ftos)
+    CALLPARAM(ENTFIELD(pawn, mema))
+    ENDCALLWITH(output,
+        CALL(print)
+        CALLPARAM(output)
+        CALLPARAM(sNL)
+        ENDCALL();
+    );
+    CALL(ftos)
+    CALLPARAM(ENTFIELD(pawn, memb))
+    ENDCALLWITH(output,
+        CALL(print)
+        CALLPARAM(output)
+        CALLPARAM(sNL)
+        ENDCALL();
+    );
+    CALL(ftos)
+    CALLPARAM(ENTFIELD(pawn, VECMEM(memv, 2)))
+    ENDCALLWITH(output,
+        CALL(print)
+        CALLPARAM(output)
+        CALLPARAM(sNL)
+        ENDCALL();
+    );
+
 ENDFUNCTION(main);
 
     ir = ir_builder_new("ast_test");
     assert(ir);
 
+    /* gen fields */
+    for (i = 0; i < fields_elements; ++i) {
+        if (!ast_global_codegen(fields_data[i], ir)) {
+            assert(!"failed to generate field");
+        }
+    }
     /* gen globals */
     for (i = 0; i < globals_elements; ++i) {
         if (!ast_global_codegen(globals_data[i], ir)) {

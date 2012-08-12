@@ -94,6 +94,15 @@ static ast_value* ast_value_copy(const ast_value *self)
     return cp;
 }
 
+static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
+{
+    ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
+    self->expression.codegen = NULL;
+    self->expression.next    = NULL;
+    self->expression.vtype   = vtype;
+    return self;
+}
+
 static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
 {
     size_t i;
@@ -306,10 +315,22 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
         return NULL;
     }
 
+    if (owner->expression.vtype != TYPE_FLOAT &&
+        owner->expression.vtype != TYPE_FIELD) {
+        printf("ast_member on an invalid owner of type %i\n", (int)owner->expression.vtype);
+        mem_d(self);
+        return NULL;
+    }
+
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_member_codegen);
 
-    self->expression.vtype = TYPE_FLOAT;
-    self->expression.next  = NULL;
+    if (owner->expression.vtype == TYPE_VECTOR) {
+        self->expression.vtype = TYPE_FLOAT;
+        self->expression.next  = NULL;
+    } else {
+        self->expression.vtype = TYPE_FIELD;
+        self->expression.next = ast_shallow_type(ctx, TYPE_FLOAT);
+    }
 
     self->owner = owner;
     self->field = field;
@@ -625,6 +646,18 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         self->constval.vfunc->ir_func = func;
         self->ir_v = func->value;
         /* The function is filled later on ast_function_codegen... */
+        return true;
+    }
+
+    if (self->expression.vtype == TYPE_FIELD) {
+        v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
+        if (!v)
+            return false;
+        if (self->isconst) {
+            printf("TODO: constant field pointers with value\n");
+            goto error;
+        }
+        self->ir_v = v;
         return true;
     }
 
@@ -954,14 +987,17 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_value **out)
 {
     ast_expression_codegen *cgen;
-    ir_value *vec, *field;
+    ir_value *vec;
 
     cgen = self->owner->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->owner), func, true, &vec))
         return false;
 
-    if (vec->vtype != TYPE_VECTOR)
+    if (vec->vtype != TYPE_VECTOR &&
+        !(vec->vtype == TYPE_FIELD && self->owner->expression.next->expression.vtype == TYPE_VECTOR))
+    {
         return false;
+    }
 
     *out = ir_value_vector_member(vec, self->field);
 
