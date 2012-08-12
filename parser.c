@@ -313,6 +313,12 @@ static sy_elem syparen(lex_ctx ctx, int p, size_t off) {
     return e;
 }
 
+#ifdef DEBUGSHUNT
+# define DEBUGSHUNTDO(x) x
+#else
+# define DEBUGSHUNTDO(x)
+#endif
+
 static bool parser_sy_pop(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
@@ -320,7 +326,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ast_expression *out = NULL;
     ast_expression *exprs[3];
     ast_block      *blocks[3];
-    size_t i;
+    size_t i, assignop;
 
     if (!sy->ops_count) {
         parseerror(parser, "internal error: missing operator");
@@ -334,6 +340,8 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
     op = &operators[sy->ops[sy->ops_count-1].etype - 1];
     ctx = sy->ops[sy->ops_count-1].ctx;
+
+    DEBUGSHUNTDO(printf("apply %s\n", op->op));
 
     if (sy->out_count < op->operands) {
         parseerror(parser, "internal error: not enough operands: %i", sy->out_count);
@@ -358,6 +366,24 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         default:
             parseerror(parser, "internal error: unhandled operand");
             return false;
+
+        case opid1('.'):
+            if (exprs[0]->expression.vtype == TYPE_ENTITY) {
+                if (exprs[1]->expression.vtype != TYPE_FIELD) {
+                    parseerror(parser, "type error: right hand of member-operand should be an entity-field");
+                    return false;
+                }
+                out = (ast_expression*)ast_entfield_new(ctx, exprs[0], exprs[1]);
+            }
+            else if (exprs[0]->expression.vtype == TYPE_VECTOR) {
+                parseerror(parser, "internal error: vector access is not supposed to be handled at this point");
+                return false;
+            }
+            else {
+                parseerror(parser, "type error: member-of operator on something that is not an entity or vector");
+                return false;
+            }
+            break;
 
         case opid1(','):
             if (blocks[0]) {
@@ -465,9 +491,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
 
         case opid1('='):
-            out = (ast_expression*)ast_store_new(ctx,
-                                                 type_store_instr[exprs[0]->expression.vtype],
-                                                 exprs[0], exprs[1]);
+            if (ast_istype(exprs[0], ast_entfield))
+                assignop = type_storep_instr[exprs[0]->expression.vtype];
+            else
+                assignop = type_store_instr[exprs[0]->expression.vtype];
+            out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
     }
 
@@ -476,6 +504,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         return false;
     }
 
+    DEBUGSHUNTDO(printf("applied %s\n", op->op));
     sy->out[sy->out_count++] = syexp(ctx, out);
     return true;
 }
@@ -640,6 +669,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                DEBUGSHUNTDO(printf("push %s\n", parser_tokval(parser)));
             }
             else if (parser->tok == TOKEN_FLOATCONST) {
                 ast_value *val = parser_const_float(parser, (parser_token(parser)->constval.f));
@@ -649,6 +679,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                DEBUGSHUNTDO(printf("push %g\n", parser_token(parser)->constval.f));
             }
             else if (parser->tok == TOKEN_INTCONST) {
                 ast_value *val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
@@ -658,6 +689,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                DEBUGSHUNTDO(printf("push %i\n", parser_token(parser)->constval.i));
             }
             else if (parser->tok == TOKEN_STRINGCONST) {
                 ast_value *val = parser_const_string(parser, parser_tokval(parser));
@@ -667,6 +699,7 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                DEBUGSHUNTDO(printf("push string\n"));
             }
             else if (parser->tok == TOKEN_VECTORCONST) {
                 ast_value *val = parser_const_vector(parser, parser_token(parser)->constval.v);
@@ -676,6 +709,10 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                DEBUGSHUNTDO(printf("push '%g %g %g'\n",
+                                    parser_token(parser)->constval.v.x,
+                                    parser_token(parser)->constval.v.y,
+                                    parser_token(parser)->constval.v.z));
             }
             else if (parser->tok == '(') {
                 ++parens;
@@ -684,8 +721,10 @@ static ast_expression* parser_expression(parser_t *parser)
                     parseerror(parser, "out of memory");
                     goto onerr;
                 }
+                DEBUGSHUNTDO(printf("push (\n"));
             }
             else if (parser->tok == ')') {
+                DEBUGSHUNTDO(printf("call )\n"));
                 --parens;
                 if (parens < 0)
                     break;
@@ -702,6 +741,7 @@ static ast_expression* parser_expression(parser_t *parser)
             parser->lex->flags.noops = !wantop;
         } else {
             if (parser->tok == '(') {
+                DEBUGSHUNTDO(printf("push (\n"));
                 ++parens;
                 /* we expected an operator, this is the function-call operator */
                 if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
@@ -710,6 +750,7 @@ static ast_expression* parser_expression(parser_t *parser)
                 }
             }
             else if (parser->tok == ')') {
+                DEBUGSHUNTDO(printf("calc )\n"));
                 --parens;
                 if (parens < 0)
                     break;
@@ -771,8 +812,11 @@ static ast_expression* parser_expression(parser_t *parser)
                         goto onerr;
                     if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
                         olast = &operators[sy.ops[sy.ops_count-1].etype-1];
+                    else
+                        olast = NULL;
                 }
 
+                DEBUGSHUNTDO(printf("push operator %s\n", op->op));
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
                     goto onerr;
             }
@@ -804,6 +848,7 @@ static ast_expression* parser_expression(parser_t *parser)
         expr = sy.out[0].out;
     MEM_VECTOR_CLEAR(&sy, out);
     MEM_VECTOR_CLEAR(&sy, ops);
+    DEBUGSHUNTDO(printf("shut done\n"));
     return expr;
 
 onerr:
