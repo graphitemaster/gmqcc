@@ -2850,6 +2850,9 @@ void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
             case TYPE_VOID:
                 oprintf("(void)");
                 break;
+            case TYPE_FUNCTION:
+                oprintf("(function)");
+                break;
             case TYPE_FLOAT:
                 oprintf("%g", v->constval.vfloat);
                 break;
