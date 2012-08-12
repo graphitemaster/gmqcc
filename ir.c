@@ -575,6 +575,10 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     memset(&self->constval, 0, sizeof(self->constval));
     memset(&self->code,     0, sizeof(self->code));
 
+    self->members[0] = NULL;
+    self->members[1] = NULL;
+    self->members[2] = NULL;
+
     MEM_VECTOR_INIT(self, life);
     return self;
 }
