@@ -614,7 +614,7 @@ static ast_expression* parser_expression(parser_t *parser)
                 ast_expression *var;
                 if (opts_standard == COMPILER_GMQCC)
                 {
-                    if (parser->memberof == TYPE_FIELD)
+                    if (parser->memberof == TYPE_ENTITY)
                         var = parser_find_field(parser, parser_tokval(parser));
                     else if (parser->memberof == TYPE_VECTOR)
                     {
@@ -750,7 +750,7 @@ static ast_expression* parser_expression(parser_t *parser)
                         goto onerr;
                     }
                     if (prevex->expression.vtype == TYPE_ENTITY)
-                        parser->memberof = TYPE_FIELD;
+                        parser->memberof = TYPE_ENTITY;
                     else if (prevex->expression.vtype == TYPE_VECTOR)
                         parser->memberof = TYPE_VECTOR;
                     else {
