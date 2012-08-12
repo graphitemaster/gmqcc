@@ -2815,7 +2815,11 @@ void ir_instr_dump(ir_instr *in, char *ind,
         if (in->_ops[1] || in->_ops[2])
             oprintf(" <- ");
     }
-    oprintf("%s\t", qc_opname(in->opcode));
+    if (in->opcode == INSTR_CALL0) {
+        oprintf("CALL%i\t", in->params_count);
+    } else
+        oprintf("%s\t", qc_opname(in->opcode));
+
     if (in->_ops[0] && !(in->_ops[1] || in->_ops[2])) {
         ir_value_dump(in->_ops[0], oprintf);
         comma = ",\t";
