@@ -724,7 +724,7 @@ static ast_expression* parser_expression(parser_t *parser)
                 DEBUGSHUNTDO(printf("push (\n"));
             }
             else if (parser->tok == ')') {
-                DEBUGSHUNTDO(printf("call )\n"));
+                DEBUGSHUNTDO(printf("do[nop] )\n"));
                 --parens;
                 if (parens < 0)
                     break;
@@ -740,6 +740,7 @@ static ast_expression* parser_expression(parser_t *parser)
             wantop = nextwant;
             parser->lex->flags.noops = !wantop;
         } else {
+            bool nextwant = false;
             if (parser->tok == '(') {
                 DEBUGSHUNTDO(printf("push (\n"));
                 ++parens;
@@ -750,7 +751,7 @@ static ast_expression* parser_expression(parser_t *parser)
                 }
             }
             else if (parser->tok == ')') {
-                DEBUGSHUNTDO(printf("calc )\n"));
+                DEBUGSHUNTDO(printf("do[op] )\n"));
                 --parens;
                 if (parens < 0)
                     break;
@@ -758,6 +759,7 @@ static ast_expression* parser_expression(parser_t *parser)
                 /* closing an opening paren */
                 if (!parser_close_paren(parser, &sy, false))
                     goto onerr;
+                nextwant = true;
             }
             else if (parser->tok != TOKEN_OPERATOR) {
                 parseerror(parser, "expected operator or end of statement");
@@ -820,8 +822,8 @@ static ast_expression* parser_expression(parser_t *parser)
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
                     goto onerr;
             }
-            wantop = false;
-            parser->lex->flags.noops = true;
+            wantop = nextwant;
+            parser->lex->flags.noops = !wantop;
         }
         if (!parser_next(parser)) {
             goto onerr;
