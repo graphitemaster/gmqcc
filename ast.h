@@ -133,8 +133,6 @@ struct ast_value_s
         const char   *vstring;
         int           ventity;
         ast_function *vfunc;
-        quaternion    vquat;
-        matrix        vmat;
     } constval;
 
     ir_value *ir_v;

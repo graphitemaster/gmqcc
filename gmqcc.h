@@ -279,8 +279,6 @@ enum {
     TYPE_FUNCTION ,
     TYPE_POINTER  ,
     TYPE_INTEGER  ,
-    TYPE_QUATERNION  ,
-    TYPE_MATRIX  ,
     TYPE_VARIANT  ,
 
     TYPE_COUNT
@@ -400,8 +398,8 @@ enum {
     INSTR_DONE,
     INSTR_MUL_F,
     INSTR_MUL_V,
-    INSTR_MUL_VF,
     INSTR_MUL_FV,
+    INSTR_MUL_VF,
     INSTR_DIV_F,
     INSTR_ADD_F,
     INSTR_ADD_V,
@@ -464,23 +462,6 @@ enum {
     INSTR_BITAND,
     INSTR_BITOR,
 
-/* warning: will be reordered */
-    INSTR_MUL_Q,
-    INSTR_MUL_QF,
-    INSTR_MUL_M,
-    INSTR_MUL_MF,
-    INSTR_EQ_Q,
-    INSTR_EQ_M,
-    INSTR_NE_Q,
-    INSTR_NE_M,
-    INSTR_LOAD_Q,
-    INSTR_LOAD_M,
-    INSTR_STORE_Q,
-    INSTR_STORE_M,
-    INSTR_STOREP_Q,
-    INSTR_STOREP_M,
-    INSTR_INV_Q,
-    INSTR_INV_M,
     /*
      * Virtual instructions used by the assembler
      * keep at the end but before virtual instructions
@@ -540,8 +521,8 @@ static const struct {
     { "DONE"      , 1, 4 },
     { "MUL_F"     , 3, 5 },
     { "MUL_V"     , 3, 5 },
-    { "MUL_VF"    , 3, 6 },
     { "MUL_FV"    , 3, 6 },
+    { "MUL_VF"    , 3, 6 },
     { "DIV"       , 0, 3 },
     { "ADD_F"     , 3, 5 },
     { "ADD_V"     , 3, 5 },
@@ -603,23 +584,6 @@ static const struct {
     { "OR"        , 0, 2 },
     { "BITAND"    , 0, 6 },
     { "BITOR"     , 0, 5 },
-
-    { "MUL_Q"     , 3, 5 },
-    { "MUL_QF"    , 3, 6 },
-    { "MUL_M"     , 3, 5 },
-    { "MUL_MF"    , 3, 6 },
-    { "EQ_Q"      , 0, 4 },
-    { "EQ_M"      , 0, 4 },
-    { "NE_Q"      , 0, 4 },
-    { "NE_M"      , 0, 4 },
-    { "FIELD_Q"   , 0, 7 },
-    { "FIELD_M"   , 0, 7 },
-    { "STORE_Q"   , 0, 7 },
-    { "STORE_M"   , 0, 7 },
-    { "STOREP_Q"  , 0, 8 },
-    { "STOREP_M"  , 0, 8 },
-    { "INV_Q"     , 0, 5 },
-    { "INV_M"     , 0, 5 },
 
     { "END"       , 0, 3 } /* virtual assembler instruction */
 };
@@ -811,14 +775,6 @@ enum store_types {
 typedef struct {
     float x, y, z;
 } vector;
-
-typedef float matrix[4][4]; /* OpenGL layout */
-typedef float quaternion[4]; /* order: x, y, z, w */
-#define MATRIX(axis, elem) ((4*(axis)) + (elem))
-#define QUAT_X 0
-#define QUAT_Y 1
-#define QUAT_Z 2
-#define QUAT_W 3
 
 /*
  * A shallow copy of a lex_file to remember where which ast node
