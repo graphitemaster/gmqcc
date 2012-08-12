@@ -2851,6 +2851,7 @@ void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
 {
     if (v->isconst) {
         switch (v->vtype) {
+            default:
             case TYPE_VOID:
                 oprintf("(void)");
                 break;
