@@ -331,6 +331,7 @@ void parser_cleanup();
 
 int main(int argc, char **argv) {
     size_t itr;
+    int retval = 0;
     app_name = argv[0];
 
     /* default options / warn flags */
@@ -368,8 +369,10 @@ int main(int argc, char **argv) {
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
 
-            if (!parser_compile(items_data[itr].filename))
+            if (!parser_compile(items_data[itr].filename)) {
+                retval = 1;
                 goto cleanup;
+            }
         }
 
         parser_finish(opts_output);
@@ -385,5 +388,5 @@ cleanup:
     parser_cleanup();
 
     util_meminfo();
-    return 0;
+    return retval;
 }
