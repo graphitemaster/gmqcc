@@ -601,6 +601,9 @@ static ast_expression* parser_expression(parser_t *parser)
             {
                 /* variable */
                 ast_expression *var = parser_find_var(parser, parser_tokval(parser));
+                /* in the gmqcc standard, fields are in their own namespace */
+                if (!var && opts_standard != COMPILER_GMQCC)
+                    var = parser_find_field(parser, parser_tokval(parser));
                 if (!var) {
                     parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     goto onerr;
