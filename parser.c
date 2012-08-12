@@ -25,6 +25,12 @@ typedef struct {
     size_t blocklocal;
 
     size_t errors;
+
+    /* TYPE_FIELD -> parser_find_fields is used instead of find_var
+     * TODO: TYPE_VECTOR -> x, y and z are accepted in the gmqcc standard
+     * anything else: type error
+     */
+    qcint  memberof;
 } parser_t;
 
 MEM_VEC_FUNCTIONS(parser_t, varentry_t, globals)
@@ -583,6 +589,7 @@ static ast_expression* parser_expression(parser_t *parser)
     ast_expression *expr = NULL;
     shunt sy;
     bool wantop = false;
+    bool gotmemberof = false;
 
     /* count the parens because an if starts with one, so the
      * end of a condition is an unmatched closing paren
@@ -594,16 +601,37 @@ static ast_expression* parser_expression(parser_t *parser)
 
     while (true)
     {
+        if (gotmemberof)
+            gotmemberof = false;
+        else
+            parser->memberof = 0;
         if (!wantop)
         {
             bool nextwant = true;
             if (parser->tok == TOKEN_IDENT)
             {
                 /* variable */
-                ast_expression *var = parser_find_var(parser, parser_tokval(parser));
-                /* in the gmqcc standard, fields are in their own namespace */
-                if (!var && opts_standard != COMPILER_GMQCC)
-                    var = parser_find_field(parser, parser_tokval(parser));
+                ast_expression *var;
+                if (opts_standard == COMPILER_GMQCC)
+                {
+                    if (parser->memberof == TYPE_FIELD)
+                        var = parser_find_field(parser, parser_tokval(parser));
+                    else if (parser->memberof == TYPE_VECTOR)
+                    {
+                        parseerror(parser, "TODO: implement effective vector member access");
+                        goto onerr;
+                    }
+                    else if (parser->memberof) {
+                        parseerror(parser, "namespace for member not found");
+                        goto onerr;
+                    }
+                    else
+                        var = parser_find_var(parser, parser_tokval(parser));
+                } else {
+                    var = parser_find_var(parser, parser_tokval(parser));
+                    if (!var)
+                        var = parser_find_field(parser, parser_tokval(parser));
+                }
                 if (!var) {
                     parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     goto onerr;
@@ -714,6 +742,23 @@ static ast_expression* parser_expression(parser_t *parser)
                 }
                 /* found an operator */
                 op = &operators[o];
+                if (op->id == opid1('.')) {
+                    /* for gmqcc standard: open up the namespace of the previous type */
+                    ast_expression *prevex = sy.out[sy.out_count-1].out;
+                    if (!prevex) {
+                        parseerror(parser, "unexpected member operator");
+                        goto onerr;
+                    }
+                    if (prevex->expression.vtype == TYPE_ENTITY)
+                        parser->memberof = TYPE_FIELD;
+                    else if (prevex->expression.vtype == TYPE_VECTOR)
+                        parser->memberof = TYPE_VECTOR;
+                    else {
+                        parseerror(parser, "type error: type has no members");
+                        goto onerr;
+                    }
+                    gotmemberof = true;
+                }
 
                 if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
                     olast = &operators[sy.ops[sy.ops_count-1].etype-1];
