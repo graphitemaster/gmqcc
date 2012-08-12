@@ -497,8 +497,6 @@ int lex_do(lex_file *lex)
 		case '[':
 		case ']':
 
-		case '.':
-
 		case '#':
 
 			return (lex->tok->ttype = ch);
@@ -525,13 +523,14 @@ int lex_do(lex_file *lex)
 			case '^':
 			case '~':
 			case ',':
-				return ch;
+		    case '.':
+				return (lex->tok->ttype = ch);
 			default:
 				break;
 		}
 	}
 
-	if (ch == ',') {
+	if (ch == ',' || ch == '.') {
 	    if (!lex_tokench(lex, ch) ||
 	        !lex_endtoken(lex))
 	    {
