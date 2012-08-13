@@ -41,6 +41,13 @@ MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_vector)
 MEM_VEC_FUNCTIONS(parser_t, varentry_t, locals)
 MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
+static void parser_pop_local(parser_t *parser);
+static bool parser_variable(parser_t *parser, ast_block *localblock);
+static ast_block* parser_parse_block(parser_t *parser);
+static ast_expression* parser_parse_statement_or_block(parser_t *parser);
+static ast_expression* parser_expression_leave(parser_t *parser);
+static ast_expression* parser_expression(parser_t *parser);
+
 void parseerror(parser_t *parser, const char *fmt, ...)
 {
 	va_list ap;
@@ -57,6 +64,36 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 	va_end(ap);
 
 	printf("\n");
+}
+
+/* returns true if it counts as an error */
+bool parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
+{
+	va_list ap;
+
+#if 0
+    if (OPTS_WARN(WARN_ERROR))
+	    parser->errors++;
+#endif
+
+    if (!OPTS_WARN(warntype))
+        return false;
+
+    if (parser)
+	    printf("warning %s:%lu: ", parser->lex->tok->ctx.file, (unsigned long)parser->lex->tok->ctx.line);
+	else
+	    printf("warning: ");
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+
+	printf("\n");
+#if 0
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool parser_next(parser_t *parser)
@@ -705,7 +742,7 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
     return true;
 }
 
-static ast_expression* parser_expression(parser_t *parser)
+static ast_expression* parser_expression_leave(parser_t *parser)
 {
     ast_expression *expr = NULL;
     shunt sy;
@@ -924,10 +961,6 @@ static ast_expression* parser_expression(parser_t *parser)
             break;
         }
     }
-    if (parens >= 0 && !parser_next(parser)) {
-        parseerror(parser, "Unexpected end of file");
-        goto onerr;
-    }
 
     while (sy.ops_count) {
         if (!parser_sy_pop(parser, &sy))
@@ -952,9 +985,17 @@ onerr:
     return NULL;
 }
 
-static bool parser_variable(parser_t *parser, ast_block *localblock);
-static ast_block* parser_parse_block(parser_t *parser);
-static ast_expression* parser_parse_statement_or_block(parser_t *parser);
+static ast_expression* parser_expression(parser_t *parser)
+{
+    ast_expression *e = parser_expression_leave(parser);
+    if (!e)
+        return NULL;
+    if (!parser_next(parser)) {
+        ast_delete(e);
+        return NULL;
+    }
+    return e;
+}
 
 static bool parser_parse_if(parser_t *parser, ast_block *block, ast_expression **out)
 {
@@ -974,7 +1015,7 @@ static bool parser_parse_if(parser_t *parser, ast_block *block, ast_expression *
         return false;
     }
     /* parse the condition */
-    cond = parser_expression(parser);
+    cond = parser_expression_leave(parser);
     if (!cond)
         return false;
     /* closing paren */
@@ -1025,27 +1066,27 @@ static bool parser_parse_while(parser_t *parser, ast_block *block, ast_expressio
 
     /* skip the 'while' and check for opening paren */
     if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected 'if' condition in parenthesis");
+        parseerror(parser, "expected 'while' condition in parenthesis");
         return false;
     }
     /* parse into the expression */
     if (!parser_next(parser)) {
-        parseerror(parser, "expected 'if' condition after opening paren");
+        parseerror(parser, "expected 'while' condition after opening paren");
         return false;
     }
     /* parse the condition */
-    cond = parser_expression(parser);
+    cond = parser_expression_leave(parser);
     if (!cond)
         return false;
     /* closing paren */
     if (parser->tok != ')') {
-        parseerror(parser, "expected closing paren after 'if' condition");
+        parseerror(parser, "expected closing paren after 'while' condition");
         ast_delete(cond);
         return false;
     }
     /* parse into the 'then' branch */
     if (!parser_next(parser)) {
-        parseerror(parser, "expected statement for on-true branch of 'if'");
+        parseerror(parser, "expected while-loop body");
         ast_delete(cond);
         return false;
     }
@@ -1058,6 +1099,120 @@ static bool parser_parse_while(parser_t *parser, ast_block *block, ast_expressio
     aloop = ast_loop_new(ctx, NULL, cond, NULL, NULL, ontrue);
     *out = (ast_expression*)aloop;
     return true;
+}
+
+static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    ast_loop *aloop;
+    ast_expression *initexpr, *cond, *increment, *ontrue;
+    size_t oldblocklocal;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    oldblocklocal = parser->blocklocal;
+    parser->blocklocal = parser->locals_count;
+
+    initexpr  = NULL;
+    cond      = NULL;
+    increment = NULL;
+    ontrue    = NULL;
+
+    /* skip the 'while' and check for opening paren */
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected 'for' expressions in parenthesis");
+        goto onerr;
+    }
+    /* parse into the expression */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected 'for' initializer after opening paren");
+        goto onerr;
+    }
+
+    if (parser->tok == TOKEN_TYPENAME) {
+        if (opts_standard != COMPILER_GMQCC) {
+            if (parsewarning(parser, WARN_EXTENSIONS,
+                             "current standard does not allow variable declarations in for-loop initializers"))
+                goto onerr;
+        }
+
+        parseerror(parser, "TODO: assignment of new variables to be non-const");
+        goto onerr;
+        if (!parser_variable(parser, block))
+            goto onerr;
+    }
+    else if (parser->tok != ';')
+    {
+        initexpr = parser_expression_leave(parser);
+        if (!initexpr)
+            goto onerr;
+    }
+
+    /* move on to condition */
+    if (parser->tok != ';') {
+        parseerror(parser, "expected semicolon after for-loop initializer");
+        goto onerr;
+    }
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected for-loop condition");
+        goto onerr;
+    }
+
+    /* parse the condition */
+    if (parser->tok != ';') {
+        printf("going cond!\n");
+        cond = parser_expression_leave(parser);
+        if (!cond)
+            goto onerr;
+        printf("going cond!\n");
+    }
+
+    /* move on to incrementor */
+    if (parser->tok != ';') {
+        parseerror(parser, "expected semicolon after for-loop initializer");
+        goto onerr;
+    }
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected for-loop condition");
+        goto onerr;
+    }
+
+    /* parse the incrementor */
+    if (parser->tok != ')') {
+        increment = parser_expression_leave(parser);
+        if (!increment)
+            goto onerr;
+    }
+
+    /* closing paren */
+    if (parser->tok != ')') {
+        parseerror(parser, "expected closing paren after 'for-loop' incrementor");
+        goto onerr;
+    }
+    /* parse into the 'then' branch */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected for-loop body");
+        goto onerr;
+    }
+    ontrue = parser_parse_statement_or_block(parser);
+    if (!ontrue) {
+        goto onerr;
+    }
+
+    aloop = ast_loop_new(ctx, initexpr, cond, NULL, increment, ontrue);
+    *out = (ast_expression*)aloop;
+
+    while (parser->locals_count > parser->blocklocal)
+        parser_pop_local(parser);
+    parser->blocklocal = oldblocklocal;
+    return true;
+onerr:
+    if (initexpr)  ast_delete(initexpr);
+    if (cond)      ast_delete(cond);
+    if (increment) ast_delete(increment);
+    while (parser->locals_count > parser->blocklocal)
+        parser_pop_local(parser);
+    parser->blocklocal = oldblocklocal;
+    return false;
 }
 
 static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
@@ -1118,6 +1273,10 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
         else if (!strcmp(parser_tokval(parser), "while"))
         {
             return parser_parse_while(parser, block, out);
+        }
+        else if (!strcmp(parser_tokval(parser), "for"))
+        {
+            return parser_parse_for(parser, block, out);
         }
         parseerror(parser, "Unexpected keyword");
         return false;
