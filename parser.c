@@ -327,6 +327,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ast_expression *exprs[3];
     ast_block      *blocks[3];
     size_t i, assignop;
+    qcint  generated_op = 0;
 
     if (!sy->ops_count) {
         parseerror(parser, "internal error: missing operator");
@@ -361,6 +362,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         return false;
     }
 
+#define NotSameType(T) \
+             (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
+              exprs[0]->expression.vtype != T)
     switch (op->id)
     {
         default:
@@ -410,7 +414,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
-            if (exprs[0]->expression.vteyp != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
                 parseerror(parser, "type error: %s - %s not defined",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
@@ -437,7 +441,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[0]->expression.vtype]);
                 return false;
             }
-            if (exprs[0]->expression.vteyp != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
                 parseerror(parser, "type error: %s - %s not defined",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
@@ -490,9 +494,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             };
             break;
         case opid1('/'):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
-                exprs[0]->expression.vtype != TYPE_FLOAT)
-            {
+            if (NotSameType(TYPE_FLOAT)) {
                 parseerror(parser, "type error: cannot divide types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
@@ -502,9 +504,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid1('|'):
         case opid1('&'):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
-                exprs[0]->expression.vtype != TYPE_FLOAT)
-            {
+            if (NotSameType(TYPE_FLOAT)) {
                 parseerror(parser, "type error: cannot perform bit operations on types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
@@ -513,6 +513,41 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_binary_new(ctx,
                                                   (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
                                                   exprs[0], exprs[1]);
+            break;
+
+        case opid1('>'):
+            generated_op += 1; /* INSTR_GT */
+        case opid1('<'):
+            generated_op += 1; /* INSTR_LT */
+        case opid2('>', '='):
+            generated_op += 1; /* INSTR_GE */
+        case opid2('<', '='):
+            generated_op += INSTR_LE;
+            if (NotSameType(TYPE_FLOAT)) {
+                parseerror(parser, "type error: cannot compare types %s and %s",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+            break;
+        case opid2('!', '='):
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
+                parseerror(parser, "type error: cannot compare types %s and %s",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            out = (ast_expression*)ast_binary_new(ctx, type_ne_op[exprs[0]->expression.vtype], exprs[0], exprs[1]);
+            break;
+        case opid2('=', '='):
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
+                parseerror(parser, "type error: cannot compare types %s and %s",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            out = (ast_expression*)ast_binary_new(ctx, type_eq_op[exprs[0]->expression.vtype], exprs[0], exprs[1]);
             break;
 
 
@@ -524,6 +559,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
     }
+#undef NotSameType
 
     if (!out) {
         parseerror(parser, "failed to apply operand %s", op->op);
