@@ -36,6 +36,7 @@ typedef struct ast_function_s   ast_function;
 typedef struct ast_block_s      ast_block;
 typedef struct ast_binary_s     ast_binary;
 typedef struct ast_store_s      ast_store;
+typedef struct ast_binstore_s   ast_binstore;
 typedef struct ast_entfield_s   ast_entfield;
 typedef struct ast_ifthen_s     ast_ifthen;
 typedef struct ast_ternary_s    ast_ternary;
@@ -53,6 +54,7 @@ enum {
     TYPE_ast_block,
     TYPE_ast_binary,
     TYPE_ast_store,
+    TYPE_ast_binstore,
     TYPE_ast_entfield,
     TYPE_ast_ifthen,
     TYPE_ast_ternary,
@@ -104,6 +106,13 @@ typedef struct
     int                     vtype;
     ast_expression         *next;
     MEM_VECTOR_MAKE(ast_value*, params);
+    /* The codegen functions should store their output values
+     * so we can call it multiple times without re-evaluating.
+     * Store lvalue and rvalue seperately though. So that
+     * ast_entfield for example can generate both if required.
+     */
+    ir_value               *outl;
+    ir_value               *outr;
 } ast_expression_common;
 MEM_VECTOR_PROTO(ast_expression_common, ast_value*, params);
 
@@ -169,6 +178,28 @@ ast_binary* ast_binary_new(lex_ctx    ctx,
 void ast_binary_delete(ast_binary*);
 
 bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
+
+/* Binstore
+ *
+ * An assignment including a binary expression with the source as left operand.
+ * Eg. a += b; is a binstore { INSTR_STORE, INSTR_ADD, a, b }
+ */
+struct ast_binstore_s
+{
+    ast_expression_common expression;
+
+    int             opstore;
+    int             opbin;
+    ast_expression *left;
+    ast_expression *right;
+};
+ast_binstore* ast_binstore_new(lex_ctx    ctx,
+                               int        op,
+                               ast_expression *left,
+                               ast_expression *right);
+void ast_binstore_delete(ast_binstore*);
+
+bool ast_binstore_codegen(ast_binstore*, ast_function*, bool lvalue, ir_value**);
 
 /* Unary
  *
