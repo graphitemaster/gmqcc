@@ -424,7 +424,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "Cannot add type %s and %s",
+                    parseerror(parser, "type error: cannot add type %s to %s",
                                type_name[exprs[0]->expression.vtype],
                                type_name[exprs[1]->expression.vtype]);
                     return false;
@@ -432,7 +432,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid1('-'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "Cannot subtract type %s from %s",
+                parseerror(parser, "type error: cannot subtract type %s from %s",
                            type_name[exprs[1]->expression.vtype],
                            type_name[exprs[0]->expression.vtype]);
                 return false;
@@ -451,7 +451,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "Cannot add type %s from %s",
+                    parseerror(parser, "type error: cannot subtract type %s from %s",
                                type_name[exprs[1]->expression.vtype],
                                type_name[exprs[0]->expression.vtype]);
                     return false;
@@ -464,7 +464,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 exprs[1]->expression.vtype != TYPE_VECTOR &&
                 exprs[1]->expression.vtype != TYPE_FLOAT)
             {
-                parseerror(parser, "Cannot multiply type %s from %s",
+                parseerror(parser, "type error: cannot multiply type %s by %s",
                            type_name[exprs[1]->expression.vtype],
                            type_name[exprs[0]->expression.vtype]);
                 return false;
@@ -483,7 +483,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "Cannot add type %s from %s",
+                    parseerror(parser, "type error: cannot multiplye type %s by %s",
                                type_name[exprs[1]->expression.vtype],
                                type_name[exprs[0]->expression.vtype]);
                     return false;
@@ -493,12 +493,26 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
                 exprs[0]->expression.vtype != TYPE_FLOAT)
             {
-                parseerror(parser, "Cannot divide types %s and %s",
+                parseerror(parser, "type error: cannot divide types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+            break;
+        case opid1('|'):
+        case opid1('&'):
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
+                exprs[0]->expression.vtype != TYPE_FLOAT)
+            {
+                parseerror(parser, "type error: cannot perform bit operations on types %s and %s",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            out = (ast_expression*)ast_binary_new(ctx,
+                                                  (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
+                                                  exprs[0], exprs[1]);
             break;
 
 
