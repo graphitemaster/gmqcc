@@ -410,6 +410,12 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
+            if (exprs[0]->expression.vteyp != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
+                parseerror(parser, "type error: %s - %s not defined",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
             switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
@@ -429,6 +435,12 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 parseerror(parser, "Cannot subtract type %s from %s",
                            type_name[exprs[1]->expression.vtype],
                            type_name[exprs[0]->expression.vtype]);
+                return false;
+            }
+            if (exprs[0]->expression.vteyp != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
+                parseerror(parser, "type error: %s - %s not defined",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             switch (exprs[0]->expression.vtype) {
