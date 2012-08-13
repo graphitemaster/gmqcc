@@ -58,6 +58,8 @@ static void ast_expression_init(ast_expression *self,
     self->expression.codegen = codegen;
     self->expression.vtype   = TYPE_VOID;
     self->expression.next    = NULL;
+    self->expression.outl    = NULL;
+    self->expression.outr    = NULL;
     MEM_VECTOR_INIT(&self->expression, params);
 }
 
