@@ -91,6 +91,38 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
     INSTR_STOREP_V, /* variant, should never be accessed */
 };
 
+uint16_t type_eq_instr[TYPE_COUNT] = {
+    INSTR_EQ_F, /* should use I when having integer support */
+    INSTR_EQ_S,
+    INSTR_EQ_F,
+    INSTR_EQ_V,
+    INSTR_EQ_E,
+    INSTR_EQ_E, /* FLD has no comparison */
+    INSTR_EQ_FNC,
+    INSTR_EQ_E, /* should use I */
+#if 0
+    INSTR_EQ_I,
+#endif
+
+    INSTR_EQ_V, /* variant, should never be accessed */
+};
+
+uint16_t type_ne_instr[TYPE_COUNT] = {
+    INSTR_NE_F, /* should use I when having integer support */
+    INSTR_NE_S,
+    INSTR_NE_F,
+    INSTR_NE_V,
+    INSTR_NE_E,
+    INSTR_NE_E, /* FLD has no comparison */
+    INSTR_NE_FNC,
+    INSTR_NE_E, /* should use I */
+#if 0
+    INSTR_NE_I,
+#endif
+
+    INSTR_NE_V, /* variant, should never be accessed */
+};
+
 MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
 
 /***********************************************************************
