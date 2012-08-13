@@ -502,6 +502,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
             break;
+        case opid1('%'):
+            parseerror(parser, "qc does not have a modulo operator");
+            return false;
         case opid1('|'):
         case opid1('&'):
             if (NotSameType(TYPE_FLOAT)) {
@@ -513,6 +516,31 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_binary_new(ctx,
                                                   (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
                                                   exprs[0], exprs[1]);
+            break;
+        case opid1('^'):
+            parseerror(parser, "TODO: bitxor");
+            return false;
+
+        case opid2('<','<'):
+        case opid2('>','>'):
+            parseerror(parser, "TODO: shifts");
+            return false;
+
+        case opid2('|','|'):
+            generated_op += 1; /* INSTR_OR */
+        case opid2('&','&'):
+            generated_op += INSTR_AND;
+            if (NotSameType(TYPE_FLOAT)) {
+                parseerror(parser, "type error: cannot apply logical operation on types %s and %s",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                parseerror(parser, "TODO: logical ops for arbitrary types using INSTR_NOT");
+                parseerror(parser, "TODO: optional early out");
+                return false;
+            }
+            if (opts_standard == COMPILER_GMQCC)
+                printf("TODO: early out logic\n");
+            out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             break;
 
         case opid1('>'):
@@ -538,7 +566,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_ne_op[exprs[0]->expression.vtype], exprs[0], exprs[1]);
+            out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->expression.vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
@@ -547,9 +575,8 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_eq_op[exprs[0]->expression.vtype], exprs[0], exprs[1]);
+            out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->expression.vtype], exprs[0], exprs[1]);
             break;
-
 
         case opid1('='):
             if (ast_istype(exprs[0], ast_entfield))
