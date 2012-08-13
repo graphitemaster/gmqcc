@@ -503,6 +503,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
             break;
         case opid1('%'):
+        case opid2('%','='):
             parseerror(parser, "qc does not have a modulo operator");
             return false;
         case opid1('|'):
@@ -523,6 +524,8 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
         case opid2('<','<'):
         case opid2('>','>'):
+        case opid3('<','<','='):
+        case opid3('>','>','='):
             parseerror(parser, "TODO: shifts");
             return false;
 
@@ -952,6 +955,111 @@ onerr:
 static bool parser_variable(parser_t *parser, ast_block *localblock);
 static ast_block* parser_parse_block(parser_t *parser);
 static ast_expression* parser_parse_statement_or_block(parser_t *parser);
+
+static bool parser_parse_if(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    ast_ifthen *ifthen;
+    ast_expression *cond, *ontrue, *onfalse = NULL;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    /* skip the 'if' and check for opening paren */
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected 'if' condition in parenthesis");
+        return false;
+    }
+    /* parse into the expression */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected 'if' condition after opening paren");
+        return false;
+    }
+    /* parse the condition */
+    cond = parser_expression(parser);
+    if (!cond)
+        return false;
+    /* closing paren */
+    if (parser->tok != ')') {
+        parseerror(parser, "expected closing paren after 'if' condition");
+        ast_delete(cond);
+        return false;
+    }
+    /* parse into the 'then' branch */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected statement for on-true branch of 'if'");
+        ast_delete(cond);
+        return false;
+    }
+    ontrue = parser_parse_statement_or_block(parser);
+    if (!ontrue) {
+        ast_delete(cond);
+        return false;
+    }
+    /* check for an else */
+    if (!strcmp(parser_tokval(parser), "else")) {
+        /* parse into the 'else' branch */
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected on-false branch after 'else'");
+            ast_delete(ontrue);
+            ast_delete(cond);
+            return false;
+        }
+        onfalse = parser_parse_statement_or_block(parser);
+        if (!onfalse) {
+            ast_delete(ontrue);
+            ast_delete(cond);
+            return false;
+        }
+    }
+
+    ifthen = ast_ifthen_new(ctx, cond, ontrue, onfalse);
+    *out = (ast_expression*)ifthen;
+    return true;
+}
+
+static bool parser_parse_while(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    ast_loop *aloop;
+    ast_expression *cond, *ontrue;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    /* skip the 'while' and check for opening paren */
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected 'if' condition in parenthesis");
+        return false;
+    }
+    /* parse into the expression */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected 'if' condition after opening paren");
+        return false;
+    }
+    /* parse the condition */
+    cond = parser_expression(parser);
+    if (!cond)
+        return false;
+    /* closing paren */
+    if (parser->tok != ')') {
+        parseerror(parser, "expected closing paren after 'if' condition");
+        ast_delete(cond);
+        return false;
+    }
+    /* parse into the 'then' branch */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected statement for on-true branch of 'if'");
+        ast_delete(cond);
+        return false;
+    }
+    ontrue = parser_parse_statement_or_block(parser);
+    if (!ontrue) {
+        ast_delete(cond);
+        return false;
+    }
+
+    aloop = ast_loop_new(ctx, NULL, cond, NULL, NULL, ontrue);
+    *out = (ast_expression*)aloop;
+    return true;
+}
+
 static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
 {
     if (parser->tok == TOKEN_TYPENAME)
@@ -1005,62 +1113,11 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
         }
         else if (!strcmp(parser_tokval(parser), "if"))
         {
-            ast_ifthen *ifthen;
-            ast_expression *cond, *ontrue, *onfalse = NULL;
-
-            lex_ctx ctx = parser_ctx(parser);
-
-            /* skip the 'if' and check for opening paren */
-            if (!parser_next(parser) || parser->tok != '(') {
-                parseerror(parser, "expected 'if' condition in parenthesis");
-                return false;
-            }
-            /* parse into the expression */
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected 'if' condition after opening paren");
-                return false;
-            }
-            /* parse the condition */
-            cond = parser_expression(parser);
-            if (!cond)
-                return false;
-            /* closing paren */
-            if (parser->tok != ')') {
-                parseerror(parser, "expected closing paren after 'if' condition");
-                ast_delete(cond);
-                return false;
-            }
-            /* parse into the 'then' branch */
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected statement for on-true branch of 'if'");
-                ast_delete(cond);
-                return false;
-            }
-            ontrue = parser_parse_statement_or_block(parser);
-            if (!ontrue) {
-                ast_delete(cond);
-                return false;
-            }
-            /* check for an else */
-            if (!strcmp(parser_tokval(parser), "else")) {
-                /* parse into the 'else' branch */
-                if (!parser_next(parser)) {
-                    parseerror(parser, "expected on-false branch after 'else'");
-                    ast_delete(ontrue);
-                    ast_delete(cond);
-                    return false;
-                }
-                onfalse = parser_parse_statement_or_block(parser);
-                if (!onfalse) {
-                    ast_delete(ontrue);
-                    ast_delete(cond);
-                    return false;
-                }
-            }
-
-            ifthen = ast_ifthen_new(ctx, cond, ontrue, onfalse);
-            *out = (ast_expression*)ifthen;
-            return true;
+            return parser_parse_if(parser, block, out);
+        }
+        else if (!strcmp(parser_tokval(parser), "while"))
+        {
+            return parser_parse_while(parser, block, out);
         }
         parseerror(parser, "Unexpected keyword");
         return false;
