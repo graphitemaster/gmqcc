@@ -825,6 +825,10 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
      * of the form: (a, b, c) = x should not assign to c...
      */
     (void)lvalue;
+    if (self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
 
     /* output is NULL at first, we'll have each expression
      * assign to out output, thus, a comma-operator represention
@@ -848,6 +852,8 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
             return false;
     }
 
+    self->expression.outr = *out;
+
     return true;
 }
 
@@ -856,10 +862,21 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
     ast_expression_codegen *cgen;
     ir_value *left, *right;
 
+    if (lvalue && self->expression.outl) {
+        *out = self->expression.outl;
+        return true;
+    }
+
+    if (!lvalue && self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
+
     cgen = self->dest->expression.codegen;
     /* lvalue! */
     if (!(*cgen)((ast_expression*)(self->dest), func, true, &left))
         return false;
+    self->expression.outl = left;
 
     cgen = self->source->expression.codegen;
     /* rvalue! */
@@ -868,6 +885,7 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
 
     if (!ir_block_create_store_op(func->curblock, self->op, left, right))
         return false;
+    self->expression.outr = right;
 
     /* Theoretically, an assinment returns its left side as an
      * lvalue, if we don't need an lvalue though, we return
@@ -889,7 +907,11 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     /* In the context of a binary operation, we can disregard
      * the lvalue flag.
      */
-     (void)lvalue;
+    (void)lvalue;
+    if (self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
 
     cgen = self->left->expression.codegen;
     /* lvalue! */
@@ -905,6 +927,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
                                  self->op, left, right);
     if (!*out)
         return false;
+    self->expression.outr = *out;
 
     return true;
 }
@@ -918,6 +941,10 @@ bool ast_unary_codegen(ast_unary *self, ast_function *func, bool lvalue, ir_valu
      * the lvalue flag.
      */
     (void)lvalue;
+    if (self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
 
     cgen = self->operand->expression.codegen;
     /* lvalue! */
@@ -928,6 +955,7 @@ bool ast_unary_codegen(ast_unary *self, ast_function *func, bool lvalue, ir_valu
                                  self->op, operand);
     if (!*out)
         return false;
+    self->expression.outr = *out;
 
     return true;
 }
@@ -941,6 +969,11 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
      * the lvalue flag.
      */
     (void)lvalue;
+    if (self->expression.outr) {
+        printf("internal error: ast_return cannot be reused, it bears no result!\n");
+        return false;
+    }
+    self->expression.outr = (ir_value*)1;
 
     cgen = self->operand->expression.codegen;
     /* lvalue! */
@@ -963,6 +996,16 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
      * value in a temp.
      */
 
+    if (lvalue && self->expression.outl) {
+        *out = self->expression.outl;
+        return true;
+    }
+
+    if (!lvalue && self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
+
     cgen = self->entity->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->entity), func, false, &ent))
         return false;
@@ -982,6 +1025,11 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
     if (!*out)
         return false;
 
+    if (lvalue)
+        self->expression.outl = *out;
+    else
+        self->expression.outr = *out;
+
     /* Hm that should be it... */
     return true;
 }
@@ -990,6 +1038,13 @@ bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_va
 {
     ast_expression_codegen *cgen;
     ir_value *vec;
+
+    /* in QC this is always an lvalue */
+    (void)lvalue;
+    if (self->expression.outl) {
+        *out = self->expression.outl;
+        return true;
+    }
 
     cgen = self->owner->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->owner), func, true, &vec))
@@ -1002,6 +1057,7 @@ bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_va
     }
 
     *out = ir_value_vector_member(vec, self->field);
+    self->expression.outl = *out;
 
     return (*out != NULL);
 }
@@ -1021,6 +1077,12 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     /* We don't output any value, thus also don't care about r/lvalue */
     (void)out;
     (void)lvalue;
+
+    if (self->expression.outr) {
+        printf("internal error: ast_ifthen cannot be reused, it bears no result!\n");
+        return false;
+    }
+    self->expression.outr = (ir_value*)1;
 
     /* generate the condition */
     func->curblock = cond;
@@ -1102,6 +1164,10 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     ir_block *onfalse;
     ir_block *merge;
 
+    /* Ternary can never create an lvalue... */
+    if (lvalue)
+        return false;
+
     /* In theory it shouldn't be possible to pass through a node twice, but
      * in case we add any kind of optimization pass for the AST itself, it
      * may still happen, thus we remember a created ir_value and simply return one
@@ -1111,10 +1177,6 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         *out = self->phi_out;
         return true;
     }
-
-    /* Ternary can never create an lvalue... */
-    if (lvalue)
-        return false;
 
     /* In the following, contraty to ast_ifthen, we assume both paths exist. */
 
@@ -1226,6 +1288,12 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 
     (void)lvalue;
     (void)out;
+
+    if (self->expression.outr) {
+        printf("internal error: ast_loop cannot be reused, it bears no result!\n");
+        return false;
+    }
+    self->expression.outr = (ir_value*)1;
 
     /* NOTE:
      * Should we ever need some kind of block ordering, better make this function
@@ -1431,8 +1499,13 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
 
     ir_value *funval = NULL;
 
-    /* return values are never rvalues */
+    /* return values are never lvalues */
     (void)lvalue;
+
+    if (self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
 
     cgen = self->func->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->func), func, false, &funval))
@@ -1467,6 +1540,7 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
     }
 
     *out = ir_call_value(callinstr);
+    self->expression.outr = *out;
 
     MEM_VECTOR_CLEAR(&params, v);
     return true;
