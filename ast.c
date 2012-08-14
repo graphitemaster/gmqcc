@@ -156,6 +156,27 @@ static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
     }
 }
 
+bool ast_compare_type(ast_expression *a, ast_expression *b)
+{
+    if (a->expression.vtype != b->expression.vtype)
+        return false;
+    if (!a->expression.next != !b->expression.next)
+        return false;
+    if (a->expression.params_count != b->expression.params_count)
+        return false;
+    if (a->expression.params_count) {
+        size_t i;
+        for (i = 0; i < a->expression.params_count; ++i) {
+            if (!ast_compare_type((ast_expression*)a->expression.params[i],
+                                  (ast_expression*)b->expression.params[i]))
+                return false;
+        }
+    }
+    if (a->expression.next)
+        return ast_compare_type(a->expression.next, b->expression.next);
+    return true;
+}
+
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);

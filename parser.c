@@ -1398,8 +1398,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             return false;
         }
 
-        isfunc = false;
-        func = NULL;
+        olddecl = NULL;
+        isfunc  = false;
+        func    = NULL;
         ctx = parser_ctx(parser);
         var = parser_parse_type(parser, basetype, &isfunc);
 
@@ -1411,18 +1412,20 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             return false;
         }
 
-        if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
-            ast_value_delete(var);
-            parseerror(parser, "global %s already declared here: %s:%i\n",
-                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-            return false;
-        }
+        if (!isfunc) {
+            if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
+                ast_value_delete(var);
+                parseerror(parser, "global %s already declared here: %s:%i\n",
+                           parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                return false;
+            }
 
-        if (localblock && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
-            ast_value_delete(var);
-            parseerror(parser, "local %s already declared here: %s:%i\n",
-                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-            return false;
+            if (localblock && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
+                ast_value_delete(var);
+                parseerror(parser, "local %s already declared here: %s:%i\n",
+                           parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                return false;
+            }
         }
 
         if (!ast_value_set_name(var, parser_tokval(parser))) {
@@ -1434,6 +1437,30 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
         if (isfunc) {
             /* a function was defined */
             ast_value *fval;
+            ast_value *proto = NULL;
+
+            if (!localblock)
+                olddecl = parser_find_global(parser, parser_tokval(parser));
+            else
+                olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal);
+
+            if (olddecl) {
+                /* we had a prototype */
+                if (!ast_istype(olddecl, ast_value)) {
+                    /* theoretically not possible you think?
+                     * well:
+                     * vector v;
+                     * void() v_x = {}
+                     * got it?
+                     */
+                    parseerror(parser, "cannot declare a function with the same name as a vector's member: %s",
+                               parser_tokval(parser));
+                    ast_value_delete(var);
+                    return false;
+                }
+
+                proto = (ast_value*)olddecl;
+            }
 
             /* turn var into a value of TYPE_FUNCTION, with the old var
              * as return type
@@ -1450,11 +1477,29 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             fval->expression.next = (ast_expression*)var;
             MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
 
-            if (!parser_t_functions_add(parser, func)) {
-                ast_value_delete(var);
-                if (fval) ast_value_delete(fval);
-                if (func) ast_function_delete(func);
-                return false;
+            /* we compare the type late here, but it's easier than
+             * messing with the parameter-vector etc. earlier
+             */
+            if (proto) {
+                if (!ast_compare_type((ast_expression*)proto, (ast_expression*)fval)) {
+                    parseerror(parser, "prototype declared at %s:%i had a different type",
+                               ast_ctx(fval).file, ast_ctx(fval).line);
+                    ast_function_delete(func);
+                    ast_value_delete(fval);
+                    return false;
+                }
+                ast_function_delete(func);
+                ast_value_delete(fval);
+                var = proto;
+                func = var->constval.vfunc;
+            }
+            else
+            {
+                if (!parser_t_functions_add(parser, func)) {
+                    ast_function_delete(func);
+                    ast_value_delete(fval);
+                    return false;
+                }
             }
 
             var = fval;

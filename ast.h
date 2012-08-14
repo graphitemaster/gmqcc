@@ -160,6 +160,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir);
 
 bool GMQCC_WARN ast_value_params_add(ast_value*, ast_value*);
 
+bool ast_compare_type(ast_expression *a, ast_expression *b);
+
 /* Binary
  *
  * A value-returning binary expression.
