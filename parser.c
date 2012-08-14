@@ -625,6 +625,33 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 assignop = type_store_instr[exprs[0]->expression.vtype];
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
+        case opid2('+','='):
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
+                parseerror(parser, "Cannot add type %s and %s",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
+                parseerror(parser, "type error: %s - %s not defined",
+                           type_name[exprs[0]->expression.vtype],
+                           type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            switch (exprs[0]->expression.vtype) {
+                case TYPE_FLOAT:
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
+                    break;
+                case TYPE_VECTOR:
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
+                    break;
+                default:
+                    parseerror(parser, "type error: cannot add type %s to %s",
+                               type_name[exprs[0]->expression.vtype],
+                               type_name[exprs[1]->expression.vtype]);
+                    return false;
+            };
+            break;
     }
 #undef NotSameType
 
