@@ -433,6 +433,8 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 #define CanConstFold(A, B)                                                \
              (ast_istype((A), ast_value) && ast_istype((B), ast_value) && \
               ((ast_value*)(A))->isconst && ((ast_value*)(B))->isconst)
+#define ConstV(i) (asvalue[(i)]->constval.vvec)
+#define ConstF(i) (asvalue[(i)]->constval.vfloat)
     switch (op->id)
     {
         default:
@@ -488,18 +490,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 case TYPE_FLOAT:
                     if (CanConstFold(exprs[0], exprs[1]))
                     {
-                        out = (ast_expression*)parser_const_float(parser,
-                            asvalue[0]->constval.vfloat + asvalue[1]->constval.vfloat);
+                        out = (ast_expression*)parser_const_float(parser, ConstF(0) + ConstF(1));
                     }
                     else
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
                     if (CanConstFold(exprs[0], exprs[1]))
-                    {
-                        out = (ast_expression*)parser_const_vector(parser,
-                            vec3_add(asvalue[0]->constval.vvec, asvalue[1]->constval.vvec));
-                    }
+                        out = (ast_expression*)parser_const_vector(parser, vec3_add(ConstV(0), ConstV(1)));
                     else
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
@@ -522,19 +520,13 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
                     if (CanConstFold(exprs[0], exprs[1]))
-                    {
-                        out = (ast_expression*)parser_const_float(parser,
-                            asvalue[0]->constval.vfloat - asvalue[1]->constval.vfloat);
-                    }
+                        out = (ast_expression*)parser_const_float(parser, ConstF(0) - ConstF(1));
                     else
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
                     if (CanConstFold(exprs[0], exprs[1]))
-                    {
-                        out = (ast_expression*)parser_const_vector(parser,
-                            vec3_sub(asvalue[0]->constval.vvec, asvalue[1]->constval.vvec));
-                    }
+                        out = (ast_expression*)parser_const_vector(parser, vec3_sub(ConstV(0), ConstV(1)));
                     else
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                     break;
@@ -562,16 +554,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     if (exprs[1]->expression.vtype == TYPE_VECTOR)
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
-                            out = (ast_expression*)parser_const_vector(parser,
-                                vec3_mulvf(asvalue[1]->constval.vvec, asvalue[0]->constval.vfloat));
+                            out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(1), ConstF(0)));
                         else
                             out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
                     }
                     else
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
-                            out = (ast_expression*)parser_const_float(parser,
-                                asvalue[0]->constval.vfloat * asvalue[1]->constval.vfloat);
+                            out = (ast_expression*)parser_const_float(parser, ConstF(0) * ConstF(1));
                         else
                             out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
                     }
@@ -580,16 +570,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     if (exprs[1]->expression.vtype == TYPE_FLOAT)
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
-                            out = (ast_expression*)parser_const_vector(parser,
-                                vec3_mulvf(asvalue[0]->constval.vvec, asvalue[1]->constval.vfloat));
+                            out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(0), ConstF(1)));
                         else
                             out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
                     }
                     else
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
-                            out = (ast_expression*)parser_const_float(parser,
-                                vec3_mulvv(asvalue[0]->constval.vvec, asvalue[1]->constval.vvec));
+                            out = (ast_expression*)parser_const_float(parser, vec3_mulvv(ConstV(0), ConstV(1)));
                         else
                             out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                     }
@@ -609,8 +597,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 return false;
             }
             if (CanConstFold(exprs[0], exprs[1]))
-                out = (ast_expression*)parser_const_float(parser,
-                    asvalue[0]->constval.vfloat / asvalue[1]->constval.vfloat);
+                out = (ast_expression*)parser_const_float(parser, ConstF(0) / ConstF(1));
             else
                 out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
             break;
@@ -626,9 +613,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx,
-                                                  (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
-                                                  exprs[0], exprs[1]);
+            if (CanConstFold(exprs[0], exprs[1]))
+                out = (ast_expression*)parser_const_float(parser,
+                    (op->id == opid1('|') ? (float)( ((qcint)ConstF(0)) | ((qcint)ConstF(1)) ) :
+                                            (float)( ((qcint)ConstF(0)) | ((qcint)ConstF(1)) ) ));
+            else
+                out = (ast_expression*)ast_binary_new(ctx,
+                    (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
+                    exprs[0], exprs[1]);
             break;
         case opid1('^'):
             parseerror(parser, "TODO: bitxor");
@@ -655,7 +647,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             if (opts_standard == COMPILER_GMQCC)
                 printf("TODO: early out logic\n");
-            out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+            if (CanConstFold(exprs[0], exprs[1]))
+                out = (ast_expression*)parser_const_float(parser,
+                    (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
+            else
+                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             break;
 
         case opid1('>'):
