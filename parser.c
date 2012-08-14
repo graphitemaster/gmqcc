@@ -1483,7 +1483,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             if (proto) {
                 if (!ast_compare_type((ast_expression*)proto, (ast_expression*)fval)) {
                     parseerror(parser, "prototype declared at %s:%i had a different type",
-                               ast_ctx(fval).file, ast_ctx(fval).line);
+                               ast_ctx(proto).file, ast_ctx(proto).line);
                     ast_function_delete(func);
                     ast_value_delete(fval);
                     return false;
