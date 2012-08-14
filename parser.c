@@ -626,10 +626,10 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
+                    out = (ast_expression*)ast_binstore_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
+                    out = (ast_expression*)ast_binstore_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
                     parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
