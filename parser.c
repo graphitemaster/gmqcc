@@ -1378,6 +1378,10 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
         }
         else if (!strcmp(parser_tokval(parser), "for"))
         {
+            if (opts_standard == COMPILER_QCC) {
+                if (parsewarning(parser, WARN_EXTENSIONS, "there's no for-loop in -std=qcc"))
+                    return false;
+            }
             return parser_parse_for(parser, block, out);
         }
         parseerror(parser, "Unexpected keyword");
