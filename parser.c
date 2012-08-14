@@ -616,7 +616,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
                     (op->id == opid1('|') ? (float)( ((qcint)ConstF(0)) | ((qcint)ConstF(1)) ) :
-                                            (float)( ((qcint)ConstF(0)) | ((qcint)ConstF(1)) ) ));
+                                            (float)( ((qcint)ConstF(0)) & ((qcint)ConstF(1)) ) ));
             else
                 out = (ast_expression*)ast_binary_new(ctx,
                     (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
