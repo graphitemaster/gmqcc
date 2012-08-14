@@ -432,13 +432,13 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
         case opid1('+'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "Cannot add type %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
-                parseerror(parser, "type error: %s - %s not defined",
+                parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -451,7 +451,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "type error: cannot add type %s to %s",
+                    parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
                                type_name[exprs[0]->expression.vtype],
                                type_name[exprs[1]->expression.vtype]);
                     return false;
@@ -459,13 +459,13 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid1('-'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "type error: cannot subtract type %s from %s",
+                parseerror(parser, "invalid types used in expression: cannot subtract type %s from %s",
                            type_name[exprs[1]->expression.vtype],
                            type_name[exprs[0]->expression.vtype]);
                 return false;
             }
             if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
-                parseerror(parser, "type error: %s - %s not defined",
+                parseerror(parser, "invalid types used in expression: cannot subtract type %s from %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -478,7 +478,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "type error: cannot subtract type %s from %s",
+                    parseerror(parser, "invalid types used in expression: cannot subtract type %s from %s",
                                type_name[exprs[1]->expression.vtype],
                                type_name[exprs[0]->expression.vtype]);
                     return false;
@@ -491,7 +491,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 exprs[1]->expression.vtype != TYPE_VECTOR &&
                 exprs[1]->expression.vtype != TYPE_FLOAT)
             {
-                parseerror(parser, "type error: cannot multiply type %s by %s",
+                parseerror(parser, "invalid types used in expression: cannot multiply types %s and %s",
                            type_name[exprs[1]->expression.vtype],
                            type_name[exprs[0]->expression.vtype]);
                 return false;
@@ -510,7 +510,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "type error: cannot multiply type %s by %s",
+                    parseerror(parser, "invalid types used in expression: cannot multiply types %s and %s",
                                type_name[exprs[1]->expression.vtype],
                                type_name[exprs[0]->expression.vtype]);
                     return false;
@@ -518,7 +518,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid1('/'):
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "type error: cannot divide types %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot divide types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -532,7 +532,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         case opid1('|'):
         case opid1('&'):
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "type error: cannot perform bit operations on types %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot perform bit operations between types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -557,7 +557,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         case opid2('&','&'):
             generated_op += INSTR_AND;
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "type error: cannot apply logical operation on types %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot perform logical operations between types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 parseerror(parser, "TODO: logical ops for arbitrary types using INSTR_NOT");
@@ -578,7 +578,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         case opid2('<', '='):
             generated_op += INSTR_LE;
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "type error: cannot compare types %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot perform comparison between types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -587,7 +587,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid2('!', '='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "type error: cannot compare types %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot perform comparison between types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -596,7 +596,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid2('=', '='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "type error: cannot compare types %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot perform comparison between types %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -613,13 +613,13 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid2('+','='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "Cannot add type %s and %s",
+                parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
-                parseerror(parser, "type error: %s - %s not defined",
+                parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 return false;
@@ -632,7 +632,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "type error: cannot add type %s to %s",
+                    parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
                                type_name[exprs[0]->expression.vtype],
                                type_name[exprs[1]->expression.vtype]);
                     return false;
