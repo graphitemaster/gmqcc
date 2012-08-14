@@ -29,6 +29,17 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+/*
+ * Disable some over protective warnings in visual studio because fixing them is a waste
+ * of my time.
+ */
+#ifdef _MSC_VER
+#	pragma warning(disable : 4244 ) // conversion from 'int' to 'float', possible loss of data
+#	pragma warning(disable : 4018 ) // signed/unsigned mismatch
+#	pragma warning(disable : 4996 ) // This function or variable may be unsafe
+#	pragma warning(disable : 4700 ) // uninitialized local variable used
+#endif
+
 #define GMQCC_VERSION_MAJOR 0
 #define GMQCC_VERSION_MINOR 1
 #define GMQCC_VERSION_PATCH 0
@@ -135,31 +146,26 @@
 #if   INT_MAX   == 0x7FFFFFFF
     typedef int            int32_t;
     typedef unsigned int   uint32_t;
-    typedef long           int64_t;
-    typedef unsigned long  uint64_t;
 #elif LONG_MAX  == 0x7FFFFFFF
     typedef long           int32_t;
     typedef unsigned long  uint32_t;
+#endif
 
+
+#if defined(__GNUC__) || defined (__CLANG__)
+	typedef int          int64_t  __attribute__((__mode__(__DI__)));
+	typedef unsigned int uint64_t __attribute__((__mode__(__DI__)));
+#elif defined(_MSC_VER)
+	typedef __int64          int64_t;
+	typedef unsigned __int64 uint64_t;
+#else
     /*
-     * It's nearly impossible to figure out a 64bit type at
-     * this point without making assumptions about the build
-     * enviroment.  So if clang or gcc is detected use some
-     * compiler builtins to create a 64 signed and unsigned
-     * type.
-     */
-#   if defined(__GNUC__) || defined (__CLANG__)
-        typedef int          int64_t  __attribute__((__mode__(__DI__)));
-        typedef unsigned int uint64_t __attribute__((__mode__(__DI__)));
-#   else
-        /*
-         * Incoorectly size the types so static assertions below will
-         * fail.  There is no valid way to get a 64bit type at this point
-         * without making assumptions of too many things.
-         */
-        typedef struct { char _fail : 0; } int64_t;
-        typedef struct { char _fail : 0; } uint64_t;
-#   endif
+    * Incoorectly size the types so static assertions below will
+    * fail.  There is no valid way to get a 64bit type at this point
+    * without making assumptions of too many things.
+    */
+    typedef struct { char _fail : 0; } int64_t;
+    typedef struct { char _fail : 0; } uint64_t;
 #endif
 #ifdef _LP64 /* long pointer == 64 */
     typedef unsigned long  uintptr_t;
@@ -175,7 +181,7 @@ typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
 typedef char uint64_size_is_correct [sizeof(uint64_t) == 8?1:-1];
 typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
 typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
-typedef char int64_size_is_correct  [sizeof(int64_t)  == 8?1:-1];
+typedef char int64_size_is_correct  [sizeof(int64_t)  >= 8?1:-1];
 /* intptr_t / uintptr_t correct size check */
 typedef char uintptr_size_is_correct[sizeof(intptr_t) == sizeof(int*)?1:-1];
 typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
