@@ -190,10 +190,11 @@ struct ast_binstore_s
 
     int             opstore;
     int             opbin;
-    ast_expression *left;
-    ast_expression *right;
+    ast_expression *dest;
+    ast_expression *source;
 };
 ast_binstore* ast_binstore_new(lex_ctx    ctx,
+                               int        storeop,
                                int        op,
                                ast_expression *left,
                                ast_expression *right);

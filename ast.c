@@ -236,6 +236,39 @@ void ast_binary_delete(ast_binary *self)
     mem_d(self);
 }
 
+ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
+                               ast_expression* left, ast_expression* right)
+{
+    ast_instantiate(ast_binstore, ctx, ast_binstore_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binstore_codegen);
+
+    self->opstore = storop;
+    self->opbin   = op;
+    self->dest    = left;
+    self->source  = right;
+
+    self->expression.vtype = left->expression.vtype;
+    if (left->expression.next) {
+        self->expression.next = ast_type_copy(ctx, left);
+        if (!self->expression.next) {
+            ast_delete(self);
+            return NULL;
+        }
+    }
+    else
+        self->expression.next = NULL;
+
+    return self;
+}
+
+void ast_binstore_delete(ast_binstore *self)
+{
+    ast_unref(self->dest);
+    ast_unref(self->source);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_unary* ast_unary_new(lex_ctx ctx, int op,
                          ast_expression *expr)
 {
@@ -928,6 +961,60 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     if (!*out)
         return false;
     self->expression.outr = *out;
+
+    return true;
+}
+
+bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+    ir_value *leftl, *leftr, *right, *bin;
+
+    if (lvalue && self->expression.outl) {
+        *out = self->expression.outl;
+        return true;
+    }
+
+    if (!lvalue && self->expression.outr) {
+        *out = self->expression.outr;
+        return true;
+    }
+
+    /* for a binstore we need both an lvalue and an rvalue for the left side */
+    /* rvalue of destination! */
+    cgen = self->dest->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->dest), func, true, &leftr))
+        return false;
+
+    /* source as rvalue only */
+    cgen = self->source->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
+        return false;
+
+    /* now the binary */
+    bin = ir_block_create_binop(func->curblock, ast_function_label(func, "binst"),
+                                self->opbin, leftr, right);
+    self->expression.outr = bin;
+
+    /* now store them */
+    cgen = self->dest->expression.codegen;
+    /* lvalue of destination */
+    if (!(*cgen)((ast_expression*)(self->dest), func, true, &leftl))
+        return false;
+    self->expression.outl = leftl;
+
+    if (!ir_block_create_store_op(func->curblock, self->opstore, leftl, bin))
+        return false;
+    self->expression.outr = bin;
+
+    /* Theoretically, an assinment returns its left side as an
+     * lvalue, if we don't need an lvalue though, we return
+     * the right side as an rvalue, otherwise we have to
+     * somehow know whether or not we need to dereference the pointer
+     * on the left side - that is: OP_LOAD if it was an address.
+     * Also: in original QC we cannot OP_LOADP *anyway*.
+     */
+    *out = (lvalue ? leftl : bin);
 
     return true;
 }
