@@ -1172,11 +1172,9 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
 
     /* parse the condition */
     if (parser->tok != ';') {
-        printf("going cond!\n");
         cond = parser_expression_leave(parser);
         if (!cond)
             goto onerr;
-        printf("going cond!\n");
     }
 
     /* move on to incrementor */
