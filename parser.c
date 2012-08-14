@@ -608,7 +608,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+            if (CanConstFold(exprs[0], exprs[1]))
+                out = (ast_expression*)parser_const_float(parser,
+                    asvalue[0]->constval.vfloat / asvalue[1]->constval.vfloat);
+            else
+                out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
             break;
         case opid1('%'):
         case opid2('%','='):
