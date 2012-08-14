@@ -613,13 +613,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
         case opid2('+','='):
         case opid2('-','='):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
-                return false;
-            }
-            if (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
+                (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
+            {
                 parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
