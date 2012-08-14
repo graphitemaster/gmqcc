@@ -510,7 +510,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "type error: cannot multiplye type %s by %s",
+                    parseerror(parser, "type error: cannot multiply type %s by %s",
                                type_name[exprs[1]->expression.vtype],
                                type_name[exprs[0]->expression.vtype]);
                     return false;
