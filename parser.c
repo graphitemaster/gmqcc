@@ -1752,7 +1752,7 @@ bool parser_compile(const char *filename)
             if (!parser_do(parser)) {
                 if (parser->tok == TOKEN_EOF)
                     parseerror(parser, "unexpected eof");
-                else
+                else if (!parser->errors)
                     parseerror(parser, "parse error\n");
                 lex_close(parser->lex);
                 mem_d(parser);
