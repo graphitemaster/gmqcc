@@ -624,12 +624,16 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[1]->expression.vtype]);
                 return false;
             }
+            if (ast_istype(exprs[0], ast_entfield))
+                assignop = type_storep_instr[exprs[0]->expression.vtype];
+            else
+                assignop = type_store_instr[exprs[0]->expression.vtype];
             switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binstore_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
+                    out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_ADD_F, exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binstore_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
+                    out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
                     parseerror(parser, "invalid types used in expression: cannot add type %s and %s",

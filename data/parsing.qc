@@ -47,4 +47,12 @@ void() main = {
         print("Foo\n");
         a = a - 1;
     } while (a);
+
+    float b;
+    a = 5;
+    print3("a = ", ftos(a), "\n");
+    b = (a += 7);
+    print("adding\n");
+    print3("a = ", ftos(a), "\n");
+    print3("b = ", ftos(a), "\n");
 };
