@@ -1622,6 +1622,11 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 ast_block_delete(block);
                 return false;
             }
+
+            if (parser->tok == ';')
+                return parser_next(parser);
+            else if (opts_standard == COMPILER_QCC)
+                parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
             return true;
         } else {
             parseerror(parser, "TODO, const assignment");
