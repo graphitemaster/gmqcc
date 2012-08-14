@@ -51,8 +51,12 @@ void() main = {
     float b;
     a = 5;
     print3("a = ", ftos(a), "\n");
-    b = (a += 7);
+    b = a += 7;
     print("adding\n");
     print3("a = ", ftos(a), "\n");
     print3("b = ", ftos(a), "\n");
+
+    print3("memb = ", ftos(pawn.memb), "\n");
+    pawn.memb += 1;
+    print3("memb = ", ftos(pawn.memb), "\n");
 };

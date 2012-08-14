@@ -1013,7 +1013,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
     /* for a binstore we need both an lvalue and an rvalue for the left side */
     /* rvalue of destination! */
     cgen = self->dest->expression.codegen;
-    if (!(*cgen)((ast_expression*)(self->dest), func, true, &leftr))
+    if (!(*cgen)((ast_expression*)(self->dest), func, false, &leftr))
         return false;
 
     /* source as rvalue only */
