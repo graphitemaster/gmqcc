@@ -37,7 +37,7 @@ int levelcolor[] = {
 };
 #endif
 
-void vprintmsg(int level, const char *name, size_t line, char *errtype, const char *msg, va_list ap)
+void vprintmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
 {
 #ifndef WIN32
     fprintf (stderr, "\033[0;%dm%s:%d: \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, levelcolor[level], errtype);
@@ -48,10 +48,23 @@ void vprintmsg(int level, const char *name, size_t line, char *errtype, const ch
     fprintf (stderr, "\n");
 }
 
-void printmsg(int level, const char *name, size_t line, char *errtype, const char *msg, ...)
+void printmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
 {
     va_list   va;
     va_start(va, msg);
     vprintmsg(level, name, line, errtype, msg, va);
+    va_end  (va);
+}
+
+void cvprintmsg(lex_ctx ctx, int lvl, const char *msgtype, const char *msg, va_list ap)
+{
+    vprintmsg(lvl, ctx.name, ctx.line, msgtype, msg, ap);
+}
+
+void cprintmsg (lex_ctx ctx, int lvl, const char *msgtype, const char *msg, ...)
+{
+    va_list   va;
+    va_start(va, msg);
+    cvprintmsg(ctx, lvl, msgtype, msg, va);
     va_end  (va);
 }

@@ -901,8 +901,10 @@ enum {
     LVL_ERROR
 };
 
-void vprintmsg(int level, const char *name, size_t line, char *errtype, const char *msg, va_list ap);
-void printmsg (int level, const char *name, size_t line, char *errtype, const char *msg, ...);
+void vprintmsg (int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
+void printmsg  (int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
+void cvprintmsg(lex_ctx ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
+void cprintmsg (lex_ctx ctx, int lvl, const char *msgtype, const char *msg, ...);
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
