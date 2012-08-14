@@ -35,6 +35,15 @@
     ast_node_init((ast_node*)self, ctx, TYPE_##T);                  \
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
+/* error handling */
+static void asterror(lex_ctx ctx, const char *msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    cvprintmsg(ctx, LVL_ERROR, "error", msg, ap);
+    va_end(ap);
+}
+
 /* It must not be possible to get here. */
 static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
@@ -352,7 +361,7 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 
     if (owner->expression.vtype != TYPE_VECTOR &&
         owner->expression.vtype != TYPE_FIELD) {
-        printf("ast_member on an invalid owner of type %i\n", (int)owner->expression.vtype);
+        asterror(ctx, "member-access on an invalid owner of type %s\n", type_name[owner->expression.vtype]);
         mem_d(self);
         return NULL;
     }
@@ -662,7 +671,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * on all the globals.
      */
     if (!self->ir_v) {
-        printf("ast_value used before generated (%s)\n", self->name);
+        asterror(ast_ctx(self), "ast_value used before generated (%s)\n", self->name);
         return false;
     }
     *out = self->ir_v;
@@ -689,7 +698,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         if (!v)
             return false;
         if (self->isconst) {
-            printf("TODO: constant field pointers with value\n");
+            asterror(ast_ctx(self), "TODO: constant field pointers with value\n");
             goto error;
         }
         self->ir_v = v;
@@ -698,7 +707,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
 
     v = ir_builder_create_global(ir, self->name, self->expression.vtype);
     if (!v) {
-        printf("ir_builder_create_global failed\n");
+        asterror(ast_ctx(self), "ir_builder_create_global failed\n");
         return false;
     }
 
@@ -718,13 +727,13 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
                     goto error;
                 break;
             case TYPE_FUNCTION:
-                printf("global of type function not properly generated\n");
+                asterror(ast_ctx(self), "global of type function not properly generated\n");
                 goto error;
                 /* Cannot generate an IR value for a function,
                  * need a pointer pointing to a function rather.
                  */
             default:
-                printf("TODO: global constant type %i\n", self->expression.vtype);
+                asterror(ast_ctx(self), "TODO: global constant type %i\n", self->expression.vtype);
                 break;
         }
     }
@@ -772,7 +781,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
                     goto error;
                 break;
             default:
-                printf("TODO: global constant type %i\n", self->expression.vtype);
+                asterror(ast_ctx(self), "TODO: global constant type %i\n", self->expression.vtype);
                 break;
         }
     }
@@ -795,7 +804,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     irf = self->ir_func;
     if (!irf) {
-        printf("ast_function's related ast_value was not generated yet\n");
+        asterror(ast_ctx(self), "ast_function's related ast_value was not generated yet\n");
         return false;
     }
 
@@ -1057,7 +1066,7 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
      */
     (void)lvalue;
     if (self->expression.outr) {
-        printf("internal error: ast_return cannot be reused, it bears no result!\n");
+        asterror(ast_ctx(self), "internal error: ast_return cannot be reused, it bears no result!\n");
         return false;
     }
     self->expression.outr = (ir_value*)1;
@@ -1166,7 +1175,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     (void)lvalue;
 
     if (self->expression.outr) {
-        printf("internal error: ast_ifthen cannot be reused, it bears no result!\n");
+        asterror(ast_ctx(self), "internal error: ast_ifthen cannot be reused, it bears no result!\n");
         return false;
     }
     self->expression.outr = (ir_value*)1;
@@ -1377,7 +1386,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     (void)out;
 
     if (self->expression.outr) {
-        printf("internal error: ast_loop cannot be reused, it bears no result!\n");
+        asterror(ast_ctx(self), "internal error: ast_loop cannot be reused, it bears no result!\n");
         return false;
     }
     self->expression.outr = (ir_value*)1;

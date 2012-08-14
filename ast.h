@@ -66,6 +66,7 @@ enum {
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
+#define ast_ctx(node) (((ast_node_common*)(node))->context)
 
 /* Node interface with common components
  */
