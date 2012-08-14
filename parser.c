@@ -54,8 +54,6 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 
 	parser->errors++;
 
-	printf("error %s:%lu: ", parser->lex->tok->ctx.file, (unsigned long)parser->lex->tok->ctx.line);
-
 	va_start(ap, fmt);
     vprintmsg(LVL_ERROR, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "parse error", fmt, ap);
 	va_end(ap);
