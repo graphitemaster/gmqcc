@@ -1244,7 +1244,22 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
-        if (!strcmp(parser_tokval(parser), "return"))
+        if (!strcmp(parser_tokval(parser), "local"))
+        {
+            if (!block) {
+                parseerror(parser, "cannot declare a local variable here");
+                return false;
+            }
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected variable declaration");
+                return false;
+            }
+            if (!parser_variable(parser, block))
+                return false;
+            *out = NULL;
+            return true;
+        }
+        else if (!strcmp(parser_tokval(parser), "return"))
         {
             ast_expression *exp = NULL;
             ast_return     *ret = NULL;
