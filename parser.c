@@ -1622,7 +1622,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             }
 
             if (parser->tok == ';')
-                return parser_next(parser);
+                return parser_next(parser) || parser->tok == TOKEN_EOF;
             else if (opts_standard == COMPILER_QCC)
                 parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
             return true;
