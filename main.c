@@ -32,6 +32,8 @@ bool        opts_debug    = false;
 bool        opts_memchk   = false;
 bool        opts_dump     = false;
 
+static bool opts_output_wasset = false;
+
 typedef struct { char *filename; int type; } argitem;
 VECTOR_MAKE(argitem, items);
 
@@ -259,6 +261,7 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     opts_output = argarg;
+                    opts_output_wasset = true;
                     break;
 
                 case 'a':
@@ -286,10 +289,10 @@ static bool options_parse(int argc, char **argv) {
                     }
                     else {
             /* All long options with arguments */
-                        if (options_long_witharg("output", &argc, &argv, &argarg))
+                        if (options_long_witharg("output", &argc, &argv, &argarg)) {
                             opts_output = argarg;
-                        else
-                        {
+                            opts_output_wasset = true;
+                        } else {
                             printf("Unknown parameter: %s\n", argv[0]);
                             return false;
                         }
@@ -329,14 +332,39 @@ static void options_set(uint32_t *flags, size_t idx, bool on)
 #endif
 }
 
-bool parser_init();
-bool parser_compile(const char *filename);
-bool parser_finish(const char *output);
-void parser_cleanup();
+/* returns the line number, or -1 on error */
+static bool progs_nextline(char **out, FILE *src)
+{
+    size_t alen;
+    int    len;
+    char  *line;
+    char  *start;
+    char  *end;
+
+    line = *out;
+    len = util_getline(&line, &alen, src);
+    if (len == -1)
+        return false;
+
+    /* start at first non-blank */
+    for (start = line; isspace(*start); ++start) {}
+    /* end at the first non-blank */
+    for (end = start;  *end && !isspace(*end);  ++end)   {}
+
+    *out = line;
+    /* move the actual filename to the beginning */
+    while (start != end) {
+        *line++ = *start++;
+    }
+    *line = 0;
+    return true;
+}
 
 int main(int argc, char **argv) {
     size_t itr;
     int retval = 0;
+    bool opts_output_free = false;
+
     app_name = argv[0];
 
     /* default options / warn flags */
@@ -361,6 +389,7 @@ int main(int argc, char **argv) {
 
     if (!parser_init()) {
         printf("failed to initialize parser\n");
+        retval = 1;
         goto cleanup;
     }
 
@@ -385,7 +414,42 @@ int main(int argc, char **argv) {
 
         parser_finish(opts_output);
     } else {
-        printf("Mode: progs.src - not implemented\n");
+        FILE *src;
+        char *line;
+
+        printf("Mode: progs.src\n");
+        src = fopen("progs.src", "rb");
+        if (!src) {
+            printf("failed to open `progs.src` for reading\n");
+            retval = 1;
+            goto cleanup;
+        }
+
+        line = NULL;
+        if (!progs_nextline(&line, src) || !line[0]) {
+            printf("illformatted progs.src file: expected output filename in first line\n");
+            retval = 1;
+            goto srcdone;
+        }
+
+        if (!opts_output_wasset) {
+            opts_output = util_strdup(line);
+            opts_output_free = true;
+        }
+
+        while (progs_nextline(&line, src)) {
+            if (!line[0] || (line[0] == '/' && line[1] == '/'))
+                continue;
+            printf("  src: %s\n", line);
+            if (!parser_compile(line)) {
+                retval = 1;
+                goto srcdone;
+            }
+        }
+
+srcdone:
+        fclose(src);
+        mem_d(line);
     }
 
     /* stuff */
@@ -394,6 +458,8 @@ cleanup:
     util_debug("COM", "cleaning ...\n");
 
     parser_cleanup();
+    if (opts_output_free)
+        mem_d((char*)opts_output);
 
     util_meminfo();
     return retval;

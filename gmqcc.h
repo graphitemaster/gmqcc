@@ -907,6 +907,15 @@ void cvprintmsg(lex_ctx ctx, int lvl, const char *msgtype, const char *msg, va_l
 void cprintmsg (lex_ctx ctx, int lvl, const char *msgtype, const char *msg, ...);
 
 /*===================================================================*/
+/*===================== parser.c commandline ========================*/
+/*===================================================================*/
+
+bool parser_init   ();
+bool parser_compile(const char *filename);
+bool parser_finish (const char *output);
+void parser_cleanup();
+
+/*===================================================================*/
 /*======================= main.c commandline ========================*/
 /*===================================================================*/
 
