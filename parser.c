@@ -62,7 +62,7 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 }
 
 /* returns true if it counts as an error */
-bool parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
+bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
 {
 	va_list ap;
 	int lvl = LVL_WARNING;
@@ -1235,8 +1235,10 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
             parseerror(parser, "cannot declare a variable from here");
             return false;
         }
-        if (opts_standard == COMPILER_QCC)
-            parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable");
+        if (opts_standard == COMPILER_QCC) {
+            if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
+                return false;
+        }
         if (!parser_variable(parser, block))
             return false;
         *out = NULL;
