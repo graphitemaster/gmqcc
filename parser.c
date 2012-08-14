@@ -1114,6 +1114,67 @@ static bool parser_parse_while(parser_t *parser, ast_block *block, ast_expressio
     return true;
 }
 
+static bool parser_parse_dowhile(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    ast_loop *aloop;
+    ast_expression *cond, *ontrue;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    /* skip the 'do' and get the body */
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected loop body");
+        return false;
+    }
+    ontrue = parser_parse_statement_or_block(parser);
+    if (!ontrue)
+        return false;
+
+    /* expect the "while" */
+    if (parser->tok != TOKEN_KEYWORD ||
+        !strcmp(parser_tokval(parser), "while"))
+    {
+        parseerror(parser, "expected 'while' and condition");
+        ast_delete(ontrue);
+        return false;
+    }
+
+    /* skip the 'while' and check for opening paren */
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected 'while' condition in parenthesis");
+        ast_delete(ontrue);
+        return false;
+    }
+    /* parse into the expression */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected 'while' condition after opening paren");
+        ast_delete(ontrue);
+        return false;
+    }
+    /* parse the condition */
+    cond = parser_expression_leave(parser);
+    if (!cond)
+        return false;
+    /* closing paren */
+    if (parser->tok != ')') {
+        parseerror(parser, "expected closing paren after 'while' condition");
+        ast_delete(ontrue);
+        ast_delete(cond);
+        return false;
+    }
+    /* parse on */
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error");
+        ast_delete(ontrue);
+        ast_delete(cond);
+        return false;
+    }
+
+    aloop = ast_loop_new(ctx, NULL, NULL, cond, NULL, ontrue);
+    *out = (ast_expression*)aloop;
+    return true;
+}
+
 static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop *aloop;
@@ -1303,6 +1364,10 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
         else if (!strcmp(parser_tokval(parser), "while"))
         {
             return parser_parse_while(parser, block, out);
+        }
+        else if (!strcmp(parser_tokval(parser), "do"))
+        {
+            return parser_parse_dowhile(parser, block, out);
         }
         else if (!strcmp(parser_tokval(parser), "for"))
         {
