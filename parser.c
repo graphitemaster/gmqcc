@@ -1923,7 +1923,8 @@ bool parser_finish(const char *output)
             }
         }
 
-        ir_builder_dump(ir, printf);
+        if (opts_dump)
+            ir_builder_dump(ir, printf);
 
         if (!ir_builder_generate(ir, output)) {
             printf("*** failed to generate output file\n");

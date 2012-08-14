@@ -970,6 +970,7 @@ extern const char *opts_output; /* -o file */
 extern int         opts_standard;
 extern bool        opts_debug;
 extern bool        opts_memchk;
+extern bool        opts_dump;
 
 /*===================================================================*/
 #define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))
