@@ -1387,6 +1387,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
     lex_ctx       ctx;
     ast_value    *var;
     varentry_t    varent;
+    ast_expression *olddecl;
 
     int basetype = parser_token(parser)->constval.t;
 
@@ -1410,15 +1411,17 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             return false;
         }
 
-        if (!localblock && parser_find_global(parser, parser_tokval(parser))) {
+        if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
             ast_value_delete(var);
-            parseerror(parser, "global already exists: %s\n", parser_tokval(parser));
+            parseerror(parser, "global %s already declared here: %s:%i\n",
+                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
             return false;
         }
 
         if (localblock && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
             ast_value_delete(var);
-            parseerror(parser, "local variable already exists: %s\n", parser_tokval(parser));
+            parseerror(parser, "local %s already declared here: %s:%i\n",
+                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
             return false;
         }
 
