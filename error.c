@@ -42,7 +42,7 @@ void vprintmsg(int level, const char *name, size_t line, char *errtype, const ch
 #ifndef WIN32
     fprintf (stderr, "\033[0;%dm%s:%d \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, levelcolor[level], errtype);
 #else
-    fprintf (stderr, "%s:%d %s: ", name, line, errtype);
+    fprintf (stderr, "%s:%d: %s: ", name, line, errtype);
 #endif
     vfprintf(stderr, msg, ap);
     fprintf (stderr, "\n");
