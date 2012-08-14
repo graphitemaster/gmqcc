@@ -347,15 +347,17 @@ int main(int argc, char **argv) {
         return usage();
     }
 
-    for (itr = 0; itr < COUNT_FLAGS; ++itr) {
-        printf("Flag %s = %i\n", opts_flag_list[itr].name, OPTS_FLAG(itr));
+    if (opts_dump) {
+        for (itr = 0; itr < COUNT_FLAGS; ++itr) {
+            printf("Flag %s = %i\n", opts_flag_list[itr].name, OPTS_FLAG(itr));
+        }
+        for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
+            printf("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
+        }
+        printf("output = %s\n", opts_output);
+        printf("optimization level = %i\n", (int)opts_O);
+        printf("standard = %i\n", opts_standard);
     }
-    for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
-        printf("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
-    }
-    printf("output = %s\n", opts_output);
-    printf("optimization level = %i\n", (int)opts_O);
-    printf("standard = %i\n", opts_standard);
 
     if (!parser_init()) {
         printf("failed to initialize parser\n");
