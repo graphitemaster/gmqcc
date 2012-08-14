@@ -1790,87 +1790,94 @@ static bool parser_do(parser_t *parser)
         if (!var)
             return false;
 
-        /* now the field name */
-        if (parser->tok != TOKEN_IDENT) {
-            parseerror(parser, "expected field name");
-            ast_delete(var);
-            return false;
-        }
-
-        /* check for an existing field
-         * in original qc we also have to check for an existing
-         * global named like the field
-         */
-        if (opts_standard == COMPILER_QCC) {
-            if (parser_find_global(parser, parser_tokval(parser))) {
-                parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+        while (true) {
+            /* now the field name */
+            if (parser->tok != TOKEN_IDENT) {
+                parseerror(parser, "expected field name");
                 ast_delete(var);
                 return false;
             }
-        }
-        if (parser_find_field(parser, parser_tokval(parser))) {
-            parseerror(parser, "field %s already exists", parser_tokval(parser));
-            ast_delete(var);
-            return false;
-        }
 
-        /* if it was a function, turn it into a function */
-        if (isfunc) {
-            ast_value *fval;
-            /* turn var into a value of TYPE_FUNCTION, with the old var
-             * as return type
+            /* check for an existing field
+             * in original qc we also have to check for an existing
+             * global named like the field
              */
-            fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
-            if (!fval) {
-                ast_value_delete(var);
-                ast_value_delete(fval);
+            if (opts_standard == COMPILER_QCC) {
+                if (parser_find_global(parser, parser_tokval(parser))) {
+                    parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+                    ast_delete(var);
+                    return false;
+                }
+            }
+            if (parser_find_field(parser, parser_tokval(parser))) {
+                parseerror(parser, "field %s already exists", parser_tokval(parser));
+                ast_delete(var);
                 return false;
             }
 
-            fval->expression.next = (ast_expression*)var;
-            MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
+            /* if it was a function, turn it into a function */
+            if (isfunc) {
+                ast_value *fval;
+                /* turn var into a value of TYPE_FUNCTION, with the old var
+                 * as return type
+                 */
+                fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
+                if (!fval) {
+                    ast_value_delete(var);
+                    ast_value_delete(fval);
+                    return false;
+                }
 
-            var = fval;
-        }
+                fval->expression.next = (ast_expression*)var;
+                MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
 
-        /* turn it into a field */
-        fld = ast_value_new(ctx, parser_tokval(parser), TYPE_FIELD);
-        fld->expression.next = (ast_expression*)var;
+                var = fval;
+            }
 
-        varent.var = (ast_expression*)fld;
-        varent.name = util_strdup(fld->name);
-        (void)!parser_t_fields_add(parser, varent);
+            /* turn it into a field */
+            fld = ast_value_new(ctx, parser_tokval(parser), TYPE_FIELD);
+            fld->expression.next = (ast_expression*)var;
 
-        if (var->expression.vtype == TYPE_VECTOR)
-        {
-            /* create _x, _y and _z fields as well */
-            size_t len;
-            varentry_t vx, vy, vz;
+            varent.var = (ast_expression*)fld;
+            varent.name = util_strdup(fld->name);
+            (void)!parser_t_fields_add(parser, varent);
 
-            len = strlen(varent.name);
-            vx.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 0);
-            vy.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 1);
-            vz.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 2);
-            vx.name = mem_a(len+3);
-            vy.name = mem_a(len+3);
-            vz.name = mem_a(len+3);
-            strcpy(vx.name, varent.name);
-            strcpy(vy.name, varent.name);
-            strcpy(vz.name, varent.name);
-            vx.name[len] = vy.name[len] = vz.name[len] = '_';
-            vx.name[len+1] = 'x';
-            vy.name[len+1] = 'y';
-            vz.name[len+1] = 'z';
-            vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
-            (void)!parser_t_fields_add(parser, vx);
-            (void)!parser_t_fields_add(parser, vy);
-            (void)!parser_t_fields_add(parser, vz);
-        }
+            if (var->expression.vtype == TYPE_VECTOR)
+            {
+                /* create _x, _y and _z fields as well */
+                size_t len;
+                varentry_t vx, vy, vz;
 
-        /* end with a semicolon */
-        if (!parser_next(parser) || parser->tok != ';') {
-            parseerror(parser, "semicolon expected");
-            return false;
+                len = strlen(varent.name);
+                vx.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 0);
+                vy.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 1);
+                vz.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 2);
+                vx.name = mem_a(len+3);
+                vy.name = mem_a(len+3);
+                vz.name = mem_a(len+3);
+                strcpy(vx.name, varent.name);
+                strcpy(vy.name, varent.name);
+                strcpy(vz.name, varent.name);
+                vx.name[len] = vy.name[len] = vz.name[len] = '_';
+                vx.name[len+1] = 'x';
+                vy.name[len+1] = 'y';
+                vz.name[len+1] = 'z';
+                vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
+                (void)!parser_t_fields_add(parser, vx);
+                (void)!parser_t_fields_add(parser, vy);
+                (void)!parser_t_fields_add(parser, vz);
+            }
+
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected semicolon or another field name");
+                return false;
+            }
+            if (parser->tok == ';')
+                break;
+            if (parser->tok != ',' || !parser_next(parser)) {
+                parseerror(parser, "expected semicolon or another field name");
+                return false;
+            }
         }
 
         /* skip the semicolon */
