@@ -1122,7 +1122,7 @@ static bool parser_parse_dowhile(parser_t *parser, ast_block *block, ast_express
     lex_ctx ctx = parser_ctx(parser);
 
     /* skip the 'do' and get the body */
-    if (!parser_next(parser) || parser->tok != '(') {
+    if (!parser_next(parser)) {
         parseerror(parser, "expected loop body");
         return false;
     }
@@ -1132,7 +1132,7 @@ static bool parser_parse_dowhile(parser_t *parser, ast_block *block, ast_express
 
     /* expect the "while" */
     if (parser->tok != TOKEN_KEYWORD ||
-        !strcmp(parser_tokval(parser), "while"))
+        strcmp(parser_tokval(parser), "while"))
     {
         parseerror(parser, "expected 'while' and condition");
         ast_delete(ontrue);
@@ -1163,6 +1163,13 @@ static bool parser_parse_dowhile(parser_t *parser, ast_block *block, ast_express
         return false;
     }
     /* parse on */
+    if (!parser_next(parser) || parser->tok != ';') {
+        parseerror(parser, "expected semicolon after condition");
+        ast_delete(ontrue);
+        ast_delete(cond);
+        return false;
+    }
+
     if (!parser_next(parser)) {
         parseerror(parser, "parse error");
         ast_delete(ontrue);
