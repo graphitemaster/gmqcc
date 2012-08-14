@@ -40,7 +40,7 @@ int levelcolor[] = {
 void vprintmsg(int level, const char *name, size_t line, char *errtype, const char *msg, va_list ap)
 {
 #ifndef WIN32
-    fprintf (stderr, "\033[0;%dm%s:%d \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, levelcolor[level], errtype);
+    fprintf (stderr, "\033[0;%dm%s:%d: \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, levelcolor[level], errtype);
 #else
     fprintf (stderr, "%s:%d: %s: ", name, line, errtype);
 #endif
