@@ -1235,6 +1235,8 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
             parseerror(parser, "cannot declare a variable from here");
             return false;
         }
+        if (opts_standard == COMPILER_QCC)
+            parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable");
         if (!parser_variable(parser, block))
             return false;
         *out = NULL;
