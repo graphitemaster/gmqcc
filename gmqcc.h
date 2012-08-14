@@ -780,6 +780,11 @@ typedef struct {
     float x, y, z;
 } vector;
 
+vector  vec3_add  (vector, vector);
+vector  vec3_sub  (vector, vector);
+qcfloat vec3_mulvv(vector, vector);
+vector  vec3_mulvf(vector, float);
+
 /*
  * A shallow copy of a lex_file to remember where which ast node
  * came from.
