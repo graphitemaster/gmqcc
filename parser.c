@@ -54,13 +54,10 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 
 	parser->errors++;
 
-    if (parser)
-	    printf("error %s:%lu: ", parser->lex->tok->ctx.file, (unsigned long)parser->lex->tok->ctx.line);
-	else
-	    printf("error: ");
+	printf("error %s:%lu: ", parser->lex->tok->ctx.file, (unsigned long)parser->lex->tok->ctx.line);
 
 	va_start(ap, fmt);
-	vprintf(fmt, ap);
+    vprintmsg(LVL_ERROR, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "parse error", fmt, ap);
 	va_end(ap);
 
 	printf("\n");
@@ -70,30 +67,21 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 bool parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
 {
 	va_list ap;
-
-#if 0
-    if (OPTS_WARN(WARN_ERROR))
-	    parser->errors++;
-#endif
+	int lvl = LVL_WARNING;
 
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (parser)
-	    printf("warning %s:%lu: ", parser->lex->tok->ctx.file, (unsigned long)parser->lex->tok->ctx.line);
-	else
-	    printf("warning: ");
+    if (OPTS_WARN(WARN_ERROR)) {
+	    parser->errors++;
+	    lvl = LVL_ERROR;
+	}
 
 	va_start(ap, fmt);
-	vprintf(fmt, ap);
+    vprintmsg(lvl, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "warning", fmt, ap);
 	va_end(ap);
 
-	printf("\n");
-#if 0
-    return true;
-#else
-    return false;
-#endif
+	return OPTS_WARN(WARN_ERROR);
 }
 
 bool parser_next(parser_t *parser)

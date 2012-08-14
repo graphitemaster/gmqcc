@@ -23,7 +23,7 @@ OBJ     = \
           ir.o
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
-OBJ_C = main.o lexer.o parser.o
+OBJ_C = main.o lexer.o parser.o error.o
 OBJ_X = exec-standalone.o util.o
 
 #default is compiler only

@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012
  *     Dale Weiler
+ *     Wolfgang Bumiller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdarg.h>
 #include "gmqcc.h"
 
 /*
@@ -28,65 +28,32 @@
  * such as after so many errors just stop the compilation, and other
  * intereting like colors for the console.
  */
+
 #ifndef WIN32
-enum {
-    CON_BLACK   = 30,
-    CON_RED,
-    CON_GREEN,
-    CON_BROWN,
-    CON_BLUE,
-    CON_MAGENTA,
-    CON_CYAN ,
-    CON_WHITE
-};
-static const int error_color[] = {
-    CON_RED,
+int levelcolor[] = {
+    CON_WHITE,
     CON_CYAN,
-    CON_MAGENTA,
-    CON_BLUE,
-    CON_BROWN,
-    CON_WHITE
+    CON_RED
 };
 #endif
-int error_total = 0;
-int error_max   = 10;
 
-static const char *const error_list[] = {
-    "Parsing Error:",
-    "Lexing Error:",
-    "Internal Error:",
-    "Compilation Error:",
-    "Preprocessor Error:"
-};
-
-int error(lex_file *file, int status, const char *msg, ...) {
-    char      bu[1024*4]; /* enough? */
-    char      fu[1024*4]; /* enough? */
+void vprintmsg(int level, const char *name, size_t line, char *errtype, const char *msg, va_list ap)
+{
     va_list   va;
 
-    if (error_total + 1 > error_max) {
-        fprintf(stderr, "%d errors and more following, bailing\n", error_total);
-        exit (-1);
-    }
-    error_total ++;
-/* color */
-#    ifndef WIN32
-    sprintf  (bu, "\033[0;%dm%s \033[0;%dm %s:%d ", error_color[status-SHRT_MAX], error_list[status-SHRT_MAX], error_color[(status-1)-SHRT_MAX], file->name, file->line);
+#ifndef WIN32
+    fprintf (stderr, "\033[0;%dm%s:%d \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, levelcolor[level], errtype);
 #else
-    sprintf  (bu, "%s ", error_list[status-SHRT_MAX]);
+    fprintf (stderr, "%s:%d %s: ", name, line, errtype);
 #endif
-    va_start (va, msg);
-    vsprintf (fu, msg, va);
-    va_end   (va);
-    fputs    (bu, stderr);
-    fputs    (fu, stderr);
+    vfprintf(stderr, msg, va);
+    fprintf (stderr, "\n");
+}
 
-/* color */
-#    ifndef WIN32
-    fputs    ("\033[0m", stderr);
-#    endif
-
-    fflush   (stderr);
-
-    return status;
+void printmsg(int level, const char *name, size_t line, char *errtype, const char *msg, ...)
+{
+    va_list   va;
+    va_start(va, msg);
+    vprintmsg(level, name, line, errtype, msg, va);
+    va_end  (va);
 }

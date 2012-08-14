@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <ctype.h>
 
 #define GMQCC_VERSION_MAJOR 0
@@ -877,6 +878,31 @@ prog_section_def* prog_entfield  (qc_program *prog, qcint off);
 prog_section_def* prog_getdef    (qc_program *prog, qcint off);
 qcany*            prog_getedict  (qc_program *prog, qcint e);
 qcint             prog_tempstring(qc_program *prog, const char *_str);
+
+/*===================================================================*/
+/*===================== error.c message printer =====================*/
+/*===================================================================*/
+
+#ifndef WIN32
+enum {
+    CON_BLACK   = 30,
+    CON_RED,
+    CON_GREEN,
+    CON_BROWN,
+    CON_BLUE,
+    CON_MAGENTA,
+    CON_CYAN ,
+    CON_WHITE
+};
+#endif
+enum {
+    LVL_MSG,
+    LVL_WARNING,
+    LVL_ERROR
+};
+
+void vprintmsg(int level, const char *name, size_t line, char *errtype, const char *msg, va_list ap);
+void printmsg (int level, const char *name, size_t line, char *errtype, const char *msg, ...);
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
