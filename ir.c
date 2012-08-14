@@ -2342,13 +2342,13 @@ tailcall:
 
             if (ontrue->generated) {
                 stmt.opcode = INSTR_IF;
-                stmt.o2.s1 = (ontrue->code_start-1) - code_statements_elements;
+                stmt.o2.s1 = (ontrue->code_start) - code_statements_elements;
                 if (code_statements_add(stmt) < 0)
                     return false;
             }
             if (onfalse->generated) {
                 stmt.opcode = INSTR_IFNOT;
-                stmt.o2.s1 = (onfalse->code_start-1) - code_statements_elements;
+                stmt.o2.s1 = (onfalse->code_start) - code_statements_elements;
                 if (code_statements_add(stmt) < 0)
                     return false;
             }
