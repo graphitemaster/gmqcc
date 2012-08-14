@@ -1838,16 +1838,34 @@ static bool parser_do(parser_t *parser)
         fld->expression.next = (ast_expression*)var;
 
         varent.var = (ast_expression*)fld;
+        varent.name = util_strdup(fld->name);
+        (void)!parser_t_fields_add(parser, varent);
+
         if (var->expression.vtype == TYPE_VECTOR)
         {
             /* create _x, _y and _z fields as well */
-            parseerror(parser, "TODO: vector field members (_x,_y,_z)");
-            ast_delete(fld);
-            return false;
-        }
+            size_t len;
+            varentry_t vx, vy, vz;
 
-        varent.name = util_strdup(fld->name);
-        (void)!parser_t_fields_add(parser, varent);
+            len = strlen(varent.name);
+            vx.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 0);
+            vy.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 1);
+            vz.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 2);
+            vx.name = mem_a(len+3);
+            vy.name = mem_a(len+3);
+            vz.name = mem_a(len+3);
+            strcpy(vx.name, varent.name);
+            strcpy(vy.name, varent.name);
+            strcpy(vz.name, varent.name);
+            vx.name[len] = vy.name[len] = vz.name[len] = '_';
+            vx.name[len+1] = 'x';
+            vy.name[len+1] = 'y';
+            vz.name[len+1] = 'z';
+            vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
+            (void)!parser_t_fields_add(parser, vx);
+            (void)!parser_t_fields_add(parser, vy);
+            (void)!parser_t_fields_add(parser, vz);
+        }
 
         /* end with a semicolon */
         if (!parser_next(parser) || parser->tok != ';') {
