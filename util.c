@@ -37,7 +37,7 @@ struct memblock_t {
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
-    void              *data =(void*)((uintptr_t)info+sizeof(struct memblock_t));
+    void              *data =(void*)((unsigned char*)info+sizeof(struct memblock_t));
     if (!data) return NULL;
     info->line = line;
     info->byte = byte;
@@ -54,7 +54,7 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     void              *data = NULL;
     struct memblock_t *info = NULL;
     if (!ptrn) return;
-    data = (void*)((uintptr_t)ptrn-sizeof(struct memblock_t));
+    data = (void*)((unsigned char *)ptrn-sizeof(struct memblock_t));
     info = (struct memblock_t*)data;
 
     util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
