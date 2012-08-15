@@ -1988,9 +1988,6 @@ bool parser_init()
         return false;
 
     memset(parser, 0, sizeof(*parser));
-
-    MEM_VECTOR_INIT(parser, globals);
-    MEM_VECTOR_INIT(parser, locals);
     return true;
 }
 
