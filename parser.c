@@ -1987,7 +1987,7 @@ bool parser_init()
     if (!parser)
         return false;
 
-    memset(parser, 0, sizeof(parser));
+    memset(parser, 0, sizeof(*parser));
 
     MEM_VECTOR_INIT(parser, globals);
     MEM_VECTOR_INIT(parser, locals);
