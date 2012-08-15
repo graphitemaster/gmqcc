@@ -447,6 +447,8 @@ int main(int argc, char **argv) {
             }
         }
 
+        parser_finish(opts_output);
+
 srcdone:
         fclose(src);
         mem_d(line);
