@@ -2698,7 +2698,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
         }
 
         name[0] = '.';
-        strcpy(name+1, field->name); /* no strncpy - we used strlen above */
+        memcpy(name+1, field->name, len); /* no strncpy - we used strlen above */
         name[len+1] = 0;
 
         def.name = code_genstring(name);
