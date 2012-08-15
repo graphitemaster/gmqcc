@@ -1701,9 +1701,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             vx.name = mem_a(len+3);
             vy.name = mem_a(len+3);
             vz.name = mem_a(len+3);
-            strcpy(vx.name, varent.name);
-            strcpy(vy.name, varent.name);
-            strcpy(vz.name, varent.name);
+            memcpy(vx.name, varent.name, len);
+            memcpy(vy.name, varent.name, len);
+            memcpy(vz.name, varent.name, len);
             vx.name[len] = vy.name[len] = vz.name[len] = '_';
             vx.name[len+1] = 'x';
             vy.name[len+1] = 'y';
@@ -1940,9 +1940,9 @@ static bool parser_do(parser_t *parser)
                 vx.name = mem_a(len+3);
                 vy.name = mem_a(len+3);
                 vz.name = mem_a(len+3);
-                strcpy(vx.name, varent.name);
-                strcpy(vy.name, varent.name);
-                strcpy(vz.name, varent.name);
+                memcpy(vx.name, varent.name, len);
+                memcpy(vy.name, varent.name, len);
+                memcpy(vz.name, varent.name, len);
                 vx.name[len] = vy.name[len] = vz.name[len] = '_';
                 vx.name[len+1] = 'x';
                 vy.name[len+1] = 'y';
