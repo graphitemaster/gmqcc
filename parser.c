@@ -965,8 +965,12 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
             /* variable */
             if (opts_standard == COMPILER_GMQCC)
             {
-                if (parser->memberof == TYPE_ENTITY)
-                    var = parser_find_field(parser, parser_tokval(parser));
+                if (parser->memberof == TYPE_ENTITY) {
+                    /* still get vars first since there could be a fieldpointer */
+                    var = parser_find_var(parser, parser_tokval(parser));
+                    if (!var)
+                        var = parser_find_field(parser, parser_tokval(parser));
+                }
                 else if (parser->memberof == TYPE_VECTOR)
                 {
                     parseerror(parser, "TODO: implement effective vector member access");
