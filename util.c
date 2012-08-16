@@ -344,8 +344,8 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
             if  (!tmp)
                 return -1;
 
+            memcpy(tmp, *lineptr, pos - *lineptr);
             chr = *n + *lineptr - pos;
-            strcpy(tmp,*lineptr);
             if (!(*lineptr = tmp)) {
                 mem_d (tmp);
                 return -1;
