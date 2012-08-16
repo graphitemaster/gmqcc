@@ -549,6 +549,28 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             break;
 
+        case opid2('!','P'):
+            switch (exprs[0]->expression.vtype) {
+                case TYPE_FLOAT:
+                    if (CanConstFold1(exprs[0]))
+                        out = (ast_expression*)parser_const_float(parser, !ConstF(0));
+                    else
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
+                    break;
+                case TYPE_VECTOR:
+                    if (CanConstFold1(exprs[0]))
+                        out = (ast_expression*)parser_const_float(parser,
+                            (!ConstV(0).x && !ConstV(0).y && !ConstV(0).z));
+                    else
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[0]);
+                    break;
+                default:
+                parseerror(parser, "invalid types used in expression: cannot logically negate type %s",
+                           type_name[exprs[0]->expression.vtype]);
+                return false;
+            }
+            break;
+
         case opid1('+'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
                 (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
