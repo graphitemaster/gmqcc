@@ -203,7 +203,7 @@ bool code_write(const char *filename) {
     util_endianswap(code_functions_data,  code_functions_elements,  sizeof(prog_section_function));
     util_endianswap(code_globals_data,    code_globals_elements,    sizeof(int32_t));
 
-    fp = fopen(filename, "wb");
+    fp = util_fopen(filename, "wb");
     if (!fp)
         return false;
 

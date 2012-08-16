@@ -122,7 +122,7 @@ token* token_copy_all(const token *cp)
 lex_file* lex_open(const char *file)
 {
 	lex_file *lex;
-	FILE *in = fopen(file, "rb");
+	FILE *in = util_fopen(file, "rb");
 
 	if (!in) {
 		lexerror(NULL, "open failed: '%s'\n", file);

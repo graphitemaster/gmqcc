@@ -55,7 +55,7 @@ qc_program* prog_load(const char *filename)
     size_t      i;
     FILE *file;
 
-    file = fopen(filename, "rb");
+    file = util_fopen(filename, "rb");
     if (!file)
         return NULL;
 

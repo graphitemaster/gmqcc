@@ -398,3 +398,16 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
     *out = 0;
     return sz-1;
 }
+
+FILE *util_fopen(const char *filename, const char *mode)
+{
+#ifdef WIN32
+    FILE *out;
+    if (fopen_s(&out, file, mode) != 0)
+        return NULL;
+    return out;
+#else
+    return fopen(file, mode);
+#endif
+}
+

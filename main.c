@@ -418,7 +418,7 @@ int main(int argc, char **argv) {
         char *line;
 
         printf("Mode: progs.src\n");
-        src = fopen("progs.src", "rb");
+        src = util_fopen("progs.src", "rb");
         if (!src) {
             printf("failed to open `progs.src` for reading\n");
             retval = 1;
