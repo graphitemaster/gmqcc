@@ -292,6 +292,8 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
         *isfunc = true;
         while (true) {
             ast_value *param;
+            ast_value *fld;
+            bool isfield = false;
             bool dummy;
 
             if (!parser_next(parser))
@@ -299,6 +301,14 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
 
             if (parser->tok == ')')
                 break;
+
+            if (parser->tok == '.') {
+                isfield = true;
+                if (!parser_next(parser)) {
+                    parseerror(parser, "expected field parameter type");
+                    goto on_error;
+                }
+            }
 
             temptype = parser_token(parser)->constval.t;
             if (!parser_next(parser))
@@ -316,6 +326,12 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
                     goto on_error;
                 if (!parser_next(parser))
                     goto on_error;
+            }
+
+            if (isfield) {
+                fld = ast_value_new(ctx, param->name, TYPE_FIELD);
+                fld->expression.next = (ast_expression*)param;
+                param = fld;
             }
 
             if (!paramlist_t_p_add(&params, param)) {
@@ -2005,6 +2021,18 @@ static bool parser_do(parser_t *parser)
                     ast_delete(var);
                     return false;
                 }
+            }
+
+            if (isfunc) {
+                ast_value *fval;
+                fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
+                if (!fval) {
+                    ast_value_delete(var);
+                    return false;
+                }
+                fval->expression.next = (ast_expression*)var;
+                MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
+                var = fval;
             }
 
             /* turn it into a field */
