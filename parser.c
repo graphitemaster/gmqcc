@@ -1961,6 +1961,7 @@ static bool parser_do(parser_t *parser)
     {
         ast_value *var;
         ast_value *fld;
+        ast_expression *oldex;
         bool       isfunc = false;
         int        basetype;
         lex_ctx    ctx = parser_ctx(parser);
@@ -2005,34 +2006,42 @@ static bool parser_do(parser_t *parser)
                     return false;
                 }
             }
-            if (parser_find_field(parser, parser_tokval(parser))) {
-                parseerror(parser, "field %s already exists", parser_tokval(parser));
-                ast_delete(var);
-                return false;
-            }
-
-            /* if it was a function, turn it into a function */
-            if (isfunc) {
-                ast_value *fval;
-                /* turn var into a value of TYPE_FUNCTION, with the old var
-                 * as return type
-                 */
-                fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
-                if (!fval) {
-                    ast_value_delete(var);
-                    ast_value_delete(fval);
-                    return false;
-                }
-
-                fval->expression.next = (ast_expression*)var;
-                MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
-
-                var = fval;
-            }
 
             /* turn it into a field */
             fld = ast_value_new(ctx, parser_tokval(parser), TYPE_FIELD);
             fld->expression.next = (ast_expression*)var;
+
+            if ( (oldex = parser_find_field(parser, parser_tokval(parser)))) {
+                if (ast_istype(oldex, ast_member)) {
+                    parseerror(parser, "cannot declare a field with the same name as a vector component, component %s has been declared here: %s:%i",
+                               parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line);
+                    ast_delete(fld);
+                    return false;
+                }
+                if (!ast_istype(oldex, ast_value)) {
+                    /* not possible / sanity check */
+                    parseerror(parser, "internal error: %s is not an ast_value", parser_tokval(parser));
+                    ast_delete(fld);
+                    return false;
+                }
+
+                if (!ast_compare_type(oldex, (ast_expression*)fld)) {
+                    parseerror(parser, "field %s has previously been declared with a different type here: %s:%i",
+                               parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line);
+                    ast_delete(fld);
+                    return false;
+                } else {
+                    if (parsewarning(parser, WARN_FIELD_REDECLARED, "field %s has already been declared here: %s:%i",
+                                     parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line))
+                    {
+                        ast_delete(fld);
+                        return false;
+                    }
+                }
+
+                ast_delete(fld);
+                goto nextfield;
+            }
 
             varent.var = (ast_expression*)fld;
             varent.name = util_strdup(fld->name);
@@ -2064,6 +2073,7 @@ static bool parser_do(parser_t *parser)
                 (void)!parser_t_fields_add(parser, vz);
             }
 
+nextfield:
             if (!parser_next(parser)) {
                 parseerror(parser, "expected semicolon or another field name");
                 return false;
