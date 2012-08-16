@@ -82,6 +82,11 @@ _all_tokennames_added_[
 	? 1 : -1];
 
 typedef struct {
+    char *name;
+    int   value;
+} frame_macro;
+
+typedef struct {
 	FILE   *file;
 	char   *name;
 	size_t  line;
@@ -95,6 +100,9 @@ typedef struct {
 	struct {
 	    bool noops;
 	} flags;
+
+    int framevalue;
+	MEM_VECTOR_MAKE(frame_macro, frames);
 } lex_file;
 
 MEM_VECTOR_PROTO(lex_file, char, token);

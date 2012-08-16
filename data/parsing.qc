@@ -11,6 +11,9 @@ void(entity)        kill   = #4;
 .float mema;
 .float memb;
 
+$framevalue 37
+$frame stand1 stand2 stand3
+
 void() main = {
     entity pawn;
     vector vec;
@@ -59,4 +62,5 @@ void() main = {
     print3("memb = ", ftos(pawn.memb), "\n");
     pawn.memb += -1;
     print3("memb = ", ftos(pawn.memb), "\n");
+    print3("Frame stand3 is ", ftos(stand3), " wooh\n");
 };

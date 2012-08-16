@@ -7,6 +7,7 @@
 #include "lexer.h"
 
 MEM_VEC_FUNCTIONS(token, char, value)
+MEM_VEC_FUNCTIONS(lex_file, frame_macro, frames)
 
 void lexerror(lex_file *lex, const char *fmt, ...)
 {
@@ -342,6 +343,58 @@ static bool GMQCC_WARN lex_finish_ident(lex_file *lex)
 	return true;
 }
 
+/* read one ident for the frame list */
+static int lex_parse_frame(lex_file *lex)
+{
+    int ch;
+
+    if (lex->tok)
+        token_delete(lex->tok);
+    lex->tok = token_new();
+
+    ch = lex_getch(lex);
+    while (ch != EOF && ch != '\n' && isspace(ch))
+        ch = lex_getch(lex);
+
+    if (ch == '\n')
+        return 1;
+
+    if (!isident_start(ch)) {
+        lexerror(lex, "invalid framename, must start with one of a-z or _, got %c", ch);
+        return -1;
+    }
+
+    if (!lex_tokench(lex, ch))
+        return -1;
+    if (!lex_finish_ident(lex))
+        return -1;
+    if (!lex_endtoken(lex))
+        return -1;
+    return 0;
+}
+
+/* read a list of $frames */
+static bool lex_finish_frames(lex_file *lex)
+{
+    do {
+        int rc;
+        frame_macro m;
+
+        rc = lex_parse_frame(lex);
+        if (rc > 0) /* end of line */
+            return true;
+        if (rc < 0) /* error */
+            return false;
+
+        m.value = lex->framevalue++;
+        m.name = util_strdup(lex->tok->value);
+        if (!m.name || !lex_file_frames_add(lex, m)) {
+            lexerror(lex, "out of memory");
+            return false;
+        }
+    } while (true);
+}
+
 static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 {
 	int ch = 0;
@@ -486,6 +539,87 @@ int lex_do(lex_file *lex)
 	if (ch == EOF)
 		return (lex->tok->ttype = TOKEN_EOF);
 
+	/* modelgen / spiritgen commands */
+	if (ch == '$') {
+	    const char *v;
+	    ch = lex_getch(lex);
+	    if (!isident_start(ch)) {
+	        lexerror(lex, "hanging '$' modelgen/spritegen command line");
+	        return lex_do(lex);
+	    }
+	    if (!lex_tokench(lex, ch))
+	        return (lex->tok->ttype = TOKEN_FATAL);
+	    if (!lex_finish_ident(lex))
+	        return (lex->tok->ttype = TOKEN_ERROR);
+	    if (!lex_endtoken(lex))
+	        return (lex->tok->ttype = TOKEN_FATAL);
+	    /* skip the known commands */
+	    v = lex->tok->value;
+
+        if (!strcmp(v, "frame") || !strcmp(v, "framesave"))
+        {
+            /* frame/framesave command works like an enum
+             * similar to fteqcc we handle this in the lexer.
+             * The reason for this is that it is sensitive to newlines,
+             * which the parser is unaware of
+             */
+            if (!lex_finish_frames(lex))
+                 return (lex->tok->ttype = TOKEN_ERROR);
+            return lex_do(lex);
+        }
+
+        if (!strcmp(v, "framevalue"))
+        {
+            ch = lex_getch(lex);
+            while (ch != EOF && isspace(ch) && ch != '\n')
+                ch = lex_getch(lex);
+
+            if (!isdigit(ch)) {
+                lexerror(lex, "$framevalue requires an integer parameter");
+                return lex_do(lex);
+            }
+
+		    token_delete(lex->tok);
+	        lex->tok = token_new();
+            lex->tok->ttype = lex_finish_digit(lex, ch);
+            if (!lex_endtoken(lex))
+                return (lex->tok->ttype = TOKEN_FATAL);
+            if (lex->tok->ttype != TOKEN_INTCONST) {
+                lexerror(lex, "$framevalue requires an integer parameter");
+                return lex_do(lex);
+            }
+            lex->framevalue = lex->tok->constval.i;
+            return lex_do(lex);
+        }
+
+        if (!strcmp(v, "flush"))
+        {
+            size_t frame;
+            for (frame = 0; frame < lex->frames_count; ++frame)
+                mem_d(lex->frames[frame].name);
+            MEM_VECTOR_CLEAR(lex, frames);
+	        /* skip line (fteqcc does it too) */
+	        ch = lex_getch(lex);
+	        while (ch != EOF && ch != '\n')
+	            ch = lex_getch(lex);
+            return lex_do(lex);
+        }
+
+	    if (!strcmp(v, "cd") ||
+	        !strcmp(v, "origin") ||
+	        !strcmp(v, "base") ||
+	        !strcmp(v, "flags") ||
+	        !strcmp(v, "scale") ||
+	        !strcmp(v, "skin"))
+	    {
+	        /* skip line */
+	        ch = lex_getch(lex);
+	        while (ch != EOF && ch != '\n')
+	            ch = lex_getch(lex);
+	        return lex_do(lex);
+	    }
+	}
+
 	/* single-character tokens */
 	switch (ch)
 	{
@@ -496,8 +630,6 @@ int lex_do(lex_file *lex)
 		case '}':
 		case '[':
 		case ']':
-
-		case '$':
 
 		case '#':
 	        if (!lex_tokench(lex, ch) ||
@@ -606,6 +738,7 @@ int lex_do(lex_file *lex)
 	if (isident_start(ch))
 	{
 		const char *v;
+		size_t frame;
 		if (!lex_tokench(lex, ch))
 			return (lex->tok->ttype = TOKEN_FATAL);
 		if (!lex_finish_ident(lex)) {
@@ -644,6 +777,13 @@ int lex_do(lex_file *lex)
 		         !strcmp(v, "return") ||
 		         !strcmp(v, "const"))
 			lex->tok->ttype = TOKEN_KEYWORD;
+
+        for (frame = 0; frame < lex->frames_count; ++frame) {
+            if (!strcmp(v, lex->frames[frame].name)) {
+                lex->tok->constval.i = lex->frames[frame].value;
+                return (lex->tok->ttype = TOKEN_INTCONST);
+            }
+        }
 
 		return lex->tok->ttype;
 	}

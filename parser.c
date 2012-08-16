@@ -2160,6 +2160,13 @@ nextfield:
 
         return true;
     }
+    else if (parser->tok == '$')
+    {
+        if (!parser_next(parser)) {
+            parseerror(parser, "parse error");
+            return false;
+        }
+    }
     else
     {
         parseerror(parser, "unexpected token: %s", parser->lex->tok->value);
