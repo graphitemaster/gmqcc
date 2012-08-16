@@ -481,6 +481,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
              (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
 #define ConstF(i) (asvalue[(i)]->constval.vfloat)
+#define ConstS(i) (asvalue[(i)]->constval.vstring)
     switch (op->id)
     {
         default:
@@ -563,6 +564,19 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                             (!ConstV(0).x && !ConstV(0).y && !ConstV(0).z));
                     else
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[0]);
+                    break;
+                case TYPE_STRING:
+                    if (CanConstFold1(exprs[0]))
+                        out = (ast_expression*)parser_const_float(parser, !ConstS(0) || !*ConstS(0));
+                    else
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[0]);
+                    break;
+                /* we don't constant-fold NOT for these types */
+                case TYPE_ENTITY:
+                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_ENT, exprs[0]);
+                    break;
+                case TYPE_FUNCTION:
+                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_FNC, exprs[0]);
                     break;
                 default:
                 parseerror(parser, "invalid types used in expression: cannot logically negate type %s",
