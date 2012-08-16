@@ -484,7 +484,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     switch (op->id)
     {
         default:
-            parseerror(parser, "internal error: unhandled operand");
+            parseerror(parser, "internal error: unhandled operator");
             return false;
 
         case opid1('.'):
