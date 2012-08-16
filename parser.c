@@ -45,8 +45,8 @@ static void parser_pop_local(parser_t *parser);
 static bool parser_variable(parser_t *parser, ast_block *localblock);
 static ast_block* parser_parse_block(parser_t *parser);
 static ast_expression* parser_parse_statement_or_block(parser_t *parser);
-static ast_expression* parser_expression_leave(parser_t *parser);
-static ast_expression* parser_expression(parser_t *parser);
+static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomma);
+static ast_expression* parser_expression(parser_t *parser, bool stopatcomma);
 
 void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -845,7 +845,7 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
     return true;
 }
 
-static ast_expression* parser_expression_leave(parser_t *parser)
+static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomma)
 {
     ast_expression *expr = NULL;
     shunt sy;
@@ -1017,6 +1017,11 @@ static ast_expression* parser_expression_leave(parser_t *parser)
                 }
                 /* found an operator */
                 op = &operators[o];
+
+                /* when declaring variables, a comma starts a new variable */
+                if (op->id == opid1(',') && !parens && stopatcomma)
+                    break;
+
                 if (op->id == opid1('.')) {
                     /* for gmqcc standard: open up the namespace of the previous type */
                     ast_expression *prevex = sy.out[sy.out_count-1].out;
@@ -1088,9 +1093,9 @@ onerr:
     return NULL;
 }
 
-static ast_expression* parser_expression(parser_t *parser)
+static ast_expression* parser_expression(parser_t *parser, bool stopatcomma)
 {
-    ast_expression *e = parser_expression_leave(parser);
+    ast_expression *e = parser_expression_leave(parser, stopatcomma);
     if (!e)
         return NULL;
     if (!parser_next(parser)) {
@@ -1118,7 +1123,7 @@ static bool parser_parse_if(parser_t *parser, ast_block *block, ast_expression *
         return false;
     }
     /* parse the condition */
-    cond = parser_expression_leave(parser);
+    cond = parser_expression_leave(parser, false);
     if (!cond)
         return false;
     /* closing paren */
@@ -1178,7 +1183,7 @@ static bool parser_parse_while(parser_t *parser, ast_block *block, ast_expressio
         return false;
     }
     /* parse the condition */
-    cond = parser_expression_leave(parser);
+    cond = parser_expression_leave(parser, false);
     if (!cond)
         return false;
     /* closing paren */
@@ -1242,7 +1247,7 @@ static bool parser_parse_dowhile(parser_t *parser, ast_block *block, ast_express
         return false;
     }
     /* parse the condition */
-    cond = parser_expression_leave(parser);
+    cond = parser_expression_leave(parser, false);
     if (!cond)
         return false;
     /* closing paren */
@@ -1313,7 +1318,7 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
     }
     else if (parser->tok != ';')
     {
-        initexpr = parser_expression_leave(parser);
+        initexpr = parser_expression_leave(parser, false);
         if (!initexpr)
             goto onerr;
     }
@@ -1330,7 +1335,7 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
 
     /* parse the condition */
     if (parser->tok != ';') {
-        cond = parser_expression_leave(parser);
+        cond = parser_expression_leave(parser, false);
         if (!cond)
             goto onerr;
     }
@@ -1347,7 +1352,7 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
 
     /* parse the incrementor */
     if (parser->tok != ')') {
-        increment = parser_expression_leave(parser);
+        increment = parser_expression_leave(parser, false);
         if (!increment)
             goto onerr;
     }
@@ -1431,7 +1436,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
             }
 
             if (parser->tok != ';') {
-                exp = parser_expression(parser);
+                exp = parser_expression(parser, false);
                 if (!exp)
                     return false;
 
@@ -1488,7 +1493,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
     }
     else
     {
-        ast_expression *exp = parser_expression(parser);
+        ast_expression *exp = parser_expression(parser, false);
         if (!exp)
             return false;
         *out = exp;
@@ -1785,6 +1790,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             }
 
             func->builtin = -parser_token(parser)->constval.i;
+
+            if (!parser_next(parser))
+                return false;
         } else if (parser->tok == '{') {
             /* function body */
             ast_block *block;
@@ -1813,11 +1821,21 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
             return true;
         } else {
-            parseerror(parser, "TODO, const assignment");
-        }
+            ast_expression *cexp;
+            ast_value      *cval;
 
-        if (!parser_next(parser))
-            return false;
+            cexp = parser_expression_leave(parser, true);
+            cval = (ast_value*)cexp;
+            if (!ast_istype(cval, ast_value) || !cval->isconst)
+                parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
+            else
+            {
+                var->isconst = true;
+                memcpy(&var->constval, &cval->constval, sizeof(var->constval));
+                memset(&cval->constval, 0, sizeof(cval->constval));
+                ast_unref(cval);
+            }
+        }
 
         if (parser->tok == ',') {
             /* another */
@@ -1825,7 +1843,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
         }
 
         if (parser->tok != ';') {
-            parseerror(parser, "expected semicolon");
+            parseerror(parser, "missing semicolon");
             return false;
         }
 
