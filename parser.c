@@ -1705,9 +1705,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             vx.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 0);
             vy.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 1);
             vz.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 2);
-            vx.name = mem_a(len+3);
-            vy.name = mem_a(len+3);
-            vz.name = mem_a(len+3);
+            vx.name = (char*)mem_a(len+3);
+            vy.name = (char*)mem_a(len+3);
+            vz.name = (char*)mem_a(len+3);
             memcpy(vx.name, varent.name, len);
             memcpy(vy.name, varent.name, len);
             memcpy(vz.name, varent.name, len);
@@ -1957,9 +1957,9 @@ static bool parser_do(parser_t *parser)
                 vx.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 0);
                 vy.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 1);
                 vz.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 2);
-                vx.name = mem_a(len+3);
-                vy.name = mem_a(len+3);
-                vz.name = mem_a(len+3);
+                vx.name = (char*)mem_a(len+3);
+                vy.name = (char*)mem_a(len+3);
+                vz.name = (char*)mem_a(len+3);
                 memcpy(vx.name, varent.name, len);
                 memcpy(vy.name, varent.name, len);
                 memcpy(vz.name, varent.name, len);
