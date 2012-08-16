@@ -62,5 +62,5 @@ void() main = {
     print3("memb = ", ftos(pawn.memb), "\n");
     pawn.memb += -1;
     print3("memb = ", ftos(pawn.memb), "\n");
-    print3("Frame stand3 is ", ftos(stand3), " wooh\n");
+    print3("Frame stand3 is ", ftos($stand3), " wooh\n");
 };

@@ -542,6 +542,8 @@ int lex_do(lex_file *lex)
 	/* modelgen / spiritgen commands */
 	if (ch == '$') {
 	    const char *v;
+	    size_t frame;
+
 	    ch = lex_getch(lex);
 	    if (!isident_start(ch)) {
 	        lexerror(lex, "hanging '$' modelgen/spritegen command line");
@@ -618,6 +620,16 @@ int lex_do(lex_file *lex)
 	            ch = lex_getch(lex);
 	        return lex_do(lex);
 	    }
+
+        for (frame = 0; frame < lex->frames_count; ++frame) {
+            if (!strcmp(v, lex->frames[frame].name)) {
+                lex->tok->constval.i = lex->frames[frame].value;
+                return (lex->tok->ttype = TOKEN_INTCONST);
+            }
+        }
+
+        lexerror(lex, "invalid frame macro");
+        return lex_do(lex);
 	}
 
 	/* single-character tokens */
@@ -738,7 +750,7 @@ int lex_do(lex_file *lex)
 	if (isident_start(ch))
 	{
 		const char *v;
-		size_t frame;
+
 		if (!lex_tokench(lex, ch))
 			return (lex->tok->ttype = TOKEN_FATAL);
 		if (!lex_finish_ident(lex)) {
@@ -777,13 +789,6 @@ int lex_do(lex_file *lex)
 		         !strcmp(v, "return") ||
 		         !strcmp(v, "const"))
 			lex->tok->ttype = TOKEN_KEYWORD;
-
-        for (frame = 0; frame < lex->frames_count; ++frame) {
-            if (!strcmp(v, lex->frames[frame].name)) {
-                lex->tok->constval.i = lex->frames[frame].value;
-                return (lex->tok->ttype = TOKEN_INTCONST);
-            }
-        }
 
 		return lex->tok->ttype;
 	}
