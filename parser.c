@@ -20,6 +20,9 @@ typedef struct {
     MEM_VECTOR_MAKE(ast_value*, imm_string);
     MEM_VECTOR_MAKE(ast_value*, imm_vector);
 
+    ast_value *imm_float_zero;
+    ast_value *imm_vector_zero;
+
     ast_function *function;
     MEM_VECTOR_MAKE(varentry_t, locals);
     size_t blocklocal;
@@ -161,6 +164,13 @@ ast_value* parser_const_float(parser_t *parser, double d)
     return out;
 }
 
+ast_value* parser_const_float_0(parser_t *parser)
+{
+    if (!parser->imm_float_zero)
+        parser->imm_float_zero = parser_const_float(parser, 0);
+    return parser->imm_float_zero;
+}
+
 ast_value* parser_const_string(parser_t *parser, const char *str)
 {
     size_t i;
@@ -195,6 +205,22 @@ ast_value* parser_const_vector(parser_t *parser, vector v)
         return NULL;
     }
     return out;
+}
+
+ast_value* parser_const_vector_f(parser_t *parser, float x, float y, float z)
+{
+    vector v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    return parser_const_vector(parser, v);
+}
+
+ast_value* parser_const_vector_0(parser_t *parser)
+{
+    if (!parser->imm_vector_zero)
+        parser->imm_vector_zero = parser_const_vector_f(parser, 0, 0, 0);
+    return parser->imm_vector_zero;
 }
 
 ast_expression* parser_find_field(parser_t *parser, const char *name)
@@ -432,9 +458,10 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 #define NotSameType(T) \
              (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
               exprs[0]->expression.vtype != T)
-#define CanConstFold(A, B)                                                \
-             (ast_istype((A), ast_value) && ast_istype((B), ast_value) && \
-              ((ast_value*)(A))->isconst && ((ast_value*)(B))->isconst)
+#define CanConstFold1(A) \
+             (ast_istype((A), ast_value) && ((ast_value*)(A))->isconst)
+#define CanConstFold(A, B) \
+             (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
 #define ConstF(i) (asvalue[(i)]->constval.vfloat)
     switch (op->id)
@@ -478,6 +505,32 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
             sy->out[sy->out_count++] = syblock(ctx, blocks[0]);
             return true;
+
+        case opid2('-','P'):
+            switch (exprs[0]->expression.vtype) {
+                case TYPE_FLOAT:
+                    if (CanConstFold1(exprs[0]))
+                        out = (ast_expression*)parser_const_float(parser, -ConstF(0));
+                    else
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F,
+                                                              (ast_expression*)parser_const_float_0(parser),
+                                                              exprs[0]);
+                    break;
+                case TYPE_VECTOR:
+                    if (CanConstFold1(exprs[0]))
+                        out = (ast_expression*)parser_const_vector_f(parser,
+                            -ConstV(0).x, -ConstV(0).y, -ConstV(0).z);
+                    else
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V,
+                                                              (ast_expression*)parser_const_vector_0(parser),
+                                                              exprs[0]);
+                    break;
+                default:
+                parseerror(parser, "invalid types used in expression: cannot negate type %s",
+                           type_name[exprs[0]->expression.vtype]);
+                return false;
+            }
+            break;
 
         case opid1('+'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
