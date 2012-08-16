@@ -134,8 +134,8 @@ static const oper_info operators[] = {
 
     { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
 
-    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, 0 },
-    { "~",   1, opid2('~', 'P'),    ASSOC_RIGHT, 14, 0 },
+    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
+    { "~",   1, opid2('~', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
     { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
     { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
     { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX },
