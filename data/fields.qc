@@ -12,11 +12,8 @@ void(entity)        kill   = #4;
 .float memb;
 .vector memv;
 
-//void(entity a, .float f) printfield = {
-//    print3("The field is ", ftos(a.f), "\n");
-//};
-void(entity x) foo = {
-    print2(ftos(x.mema),"\n");
+void(entity a, .float f) printfield = {
+    print3("The field is ", ftos(a.f), "\n");
 };
 
 void() main = {
@@ -37,5 +34,5 @@ void() main = {
     print3("x = ", ftos(pawn.memv_x), "\n");
     print3("y = ", ftos(pawn.memv_y), "\n");
     print3("z = ", ftos(pawn.memv_z), "\n");
-    foo(pawn);
+    printfield(pawn, memv_z);
 };
