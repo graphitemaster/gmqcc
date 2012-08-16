@@ -312,7 +312,7 @@ while (1) {
 					          builtinnumber, prog->filename);
 			}
 			else
-				st = prog->code + prog_enterfunction(prog, newf);
+				st = prog->code + prog_enterfunction(prog, newf) - 1; /* offset st++ */
 			if (prog->vmerror)
 				goto cleanup;
 			break;
