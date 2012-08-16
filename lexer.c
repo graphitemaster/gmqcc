@@ -387,8 +387,9 @@ static bool lex_finish_frames(lex_file *lex)
             return false;
 
         m.value = lex->framevalue++;
-        m.name = util_strdup(lex->tok->value);
-        if (!m.name || !lex_file_frames_add(lex, m)) {
+        m.name = lex->tok->value;
+        lex->tok->value = NULL;
+        if (!lex_file_frames_add(lex, m)) {
             lexerror(lex, "out of memory");
             return false;
         }
@@ -591,6 +592,71 @@ int lex_do(lex_file *lex)
                 return lex_do(lex);
             }
             lex->framevalue = lex->tok->constval.i;
+            return lex_do(lex);
+        }
+
+        if (!strcmp(v, "framerestore"))
+        {
+            int rc;
+
+		    token_delete(lex->tok);
+	        lex->tok = token_new();
+
+            rc = lex_parse_frame(lex);
+
+            if (rc > 0) {
+                lexerror(lex, "$framerestore requires a framename parameter");
+                return lex_do(lex);
+            }
+            if (rc < 0)
+                return (lex->tok->ttype = TOKEN_FATAL);
+
+            v = lex->tok->value;
+            for (frame = 0; frame < lex->frames_count; ++frame) {
+                if (!strcmp(v, lex->frames[frame].name)) {
+                    lex->framevalue = lex->frames[frame].value;
+                    return lex_do(lex);
+                }
+            }
+            lexerror(lex, "unknown framename `%s`", v);
+            return lex_do(lex);
+        }
+
+        if (!strcmp(v, "modelname"))
+        {
+            int rc;
+
+		    token_delete(lex->tok);
+	        lex->tok = token_new();
+
+            rc = lex_parse_frame(lex);
+
+            if (rc > 0) {
+                lexerror(lex, "$framerestore requires a framename parameter");
+                return lex_do(lex);
+            }
+            if (rc < 0)
+                return (lex->tok->ttype = TOKEN_FATAL);
+
+            v = lex->tok->value;
+            if (lex->modelname) {
+                frame_macro m;
+                m.value = lex->framevalue;
+                m.name = lex->modelname;
+                lex->modelname = NULL;
+                if (!lex_file_frames_add(lex, m)) {
+                    lexerror(lex, "out of memory");
+                    return (lex->tok->ttype = TOKEN_FATAL);
+                }
+            }
+            lex->modelname = lex->tok->value;
+            lex->tok->value = NULL;
+            for (frame = 0; frame < lex->frames_count; ++frame) {
+                if (!strcmp(v, lex->frames[frame].name)) {
+                    lex->framevalue = lex->frames[frame].value;
+                    break;
+                }
+            }
             return lex_do(lex);
         }
 

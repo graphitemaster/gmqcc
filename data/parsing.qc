@@ -11,8 +11,12 @@ void(entity)        kill   = #4;
 .float mema;
 .float memb;
 
-$framevalue 37
-$frame stand1 stand2 stand3
+$framevalue 0
+$frame stand1 stand2 standX
+$framerestore stand2
+$frame stand3
+$modelname foobar
+$modelname foobar3
 
 void() main = {
     entity pawn;

@@ -103,6 +103,7 @@ typedef struct {
 
     int framevalue;
 	MEM_VECTOR_MAKE(frame_macro, frames);
+	char *modelname;
 } lex_file;
 
 MEM_VECTOR_PROTO(lex_file, char, token);
