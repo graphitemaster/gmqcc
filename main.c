@@ -370,6 +370,7 @@ int main(int argc, char **argv) {
     /* default options / warn flags */
     options_set(opts_warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
     options_set(opts_warn, WARN_EXTENSIONS, true);
+    options_set(opts_warn, WARN_FIELD_REDECLARED, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
