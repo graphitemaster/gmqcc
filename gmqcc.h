@@ -783,7 +783,7 @@ enum store_types {
 };
 
 typedef struct {
-    float x, y, z;
+    qcfloat x, y, z;
 } vector;
 
 vector  vec3_add  (vector, vector);
