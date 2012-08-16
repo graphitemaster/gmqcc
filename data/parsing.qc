@@ -57,6 +57,6 @@ void() main = {
     print3("b = ", ftos(a), "\n");
 
     print3("memb = ", ftos(pawn.memb), "\n");
-    pawn.memb += 1;
+    pawn.memb += -1;
     print3("memb = ", ftos(pawn.memb), "\n");
 };
