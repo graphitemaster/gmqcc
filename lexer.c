@@ -528,6 +528,7 @@ int lex_do(lex_file *lex)
 			case '~':
 			case ',':
 		    case '.':
+		    case '!':
 	            if (!lex_tokench(lex, ch) ||
 	                !lex_endtoken(lex))
 	            {
@@ -550,7 +551,7 @@ int lex_do(lex_file *lex)
 
 	if (ch == '+' || ch == '-' || /* ++, --, +=, -=  and -> as well! */
 	    ch == '>' || ch == '<' || /* <<, >>, <=, >= */
-	    ch == '=' ||              /* == */
+	    ch == '=' || ch == '!' || /* ==, != */
 	    ch == '&' || ch == '|')   /* &&, ||, &=, |= */
 	{
 		if (!lex_tokench(lex, ch))
@@ -571,6 +572,7 @@ int lex_do(lex_file *lex)
 		return (lex->tok->ttype = TOKEN_OPERATOR);
 	}
 
+    /*
 	if (ch == '^' || ch == '~' || ch == '!')
 	{
 		if (!lex_tokench(lex, ch) ||
@@ -580,6 +582,7 @@ int lex_do(lex_file *lex)
 		}
 		return (lex->tok->ttype = TOKEN_OPERATOR);
 	}
+	*/
 
 	if (ch == '*' || ch == '/') /* *=, /= */
 	{
