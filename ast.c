@@ -846,6 +846,11 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return true;
     }
 
+    if (!self->blocks_count) {
+        asterror(ast_ctx(self), "function `%s` has no body", self->name);
+        return false;
+    }
+
     self->curblock = ir_function_create_block(irf, "entry");
     if (!self->curblock)
         return false;
@@ -867,6 +872,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         else
         {
             /* error("missing return"); */
+            asterror(ast_ctx(self), "function `%s` missing return value", self->name);
             return false;
         }
     }
