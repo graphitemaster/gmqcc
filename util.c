@@ -403,11 +403,11 @@ FILE *util_fopen(const char *filename, const char *mode)
 {
 #ifdef WIN32
     FILE *out;
-    if (fopen_s(&out, file, mode) != 0)
+    if (fopen_s(&out, filename, mode) != 0)
         return NULL;
     return out;
 #else
-    return fopen(file, mode);
+    return fopen(filename, mode);
 #endif
 }
 
