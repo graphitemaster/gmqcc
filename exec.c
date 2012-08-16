@@ -36,9 +36,12 @@ static void loaderror(const char *fmt, ...)
     printf(": %s\n", strerror(err));
 }
 
-static void printvmerr(const char *fmt, ...)
+static void qcvmerror(qc_program *prog, const char *fmt, ...)
 {
     va_list ap;
+
+    prog->vmerror++;
+
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
