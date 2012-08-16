@@ -189,6 +189,10 @@ typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 /*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
+#ifdef WIN32
+# define fopen fopen_s
+#endif
+
 void *util_memory_a      (unsigned int, unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
 void  util_meminfo       ();
