@@ -977,7 +977,7 @@ bool ir_values_overlap(const ir_value *a, const ir_value *b)
             if (++la == enda)
                 break;
         }
-        else if (lb->start < la->start)
+        else /* if (lb->start < la->start)  actually <= */
         {
             /* order: B A, move B forward
              * check if we hit the end with B
