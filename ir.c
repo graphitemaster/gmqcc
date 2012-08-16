@@ -2773,6 +2773,12 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
 #define IND_BUFSZ 1024
 
+#ifdef WIN32
+# define strncat(dst, src, sz) strncat_s(dst, sz, src, _TRUNCATE)
+#else
+# define strncat strncat
+#endif
+
 const char *qc_opname(int op)
 {
     if (op < 0) return "<INVALID>";
