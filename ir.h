@@ -321,6 +321,6 @@ void ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));
 
 /* This code assumes 32 bit floats while generating binary */
 extern int check_int_and_float_size
-[ (sizeof(int32_t) == sizeof(( (ir_value*)(NULL) )->constval.vvec.x)) ? 1 : -1 ];
+[ (sizeof(int32_t) == sizeof(qcfloat)) ? 1 : -1 ];
 
 #endif
