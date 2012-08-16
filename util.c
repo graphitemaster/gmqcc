@@ -329,7 +329,7 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
     if (!lineptr || !n || !stream)
         return -1;
     if (!*lineptr) {
-        if (!(*lineptr = mem_a((*n=64))))
+        if (!(*lineptr = (char*)mem_a((*n=64))))
             return -1;
     }
 
@@ -340,7 +340,7 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
         int c = getc(stream);
 
         if (chr < 2) {
-            char *tmp = mem_a((*n+=(*n>16)?*n:64));
+            char *tmp = (char*)mem_a((*n+=(*n>16)?*n:64));
             if  (!tmp)
                 return -1;
 
