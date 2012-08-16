@@ -512,7 +512,7 @@ static qcint prog_leavefunction(qc_program *prog)
         exit(1);
     }
 
-    return st.stmt;
+    return st.stmt - 1; /* offset the ++st */
 }
 
 bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps)
