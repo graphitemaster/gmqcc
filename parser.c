@@ -226,6 +226,8 @@ ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upt
         if (!strcmp(parser->locals[i].name, name))
             return parser->locals[i].var;
     }
+    if (!parser->function)
+        return NULL;
     fun = parser->function->vtype;
     for (i = 0; i < fun->expression.params_count; ++i) {
         if (!strcmp(fun->expression.params[i]->name, name))
