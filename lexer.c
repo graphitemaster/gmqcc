@@ -497,6 +497,8 @@ int lex_do(lex_file *lex)
 		case '[':
 		case ']':
 
+		case '$':
+
 		case '#':
 	        if (!lex_tokench(lex, ch) ||
 	            !lex_endtoken(lex))
