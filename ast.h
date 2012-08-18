@@ -81,12 +81,7 @@ typedef struct
      * prevents its dtor from destroying this node as well.
      */
     bool             keep;
-    /* usecount - so we can delete unused _x,_y and _z nodes... */
-    size_t           uses;
 } ast_node_common;
-
-#define ast_use(n) ((ast_node*)(n))->node.uses++
-#define ast_unuse(n) ((ast_node*)(n))->node.uses--
 
 #define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
 #define ast_unref(x) do                     \
@@ -423,8 +418,6 @@ bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
 
 MEM_VECTOR_PROTO(ast_call, ast_expression*, params);
 
-bool ast_call_add_param(ast_call*, ast_expression*);
-
 /* Blocks
  *
  */
@@ -441,8 +434,6 @@ bool ast_block_set_type(ast_block*, ast_expression *from);
 
 MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
-
-bool ast_block_add_expr(ast_block*, ast_expression *expr);
 
 bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
 

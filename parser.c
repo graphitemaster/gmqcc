@@ -517,12 +517,12 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
         case opid1(','):
             if (blocks[0]) {
-                if (!ast_block_add_expr(blocks[0], exprs[1]))
+                if (!ast_block_exprs_add(blocks[0], exprs[1]))
                     return false;
             } else {
                 blocks[0] = ast_block_new(ctx);
-                if (!ast_block_add_expr(blocks[0], exprs[0]) ||
-                    !ast_block_add_expr(blocks[0], exprs[1]))
+                if (!ast_block_exprs_add(blocks[0], exprs[0]) ||
+                    !ast_block_exprs_add(blocks[0], exprs[1]))
                 {
                     return false;
                 }
@@ -900,7 +900,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         if (!params) {
             /* 1 param */
             paramcount = 1;
-            if (!ast_call_add_param(call, sy->out[sy->out_count].out)) {
+            if (!ast_call_params_add(call, sy->out[sy->out_count].out)) {
                 ast_delete(sy->out[sy->out_count].out);
                 parseerror(parser, "out of memory");
                 return false;
@@ -1698,7 +1698,7 @@ static ast_block* parser_parse_block(parser_t *parser)
         }
         if (!expr)
             continue;
-        if (!ast_block_add_expr(block, expr)) {
+        if (!ast_block_exprs_add(block, expr)) {
             ast_delete(expr);
             ast_block_delete(block);
             block = NULL;
