@@ -155,6 +155,9 @@ void lex_close(lex_file *lex)
         mem_d(lex->frames[i].name);
     MEM_VECTOR_CLEAR(lex, frames);
 
+    if (lex->modelname)
+        mem_d(lex->modelname);
+
     if (lex->file)
         fclose(lex->file);
     if (lex->tok)
