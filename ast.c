@@ -562,10 +562,14 @@ ast_block* ast_block_new(lex_ctx ctx)
 }
 MEM_VEC_FUNCTIONS(ast_block, ast_value*, locals)
 MEM_VEC_FUNCTIONS(ast_block, ast_expression*, exprs)
+MEM_VEC_FUNCTIONS(ast_block, ast_expression*, collect)
 
 void ast_block_delete(ast_block *self)
 {
     size_t i;
+    for (i = 0; i < self->collect_count; ++i)
+        ast_unref(self->collect[i]);
+    MEM_VECTOR_CLEAR(self, collect);
     for (i = 0; i < self->exprs_count; ++i)
         ast_unref(self->exprs[i]);
     MEM_VECTOR_CLEAR(self, exprs);

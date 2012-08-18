@@ -1888,6 +1888,18 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 (void)!parser_t_locals_add(parser, vx);
                 (void)!parser_t_locals_add(parser, vy);
                 (void)!parser_t_locals_add(parser, vz);
+                if (!ast_block_locals_add(localblock, var) ||
+                    !ast_block_collect_add(localblock, vx.var) ||
+                    !ast_block_collect_add(localblock, vy.var) ||
+                    !ast_block_collect_add(localblock, vz.var))
+                {
+                    parser_pop_local(parser);
+                    parser_pop_local(parser);
+                    parser_pop_local(parser);
+                    parser_pop_local(parser);
+                    ast_value_delete(var);
+                    return false;
+                }
             }
         }
         else
@@ -1898,12 +1910,12 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 ast_value_delete(var);
                 return false;
             }
-        }
-        if (localblock && !ast_block_locals_add(localblock, var))
-        {
-            parser_pop_local(parser);
-            ast_value_delete(var);
-            return false;
+            if (localblock && !ast_block_locals_add(localblock, var))
+            {
+                parser_pop_local(parser);
+                ast_value_delete(var);
+                return false;
+            }
         }
 
         if (!parser_next(parser)) {
