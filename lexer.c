@@ -9,6 +9,8 @@
 MEM_VEC_FUNCTIONS(token, char, value)
 MEM_VEC_FUNCTIONS(lex_file, frame_macro, frames)
 
+VECTOR_MAKE(char*, lex_filenames);
+
 void lexerror(lex_file *lex, const char *fmt, ...)
 {
     va_list ap;
@@ -145,7 +147,17 @@ lex_file* lex_open(const char *file)
 
     lex->peekpos = 0;
 
+    lex_filenames_add(lex->name);
+
     return lex;
+}
+
+void lex_cleanup(void)
+{
+    size_t i;
+    for (i = 0; i < lex_filenames_elements; ++i)
+        mem_d(lex_filenames_data[i]);
+    mem_d(lex_filenames_data);
 }
 
 void lex_close(lex_file *lex)
@@ -162,7 +174,7 @@ void lex_close(lex_file *lex)
         fclose(lex->file);
     if (lex->tok)
         token_delete(lex->tok);
-    mem_d(lex->name);
+    /* mem_d(lex->name); collected in lex_filenames */
     mem_d(lex);
 }
 

@@ -111,6 +111,7 @@ MEM_VECTOR_PROTO(lex_file, char, token);
 lex_file* lex_open (const char *file);
 void      lex_close(lex_file   *lex);
 int       lex_do   (lex_file   *lex);
+void      lex_cleanup(void);
 
 /* Parser
  *

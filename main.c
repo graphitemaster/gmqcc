@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 #include "gmqcc.h"
+#include "lexer.h"
 
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
 uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
@@ -475,6 +476,7 @@ cleanup:
     if (opts_output_free)
         mem_d((char*)opts_output);
 
+    lex_cleanup();
     util_meminfo();
     return retval;
 }
