@@ -2234,12 +2234,14 @@ bool parser_compile(const char *filename)
                 else if (!parser->errors)
                     parseerror(parser, "parse error\n");
                 lex_close(parser->lex);
+                parser->lex = NULL;
                 return false;
             }
         }
     }
 
     lex_close(parser->lex);
+    parser->lex = NULL;
 
     return !parser->errors;
 }
