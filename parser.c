@@ -928,8 +928,29 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     } else {
         if (fun->expression.params_count != paramcount) {
-            parseerror(parser, "expected %i parameters, got %i", (int)fun->expression.params_count, paramcount);
-            return false;
+            ast_value *fval;
+            fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
+            if (opts_standard == COMPILER_GMQCC)
+            {
+                if (fval)
+                    parseerror(parser, "too few parameters for call to %s: expected %i, got %i",
+                               fval->name, (int)fun->expression.params_count, paramcount);
+                else
+                    parseerror(parser, "too few parameters for function call: expected %i, got %i",
+                               (int)fun->expression.params_count, paramcount);
+                return false;
+            }
+            else
+            {
+                if (fval)
+                    return parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
+                                        "too few parameters for call to %s: expected %i, got %i",
+                                        fval->name, (int)fun->expression.params_count, paramcount);
+                else
+                    return parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
+                                        "too few parameters for function call: expected %i, got %i",
+                                        (int)fun->expression.params_count, paramcount);
+            }
         }
     }
 
@@ -1617,7 +1638,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
                     parseerror(parser, "parse error");
                 if (expected->expression.next->expression.vtype != TYPE_VOID) {
                     if (opts_standard != COMPILER_GMQCC)
-                        parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
+                        (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
                     else
                         parseerror(parser, "return without value");
                 }
