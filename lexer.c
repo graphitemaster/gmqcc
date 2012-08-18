@@ -150,6 +150,11 @@ lex_file* lex_open(const char *file)
 
 void lex_close(lex_file *lex)
 {
+    size_t i;
+    for (i = 0; i < lex->frames_count; ++i)
+        mem_d(lex->frames[i].name);
+    MEM_VECTOR_CLEAR(lex, frames);
+
     if (lex->file)
         fclose(lex->file);
     if (lex->tok)
