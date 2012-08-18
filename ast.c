@@ -405,7 +405,14 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 
 void ast_member_delete(ast_member *self)
 {
-    /* ast_unref(self->owner); */
+    /* The owner is always an ast_value, which has .keep=true,
+     * also: ast_members are usually deleted after the owner, thus
+     * this will cause invalid access
+    ast_unref(self->owner);
+     * once we allow (expression).x to access a vector-member, we need
+     * to change this: preferably by creating an alternate ast node for this
+     * purpose that is not garbage-collected.
+    */
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
