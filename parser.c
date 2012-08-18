@@ -1889,9 +1889,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 (void)!parser_t_locals_add(parser, vy);
                 (void)!parser_t_locals_add(parser, vz);
                 if (!ast_block_locals_add(localblock, var) ||
-                    !ast_block_collect_add(localblock, vx.var) ||
-                    !ast_block_collect_add(localblock, vy.var) ||
-                    !ast_block_collect_add(localblock, vz.var))
+                    !ast_block_collect(localblock, vx.var) ||
+                    !ast_block_collect(localblock, vy.var) ||
+                    !ast_block_collect(localblock, vz.var))
                 {
                     parser_pop_local(parser);
                     parser_pop_local(parser);

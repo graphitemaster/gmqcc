@@ -565,18 +565,26 @@ MEM_VEC_FUNCTIONS(ast_block, ast_value*, locals)
 MEM_VEC_FUNCTIONS(ast_block, ast_expression*, exprs)
 MEM_VEC_FUNCTIONS(ast_block, ast_expression*, collect)
 
+bool ast_block_collect(ast_block *self, ast_expression *expr)
+{
+    if (!ast_block_collect_add(self, expr))
+        return false;
+    expr->expression.node.keep = true;
+    return true;
+}
+
 void ast_block_delete(ast_block *self)
 {
     size_t i;
-    for (i = 0; i < self->collect_count; ++i)
-        ast_unref(self->collect[i]);
-    MEM_VECTOR_CLEAR(self, collect);
     for (i = 0; i < self->exprs_count; ++i)
         ast_unref(self->exprs[i]);
     MEM_VECTOR_CLEAR(self, exprs);
     for (i = 0; i < self->locals_count; ++i)
         ast_delete(self->locals[i]);
     MEM_VECTOR_CLEAR(self, locals);
+    for (i = 0; i < self->collect_count; ++i)
+        ast_delete(self->collect[i]);
+    MEM_VECTOR_CLEAR(self, collect);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }

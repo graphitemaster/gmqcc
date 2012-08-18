@@ -438,6 +438,7 @@ MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
 MEM_VECTOR_PROTO(ast_block, ast_expression*, collect);
 
 bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
+bool ast_block_collect(ast_block*, ast_expression*);
 
 /* Function
  *
