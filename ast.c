@@ -405,7 +405,7 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 
 void ast_member_delete(ast_member *self)
 {
-    ast_unref(self->owner);
+    // ast_unref(self->owner);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
