@@ -1796,14 +1796,14 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
         if (!isfunc) {
             if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
                 ast_value_delete(var);
-                parseerror(parser, "global %s already declared here: %s:%i",
+                parseerror(parser, "global `%s` already declared here: %s:%i",
                            parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
                 return false;
             }
 
             if (localblock && (olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal))) {
                 ast_value_delete(var);
-                parseerror(parser, "local %s already declared here: %s:%i",
+                parseerror(parser, "local `%s` already declared here: %s:%i",
                            parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
                 return false;
             }
