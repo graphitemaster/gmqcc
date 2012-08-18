@@ -73,7 +73,7 @@ bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ..
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (OPTS_WARN(WARN_ERROR)) {
+    if (opts_werror) {
 	    parser->errors++;
 	    lvl = LVL_ERROR;
 	}
@@ -82,7 +82,7 @@ bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ..
     vprintmsg(lvl, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "warning", fmt, ap);
 	va_end(ap);
 
-	return OPTS_WARN(WARN_ERROR);
+	return opts_werror;
 }
 
 /**********************************************************************
