@@ -943,13 +943,13 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
             else
             {
                 if (fval)
-                    return parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
-                                        "too few parameters for call to %s: expected %i, got %i",
-                                        fval->name, (int)fun->expression.params_count, paramcount);
+                    return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
+                                         "too few parameters for call to %s: expected %i, got %i",
+                                         fval->name, (int)fun->expression.params_count, paramcount);
                 else
-                    return parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
-                                        "too few parameters for function call: expected %i, got %i",
-                                        (int)fun->expression.params_count, paramcount);
+                    return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
+                                         "too few parameters for function call: expected %i, got %i",
+                                         (int)fun->expression.params_count, paramcount);
             }
         }
     }
