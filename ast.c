@@ -557,6 +557,7 @@ ast_block* ast_block_new(lex_ctx ctx)
 
     MEM_VECTOR_INIT(self, locals);
     MEM_VECTOR_INIT(self, exprs);
+    MEM_VECTOR_INIT(self, collect);
 
     return self;
 }
