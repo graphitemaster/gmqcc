@@ -252,15 +252,10 @@ ast_expression* parser_find_global(parser_t *parser, const char *name)
     return NULL;
 }
 
-ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upto)
+ast_expression* parser_find_param(parser_t *parser, const char *name)
 {
     size_t i;
     ast_value *fun;
-    for (i = parser->locals_count; i > upto;) {
-        --i;
-        if (!strcmp(parser->locals[i].name, name))
-            return parser->locals[i].var;
-    }
     if (!parser->function)
         return NULL;
     fun = parser->function->vtype;
@@ -271,10 +266,24 @@ ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upt
     return NULL;
 }
 
+ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upto, bool *isparam)
+{
+    size_t i;
+    *isparam = false;
+    for (i = parser->locals_count; i > upto;) {
+        --i;
+        if (!strcmp(parser->locals[i].name, name))
+            return parser->locals[i].var;
+    }
+    *isparam = true;
+    return parser_find_param(parser, name);
+}
+
 ast_expression* parser_find_var(parser_t *parser, const char *name)
 {
+    bool dummy;
     ast_expression *v;
-    v         = parser_find_local(parser, name, 0);
+    v         = parser_find_local(parser, name, 0, &dummy);
     if (!v) v = parser_find_global(parser, name);
     return v;
 }
@@ -1767,6 +1776,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
     ast_expression *olddecl;
 
     bool hadproto;
+    bool isparam;
 
     int basetype = parser_token(parser)->constval.t;
 
@@ -1801,7 +1811,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 return false;
             }
 
-            if (localblock && (olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal))) {
+            if (localblock && (olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal, &isparam))) {
                 ast_value_delete(var);
                 parseerror(parser, "local `%s` already declared here: %s:%i",
                            parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
@@ -1819,11 +1829,12 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             /* a function was defined */
             ast_value *fval;
             ast_value *proto = NULL;
+            bool dummy;
 
             if (!localblock)
                 olddecl = parser_find_global(parser, parser_tokval(parser));
             else
-                olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal);
+                olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal, &dummy);
 
             if (olddecl) {
                 /* we had a prototype */
