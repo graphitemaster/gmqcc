@@ -1801,7 +1801,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 return false;
             }
 
-            if (localblock && parser_find_local(parser, parser_tokval(parser), parser->blocklocal)) {
+            if (localblock && (olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal))) {
                 ast_value_delete(var);
                 parseerror(parser, "local %s already declared here: %s:%i\n",
                            parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
