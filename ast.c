@@ -388,6 +388,7 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
     }
 
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_member_codegen);
+    self->expression.node.keep = true; /* keep */
 
     if (owner->expression.vtype == TYPE_VECTOR) {
         self->expression.vtype = TYPE_FLOAT;
