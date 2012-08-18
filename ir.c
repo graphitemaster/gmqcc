@@ -1446,11 +1446,12 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_va
 
     switch (outype)
     {
-        case TYPE_FLOAT:   op = INSTR_LOAD_F;   break;
-        case TYPE_VECTOR:  op = INSTR_LOAD_V;   break;
-        case TYPE_STRING:  op = INSTR_LOAD_S;   break;
-        case TYPE_FIELD:   op = INSTR_LOAD_FLD; break;
-        case TYPE_ENTITY:  op = INSTR_LOAD_ENT; break;
+        case TYPE_FLOAT:    op = INSTR_LOAD_F;   break;
+        case TYPE_VECTOR:   op = INSTR_LOAD_V;   break;
+        case TYPE_STRING:   op = INSTR_LOAD_S;   break;
+        case TYPE_FIELD:    op = INSTR_LOAD_FLD; break;
+        case TYPE_ENTITY:   op = INSTR_LOAD_ENT; break;
+        case TYPE_FUNCTION: op = INSTR_LOAD_FNC; break;
 #if 0
         case TYPE_POINTER: op = INSTR_LOAD_I;   break;
         case TYPE_INTEGER: op = INSTR_LOAD_I;   break;
