@@ -125,6 +125,7 @@ static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
     else
     {
         ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
+        ast_expression_init(self, NULL);
 
         fromex   = &ex->expression;
         selfex = &self->expression;
