@@ -1668,6 +1668,11 @@ static void parser_pop_local(parser_t *parser)
 {
     parser->locals_count--;
     mem_d(parser->locals[parser->locals_count].name);
+    if (!ast_usecount(parser->locals[parser->locals_count].var) &&
+        ast_istype(parser->locals[parser->locals_count].var, ast_member))
+    {
+        ast_delete(parser->locals[parser->locals_count].var);
+    }
 }
 
 static ast_block* parser_parse_block(parser_t *parser)
