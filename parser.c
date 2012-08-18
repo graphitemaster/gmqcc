@@ -1618,7 +1618,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
                 if (expected->expression.next->expression.vtype != TYPE_VOID) {
                     parseerror(parser, "return without value");
                 }
-                ret = ast_return_new(exp->expression.node.context, NULL);
+                ret = ast_return_new(parser_ctx(parser), NULL);
             }
             *out = (ast_expression*)ret;
             return true;
