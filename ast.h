@@ -149,6 +149,7 @@ struct ast_value_s
 };
 
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);
+ast_value* ast_value_copy(const ast_value *self);
 /* This will NOT delete an underlying ast_function */
 void ast_value_delete(ast_value*);
 

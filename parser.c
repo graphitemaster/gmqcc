@@ -2042,6 +2042,7 @@ static bool parser_do(parser_t *parser)
     else if (parser->tok == '.')
     {
         ast_value *var;
+        ast_value *typevar;
         ast_value *fld;
         ast_expression *oldex;
         bool       isfunc = false;
@@ -2065,11 +2066,12 @@ static bool parser_do(parser_t *parser)
         }
 
         /* parse the field type fully */
-        var = parser_parse_type(parser, basetype, &isfunc);
+        typevar = var = parser_parse_type(parser, basetype, &isfunc);
         if (!var)
             return false;
 
         while (true) {
+            var = ast_value_copy(typevar);
             /* now the field name */
             if (parser->tok != TOKEN_IDENT) {
                 parseerror(parser, "expected field name");
@@ -2179,6 +2181,7 @@ nextfield:
                 return false;
             }
         }
+        ast_delete(typevar);
 
         /* skip the semicolon */
         if (!parser_next(parser))

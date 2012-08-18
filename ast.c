@@ -92,12 +92,24 @@ static void ast_expression_delete_full(ast_expression *self)
 MEM_VEC_FUNCTIONS(ast_expression_common, ast_value*, params)
 
 static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
-static ast_value* ast_value_copy(const ast_value *self)
+ast_value* ast_value_copy(const ast_value *self)
 {
+    size_t i;
+    const ast_expression_common *fromex;
+    ast_expression_common *selfex;
     ast_value *cp = ast_value_new(self->expression.node.context, self->name, self->expression.vtype);
     if (self->expression.next) {
         cp->expression.next = ast_type_copy(self->expression.node.context, self->expression.next);
         if (!cp->expression.next) {
+            ast_value_delete(cp);
+            return NULL;
+        }
+    }
+    fromex   = &self->expression;
+    selfex = &cp->expression;
+    for (i = 0; i < fromex->params_count; ++i) {
+        ast_value *v = ast_value_copy(fromex->params[i]);
+        if (!v || !ast_expression_common_params_add(selfex, v)) {
             ast_value_delete(cp);
             return NULL;
         }
