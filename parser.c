@@ -2248,6 +2248,10 @@ void parser_cleanup()
     for (i = 0; i < parser->imm_float_count; ++i) {
         ast_delete(parser->imm_float[i]);
     }
+    for (i = 0; i < parser->fields_count; ++i) {
+        ast_delete(parser->fields[i].var);
+        mem_d(parser->fields[i].name);
+    }
     for (i = 0; i < parser->globals_count; ++i) {
         ast_delete(parser->globals[i].var);
         mem_d(parser->globals[i].name);
