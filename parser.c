@@ -1838,6 +1838,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
              * messing with the parameter-vector etc. earlier
              */
             if (proto) {
+                size_t param;
                 if (!ast_compare_type((ast_expression*)proto, (ast_expression*)fval)) {
                     parseerror(parser, "conflicting types for `%s`, previous declaration was here: %s:%i",
                                proto->name,
@@ -1846,6 +1847,11 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                     ast_value_delete(fval);
                     return false;
                 }
+                /* copy over the parameter names */
+                for (param = 0; param < fval->expression.params_count; ++param)
+                    ast_value_set_name(proto->expression.params[param], fval->expression.params[param]->name);
+
+                /* now ditch the rest of the new data */
                 ast_function_delete(func);
                 ast_value_delete(fval);
                 fval = proto;
