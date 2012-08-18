@@ -44,5 +44,5 @@ void() main = {
 
     pawn.fun = funny;
 
-    (pawn.fun)();
+    pawn.fun();
 };

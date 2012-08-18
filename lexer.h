@@ -138,11 +138,13 @@ typedef struct {
 #define opid3(a,b,c) ((a<<16)|(b<<8)|c)
 
 static const oper_info operators[] = {
+    { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
+
     { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
     { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  16, OP_SUFFIX},
 
     { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
-    { "(",   0, opid1('('),         ASSOC_LEFT,  15, OP_SUFFIX },
+    { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
 
     { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
     { "~",   1, opid2('~', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },

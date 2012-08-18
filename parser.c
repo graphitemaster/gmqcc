@@ -1110,23 +1110,8 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                                 parser_token(parser)->constval.v.z));
         }
         else if (parser->tok == '(') {
-            if (wantop) {
-                DEBUGSHUNTDO(printf("push (\n"));
-                ++parens;
-                /* we expected an operator, this is the function-call operator */
-                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
-                    parseerror(parser, "out of memory");
-                    goto onerr;
-                }
-            } else {
-                ++parens;
-                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1, 0))) {
-                    parseerror(parser, "out of memory");
-                    goto onerr;
-                }
-                DEBUGSHUNTDO(printf("push (\n"));
-            }
-            wantop = false;
+            parseerror(parser, "internal error: '(' should be classified as operator");
+            goto onerr;
         }
         else if (parser->tok == ')') {
             if (wantop) {
@@ -1171,7 +1156,6 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                     break;
                 }
             }
-            wantop = false;
             if (o == operator_count) {
                 /* no operator found... must be the end of the statement */
                 break;
@@ -1216,9 +1200,30 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                     olast = NULL;
             }
 
-            DEBUGSHUNTDO(printf("push operator %s\n", op->op));
-            if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
-                goto onerr;
+            if (op->id == opid1('(')) {
+                if (wantop) {
+                    DEBUGSHUNTDO(printf("push (\n"));
+                    ++parens;
+                    /* we expected an operator, this is the function-call operator */
+                    if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
+                        parseerror(parser, "out of memory");
+                        goto onerr;
+                    }
+                } else {
+                    ++parens;
+                    if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1, 0))) {
+                        parseerror(parser, "out of memory");
+                        goto onerr;
+                    }
+                    DEBUGSHUNTDO(printf("push (\n"));
+                }
+                wantop = false;
+            } else {
+                DEBUGSHUNTDO(printf("push operator %s\n", op->op));
+                if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
+                    goto onerr;
+                wantop = false;
+            }
         }
         if (!parser_next(parser)) {
             goto onerr;
