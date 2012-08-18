@@ -344,7 +344,8 @@ ast_return* ast_return_new(lex_ctx ctx, ast_expression *expr)
 
 void ast_return_delete(ast_return *self)
 {
-    ast_unref(self->operand);
+    if (self->operand)
+        ast_unref(self->operand);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
