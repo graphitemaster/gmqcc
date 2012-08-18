@@ -1619,6 +1619,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
                 if (expected->expression.next->expression.vtype != TYPE_VOID) {
                     parseerror(parser, "return without value");
                 }
+                *out = NULL;
             }
             return true;
         }
@@ -1723,7 +1724,7 @@ cleanup:
 
 static ast_expression* parser_parse_statement_or_block(parser_t *parser)
 {
-    ast_expression *expr;
+    ast_expression *expr = NULL;
     if (parser->tok == '{')
         return (ast_expression*)parser_parse_block(parser);
     if (!parser_parse_statement(parser, NULL, &expr))
