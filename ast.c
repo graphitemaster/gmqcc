@@ -1145,8 +1145,12 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
         *out = ir_block_create_load_from_ent(func->curblock, ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
     }
-    if (!*out)
+    if (!*out) {
+        asterror(ast_ctx(self), "failed to create %s instruction (output type %s)",
+                 (lvalue ? "ADDRESS" : "FIELD"),
+                 type_name[self->expression.vtype]);
         return false;
+    }
 
     if (lvalue)
         self->expression.outl = *out;
