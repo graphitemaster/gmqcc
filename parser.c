@@ -921,7 +921,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     sy->out[fid] = syexp(call->expression.node.context, (ast_expression*)call);
 
     if (fun->expression.vtype != TYPE_FUNCTION) {
-        parseerror(parser, "not a function");
+        parseerror(parser, "not a function (%s)", type_name[fun->expression.vtype]);
         return false;
     }
 
