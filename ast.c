@@ -108,6 +108,7 @@ static ast_value* ast_value_copy(const ast_value *self)
 static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
 {
     ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
+    ast_expression_init(self, NULL);
     self->expression.codegen = NULL;
     self->expression.next    = NULL;
     self->expression.vtype   = vtype;
