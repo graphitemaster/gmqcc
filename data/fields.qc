@@ -15,7 +15,6 @@ void(entity)        kill   = #4;
 .void() fun;
 
 void(entity a, .float f) printfield = {
-    ftos(3+4);
     print3("The field is ", ftos(a.f), "\n");
 };
 
@@ -24,7 +23,7 @@ void() funny = {
 };
 
 void() main = {
-    entity pawn;
+    local entity pawn;
 
     pawn = spawn();
 
