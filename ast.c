@@ -117,6 +117,28 @@ ast_value* ast_value_copy(const ast_value *self)
     return cp;
 }
 
+#define ast_type_adopt(a, b) ast_type_adopt_impl((ast_expression*)(a), (ast_expression*)(b))
+static bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
+{
+    size_t i;
+    const ast_expression_common *fromex;
+    ast_expression_common *selfex;
+    self->expression.vtype = other->expression.vtype;
+    if (other->expression.next) {
+        self->expression.next = (ast_expression*)ast_type_copy(ast_ctx(self), other->expression.next);
+        if (!self->expression.next)
+            return false;
+    }
+    fromex   = &other->expression;
+    selfex = &self->expression;
+    for (i = 0; i < fromex->params_count; ++i) {
+        ast_value *v = ast_value_copy(fromex->params[i]);
+        if (!v || !ast_expression_common_params_add(selfex, v))
+            return false;
+    }
+    return true;
+}
+
 static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
 {
     ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
@@ -375,11 +397,13 @@ ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expressi
 
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_entfield_codegen);
 
-    self->expression.vtype = outtype->expression.vtype;
-    self->expression.next  = ast_type_copy(ctx, outtype->expression.next);
-
     self->entity = entity;
     self->field  = field;
+
+    if (!ast_type_adopt(self, outtype)) {
+        ast_entfield_delete(self);
+        return NULL;
+    }
 
     return self;
 }

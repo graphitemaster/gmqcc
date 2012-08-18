@@ -8,12 +8,23 @@ string(float)       ftos   = #2;
 entity()            spawn  = #3;
 void(entity)        kill   = #4;
 
+.void(string x) printit;
+
 float(vector different_name, vector b) dot;
 
 float(vector a, vector b) dot = {
     return a * b;
 };
 
+void(string x) myprintit = {
+    print3("-> ", x, "\n");
+};
+
 void() main = {
+    local entity pawn;
     print3("should be 1: ", ftos(dot('1 1 0', '1 0 0')), "\n");
+
+    pawn = spawn();
+    pawn.printit = myprintit;
+    pawn.printit("Hello");
 };
