@@ -177,7 +177,7 @@ void ir_builder_delete(ir_builder* self)
     for (i = 0; i != self->globals_count; ++i) {
         ir_value_delete(self->globals[i]);
     }
-    MEM_VECTOR_CLEAR(self, fields);
+    MEM_VECTOR_CLEAR(self, globals);
     for (i = 0; i != self->fields_count; ++i) {
         ir_value_delete(self->fields[i]);
     }
