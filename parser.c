@@ -171,6 +171,17 @@ ast_value* parser_const_float_0(parser_t *parser)
     return parser->imm_float_zero;
 }
 
+char *parser_strdup(const char *str)
+{
+    if (str && !*str) {
+        /* actually dup empty strings */
+        char *out = mem_a(1);
+        *out = 0;
+        return out;
+    }
+    return util_strdup(str);
+}
+
 ast_value* parser_const_string(parser_t *parser, const char *str)
 {
     size_t i;
@@ -181,7 +192,7 @@ ast_value* parser_const_string(parser_t *parser, const char *str)
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
     out->isconst = true;
-    out->constval.vstring = util_strdup(str);
+    out->constval.vstring = parser_strdup(str);
     if (!parser_t_imm_string_add(parser, out)) {
         ast_value_delete(out);
         return NULL;
