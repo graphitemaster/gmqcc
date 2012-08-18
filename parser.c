@@ -2257,6 +2257,8 @@ void parser_cleanup()
         mem_d(parser->globals[i].name);
     }
     MEM_VECTOR_CLEAR(parser, globals);
+    MEM_VECTOR_CLEAR(parser, fields);
+    MEM_VECTOR_CLEAR(parser, locals);
 
     mem_d(parser);
 }
