@@ -469,6 +469,8 @@ srcdone:
 cleanup:
     util_debug("COM", "cleaning ...\n");
 
+    mem_d(items_data);
+
     parser_cleanup();
     if (opts_output_free)
         mem_d((char*)opts_output);
