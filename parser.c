@@ -2256,6 +2256,10 @@ void parser_cleanup()
         ast_delete(parser->globals[i].var);
         mem_d(parser->globals[i].name);
     }
+    MEM_VECTOR_CLEAR(parser, functions);
+    MEM_VECTOR_CLEAR(parser, imm_vector);
+    MEM_VECTOR_CLEAR(parser, imm_string);
+    MEM_VECTOR_CLEAR(parser, imm_float);
     MEM_VECTOR_CLEAR(parser, globals);
     MEM_VECTOR_CLEAR(parser, fields);
     MEM_VECTOR_CLEAR(parser, locals);
