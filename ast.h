@@ -87,6 +87,7 @@ typedef struct
 
 #define ast_use(n) ((ast_node*)(n))->node.uses++
 #define ast_unuse(n) ((ast_node*)(n))->node.uses--
+#define ast_usecount(n) (((ast_node*)(n))->node.uses)
 
 #define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
 #define ast_unref(x) do                     \
