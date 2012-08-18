@@ -1182,7 +1182,7 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                     olast = NULL;
             }
 
-            if (op->id == opid1('.')) {
+            if (op->id == opid1('.') && opts_standard == COMPILER_GMQCC) {
                 /* for gmqcc standard: open up the namespace of the previous type */
                 ast_expression *prevex = sy.out[sy.out_count-1].out;
                 if (!prevex) {
