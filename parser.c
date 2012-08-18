@@ -2234,7 +2234,6 @@ bool parser_compile(const char *filename)
                 else if (!parser->errors)
                     parseerror(parser, "parse error\n");
                 lex_close(parser->lex);
-                mem_d(parser);
                 return false;
             }
         }
