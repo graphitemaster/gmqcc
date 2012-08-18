@@ -60,8 +60,6 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 	va_start(ap, fmt);
     vprintmsg(LVL_ERROR, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "parse error", fmt, ap);
 	va_end(ap);
-
-	printf("\n");
 }
 
 /* returns true if it counts as an error */
