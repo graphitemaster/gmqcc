@@ -1616,7 +1616,10 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
                 if (!parser_next(parser))
                     parseerror(parser, "parse error");
                 if (expected->expression.next->expression.vtype != TYPE_VOID) {
-                    parseerror(parser, "return without value");
+                    if (opts_standard != COMPILER_GMQCC)
+                        parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
+                    else
+                        parseerror(parser, "return without value");
                 }
                 ret = ast_return_new(parser_ctx(parser), NULL);
             }
