@@ -621,6 +621,8 @@ bool ast_block_set_type(ast_block *self, ast_expression *from)
         if (!self->expression.next)
             return false;
     }
+    else
+        self->expression.next = NULL;
     return true;
 }
 
