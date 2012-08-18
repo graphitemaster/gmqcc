@@ -57,6 +57,7 @@ static void ast_node_init(ast_node *self, lex_ctx ctx, int nodetype)
     self->node.context = ctx;
     self->node.destroy = &_ast_node_destroy;
     self->node.keep    = false;
+    self->node.uses    = 0;
     self->node.nodetype = nodetype;
 }
 
@@ -255,6 +256,9 @@ ast_binary* ast_binary_new(lex_ctx ctx, int op,
     else
         self->expression.vtype = left->expression.vtype;
 
+    ast_use(left);
+    ast_use(right);
+
     return self;
 }
 
@@ -288,6 +292,10 @@ ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
     else
         self->expression.next = NULL;
 
+    ast_use(left);
+    ast_use(right);
+    ast_use(left);
+
     return self;
 }
 
@@ -308,6 +316,8 @@ ast_unary* ast_unary_new(lex_ctx ctx, int op,
     self->op = op;
     self->operand = expr;
 
+    ast_use(expr);
+
     return self;
 }
 
@@ -324,6 +334,8 @@ ast_return* ast_return_new(lex_ctx ctx, ast_expression *expr)
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);
 
     self->operand = expr;
+
+    ast_use(expr);
 
     return self;
 }
@@ -360,6 +372,9 @@ ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expressi
 
     self->entity = entity;
     self->field  = field;
+
+    ast_use(entity);
+    ast_use(field);
 
     return self;
 }
@@ -400,6 +415,8 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
     self->owner = owner;
     self->field = field;
 
+    ast_use(owner);
+
     return self;
 }
 
@@ -423,6 +440,10 @@ ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *on
     self->cond     = cond;
     self->on_true  = ontrue;
     self->on_false = onfalse;
+
+    ast_use(cond);
+    if (ontrue)  ast_use(ontrue);
+    if (onfalse) ast_use(onfalse);
 
     return self;
 }
@@ -453,6 +474,10 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
     self->on_false = onfalse;
     self->phi_out  = NULL;
 
+    ast_use(cond);
+    ast_use(ontrue);
+    ast_use(onfalse);
+
     return self;
 }
 
@@ -480,6 +505,12 @@ ast_loop* ast_loop_new(lex_ctx ctx,
     self->postcond  = postcond;
     self->increment = increment;
     self->body      = body;
+
+    if (initexpr)  ast_use(initexpr);
+    if (precond)   ast_use(precond);
+    if (postcond)  ast_use(postcond);
+    if (increment) ast_use(increment);
+    if (body)      ast_use(body);
 
     return self;
 }
@@ -509,10 +540,19 @@ ast_call* ast_call_new(lex_ctx ctx,
     MEM_VECTOR_INIT(self, params);
 
     self->func = funcexpr;
+    ast_use(funcexpr);
 
     return self;
 }
 MEM_VEC_FUNCTIONS(ast_call, ast_expression*, params)
+
+bool ast_call_add_param(ast_call *self, ast_expression *expr)
+{
+    if (!ast_call_params_add(self, expr))
+        return false;
+    ast_use(expr);
+    return true;
+}
 
 void ast_call_delete(ast_call *self)
 {
@@ -538,6 +578,9 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
     self->dest = dest;
     self->source = source;
 
+    ast_use(dest);
+    ast_use(source);
+
     return self;
 }
 
@@ -562,6 +605,14 @@ ast_block* ast_block_new(lex_ctx ctx)
 }
 MEM_VEC_FUNCTIONS(ast_block, ast_value*, locals)
 MEM_VEC_FUNCTIONS(ast_block, ast_expression*, exprs)
+
+bool ast_block_add_expr(ast_block *self, ast_expression *expr)
+{
+    if (!ast_block_exprs_add(self, expr))
+        return false;
+    ast_use(expr);
+    return true;
+}
 
 void ast_block_delete(ast_block *self)
 {
