@@ -322,6 +322,11 @@ ast_unary* ast_unary_new(lex_ctx ctx, int op,
     self->op = op;
     self->operand = expr;
 
+    if (op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) {
+        self->expression.vtype = TYPE_FLOAT;
+    } else
+        asterror(ctx, "cannot determine type of unary operation %s", asm_instr[op].m);
+
     return self;
 }
 
