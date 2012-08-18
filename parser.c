@@ -1612,15 +1612,15 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
                     ast_delete(exp);
                     return false;
                 }
-
-                *out = (ast_expression*)ret;
-            } else if (!parser_next(parser)) {
-                parseerror(parser, "expected semicolon");
+            } else {
+                if (!parser_next(parser))
+                    parseerror(parser, "parse error");
                 if (expected->expression.next->expression.vtype != TYPE_VOID) {
                     parseerror(parser, "return without value");
                 }
-                *out = NULL;
+                ret = ast_return_new(exp->expression.node.context, NULL);
             }
+            *out = (ast_expression*)ret;
             return true;
         }
         else if (!strcmp(parser_tokval(parser), "if"))
@@ -1693,6 +1693,7 @@ static ast_block* parser_parse_block(parser_t *parser)
             break;
 
         if (!parser_parse_statement(parser, block, &expr)) {
+            parseerror(parser, "parse error");
             ast_block_delete(block);
             block = NULL;
             goto cleanup;
