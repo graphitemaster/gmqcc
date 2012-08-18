@@ -31,6 +31,7 @@ int         opts_standard = COMPILER_GMQCC;
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
 bool        opts_dump     = false;
+bool        opts_werror   = false;
 
 static bool opts_output_wasset = false;
 
@@ -229,6 +230,14 @@ static bool options_parse(int argc, char **argv) {
                             printf(" -W%s\n", buffer);
                         }
                         exit(0);
+                    }
+                    else if (!strcmp(argv[0]+2, "NO_ERROR")) {
+                        opts_werror = false;
+                        break;
+                    }
+                    else if (!strcmp(argv[0]+2, "ERROR")) {
+                        opts_werror = true;
+                        break;
                     }
                     else if (!strcmp(argv[0]+2, "ALL")) {
                         for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
