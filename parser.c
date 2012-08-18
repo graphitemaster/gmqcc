@@ -1167,6 +1167,21 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
             if (op->id == opid1(',') && !parens && stopatcomma)
                 break;
 
+            if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
+                olast = &operators[sy.ops[sy.ops_count-1].etype-1];
+
+            while (olast && (
+                    (op->prec < olast->prec) ||
+                    (op->assoc == ASSOC_LEFT && op->prec <= olast->prec) ) )
+            {
+                if (!parser_sy_pop(parser, &sy))
+                    goto onerr;
+                if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
+                    olast = &operators[sy.ops[sy.ops_count-1].etype-1];
+                else
+                    olast = NULL;
+            }
+
             if (op->id == opid1('.')) {
                 /* for gmqcc standard: open up the namespace of the previous type */
                 ast_expression *prevex = sy.out[sy.out_count-1].out;
@@ -1183,21 +1198,6 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                     goto onerr;
                 }
                 gotmemberof = true;
-            }
-
-            if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
-                olast = &operators[sy.ops[sy.ops_count-1].etype-1];
-
-            while (olast && (
-                    (op->prec < olast->prec) ||
-                    (op->assoc == ASSOC_LEFT && op->prec <= olast->prec) ) )
-            {
-                if (!parser_sy_pop(parser, &sy))
-                    goto onerr;
-                if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
-                    olast = &operators[sy.ops[sy.ops_count-1].etype-1];
-                else
-                    olast = NULL;
             }
 
             if (op->id == opid1('(')) {

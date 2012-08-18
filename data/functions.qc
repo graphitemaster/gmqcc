@@ -22,7 +22,7 @@ void() main = {
     pawn2 = spawn();
 
     pawn.other = pawn2;
-    (pawn.other).vis = 0;
+    pawn.other.vis = 0;
 
     if (!visible(pawn.other))
         print("Yes\n");
