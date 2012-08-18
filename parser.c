@@ -1740,10 +1740,14 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
     varentry_t    varent;
     ast_expression *olddecl;
 
+    bool hadproto;
+
     int basetype = parser_token(parser)->constval.t;
 
     while (true)
     {
+        hadproto = false;
+
         if (!parser_next(parser)) { /* skip basetype or comma */
             parseerror(parser, "expected variable declaration");
             return false;
@@ -1842,8 +1846,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 }
                 ast_function_delete(func);
                 ast_value_delete(fval);
-                var = proto;
-                func = var->constval.vfunc;
+                fval = proto;
+                func = proto->constval.vfunc;
+                hadproto = true;
             }
             else
             {
@@ -1857,64 +1862,66 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             var = fval;
         }
 
-        varent.name = util_strdup(var->name);
-        varent.var = (ast_expression*)var;
-        if (var->expression.vtype == TYPE_VECTOR)
-        {
-            size_t len = strlen(varent.name);
-            varentry_t vx, vy, vz;
-            vx.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 0);
-            vy.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 1);
-            vz.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 2);
-            vx.name = (char*)mem_a(len+3);
-            vy.name = (char*)mem_a(len+3);
-            vz.name = (char*)mem_a(len+3);
-            memcpy(vx.name, varent.name, len);
-            memcpy(vy.name, varent.name, len);
-            memcpy(vz.name, varent.name, len);
-            vx.name[len] = vy.name[len] = vz.name[len] = '_';
-            vx.name[len+1] = 'x';
-            vy.name[len+1] = 'y';
-            vz.name[len+1] = 'z';
-            vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
+        if (!hadproto) {
+            varent.name = util_strdup(var->name);
+            varent.var = (ast_expression*)var;
+            if (var->expression.vtype == TYPE_VECTOR)
+            {
+                size_t len = strlen(varent.name);
+                varentry_t vx, vy, vz;
+                vx.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 0);
+                vy.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 1);
+                vz.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 2);
+                vx.name = (char*)mem_a(len+3);
+                vy.name = (char*)mem_a(len+3);
+                vz.name = (char*)mem_a(len+3);
+                memcpy(vx.name, varent.name, len);
+                memcpy(vy.name, varent.name, len);
+                memcpy(vz.name, varent.name, len);
+                vx.name[len] = vy.name[len] = vz.name[len] = '_';
+                vx.name[len+1] = 'x';
+                vy.name[len+1] = 'y';
+                vz.name[len+1] = 'z';
+                vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
 
-            if (!localblock) {
-                (void)!parser_t_globals_add(parser, varent);
-                (void)!parser_t_globals_add(parser, vx);
-                (void)!parser_t_globals_add(parser, vy);
-                (void)!parser_t_globals_add(parser, vz);
-            } else {
-                (void)!parser_t_locals_add(parser, varent);
-                (void)!parser_t_locals_add(parser, vx);
-                (void)!parser_t_locals_add(parser, vy);
-                (void)!parser_t_locals_add(parser, vz);
-                if (!ast_block_locals_add(localblock, var) ||
-                    !ast_block_collect(localblock, vx.var) ||
-                    !ast_block_collect(localblock, vy.var) ||
-                    !ast_block_collect(localblock, vz.var))
+                if (!localblock) {
+                    (void)!parser_t_globals_add(parser, varent);
+                    (void)!parser_t_globals_add(parser, vx);
+                    (void)!parser_t_globals_add(parser, vy);
+                    (void)!parser_t_globals_add(parser, vz);
+                } else {
+                    (void)!parser_t_locals_add(parser, varent);
+                    (void)!parser_t_locals_add(parser, vx);
+                    (void)!parser_t_locals_add(parser, vy);
+                    (void)!parser_t_locals_add(parser, vz);
+                    if (!ast_block_locals_add(localblock, var) ||
+                        !ast_block_collect(localblock, vx.var) ||
+                        !ast_block_collect(localblock, vy.var) ||
+                        !ast_block_collect(localblock, vz.var))
+                    {
+                        parser_pop_local(parser);
+                        parser_pop_local(parser);
+                        parser_pop_local(parser);
+                        parser_pop_local(parser);
+                        ast_value_delete(var);
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                if ( (!localblock && !parser_t_globals_add(parser, varent)) ||
+                     ( localblock && !parser_t_locals_add(parser, varent)) )
                 {
-                    parser_pop_local(parser);
-                    parser_pop_local(parser);
-                    parser_pop_local(parser);
+                    ast_value_delete(var);
+                    return false;
+                }
+                if (localblock && !ast_block_locals_add(localblock, var))
+                {
                     parser_pop_local(parser);
                     ast_value_delete(var);
                     return false;
                 }
-            }
-        }
-        else
-        {
-            if ( (!localblock && !parser_t_globals_add(parser, varent)) ||
-                 ( localblock && !parser_t_locals_add(parser, varent)) )
-            {
-                ast_value_delete(var);
-                return false;
-            }
-            if (localblock && !ast_block_locals_add(localblock, var))
-            {
-                parser_pop_local(parser);
-                ast_value_delete(var);
-                return false;
             }
         }
 
