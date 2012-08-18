@@ -533,6 +533,10 @@ ast_call* ast_call_new(lex_ctx ctx,
 
     self->func = funcexpr;
 
+    self->expression.vtype = funcexpr->expression.next->expression.vtype;
+    if (funcexpr->expression.next->expression.next)
+        self->expression.next = ast_type_copy(ctx, funcexpr->expression.next->expression.next);
+
     return self;
 }
 MEM_VEC_FUNCTIONS(ast_call, ast_expression*, params)
