@@ -1077,11 +1077,11 @@ bool ir_block_create_return(ir_block *self, ir_value *v)
     if (!in)
         return false;
 
-    if (!ir_instr_op(in, 0, v, false) ||
-        !ir_block_instr_add(self, in) )
-    {
+    if (v && !ir_instr_op(in, 0, v, false))
         return false;
-    }
+
+    if (!ir_block_instr_add(self, in))
+        return false;
     return true;
 }
 

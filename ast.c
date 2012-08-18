@@ -1135,13 +1135,18 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
     }
     self->expression.outr = (ir_value*)1;
 
-    cgen = self->operand->expression.codegen;
-    /* lvalue! */
-    if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
-        return false;
+    if (self->operand) {
+        cgen = self->operand->expression.codegen;
+        /* lvalue! */
+        if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
+            return false;
 
-    if (!ir_block_create_return(func->curblock, operand))
-        return false;
+        if (!ir_block_create_return(func->curblock, operand))
+            return false;
+    } else {
+        if (!ir_block_create_return(func->curblock, NULL))
+            return false;
+    }
 
     return true;
 }
