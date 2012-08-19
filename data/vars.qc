@@ -20,6 +20,11 @@ void(string x) myprintit = {
     print3("-> ", x, "\n");
 };
 
+void(vector par) vecpar = {
+    // vector-parameters need _x, _y, _z as well
+    print3("par_y should be 5... = ", ftos(par_y), "\n");
+};
+
 void() main = {
     local entity pawn;
     print3("should be 1: ", ftos(dot('1 1 0', '1 0 0')), "\n");
@@ -27,4 +32,6 @@ void() main = {
     pawn = spawn();
     pawn.printit = myprintit;
     pawn.printit("Hello");
+
+    vecpar('1 5 9');
 };

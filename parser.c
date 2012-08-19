@@ -47,6 +47,7 @@ MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 static void parser_pop_local(parser_t *parser);
 static bool parser_variable(parser_t *parser, ast_block *localblock);
 static ast_block* parser_parse_block(parser_t *parser);
+static bool parser_parse_block_into(parser_t *parser, ast_block *block);
 static ast_expression* parser_parse_statement_or_block(parser_t *parser);
 static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomma);
 static ast_expression* parser_expression(parser_t *parser, bool stopatcomma);
@@ -1704,10 +1705,9 @@ static void parser_pop_local(parser_t *parser)
     mem_d(parser->locals[parser->locals_count].name);
 }
 
-static ast_block* parser_parse_block(parser_t *parser)
+static bool parser_parse_block_into(parser_t *parser, ast_block *block)
 {
     size_t oldblocklocal;
-    ast_block *block = NULL;
 
     oldblocklocal = parser->blocklocal;
     parser->blocklocal = parser->locals_count;
@@ -1717,8 +1717,6 @@ static ast_block* parser_parse_block(parser_t *parser)
         goto cleanup;
     }
 
-    block = ast_block_new(parser_ctx(parser));
-
     while (parser->tok != TOKEN_EOF && parser->tok < TOKEN_ERROR)
     {
         ast_expression *expr;
@@ -1727,7 +1725,6 @@ static ast_block* parser_parse_block(parser_t *parser)
 
         if (!parser_parse_statement(parser, block, &expr)) {
             parseerror(parser, "parse error");
-            ast_block_delete(block);
             block = NULL;
             goto cleanup;
         }
@@ -1735,14 +1732,12 @@ static ast_block* parser_parse_block(parser_t *parser)
             continue;
         if (!ast_block_exprs_add(block, expr)) {
             ast_delete(expr);
-            ast_block_delete(block);
             block = NULL;
             goto cleanup;
         }
     }
 
     if (parser->tok != '}') {
-        ast_block_delete(block);
         block = NULL;
     } else {
         (void)parser_next(parser);
@@ -1752,7 +1747,19 @@ cleanup:
     while (parser->locals_count > parser->blocklocal)
         parser_pop_local(parser);
     parser->blocklocal = oldblocklocal;
-    /* unroll the local vector */
+    return !!block;
+}
+
+static ast_block* parser_parse_block(parser_t *parser)
+{
+    ast_block *block;
+    block = ast_block_new(parser_ctx(parser));
+    if (!block)
+        return NULL;
+    if (!parser_parse_block_into(parser, block)) {
+        ast_block_delete(block);
+        return NULL;
+    }
     return block;
 }
 
@@ -1764,6 +1771,67 @@ static ast_expression* parser_parse_statement_or_block(parser_t *parser)
     if (!parser_parse_statement(parser, NULL, &expr))
         return NULL;
     return expr;
+}
+
+static bool create_vector_members(parser_t *parser, ast_value *var,
+                                  varentry_t *vx, varentry_t *vy, varentry_t *vz)
+{
+    size_t len = strlen(var->name);
+    vx->var = (ast_expression*)ast_member_new(ast_ctx(var), (ast_expression*)var, 0);
+    if (!vx->var) {
+        parseerror(parser, "failed to create vector members (out of memory)");
+        return false;
+    }
+
+    vy->var = (ast_expression*)ast_member_new(ast_ctx(var), (ast_expression*)var, 1);
+    if (!vy->var) {
+        ast_delete(vx->var);
+        parseerror(parser, "failed to create vector members (out of memory)");
+        return false;
+    }
+
+    vz->var = (ast_expression*)ast_member_new(ast_ctx(var), (ast_expression*)var, 2);
+    if (!vz->var) {
+        ast_delete(vy->var);
+        ast_delete(vx->var);
+        parseerror(parser, "failed to create vector members (out of memory)");
+        return false;
+    }
+
+    if ( !(vx->name = (char*)mem_a(len+3)) ) {
+        ast_delete(vz->var);
+        ast_delete(vy->var);
+        ast_delete(vx->var);
+        parseerror(parser, "failed to create vector members (out of memory)");
+        return false;
+    }
+    if ( !(vy->name = (char*)mem_a(len+3)) ) {
+        mem_d(vx->name);
+        ast_delete(vz->var);
+        ast_delete(vy->var);
+        ast_delete(vx->var);
+        parseerror(parser, "failed to create vector members (out of memory)");
+        return false;
+    }
+    if ( !(vz->name = (char*)mem_a(len+3)) ) {
+        mem_d(vy->name);
+        mem_d(vx->name);
+        ast_delete(vz->var);
+        ast_delete(vy->var);
+        ast_delete(vx->var);
+        parseerror(parser, "failed to create vector members (out of memory)");
+        return false;
+    }
+
+    memcpy(vx->name, var->name, len);
+    memcpy(vy->name, var->name, len);
+    memcpy(vz->name, var->name, len);
+    vx->name[len] = vy->name[len] = vz->name[len] = '_';
+    vx->name[len+1] = 'x';
+    vy->name[len+1] = 'y';
+    vz->name[len+1] = 'z';
+    vx->name[len+2] = vy->name[len+2] = vz->name[len+2] = 0;
+    return true;
 }
 
 static bool parser_variable(parser_t *parser, ast_block *localblock)
@@ -1952,22 +2020,11 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             varent.var = (ast_expression*)var;
             if (var->expression.vtype == TYPE_VECTOR)
             {
-                size_t len = strlen(varent.name);
                 varentry_t vx, vy, vz;
-                vx.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 0);
-                vy.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 1);
-                vz.var = (ast_expression*)ast_member_new(var->expression.node.context, (ast_expression*)var, 2);
-                vx.name = (char*)mem_a(len+3);
-                vy.name = (char*)mem_a(len+3);
-                vz.name = (char*)mem_a(len+3);
-                memcpy(vx.name, varent.name, len);
-                memcpy(vy.name, varent.name, len);
-                memcpy(vz.name, varent.name, len);
-                vx.name[len] = vy.name[len] = vz.name[len] = '_';
-                vx.name[len+1] = 'x';
-                vy.name[len+1] = 'y';
-                vz.name[len+1] = 'z';
-                vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
+                if (!create_vector_members(parser, var, &vx, &vy, &vz)) {
+                    ast_delete(var);
+                    return false;
+                }
 
                 if (!localblock) {
                     (void)!parser_t_globals_add(parser, varent);
@@ -2064,6 +2121,7 @@ nextvar:
         } else if (parser->tok == '{') {
             /* function body */
             ast_block *block;
+            size_t     parami;
             ast_function *old = parser->function;
 
             if (localblock) {
@@ -2071,8 +2129,49 @@ nextvar:
                 return false;
             }
 
+            block = ast_block_new(parser_ctx(parser));
+            if (!block) {
+                parseerror(parser, "failed to allocate block");
+                return false;
+            }
+
+            for (parami = 0; parami < var->expression.params_count; ++parami) {
+                ast_value *param = var->expression.params[parami];
+                varentry_t vx, vy, vz;
+
+                if (param->expression.vtype != TYPE_VECTOR &&
+                    (param->expression.vtype != TYPE_FIELD ||
+                     param->expression.next->expression.vtype != TYPE_VECTOR))
+                {
+                    continue;
+                }
+
+                if (!create_vector_members(parser, param, &vx, &vy, &vz)) {
+                    ast_block_delete(block);
+                    return false;
+                }
+
+                (void)!parser_t_locals_add(parser, vx);
+                (void)!parser_t_locals_add(parser, vy);
+                (void)!parser_t_locals_add(parser, vz);
+                if (!ast_block_collect(block, vx.var) ||
+                    !ast_block_collect(block, vy.var) ||
+                    !ast_block_collect(block, vz.var) )
+                {
+                    parser_pop_local(parser);
+                    parser_pop_local(parser);
+                    parser_pop_local(parser);
+                    ast_block_delete(block);
+                    return false;
+                }
+            }
+
             parser->function = func;
-            block = parser_parse_block(parser);
+            if (!parser_parse_block_into(parser, block)) {
+                ast_block_delete(block);
+                parser->function = old;
+                return false;
+            }
             parser->function = old;
 
             if (!block)
@@ -2239,24 +2338,11 @@ static bool parser_do(parser_t *parser)
             if (var->expression.vtype == TYPE_VECTOR)
             {
                 /* create _x, _y and _z fields as well */
-                size_t len;
                 varentry_t vx, vy, vz;
-
-                len = strlen(varent.name);
-                vx.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 0);
-                vy.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 1);
-                vz.var = (ast_expression*)ast_member_new(ast_ctx(fld), (ast_expression*)fld, 2);
-                vx.name = (char*)mem_a(len+3);
-                vy.name = (char*)mem_a(len+3);
-                vz.name = (char*)mem_a(len+3);
-                memcpy(vx.name, varent.name, len);
-                memcpy(vy.name, varent.name, len);
-                memcpy(vz.name, varent.name, len);
-                vx.name[len] = vy.name[len] = vz.name[len] = '_';
-                vx.name[len+1] = 'x';
-                vy.name[len+1] = 'y';
-                vz.name[len+1] = 'z';
-                vx.name[len+2] = vy.name[len+2] = vz.name[len+2] = 0;
+                if (!create_vector_members(parser, fld, &vx, &vy, &vz)) {
+                    ast_delete(fld);
+                    return false;
+                }
                 (void)!parser_t_fields_add(parser, vx);
                 (void)!parser_t_fields_add(parser, vy);
                 (void)!parser_t_fields_add(parser, vz);
