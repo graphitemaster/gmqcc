@@ -39,9 +39,11 @@ void() main = {
 
     time = 10;
 
-    self.nextthink = stand1;
+    print("Setting think\n");
+    self.think = stand1;
 
-    self.nextthink();
-    self.nextthink();
-    self.nextthink();
+    print("Running think\n");
+    self.think();
+    self.think();
+    self.think();
 };
