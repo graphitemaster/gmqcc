@@ -16,7 +16,7 @@ $frame stand1 stand2 standX
 entity self;
 float  time;
 
-void() stand2;
+// void() stand2; this is auto-prototyped
 void() stand1 = [ 0, stand2 ] {
     // expands to:
     //self.frame = 0;

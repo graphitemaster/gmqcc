@@ -91,7 +91,6 @@ static void ast_expression_delete_full(ast_expression *self)
 
 MEM_VEC_FUNCTIONS(ast_expression_common, ast_value*, params)
 
-static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
 ast_value* ast_value_copy(const ast_value *self)
 {
     size_t i;
@@ -117,8 +116,7 @@ ast_value* ast_value_copy(const ast_value *self)
     return cp;
 }
 
-#define ast_type_adopt(a, b) ast_type_adopt_impl((ast_expression*)(a), (ast_expression*)(b))
-static bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
+bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
 {
     size_t i;
     const ast_expression_common *fromex;
@@ -149,7 +147,7 @@ static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
     return self;
 }
 
-static ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
+ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
 {
     size_t i;
     const ast_expression_common *fromex;

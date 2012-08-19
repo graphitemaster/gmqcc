@@ -162,6 +162,9 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir);
 bool GMQCC_WARN ast_value_params_add(ast_value*, ast_value*);
 
 bool ast_compare_type(ast_expression *a, ast_expression *b);
+ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
+#define ast_type_adopt(a, b) ast_type_adopt_impl((ast_expression*)(a), (ast_expression*)(b))
+bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other);
 
 /* Binary
  *

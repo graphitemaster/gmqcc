@@ -2151,6 +2151,8 @@ nextvar:
                  * self.nextthink = time + 0.1;
                  * self.think = nextthink;
                  */
+                nextthink = NULL;
+
                 fld_think     = parser_find_field(parser, "think");
                 fld_nextthink = parser_find_field(parser, "nextthink");
                 fld_frame     = parser_find_field(parser, "frame");
@@ -2193,11 +2195,54 @@ nextvar:
                     return false;
                 }
 
-                nextthink = parser_expression_leave(parser, true);
-                if (!nextthink) {
-                    ast_unref(framenum);
-                    parseerror(parser, "expected a think-function in [frame,think] notation");
-                    return false;
+                if (parser->tok == TOKEN_IDENT && !parser_find_var(parser, parser_tokval(parser)))
+                {
+                    /* qc allows the use of not-yet-declared functions here
+                     * - this automatically creates a prototype */
+                    varentry_t      varent;
+                    ast_value      *thinkfunc;
+                    ast_expression *functype = fld_think->expression.next;
+
+                    thinkfunc = ast_value_new(parser_ctx(parser), parser_tokval(parser), functype->expression.vtype);
+                    if (!thinkfunc || !ast_type_adopt(nextthink, functype)) {
+                        ast_unref(framenum);
+                        parseerror(parser, "failed to create implicit prototype for `%s`", parser_tokval(parser));
+                        return false;
+                    }
+
+                    if (!parser_next(parser)) {
+                        ast_unref(framenum);
+                        return false;
+                    }
+
+                    varent.var = (ast_expression*)thinkfunc;
+                    varent.name = util_strdup(thinkfunc->name);
+                    if (nextthink->expression.vtype == TYPE_FUNCTION)
+                    {
+                        ast_function *func;
+
+                        func = ast_function_new(parser_ctx(parser), thinkfunc->name, thinkfunc);
+                        if (!func) {
+                            ast_delete(nextthink);
+                            ast_unref(framenum);
+                            parseerror(parser, "failed to create function for implicit prototype for `%s`",
+                                       thinkfunc->name);
+                            return false;
+                        }
+                        (void)!parser_t_functions_add(parser, func);
+                        (void)!parser_t_globals_add(parser, varent);
+                    }
+                    else
+                        (void)!parser_t_globals_add(parser, varent);
+                    nextthink = (ast_expression*)thinkfunc;
+
+                } else {
+                    nextthink = parser_expression_leave(parser, true);
+                    if (!nextthink) {
+                        ast_unref(framenum);
+                        parseerror(parser, "expected a think-function in [frame,think] notation");
+                        return false;
+                    }
                 }
 
                 if (!ast_istype(nextthink, ast_value) || !( (ast_value*)nextthink )->isconst) {
