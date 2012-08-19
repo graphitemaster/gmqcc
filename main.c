@@ -382,6 +382,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_EXTENSIONS, true);
     options_set(opts_warn, WARN_FIELD_REDECLARED, true);
     options_set(opts_warn, WARN_TOO_FEW_PARAMETERS, true);
+    options_set(opts_warn, WARN_MISSING_RETURN_VALUES, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
