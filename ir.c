@@ -1894,6 +1894,10 @@ bool ir_function_allocate_locals(ir_function *self)
         }
     }
 
+    if (!alloc.sizes) {
+        goto cleanup;
+    }
+
     /* Adjust slot positions based on sizes */
     if (!function_allocator_positions_add(&alloc, 0))
         goto error;
