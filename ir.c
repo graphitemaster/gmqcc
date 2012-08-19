@@ -1225,7 +1225,7 @@ ir_instr* ir_block_create_call(ir_block *self, const char *label, ir_value *func
     in = ir_instr_new(self, INSTR_CALL0);
     if (!in)
         return NULL;
-    out = ir_value_out(self->owner, label, store_return, func->outtype);
+    out = ir_value_out(self->owner, label, store_value, func->outtype);
     if (!out) {
         ir_instr_delete(in);
         return NULL;
@@ -1844,7 +1844,7 @@ bool ir_function_allocate_locals(ir_function *self)
 
     function_allocator alloc;
 
-    if (!self->locals_count)
+    if (!self->locals_count && !self->values_count)
         return true;
 
     MEM_VECTOR_INIT(&alloc, locals);
@@ -1907,8 +1907,9 @@ bool ir_function_allocate_locals(ir_function *self)
     self->allocated_locals = pos + alloc.sizes[alloc.sizes_count-1];
 
     /* Take over the actual slot positions */
-    for (i = 0; i < self->values_count; ++i)
+    for (i = 0; i < self->values_count; ++i) {
         self->values[i]->code.local = alloc.positions[self->values[i]->code.local];
+    }
 
     goto cleanup;
 
@@ -2038,6 +2039,25 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (p = 0; p < instr->phi_count; ++p)
         {
             value = instr->phi[p].value;
+#if ! defined(LIFE_RANGE_WITHOUT_LAST_READ)
+            if (!ir_block_living_find(self, value, NULL) &&
+                !ir_block_living_add(self, value))
+            {
+                goto on_error;
+            }
+#else
+            if (!new_reads_t_v_find(&new_reads, value, NULL))
+            {
+                if (!new_reads_t_v_add(&new_reads, value))
+                    goto on_error;
+            }
+#endif
+        }
+
+        /* call params are read operands too */
+        for (p = 0; p < instr->params_count; ++p)
+        {
+            value = instr->params[p];
 #if ! defined(LIFE_RANGE_WITHOUT_LAST_READ)
             if (!ir_block_living_find(self, value, NULL) &&
                 !ir_block_living_add(self, value))
@@ -2566,7 +2586,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         ir_value *v = irfun->values[i];
         ir_value_code_setaddr(v, local_var_end + v->code.local);
     }
-    for (i = 0; i < irfun->locals_count; ++i) {
+    for (i = 0; i < irfun->allocated_locals; ++i) {
         /* fill the locals with zeros */
         code_globals_add(0);
     }
