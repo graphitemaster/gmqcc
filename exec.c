@@ -320,13 +320,15 @@ static int print_escaped_string(const char *str)
 
 static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
 {
-    static char spaces[16+1] = "            ";
+    static char spaces[40+1] = "                                        ";
     prog_section_def *def;
     qcany    *value;
     int       len;
 
-    if (!glob)
-        return;
+    if (!glob) {
+        len = printf("<null>,");
+        goto done;
+    }
 
     def = prog_getdef(prog, glob);
     value = (qcany*)(&prog->globals[glob]);
@@ -353,6 +355,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
             break;
         case TYPE_STRING:
             len += print_escaped_string(prog_getstring(prog, value->string));
+            len += printf(",");
             /* len += printf("\"%s\",", prog_getstring(prog, value->string)); */
             break;
         case TYPE_FLOAT:
@@ -360,10 +363,11 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
             len += printf("%g,", value->_float);
             break;
     }
-    if (len < 16) {
-        spaces[16-len] = 0;
+done:
+    if (len < sizeof(spaces)-1) {
+        spaces[sizeof(spaces)-1-len] = 0;
         printf(spaces);
-        spaces[16-len] = ' ';
+        spaces[sizeof(spaces)-1-len] = ' ';
     }
 }
 
@@ -413,18 +417,50 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
             case INSTR_NE_S:
                 t[0] = t[1] = TYPE_STRING;
                 break;
+            case INSTR_STORE_F:
+            case INSTR_STOREP_F:
+                t[2] = -1;
+                break;
             case INSTR_STORE_V:
                 t[0] = t[1] = TYPE_VECTOR; t[2] = -1;
                 break;
             case INSTR_STORE_S:
                 t[0] = t[1] = TYPE_STRING; t[2] = -1;
                 break;
+            case INSTR_STORE_ENT:
+                t[0] = t[1] = TYPE_ENTITY; t[2] = -1;
+                break;
+            case INSTR_STORE_FLD:
+                t[0] = t[1] = TYPE_FIELD; t[2] = -1;
+                break;
+            case INSTR_STORE_FNC:
+                t[0] = t[1] = TYPE_FUNCTION; t[2] = -1;
+                break;
+            case INSTR_STOREP_V:
+                t[0] = TYPE_VECTOR; t[1] = TYPE_ENTITY; t[2] = -1;
+                break;
+            case INSTR_STOREP_S:
+                t[0] = TYPE_STRING; t[1] = TYPE_ENTITY; t[2] = -1;
+                break;
+            case INSTR_STOREP_ENT:
+                t[0] = TYPE_ENTITY; t[1] = TYPE_ENTITY; t[2] = -1;
+                break;
+            case INSTR_STOREP_FLD:
+                t[0] = TYPE_FIELD; t[1] = TYPE_ENTITY; t[2] = -1;
+                break;
+            case INSTR_STOREP_FNC:
+                t[0] = TYPE_FUNCTION; t[1] = TYPE_ENTITY; t[2] = -1;
+                break;
         }
         if (t[0] >= 0) trace_print_global(prog, st->o1.u1, t[0]);
+        else           printf("(none),          ");
         if (t[1] >= 0) trace_print_global(prog, st->o2.u1, t[1]);
+        else           printf("(none),          ");
         if (t[2] >= 0) trace_print_global(prog, st->o3.u1, t[2]);
+        else           printf("(none)");
         printf("\n");
     }
+    fflush(stdout);
 }
 
 static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
