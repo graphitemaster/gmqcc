@@ -2204,7 +2204,7 @@ nextvar:
                     ast_expression *functype = fld_think->expression.next;
 
                     thinkfunc = ast_value_new(parser_ctx(parser), parser_tokval(parser), functype->expression.vtype);
-                    if (!thinkfunc || !ast_type_adopt(nextthink, functype)) {
+                    if (!thinkfunc || !ast_type_adopt(thinkfunc, functype)) {
                         ast_unref(framenum);
                         parseerror(parser, "failed to create implicit prototype for `%s`", parser_tokval(parser));
                         return false;
@@ -2217,13 +2217,13 @@ nextvar:
 
                     varent.var = (ast_expression*)thinkfunc;
                     varent.name = util_strdup(thinkfunc->name);
-                    if (nextthink->expression.vtype == TYPE_FUNCTION)
+                    if (thinkfunc->expression.vtype == TYPE_FUNCTION)
                     {
                         ast_function *func;
 
                         func = ast_function_new(parser_ctx(parser), thinkfunc->name, thinkfunc);
                         if (!func) {
-                            ast_delete(nextthink);
+                            ast_delete(thinkfunc);
                             ast_unref(framenum);
                             parseerror(parser, "failed to create function for implicit prototype for `%s`",
                                        thinkfunc->name);
