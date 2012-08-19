@@ -1749,12 +1749,15 @@ static bool parser_parse_block_into(parser_t *parser, ast_block *block, bool war
     if (parser->tok != '}') {
         block = NULL;
     } else {
-        if (parser->function->vtype->expression.next->expression.vtype != TYPE_VOID)
+        if (warnreturn && parser->function->vtype->expression.next->expression.vtype != TYPE_VOID)
         {
             if (!block->exprs_count ||
                 !ast_istype(block->exprs[block->exprs_count-1], ast_return))
             {
-                parsewarning(parser, WARN_MISSING_RETURN_VALUES, "control reaches end of non-void function");
+                if (parsewarning(parser, WARN_MISSING_RETURN_VALUES, "control reaches end of non-void function")) {
+                    block = NULL;
+                    goto cleanup;
+                }
             }
         }
         (void)parser_next(parser);
