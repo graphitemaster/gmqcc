@@ -68,6 +68,7 @@ typedef struct ir_value_s {
 
     /* for acessing vectors */
     struct ir_value_s *members[3];
+    struct ir_value_s *memberof;
 
     /* For the temp allocator */
     MEM_VECTOR_MAKE(ir_life_entry_t, life);

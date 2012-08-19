@@ -641,6 +641,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->members[0] = NULL;
     self->members[1] = NULL;
     self->members[2] = NULL;
+    self->memberof = NULL;
 
     MEM_VECTOR_INIT(self, life);
     return self;
@@ -684,6 +685,7 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
         return NULL;
     }
 
+    m->memberof = self;
     return m;
 }
 
@@ -1824,7 +1826,7 @@ bool ir_function_calculate_liferanges(ir_function *self)
         ir_block *block = self->blocks[0];
         for (i = 0; i < block->living_count; ++i) {
             ir_value *v = block->living[i];
-            if (v->name[0] == '#' || v->name[0] == '%')
+            if (v->memberof || v->store != store_local)
                 continue;
             if (irwarning(v->context, WARN_USED_UNINITIALIZED,
                           "variable `%s` may be used uninitialized in this function", v->name))
@@ -2086,6 +2088,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (p = 0; p < instr->phi_count; ++p)
         {
             value = instr->phi[p].value;
+            if (value->memberof)
+                value = value->memberof;
             if (!ir_block_living_find(self, value, NULL) &&
                 !ir_block_living_add(self, value))
             {
@@ -2097,6 +2101,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (p = 0; p < instr->params_count; ++p)
         {
             value = instr->params[p];
+            if (value->memberof)
+                value = value->memberof;
             if (!ir_block_living_find(self, value, NULL) &&
                 !ir_block_living_add(self, value))
             {
@@ -2114,6 +2120,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 continue;
 
             value = instr->_ops[o];
+            if (value->memberof)
+                value = value->memberof;
 
             /* We only care about locals */
             /* we also calculate parameter liferanges so that locals
