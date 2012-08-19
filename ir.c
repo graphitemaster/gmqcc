@@ -322,6 +322,8 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     MEM_VECTOR_INIT(self, values);
     MEM_VECTOR_INIT(self, locals);
 
+    self->code_function_def = -1;
+
     self->run_id = 0;
     return self;
 }
@@ -2580,7 +2582,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     local_var_end = fun.firstlocal;
     for (i = 0; i < irfun->locals_count; ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i])) {
-            irerror(irfun->locals[i]->context, "Failed to generate local %s\n", irfun->locals[i]->name);
+            irerror(irfun->locals[i]->context, "Failed to generate local %s", irfun->locals[i]->name);
             return false;
         }
     }
@@ -2603,14 +2605,40 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     if (irfun->builtin)
         fun.entry = irfun->builtin;
     else {
+        irfun->code_function_def = code_functions_elements;
         fun.entry = code_statements_elements;
+        /* done in second pass: gen_global_function_code!
         if (!gen_function_code(irfun)) {
-            irerror(irfun->context, "Failed to generate code for function %s\n", irfun->name);
+            irerror(irfun->context, "Failed to generate code for function %s", irfun->name);
             return false;
         }
+        */
     }
 
     return (code_functions_add(fun) >= 0);
+}
+
+static bool gen_global_function_code(ir_builder *ir, ir_value *global)
+{
+    prog_section_function *fundef;
+    ir_function           *irfun;
+
+    irfun = global->constval.vfunc;
+    if (irfun->builtin)
+        return true;
+
+    if (irfun->code_function_def < 0) {
+        irerror(irfun->context, "`%s`: IR global wasn't generated, failed to access function-def", irfun->name);
+        return false;
+    }
+    fundef = &code_functions_data[irfun->code_function_def];
+
+    fundef->entry = code_statements_elements;
+    if (!gen_function_code(irfun)) {
+        irerror(irfun->context, "Failed to generate code for function %s", irfun->name);
+        return false;
+    }
+    return true;
 }
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
@@ -2790,6 +2818,16 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     {
         if (!ir_builder_gen_global(self, self->globals[i])) {
             return false;
+        }
+    }
+
+    /* generate function code */
+    for (i = 0; i < self->globals_count; ++i)
+    {
+        if (self->globals[i]->vtype == TYPE_FUNCTION) {
+            if (!gen_global_function_code(self, self->globals[i])) {
+                return false;
+            }
         }
     }
 

@@ -260,6 +260,14 @@ typedef struct ir_function_s
 
     lex_ctx       context;
 
+    /* for prototypes - first we generate all the
+     * globals, and we remember teh function-defs
+     * so we can later fill in the entry pos
+     *
+     * remember the ID:
+     */
+    qcint code_function_def;
+
     /* for temp allocation */
     size_t run_id;
 
