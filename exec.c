@@ -636,16 +636,41 @@ static prog_builtin qc_builtins[] = {
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
+static const char *arg0 = NULL;
+
+void usage()
+{
+    printf("usage: [-debug] %s file\n", arg0);
+    exit(1);
+}
+
 int main(int argc, char **argv)
 {
     size_t      i;
     qcint       fnmain = -1;
     qc_program *prog;
+    size_t      xflags = VMXF_DEFAULT;
 
-    if (argc != 2) {
-        printf("usage: %s file\n", argv[0]);
-        exit(1);
+    arg0 = argv[0];
+
+    if (argc < 2)
+        usage();
+
+    while (argc > 2) {
+        if (!strcmp(argv[1], "-trace")) {
+            --argc;
+            ++argv;
+            xflags |= VMXF_TRACE;
+        }
+        else if (!strcmp(argv[1], "-profile")) {
+            --argc;
+            ++argv;
+            xflags |= VMXF_PROFILE;
+        }
+        else
+            usage();
     }
+
 
     prog = prog_load(argv[1]);
     if (!prog) {
@@ -659,14 +684,14 @@ int main(int argc, char **argv)
 
     for (i = 1; i < prog->functions_count; ++i) {
         const char *name = prog_getstring(prog, prog->functions[i].name);
-        printf("Found function: %s\n", name);
+        /* printf("Found function: %s\n", name); */
         if (!strcmp(name, "main"))
             fnmain = (qcint)i;
     }
     printf("Entity field space: %i\n", (int)prog->entityfields);
     if (fnmain > 0)
     {
-        prog_exec(prog, &prog->functions[fnmain], VMXF_TRACE, VM_JUMPS_DEFAULT);
+        prog_exec(prog, &prog->functions[fnmain], xflags, VM_JUMPS_DEFAULT);
     }
     else
         printf("No main function found\n");
