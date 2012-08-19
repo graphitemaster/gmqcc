@@ -46,8 +46,8 @@ MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
 static void parser_pop_local(parser_t *parser);
 static bool parser_variable(parser_t *parser, ast_block *localblock);
-static ast_block* parser_parse_block(parser_t *parser);
-static bool parser_parse_block_into(parser_t *parser, ast_block *block);
+static ast_block* parser_parse_block(parser_t *parser, bool warnreturn);
+static bool parser_parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
 static ast_expression* parser_parse_statement_or_block(parser_t *parser);
 static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomma);
 static ast_expression* parser_expression(parser_t *parser, bool stopatcomma);
@@ -1692,7 +1692,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
     else if (parser->tok == '{')
     {
         ast_block *inner;
-        inner = parser_parse_block(parser);
+        inner = parser_parse_block(parser, false);
         if (!inner)
             return false;
         *out = (ast_expression*)inner;
@@ -1714,7 +1714,7 @@ static void parser_pop_local(parser_t *parser)
     mem_d(parser->locals[parser->locals_count].name);
 }
 
-static bool parser_parse_block_into(parser_t *parser, ast_block *block)
+static bool parser_parse_block_into(parser_t *parser, ast_block *block, bool warnreturn)
 {
     size_t oldblocklocal;
 
@@ -1759,13 +1759,13 @@ cleanup:
     return !!block;
 }
 
-static ast_block* parser_parse_block(parser_t *parser)
+static ast_block* parser_parse_block(parser_t *parser, bool warnreturn)
 {
     ast_block *block;
     block = ast_block_new(parser_ctx(parser));
     if (!block)
         return NULL;
-    if (!parser_parse_block_into(parser, block)) {
+    if (!parser_parse_block_into(parser, block, warnreturn)) {
         ast_block_delete(block);
         return NULL;
     }
@@ -1776,7 +1776,7 @@ static ast_expression* parser_parse_statement_or_block(parser_t *parser)
 {
     ast_expression *expr = NULL;
     if (parser->tok == '{')
-        return (ast_expression*)parser_parse_block(parser);
+        return (ast_expression*)parser_parse_block(parser, false);
     if (!parser_parse_statement(parser, NULL, &expr))
         return NULL;
     return expr;
@@ -2348,7 +2348,7 @@ nextvar:
             }
 
             parser->function = func;
-            if (!parser_parse_block_into(parser, block)) {
+            if (!parser_parse_block_into(parser, block, true)) {
                 ast_block_delete(block);
                 parser->function = old;
                 return false;
