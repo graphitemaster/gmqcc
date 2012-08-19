@@ -970,13 +970,8 @@ bool ir_values_overlap(const ir_value *a, const ir_value *b)
         /* check if the entries overlap, for that,
          * both must start before the other one ends.
          */
-#if defined(LIFE_RANGE_WITHOUT_LAST_READ)
-        if (la->start <= lb->end &&
-            lb->start <= la->end)
-#else
-        if (la->start <  lb->end &&
-            lb->start <  la->end)
-#endif
+        if (la->start < lb->end &&
+            lb->start < la->end)
         {
             return true;
         }
@@ -2042,16 +2037,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     size_t i, o, p;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
-#if defined(LIFE_RANGE_WITHOUT_LAST_READ)
-    size_t rd;
-    new_reads_t new_reads;
-#endif
     char dbg_ind[16] = { '#', '0' };
     (void)dbg_ind;
-
-#if defined(LIFE_RANGE_WITHOUT_LAST_READ)
-    MEM_VECTOR_INIT(&new_reads, v);
-#endif
 
     if (prev)
     {
@@ -2068,38 +2055,22 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (p = 0; p < instr->phi_count; ++p)
         {
             value = instr->phi[p].value;
-#if ! defined(LIFE_RANGE_WITHOUT_LAST_READ)
             if (!ir_block_living_find(self, value, NULL) &&
                 !ir_block_living_add(self, value))
             {
-                goto on_error;
+                return false;
             }
-#else
-            if (!new_reads_t_v_find(&new_reads, value, NULL))
-            {
-                if (!new_reads_t_v_add(&new_reads, value))
-                    goto on_error;
-            }
-#endif
         }
 
         /* call params are read operands too */
         for (p = 0; p < instr->params_count; ++p)
         {
             value = instr->params[p];
-#if ! defined(LIFE_RANGE_WITHOUT_LAST_READ)
             if (!ir_block_living_find(self, value, NULL) &&
                 !ir_block_living_add(self, value))
             {
-                goto on_error;
+                return false;
             }
-#else
-            if (!new_reads_t_v_find(&new_reads, value, NULL))
-            {
-                if (!new_reads_t_v_add(&new_reads, value))
-                    goto on_error;
-            }
-#endif
         }
 
         /* See which operands are read and write operands */
@@ -2124,20 +2095,11 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             /* read operands */
             if (read & (1<<o))
             {
-#if ! defined(LIFE_RANGE_WITHOUT_LAST_READ)
                 if (!ir_block_living_find(self, value, NULL) &&
                     !ir_block_living_add(self, value))
                 {
-                    goto on_error;
+                    return false;
                 }
-#else
-                /* fprintf(stderr, "read: %s\n", value->_name); */
-                if (!new_reads_t_v_find(&new_reads, value, NULL))
-                {
-                    if (!new_reads_t_v_add(&new_reads, value))
-                        goto on_error;
-                }
-#endif
             }
 
             /* write operands */
@@ -2149,13 +2111,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             {
                 size_t idx;
                 bool in_living = ir_block_living_find(self, value, &idx);
-#if defined(LIFE_RANGE_WITHOUT_LAST_READ)
-                size_t readidx;
-                bool in_reads = new_reads_t_v_find(&new_reads, value, &readidx);
-                if (!in_living && !in_reads)
-#else
                 if (!in_living)
-#endif
                 {
                     /* If the value isn't alive it hasn't been read before... */
                     /* TODO: See if the warning can be emitted during parsing or AST processing
@@ -2184,16 +2140,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                     */
                     *changed = *changed || tempbool;
                     /* Then remove */
-#if ! defined(LIFE_RANGE_WITHOUT_LAST_READ)
                     if (!ir_block_living_remove(self, idx))
-                        goto on_error;
-#else
-                    if (in_reads)
-                    {
-                        if (!new_reads_t_v_remove(&new_reads, readidx))
-                            goto on_error;
-                    }
-#endif
+                        return false;
                 }
             }
         }
@@ -2202,21 +2150,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         /*fprintf(stderr, "living added values\n");*/
         *changed = *changed || tempbool;
 
-#if defined(LIFE_RANGE_WITHOUT_LAST_READ)
-        /* new reads: */
-        for (rd = 0; rd < new_reads.v_count; ++rd)
-        {
-            if (!ir_block_living_find(self, new_reads.v[rd], NULL)) {
-                if (!ir_block_living_add(self, new_reads.v[rd]))
-                    goto on_error;
-            }
-            if (!i && !self->entries_count) {
-                /* fix the top */
-                *changed = *changed || ir_value_life_merge(new_reads.v[rd], instr->eid);
-            }
-        }
-        MEM_VECTOR_CLEAR(&new_reads, v);
-#endif
     }
 
     if (self->run_id == self->owner->run_id)
@@ -2231,11 +2164,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     }
 
     return true;
-on_error:
-#if defined(LIFE_RANGE_WITHOUT_LAST_READ)
-    MEM_VECTOR_CLEAR(&new_reads, v);
-#endif
-    return false;
 }
 
 /***********************************************************************
