@@ -306,6 +306,8 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     if (!self)
         return NULL;
 
+    memset(self, 0, sizeof(*self));
+
     self->name = NULL;
     if (!ir_function_set_name(self, "<@unnamed>")) {
         mem_d(self);
@@ -323,6 +325,7 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     MEM_VECTOR_INIT(self, locals);
 
     self->code_function_def = -1;
+    self->allocated_locals = 0;
 
     self->run_id = 0;
     return self;
