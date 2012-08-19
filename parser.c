@@ -977,10 +977,12 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
         parseerror(parser, "unmatched closing paren");
         return false;
     }
+    /* this would for bit a + (x) because there are no operators inside (x)
     if (sy->ops[sy->ops_count-1].paren == 1) {
         parseerror(parser, "empty parenthesis expression");
         return false;
     }
+    */
     while (sy->ops_count) {
         if (sy->ops[sy->ops_count-1].paren == 'f') {
             if (!parser_close_call(parser, sy))
@@ -1240,7 +1242,7 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
 
             if (op->id == opid1('(')) {
                 if (wantop) {
-                    DEBUGSHUNTDO(printf("push (\n"));
+                    DEBUGSHUNTDO(printf("push [op] (\n"));
                     ++parens;
                     /* we expected an operator, this is the function-call operator */
                     if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
@@ -1253,7 +1255,7 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                         parseerror(parser, "out of memory");
                         goto onerr;
                     }
-                    DEBUGSHUNTDO(printf("push (\n"));
+                    DEBUGSHUNTDO(printf("push [nop] (\n"));
                 }
                 wantop = false;
             } else {

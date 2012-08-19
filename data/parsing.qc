@@ -68,3 +68,9 @@ void() main = {
     print3("memb = ", ftos(pawn.memb), "\n");
     print3("Frame stand3 is ", ftos($stand3), " wooh\n");
 };
+
+float() exprtest = {
+    local float x;
+    x = 3;
+    return (x); /* parens */
+}
