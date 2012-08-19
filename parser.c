@@ -128,8 +128,12 @@ bool parser_next(parser_t *parser)
 {
     /* lex_do kills the previous token */
     parser->tok = lex_do(parser->lex);
-    if (parser->tok == TOKEN_EOF || parser->tok >= TOKEN_ERROR)
+    if (parser->tok == TOKEN_EOF)
         return false;
+    if (parser->tok >= TOKEN_ERROR) {
+        parseerror(parser, "lex error");
+        return false;
+    }
     return true;
 }
 
@@ -1195,8 +1199,11 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
             op = &operators[o];
 
             /* when declaring variables, a comma starts a new variable */
-            if (op->id == opid1(',') && !parens && stopatcomma)
+            if (op->id == opid1(',') && !parens && stopatcomma) {
+                /* fixup the token */
+                parser->tok = ',';
                 break;
+            }
 
             if (sy.ops_count && !sy.ops[sy.ops_count-1].paren)
                 olast = &operators[sy.ops[sy.ops_count-1].etype-1];
@@ -1259,7 +1266,7 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
         if (!parser_next(parser)) {
             goto onerr;
         }
-        if (parser->tok == ';') {
+        if (parser->tok == ';' || parser->tok == ']') {
             break;
         }
     }
@@ -2118,21 +2125,146 @@ nextvar:
 
             if (!parser_next(parser))
                 return false;
-        } else if (parser->tok == '{') {
+        } else if (parser->tok == '{' || parser->tok == '[') {
             /* function body */
+            ast_function *old;
             ast_block *block;
             size_t     parami;
-            ast_function *old = parser->function;
+
+            ast_expression *fld_think, *fld_nextthink, *fld_frame;
+            ast_expression *gbl_time, *gbl_self;
+            ast_expression *framenum, *nextthink;
+            bool            has_frame_think;
+
+            has_frame_think = false;
+            old = parser->function;
 
             if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");
                 return false;
             }
 
+            if (parser->tok == '[') {
+                /* got a frame definition: [ framenum, nextthink ]
+                 * this translates to:
+                 * self.frame = framenum;
+                 * self.nextthink = time + 0.1;
+                 * self.think = nextthink;
+                 */
+                fld_think     = parser_find_field(parser, "think");
+                fld_nextthink = parser_find_field(parser, "nextthink");
+                fld_frame     = parser_find_field(parser, "frame");
+                if (!fld_think || !fld_nextthink || !fld_frame) {
+                    parseerror(parser, "cannot use [frame,think] notation without the required fields");
+                    parseerror(parser, "please declare the following entityfields: `frame`, `think`, `nextthink`");
+                    return false;
+                }
+                gbl_time      = parser_find_global(parser, "time");
+                gbl_self      = parser_find_global(parser, "self");
+                if (!gbl_time || !gbl_self) {
+                    parseerror(parser, "cannot use [frame,think] notation without the required globals");
+                    parseerror(parser, "please declare the following globals: `time`, `self`");
+                    return false;
+                }
+
+                if (!parser_next(parser)) {
+                    return false;
+                }
+
+                framenum = parser_expression_leave(parser, true);
+                if (!framenum) {
+                    parseerror(parser, "expected a framenumber constant in[frame,think] notation");
+                    return false;
+                }
+                if (!ast_istype(framenum, ast_value) || !( (ast_value*)framenum )->isconst) {
+                    ast_unref(framenum);
+                    parseerror(parser, "framenumber in [frame,think] notation must be a constant");
+                }
+
+                if (parser->tok != ',') {
+                    ast_unref(framenum);
+                    parseerror(parser, "expected comma after frame number in [frame,think] notation");
+                    parseerror(parser, "Got a %i\n", parser->tok);
+                    return false;
+                }
+
+                if (!parser_next(parser)) {
+                    ast_unref(framenum);
+                    return false;
+                }
+
+                nextthink = parser_expression_leave(parser, true);
+                if (!nextthink) {
+                    ast_unref(framenum);
+                    parseerror(parser, "expected a think-function in [frame,think] notation");
+                    return false;
+                }
+
+                if (!ast_istype(nextthink, ast_value) || !( (ast_value*)nextthink )->isconst) {
+                    ast_unref(nextthink);
+                    ast_unref(framenum);
+                    parseerror(parser, "think-function in [frame,think] notation must be a constant");
+                }
+
+                if (parser->tok != ']') {
+                    parseerror(parser, "expected closing `]` for [frame,think] notation");
+                    ast_unref(nextthink);
+                    ast_unref(framenum);
+                    return false;
+                }
+
+                if (!parser_next(parser)) {
+                    ast_unref(nextthink);
+                    ast_unref(framenum);
+                    return false;
+                }
+
+                if (parser->tok != '{') {
+                    parseerror(parser, "a function body has to be declared after a [frame,think] declaration");
+                    ast_unref(nextthink);
+                    ast_unref(framenum);
+                    return false;
+                }
+
+                has_frame_think = true;
+            }
+
             block = ast_block_new(parser_ctx(parser));
             if (!block) {
                 parseerror(parser, "failed to allocate block");
                 return false;
+            }
+
+            if (has_frame_think) {
+                lex_ctx ctx;
+                ast_expression *self_frame;
+                ast_expression *self_nextthink;
+                ast_expression *self_think;
+                ast_expression *time_plus_1;
+                ast_store *store_frame;
+                ast_store *store_nextthink;
+                ast_store *store_think;
+
+                ctx = parser_ctx(parser);
+                self_frame     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_frame);
+                self_nextthink = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_nextthink);
+                self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
+
+                time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
+                                 gbl_time, (ast_expression*)parser_const_float(parser, 0.1));
+
+                store_frame     = ast_store_new(ctx, INSTR_STOREP_F,   self_frame,     framenum);
+                store_nextthink = ast_store_new(ctx, INSTR_STOREP_F,   self_nextthink, time_plus_1);
+                store_think     = ast_store_new(ctx, INSTR_STOREP_FNC, self_think,     nextthink);
+
+                if (!ast_block_exprs_add(block, (ast_expression*)store_frame)     ||
+                    !ast_block_exprs_add(block, (ast_expression*)store_nextthink) ||
+                    !ast_block_exprs_add(block, (ast_expression*)store_think) )
+                {
+                    parseerror(parser, "failed to generate code for [frame,think]");
+                    ast_block_delete(block);
+                    return false;
+                }
             }
 
             for (parami = 0; parami < var->expression.params_count; ++parami) {
