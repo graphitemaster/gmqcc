@@ -1333,9 +1333,9 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         return false;
 
     /* add jumps ot the merge block */
-    if (ontrue && !ir_block_create_jump(ontrue, merge))
+    if (ontrue && !ontrue->final && !ir_block_create_jump(ontrue, merge))
         return false;
-    if (onfalse && !ir_block_create_jump(onfalse, merge))
+    if (onfalse && !onfalse->final && !ir_block_create_jump(onfalse, merge))
         return false;
 
     /* we create the if here, that way all blocks are ordered :)
