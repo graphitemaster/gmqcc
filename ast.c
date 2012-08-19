@@ -1653,7 +1653,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bpostcond)  tmpblock = bpostcond;
         else if (bprecond)   tmpblock = bprecond;
         else                 tmpblock = bout;
-        if (!ir_block_create_jump(end_bbody, tmpblock))
+        if (!end_bbody->final && !ir_block_create_jump(end_bbody, tmpblock))
             return false;
     }
 
