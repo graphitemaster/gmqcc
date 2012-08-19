@@ -788,6 +788,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
         if (!v)
             return false;
+        v->context = ast_ctx(self);
         if (self->isconst) {
             asterror(ast_ctx(self), "TODO: constant field pointers with value\n");
             goto error;
@@ -801,6 +802,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         asterror(ast_ctx(self), "ir_builder_create_global failed\n");
         return false;
     }
+    v->context = ast_ctx(self);
 
     if (self->isconst) {
         switch (self->expression.vtype)
