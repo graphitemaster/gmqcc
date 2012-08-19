@@ -934,6 +934,9 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     /* TODO: check return types */
     if (!self->curblock->is_return)
     {
+        return ir_block_create_return(self->curblock, NULL);
+        /* From now on the parser has to handle this situation */
+#if 0
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
         {
@@ -945,6 +948,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
             asterror(ast_ctx(self), "function `%s` missing return value", self->name);
             return false;
         }
+#endif
     }
     return true;
 }
