@@ -174,7 +174,7 @@ ast_value* parser_const_float_0(parser_t *parser)
     return parser->imm_float_zero;
 }
 
-char *parser_strdup(const char *str)
+static char *parser_strdup(const char *str)
 {
     if (str && !*str) {
         /* actually dup empty strings */

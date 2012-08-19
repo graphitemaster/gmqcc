@@ -749,11 +749,22 @@ bool ir_value_set_field(ir_value *self, ir_value *fld)
     return true;
 }
 
+static char *ir_strdup(const char *str)
+{
+    if (str && !*str) {
+        /* actually dup empty strings */
+        char *out = mem_a(1);
+        *out = 0;
+        return out;
+    }
+    return util_strdup(str);
+}
+
 bool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != TYPE_STRING)
         return false;
-    self->constval.vstring = util_strdup(str);
+    self->constval.vstring = ir_strdup(str);
     self->isconst = true;
     return true;
 }
