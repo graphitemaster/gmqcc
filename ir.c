@@ -2548,7 +2548,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     fun.firstlocal = code_globals_elements;
     fun.locals     = irfun->allocated_locals + irfun->locals_count;
 
-    local_var_end = 0;
+    local_var_end = fun.firstlocal;
     for (i = 0; i < irfun->locals_count; ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i])) {
             irerror(irfun->locals[i]->context, "Failed to generate global %s\n", irfun->locals[i]->name);
