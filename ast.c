@@ -776,6 +776,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         ir_function *func = ir_builder_create_function(ir, self->name, self->expression.next->expression.vtype);
         if (!func)
             return false;
+        func->context = ast_ctx(self);
 
         self->constval.vfunc->ir_func = func;
         self->ir_v = func->value;
