@@ -421,7 +421,7 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
     if (param &&
         self->locals_count &&
         self->locals[self->locals_count-1]->store != store_param) {
-        irerror(self->context, "cannot add parameters after adding locals\n");
+        irerror(self->context, "cannot add parameters after adding locals");
         return NULL;
     }
 
@@ -662,7 +662,7 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     }
     else
     {
-        irerror(self->context, "invalid member access on %s\n", self->name);
+        irerror(self->context, "invalid member access on %s", self->name);
         return NULL;
     }
 
@@ -1018,9 +1018,9 @@ bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value
     if (target->store == store_value &&
         (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC))
     {
-        irerror(self->context, "cannot store to an SSA value\n");
-        irerror(self->context, "trying to store: %s <- %s\n", target->name, what->name);
-        irerror(self->context, "instruction: %s\n", asm_instr[op].m);
+        irerror(self->context, "cannot store to an SSA value");
+        irerror(self->context, "trying to store: %s <- %s", target->name, what->name);
+        irerror(self->context, "instruction: %s", asm_instr[op].m);
         return false;
     }
 
@@ -1084,7 +1084,7 @@ bool ir_block_create_return(ir_block *self, ir_value *v)
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)\n", self->label);
+        irerror(self->context, "block already ended (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1106,7 +1106,7 @@ bool ir_block_create_if(ir_block *self, ir_value *v,
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)\n", self->label);
+        irerror(self->context, "block already ended (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1140,7 +1140,7 @@ bool ir_block_create_jump(ir_block *self, ir_block *to)
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)\n", self->label);
+        irerror(self->context, "block already ended (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1164,7 +1164,7 @@ bool ir_block_create_goto(ir_block *self, ir_block *to)
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)\n", self->label);
+        irerror(self->context, "block already ended (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1222,7 +1222,7 @@ bool ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
         /* Must not be possible to cause this, otherwise the AST
          * is doing something wrong.
          */
-        irerror(self->context, "Invalid entry block for PHI\n");
+        irerror(self->context, "Invalid entry block for PHI");
         abort();
     }
 
@@ -1993,7 +1993,7 @@ static bool ir_block_living_add_instr(ir_block *self, size_t eid)
         tempbool = ir_value_life_merge(self->living[i], eid);
         /* debug
         if (tempbool)
-            irerror(self->context, "block_living_add_instr() value instruction added %s: %i\n", self->living[i]->_name, (int)eid);
+            irerror(self->context, "block_living_add_instr() value instruction added %s: %i", self->living[i]->_name, (int)eid);
         */
         changed = changed || tempbool;
     }
@@ -2028,7 +2028,7 @@ static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *ch
         if (!ir_block_living_add(self, prev->living[i]))
             return false;
         /*
-        irerror(self->contextt from prev: %s\n", self->label, prev->living[i]->_name);
+        irerror(self->contextt from prev: %s", self->label, prev->living[i]->_name);
         */
     }
     return true;
@@ -2261,7 +2261,7 @@ static bool gen_global_field(ir_value *global)
     {
         ir_value *fld = global->constval.vpointer;
         if (!fld) {
-            irerror(global->context, "Invalid field constant with no field: %s\n", global->name);
+            irerror(global->context, "Invalid field constant with no field: %s", global->name);
             return false;
         }
 
@@ -2274,7 +2274,7 @@ static bool gen_global_field(ir_value *global)
          * for functions... might as well support that here.
          */
         if (!fld->code.globaladdr) {
-            irerror(global->context, "FIXME: Relocation support\n");
+            irerror(global->context, "FIXME: Relocation support");
             return false;
         }
 
@@ -2304,7 +2304,7 @@ static bool gen_global_pointer(ir_value *global)
     {
         ir_value *target = global->constval.vpointer;
         if (!target) {
-            irerror(global->context, "Invalid pointer constant: %s\n", global->name);
+            irerror(global->context, "Invalid pointer constant: %s", global->name);
             /* NULL pointers are pointing to the NULL constant, which also
              * sits at address 0, but still has an ir_value for itself.
              */
@@ -2320,7 +2320,7 @@ static bool gen_global_pointer(ir_value *global)
             /* FIXME: Check for the constant nullptr ir_value!
              * because then code.globaladdr being 0 is valid.
              */
-            irerror(global->context, "FIXME: Relocation support\n");
+            irerror(global->context, "FIXME: Relocation support");
             return false;
         }
 
@@ -2353,7 +2353,7 @@ tailcall:
         instr = block->instr[i];
 
         if (instr->opcode == VINSTR_PHI) {
-            irerror(block->context, "cannot generate virtual instruction (phi)\n");
+            irerror(block->context, "cannot generate virtual instruction (phi)");
             return false;
         }
 
@@ -2494,7 +2494,7 @@ tailcall:
         }
 
         if (instr->opcode == INSTR_STATE) {
-            irerror(block->context, "TODO: state instruction\n");
+            irerror(block->context, "TODO: state instruction");
             return false;
         }
 
@@ -2543,7 +2543,7 @@ static bool gen_function_code(ir_function *self)
      * for now. Dead blocks will not be translated obviously.
      */
     if (!self->blocks_count) {
-        irerror(self->context, "Function '%s' declared without body.\n", self->name);
+        irerror(self->context, "Function '%s' declared without body.", self->name);
         return false;
     }
 
@@ -2552,7 +2552,7 @@ static bool gen_function_code(ir_function *self)
         return true;
 
     if (!gen_blocks_recursive(self, block)) {
-        irerror(self->context, "failed to generate blocks for '%s'\n", self->name);
+        irerror(self->context, "failed to generate blocks for '%s'", self->name);
         return false;
     }
 
@@ -2576,7 +2576,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     if (!global->isconst || (!global->constval.vfunc))
     {
-        irerror(global->context, "Invalid state of function-global: not constant: %s\n", global->name);
+        irerror(global->context, "Invalid state of function-global: not constant: %s", global->name);
         return false;
     }
 
@@ -2740,7 +2740,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
-        irerror(global->context, "Invalid type for global variable `%s`: %s\n",
+        irerror(global->context, "Invalid type for global variable `%s`: %s",
                 global->name, type_name[global->vtype]);
         return false;
     }
@@ -2764,7 +2764,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
          * bytes is more than enough for a variable/field name
          */
         if (len+2 >= sizeof(name)) {
-            irerror(field->context, "invalid field name size: %u\n", (unsigned int)len);
+            irerror(field->context, "invalid field name size: %u", (unsigned int)len);
             return false;
         }
 
@@ -2792,7 +2792,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     fld.type = field->fieldtype;
 
     if (fld.type == TYPE_VOID) {
-        irerror(field->context, "field is missing a type: %s - don't know its size\n", field->name);
+        irerror(field->context, "field is missing a type: %s - don't know its size", field->name);
         return false;
     }
 
