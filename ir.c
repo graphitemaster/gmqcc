@@ -2740,7 +2740,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
-        irerror(global->context, "Invalid type for global variable %s\n", global->name);
+        irerror(global->context, "Invalid type for global variable `%s`: %s\n",
+                global->name, type_name[global->vtype]);
         return false;
     }
 }
