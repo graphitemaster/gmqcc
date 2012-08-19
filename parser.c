@@ -2511,7 +2511,7 @@ static bool parser_do(parser_t *parser)
                     ast_delete(fld);
                     return false;
                 } else {
-                    if (parsewarning(parser, WARN_FIELD_REDECLARED, "field %s has already been declared here: %s:%i",
+                    if (parsewarning(parser, WARN_FIELD_REDECLARED, "field `%s` has already been declared here: %s:%i",
                                      parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line))
                     {
                         ast_delete(fld);
