@@ -133,6 +133,24 @@ static void irerror(lex_ctx ctx, const char *msg, ...)
     va_end(ap);
 }
 
+static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
+{
+	va_list ap;
+	int lvl = LVL_WARNING;
+
+    if (!OPTS_WARN(warntype))
+        return false;
+
+    if (opts_werror)
+	    lvl = LVL_ERROR;
+
+	va_start(ap, fmt);
+    vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
+	va_end(ap);
+
+	return opts_werror;
+}
+
 /***********************************************************************
  *IR Builder
  */
@@ -1802,6 +1820,19 @@ bool ir_function_calculate_liferanges(ir_function *self)
             }
         }
     } while (changed);
+    if (self->blocks_count) {
+        ir_block *block = self->blocks[0];
+        for (i = 0; i < block->living_count; ++i) {
+            ir_value *v = block->living[i];
+            if (v->name[0] == '#' || v->name[0] == '%')
+                continue;
+            if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                          "variable `%s` may be used uninitialized in this function", v->name))
+            {
+                return false;
+            }
+        }
+    }
     return true;
 }
 
