@@ -2004,6 +2004,8 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 /* copy over the parameter names */
                 for (param = 0; param < fval->expression.params_count; ++param)
                     ast_value_set_name(proto->expression.params[param], fval->expression.params[param]->name);
+                /* copy the new context */
+                ast_ctx(proto) = ast_ctx(fval);
 
                 /* now ditch the rest of the new data */
                 ast_function_delete(func);
