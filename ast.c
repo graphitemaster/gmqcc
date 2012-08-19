@@ -854,6 +854,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
     v = ir_function_create_local(func, self->name, self->expression.vtype, param);
     if (!v)
         return false;
+    v->context = ast_ctx(self);
 
     /* A constant local... hmmm...
      * I suppose the IR will have to deal with this
