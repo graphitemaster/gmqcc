@@ -2610,12 +2610,6 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     else {
         irfun->code_function_def = code_functions_elements;
         fun.entry = code_statements_elements;
-        /* done in second pass: gen_global_function_code!
-        if (!gen_function_code(irfun)) {
-            irerror(irfun->context, "Failed to generate code for function %s", irfun->name);
-            return false;
-        }
-        */
     }
 
     return (code_functions_add(fun) >= 0);
