@@ -1947,6 +1947,15 @@ static void ir_op_read_write(int op, size_t *read, size_t *write)
         *write = 0;
         *read = 1;
         break;
+    case INSTR_STOREP_F:
+    case INSTR_STOREP_V:
+    case INSTR_STOREP_S:
+    case INSTR_STOREP_ENT:
+    case INSTR_STOREP_FLD:
+    case INSTR_STOREP_FNC:
+        *write = 0;
+        *read  = 7;
+        break;
     default:
         *write = 1;
         *read = 6;
