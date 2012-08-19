@@ -61,7 +61,7 @@ void() main = {
     b = a += 7;
     print("adding\n");
     print3("a = ", ftos(a), "\n");
-    print3("b = ", ftos(a), "\n");
+    print3("b = ", ftos(b), "\n");
 
     print3("memb = ", ftos(pawn.memb), "\n");
     pawn.memb += -1;
