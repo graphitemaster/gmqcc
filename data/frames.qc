@@ -9,7 +9,6 @@ entity()            spawn  = #3;
 void(entity)        kill   = #4;
 
 $frame stand1 stand2 standX
-/*
 .float  frame;
 .float  nextthink;
 .void() think;
@@ -18,7 +17,6 @@ entity self;
 float  time;
 
 void() stand2;
-
 void() stand1 = [ 0, stand2 ] {
     // expands to:
     //self.frame = 0;
@@ -34,10 +32,11 @@ void() stand2 = [ 1, stand1 ] {
 };
 
 void() standm = {
+    local string bar;
+    bar = ftos(self);
     print3("Foo ", ftos(self), "\n");
     self.frame = 0;
     self.nextthink = time + 0.1;
-    self.think = stand2;
 };
 
 void() main = {
@@ -55,22 +54,3 @@ void() main = {
     self.think();
     self.think();
 };
-*/
-
-entity self;
-
-.float frame;
-.float nextthink;
-
-void(float a, float b) foo = {};
-
-void() main = {
-    self = spawn();
-    self.frame = 1;
-    self.nextthink = 2;
-    print2(ftos(self.frame), "\n");
-    print2(ftos(self.nextthink), "\n");
-    foo(self.frame, self.nextthink);
-    kill(self);
-};
-
