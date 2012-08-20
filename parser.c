@@ -1863,37 +1863,48 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
     varentry_t    varent;
     ast_expression *olddecl;
 
+    ast_value    *typevar;
+
     bool hadproto;
     bool isparam;
 
     int basetype = parser_token(parser)->constval.t;
 
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected variable definition");
+        return false;
+    }
+
+    typevar = parser_parse_type(parser, basetype, &isfunc);
+    if (!typevar)
+        return false;
+
     while (true)
     {
         hadproto = false;
+        olddecl = NULL;
+        func    = NULL;
+        isparam = false;
 
-        if (!parser_next(parser)) { /* skip basetype or comma */
-            parseerror(parser, "expected variable declaration");
+        ctx = parser_ctx(parser);
+        var = ast_value_copy(typevar);
+
+        if (!var) {
+            ast_delete(typevar);
+            parseerror(parser, "failed to create variable");
             return false;
         }
 
-        olddecl = NULL;
-        isfunc  = false;
-        func    = NULL;
-        isparam = false;
-        ctx = parser_ctx(parser);
-        var = parser_parse_type(parser, basetype, &isfunc);
-
-        if (!var)
-            return false;
-
         if (parser->tok != TOKEN_IDENT) {
-            parseerror(parser, "expected variable name\n");
+            parseerror(parser, "expected variable name");
+            ast_value_delete(typevar);
+            ast_value_delete(var);
             return false;
         }
 
         if (!isfunc) {
             if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
+                ast_value_delete(typevar);
                 ast_value_delete(var);
                 parseerror(parser, "global `%s` already declared here: %s:%i",
                            parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
@@ -1907,6 +1918,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                     if (olddecl)
                     {
                         if (!isparam) {
+                            ast_value_delete(typevar);
                             ast_value_delete(var);
                             parseerror(parser, "local `%s` already declared here: %s:%i",
                                        parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
@@ -1919,6 +1931,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                         if (parsewarning(parser, WARN_LOCAL_SHADOWS,
                                          "local `%s` is shadowing a parameter", parser_tokval(parser)))
                         {
+                            ast_value_delete(typevar);
                             ast_value_delete(var);
                             parseerror(parser, "local `%s` already declared here: %s:%i",
                                        parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
@@ -1935,12 +1948,16 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                             parsewarning(parser, WARN_LOCAL_SHADOWS,
                                          "a parameter is shadowing local `%s`", parser_tokval(parser)))
                         {
+                            ast_value_delete(typevar);
+                            ast_value_delete(var);
                             return false;
                         }
                         else if (!isparam)
                         {
                             parseerror(parser, "local `%s` already declared here: %s:%i",
                                        parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                            ast_value_delete(typevar);
+                            ast_value_delete(var);
                             return false;
                         }
                         goto nextvar;
@@ -1951,6 +1968,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
 
         if (!ast_value_set_name(var, parser_tokval(parser))) {
             parseerror(parser, "failed to set variable name\n");
+            ast_value_delete(typevar);
             ast_value_delete(var);
             return false;
         }
@@ -2091,13 +2109,15 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
 
 nextvar:
         if (!parser_next(parser)) {
+            ast_value_delete(typevar);
             ast_value_delete(var);
             return false;
         }
 
         if (parser->tok == ';') {
+            ast_value_delete(typevar);
             if (!parser_next(parser))
-                return parser->tok == TOKEN_EOF;
+                return false;
             return true;
         }
 
@@ -2107,39 +2127,49 @@ nextvar:
         }
 
         if (parser->tok != '=') {
+            ast_value_delete(typevar);
             parseerror(parser, "expected '=' or ';'");
             return false;
         }
 
-        if (!parser_next(parser))
+        if (!parser_next(parser)) {
+            ast_value_delete(typevar);
             return false;
+        }
 
         if (parser->tok == '#') {
             if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
+                ast_value_delete(typevar);
                 return false;
             }
             if (!isfunc || !func) {
                 parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
+                ast_value_delete(typevar);
                 return false;
             }
             if (!parser_next(parser)) {
                 parseerror(parser, "expected builtin number");
+                ast_value_delete(typevar);
                 return false;
             }
             if (parser->tok != TOKEN_INTCONST) {
                 parseerror(parser, "builtin number must be an integer constant");
+                ast_value_delete(typevar);
                 return false;
             }
             if (parser_token(parser)->constval.i <= 0) {
                 parseerror(parser, "builtin number must be positive integer greater than zero");
+                ast_value_delete(typevar);
                 return false;
             }
 
             func->builtin = -parser_token(parser)->constval.i;
 
-            if (!parser_next(parser))
+            if (!parser_next(parser)) {
+                ast_value_delete(typevar);
                 return false;
+            }
         } else if (parser->tok == '{' || parser->tok == '[') {
             /* function body */
             ast_function *old;
@@ -2156,6 +2186,7 @@ nextvar:
 
             if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");
+                ast_value_delete(typevar);
                 return false;
             }
 
@@ -2174,6 +2205,7 @@ nextvar:
                 if (!fld_think || !fld_nextthink || !fld_frame) {
                     parseerror(parser, "cannot use [frame,think] notation without the required fields");
                     parseerror(parser, "please declare the following entityfields: `frame`, `think`, `nextthink`");
+                    ast_value_delete(typevar);
                     return false;
                 }
                 gbl_time      = parser_find_global(parser, "time");
@@ -2181,16 +2213,19 @@ nextvar:
                 if (!gbl_time || !gbl_self) {
                     parseerror(parser, "cannot use [frame,think] notation without the required globals");
                     parseerror(parser, "please declare the following globals: `time`, `self`");
+                    ast_value_delete(typevar);
                     return false;
                 }
 
                 if (!parser_next(parser)) {
+                    ast_value_delete(typevar);
                     return false;
                 }
 
                 framenum = parser_expression_leave(parser, true);
                 if (!framenum) {
                     parseerror(parser, "expected a framenumber constant in[frame,think] notation");
+                    ast_value_delete(typevar);
                     return false;
                 }
                 if (!ast_istype(framenum, ast_value) || !( (ast_value*)framenum )->isconst) {
@@ -2202,11 +2237,13 @@ nextvar:
                     ast_unref(framenum);
                     parseerror(parser, "expected comma after frame number in [frame,think] notation");
                     parseerror(parser, "Got a %i\n", parser->tok);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
                 if (!parser_next(parser)) {
                     ast_unref(framenum);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
@@ -2222,11 +2259,13 @@ nextvar:
                     if (!thinkfunc || !ast_type_adopt(thinkfunc, functype)) {
                         ast_unref(framenum);
                         parseerror(parser, "failed to create implicit prototype for `%s`", parser_tokval(parser));
+                        ast_value_delete(typevar);
                         return false;
                     }
 
                     if (!parser_next(parser)) {
                         ast_unref(framenum);
+                        ast_value_delete(typevar);
                         return false;
                     }
 
@@ -2242,6 +2281,7 @@ nextvar:
                             ast_unref(framenum);
                             parseerror(parser, "failed to create function for implicit prototype for `%s`",
                                        thinkfunc->name);
+                            ast_value_delete(typevar);
                             return false;
                         }
                         (void)!parser_t_functions_add(parser, func);
@@ -2256,6 +2296,7 @@ nextvar:
                     if (!nextthink) {
                         ast_unref(framenum);
                         parseerror(parser, "expected a think-function in [frame,think] notation");
+                        ast_value_delete(typevar);
                         return false;
                     }
                 }
@@ -2270,12 +2311,14 @@ nextvar:
                     parseerror(parser, "expected closing `]` for [frame,think] notation");
                     ast_unref(nextthink);
                     ast_unref(framenum);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
                 if (!parser_next(parser)) {
                     ast_unref(nextthink);
                     ast_unref(framenum);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
@@ -2283,6 +2326,7 @@ nextvar:
                     parseerror(parser, "a function body has to be declared after a [frame,think] declaration");
                     ast_unref(nextthink);
                     ast_unref(framenum);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
@@ -2292,6 +2336,7 @@ nextvar:
             block = ast_block_new(parser_ctx(parser));
             if (!block) {
                 parseerror(parser, "failed to allocate block");
+                ast_value_delete(typevar);
                 return false;
             }
 
@@ -2323,6 +2368,7 @@ nextvar:
                 {
                     parseerror(parser, "failed to generate code for [frame,think]");
                     ast_block_delete(block);
+                    ast_value_delete(typevar);
                     return false;
                 }
             }
@@ -2340,6 +2386,7 @@ nextvar:
 
                 if (!create_vector_members(parser, param, &vx, &vy, &vz)) {
                     ast_block_delete(block);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
@@ -2354,6 +2401,7 @@ nextvar:
                     parser_pop_local(parser);
                     parser_pop_local(parser);
                     ast_block_delete(block);
+                    ast_value_delete(typevar);
                     return false;
                 }
             }
@@ -2362,15 +2410,19 @@ nextvar:
             if (!parser_parse_block_into(parser, block, true)) {
                 ast_block_delete(block);
                 parser->function = old;
+                ast_value_delete(typevar);
                 return false;
             }
             parser->function = old;
 
-            if (!block)
+            if (!block) {
+                ast_value_delete(typevar);
                 return false;
+            }
 
             if (!ast_function_blocks_add(func, block)) {
                 ast_block_delete(block);
+                ast_value_delete(typevar);
                 return false;
             }
 
@@ -2378,6 +2430,7 @@ nextvar:
                 return parser_next(parser) || parser->tok == TOKEN_EOF;
             else if (opts_standard == COMPILER_QCC)
                 parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
+            ast_value_delete(typevar);
             return true;
         } else {
             ast_expression *cexp;
@@ -2403,11 +2456,13 @@ nextvar:
 
         if (parser->tok != ';') {
             parseerror(parser, "missing semicolon");
+            ast_value_delete(typevar);
             return false;
         }
 
         (void)parser_next(parser);
 
+        ast_value_delete(typevar);
         return true;
     }
 }
@@ -2445,7 +2500,7 @@ static bool parser_do(parser_t *parser)
 
         /* parse into the declaration */
         if (!parser_next(parser)) {
-            parseerror(parser, "expected field def");
+            parseerror(parser, "expected field definition");
             return false;
         }
 
