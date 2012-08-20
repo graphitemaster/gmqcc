@@ -2277,24 +2277,7 @@ nextvar:
 
                     varent.var = (ast_expression*)thinkfunc;
                     varent.name = util_strdup(thinkfunc->name);
-                    if (thinkfunc->expression.vtype == TYPE_FUNCTION)
-                    {
-                        ast_function *func;
-
-                        func = ast_function_new(parser_ctx(parser), thinkfunc->name, thinkfunc);
-                        if (!func) {
-                            ast_delete(thinkfunc);
-                            ast_unref(framenum);
-                            parseerror(parser, "failed to create function for implicit prototype for `%s`",
-                                       thinkfunc->name);
-                            ast_value_delete(typevar);
-                            return false;
-                        }
-                        (void)!parser_t_functions_add(parser, func);
-                        (void)!parser_t_globals_add(parser, varent);
-                    }
-                    else
-                        (void)!parser_t_globals_add(parser, varent);
+                    (void)!parser_t_globals_add(parser, varent);
                     nextthink = (ast_expression*)thinkfunc;
 
                 } else {
@@ -2307,7 +2290,7 @@ nextvar:
                     }
                 }
 
-                if (!ast_istype(nextthink, ast_value) || !( (ast_value*)nextthink )->isconst) {
+                if (!ast_istype(nextthink, ast_value)) {
                     ast_unref(nextthink);
                     ast_unref(framenum);
                     parseerror(parser, "think-function in [frame,think] notation must be a constant");
