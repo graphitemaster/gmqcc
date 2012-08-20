@@ -129,7 +129,7 @@ bool parser_next(parser_t *parser)
     /* lex_do kills the previous token */
     parser->tok = lex_do(parser->lex);
     if (parser->tok == TOKEN_EOF)
-        return false;
+        return true;
     if (parser->tok >= TOKEN_ERROR) {
         parseerror(parser, "lex error");
         return false;
