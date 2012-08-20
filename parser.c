@@ -1857,7 +1857,6 @@ static bool create_vector_members(parser_t *parser, ast_value *var,
 static bool parser_variable(parser_t *parser, ast_block *localblock)
 {
     bool          isfunc = false;
-    ast_function *func = NULL;
     lex_ctx       ctx;
     ast_value    *var;
     varentry_t    varent;
@@ -1883,7 +1882,6 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
     {
         hadproto = false;
         olddecl = NULL;
-        func    = NULL;
         isparam = false;
 
         ctx = parser_ctx(parser);
@@ -2006,11 +2004,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
              * as return type
              */
             fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
-            func = ast_function_new(ctx, var->name, fval);
-            if (!fval || !func) {
+            if (!fval) {
                 ast_value_delete(var);
                 if (fval) ast_value_delete(fval);
-                if (func) ast_function_delete(func);
                 return false;
             }
 
@@ -2026,7 +2022,6 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                     parseerror(parser, "conflicting types for `%s`, previous declaration was here: %s:%i",
                                proto->name,
                                ast_ctx(proto).file, ast_ctx(proto).line);
-                    ast_function_delete(func);
                     ast_value_delete(fval);
                     return false;
                 }
@@ -2037,19 +2032,9 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 ast_ctx(proto) = ast_ctx(fval);
 
                 /* now ditch the rest of the new data */
-                ast_function_delete(func);
                 ast_value_delete(fval);
                 fval = proto;
-                func = proto->constval.vfunc;
                 hadproto = true;
-            }
-            else
-            {
-                if (!parser_t_functions_add(parser, func)) {
-                    ast_function_delete(func);
-                    ast_value_delete(fval);
-                    return false;
-                }
             }
 
             var = fval;
@@ -2138,12 +2123,14 @@ nextvar:
         }
 
         if (parser->tok == '#') {
+            ast_function *func;
+
             if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
                 ast_value_delete(typevar);
                 return false;
             }
-            if (!isfunc || !func) {
+            if (!isfunc) {
                 parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
                 ast_value_delete(typevar);
                 return false;
@@ -2164,6 +2151,20 @@ nextvar:
                 return false;
             }
 
+            func = ast_function_new(ast_ctx(var), var->name, var);
+            if (!func) {
+                parseerror(parser, "failed to allocate function for `%s`", var->name);
+                ast_value_delete(typevar);
+                return false;
+            }
+            if (!parser_t_functions_add(parser, func)) {
+                parseerror(parser, "failed to allocate slot for function `%s`", var->name);
+                ast_function_delete(func);
+                var->constval.vfunc = NULL;
+                ast_value_delete(typevar);
+                return false;
+            }
+
             func->builtin = -parser_token(parser)->constval.i;
 
             if (!parser_next(parser)) {
@@ -2172,6 +2173,7 @@ nextvar:
             }
         } else if (parser->tok == '{' || parser->tok == '[') {
             /* function body */
+            ast_function *func;
             ast_function *old;
             ast_block *block;
             size_t     parami;
@@ -2404,6 +2406,24 @@ nextvar:
                     ast_value_delete(typevar);
                     return false;
                 }
+            }
+
+            func = ast_function_new(ast_ctx(var), var->name, var);
+            if (!func) {
+                parseerror(parser, "failed to allocate function for `%s`", var->name);
+                ast_block_delete(block);
+                parser->function = old;
+                ast_value_delete(typevar);
+                return false;
+            }
+            if (!parser_t_functions_add(parser, func)) {
+                parseerror(parser, "failed to allocate slot for function `%s`", var->name);
+                ast_function_delete(func);
+                var->constval.vfunc = NULL;
+                ast_value_delete(typevar);
+                ast_block_delete(block);
+                parser->function = old;
+                return false;
             }
 
             parser->function = func;

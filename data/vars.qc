@@ -8,6 +8,8 @@ string(float)       ftos   = #2;
 entity()            spawn  = #3;
 void(entity)        kill   = #4;
 
+float multi, decla, ration;
+
 .void(string x) printit;
 
 float(vector different_name, vector b) dot;
