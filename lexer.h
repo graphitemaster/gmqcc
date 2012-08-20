@@ -95,6 +95,8 @@ typedef struct {
 	char    peek[256];
 	size_t  peekpos;
 
+	bool    eof;
+
 	token  *tok;
 
 	struct {

@@ -146,6 +146,7 @@ lex_file* lex_open(const char *file)
     lex->line = 1; /* we start counting at 1 */
 
     lex->peekpos = 0;
+    lex->eof = false;
 
     lex_filenames_add(lex->name);
 
@@ -557,8 +558,13 @@ int lex_do(lex_file *lex)
     lex->tok->ctx.line = lex->sline;
     lex->tok->ctx.file = lex->name;
 
-    if (ch == EOF)
+    if (lex->eof)
+        return (lex->tok->ttype = TOKEN_FATAL);
+
+    if (ch == EOF) {
+        lex->eof = true;
         return (lex->tok->ttype = TOKEN_EOF);
+    }
 
     /* modelgen / spiritgen commands */
     if (ch == '$') {
