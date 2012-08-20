@@ -2108,6 +2108,10 @@ nextvar:
 
         if (parser->tok == ',') {
             /* another var */
+            if (!parser_next(parser)) {
+                ast_delete(typevar);
+                return false;
+            }
             continue;
         }
 
