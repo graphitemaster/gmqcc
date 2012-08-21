@@ -2450,8 +2450,10 @@ nextvar:
             else
             {
                 var->isconst = true;
-                memcpy(&var->constval, &cval->constval, sizeof(var->constval));
-                memset(&cval->constval, 0, sizeof(cval->constval));
+                if (cval->expression.vtype == TYPE_STRING)
+                    var->constval.vstring = parser_strdup(cval->constval.vstring);
+                else
+                    memcpy(&var->constval, &cval->constval, sizeof(var->constval));
                 ast_unref(cval);
             }
         }
