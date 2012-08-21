@@ -21,6 +21,7 @@ const char *opts_output   = "progs.dat";
 int         opts_standard = COMPILER_GMQCC;
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
+bool        opts_werror   = false;
 
 #include "ast-macros.h"
 
