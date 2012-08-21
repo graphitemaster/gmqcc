@@ -2115,6 +2115,16 @@ nextvar:
             continue;
         }
 
+        if (localblock && opts_standard == COMPILER_QCC) {
+            if (parsewarning(parser, WARN_LOCAL_CONSTANTS,
+                             "initializing expression turns variable `%s` into a constant in this standard",
+                             var->name) )
+            {
+                ast_value_delete(typevar);
+                return false;
+            }
+        }
+
         if (parser->tok != '=') {
             ast_value_delete(typevar);
             parseerror(parser, "expected '=' or ';'");

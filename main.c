@@ -384,6 +384,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_TOO_FEW_PARAMETERS, true);
     options_set(opts_warn, WARN_MISSING_RETURN_VALUES, true);
     options_set(opts_warn, WARN_USED_UNINITIALIZED, true);
+    options_set(opts_warn, WARN_LOCAL_CONSTANTS, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
