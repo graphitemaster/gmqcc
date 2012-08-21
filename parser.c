@@ -2449,8 +2449,10 @@ nextvar:
                 return false;
             }
 
-            if (parser->tok == ';')
+            if (parser->tok == ';') {
+                ast_value_delete(typevar);
                 return parser_next(parser) || parser->tok == TOKEN_EOF;
+            }
             else if (opts_standard == COMPILER_QCC)
                 parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
             ast_value_delete(typevar);
