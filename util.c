@@ -87,6 +87,13 @@ void util_meminfo() {
     if (!opts_memchk)
         return;
 
+    for (info = mem_start; info; info = info->next) {
+        util_debug("MEM", "lost:       % 8u (bytes) at %s:%u\n",
+            info->byte,
+            info->file,
+            info->line);
+    }
+
     util_debug("MEM", "Memory information:\n\
         Total allocations:   %llu\n\
         Total deallocations: %llu\n\
@@ -98,13 +105,6 @@ void util_meminfo() {
            (mem_ab -  mem_db),
            (mem_at -  mem_dt)
     );
-
-    for (info = mem_start; info; info = info->next) {
-        util_debug("MEM", "%u bytes lost at %s:%u\n",
-            info->byte,
-            info->file,
-            info->line);
-    }
 }
 
 /*
