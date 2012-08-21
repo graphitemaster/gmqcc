@@ -2632,6 +2632,28 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
 
     switch (global->vtype)
     {
+    case TYPE_VOID:
+        if (!strcmp(global->name, "end_sys_globals")) {
+            /* TODO: remember this point... all the defs before this one
+             * should be checksummed and added to progdefs.h when we generate it.
+             */
+        }
+        else if (!strcmp(global->name, "end_sys_globals")) {
+            /* TODO: same as above but for entity-fields rather than globsl
+             */
+        }
+        else
+            irwarning(global->context, WARN_VOID_VARIABLES, "unrecognized variable of type void `%s`",
+                      global->name);
+        /* I'd argue setting it to 0 is sufficient, but maybe some depend on knowing how far
+         * the system fields actually go? Though the engine knows this anyway...
+         * Maybe this could be an -foption
+         */
+        ir_value_code_setaddr(global, def.offset);
+        /* Add the def */
+        if (code_defs_add(def) < 0)
+            return false;
+        return true;
     case TYPE_POINTER:
         if (code_defs_add(def) < 0)
             return false;
