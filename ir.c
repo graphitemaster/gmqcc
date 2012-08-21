@@ -172,11 +172,6 @@ ir_builder* ir_builder_new(const char *modulename)
         return NULL;
     }
 
-    /* globals which always exist */
-
-    /* for now we give it a vector size */
-    ir_builder_create_global(self, "OFS_RETURN", TYPE_VARIANT);
-
     return self;
 }
 
