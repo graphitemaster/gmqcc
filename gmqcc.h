@@ -34,10 +34,10 @@
  * of my time.
  */
 #ifdef _MSC_VER
-#	pragma warning(disable : 4244 ) // conversion from 'int' to 'float', possible loss of data
-#	pragma warning(disable : 4018 ) // signed/unsigned mismatch
-#	pragma warning(disable : 4996 ) // This function or variable may be unsafe
-#	pragma warning(disable : 4700 ) // uninitialized local variable used
+#	pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
+#	pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
+#	pragma warning(disable : 4996 ) /* This function or variable may be unsafe                 */
+#	pragma warning(disable : 4700 ) /* uninitialized local variable used                       */
 #endif
 
 #define GMQCC_VERSION_MAJOR 0
