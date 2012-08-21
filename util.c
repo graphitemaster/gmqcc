@@ -33,7 +33,11 @@ struct memblock_t {
     const char  *file;
     unsigned int line;
     unsigned int byte;
+    struct memblock_t *next;
+    struct memblock_t *prev;
 };
+
+static struct memblock_t *mem_start = NULL;
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
@@ -42,6 +46,11 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     info->line = line;
     info->byte = byte;
     info->file = file;
+    info->prev = NULL;
+    info->next = mem_start;
+    if (mem_start)
+        mem_start->prev = info;
+    mem_start = info;
 
     util_debug("MEM", "allocation: % 8u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
     mem_at++;
@@ -53,6 +62,7 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
 void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     void              *data = NULL;
     struct memblock_t *info = NULL;
+
     if (!ptrn) return;
     data = (void*)((unsigned char *)ptrn-sizeof(struct memblock_t));
     info = (struct memblock_t*)data;
@@ -61,10 +71,19 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     mem_db += info->byte;
     mem_dt++;
 
+    if (info->prev)
+        info->prev->next = info->next;
+    if (info->next)
+        info->next->prev = info->prev;
+    if (info == mem_start)
+        mem_start = info->next;
+
     free(data);
 }
 
 void util_meminfo() {
+    struct memblock_t *info;
+
     if (!opts_memchk)
         return;
 
@@ -79,6 +98,13 @@ void util_meminfo() {
            (mem_ab -  mem_db),
            (mem_at -  mem_dt)
     );
+
+    for (info = mem_start; info; info = info->next) {
+        util_debug("MEM", "%u bytes lost at %s:%u\n",
+            info->byte,
+            info->file,
+            info->line);
+    }
 }
 
 /*
