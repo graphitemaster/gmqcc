@@ -1281,6 +1281,8 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     ir_block *cond = func->curblock;
     ir_block *ontrue;
     ir_block *onfalse;
+    ir_block *ontrue_endblock;
+    ir_block *onfalse_endblock;
     ir_block *merge;
 
     /* We don't output any value, thus also don't care about r/lvalue */
@@ -1314,6 +1316,9 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         cgen = self->on_true->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->on_true), func, false, &dummy))
             return false;
+
+        /* we now need to work from the current endpoint */
+        ontrue_endblock = func->curblock;
     } else
         ontrue = NULL;
 
@@ -1331,6 +1336,9 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         cgen = self->on_false->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->on_false), func, false, &dummy))
             return false;
+
+        /* we now need to work from the current endpoint */
+        onfalse_endblock = func->curblock;
     } else
         onfalse = NULL;
 
@@ -1340,9 +1348,9 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         return false;
 
     /* add jumps ot the merge block */
-    if (ontrue && !ontrue->final && !ir_block_create_jump(ontrue, merge))
+    if (ontrue && !ontrue_endblock->final && !ir_block_create_jump(ontrue_endblock, merge))
         return false;
-    if (onfalse && !onfalse->final && !ir_block_create_jump(onfalse, merge))
+    if (onfalse && !onfalse_endblock->final && !ir_block_create_jump(onfalse_endblock, merge))
         return false;
 
     /* we create the if here, that way all blocks are ordered :)
