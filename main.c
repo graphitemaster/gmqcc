@@ -343,16 +343,15 @@ static void options_set(uint32_t *flags, size_t idx, bool on)
 }
 
 /* returns the line number, or -1 on error */
-static bool progs_nextline(char **out, FILE *src)
+static bool progs_nextline(char **out, size_t *alen,FILE *src)
 {
-    size_t alen;
     int    len;
     char  *line;
     char  *start;
     char  *end;
 
     line = *out;
-    len = util_getline(&line, &alen, src);
+    len = util_getline(&line, alen, src);
     if (len == -1)
         return false;
 
@@ -385,7 +384,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_MISSING_RETURN_VALUES, true);
     options_set(opts_warn, WARN_USED_UNINITIALIZED, true);
     options_set(opts_warn, WARN_LOCAL_CONSTANTS, true);
-    options_set(opts_warn, WARN_VOID_VARIABLE, true);
+    options_set(opts_warn, WARN_VOID_VARIABLES, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
@@ -432,6 +431,7 @@ int main(int argc, char **argv) {
     } else {
         FILE *src;
         char *line;
+        size_t linelen = 0;
 
         printf("Mode: progs.src\n");
         src = util_fopen("progs.src", "rb");
@@ -442,7 +442,7 @@ int main(int argc, char **argv) {
         }
 
         line = NULL;
-        if (!progs_nextline(&line, src) || !line[0]) {
+        if (!progs_nextline(&line, &linelen, src) || !line[0]) {
             printf("illformatted progs.src file: expected output filename in first line\n");
             retval = 1;
             goto srcdone;
@@ -453,7 +453,7 @@ int main(int argc, char **argv) {
             opts_output_free = true;
         }
 
-        while (progs_nextline(&line, src)) {
+        while (progs_nextline(&line, &linelen, src)) {
             if (!line[0] || (line[0] == '/' && line[1] == '/'))
                 continue;
             printf("  src: %s\n", line);
