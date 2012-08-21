@@ -317,7 +317,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
             ast_value *param;
             ast_value *fld;
             bool isfield = false;
-            bool dummy;
+            bool isfuncparam = false;
 
             if (!parser_next(parser))
                 goto on_error;
@@ -337,8 +337,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
             if (!parser_next(parser))
                 goto on_error;
 
-            param = parser_parse_type(parser, temptype, &dummy);
-            (void)dummy;
+            param = parser_parse_type(parser, temptype, &isfuncparam);
 
             if (!param)
                 goto on_error;
@@ -349,6 +348,18 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
                     goto on_error;
                 if (!parser_next(parser))
                     goto on_error;
+            }
+
+            /* This comes before the isfield part! */
+            if (isfuncparam) {
+                ast_value *fval = ast_value_new(ast_ctx(param), param->name, TYPE_FUNCTION);
+                if (!fval) {
+                    ast_delete(param);
+                    goto on_error;
+                }
+                fval->expression.next = (ast_expression*)param;
+                MEM_VECTOR_MOVE(&param->expression, params, &fval->expression, params);
+                param = fval;
             }
 
             if (isfield) {

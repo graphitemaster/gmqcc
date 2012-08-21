@@ -2718,9 +2718,14 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
     case TYPE_FUNCTION:
         if (code_defs_add(def) < 0)
             return false;
-        ir_value_code_setaddr(global, code_globals_elements);
-        code_globals_add(code_functions_elements);
-        return gen_global_function(self, global);
+        if (!global->isconst) {
+            ir_value_code_setaddr(global, code_globals_add(0));
+            return global->code.globaladdr >= 0;
+        } else {
+            ir_value_code_setaddr(global, code_globals_elements);
+            code_globals_add(code_functions_elements);
+            return gen_global_function(self, global);
+        }
     case TYPE_VARIANT:
         /* assume biggest type */
             ir_value_code_setaddr(global, code_globals_add(0));

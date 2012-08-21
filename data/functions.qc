@@ -15,6 +15,14 @@ float(entity targ) visible = {
     return targ.vis;
 };
 
+void() printworking = {
+    print("Working\n");
+};
+
+void(void() callback) testcallback = {
+    callback();
+};
+
 void() main = {
     local entity pawn, pawn2;
 
@@ -26,4 +34,6 @@ void() main = {
 
     if (!visible(pawn.other))
         print("Yes\n");
+
+    testcallback(printworking);
 };
