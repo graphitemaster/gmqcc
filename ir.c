@@ -2638,7 +2638,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
              * should be checksummed and added to progdefs.h when we generate it.
              */
         }
-        else if (!strcmp(global->name, "end_sys_globals")) {
+        else if (!strcmp(global->name, "end_sys_fields")) {
             /* TODO: same as above but for entity-fields rather than globsl
              */
         }
