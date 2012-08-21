@@ -2006,6 +2006,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
             fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
             if (!fval) {
                 ast_value_delete(var);
+                ast_value_delete(typevar);
                 if (fval) ast_value_delete(fval);
                 return false;
             }
@@ -2023,6 +2024,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                                proto->name,
                                ast_ctx(proto).file, ast_ctx(proto).line);
                     ast_value_delete(fval);
+                    ast_value_delete(typevar);
                     return false;
                 }
                 /* copy over the parameter names */
@@ -2048,6 +2050,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 varentry_t vx, vy, vz;
                 if (!create_vector_members(parser, var, &vx, &vy, &vz)) {
                     ast_delete(var);
+                    ast_value_delete(typevar);
                     return false;
                 }
 
@@ -2071,6 +2074,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                         parser_pop_local(parser);
                         parser_pop_local(parser);
                         ast_value_delete(var);
+                        ast_value_delete(typevar);
                         return false;
                     }
                 }
@@ -2081,12 +2085,14 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                      ( localblock && !parser_t_locals_add(parser, varent)) )
                 {
                     ast_value_delete(var);
+                    ast_value_delete(typevar);
                     return false;
                 }
                 if (localblock && !ast_block_locals_add(localblock, var))
                 {
                     parser_pop_local(parser);
                     ast_value_delete(var);
+                    ast_value_delete(typevar);
                     return false;
                 }
             }
