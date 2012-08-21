@@ -2805,6 +2805,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
 bool ir_builder_generate(ir_builder *self, const char *filename)
 {
+    prog_section_statement stmt;
     size_t i;
 
     code_init();
@@ -2832,6 +2833,17 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
             }
         }
     }
+
+    /* DP errors if the last instruction is not an INSTR_DONE
+     * and for debugging purposes we add an additional AINSTR_END
+     * to the end of functions, so here it goes:
+     */
+    stmt.opcode = INSTR_DONE;
+    stmt.o1.u1 = 0;
+    stmt.o2.u1 = 0;
+    stmt.o3.u1 = 0;
+    if (code_statements_add(stmt) < 0)
+        return false;
 
     printf("writing '%s'...\n", filename);
     return code_write(filename);
