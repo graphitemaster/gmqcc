@@ -57,7 +57,7 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     data = (void*)((unsigned char *)ptrn-sizeof(struct memblock_t));
     info = (struct memblock_t*)data;
 
-    util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, data, file, line);
+    util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, ptrn, file, line);
     mem_db += info->byte;
     mem_dt++;
 
