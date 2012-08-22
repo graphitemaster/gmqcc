@@ -2921,6 +2921,25 @@ void ir_function_dump(ir_function *f, char *ind,
             oprintf("\n");
         }
     }
+    oprintf("%sliferanges:\n", ind);
+    for (i = 0; i < f->locals_count; ++i) {
+        size_t l;
+        ir_value *v = f->locals[i];
+        oprintf("%s\t%s: ", ind, v->name);
+        for (l = 0; l < v->life_count; ++l) {
+            oprintf("[%i,%i] ", v->life[i].start, v->life[i].end);
+        }
+        oprintf("\n");
+    }
+    for (i = 0; i < f->values_count; ++i) {
+        size_t l;
+        ir_value *v = f->values[i];
+        oprintf("%s\t%s: ", ind, v->name);
+        for (l = 0; l < v->life_count; ++l) {
+            oprintf("[%i,%i] ", v->life[i].start, v->life[i].end);
+        }
+        oprintf("\n");
+    }
     if (f->blocks_count)
     {
         oprintf("%slife passes (check): %i\n", ind, (int)f->run_id);
@@ -3009,6 +3028,12 @@ void ir_instr_dump(ir_instr *in, char *ind,
     }
     if (in->bops[1])
         oprintf("%s[%s]", comma, in->bops[1]->label);
+    if (in->params_count) {
+        oprintf("\tparams: ");
+        for (i = 0; i != in->params_count; ++i) {
+            oprintf("%s, ", in->params[i]->name);
+        }
+    }
     oprintf("\n");
     ind[strlen(ind)-1] = 0;
 }
@@ -3022,7 +3047,7 @@ void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
                 oprintf("(void)");
                 break;
             case TYPE_FUNCTION:
-                oprintf("(function)");
+                oprintf("fn:%s", v->name);
                 break;
             case TYPE_FLOAT:
                 oprintf("%g", v->constval.vfloat);
