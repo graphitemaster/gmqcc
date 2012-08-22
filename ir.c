@@ -1812,6 +1812,7 @@ bool ir_function_calculate_liferanges(ir_function *self)
         {
             if (self->blocks[i]->is_return)
             {
+                self->blocks[i]->living_count = 0;
                 if (!ir_block_life_propagate(self->blocks[i], NULL, &changed))
                     return false;
             }
