@@ -1,5 +1,5 @@
 CC     ?= clang
-CFLAGS += -Wall -I. -pedantic-errors -std=c90
+CFLAGS += -Wall -I. -pedantic-errors
 
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
