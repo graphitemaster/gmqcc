@@ -296,11 +296,19 @@ qcint prog_tempstring(qc_program *prog, const char *_str)
     return at;
 }
 
-static int print_escaped_string(const char *str)
+static int print_escaped_string(const char *str, size_t maxlen)
 {
     int len = 2;
     putchar('"');
+    --maxlen; /* because we're lazy and have escape sequences */
     while (*str) {
+        if (len >= maxlen) {
+            putchar('.');
+            putchar('.');
+            putchar('.');
+            len += 3;
+            break;
+        }
         switch (*str) {
             case '\a': len += 2; putchar('\\'); putchar('a'); break;
             case '\b': len += 2; putchar('\\'); putchar('b'); break;
@@ -324,7 +332,7 @@ static int print_escaped_string(const char *str)
 
 static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
 {
-    static char spaces[40+1] = "                                        ";
+    static char spaces[28+1] = "                            ";
     prog_section_def *def;
     qcany    *value;
     int       len;
@@ -362,7 +370,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
                                          value->vector[2]);
             break;
         case TYPE_STRING:
-            len += print_escaped_string(prog_getstring(prog, value->string));
+            len += print_escaped_string(prog_getstring(prog, value->string), sizeof(spaces)-len-5);
             len += printf(",");
             /* len += printf("\"%s\",", prog_getstring(prog, value->string)); */
             break;
