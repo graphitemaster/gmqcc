@@ -717,6 +717,7 @@ bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
         if (!reall) { return false; }                            \
         memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
         s->mem##_alloc = c;                                      \
+        s->mem##_count = c;                                      \
         mem_d(s->mem);                                           \
         s->mem = reall;                                          \
         return true;                                             \
