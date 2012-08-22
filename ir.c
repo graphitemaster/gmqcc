@@ -2109,6 +2109,19 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         /* See which operands are read and write operands */
         ir_op_read_write(instr->opcode, &read, &write);
 
+        if (instr->opcode == INSTR_MUL_VF)
+        {
+            /* the float source will get an additional lifetime */
+            tempbool = ir_value_life_merge(instr->_ops[2], instr->eid+1);
+            *changed = *changed || tempbool;
+        }
+        else if (instr->opcode == INSTR_MUL_FV)
+        {
+            /* the float source will get an additional lifetime */
+            tempbool = ir_value_life_merge(instr->_ops[1], instr->eid+1);
+            *changed = *changed || tempbool;
+        }
+
         /* Go through the 3 main operands */
         for (o = 0; o < 3; ++o)
         {
