@@ -2817,16 +2817,16 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
     code_init();
 
-    for (i = 0; i < self->fields_count; ++i)
+    for (i = 0; i < self->globals_count; ++i)
     {
-        if (!ir_builder_gen_field(self, self->fields[i])) {
+        if (!ir_builder_gen_global(self, self->globals[i])) {
             return false;
         }
     }
 
-    for (i = 0; i < self->globals_count; ++i)
+    for (i = 0; i < self->fields_count; ++i)
     {
-        if (!ir_builder_gen_global(self, self->globals[i])) {
+        if (!ir_builder_gen_field(self, self->fields[i])) {
             return false;
         }
     }
