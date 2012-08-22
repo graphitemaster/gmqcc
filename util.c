@@ -198,6 +198,9 @@ void util_debug(const char *area, const char *ms, ...) {
     if (!opts_debug)
         return;
 
+    if (!strcmp(area, "MEM") && !opts_memchk)
+        return;
+
     va_start(va, ms);
     fprintf (stdout, "DEBUG: ");
     fputc   ('[',  stdout);
