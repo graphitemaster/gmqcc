@@ -562,9 +562,11 @@ static qcint prog_leavefunction(qc_program *prog)
 bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps)
 {
     long jumpcount = 0;
+    size_t oldxflags = prog->xflags;
     prog_section_statement *st;
 
     prog->vmerror = 0;
+    prog->xflags = flags;
 
     st = prog->code + prog_enterfunction(prog, func);
     --st;
@@ -602,6 +604,7 @@ bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long
     };
 
 cleanup:
+    prog->xflags = oldxflags;
     prog->localstack_count = 0;
     prog->stack_count = 0;
     if (prog->vmerror)
@@ -650,9 +653,15 @@ bool        opts_memchk   = false;
 static int qc_print(qc_program *prog)
 {
     size_t i;
+    const char *laststr = NULL;
     for (i = 0; i < prog->argc; ++i) {
         qcany *str = (qcany*)(prog->globals + OFS_PARM0 + 3*i);
-        printf("%s", prog_getstring(prog, str->string));
+        printf("%s", (laststr = prog_getstring(prog, str->string)));
+    }
+    if (laststr && (prog->xflags & VMXF_TRACE)) {
+        size_t len = strlen(laststr);
+        if (!len || laststr[len-1] != '\n')
+            printf("\n");
     }
     return 0;
 }
