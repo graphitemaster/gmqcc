@@ -2599,6 +2599,8 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
 
     irfun = global->constval.vfunc;
     if (!irfun) {
+        irwarning(global->context, WARN_IMPLICIT_FUNCTION_POINTER,
+                  "function `%s` has no body and in QC implicitly becomes a function-pointer", global->name);
         /* this was a function pointer, don't generate code for those */
         return true;
     }
