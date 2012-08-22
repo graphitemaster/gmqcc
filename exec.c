@@ -218,11 +218,12 @@ qcany* prog_getedict(qc_program *prog, qcint e)
 
 qcint prog_spawn_entity(qc_program *prog)
 {
+    char  *data;
     size_t i;
     qcint  e;
     for (e = 0; e < (qcint)prog->entitypool_count; ++e) {
         if (!prog->entitypool[e]) {
-            char *data = (char*)(prog->entitydata + (prog->entityfields * e));
+            data = (char*)(prog->entitydata + (prog->entityfields * e));
             memset(data, 0, prog->entityfields * sizeof(qcint));
             return e;
         }
@@ -239,6 +240,8 @@ qcint prog_spawn_entity(qc_program *prog)
             return 0;
         }
     }
+    data = (char*)(prog->entitydata + (prog->entityfields * e));
+    memset(data, 0, prog->entityfields * sizeof(qcint));
     return e;
 }
 
@@ -648,6 +651,14 @@ static int qc_print(qc_program *prog)
     return 0;
 }
 
+static int qc_error(qc_program *prog)
+{
+    printf("*** VM raised an error:\n");
+    qc_print(prog);
+    prog->vmerror++;
+    return -1;
+}
+
 static int qc_ftos(qc_program *prog)
 {
     char buffer[512];
@@ -699,6 +710,7 @@ static prog_builtin qc_builtins[] = {
     &qc_spawn,
     &qc_kill,
     &qc_vtos,
+    &qc_error
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
