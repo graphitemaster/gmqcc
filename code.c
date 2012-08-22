@@ -183,7 +183,10 @@ bool code_write(const char *filename) {
     code_header.strings.offset    = code_header.globals.offset    + (sizeof(int32_t)                * code_globals_elements);
     code_header.strings.length    = code_chars_elements;
     code_header.version           = 6;
-    code_header.crc16             = 0; /* TODO: */
+    if (opts_forcecrc)
+        code_header.crc16         = opts_forced_crc;
+    else
+        code_header.crc16         = 0; /* TODO: */
     code_header.entfield          = code_entfields;
 
     if (OPTS_FLAG(DARKPLACES_STRING_TABLE_BUG)) {

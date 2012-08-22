@@ -860,6 +860,8 @@ typedef struct qc_program_s {
     MEM_VECTOR_MAKE(qcint,                  entitydata);
     MEM_VECTOR_MAKE(bool,                   entitypool);
 
+    uint16_t crc16;
+
     size_t tempstring_start;
     size_t tempstring_at;
 
@@ -994,6 +996,8 @@ extern bool        opts_debug;
 extern bool        opts_memchk;
 extern bool        opts_dump;
 extern bool        opts_werror;
+extern bool        opts_forcecrc;
+extern uint16_t    opts_forced_crc;
 
 /*===================================================================*/
 #define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))

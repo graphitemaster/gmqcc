@@ -33,6 +33,9 @@ bool        opts_debug    = false;
 bool        opts_memchk   = false;
 bool        opts_dump     = false;
 bool        opts_werror   = false;
+bool        opts_forcecrc = false;
+
+uint16_t    opts_forced_crc;
 
 static bool opts_output_wasset = false;
 
@@ -63,6 +66,7 @@ static int usage() {
     printf("  -W<warning>            enable a warning\n"
            "  -Wno-<warning>         disable a warning\n"
            "  -Wall                  enable all warnings\n");
+    printf("  -force-crc=num         force a specific checksum into the header\n");
     printf("\n");
     printf("flags:\n"
            "  -fdarkplaces-string-table-bug\n"
@@ -178,6 +182,11 @@ static bool options_parse(int argc, char **argv) {
                     printf("Unknown standard: %s\n", argarg);
                     return false;
                 }
+                continue;
+            }
+            if (options_long_gcc("force-crc", &argc, &argv, &argarg)) {
+                opts_forcecrc = true;
+                opts_forced_crc = strtol(argarg, NULL, 0);
                 continue;
             }
             if (!strcmp(argv[0]+1, "debug")) {

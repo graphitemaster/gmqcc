@@ -80,6 +80,7 @@ qc_program* prog_load(const char *filename)
     memset(prog, 0, sizeof(*prog));
 
     prog->entityfields = header.entfield;
+    prog->crc16 = header.crc16;
 
     prog->filename = util_strdup(filename);
     if (!prog->filename) {
@@ -606,6 +607,21 @@ cleanup:
  */
 
 #if defined(QCVM_EXECUTOR)
+const char *type_name[TYPE_COUNT] = {
+    "void",
+    "string",
+    "float",
+    "vector",
+    "entity",
+    "field",
+    "function",
+    "pointer",
+#if 0
+    "integer",
+#endif
+    "variant"
+};
+
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
 
@@ -686,6 +702,8 @@ int main(int argc, char **argv)
     qcint       fnmain = -1;
     qc_program *prog;
     size_t      xflags = VMXF_DEFAULT;
+    bool        opts_printfields = false;
+    bool        opts_info  = false;
 
     arg0 = argv[0];
 
@@ -703,6 +721,16 @@ int main(int argc, char **argv)
             ++argv;
             xflags |= VMXF_PROFILE;
         }
+        else if (!strcmp(argv[1], "-info")) {
+            --argc;
+            ++argv;
+            opts_info = true;
+        }
+        else if (!strcmp(argv[1], "-printfields")) {
+            --argc;
+            ++argv;
+            opts_printfields = true;
+        }
         else
             usage();
     }
@@ -718,6 +746,8 @@ int main(int argc, char **argv)
     prog->builtins_count = qc_builtins_count;
     prog->builtins_alloc = 0;
 
+    printf("Program's system-checksum = 0x%04x\n", (int)prog->crc16);
+
     for (i = 1; i < prog->functions_count; ++i) {
         const char *name = prog_getstring(prog, prog->functions[i].name);
         /* printf("Found function: %s\n", name); */
@@ -725,12 +755,27 @@ int main(int argc, char **argv)
             fnmain = (qcint)i;
     }
     printf("Entity field space: %i\n", (int)prog->entityfields);
-    if (fnmain > 0)
-    {
-        prog_exec(prog, &prog->functions[fnmain], xflags, VM_JUMPS_DEFAULT);
+    if (opts_info) {
+        prog_delete(prog);
+        return 0;
+    }
+    if (opts_printfields) {
+        for (i = 0; i < prog->fields_count; ++i) {
+            printf("Field: %8s %-16s at %u\n",
+                   type_name[prog->fields[i].type],
+                   prog_getstring(prog, prog->fields[i].name),
+                   (unsigned int)prog->fields[i].offset);
+        }
     }
     else
-        printf("No main function found\n");
+    {
+        if (fnmain > 0)
+        {
+            prog_exec(prog, &prog->functions[fnmain], xflags, VM_JUMPS_DEFAULT);
+        }
+        else
+            printf("No main function found\n");
+    }
 
     prog_delete(prog);
     return 0;
