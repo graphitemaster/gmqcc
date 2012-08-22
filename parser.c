@@ -2448,6 +2448,8 @@ nextvar:
                 return false;
             }
             parser->function = old;
+            while (parser->locals_count)
+                parser_pop_local(parser);
 
             if (!block) {
                 ast_value_delete(typevar);
