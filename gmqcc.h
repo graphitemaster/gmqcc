@@ -881,6 +881,8 @@ typedef struct qc_program_s {
     MEM_VECTOR_MAKE(qc_exec_stack, stack);
     size_t statement;
 
+    size_t xflags;
+
     int    argc; /* current arg count for debugging */
 } qc_program;
 
