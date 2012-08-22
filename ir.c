@@ -2558,7 +2558,6 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     }
 
     fun.firstlocal = code_globals_elements;
-    fun.locals     = irfun->allocated_locals + irfun->locals_count;
 
     local_var_end = fun.firstlocal;
     for (i = 0; i < irfun->locals_count; ++i) {
@@ -2582,6 +2581,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         /* fill the locals with zeros */
         code_globals_add(0);
     }
+
+    fun.locals = code_globals_elements - fun.firstlocal;
 
     if (irfun->builtin)
         fun.entry = irfun->builtin;
@@ -2926,7 +2927,7 @@ void ir_function_dump(ir_function *f, char *ind,
     for (i = 0; i < f->locals_count; ++i) {
         size_t l;
         ir_value *v = f->locals[i];
-        oprintf("%s\t%s: ", ind, v->name);
+        oprintf("%s\t%s: unique ", ind, v->name);
         for (l = 0; l < v->life_count; ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
@@ -2935,7 +2936,7 @@ void ir_function_dump(ir_function *f, char *ind,
     for (i = 0; i < f->values_count; ++i) {
         size_t l;
         ir_value *v = f->values[i];
-        oprintf("%s\t%s: (%i)", ind, v->name, (int)v->life_count);
+        oprintf("%s\t%s: @%i ", ind, v->name, (int)v->code.local);
         for (l = 0; l < v->life_count; ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
