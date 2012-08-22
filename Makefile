@@ -16,6 +16,10 @@ ifeq ($(CC), clang)
 		-Wno-format-nonliteral
 
 endif
+ifeq ($(track), no)
+    CFLAGS += -DNOTRACK
+endif
+
 OBJ     = \
           util.o      \
           code.o      \
