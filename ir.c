@@ -2598,6 +2598,11 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     ir_function           *irfun;
 
     irfun = global->constval.vfunc;
+    if (!irfun) {
+        /* this was a function pointer, don't generate code for those */
+        return true;
+    }
+
     if (irfun->builtin)
         return true;
 
