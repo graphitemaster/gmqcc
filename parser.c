@@ -2767,27 +2767,6 @@ bool parser_finish(const char *output)
             return false;
         }
 
-        for (i = 0; i < parser->imm_float_count; ++i) {
-            if (!ast_global_codegen(parser->imm_float[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_float[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < parser->imm_string_count; ++i) {
-            if (!ast_global_codegen(parser->imm_string[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_string[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < parser->imm_vector_count; ++i) {
-            if (!ast_global_codegen(parser->imm_vector[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_vector[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
         for (i = 0; i < parser->fields_count; ++i) {
             ast_value *field;
             bool isconst;
@@ -2819,6 +2798,27 @@ bool parser_finish(const char *output)
                 continue;
             if (!ast_global_codegen((ast_value*)(parser->globals[i].var), ir)) {
                 printf("failed to generate global %s\n", parser->globals[i].name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->imm_float_count; ++i) {
+            if (!ast_global_codegen(parser->imm_float[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_float[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->imm_string_count; ++i) {
+            if (!ast_global_codegen(parser->imm_string[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_string[i]->name);
+                ir_builder_delete(ir);
+                return false;
+            }
+        }
+        for (i = 0; i < parser->imm_vector_count; ++i) {
+            if (!ast_global_codegen(parser->imm_vector[i], ir)) {
+                printf("failed to generate global %s\n", parser->imm_vector[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
