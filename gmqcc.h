@@ -410,8 +410,8 @@ enum {
     INSTR_DONE,
     INSTR_MUL_F,
     INSTR_MUL_V,
-    INSTR_MUL_FV,
-    INSTR_MUL_VF,
+    INSTR_MUL_FV, /* NOTE: the float operands must NOT be at the same locations: A != C */
+    INSTR_MUL_VF, /* and here: B != C */
     INSTR_DIV_F,
     INSTR_ADD_F,
     INSTR_ADD_V,
