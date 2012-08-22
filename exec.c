@@ -703,6 +703,7 @@ int main(int argc, char **argv)
     qc_program *prog;
     size_t      xflags = VMXF_DEFAULT;
     bool        opts_printfields = false;
+    bool        opts_printdefs   = false;
     bool        opts_info  = false;
 
     arg0 = argv[0];
@@ -725,6 +726,11 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
             opts_info = true;
+        }
+        else if (!strcmp(argv[1], "-printdefs")) {
+            --argc;
+            ++argv;
+            opts_printdefs = true;
         }
         else if (!strcmp(argv[1], "-printfields")) {
             --argc;
@@ -759,7 +765,15 @@ int main(int argc, char **argv)
         prog_delete(prog);
         return 0;
     }
-    if (opts_printfields) {
+    if (opts_printdefs) {
+        for (i = 0; i < prog->defs_count; ++i) {
+            printf("Global: %8s %-16s at %u\n",
+                   type_name[prog->defs[i].type],
+                   prog_getstring(prog, prog->defs[i].name),
+                   (unsigned int)prog->defs[i].offset);
+        }
+    }
+    else if (opts_printfields) {
         for (i = 0; i < prog->fields_count; ++i) {
             printf("Field: %8s %-16s at %u\n",
                    type_name[prog->fields[i].type],
