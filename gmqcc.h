@@ -539,7 +539,7 @@ static const struct {
     { "ADD_F"     , 3, 5 },
     { "ADD_V"     , 3, 5 },
     { "SUB_F"     , 3, 5 },
-    { "DUB_V"     , 3, 5 },
+    { "SUB_V"     , 3, 5 },
     { "EQ_F"      , 0, 4 },
     { "EQ_V"      , 0, 4 },
     { "EQ_S"      , 0, 4 },
