@@ -668,7 +668,7 @@ static int qc_vtos(qc_program *prog)
     qcany str;
     CheckArgs(1);
     num = GetArg(0);
-    snprintf(buffer, sizeof(buffer), "%g %g %g", num->vector[0], num->vector[1], num->vector[2]);
+    snprintf(buffer, sizeof(buffer), "`%g %g %g`", num->vector[0], num->vector[1], num->vector[2]);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
