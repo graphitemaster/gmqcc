@@ -610,6 +610,8 @@ cleanup:
  */
 
 #if defined(QCVM_EXECUTOR)
+#include <math.h>
+
 const char *type_name[TYPE_COUNT] = {
     "void",
     "string",
@@ -703,14 +705,27 @@ static int qc_kill(qc_program *prog)
     return 0;
 }
 
+static int qc_vlen(qc_program *prog)
+{
+    qcany *vec, len;
+    CheckArgs(1);
+    vec = GetArg(0);
+    len._float = sqrt(vec->vector[0] * vec->vector[0] + 
+                      vec->vector[1] * vec->vector[1] +
+                      vec->vector[2] * vec->vector[2]);
+    Return(len);
+    return 0;
+}
+
 static prog_builtin qc_builtins[] = {
     NULL,
-    &qc_print,
-    &qc_ftos,
-    &qc_spawn,
-    &qc_kill,
-    &qc_vtos,
-    &qc_error
+    &qc_print, /*   1   */
+    &qc_ftos,  /*   2   */
+    &qc_spawn, /*   3   */
+    &qc_kill,  /*   4   */
+    &qc_vtos,  /*   5   */
+    &qc_error, /*   6   */
+    &qc_vlen   /*   7   */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
