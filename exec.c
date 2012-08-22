@@ -338,7 +338,11 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
     value = (qcany*)(&prog->globals[glob]);
 
     if (def) {
-        len = printf("[%s] ", prog_getstring(prog, def->name));
+        const char *name = prog_getstring(prog, def->name);
+        if (name[0] == '#')
+            len = printf("$");
+        else
+            len = printf("%s ", name);
         vtype = def->type;
     }
     else
@@ -350,7 +354,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
         case TYPE_FIELD:
         case TYPE_FUNCTION:
         case TYPE_POINTER:
-            len += printf("%i,", value->_int);
+            len += printf("(%i),", value->_int);
             break;
         case TYPE_VECTOR:
             len += printf("'%g %g %g',", value->vector[0],
