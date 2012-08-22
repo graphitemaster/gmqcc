@@ -2927,16 +2927,16 @@ void ir_function_dump(ir_function *f, char *ind,
         ir_value *v = f->locals[i];
         oprintf("%s\t%s: ", ind, v->name);
         for (l = 0; l < v->life_count; ++l) {
-            oprintf("[%i,%i] ", v->life[i].start, v->life[i].end);
+            oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
         oprintf("\n");
     }
     for (i = 0; i < f->values_count; ++i) {
         size_t l;
         ir_value *v = f->values[i];
-        oprintf("%s\t%s: ", ind, v->name);
+        oprintf("%s\t%s: (%i)", ind, v->name, (int)v->life_count);
         for (l = 0; l < v->life_count; ++l) {
-            oprintf("[%i,%i] ", v->life[i].start, v->life[i].end);
+            oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
         oprintf("\n");
     }
