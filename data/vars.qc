@@ -9,6 +9,7 @@ entity()            spawn  = #3;
 void(entity)        kill   = #4;
 
 float multi, decla, ration;
+.vector memvec;
 
 .void(string x) printit;
 
@@ -29,8 +30,11 @@ void(vector par) vecpar = {
 
 void() main = {
     local entity pawn;
+    local vector foovec;
     print3("should be 1: ", ftos(dot('1 1 0', '1 0 0')), "\n");
 
+    foovec = '3 4 5';
+    foovec_y = 9;
     pawn = spawn();
     pawn.printit = myprintit;
     pawn.printit("Hello");
