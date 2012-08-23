@@ -23,6 +23,8 @@ void(void() callback) testcallback = {
     callback();
 };
 
+void(float) has1param = {};
+
 void() main = {
     local entity pawn, pawn2;
 
@@ -36,4 +38,6 @@ void() main = {
         print("Yes\n");
 
     testcallback(printworking);
+
+    has1param();
 };

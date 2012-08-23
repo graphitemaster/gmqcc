@@ -395,6 +395,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_LOCAL_CONSTANTS, true);
     options_set(opts_warn, WARN_VOID_VARIABLES, true);
     options_set(opts_warn, WARN_IMPLICIT_FUNCTION_POINTER, true);
+    options_set(opts_warn, WARN_VARIADIC_FUNCTION, true);
 
     if (!options_parse(argc, argv)) {
         return usage();

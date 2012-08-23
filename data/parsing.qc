@@ -1,7 +1,7 @@
 /* this is the WIP test for the parser...
  * constantly adding stuff here to see if things break
  */
-void(string)        print  = #1;
+void(string,...)    print  = #1;
 void(string,string) print2 = #1;
 void(string,string,string) print3 = #1;
 string(float)       ftos   = #2;
@@ -17,6 +17,9 @@ $framerestore stand2
 $frame stand3
 $modelname foobar
 $modelname foobar3
+
+void(string a, ...) hasvaria = {
+};
 
 void() main = {
     entity pawn;
@@ -40,8 +43,8 @@ void() main = {
     pawn = spawn();
     pawn.mema = 3;
     pawn.memb = 5;
-    print2(ftos(pawn.mema), "\n");
-    print2(ftos(pawn.memb), "\n");
+    print(ftos(pawn.mema), "\n");
+    print(ftos(pawn.memb), "\n");
 
     print("SECOND TEST\n");
     for (a = 0; a < 3; a = a + 1) {

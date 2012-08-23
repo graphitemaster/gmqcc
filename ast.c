@@ -64,11 +64,12 @@ static void ast_node_init(ast_node *self, lex_ctx ctx, int nodetype)
 static void ast_expression_init(ast_expression *self,
                                 ast_expression_codegen *codegen)
 {
-    self->expression.codegen = codegen;
-    self->expression.vtype   = TYPE_VOID;
-    self->expression.next    = NULL;
-    self->expression.outl    = NULL;
-    self->expression.outr    = NULL;
+    self->expression.codegen  = codegen;
+    self->expression.vtype    = TYPE_VOID;
+    self->expression.next     = NULL;
+    self->expression.outl     = NULL;
+    self->expression.outr     = NULL;
+    self->expression.variadic = false;
     MEM_VECTOR_INIT(&self->expression, params);
 }
 
@@ -106,6 +107,7 @@ ast_value* ast_value_copy(const ast_value *self)
     }
     fromex   = &self->expression;
     selfex = &cp->expression;
+    selfex->variadic = fromex->variadic;
     for (i = 0; i < fromex->params_count; ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
         if (!v || !ast_expression_common_params_add(selfex, v)) {
@@ -129,6 +131,7 @@ bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     }
     fromex   = &other->expression;
     selfex = &self->expression;
+    selfex->variadic = fromex->variadic;
     for (i = 0; i < fromex->params_count; ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
         if (!v || !ast_expression_common_params_add(selfex, v))
@@ -178,6 +181,7 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
         else
             selfex->next = NULL;
 
+        selfex->variadic = fromex->variadic;
         for (i = 0; i < fromex->params_count; ++i) {
             ast_value *v = ast_value_copy(fromex->params[i]);
             if (!v || !ast_expression_common_params_add(selfex, v)) {
@@ -197,6 +201,8 @@ bool ast_compare_type(ast_expression *a, ast_expression *b)
     if (!a->expression.next != !b->expression.next)
         return false;
     if (a->expression.params_count != b->expression.params_count)
+        return false;
+    if (a->expression.variadic != b->expression.variadic)
         return false;
     if (a->expression.params_count) {
         size_t i;

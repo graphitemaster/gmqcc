@@ -306,6 +306,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
     int vtype = basetype;
     int temptype;
     size_t i;
+    bool variadic = false;
 
     MEM_VECTOR_INIT(&params, p);
 
@@ -331,6 +332,18 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
                     parseerror(parser, "expected field parameter type");
                     goto on_error;
                 }
+            }
+
+            if (parser->tok == TOKEN_DOTS) {
+                /* variadic args */
+                variadic = true;
+                if (!parser_next(parser))
+                    goto on_error;
+                if (parser->tok != ')') {
+                    parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
+                    goto on_error;
+                }
+                break;
             }
 
             temptype = parser_token(parser)->constval.t;
@@ -359,6 +372,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
                 }
                 fval->expression.next = (ast_expression*)param;
                 MEM_VECTOR_MOVE(&param->expression, params, &fval->expression, params);
+                fval->expression.variadic = param->expression.variadic;
                 param = fval;
             }
 
@@ -387,6 +401,7 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
     var = ast_value_new(ctx, "<unnamed>", vtype);
     if (!var)
         goto on_error;
+    var->expression.variadic = variadic;
     MEM_VECTOR_MOVE(&params, p, &var->expression, params);
     return var;
 on_error:
@@ -952,16 +967,21 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         parseerror(parser, "could not determine function return type");
         return false;
     } else {
-        if (fun->expression.params_count != paramcount) {
+        if (fun->expression.params_count != paramcount &&
+            !(fun->expression.variadic &&
+              fun->expression.params_count < paramcount))
+        {
             ast_value *fval;
+            const char *fewmany = (fun->expression.params_count > paramcount) ? "few" : "many";
+
             fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
             if (opts_standard == COMPILER_GMQCC)
             {
                 if (fval)
-                    parseerror(parser, "too few parameters for call to %s: expected %i, got %i",
+                    parseerror(parser, "too %s parameters for call to %s: expected %i, got %i", fewmany,
                                fval->name, (int)fun->expression.params_count, paramcount);
                 else
-                    parseerror(parser, "too few parameters for function call: expected %i, got %i",
+                    parseerror(parser, "too %s parameters for function call: expected %i, got %i", fewmany,
                                (int)fun->expression.params_count, paramcount);
                 return false;
             }
@@ -969,11 +989,11 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
             {
                 if (fval)
                     return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
-                                         "too few parameters for call to %s: expected %i, got %i",
+                                         "too %s parameters for call to %s: expected %i, got %i", fewmany,
                                          fval->name, (int)fun->expression.params_count, paramcount);
                 else
                     return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
-                                         "too few parameters for function call: expected %i, got %i",
+                                         "too %s parameters for function call: expected %i, got %i", fewmany,
                                          (int)fun->expression.params_count, paramcount);
             }
         }
@@ -2024,6 +2044,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
 
             fval->expression.next = (ast_expression*)var;
             MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
+            fval->expression.variadic = var->expression.variadic;
 
             /* we compare the type late here, but it's easier than
              * messing with the parameter-vector etc. earlier
@@ -2216,6 +2237,15 @@ nextvar:
 
             has_frame_think = false;
             old = parser->function;
+
+            if (var->expression.variadic) {
+                if (parsewarning(parser, WARN_VARIADIC_FUNCTION,
+                                 "variadic function with implementation will not be able to access additional parameters"))
+                {
+                    ast_value_delete(typevar);
+                    return false;
+                }
+            }
 
             if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");
@@ -2579,6 +2609,7 @@ static bool parser_do(parser_t *parser)
                 }
                 fval->expression.next = (ast_expression*)var;
                 MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
+                fval->expression.variadic = var->expression.variadic;
                 var = fval;
             }
 

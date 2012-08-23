@@ -107,6 +107,7 @@ typedef struct
     int                     vtype;
     ast_expression         *next;
     MEM_VECTOR_MAKE(ast_value*, params);
+    bool                    variadic;
     /* The codegen functions should store their output values
      * so we can call it multiple times without re-evaluating.
      * Store lvalue and rvalue seperately though. So that
