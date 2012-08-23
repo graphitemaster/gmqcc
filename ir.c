@@ -2231,7 +2231,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
  *
  * Breaking conventions is annoying...
  */
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global);
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal);
 
 static bool gen_global_field(ir_value *global)
 {
@@ -2576,7 +2576,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     local_var_end = fun.firstlocal;
     for (i = 0; i < irfun->locals_count; ++i) {
-        if (!ir_builder_gen_global(ir, irfun->locals[i])) {
+        if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
             irerror(irfun->locals[i]->context, "Failed to generate local %s", irfun->locals[i]->name);
             return false;
         }
@@ -2639,7 +2639,7 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     return true;
 }
 
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
 {
     size_t           i;
     int32_t         *iptr;
@@ -2691,7 +2691,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             ir_value_code_setaddr(global, code_globals_add(*iptr));
         } else {
             ir_value_code_setaddr(global, code_globals_add(0));
-            def.type |= DEF_SAVEGLOBAL;
+            if (!islocal)
+                def.type |= DEF_SAVEGLOBAL;
         }
         if (code_defs_add(def) < 0)
             return false;
@@ -2704,7 +2705,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             ir_value_code_setaddr(global, code_globals_add(code_cachedstring(global->constval.vstring)));
         else {
             ir_value_code_setaddr(global, code_globals_add(0));
-            def.type |= DEF_SAVEGLOBAL;
+            if (!islocal)
+                def.type |= DEF_SAVEGLOBAL;
         }
         if (code_defs_add(def) < 0)
             return false;
@@ -2732,7 +2734,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
                 if (code_globals_add(0) < 0)
                     return false;
             }
-            def.type |= DEF_SAVEGLOBAL;
+            if (!islocal)
+                def.type |= DEF_SAVEGLOBAL;
         }
 
         if (code_defs_add(def) < 0)
@@ -2749,7 +2752,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
             code_globals_add(code_functions_elements);
             if (!gen_global_function(self, global))
                 return false;
-            def.type |= DEF_SAVEGLOBAL;
+            if (!islocal)
+                def.type |= DEF_SAVEGLOBAL;
         }
         if (code_defs_add(def) < 0)
             return false;
@@ -2845,7 +2849,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
     for (i = 0; i < self->globals_count; ++i)
     {
-        if (!ir_builder_gen_global(self, self->globals[i])) {
+        if (!ir_builder_gen_global(self, self->globals[i], false)) {
             return false;
         }
     }
