@@ -885,7 +885,10 @@ int main(int argc, char **argv)
     prog->builtins_count = qc_builtins_count;
     prog->builtins_alloc = 0;
 
-    printf("Program's system-checksum = 0x%04x\n", (int)prog->crc16);
+    if (opts_info) {
+        printf("Program's system-checksum = 0x%04x\n", (int)prog->crc16);
+        printf("Entity field space: %i\n", (int)prog->entityfields);
+    }
 
     for (i = 1; i < prog->functions_count; ++i) {
         const char *name = prog_getstring(prog, prog->functions[i].name);
@@ -893,7 +896,6 @@ int main(int argc, char **argv)
         if (!strcmp(name, "main"))
             fnmain = (qcint)i;
     }
-    printf("Entity field space: %i\n", (int)prog->entityfields);
     if (opts_info) {
         prog_delete(prog);
         return 0;
