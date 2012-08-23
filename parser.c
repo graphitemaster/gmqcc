@@ -1768,6 +1768,13 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
         if (!exp)
             return false;
         *out = exp;
+        if (!ast_istype(exp, ast_store) &&
+            !ast_istype(exp, ast_call) &&
+            !ast_istype(exp, ast_binstore))
+        {
+            if (parsewarning(parser, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+                return false;
+        }
         return true;
     }
 }

@@ -402,6 +402,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_VARIADIC_FUNCTION, true);
     options_set(opts_warn, WARN_FRAME_MACROS, true);
     options_set(opts_warn, WARN_UNUSED_VARIABLE, true);
+    options_set(opts_warn, WARN_EFFECTLESS_STATEMENT, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
