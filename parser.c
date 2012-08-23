@@ -343,6 +343,10 @@ static ast_value *parser_parse_type(parser_t *parser, int basetype, bool *isfunc
                     parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                     goto on_error;
                 }
+                if (opts_standard == COMPILER_QCC) {
+                    if (parsewarning(parser, WARN_EXTENSIONS, "variadic functions are not available in this standard"))
+                        goto on_error;
+                }
                 break;
             }
 
