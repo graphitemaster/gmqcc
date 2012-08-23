@@ -686,22 +686,23 @@ bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
 bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
 {                                                                    \
     Twhat *reall;                                                    \
-    if (s->mem##_count+c >= s->mem##_alloc) {                        \
+    if (s->mem##_count+c > s->mem##_alloc) {                         \
         if (!s->mem##_alloc) {                                       \
             s->mem##_alloc = c < 16 ? 16 : c;                        \
+            s->mem = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);  \
         } else {                                                     \
             s->mem##_alloc *= 2;                                     \
             if (s->mem##_count+c >= s->mem##_alloc) {                \
                 s->mem##_alloc = s->mem##_count+c;                   \
             }                                                        \
+            reall = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);   \
+            if (!reall) {                                            \
+                return false;                                        \
+            }                                                        \
+            memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
+            mem_d(s->mem);                                           \
+            s->mem = reall;                                          \
         }                                                            \
-        reall = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);       \
-        if (!reall) {                                                \
-            return false;                                            \
-        }                                                            \
-        memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);       \
-        mem_d(s->mem);                                               \
-        s->mem = reall;                                              \
     }                                                                \
     memcpy(&s->mem[s->mem##_count], p, c*sizeof(*p));                \
     s->mem##_count += c;                                             \
