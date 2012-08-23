@@ -2509,6 +2509,11 @@ nextvar:
             ast_value      *cval;
 
             cexp = parser_expression_leave(parser, true);
+            if (!cexp) {
+                ast_value_delete(typevar);
+                return false;
+            }
+
             cval = (ast_value*)cexp;
             if (!ast_istype(cval, ast_value) || !cval->isconst)
                 parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
