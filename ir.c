@@ -138,7 +138,7 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
 	va_list ap;
 	int lvl = LVL_WARNING;
 
-    if (!OPTS_WARN(warntype))
+    if (warntype && !OPTS_WARN(warntype))
         return false;
 
     if (opts_werror)
@@ -426,10 +426,12 @@ ir_value* ir_function_get_local(ir_function *self, const char *name)
 
 ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param)
 {
-    ir_value *ve = ir_function_get_local(self, name);
-    if (ve) {
+    ir_value *ve;
+
+    /*
+    if (ir_function_get_local(self, name))
         return NULL;
-    }
+    */
 
     if (param &&
         self->locals_count &&

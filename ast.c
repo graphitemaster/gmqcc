@@ -995,8 +995,11 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     /* generate locals */
     for (i = 0; i < self->locals_count; ++i)
     {
-        if (!ast_local_codegen(self->locals[i], func->ir_func, false))
+        if (!ast_local_codegen(self->locals[i], func->ir_func, false)) {
+            if (opts_debug)
+                asterror(ast_ctx(self), "failed to generate local `%s`", self->locals[i]->name);
             return false;
+        }
     }
 
     for (i = 0; i < self->exprs_count; ++i)
