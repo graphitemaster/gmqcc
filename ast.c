@@ -430,7 +430,7 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 
     if (owner->expression.vtype != TYPE_VECTOR &&
         owner->expression.vtype != TYPE_FIELD) {
-        asterror(ctx, "member-access on an invalid owner of type %s\n", type_name[owner->expression.vtype]);
+        asterror(ctx, "member-access on an invalid owner of type %s", type_name[owner->expression.vtype]);
         mem_d(self);
         return NULL;
     }
@@ -767,7 +767,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * on all the globals.
      */
     if (!self->ir_v) {
-        asterror(ast_ctx(self), "ast_value used before generated (%s)\n", self->name);
+        asterror(ast_ctx(self), "ast_value used before generated (%s)", self->name);
         return false;
     }
     *out = self->ir_v;
@@ -796,7 +796,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
             return false;
         v->context = ast_ctx(self);
         if (self->isconst) {
-            asterror(ast_ctx(self), "TODO: constant field pointers with value\n");
+            asterror(ast_ctx(self), "TODO: constant field pointers with value");
             goto error;
         }
         self->ir_v = v;
@@ -805,7 +805,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
 
     v = ir_builder_create_global(ir, self->name, self->expression.vtype);
     if (!v) {
-        asterror(ast_ctx(self), "ir_builder_create_global failed\n");
+        asterror(ast_ctx(self), "ir_builder_create_global failed");
         return false;
     }
     v->context = ast_ctx(self);
@@ -826,13 +826,13 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
                     goto error;
                 break;
             case TYPE_FUNCTION:
-                asterror(ast_ctx(self), "global of type function not properly generated\n");
+                asterror(ast_ctx(self), "global of type function not properly generated");
                 goto error;
                 /* Cannot generate an IR value for a function,
                  * need a pointer pointing to a function rather.
                  */
             default:
-                asterror(ast_ctx(self), "TODO: global constant type %i\n", self->expression.vtype);
+                asterror(ast_ctx(self), "TODO: global constant type %i", self->expression.vtype);
                 break;
         }
     }
@@ -881,7 +881,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
                     goto error;
                 break;
             default:
-                asterror(ast_ctx(self), "TODO: global constant type %i\n", self->expression.vtype);
+                asterror(ast_ctx(self), "TODO: global constant type %i", self->expression.vtype);
                 break;
         }
     }
@@ -904,7 +904,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     irf = self->ir_func;
     if (!irf) {
-        asterror(ast_ctx(self), "ast_function's related ast_value was not generated yet\n");
+        asterror(ast_ctx(self), "ast_function's related ast_value was not generated yet");
         return false;
     }
 
@@ -931,8 +931,10 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     }
 
     self->curblock = ir_function_create_block(irf, "entry");
-    if (!self->curblock)
+    if (!self->curblock) {
+        asterror(ast_ctx(self), "failed to allocate entry block for `%s`", self->name);
         return false;
+    }
 
     for (i = 0; i < self->blocks_count; ++i) {
         ast_expression_codegen *gen = self->blocks[i]->expression.codegen;
@@ -1176,7 +1178,7 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
      */
     (void)lvalue;
     if (self->expression.outr) {
-        asterror(ast_ctx(self), "internal error: ast_return cannot be reused, it bears no result!\n");
+        asterror(ast_ctx(self), "internal error: ast_return cannot be reused, it bears no result!");
         return false;
     }
     self->expression.outr = (ir_value*)1;
@@ -1296,7 +1298,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     (void)lvalue;
 
     if (self->expression.outr) {
-        asterror(ast_ctx(self), "internal error: ast_ifthen cannot be reused, it bears no result!\n");
+        asterror(ast_ctx(self), "internal error: ast_ifthen cannot be reused, it bears no result!");
         return false;
     }
     self->expression.outr = (ir_value*)1;
@@ -1513,7 +1515,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     (void)out;
 
     if (self->expression.outr) {
-        asterror(ast_ctx(self), "internal error: ast_loop cannot be reused, it bears no result!\n");
+        asterror(ast_ctx(self), "internal error: ast_loop cannot be reused, it bears no result!");
         return false;
     }
     self->expression.outr = (ir_value*)1;
