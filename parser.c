@@ -52,7 +52,7 @@ static ast_expression* parser_parse_statement_or_block(parser_t *parser);
 static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomma);
 static ast_expression* parser_expression(parser_t *parser, bool stopatcomma);
 
-void parseerror(parser_t *parser, const char *fmt, ...)
+static void parseerror(parser_t *parser, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -64,7 +64,7 @@ void parseerror(parser_t *parser, const char *fmt, ...)
 }
 
 /* returns true if it counts as an error */
-bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
+static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
 {
 	va_list ap;
 	int lvl = LVL_WARNING;
@@ -79,6 +79,24 @@ bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ..
 
 	va_start(ap, fmt);
     vprintmsg(lvl, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "warning", fmt, ap);
+	va_end(ap);
+
+	return opts_werror;
+}
+
+static bool GMQCC_WARN genwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
+{
+	va_list ap;
+	int lvl = LVL_WARNING;
+
+    if (!OPTS_WARN(warntype))
+        return false;
+
+    if (opts_werror)
+	    lvl = LVL_ERROR;
+
+	va_start(ap, fmt);
+    vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
 	va_end(ap);
 
 	return opts_werror;
@@ -2812,6 +2830,7 @@ bool parser_finish(const char *output)
 {
     size_t i;
     ir_builder *ir;
+    bool retval = true;
 
     if (!parser->errors)
     {
@@ -2848,9 +2867,15 @@ bool parser_finish(const char *output)
             }
         }
         for (i = 0; i < parser->globals_count; ++i) {
+            ast_value *asvalue;
             if (!ast_istype(parser->globals[i].var, ast_value))
                 continue;
-            if (!ast_global_codegen((ast_value*)(parser->globals[i].var), ir)) {
+            asvalue = (ast_value*)(parser->globals[i].var);
+            if (!asvalue->uses && !asvalue->isconst && asvalue->expression.vtype != TYPE_FUNCTION) {
+                retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
+                                               "unused global: `%s`", asvalue->name);
+            }
+            if (!ast_global_codegen(asvalue, ir)) {
                 printf("failed to generate global %s\n", parser->globals[i].name);
                 ir_builder_delete(ir);
                 return false;
@@ -2890,17 +2915,19 @@ bool parser_finish(const char *output)
             }
         }
 
-        if (opts_dump)
-            ir_builder_dump(ir, printf);
+        if (retval) {
+            if (opts_dump)
+                ir_builder_dump(ir, printf);
 
-        if (!ir_builder_generate(ir, output)) {
-            printf("*** failed to generate output file\n");
-            ir_builder_delete(ir);
-            return false;
+            if (!ir_builder_generate(ir, output)) {
+                printf("*** failed to generate output file\n");
+                ir_builder_delete(ir);
+                return false;
+            }
         }
 
         ir_builder_delete(ir);
-        return true;
+        return retval;
     }
 
     printf("*** there were compile errors\n");
