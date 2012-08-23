@@ -253,6 +253,11 @@ static bool options_parse(int argc, char **argv) {
                         opts_werror = true;
                         break;
                     }
+                    else if (!strcmp(argv[0]+2, "NONE")) {
+                        for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
+                            opts_warn[itr] = 0;
+                        break;
+                    }
                     else if (!strcmp(argv[0]+2, "ALL")) {
                         for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
                             opts_warn[itr] = 0xFFFFFFFFL;
