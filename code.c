@@ -68,6 +68,7 @@ uint32_t                            code_entfields;
 void code_init() {
     prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
     prog_section_statement empty_statement = {0,{0},{0},{0}};
+    prog_section_def       empty_def       = {0, 0, 0};
     int                    i               = 0;
 
     /* omit creation of null code */
@@ -84,6 +85,8 @@ void code_init() {
     code_chars_add     ('\0');
     code_functions_add (empty_function);
     code_statements_add(empty_statement);
+    code_defs_add      (empty_def);
+    code_fields_add    (empty_def);
 
     code_entfields = 0;
 }
