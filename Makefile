@@ -45,7 +45,7 @@ test_ast: $(OBJ_A) $(OBJ)
 test_ir:  $(OBJ_I) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 qcvm:     $(OBJ_X)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) -lm
 exec.o: execloop.h
 exec-standalone.o: execloop.h
 test: test_ast test_ir
