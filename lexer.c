@@ -27,12 +27,12 @@ void lexerror(lex_file *lex, const char *fmt, ...)
     printf("\n");
 }
 
-void lexwarn(lex_file *lex, int warn, const char *fmt, ...)
+bool lexwarn(lex_file *lex, int warn, const char *fmt, ...)
 {
     va_list ap;
 
     if (!OPTS_WARN(warn))
-        return;
+        return false;
 
     if (lex)
         printf("warning %s:%lu: ", lex->name, (unsigned long)lex->sline);
@@ -44,6 +44,8 @@ void lexwarn(lex_file *lex, int warn, const char *fmt, ...)
     va_end(ap);
 
     printf("\n");
+
+    return opts_werror;
 }
 
 token* token_new()
@@ -398,7 +400,8 @@ static int lex_parse_frame(lex_file *lex)
 static bool lex_finish_frames(lex_file *lex)
 {
     do {
-        int rc;
+        size_t i;
+        int    rc;
         frame_macro m;
 
         rc = lex_parse_frame(lex);
@@ -406,6 +409,15 @@ static bool lex_finish_frames(lex_file *lex)
             return true;
         if (rc < 0) /* error */
             return false;
+
+        for (i = 0; i < lex->frames_count; ++i) {
+            if (!strcmp(lex->tok->value, lex->frames[i].name)) {
+                lex->frames[i].value = lex->framevalue++;
+                if (lexwarn(lex, WARN_FRAME_MACROS, "duplicate frame macro defined: `%s`", lex->tok->value))
+                    return false;
+                continue;
+            }
+        }
 
         m.value = lex->framevalue++;
         m.name = lex->tok->value;
