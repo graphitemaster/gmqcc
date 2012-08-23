@@ -2,8 +2,6 @@
  * constantly adding stuff here to see if things break
  */
 void(string,...)    print  = #1;
-void(string,string) print2 = #1;
-void(string,string,string) print3 = #1;
 string(float)       ftos   = #2;
 entity()            spawn  = #3;
 void(entity)        kill   = #4;
@@ -48,7 +46,7 @@ void() main = {
 
     print("SECOND TEST\n");
     for (a = 0; a < 3; a = a + 1) {
-        print3("LOOP ", ftos(a), "\n");
+        print("LOOP ", ftos(a), "\n");
     }
 
     print("DO-WHILE test\n");
@@ -60,16 +58,16 @@ void() main = {
 
     float b;
     a = 5;
-    print3("a = ", ftos(a), "\n");
+    print("a = ", ftos(a), "\n");
     b = a += 7;
     print("adding\n");
-    print3("a = ", ftos(a), "\n");
-    print3("b = ", ftos(b), "\n");
+    print("a = ", ftos(a), "\n");
+    print("b = ", ftos(b), "\n");
 
-    print3("memb = ", ftos(pawn.memb), "\n");
+    print("memb = ", ftos(pawn.memb), "\n");
     pawn.memb += -1;
-    print3("memb = ", ftos(pawn.memb), "\n");
-    print3("Frame stand3 is ", ftos($stand3), " wooh\n");
+    print("memb = ", ftos(pawn.memb), "\n");
+    print("Frame stand3 is ", ftos($stand3), " wooh\n");
 };
 
 float() exprtest = {
