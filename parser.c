@@ -1626,7 +1626,7 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
             !ast_istype(increment, ast_call) &&
             !ast_istype(increment, ast_binstore))
         {
-            if (parsewarning(parser, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+            if (genwarning(ast_ctx(increment), WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
                 goto onerr;
         }
     }
@@ -1779,7 +1779,7 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
             !ast_istype(exp, ast_call) &&
             !ast_istype(exp, ast_binstore))
         {
-            if (parsewarning(parser, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+            if (genwarning(ast_ctx(exp), WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
                 return false;
         }
         return true;
