@@ -774,7 +774,6 @@ int lex_do(lex_file *lex)
             case '^':
             case '~':
             case ',':
-            case '.':
             case '!':
                 if (!lex_tokench(lex, ch) ||
                     !lex_endtoken(lex))
@@ -784,6 +783,37 @@ int lex_do(lex_file *lex)
                 return (lex->tok->ttype = ch);
             default:
                 break;
+        }
+
+        if (ch == '.')
+        {
+            if (!lex_tokench(lex, ch))
+                return (lex->tok->ttype = TOKEN_FATAL);
+            /* peak ahead once */
+            nextch = lex_getch(lex);
+            if (nextch != '.') {
+                lex_ungetch(lex, nextch);
+                if (!lex_endtoken(lex))
+                    return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok->ttype = ch);
+            }
+            /* peak ahead again */
+            nextch = lex_getch(lex);
+            if (nextch != '.') {
+                lex_ungetch(lex, nextch);
+                lex_ungetch(lex, nextch);
+                if (!lex_endtoken(lex))
+                    return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok->ttype = ch);
+            }
+            /* fill the token to be "..." */
+            if (!lex_tokench(lex, ch) ||
+                !lex_tokench(lex, ch) ||
+                !lex_endtoken(lex))
+            {
+                return (lex->tok->ttype = TOKEN_FATAL);
+            }
+            return (lex->tok->ttype = TOKEN_DOTS);
         }
     }
 

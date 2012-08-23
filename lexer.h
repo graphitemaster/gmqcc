@@ -45,6 +45,8 @@ enum {
 
     TOKEN_KEYWORD, /* loop */
 
+    TOKEN_DOTS, /* 3 dots, ... */
+
     TOKEN_STRINGCONST, /* not the typename but an actual "string" */
     TOKEN_CHARCONST,
     TOKEN_VECTORCONST,
@@ -66,6 +68,7 @@ static const char *_tokennames[] = {
     "TOKEN_TYPENAME",
     "TOKEN_OPERATOR",
     "TOKEN_KEYWORD",
+    "TOKEN_DOTS",
     "TOKEN_STRINGCONST",
     "TOKEN_CHARCONST",
     "TOKEN_VECTORCONST",
