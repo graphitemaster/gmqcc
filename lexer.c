@@ -13,39 +13,31 @@ VECTOR_MAKE(char*, lex_filenames);
 
 void lexerror(lex_file *lex, const char *fmt, ...)
 {
-    va_list ap;
+	va_list ap;
 
-    if (lex)
-        printf("error %s:%lu: ", lex->name, (unsigned long)lex->sline);
-    else
-        printf("error: ");
+	parser->errors++;
 
-    va_start(ap, fmt);
-    vprintf(fmt, ap);
-    va_end(ap);
-
-    printf("\n");
+	va_start(ap, fmt);
+    vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
+	va_end(ap);
 }
 
-bool lexwarn(lex_file *lex, int warn, const char *fmt, ...)
+bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
-    va_list ap;
+	va_list ap;
+	int lvl = LVL_WARNING;
 
-    if (!OPTS_WARN(warn))
+    if (!OPTS_WARN(warntype))
         return false;
 
-    if (lex)
-        printf("warning %s:%lu: ", lex->name, (unsigned long)lex->sline);
-    else
-        printf("warning: ");
+    if (opts_werror)
+	    lvl = LVL_ERROR;
 
-    va_start(ap, fmt);
-    vprintf(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+    vprintmsg(lvl, lex->name, lex->sline, "warning", fmt, ap);
+	va_end(ap);
 
-    printf("\n");
-
-    return opts_werror;
+	return opts_werror;
 }
 
 token* token_new()
