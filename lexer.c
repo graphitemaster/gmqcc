@@ -15,8 +15,6 @@ void lexerror(lex_file *lex, const char *fmt, ...)
 {
 	va_list ap;
 
-	parser->errors++;
-
 	va_start(ap, fmt);
     vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
 	va_end(ap);
