@@ -405,9 +405,11 @@ static bool lex_finish_frames(lex_file *lex)
                 lex->frames[i].value = lex->framevalue++;
                 if (lexwarn(lex, WARN_FRAME_MACROS, "duplicate frame macro defined: `%s`", lex->tok->value))
                     return false;
-                continue;
+                break;
             }
         }
+        if (i < lex->frames_count)
+            continue;
 
         m.value = lex->framevalue++;
         m.name = lex->tok->value;
