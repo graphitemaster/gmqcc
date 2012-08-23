@@ -903,7 +903,7 @@ int main(int argc, char **argv)
     if (opts_printdefs) {
         for (i = 0; i < prog->defs_count; ++i) {
             printf("Global: %8s %-16s at %u\n",
-                   type_name[prog->defs[i].type],
+                   type_name[prog->defs[i].type & DEF_TYPEMASK],
                    prog_getstring(prog, prog->defs[i].name),
                    (unsigned int)prog->defs[i].offset);
         }

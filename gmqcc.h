@@ -390,6 +390,10 @@ typedef struct {
 typedef prog_section_both prog_section_def;
 typedef prog_section_both prog_section_field;
 
+/* this is ORed to the type */
+#define DEF_SAVEGLOBAL (1<<15)
+#define DEF_TYPEMASK   ((1<<15)-1)
+
 typedef struct {
     int32_t   entry;      /* in statement table for instructions  */
     uint32_t  firstlocal; /* First local in local table           */

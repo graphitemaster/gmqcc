@@ -2667,8 +2667,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
         /* I'd argue setting it to 0 is sufficient, but maybe some depend on knowing how far
          * the system fields actually go? Though the engine knows this anyway...
          * Maybe this could be an -foption
+         * fteqcc creates data for end_sys_* - of size 1, so let's do the same
          */
-        ir_value_code_setaddr(global, def.offset);
+        ir_value_code_setaddr(global, code_globals_add(0));
         /* Add the def */
         if (code_defs_add(def) < 0)
             return false;
@@ -2685,33 +2686,33 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
         /* fall through */
     case TYPE_FLOAT:
     {
-        if (code_defs_add(def) < 0)
-            return false;
-
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vfloat;
             ir_value_code_setaddr(global, code_globals_add(*iptr));
-        } else
+        } else {
             ir_value_code_setaddr(global, code_globals_add(0));
+            def.type |= DEF_SAVEGLOBAL;
+        }
+        if (code_defs_add(def) < 0)
+            return false;
 
         return global->code.globaladdr >= 0;
     }
     case TYPE_STRING:
     {
-        if (code_defs_add(def) < 0)
-            return false;
         if (global->isconst)
             ir_value_code_setaddr(global, code_globals_add(code_cachedstring(global->constval.vstring)));
-        else
+        else {
             ir_value_code_setaddr(global, code_globals_add(0));
+            def.type |= DEF_SAVEGLOBAL;
+        }
+        if (code_defs_add(def) < 0)
+            return false;
         return global->code.globaladdr >= 0;
     }
     case TYPE_VECTOR:
     {
         size_t d;
-        if (code_defs_add(def) < 0)
-            return false;
-
         if (global->isconst) {
             iptr = (int32_t*)&global->constval.vvec;
             ir_value_code_setaddr(global, code_globals_add(iptr[0]));
@@ -2731,20 +2732,28 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global)
                 if (code_globals_add(0) < 0)
                     return false;
             }
+            def.type |= DEF_SAVEGLOBAL;
         }
+
+        if (code_defs_add(def) < 0)
+            return false;
         return global->code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
-        if (code_defs_add(def) < 0)
-            return false;
         if (!global->isconst) {
             ir_value_code_setaddr(global, code_globals_add(0));
-            return global->code.globaladdr >= 0;
+            if (global->code.globaladdr < 0)
+                return false;
         } else {
             ir_value_code_setaddr(global, code_globals_elements);
             code_globals_add(code_functions_elements);
-            return gen_global_function(self, global);
+            if (!gen_global_function(self, global))
+                return false;
+            def.type |= DEF_SAVEGLOBAL;
         }
+        if (code_defs_add(def) < 0)
+            return false;
+        return true;
     case TYPE_VARIANT:
         /* assume biggest type */
             ir_value_code_setaddr(global, code_globals_add(0));
