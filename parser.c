@@ -1622,6 +1622,13 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
         increment = parser_expression_leave(parser, false);
         if (!increment)
             goto onerr;
+        if (!ast_istype(increment, ast_store) &&
+            !ast_istype(increment, ast_call) &&
+            !ast_istype(increment, ast_binstore))
+        {
+            if (parsewarning(parser, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+                goto onerr;
+        }
     }
 
     /* closing paren */
