@@ -111,7 +111,7 @@ bool ir_value_lives(ir_value*, size_t);
 bool ir_values_overlap(const ir_value*, const ir_value*);
 
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
-void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...));
+void ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...));
 
 /* A vector of IR values */
 typedef struct {

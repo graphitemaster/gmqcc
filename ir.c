@@ -919,7 +919,7 @@ bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
             }
 
             if (life->start <  entry->start &&
-                life->end   >= entry->start)
+                life->end+1 >= entry->start)
             {
                 /* starts earlier and overlaps */
                 entry->start = life->start;
@@ -3109,10 +3109,10 @@ void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
     }
 }
 
-void ir_value_dump_life(ir_value *self, int (*oprintf)(const char*,...))
+void ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...))
 {
     size_t i;
-    oprintf("Life of %s:\n", self->name);
+    oprintf("Life of %12s:", self->name);
     for (i = 0; i < self->life_count; ++i)
     {
         oprintf(" + [%i, %i]\n", self->life[i].start, self->life[i].end);
