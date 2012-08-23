@@ -645,6 +645,13 @@ const char *type_name[TYPE_COUNT] = {
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
 
+typedef struct {
+    int         vtype;
+    const char *value;
+} qcvm_parameter;
+
+VECTOR_MAKE(qcvm_parameter, main_params);
+
 #define CheckArgs(num) do {                                                    \
     if (prog->argc != (num)) {                                                 \
         prog->vmerror++;                                                       \
@@ -758,6 +765,43 @@ void usage()
     exit(1);
 }
 
+static void prog_main_setparams(qc_program *prog)
+{
+    size_t i;
+    qcany *arg;
+
+    for (i = 0; i < main_params_elements; ++i) {
+        arg = GetGlobal(OFS_PARM0 + 3*i);
+        arg->vector[0] = 0;
+        arg->vector[1] = 0;
+        arg->vector[2] = 0;
+        switch (main_params_data[i].vtype) {
+            case TYPE_VECTOR:
+#ifdef WIN32
+                (void)sscanf_s(main_params_data[i].value, " %f %f %f ",
+                               &arg->vector[0],
+                               &arg->vector[1],
+                               &arg->vector[2]);
+#else
+                (void)sscanf(main_params_data[i].value, " %f %f %f ",
+                             &arg->vector[0],
+                             &arg->vector[1],
+                             &arg->vector[2]);
+#endif
+                break;
+            case TYPE_FLOAT:
+                arg->_float = atof(main_params_data[i].value);
+                break;
+            case TYPE_STRING:
+                arg->string = prog_tempstring(prog, main_params_data[i].value);
+                break;
+            default:
+                printf("error: unhandled parameter type: %i\n", main_params_data[i].vtype);
+                break;
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     size_t      i;
@@ -798,6 +842,33 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
             opts_printfields = true;
+        }
+        else if (!strcmp(argv[1], "-vector") ||
+                 !strcmp(argv[1], "-string") ||
+                 !strcmp(argv[1], "-float") )
+        {
+            qcvm_parameter p;
+            if (argv[1][1] == 'f')
+                p.vtype = TYPE_FLOAT;
+            else if (argv[1][1] == 's')
+                p.vtype = TYPE_STRING;
+            else if (argv[1][1] == 'v')
+                p.vtype = TYPE_VECTOR;
+
+            --argc;
+            ++argv;
+            if (argc < 3)
+                usage();
+            p.value = argv[1];
+
+            if (main_params_add(p) < 0) {
+                if (main_params_data)
+                    mem_d(main_params_data);
+                printf("cannot add parameter\n");
+                exit(1);
+            }
+            --argc;
+            ++argv;
         }
         else
             usage();
@@ -847,6 +918,7 @@ int main(int argc, char **argv)
     {
         if (fnmain > 0)
         {
+            prog_main_setparams(prog);
             prog_exec(prog, &prog->functions[fnmain], xflags, VM_JUMPS_DEFAULT);
         }
         else
