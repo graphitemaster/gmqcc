@@ -44,7 +44,7 @@ MEM_VEC_FUNCTIONS(parser_t, ast_value*, imm_vector)
 MEM_VEC_FUNCTIONS(parser_t, varentry_t, locals)
 MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
-static void parser_pop_local(parser_t *parser);
+static bool GMQCC_WARN parser_pop_local(parser_t *parser);
 static bool parser_variable(parser_t *parser, ast_block *localblock);
 static ast_block* parser_parse_block(parser_t *parser, bool warnreturn);
 static bool parser_parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
@@ -1108,6 +1108,8 @@ static ast_expression* parser_expression_leave(parser_t *parser, bool stopatcomm
                 parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                 goto onerr;
             }
+            if (ast_istype(var, ast_value))
+                ((ast_value*)var)->uses++;
             if (!shunt_out_add(&sy, syexp(parser_ctx(parser), var))) {
                 parseerror(parser, "out of memory");
                 goto onerr;
@@ -1520,6 +1522,7 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
     ast_loop *aloop;
     ast_expression *initexpr, *cond, *increment, *ontrue;
     size_t oldblocklocal;
+    bool   retval = true;
 
     lex_ctx ctx = parser_ctx(parser);
 
@@ -1614,15 +1617,15 @@ static bool parser_parse_for(parser_t *parser, ast_block *block, ast_expression 
     *out = (ast_expression*)aloop;
 
     while (parser->locals_count > parser->blocklocal)
-        parser_pop_local(parser);
+        retval = retval && parser_pop_local(parser);
     parser->blocklocal = oldblocklocal;
-    return true;
+    return retval;
 onerr:
     if (initexpr)  ast_delete(initexpr);
     if (cond)      ast_delete(cond);
     if (increment) ast_delete(increment);
     while (parser->locals_count > parser->blocklocal)
-        parser_pop_local(parser);
+        (void)!parser_pop_local(parser);
     parser->blocklocal = oldblocklocal;
     return false;
 }
@@ -1743,15 +1746,24 @@ static bool parser_parse_statement(parser_t *parser, ast_block *block, ast_expre
     }
 }
 
-static void parser_pop_local(parser_t *parser)
+static bool GMQCC_WARN parser_pop_local(parser_t *parser)
 {
+    varentry_t *ve;
     parser->locals_count--;
+
+    ve = &parser->locals[parser->locals_count];
+    if (ast_istype(ve->var, ast_value) && !(((ast_value*)(ve->var))->uses)) {
+        if (parsewarning(parser, WARN_UNUSED_VARIABLE, "unused variable: `%s`", ve->name))
+            return false;
+    }
     mem_d(parser->locals[parser->locals_count].name);
+    return true;
 }
 
 static bool parser_parse_block_into(parser_t *parser, ast_block *block, bool warnreturn)
 {
     size_t oldblocklocal;
+    bool   retval = true;
 
     oldblocklocal = parser->blocklocal;
     parser->blocklocal = parser->locals_count;
@@ -1800,7 +1812,7 @@ static bool parser_parse_block_into(parser_t *parser, ast_block *block, bool war
 
 cleanup:
     while (parser->locals_count > parser->blocklocal)
-        parser_pop_local(parser);
+        retval = retval && parser_pop_local(parser);
     parser->blocklocal = oldblocklocal;
     return !!block;
 }
@@ -1901,6 +1913,8 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
 
     bool hadproto;
     bool isparam;
+
+    bool retval = true;
 
     int basetype = parser_token(parser)->constval.t;
 
@@ -2105,10 +2119,10 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                         !ast_block_collect(localblock, vy.var) ||
                         !ast_block_collect(localblock, vz.var))
                     {
-                        parser_pop_local(parser);
-                        parser_pop_local(parser);
-                        parser_pop_local(parser);
-                        parser_pop_local(parser);
+                        (void)!parser_pop_local(parser);
+                        (void)!parser_pop_local(parser);
+                        (void)!parser_pop_local(parser);
+                        (void)!parser_pop_local(parser);
                         ast_value_delete(var);
                         ast_value_delete(typevar);
                         return false;
@@ -2126,7 +2140,7 @@ static bool parser_variable(parser_t *parser, ast_block *localblock)
                 }
                 if (localblock && !ast_block_locals_add(localblock, var))
                 {
-                    parser_pop_local(parser);
+                    (void)!parser_pop_local(parser);
                     ast_value_delete(var);
                     ast_value_delete(typevar);
                     return false;
@@ -2447,9 +2461,9 @@ nextvar:
                     !ast_block_collect(block, vy.var) ||
                     !ast_block_collect(block, vz.var) )
                 {
-                    parser_pop_local(parser);
-                    parser_pop_local(parser);
-                    parser_pop_local(parser);
+                    (void)!parser_pop_local(parser);
+                    (void)!parser_pop_local(parser);
+                    (void)!parser_pop_local(parser);
                     ast_block_delete(block);
                     ast_value_delete(typevar);
                     return false;
@@ -2483,7 +2497,7 @@ nextvar:
             }
             parser->function = old;
             while (parser->locals_count)
-                parser_pop_local(parser);
+                retval = retval && parser_pop_local(parser);
 
             if (!block) {
                 ast_value_delete(typevar);
@@ -2503,7 +2517,7 @@ nextvar:
             else if (opts_standard == COMPILER_QCC)
                 parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
             ast_value_delete(typevar);
-            return true;
+            return retval;
         } else {
             ast_expression *cexp;
             ast_value      *cval;

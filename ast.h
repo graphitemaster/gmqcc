@@ -146,6 +146,9 @@ struct ast_value_s
         ast_function *vfunc;
     } constval;
 
+    /* usecount for the parser */
+    size_t uses;
+
     ir_value *ir_v;
 };
 

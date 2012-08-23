@@ -228,6 +228,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->expression.vtype = t;
     self->expression.next  = NULL;
     self->isconst = false;
+    self->uses    = 0;
     memset(&self->constval, 0, sizeof(self->constval));
 
     self->ir_v    = NULL;
