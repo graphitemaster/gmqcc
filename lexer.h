@@ -143,7 +143,7 @@ typedef struct {
 #define opid2(a,b) ((a<<8)|b)
 #define opid3(a,b,c) ((a<<16)|(b<<8)|c)
 
-static const oper_info operators[] = {
+static const oper_info c_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
 
     { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
@@ -204,7 +204,51 @@ static const oper_info operators[] = {
 
     { ",",   2, opid1(','),         ASSOC_LEFT,  1,  0 }
 };
-static const size_t operator_count = (sizeof(operators) / sizeof(operators[0]));
+static const size_t c_operator_count = (sizeof(c_operators) / sizeof(c_operators[0]));
+
+static const oper_info qcc_operators[] = {
+    { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
+
+    { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
+    { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
+
+    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
+    { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+
+    { "*",   2, opid1('*'),         ASSOC_LEFT,  13, 0 },
+    { "/",   2, opid1('/'),         ASSOC_LEFT,  13, 0 },
+    { "&",   2, opid1('&'),         ASSOC_LEFT,  13, 0 },
+    { "|",   2, opid1('|'),         ASSOC_LEFT,  13, 0 },
+
+    { "+",   2, opid1('+'),         ASSOC_LEFT,  12, 0 },
+    { "-",   2, opid1('-'),         ASSOC_LEFT,  12, 0 },
+
+    { "<",   2, opid1('<'),         ASSOC_LEFT,  10, 0 },
+    { ">",   2, opid1('>'),         ASSOC_LEFT,  10, 0 },
+    { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0 },
+    { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0 },
+    { "==",  2, opid2('=','='),     ASSOC_LEFT,  10,  0 },
+    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  10,  0 },
+
+    { "=",   2, opid1('='),         ASSOC_RIGHT, 8,  0 },
+    { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 8,  0 },
+    { "-=",  2, opid2('-','='),     ASSOC_RIGHT, 8,  0 },
+    { "*=",  2, opid2('*','='),     ASSOC_RIGHT, 8,  0 },
+    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 8,  0 },
+    { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 8,  0 },
+    { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 8,  0 },
+    { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 8,  0 },
+
+    { "&&",  2, opid2('&','&'),     ASSOC_LEFT,  5,  0 },
+    { "||",  2, opid2('|','|'),     ASSOC_LEFT,  5,  0 },
+
+    { ",",   2, opid1(','),         ASSOC_LEFT,  1,  0 }
+};
+static const size_t qcc_operator_count = (sizeof(qcc_operators) / sizeof(qcc_operators[0]));
+
+extern const oper_info *operators;
+extern size_t           operator_count;
 
 typedef struct
 {

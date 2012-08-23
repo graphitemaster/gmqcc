@@ -39,6 +39,10 @@ uint16_t    opts_forced_crc;
 
 static bool opts_output_wasset = false;
 
+/* set by the standard */
+const oper_info *operators      = NULL;
+size_t           operator_count = 0;
+
 typedef struct { char *filename; int type; } argitem;
 VECTOR_MAKE(argitem, items);
 
@@ -399,6 +403,15 @@ int main(int argc, char **argv) {
 
     if (!options_parse(argc, argv)) {
         return usage();
+    }
+
+    /* the standard decides which set of operators to use */
+    if (opts_standard == COMPILER_GMQCC) {
+        operators = c_operators;
+        operator_count = c_operator_count;
+    } else {
+        operators = qcc_operators;
+        operator_count = qcc_operator_count;
     }
 
     if (opts_dump) {
