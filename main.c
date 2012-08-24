@@ -73,6 +73,7 @@ static int usage() {
     printf("  -W<warning>            enable a warning\n"
            "  -Wno-<warning>         disable a warning\n"
            "  -Wall                  enable all warnings\n");
+           "  -Werror                treat warnings as errors\n");
     printf("  -force-crc=num         force a specific checksum into the header\n");
     printf("\n");
     printf("flags:\n"
