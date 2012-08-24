@@ -925,8 +925,8 @@ bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
                 entry->start = life->start;
             }
 
-            if (life->end     >  entry->end &&
-                life->start-1 <= entry->end)
+            if (life->end   >  entry->end &&
+                life->start <= entry->end+1)
             {
                 /* ends later and overlaps */
                 entry->end = life->end;
