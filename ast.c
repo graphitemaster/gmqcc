@@ -774,6 +774,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         if (!func)
             return false;
         func->context = ast_ctx(self);
+        func->value->context = ast_ctx(self);
 
         self->constval.vfunc->ir_func = func;
         self->ir_v = func->value;
