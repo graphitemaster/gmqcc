@@ -698,6 +698,7 @@ int lex_do(lex_file *lex)
             }
             lex->modelname = lex->tok.value;
             lex->tok.value = NULL;
+            lex->tok.value_alloc = lex->tok.value_count = 0;
             for (frame = 0; frame < lex->frames_count; ++frame) {
                 if (!strcmp(v, lex->frames[frame].name)) {
                     lex->framevalue = lex->frames[frame].value;
