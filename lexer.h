@@ -253,30 +253,6 @@ static const size_t qcc_operator_count = (sizeof(qcc_operators) / sizeof(qcc_ope
 
 extern const oper_info *operators;
 extern size_t           operator_count;
-
-typedef struct
-{
-	lex_file *lex;
-	int      error;
-	lex_ctx  ctx;
-
-	token    *tokens;
-	token    *lastok;
-
-	token    *tok; /* current token */
-
-	MEM_VECTOR_MAKE(ast_value*, globals);
-} parse_file;
-
-MEM_VECTOR_PROTO(parse_file, ast_value*, globals);
-
-parse_file* parse_open(const char *file);
-void        parse_file_close(parse_file*);
-
-bool        parse(parse_file*);
-
-bool        parse_iskey(parse_file *self, const char *ident);
-
 void lexerror(lex_file*, const char *fmt, ...);
 
 #endif
