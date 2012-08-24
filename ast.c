@@ -720,10 +720,17 @@ void ast_function_delete(ast_function *self)
 
 const char* ast_function_label(ast_function *self, const char *prefix)
 {
-    size_t id  = (self->labelcount++);
-    size_t len = strlen(prefix);
+    size_t id;
+    size_t len;
+    char  *from;
 
-    char *from = self->labelbuf + sizeof(self->labelbuf)-1;
+    if (!opts_dump)
+        return NULL;
+
+    id  = (self->labelcount++);
+    len = strlen(prefix);
+
+    from = self->labelbuf + sizeof(self->labelbuf)-1;
     *from-- = 0;
     do {
         unsigned int digit = id % 10;
