@@ -308,6 +308,8 @@ typedef struct ir_builder_s
 
     MEM_VECTOR_MAKE(const char*, filenames);
     MEM_VECTOR_MAKE(qcint,       filestrings);
+    /* we cache the #IMMEDIATE string here */
+    qcint str_immediate;
 } ir_builder;
 
 ir_builder* ir_builder_new(const char *modulename);

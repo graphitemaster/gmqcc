@@ -168,6 +168,7 @@ ir_builder* ir_builder_new(const char *modulename)
     MEM_VECTOR_INIT(self, fields);
     MEM_VECTOR_INIT(self, filenames);
     MEM_VECTOR_INIT(self, filestrings);
+    self->str_immediate = 0;
     self->name = NULL;
     if (!ir_builder_set_name(self, modulename)) {
         mem_d(self);
@@ -2679,7 +2680,18 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
 
     def.type   = global->vtype;
     def.offset = code_globals_elements;
-    def.name   = global->code.name       = code_genstring(global->name);
+
+    if (global->name) {
+        if (global->name[0] == '#') {
+            if (!self->str_immediate)
+                self->str_immediate = code_genstring("IMMEDIATE");
+            def.name = global->code.name = self->str_immediate;
+        }
+        else
+            def.name = global->code.name = code_genstring(global->name);
+    }
+    else
+        def.name   = 0;
 
     switch (global->vtype)
     {
