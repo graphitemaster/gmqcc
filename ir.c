@@ -166,6 +166,8 @@ ir_builder* ir_builder_new(const char *modulename)
     MEM_VECTOR_INIT(self, functions);
     MEM_VECTOR_INIT(self, globals);
     MEM_VECTOR_INIT(self, fields);
+    MEM_VECTOR_INIT(self, filenames);
+    MEM_VECTOR_INIT(self, filestrings);
     self->name = NULL;
     if (!ir_builder_set_name(self, modulename)) {
         mem_d(self);
@@ -175,9 +177,11 @@ ir_builder* ir_builder_new(const char *modulename)
     return self;
 }
 
-MEM_VEC_FUNCTIONS(ir_builder, ir_value*, globals)
-MEM_VEC_FUNCTIONS(ir_builder, ir_value*, fields)
+MEM_VEC_FUNCTIONS(ir_builder, ir_value*,    globals)
+MEM_VEC_FUNCTIONS(ir_builder, ir_value*,    fields)
 MEM_VEC_FUNCTIONS(ir_builder, ir_function*, functions)
+MEM_VEC_FUNCTIONS(ir_builder, const char*,  filenames)
+MEM_VEC_FUNCTIONS(ir_builder, qcint,        filestrings)
 
 void ir_builder_delete(ir_builder* self)
 {
@@ -195,6 +199,8 @@ void ir_builder_delete(ir_builder* self)
         ir_value_delete(self->fields[i]);
     }
     MEM_VECTOR_CLEAR(self, fields);
+    MEM_VECTOR_CLEAR(self, filenames);
+    MEM_VECTOR_CLEAR(self, filestrings);
     mem_d(self);
 }
 
@@ -2549,6 +2555,27 @@ static bool gen_function_code(ir_function *self)
     return true;
 }
 
+static qcint ir_builder_filestring(ir_builder *ir, const char *filename)
+{
+    /* NOTE: filename pointers are copied, we never strdup them,
+     * thus we can use pointer-comparison to find the string.
+     */
+    size_t i;
+    qcint  str;
+
+    for (i = 0; i < ir->filenames_count; ++i) {
+        if (ir->filenames[i] == filename)
+            return ir->filestrings[i];
+    }
+
+    str = code_genstring(filename);
+    if (!ir_builder_filenames_add(ir, filename))
+        return 0;
+    if (!ir_builder_filestrings_add(ir, str))
+        ir->filenames_count--;
+    return str;
+}
+
 static bool gen_global_function(ir_builder *ir, ir_value *global)
 {
     prog_section_function fun;
@@ -2566,7 +2593,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     irfun = global->constval.vfunc;
 
     fun.name    = global->code.name;
-    fun.file    = code_cachedstring(global->context.file);
+    fun.file    = ir_builder_filestring(ir, global->context.file);
     fun.profile = 0; /* always 0 */
     fun.nargs   = irfun->params_count;
 
