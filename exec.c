@@ -715,6 +715,19 @@ static int qc_vtos(qc_program *prog)
     return 0;
 }
 
+static int qc_etos(qc_program *prog)
+{
+    char buffer[512];
+    qcany *num;
+    qcany str;
+    CheckArgs(1);
+    num = GetArg(0);
+    snprintf(buffer, sizeof(buffer), "%i", num->_int);
+    str.string = prog_tempstring(prog, buffer);
+    Return(str);
+    return 0;
+}
+
 static int qc_spawn(qc_program *prog)
 {
     qcany ent;
@@ -753,7 +766,8 @@ static prog_builtin qc_builtins[] = {
     &qc_kill,  /*   4   */
     &qc_vtos,  /*   5   */
     &qc_error, /*   6   */
-    &qc_vlen   /*   7   */
+    &qc_vlen,  /*   7   */
+    &qc_etos   /*   8   */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
