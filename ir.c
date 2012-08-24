@@ -2707,7 +2707,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_STRING:
     {
         if (global->isconst)
-            ir_value_code_setaddr(global, code_globals_add(code_cachedstring(global->constval.vstring)));
+            ir_value_code_setaddr(global, code_globals_add(code_genstring(global->constval.vstring)));
         else {
             ir_value_code_setaddr(global, code_globals_add(0));
             if (!islocal)
