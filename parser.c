@@ -59,7 +59,7 @@ static void parseerror(parser_t *parser, const char *fmt, ...)
 	parser->errors++;
 
 	va_start(ap, fmt);
-    vprintmsg(LVL_ERROR, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "parse error", fmt, ap);
+    vprintmsg(LVL_ERROR, parser->lex->tok.ctx.file, parser->lex->tok.ctx.line, "parse error", fmt, ap);
 	va_end(ap);
 }
 
@@ -78,7 +78,7 @@ static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *
 	}
 
 	va_start(ap, fmt);
-    vprintmsg(lvl, parser->lex->tok->ctx.file, parser->lex->tok->ctx.line, "warning", fmt, ap);
+    vprintmsg(lvl, parser->lex->tok.ctx.file, parser->lex->tok.ctx.line, "warning", fmt, ap);
 	va_end(ap);
 
 	return opts_werror;
@@ -155,17 +155,9 @@ bool parser_next(parser_t *parser)
     return true;
 }
 
-/* lift a token out of the parser so it's not destroyed by parser_next */
-token *parser_lift(parser_t *parser)
-{
-    token *tok = parser->lex->tok;
-    parser->lex->tok = NULL;
-    return tok;
-}
-
-#define parser_tokval(p) (p->lex->tok->value)
-#define parser_token(p)  (p->lex->tok)
-#define parser_ctx(p)    (p->lex->tok->ctx)
+#define parser_tokval(p) ((p)->lex->tok.value)
+#define parser_token(p)  (&((p)->lex->tok))
+#define parser_ctx(p)    ((p)->lex->tok.ctx)
 
 static ast_value* parser_const_float(parser_t *parser, double d)
 {
@@ -2800,7 +2792,7 @@ nextfield:
     }
     else
     {
-        parseerror(parser, "unexpected token: %s", parser->lex->tok->value);
+        parseerror(parser, "unexpected token: %s", parser->lex->tok.value);
         return false;
     }
     return true;

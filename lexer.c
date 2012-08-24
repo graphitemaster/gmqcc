@@ -38,6 +38,8 @@ bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 	return opts_werror;
 }
 
+
+#if 0
 token* token_new()
 {
     token *tok = (token*)mem_a(sizeof(token));
@@ -113,6 +115,21 @@ token* token_copy_all(const token *cp)
 
     return out;
 }
+#else
+static void lex_token_new(lex_file *lex)
+{
+#if 0
+    if (lex->tok)
+        token_delete(lex->tok);
+    lex->tok = token_new();
+#else
+    lex->tok.value_count = 0;
+    lex->tok.constval.t  = 0;
+    lex->tok.ctx.line = lex->sline;
+    lex->tok.ctx.file = lex->name;
+#endif
+}
+#endif
 
 lex_file* lex_open(const char *file)
 {
@@ -165,8 +182,12 @@ void lex_close(lex_file *lex)
 
     if (lex->file)
         fclose(lex->file);
+#if 0
     if (lex->tok)
         token_delete(lex->tok);
+#else
+    MEM_VECTOR_CLEAR(&(lex->tok), value);
+#endif
     /* mem_d(lex->name); collected in lex_filenames */
     mem_d(lex);
 }
@@ -319,7 +340,7 @@ static int lex_skipwhite(lex_file *lex)
 /* Append a character to the token buffer */
 static bool GMQCC_WARN lex_tokench(lex_file *lex, int ch)
 {
-    if (!token_value_add(lex->tok, ch)) {
+    if (!token_value_add(&lex->tok, ch)) {
         lexerror(lex, "out of memory");
         return false;
     }
@@ -329,11 +350,11 @@ static bool GMQCC_WARN lex_tokench(lex_file *lex, int ch)
 /* Append a trailing null-byte */
 static bool GMQCC_WARN lex_endtoken(lex_file *lex)
 {
-    if (!token_value_add(lex->tok, 0)) {
+    if (!token_value_add(&lex->tok, 0)) {
         lexerror(lex, "out of memory");
         return false;
     }
-    lex->tok->value_count--;
+    lex->tok.value_count--;
     return true;
 }
 
@@ -346,7 +367,7 @@ static bool GMQCC_WARN lex_finish_ident(lex_file *lex)
     while (ch != EOF && isident(ch))
     {
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         ch = lex_getch(lex);
     }
 
@@ -361,9 +382,7 @@ static int lex_parse_frame(lex_file *lex)
 {
     int ch;
 
-    if (lex->tok)
-        token_delete(lex->tok);
-    lex->tok = token_new();
+    lex_token_new(lex);
 
     ch = lex_getch(lex);
     while (ch != EOF && ch != '\n' && isspace(ch))
@@ -401,9 +420,9 @@ static bool lex_finish_frames(lex_file *lex)
             return false;
 
         for (i = 0; i < lex->frames_count; ++i) {
-            if (!strcmp(lex->tok->value, lex->frames[i].name)) {
+            if (!strcmp(lex->tok.value, lex->frames[i].name)) {
                 lex->frames[i].value = lex->framevalue++;
-                if (lexwarn(lex, WARN_FRAME_MACROS, "duplicate frame macro defined: `%s`", lex->tok->value))
+                if (lexwarn(lex, WARN_FRAME_MACROS, "duplicate frame macro defined: `%s`", lex->tok.value))
                     return false;
                 break;
             }
@@ -412,8 +431,9 @@ static bool lex_finish_frames(lex_file *lex)
             continue;
 
         m.value = lex->framevalue++;
-        m.name = lex->tok->value;
-        lex->tok->value = NULL;
+        m.name = lex->tok.value;
+        lex->tok.value = NULL;
+        lex->tok.value_alloc = lex->tok.value_count = 0;
         if (!lex_file_frames_add(lex, m)) {
             lexerror(lex, "out of memory");
             return false;
@@ -436,7 +456,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             if (ch == EOF) {
                 lexerror(lex, "unexpected end of file");
                 lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
-                return (lex->tok->ttype = TOKEN_ERROR);
+                return (lex->tok.ttype = TOKEN_ERROR);
             }
 
             switch (ch) {
@@ -452,18 +472,18 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                 lexwarn(lex, WARN_UNKNOWN_CONTROL_SEQUENCE, "unrecognized control sequence: \\%c", ch);
                 /* so we just add the character plus backslash no matter what it actually is */
                 if (!lex_tokench(lex, '\\'))
-                    return (lex->tok->ttype = TOKEN_FATAL);
+                    return (lex->tok.ttype = TOKEN_FATAL);
             }
             /* add the character finally */
             if (!lex_tokench(lex, ch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
         }
         else if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
     }
     lexerror(lex, "unexpected end of file within string constant");
     lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
-    return (lex->tok->ttype = TOKEN_ERROR);
+    return (lex->tok.ttype = TOKEN_ERROR);
 }
 
 static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
@@ -473,10 +493,10 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
     int  ch = lastch;
 
     /* parse a number... */
-    lex->tok->ttype = TOKEN_INTCONST;
+    lex->tok.ttype = TOKEN_INTCONST;
 
     if (!lex_tokench(lex, ch))
-        return (lex->tok->ttype = TOKEN_FATAL);
+        return (lex->tok.ttype = TOKEN_FATAL);
 
     ch = lex_getch(lex);
     if (ch != '.' && !isdigit(ch))
@@ -486,10 +506,10 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
             /* end of the number or EOF */
             lex_ungetch(lex, ch);
             if (!lex_endtoken(lex))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
 
-            lex->tok->constval.i = lastch - '0';
-            return lex->tok->ttype;
+            lex->tok.constval.i = lastch - '0';
+            return lex->tok.ttype;
         }
 
         ishex = true;
@@ -500,12 +520,12 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
     if (ch != '.')
     {
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         ch = lex_getch(lex);
         while (isdigit(ch) || (ishex && isxdigit_only(ch)))
         {
             if (!lex_tokench(lex, ch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
             ch = lex_getch(lex);
         }
     }
@@ -513,61 +533,61 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
     if (ch == '.' && !ishex)
     {
         /* Allow floating comma in non-hex mode */
-        lex->tok->ttype = TOKEN_FLOATCONST;
+        lex->tok.ttype = TOKEN_FLOATCONST;
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
 
         /* continue digits-only */
         ch = lex_getch(lex);
         while (isdigit(ch))
         {
             if (!lex_tokench(lex, ch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
             ch = lex_getch(lex);
         }
     }
     /* put back the last character */
     /* but do not put back the trailing 'f' or a float */
-    if (lex->tok->ttype == TOKEN_FLOATCONST && ch == 'f')
+    if (lex->tok.ttype == TOKEN_FLOATCONST && ch == 'f')
         ch = lex_getch(lex);
 
     /* generally we don't want words to follow numbers: */
     if (isident(ch)) {
         lexerror(lex, "unexpected trailing characters after number");
-        return (lex->tok->ttype = TOKEN_ERROR);
+        return (lex->tok.ttype = TOKEN_ERROR);
     }
     lex_ungetch(lex, ch);
 
     if (!lex_endtoken(lex))
-        return (lex->tok->ttype = TOKEN_FATAL);
-    if (lex->tok->ttype == TOKEN_FLOATCONST)
-        lex->tok->constval.f = strtod(lex->tok->value, NULL);
+        return (lex->tok.ttype = TOKEN_FATAL);
+    if (lex->tok.ttype == TOKEN_FLOATCONST)
+        lex->tok.constval.f = strtod(lex->tok.value, NULL);
     else
-        lex->tok->constval.i = strtol(lex->tok->value, NULL, 0);
-    return lex->tok->ttype;
+        lex->tok.constval.i = strtol(lex->tok.value, NULL, 0);
+    return lex->tok.ttype;
 }
 
 int lex_do(lex_file *lex)
 {
     int ch, nextch;
 
-    if (lex->tok)
-        token_delete(lex->tok);
-    lex->tok = token_new();
+    lex_token_new(lex);
+#if 0
     if (!lex->tok)
         return TOKEN_FATAL;
+#endif
 
     ch = lex_skipwhite(lex);
     lex->sline = lex->line;
-    lex->tok->ctx.line = lex->sline;
-    lex->tok->ctx.file = lex->name;
+    lex->tok.ctx.line = lex->sline;
+    lex->tok.ctx.file = lex->name;
 
     if (lex->eof)
-        return (lex->tok->ttype = TOKEN_FATAL);
+        return (lex->tok.ttype = TOKEN_FATAL);
 
     if (ch == EOF) {
         lex->eof = true;
-        return (lex->tok->ttype = TOKEN_EOF);
+        return (lex->tok.ttype = TOKEN_EOF);
     }
 
     /* modelgen / spiritgen commands */
@@ -581,13 +601,13 @@ int lex_do(lex_file *lex)
             return lex_do(lex);
         }
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         if (!lex_finish_ident(lex))
-            return (lex->tok->ttype = TOKEN_ERROR);
+            return (lex->tok.ttype = TOKEN_ERROR);
         if (!lex_endtoken(lex))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         /* skip the known commands */
-        v = lex->tok->value;
+        v = lex->tok.value;
 
         if (!strcmp(v, "frame") || !strcmp(v, "framesave"))
         {
@@ -597,7 +617,7 @@ int lex_do(lex_file *lex)
              * which the parser is unaware of
              */
             if (!lex_finish_frames(lex))
-                 return (lex->tok->ttype = TOKEN_ERROR);
+                 return (lex->tok.ttype = TOKEN_ERROR);
             return lex_do(lex);
         }
 
@@ -612,16 +632,15 @@ int lex_do(lex_file *lex)
                 return lex_do(lex);
             }
 
-            token_delete(lex->tok);
-            lex->tok = token_new();
-            lex->tok->ttype = lex_finish_digit(lex, ch);
+            lex_token_new(lex);
+            lex->tok.ttype = lex_finish_digit(lex, ch);
             if (!lex_endtoken(lex))
-                return (lex->tok->ttype = TOKEN_FATAL);
-            if (lex->tok->ttype != TOKEN_INTCONST) {
+                return (lex->tok.ttype = TOKEN_FATAL);
+            if (lex->tok.ttype != TOKEN_INTCONST) {
                 lexerror(lex, "$framevalue requires an integer parameter");
                 return lex_do(lex);
             }
-            lex->framevalue = lex->tok->constval.i;
+            lex->framevalue = lex->tok.constval.i;
             return lex_do(lex);
         }
 
@@ -629,8 +648,7 @@ int lex_do(lex_file *lex)
         {
             int rc;
 
-            token_delete(lex->tok);
-            lex->tok = token_new();
+            lex_token_new(lex);
 
             rc = lex_parse_frame(lex);
 
@@ -639,9 +657,9 @@ int lex_do(lex_file *lex)
                 return lex_do(lex);
             }
             if (rc < 0)
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
 
-            v = lex->tok->value;
+            v = lex->tok.value;
             for (frame = 0; frame < lex->frames_count; ++frame) {
                 if (!strcmp(v, lex->frames[frame].name)) {
                     lex->framevalue = lex->frames[frame].value;
@@ -656,8 +674,7 @@ int lex_do(lex_file *lex)
         {
             int rc;
 
-            token_delete(lex->tok);
-            lex->tok = token_new();
+            lex_token_new(lex);
 
             rc = lex_parse_frame(lex);
 
@@ -666,9 +683,9 @@ int lex_do(lex_file *lex)
                 return lex_do(lex);
             }
             if (rc < 0)
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
 
-            v = lex->tok->value;
+            v = lex->tok.value;
             if (lex->modelname) {
                 frame_macro m;
                 m.value = lex->framevalue;
@@ -676,11 +693,11 @@ int lex_do(lex_file *lex)
                 lex->modelname = NULL;
                 if (!lex_file_frames_add(lex, m)) {
                     lexerror(lex, "out of memory");
-                    return (lex->tok->ttype = TOKEN_FATAL);
+                    return (lex->tok.ttype = TOKEN_FATAL);
                 }
             }
-            lex->modelname = lex->tok->value;
-            lex->tok->value = NULL;
+            lex->modelname = lex->tok.value;
+            lex->tok.value = NULL;
             for (frame = 0; frame < lex->frames_count; ++frame) {
                 if (!strcmp(v, lex->frames[frame].name)) {
                     lex->framevalue = lex->frames[frame].value;
@@ -719,8 +736,8 @@ int lex_do(lex_file *lex)
 
         for (frame = 0; frame < lex->frames_count; ++frame) {
             if (!strcmp(v, lex->frames[frame].name)) {
-                lex->tok->constval.i = lex->frames[frame].value;
-                return (lex->tok->ttype = TOKEN_INTCONST);
+                lex->tok.constval.i = lex->frames[frame].value;
+                return (lex->tok.ttype = TOKEN_INTCONST);
             }
         }
 
@@ -735,12 +752,12 @@ int lex_do(lex_file *lex)
             if (!lex_tokench(lex, ch) ||
                 !lex_endtoken(lex))
             {
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
             }
             if (lex->flags.noops)
-                return (lex->tok->ttype = ch);
+                return (lex->tok.ttype = ch);
             else
-                return (lex->tok->ttype = TOKEN_OPERATOR);
+                return (lex->tok.ttype = TOKEN_OPERATOR);
         case ')':
         case ';':
         case '{':
@@ -752,9 +769,9 @@ int lex_do(lex_file *lex)
             if (!lex_tokench(lex, ch) ||
                 !lex_endtoken(lex))
             {
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
             }
-            return (lex->tok->ttype = ch);
+            return (lex->tok.ttype = ch);
         default:
             break;
     }
@@ -782,9 +799,9 @@ int lex_do(lex_file *lex)
                 if (!lex_tokench(lex, ch) ||
                     !lex_endtoken(lex))
                 {
-                    return (lex->tok->ttype = TOKEN_FATAL);
+                    return (lex->tok.ttype = TOKEN_FATAL);
                 }
-                return (lex->tok->ttype = ch);
+                return (lex->tok.ttype = ch);
             default:
                 break;
         }
@@ -792,14 +809,14 @@ int lex_do(lex_file *lex)
         if (ch == '.')
         {
             if (!lex_tokench(lex, ch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
             /* peak ahead once */
             nextch = lex_getch(lex);
             if (nextch != '.') {
                 lex_ungetch(lex, nextch);
                 if (!lex_endtoken(lex))
-                    return (lex->tok->ttype = TOKEN_FATAL);
-                return (lex->tok->ttype = ch);
+                    return (lex->tok.ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = ch);
             }
             /* peak ahead again */
             nextch = lex_getch(lex);
@@ -807,17 +824,17 @@ int lex_do(lex_file *lex)
                 lex_ungetch(lex, nextch);
                 lex_ungetch(lex, nextch);
                 if (!lex_endtoken(lex))
-                    return (lex->tok->ttype = TOKEN_FATAL);
-                return (lex->tok->ttype = ch);
+                    return (lex->tok.ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = ch);
             }
             /* fill the token to be "..." */
             if (!lex_tokench(lex, ch) ||
                 !lex_tokench(lex, ch) ||
                 !lex_endtoken(lex))
             {
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
             }
-            return (lex->tok->ttype = TOKEN_DOTS);
+            return (lex->tok.ttype = TOKEN_DOTS);
         }
     }
 
@@ -825,9 +842,9 @@ int lex_do(lex_file *lex)
         if (!lex_tokench(lex, ch) ||
             !lex_endtoken(lex))
         {
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         }
-        return (lex->tok->ttype = TOKEN_OPERATOR);
+        return (lex->tok.ttype = TOKEN_OPERATOR);
     }
 
     if (ch == '+' || ch == '-' || /* ++, --, +=, -=  and -> as well! */
@@ -836,21 +853,21 @@ int lex_do(lex_file *lex)
         ch == '&' || ch == '|')   /* &&, ||, &=, |= */
     {
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
 
         nextch = lex_getch(lex);
         if (nextch == ch || nextch == '=') {
             if (!lex_tokench(lex, nextch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
         } else if (ch == '-' && nextch == '>') {
             if (!lex_tokench(lex, nextch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
         } else
             lex_ungetch(lex, nextch);
 
         if (!lex_endtoken(lex))
-            return (lex->tok->ttype = TOKEN_FATAL);
-        return (lex->tok->ttype = TOKEN_OPERATOR);
+            return (lex->tok.ttype = TOKEN_FATAL);
+        return (lex->tok.ttype = TOKEN_OPERATOR);
     }
 
     /*
@@ -859,27 +876,27 @@ int lex_do(lex_file *lex)
         if (!lex_tokench(lex, ch) ||
             !lex_endtoken(lex))
         {
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         }
-        return (lex->tok->ttype = TOKEN_OPERATOR);
+        return (lex->tok.ttype = TOKEN_OPERATOR);
     }
     */
 
     if (ch == '*' || ch == '/') /* *=, /= */
     {
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
 
         nextch = lex_getch(lex);
         if (nextch == '=') {
             if (!lex_tokench(lex, nextch))
-                return (lex->tok->ttype = TOKEN_FATAL);
+                return (lex->tok.ttype = TOKEN_FATAL);
         } else
             lex_ungetch(lex, nextch);
 
         if (!lex_endtoken(lex))
-            return (lex->tok->ttype = TOKEN_FATAL);
-        return (lex->tok->ttype = TOKEN_OPERATOR);
+            return (lex->tok.ttype = TOKEN_FATAL);
+        return (lex->tok.ttype = TOKEN_OPERATOR);
     }
 
     if (isident_start(ch))
@@ -887,34 +904,34 @@ int lex_do(lex_file *lex)
         const char *v;
 
         if (!lex_tokench(lex, ch))
-            return (lex->tok->ttype = TOKEN_FATAL);
+            return (lex->tok.ttype = TOKEN_FATAL);
         if (!lex_finish_ident(lex)) {
             /* error? */
-            return (lex->tok->ttype = TOKEN_ERROR);
+            return (lex->tok.ttype = TOKEN_ERROR);
         }
         if (!lex_endtoken(lex))
-            return (lex->tok->ttype = TOKEN_FATAL);
-        lex->tok->ttype = TOKEN_IDENT;
+            return (lex->tok.ttype = TOKEN_FATAL);
+        lex->tok.ttype = TOKEN_IDENT;
 
-        v = lex->tok->value;
+        v = lex->tok.value;
         if (!strcmp(v, "void")) {
-            lex->tok->ttype = TOKEN_TYPENAME;
-            lex->tok->constval.t = TYPE_VOID;
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_VOID;
         } else if (!strcmp(v, "int")) {
-            lex->tok->ttype = TOKEN_TYPENAME;
-            lex->tok->constval.t = TYPE_INTEGER;
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_INTEGER;
         } else if (!strcmp(v, "float")) {
-            lex->tok->ttype = TOKEN_TYPENAME;
-            lex->tok->constval.t = TYPE_FLOAT;
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_FLOAT;
         } else if (!strcmp(v, "string")) {
-            lex->tok->ttype = TOKEN_TYPENAME;
-            lex->tok->constval.t = TYPE_STRING;
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_STRING;
         } else if (!strcmp(v, "entity")) {
-            lex->tok->ttype = TOKEN_TYPENAME;
-            lex->tok->constval.t = TYPE_ENTITY;
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_ENTITY;
         } else if (!strcmp(v, "vector")) {
-            lex->tok->ttype = TOKEN_TYPENAME;
-            lex->tok->constval.t = TYPE_VECTOR;
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_VECTOR;
         } else if (!strcmp(v, "for")  ||
                  !strcmp(v, "while")  ||
                  !strcmp(v, "do")     ||
@@ -923,15 +940,15 @@ int lex_do(lex_file *lex)
                  !strcmp(v, "local")  ||
                  !strcmp(v, "return") ||
                  !strcmp(v, "const"))
-            lex->tok->ttype = TOKEN_KEYWORD;
+            lex->tok.ttype = TOKEN_KEYWORD;
 
-        return lex->tok->ttype;
+        return lex->tok.ttype;
     }
 
     if (ch == '"')
     {
-        lex->tok->ttype = lex_finish_string(lex, '"');
-        while (lex->tok->ttype == TOKEN_STRINGCONST)
+        lex->tok.ttype = lex_finish_string(lex, '"');
+        while (lex->tok.ttype == TOKEN_STRINGCONST)
         {
             /* Allow c style "string" "continuation" */
             ch = lex_skipwhite(lex);
@@ -940,11 +957,11 @@ int lex_do(lex_file *lex)
                 break;
             }
 
-            lex->tok->ttype = lex_finish_string(lex, '"');
+            lex->tok.ttype = lex_finish_string(lex, '"');
         }
         if (!lex_endtoken(lex))
-            return (lex->tok->ttype = TOKEN_FATAL);
-        return lex->tok->ttype;
+            return (lex->tok.ttype = TOKEN_FATAL);
+        return lex->tok.ttype;
     }
 
     if (ch == '\'')
@@ -954,33 +971,33 @@ int lex_do(lex_file *lex)
          * Likewise actual unescaping has to be done by the parser.
          * The difference is we don't allow 'char' 'continuation'.
          */
-         lex->tok->ttype = lex_finish_string(lex, '\'');
+         lex->tok.ttype = lex_finish_string(lex, '\'');
          if (!lex_endtoken(lex))
-              return (lex->tok->ttype = TOKEN_FATAL);
+              return (lex->tok.ttype = TOKEN_FATAL);
 
          /* It's a vector if we can successfully scan 3 floats */
 #ifdef WIN32
-         if (sscanf_s(lex->tok->value, " %f %f %f ",
-                    &lex->tok->constval.v.x, &lex->tok->constval.v.y, &lex->tok->constval.v.z) == 3)
+         if (sscanf_s(lex->tok.value, " %f %f %f ",
+                    &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
 #else
-         if (sscanf(lex->tok->value, " %f %f %f ",
-                    &lex->tok->constval.v.x, &lex->tok->constval.v.y, &lex->tok->constval.v.z) == 3)
+         if (sscanf(lex->tok.value, " %f %f %f ",
+                    &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
 #endif
          {
-              lex->tok->ttype = TOKEN_VECTORCONST;
+              lex->tok.ttype = TOKEN_VECTORCONST;
          }
 
-         return lex->tok->ttype;
+         return lex->tok.ttype;
     }
 
     if (isdigit(ch))
     {
-        lex->tok->ttype = lex_finish_digit(lex, ch);
+        lex->tok.ttype = lex_finish_digit(lex, ch);
         if (!lex_endtoken(lex))
-            return (lex->tok->ttype = TOKEN_FATAL);
-        return lex->tok->ttype;
+            return (lex->tok.ttype = TOKEN_FATAL);
+        return lex->tok.ttype;
     }
 
     lexerror(lex, "unknown token");
-    return (lex->tok->ttype = TOKEN_ERROR);
+    return (lex->tok.ttype = TOKEN_ERROR);
 }
