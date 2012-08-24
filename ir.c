@@ -630,7 +630,11 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->name = NULL;
-    ir_value_set_name(self, name);
+    if (name && !ir_value_set_name(self, name)) {
+        irerror(self->context, "out of memory");
+        mem_d(self);
+        return NULL;
+    }
 
     memset(&self->constval, 0, sizeof(self->constval));
     memset(&self->code,     0, sizeof(self->code));
@@ -723,11 +727,12 @@ void ir_value_delete(ir_value* self)
     mem_d(self);
 }
 
-void ir_value_set_name(ir_value *self, const char *name)
+bool ir_value_set_name(ir_value *self, const char *name)
 {
     if (self->name)
         mem_d((void*)self->name);
     self->name = util_strdup(name);
+    return !!self->name;
 }
 
 bool ir_value_set_float(ir_value *self, float f)

@@ -83,7 +83,7 @@ ir_value* ir_value_var(const char *name, int st, int vtype);
  */
 ir_value* ir_value_out(struct ir_function_s *owner, const char *name, int st, int vtype);
 void      ir_value_delete(ir_value*);
-void      ir_value_set_name(ir_value*, const char *name);
+bool      ir_value_set_name(ir_value*, const char *name);
 ir_value* ir_value_vector_member(ir_value*, unsigned int member);
 
 MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads);
