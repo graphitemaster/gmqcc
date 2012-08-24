@@ -167,7 +167,7 @@ token *parser_lift(parser_t *parser)
 #define parser_token(p)  (p->lex->tok)
 #define parser_ctx(p)    (p->lex->tok->ctx)
 
-ast_value* parser_const_float(parser_t *parser, double d)
+static ast_value* parser_const_float(parser_t *parser, double d)
 {
     size_t i;
     ast_value *out;
@@ -185,7 +185,7 @@ ast_value* parser_const_float(parser_t *parser, double d)
     return out;
 }
 
-ast_value* parser_const_float_0(parser_t *parser)
+static ast_value* parser_const_float_0(parser_t *parser)
 {
     if (!parser->imm_float_zero)
         parser->imm_float_zero = parser_const_float(parser, 0);
@@ -203,7 +203,7 @@ static char *parser_strdup(const char *str)
     return util_strdup(str);
 }
 
-ast_value* parser_const_string(parser_t *parser, const char *str)
+static ast_value* parser_const_string(parser_t *parser, const char *str)
 {
     size_t i;
     ast_value *out;
@@ -221,7 +221,7 @@ ast_value* parser_const_string(parser_t *parser, const char *str)
     return out;
 }
 
-ast_value* parser_const_vector(parser_t *parser, vector v)
+static ast_value* parser_const_vector(parser_t *parser, vector v)
 {
     size_t i;
     ast_value *out;
@@ -239,7 +239,7 @@ ast_value* parser_const_vector(parser_t *parser, vector v)
     return out;
 }
 
-ast_value* parser_const_vector_f(parser_t *parser, float x, float y, float z)
+static ast_value* parser_const_vector_f(parser_t *parser, float x, float y, float z)
 {
     vector v;
     v.x = x;
@@ -248,14 +248,14 @@ ast_value* parser_const_vector_f(parser_t *parser, float x, float y, float z)
     return parser_const_vector(parser, v);
 }
 
-ast_value* parser_const_vector_0(parser_t *parser)
+static ast_value* parser_const_vector_0(parser_t *parser)
 {
     if (!parser->imm_vector_zero)
         parser->imm_vector_zero = parser_const_vector_f(parser, 0, 0, 0);
     return parser->imm_vector_zero;
 }
 
-ast_expression* parser_find_field(parser_t *parser, const char *name)
+static ast_expression* parser_find_field(parser_t *parser, const char *name)
 {
     size_t i;
     for (i = 0; i < parser->fields_count; ++i) {
@@ -265,7 +265,7 @@ ast_expression* parser_find_field(parser_t *parser, const char *name)
     return NULL;
 }
 
-ast_expression* parser_find_global(parser_t *parser, const char *name)
+static ast_expression* parser_find_global(parser_t *parser, const char *name)
 {
     size_t i;
     for (i = 0; i < parser->globals_count; ++i) {
@@ -275,7 +275,7 @@ ast_expression* parser_find_global(parser_t *parser, const char *name)
     return NULL;
 }
 
-ast_expression* parser_find_param(parser_t *parser, const char *name)
+static ast_expression* parser_find_param(parser_t *parser, const char *name)
 {
     size_t i;
     ast_value *fun;
@@ -289,7 +289,7 @@ ast_expression* parser_find_param(parser_t *parser, const char *name)
     return NULL;
 }
 
-ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upto, bool *isparam)
+static ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upto, bool *isparam)
 {
     size_t i;
     *isparam = false;
@@ -302,7 +302,7 @@ ast_expression* parser_find_local(parser_t *parser, const char *name, size_t upt
     return parser_find_param(parser, name);
 }
 
-ast_expression* parser_find_var(parser_t *parser, const char *name)
+static ast_expression* parser_find_var(parser_t *parser, const char *name)
 {
     bool dummy;
     ast_expression *v;
