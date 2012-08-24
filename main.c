@@ -77,10 +77,8 @@ static int usage() {
     printf("  -force-crc=num         force a specific checksum into the header\n");
     printf("\n");
     printf("flags:\n"
-           "  -fdarkplaces-string-table-bug\n"
-           "            patch the string table to work with some bugged darkplaces versions\n"
-           "  -fomit-nullbytes\n"
-           "            omits certain null-bytes for a smaller output - requires a patched engine\n"
+           "  -fadjust-vector-fields\n"
+           "            when assigning a vector field, its _y and _z fields also get assigned\n"
            );
     return -1;
 }
