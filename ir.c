@@ -462,7 +462,7 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     memset(self, 0, sizeof(*self));
 
     self->label = NULL;
-    if (!ir_block_set_label(self, name)) {
+    if (name && !ir_block_set_label(self, name)) {
         mem_d(self);
         return NULL;
     }
@@ -491,7 +491,7 @@ MEM_VEC_FUNCTIONS_ALL(ir_block, ir_value*, living)
 void ir_block_delete(ir_block* self)
 {
     size_t i;
-    mem_d(self->label);
+    if (self->label) mem_d(self->label);
     for (i = 0; i != self->instr_count; ++i)
         ir_instr_delete(self->instr[i]);
     MEM_VECTOR_CLEAR(self, instr);
