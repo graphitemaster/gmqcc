@@ -155,6 +155,10 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
  *IR Builder
  */
 
+static void ir_block_delete_quick(ir_block* self);
+static void ir_instr_delete_quick(ir_instr *self);
+static void ir_function_delete_quick(ir_function *self);
+
 ir_builder* ir_builder_new(const char *modulename)
 {
     ir_builder* self;
@@ -189,7 +193,7 @@ void ir_builder_delete(ir_builder* self)
     size_t i;
     mem_d((void*)self->name);
     for (i = 0; i != self->functions_count; ++i) {
-        ir_function_delete(self->functions[i]);
+        ir_function_delete_quick(self->functions[i]);
     }
     MEM_VECTOR_CLEAR(self, functions);
     for (i = 0; i != self->globals_count; ++i) {
@@ -363,6 +367,30 @@ bool ir_function_set_name(ir_function *self, const char *name)
     return !!self->name;
 }
 
+static void ir_function_delete_quick(ir_function *self)
+{
+    size_t i;
+    mem_d((void*)self->name);
+
+    for (i = 0; i != self->blocks_count; ++i)
+        ir_block_delete_quick(self->blocks[i]);
+    MEM_VECTOR_CLEAR(self, blocks);
+
+    MEM_VECTOR_CLEAR(self, params);
+
+    for (i = 0; i != self->values_count; ++i)
+        ir_value_delete(self->values[i]);
+    MEM_VECTOR_CLEAR(self, values);
+
+    for (i = 0; i != self->locals_count; ++i)
+        ir_value_delete(self->locals[i]);
+    MEM_VECTOR_CLEAR(self, locals);
+
+    /* self->value is deleted by the builder */
+
+    mem_d(self);
+}
+
 void ir_function_delete(ir_function *self)
 {
     size_t i;
@@ -495,6 +523,19 @@ MEM_VEC_FUNCTIONS_ALL(ir_block, ir_block*, entries)
 MEM_VEC_FUNCTIONS_ALL(ir_block, ir_block*, exits)
 MEM_VEC_FUNCTIONS_ALL(ir_block, ir_value*, living)
 
+static void ir_block_delete_quick(ir_block* self)
+{
+    size_t i;
+    if (self->label) mem_d(self->label);
+    for (i = 0; i != self->instr_count; ++i)
+        ir_instr_delete_quick(self->instr[i]);
+    MEM_VECTOR_CLEAR(self, instr);
+    MEM_VECTOR_CLEAR(self, entries);
+    MEM_VECTOR_CLEAR(self, exits);
+    MEM_VECTOR_CLEAR(self, living);
+    mem_d(self);
+}
+
 void ir_block_delete(ir_block* self)
 {
     size_t i;
@@ -544,6 +585,13 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
 }
 MEM_VEC_FUNCTIONS(ir_instr, ir_phi_entry_t, phi)
 MEM_VEC_FUNCTIONS(ir_instr, ir_value*, params)
+
+static void ir_instr_delete_quick(ir_instr *self)
+{
+    MEM_VECTOR_CLEAR(self, phi);
+    MEM_VECTOR_CLEAR(self, params);
+    mem_d(self);
+}
 
 void ir_instr_delete(ir_instr *self)
 {
