@@ -36,7 +36,7 @@ bool        opts_memchk   = false;
 bool        opts_dump     = false;
 bool        opts_werror   = false;
 bool        opts_forcecrc = false;
-bool        opts_benchmark    = false;
+bool        opts_benchmark = false;
 
 uint16_t    opts_forced_crc;
 
