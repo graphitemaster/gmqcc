@@ -72,7 +72,7 @@ static int usage() {
            "       -std=gmqcc        this compiler (default)\n");
     printf("  -W<warning>            enable a warning\n"
            "  -Wno-<warning>         disable a warning\n"
-           "  -Wall                  enable all warnings\n");
+           "  -Wall                  enable all warnings\n"
            "  -Werror                treat warnings as errors\n");
     printf("  -force-crc=num         force a specific checksum into the header\n");
     printf("\n");
