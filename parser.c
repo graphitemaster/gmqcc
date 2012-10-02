@@ -2928,8 +2928,12 @@ bool parser_finish(const char *output)
                 continue;
             asvalue = (ast_value*)(parser->globals[i].var);
             if (!asvalue->uses && !asvalue->isconst && asvalue->expression.vtype != TYPE_FUNCTION) {
-                retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
-                                               "unused global: `%s`", asvalue->name);
+                if (strcmp(asvalue->name, "end_sys_globals") &&
+                    strcmp(asvalue->name, "end_sys_fields"))
+                {
+                    retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
+                                                   "unused global: `%s`", asvalue->name);
+                }
             }
             if (!ast_global_codegen(asvalue, ir)) {
                 printf("failed to generate global %s\n", parser->globals[i].name);
