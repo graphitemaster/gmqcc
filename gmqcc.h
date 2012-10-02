@@ -210,8 +210,8 @@ void  util_endianswap    (void *,  int, int);
 size_t util_strtocmd    (const char *, char *, size_t);
 size_t util_strtononcmd (const char *, char *, size_t);
 
-uint16_t util_crc16(const char *, int, const short);
-uint32_t util_crc32(const char *, int, const short);
+uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
+uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
 #ifdef NOTRACK
 #    define mem_a(x) malloc(x)

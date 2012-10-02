@@ -285,7 +285,7 @@ static const uint32_t util_crc32_table[] = {
     0x54DE5729, 0x23D967BF, 0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
     0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 };
-const uint16_t util_crc16_table[] = {
+static const uint16_t util_crc16_table[] = {
     0x0000,     0x1021,     0x2042,     0x3063,     0x4084,     0x50A5,
     0x60C6,     0x70E7,     0x8108,     0x9129,     0xA14A,     0xB16B,
     0xC18C,     0xD1AD,     0xE1CE,     0xF1EF,     0x1231,     0x0210,
@@ -334,13 +334,14 @@ const uint16_t util_crc16_table[] = {
 /*
  * Implements a CRC function for X worth bits using (uint[X]_t)
  * as type. and util_crc[X]_table.
+ * Streamable QCC compatible CRC functions.
  */
 #define CRC(X) \
-uint##X##_t util_crc##X(const char *k, int len, const short clamp) {  \
-    register uint##X##_t h= (uint##X##_t)0xFFFFFFFF;                  \
+uint##X##_t util_crc##X(uint##X##_t current, const char *k, size_t len) {  \
+    register uint##X##_t h= current;                                  \
     for (; len; --len, ++k)                                           \
-        h = util_crc##X##_table[(h^((unsigned char)*k))&0xFF]^(h>>8); \
-    return (~h)%clamp;                                                \
+        h = util_crc##X##_table[(h>>8)^((unsigned char)*k)]^(h<<8);   \
+    return h;                                                         \
 }
 CRC(32)
 CRC(16)
