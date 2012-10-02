@@ -72,7 +72,6 @@ void code_init() {
     prog_section_def       empty_def       = {0, 0, 0};
     int                    i               = 0;
 
-    code_crc = 0;
     code_entfields = 0;
 
     /* omit creation of null code */

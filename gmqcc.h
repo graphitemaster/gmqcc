@@ -210,7 +210,8 @@ void  util_endianswap    (void *,  int, int);
 size_t util_strtocmd    (const char *, char *, size_t);
 size_t util_strtononcmd (const char *, char *, size_t);
 
-uint32_t util_crc32(const char *, int, register const short);
+uint16_t util_crc16(const char *, int, const short);
+uint32_t util_crc32(const char *, int, const short);
 
 #ifdef NOTRACK
 #    define mem_a(x) malloc(x)
@@ -512,6 +513,7 @@ VECTOR_PROT(prog_section_field,     code_fields    );
 VECTOR_PROT(prog_section_function,  code_functions );
 VECTOR_PROT(int,                    code_globals   );
 VECTOR_PROT(char,                   code_chars     );
+extern uint16_t code_crc;
 
 typedef float   qcfloat;
 typedef int32_t qcint;
