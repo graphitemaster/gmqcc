@@ -234,6 +234,28 @@ void util_endianswap(void *m, int s, int l) {
 }
 
 /*
+ * CRC algorithms vary in the width of the polynomial, the value of said polynomial,
+ * the initial value used for the register, weather the bits of each byte are reflected
+ * before being processed, weather the algorithm itself feeds input bytes through the
+ * register or XORs them with a byte from one end and then straight into the table, as
+ * well as (but not limited to the idea of reflected versions) where the final register
+ * value becomes reversed, and finally weather the value itself is used to XOR the final
+ * register value.  AS such you can already imagine how painfully annoying CRCs are,
+ * of course we stand to target Quake, which expects it's certian set of rules for proper
+ * calculation of a CRC.
+ *
+ * In most traditional CRC algorithms on uses a reflected table driven method where a value
+ * or register is reflected if it's bits are swapped around it's center.  For example:
+ * take the bits 0101 is the 4-bit reflection of 1010, and respectfully 0011 would be the
+ * reflection of 1100. Quakle however expects a NON-Reflected CRC on the output, but still
+ * requires a final XOR on the values (0xFFFF and 0x0000) this is a standard CCITT CRC-16
+ * which I respectfully as a programmer don't agree with.
+ *
+ * So now you know what we target, and why we target it, despite how unsettling it may seem
+ * but those are what Quake seems to request.
+ */
+
+/*
  * This is an implementation of CRC32 & CRC16. The polynomials have been
  * offline computed for faster generation at the cost of larger code size.
  *
