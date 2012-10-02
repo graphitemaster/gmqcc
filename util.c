@@ -338,11 +338,11 @@ static const uint16_t util_crc16_table[] = {
  * Quake expects a non-reflective CRC.
  */
 #define CRC(X) \
-uint##X##_t util_crc##X(const char *k, int len, const short clamp) {  \
-    register uint##X##_t h= (uint##X##_t)0xFFFFFFFF;                  \
+uint##X##_t util_crc##X(uint##X##_t current, const char *k, size_t len) {  \
+    register uint##X##_t h= current;                                  \
     for (; len; --len, ++k)                                           \
-        h = util_crc##X##_table[(h^((unsigned char)*k))&0xFF]^(h>>8); \
-    return (~h)%clamp;                                                \
+        h = util_crc##X##_table[(h>>8)^((unsigned char)*k)]^(h<<8);   \
+    return h;                                                         \
 }
 CRC(32)
 CRC(16)
