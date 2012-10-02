@@ -52,7 +52,7 @@ test: test_ast test_ir
 
 # compiler target
 gmqcc: $(OBJ_C) $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 #all target is test and all
 all: test gmqcc
