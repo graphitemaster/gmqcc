@@ -23,6 +23,9 @@ typedef struct {
     ast_value *imm_float_zero;
     ast_value *imm_vector_zero;
 
+    size_t crc_globals;
+    size_t crc_fields;
+
     ast_function *function;
     MEM_VECTOR_MAKE(varentry_t, locals);
     size_t blocklocal;
@@ -2284,6 +2287,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
             goto cleanup;
         }
 
+        if (!localblock) {
+            if      (!strcmp(parser_tokval(parser), "end_sys_globals"))
+                parser->crc_globals = parser->globals_count;
+            else if (!strcmp(parser_tokval(parser), "end_sys_fields"))
+                parser->crc_fields = parser->fields_count;
+        }
+
         if (!isfunc) {
             if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
                 parseerror(parser, "global `%s` already declared here: %s:%i",
@@ -2708,6 +2718,13 @@ static bool parser_global_statement(parser_t *parser)
                 MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
                 fval->expression.variadic = var->expression.variadic;
                 var = fval;
+            }
+
+            if (!strcmp(parser_tokval(parser), "end_sys_fields")) {
+                if (parsewarning(parser, WARN_END_SYS_FIELDS, "by convention end_sys_fields should be declared as global, rather than a field")) {
+                    ast_value_delete(var);
+                    return false;
+                }
             }
 
             /* turn it into a field */
