@@ -63,6 +63,7 @@ VECTOR_MAKE(prog_section_function,  code_functions );
 VECTOR_MAKE(int,                    code_globals   );
 VECTOR_MAKE(char,                   code_chars     );
 
+uint16_t                            code_crc;
 uint32_t                            code_entfields;
 
 void code_init() {
@@ -70,6 +71,9 @@ void code_init() {
     prog_section_statement empty_statement = {0,{0},{0},{0}};
     prog_section_def       empty_def       = {0, 0, 0};
     int                    i               = 0;
+
+    code_crc = 0;
+    code_entfields = 0;
 
     /* omit creation of null code */
     if (OPTS_FLAG(OMIT_NULL_BYTES))
@@ -87,8 +91,6 @@ void code_init() {
     code_statements_add(empty_statement);
     code_defs_add      (empty_def);
     code_fields_add    (empty_def);
-
-    code_entfields = 0;
 }
 
 uint32_t code_genstring(const char *str)
@@ -189,7 +191,7 @@ bool code_write(const char *filename) {
     if (opts_forcecrc)
         code_header.crc16         = opts_forced_crc;
     else
-        code_header.crc16         = 0; /* TODO: */
+        code_header.crc16         = code_crc;
     code_header.entfield          = code_entfields;
 
     if (OPTS_FLAG(DARKPLACES_STRING_TABLE_BUG)) {
