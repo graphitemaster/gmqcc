@@ -334,18 +334,29 @@ static const uint16_t util_crc16_table[] = {
 /*
  * Implements a CRC function for X worth bits using (uint[X]_t)
  * as type. and util_crc[X]_table.
- * Streamable QCC compatible CRC functions.
+
+ * Quake expects a non-reflective CRC.
  */
 #define CRC(X) \
-uint##X##_t util_crc##X(uint##X##_t current, const char *k, size_t len) {  \
-    register uint##X##_t h= current;                                  \
+uint##X##_t util_crc##X(const char *k, int len, const short clamp) {  \
+    register uint##X##_t h= (uint##X##_t)0xFFFFFFFF;                  \
     for (; len; --len, ++k)                                           \
-        h = util_crc##X##_table[(h>>8)^((unsigned char)*k)]^(h<<8);   \
-    return h;                                                         \
+        h = util_crc##X##_table[(h^((unsigned char)*k))&0xFF]^(h>>8); \
+    return (~h)%clamp;                                                \
 }
 CRC(32)
 CRC(16)
 #undef CRC
+/*
+#define CRC(X) \
+uint##X##_t util_crc##X(const char *k, int len, const short clamp) {  \
+    register uint##X##_t h= (uint##X##_t)0xFFFFFFFF;                  \
+    for (; len; --len, ++k)                                           \
+        h = util_crc##X##_table[(h^((unsigned char)*k))&0xFF]^(h>>8); \
+    return (~h)%clamp;                                                \
+}
+*/
+
 
 /*
  * Implements libc getline for systems that don't have it, which is
