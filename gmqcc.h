@@ -692,17 +692,20 @@ bool GMQCC_WARN Tself##_##mem##_find(Tself *self, Twhat obj, size_t *idx) \
 bool GMQCC_WARN Tself##_##mem##_append(Tself *s, Twhat *p, size_t c) \
 {                                                                    \
     Twhat *reall;                                                    \
+    size_t oldalloc;                                                 \
     if (s->mem##_count+c > s->mem##_alloc) {                         \
         if (!s->mem##_alloc) {                                       \
             s->mem##_alloc = c < 16 ? 16 : c;                        \
             s->mem = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);  \
         } else {                                                     \
+            oldalloc = s->mem##_alloc;                               \
             s->mem##_alloc *= 2;                                     \
             if (s->mem##_count+c >= s->mem##_alloc) {                \
                 s->mem##_alloc = s->mem##_count+c;                   \
             }                                                        \
             reall = (Twhat*)mem_a(sizeof(Twhat) * s->mem##_alloc);   \
             if (!reall) {                                            \
+                s->mem##_alloc = oldalloc;                           \
                 return false;                                        \
             }                                                        \
             memcpy(reall, s->mem, sizeof(Twhat) * s->mem##_count);   \
@@ -736,6 +739,7 @@ bool GMQCC_WARN Tself##_##mem##_resize(Tself *s, size_t c)       \
         memcpy(reall, s->mem, sizeof(Twhat) * c);                \
         mem_d(s->mem);                                           \
         s->mem = reall;                                          \
+        s->mem##_alloc = c;                                      \
     }                                                            \
     return true;                                                 \
 }
