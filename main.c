@@ -23,8 +23,6 @@
 #include "gmqcc.h"
 #include "lexer.h"
 
-#include <time.h>
-
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
 uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
 
@@ -36,7 +34,6 @@ bool        opts_memchk   = false;
 bool        opts_dump     = false;
 bool        opts_werror   = false;
 bool        opts_forcecrc = false;
-bool        opts_benchmark = false;
 
 uint16_t    opts_forced_crc;
 
@@ -205,10 +202,6 @@ static bool options_parse(int argc, char **argv) {
             }
             if (!strcmp(argv[0]+1, "memchk")) {
                 opts_memchk = true;
-                continue;
-            }
-            if (!strcmp(argv[0]+1, "benchmark")) {
-                opts_benchmark = true;
                 continue;
             }
 
@@ -398,8 +391,6 @@ int main(int argc, char **argv) {
     int retval = 0;
     bool opts_output_free = false;
 
-    struct timespec ta, tb, tc;
-
     app_name = argv[0];
 
     /* default options / warn flags */
@@ -454,8 +445,6 @@ int main(int argc, char **argv) {
     if (items_elements) {
         printf("Mode: manual\n");
         printf("There are %lu items to compile:\n", (unsigned long)items_elements);
-        if (opts_benchmark)
-            clock_gettime(CLOCK_MONOTONIC, &ta);
         for (itr = 0; itr < items_elements; ++itr) {
             printf("  item: %s (%s)\n",
                    items_data[itr].filename,
@@ -470,11 +459,7 @@ int main(int argc, char **argv) {
             }
         }
 
-        if (opts_benchmark)
-            clock_gettime(CLOCK_MONOTONIC, &tb);
         parser_finish(opts_output);
-        if (opts_benchmark)
-            clock_gettime(CLOCK_MONOTONIC, &tc);
 
     } else {
         FILE *src;
@@ -501,8 +486,6 @@ int main(int argc, char **argv) {
             opts_output_free = true;
         }
 
-        if (opts_benchmark)
-            clock_gettime(CLOCK_MONOTONIC, &ta);
         while (progs_nextline(&line, &linelen, src)) {
             if (!line[0] || (line[0] == '/' && line[1] == '/'))
                 continue;
@@ -513,31 +496,11 @@ int main(int argc, char **argv) {
             }
         }
 
-        if (opts_benchmark)
-            clock_gettime(CLOCK_MONOTONIC, &tb);
         parser_finish(opts_output);
-        if (opts_benchmark)
-            clock_gettime(CLOCK_MONOTONIC, &tc);
 
 srcdone:
         fclose(src);
         mem_d(line);
-    }
-    if (opts_benchmark)
-    {
-        printf("started parsing at: %lu:%09lu\n", (unsigned long)ta.tv_sec, (unsigned long)ta.tv_nsec);
-        printf("started codegen at: %lu:%09lu\n", (unsigned long)tb.tv_sec, (unsigned long)tb.tv_nsec);
-        printf("       finished at: %lu:%09lu\n", (unsigned long)tc.tv_sec, (unsigned long)tc.tv_nsec);
-        {
-            size_t sec = tb.tv_sec - ta.tv_sec;
-            size_t nsec = (tb.tv_nsec + sec * 1000000000L) - ta.tv_nsec;
-            printf("Parsing took %lu\n", (unsigned long)nsec);
-        }
-        {
-            size_t sec = tc.tv_sec - tb.tv_sec;
-            size_t nsec = (tc.tv_nsec + sec * 1000000000L) - tb.tv_nsec;
-            printf("Codegen took %lu\n", (unsigned long)nsec);
-        }
     }
 
     /* stuff */
