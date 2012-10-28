@@ -1817,7 +1817,7 @@ static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn
             break;
 
         if (!parse_statement(parser, block, &expr)) {
-            parseerror(parser, "parse error");
+            /* parseerror(parser, "parse error"); */
             block = NULL;
             goto cleanup;
         }
