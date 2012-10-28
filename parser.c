@@ -864,10 +864,50 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
 
         case opid1('='):
-            if (ast_istype(exprs[0], ast_entfield))
+            if (ast_istype(exprs[0], ast_entfield)) {
+                ast_expression *field = ((ast_entfield*)exprs[0])->field;
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
+                if (!ast_compare_type(field->expression.next, exprs[1])) {
+                    char ty1[1024];
+                    char ty2[1024];
+                    ast_type_to_string(field->expression.next, ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    if (opts_standard == COMPILER_QCC &&
+                        field->expression.next->expression.vtype == TYPE_FUNCTION &&
+                        exprs[1]->expression.vtype == TYPE_FUNCTION)
+                    {
+                        if (parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
+                                         "invalid types in assignment: cannot assign %s to %s", ty2, ty1))
+                        {
+                            parser->errors++;
+                        }
+                    }
+                    else
+                        parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                }
+            }
             else
+            {
                 assignop = type_store_instr[exprs[0]->expression.vtype];
+                if (!ast_compare_type(exprs[0], exprs[1])) {
+                    char ty1[1024];
+                    char ty2[1024];
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    if (opts_standard == COMPILER_QCC &&
+                        exprs[0]->expression.vtype == TYPE_FUNCTION &&
+                        exprs[1]->expression.vtype == TYPE_FUNCTION)
+                    {
+                        if (parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
+                                         "invalid types in assignment: cannot assign %s to %s", ty2, ty1))
+                        {
+                            parser->errors++;
+                        }
+                    }
+                    else
+                        parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                }
+            }
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
         case opid2('+','='):
