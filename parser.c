@@ -2850,7 +2850,7 @@ bool parser_compile(const char *filename)
                 if (parser->tok == TOKEN_EOF)
                     parseerror(parser, "unexpected eof");
                 else if (!parser->errors)
-                    parseerror(parser, "parse error");
+                    parseerror(parser, "there have been errors, bailing out");
                 lex_close(parser->lex);
                 parser->lex = NULL;
                 return false;
