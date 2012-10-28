@@ -423,6 +423,7 @@ ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr);
 void ast_call_delete(ast_call*);
 bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
+bool ast_call_check_types(ast_call*);
 
 MEM_VECTOR_PROTO(ast_call, ast_expression*, params);
 

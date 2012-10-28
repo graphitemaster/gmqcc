@@ -967,6 +967,8 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
             MEM_VECTOR_MOVE(params, exprs, call, params);
             ast_delete(params);
         }
+        if (!ast_call_check_types(call))
+            parser->errors++;
     } else {
         parseerror(parser, "invalid function call");
         return false;

@@ -589,6 +589,23 @@ void ast_call_delete(ast_call *self)
     mem_d(self);
 }
 
+bool ast_call_check_types(ast_call *self)
+{
+    size_t i;
+    bool   retval = true;
+    const ast_expression *func = self->func;
+
+    for (i = 0; i < self->params_count; ++i) {
+        if (!ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i]))) {
+            asterror(ast_ctx(self), "invalid type for parameter %u in function call",
+                     (unsigned int)(i+1));
+            /* we don't immediately return */
+            retval = false;
+        }
+    }
+    return retval;
+}
+
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_expression *dest, ast_expression *source)
 {
