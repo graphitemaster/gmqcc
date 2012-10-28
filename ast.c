@@ -616,6 +616,17 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
     self->dest = dest;
     self->source = source;
 
+    self->expression.vtype = dest->expression.vtype;
+    if (dest->expression.next) {
+        self->expression.next = ast_type_copy(ctx, dest);
+        if (!self->expression.next) {
+            ast_delete(self);
+            return NULL;
+        }
+    }
+    else
+        self->expression.next = NULL;
+
     return self;
 }
 
