@@ -2197,12 +2197,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     parser->function = func;
     if (!parse_block_into(parser, block, true)) {
         ast_block_delete(block);
-        goto enderrfn;
+        goto enderrfn2;
     }
 
     if (!ast_function_blocks_add(func, block)) {
         ast_block_delete(block);
-        goto enderrfn;
+        goto enderrfn2;
     }
 
     parser->function = old;
@@ -2215,6 +2215,8 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
     return retval;
 
+enderrfn2:
+    parser->functions_count--;
 enderrfn:
     ast_function_delete(func);
     var->constval.vfunc = NULL;
