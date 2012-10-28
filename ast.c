@@ -217,6 +217,87 @@ bool ast_compare_type(ast_expression *a, ast_expression *b)
     return true;
 }
 
+static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsize, size_t pos)
+{
+    const char *typestr;
+    size_t typelen;
+    size_t i;
+
+    if (!e) {
+        if (pos + 6 >= bufsize)
+            goto full;
+        strcpy(buf + pos, "(null)");
+        return pos + 6;
+    }
+
+    if (pos + 1 >= bufsize)
+        goto full;
+
+    switch (e->expression.vtype) {
+        case TYPE_VARIANT:
+            strcpy(buf + pos, "(variant)");
+            return pos + 9;
+
+        case TYPE_FIELD:
+            buf[pos++] = '.';
+            return ast_type_to_string_impl(e->expression.next, buf, bufsize, pos);
+
+        case TYPE_POINTER:
+            if (pos + 3 >= bufsize)
+                goto full;
+            buf[pos++] = '*';
+            buf[pos++] = '(';
+            pos = ast_type_to_string_impl(e->expression.next, buf, bufsize, pos);
+            if (pos + 1 >= bufsize)
+                goto full;
+            buf[pos++] = ')';
+            return pos;
+
+        case TYPE_FUNCTION:
+            pos = ast_type_to_string_impl(e->expression.next, buf, bufsize, pos);
+            if (pos + 2 >= bufsize)
+                goto full;
+            if (e->expression.params_count == 0) {
+                buf[pos++] = '(';
+                buf[pos++] = ')';
+                return pos;
+            }
+            buf[pos++] = '(';
+            pos = ast_type_to_string_impl((ast_expression*)(e->expression.params[0]), buf, bufsize, pos);
+            for (i = 1; i < e->expression.params_count; ++i) {
+                if (pos + 2 >= bufsize)
+                    goto full;
+                buf[pos++] = ',';
+                buf[pos++] = ' ';
+                pos = ast_type_to_string_impl((ast_expression*)(e->expression.params[i]), buf, bufsize, pos);
+            }
+            if (pos + 1 >= bufsize)
+                goto full;
+            buf[pos++] = ')';
+            return pos;
+
+        default:
+            typestr = type_name[e->expression.vtype];
+            typelen = strlen(typestr);
+            if (pos + typelen >= bufsize)
+                goto full;
+            strcpy(buf + pos, typestr);
+            return pos + typelen;
+    }
+
+full:
+    buf[bufsize-3] = '.';
+    buf[bufsize-2] = '.';
+    buf[bufsize-1] = '.';
+    return bufsize;
+}
+
+void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize)
+{
+    size_t pos = ast_type_to_string_impl(e, buf, bufsize-1, 0);
+    buf[pos] = 0;
+}
+
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
