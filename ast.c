@@ -674,9 +674,12 @@ bool ast_call_check_types(ast_call *self)
 {
     size_t i;
     bool   retval = true;
-    const ast_expression *func = self->func;
+    const  ast_expression *func = self->func;
+    size_t count = self->params_count;
+    if (count > func->expression.params_count)
+        count = func->expression.params_count;
 
-    for (i = 0; i < self->params_count; ++i) {
+    for (i = 0; i < count; ++i) {
         if (!ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i]))) {
             asterror(ast_ctx(self), "invalid type for parameter %u in function call",
                      (unsigned int)(i+1));
