@@ -13,7 +13,8 @@ TESTLIST = \
 	maths2     \
 	equality   \
 	fields1    \
-	invalid-types
+	invalid-types \
+	ngraphs
 
 .PHONY: clean test
 
@@ -141,6 +142,11 @@ invalid-types-ok: obj invalid-types/assign.qc invalid-types/op.qc invalid-types/
 	@touch obj/invalid-types-ok
 
 invalid-types: invalid-types-ok
+
+$(eval $(call maketest,ngraphs,qcc))
+ngraphs:
+	@$(VM) $< > $@/output
+	@diff $@/output $@/expected
 
 #######################################################################
 obj:
