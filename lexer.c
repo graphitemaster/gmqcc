@@ -197,6 +197,34 @@ void lex_close(lex_file *lex)
  * are working on.
  * The are merely wrapping get/put in order to count line numbers.
  */
+static void lex_ungetch(lex_file *lex, int ch);
+static int lex_try_trigraph(lex_file *lex, int old)
+{
+    int c2, c3;
+    c2 = fgetc(lex->file);
+    if (c2 != '?') {
+        lex_ungetch(lex, c2);
+        return old;
+    }
+
+    c3 = fgetc(lex->file);
+    switch (c3) {
+        case '=': return '#';
+        case '/': return '\\';
+        case '\'': return '^';
+        case '(': return '[';
+        case ')': return ']';
+        case '!': return '|';
+        case '<': return '{';
+        case '>': return '}';
+        case '-': return '~';
+        default:
+            lex_ungetch(lex, c3);
+            lex_ungetch(lex, c2);
+            return old;
+    }
+}
+
 static int lex_getch(lex_file *lex)
 {
     int ch;
@@ -211,6 +239,8 @@ static int lex_getch(lex_file *lex)
     ch = fgetc(lex->file);
     if (ch == '\n')
         lex->line++;
+    else if (ch == '?')
+        return lex_try_trigraph(lex, ch);
     return ch;
 }
 
