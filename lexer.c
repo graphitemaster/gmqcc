@@ -225,6 +225,24 @@ static int lex_try_trigraph(lex_file *lex, int old)
     }
 }
 
+static int lex_try_digraph(lex_file *lex, int ch)
+{
+    int c2;
+    c2 = fgetc(lex->file);
+    if      (ch == '<' && c2 == ':')
+        return '[';
+    else if (ch == ':' && c2 == '>')
+        return ']';
+    else if (ch == '<' && c2 == '%')
+        return '{';
+    else if (ch == '%' && c2 == '>')
+        return '}';
+    else if (ch == '%' && c2 == ':')
+        return '#';
+    lex_ungetch(lex, c2);
+    return ch;
+}
+
 static int lex_getch(lex_file *lex)
 {
     int ch;
@@ -241,6 +259,8 @@ static int lex_getch(lex_file *lex)
         lex->line++;
     else if (ch == '?')
         return lex_try_trigraph(lex, ch);
+    else if (ch == '<' || ch == ':' || ch == '%')
+        return lex_try_digraph(lex, ch);
     return ch;
 }
 
