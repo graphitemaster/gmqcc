@@ -460,7 +460,10 @@ int main(int argc, char **argv) {
             }
         }
 
-        parser_finish(opts_output);
+        if (!parser_finish(opts_output)) {
+            retval = 1;
+            goto cleanup;
+        }
 
     } else {
         FILE *src;
