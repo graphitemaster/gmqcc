@@ -14,7 +14,8 @@ TESTLIST = \
 	equality   \
 	fields1    \
 	invalid-types \
-	ngraphs
+	ngraphs    \
+	invalid-assign
 
 .PHONY: clean test
 
@@ -134,6 +135,7 @@ fields1:
 	@diff $@/output $@/expected
 
 invalid-types-ok: obj invalid-types/assign.qc invalid-types/op.qc invalid-types/call1.qc invalid-types/call2.qc invalid-types/call3.qc
+	@echo "Testing: invalid-types"
 	@if $(QCC) -std=qcc -o obj/invalid.dat invalid-types/op.qc     > obj/invalid.out 2>&1 ; then echo "Successfully compiled a file which was supposed to fail: op.qc"     ; false ; else true ; fi
 	@if $(QCC) -std=qcc -o obj/invalid.dat invalid-types/call1.qc  > obj/invalid.out 2>&1 ; then echo "Successfully compiled a file which was supposed to fail: call1.qc"  ; false ; else true ; fi
 	@if $(QCC) -std=qcc -o obj/invalid.dat invalid-types/call2.qc  > obj/invalid.out 2>&1 ; then echo "Successfully compiled a file which was supposed to fail: call2.qc"  ; false ; else true ; fi
@@ -147,6 +149,12 @@ $(eval $(call maketest,ngraphs,qcc))
 ngraphs:
 	@$(VM) $< > $@/output
 	@diff $@/output $@/expected
+
+invalid-assign-ok: obj invalid-assign/main.qc
+	@echo "Testing: invalid-assign"
+	@if $(QCC) -std=qcc -o obj/invalid.dat invalid-assign/main.qc > obj/invalid.out 2>&1 ; then echo "Successfully compiled a file which was supposed to fail: invalid-assign/main.qc" ; false ; else true ; fi
+
+invalid-assign: invalid-assign-ok
 
 #######################################################################
 obj:
