@@ -1082,7 +1082,11 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
      * Note: an ast-representation using the comma-operator
      * of the form: (a, b, c) = x should not assign to c...
      */
-    (void)lvalue;
+    if (lvalue) {
+        asterror(ast_ctx(self), "not an l-value (code-block)");
+        return false;
+    }
+
     if (self->expression.outr) {
         *out = self->expression.outr;
         return true;
@@ -1165,10 +1169,12 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     ast_expression_codegen *cgen;
     ir_value *left, *right;
 
-    /* In the context of a binary operation, we can disregard
-     * the lvalue flag.
-     */
-    (void)lvalue;
+    /* A binary operation cannot yield an l-value */
+    if (lvalue) {
+        asterror(ast_ctx(self), "not an l-value (binop)");
+        return false;
+    }
+
     if (self->expression.outr) {
         *out = self->expression.outr;
         return true;
@@ -1252,10 +1258,12 @@ bool ast_unary_codegen(ast_unary *self, ast_function *func, bool lvalue, ir_valu
     ast_expression_codegen *cgen;
     ir_value *operand;
 
-    /* In the context of a unary operation, we can disregard
-     * the lvalue flag.
-     */
-    (void)lvalue;
+    /* An unary operation cannot yield an l-value */
+    if (lvalue) {
+        asterror(ast_ctx(self), "not an l-value (binop)");
+        return false;
+    }
+
     if (self->expression.outr) {
         *out = self->expression.outr;
         return true;
@@ -1280,10 +1288,14 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
     ast_expression_codegen *cgen;
     ir_value *operand;
 
-    /* In the context of a return operation, we can disregard
-     * the lvalue flag.
+    /* In the context of a return operation, we don't actually return
+     * anything...
      */
-    (void)lvalue;
+    if (lvalue) {
+        asterror(ast_ctx(self), "return-expression is not an l-value");
+        return false;
+    }
+
     if (self->expression.outr) {
         asterror(ast_ctx(self), "internal error: ast_return cannot be reused, it bears no result!");
         return false;
@@ -1832,7 +1844,10 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
     ir_value *funval = NULL;
 
     /* return values are never lvalues */
-    (void)lvalue;
+    if (lvalue) {
+        asterror(ast_ctx(self), "not an l-value (function call)");
+        return false;
+    }
 
     if (self->expression.outr) {
         *out = self->expression.outr;
