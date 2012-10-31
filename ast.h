@@ -100,6 +100,16 @@ typedef bool ast_expression_codegen(ast_expression*,
                                     ast_function*,
                                     bool lvalue,
                                     ir_value**);
+/* TODO: the codegen function should take an output-type parameter
+ * indicating whether a variable, type, label etc. is expected, and
+ * an environment!
+ * Then later an ast_ident could have a codegen using this to figure
+ * out what to look for.
+ * eg. in code which uses a not-yet defined variable, the expression
+ * would take an ast_ident, and the codegen would be called with
+ * type `expression`, so the ast_ident's codegen would search for
+ * variables through the environment (or functions, constants...).
+ */
 typedef struct
 {
     ast_node_common         node;
