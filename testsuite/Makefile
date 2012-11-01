@@ -15,7 +15,8 @@ TESTLIST = \
 	fields1    \
 	invalid-types \
 	ngraphs    \
-	invalid-assign
+	invalid-assign \
+	field-parameters
 
 .PHONY: clean test
 
@@ -155,6 +156,11 @@ invalid-assign-ok: obj invalid-assign/main.qc
 	@if $(QCC) -std=qcc -o obj/invalid.dat invalid-assign/main.qc > obj/invalid.out 2>&1 ; then echo "Successfully compiled a file which was supposed to fail: invalid-assign/main.qc" ; false ; else true ; fi
 
 invalid-assign: invalid-assign-ok
+
+$(eval $(call maketest,field-parameters,qcc))
+field-parameters:
+	@$(VM) $< > $@/output
+	@diff $@/output $@/expected
 
 #######################################################################
 obj:
