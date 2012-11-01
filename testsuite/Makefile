@@ -16,7 +16,8 @@ TESTLIST = \
 	invalid-types \
 	ngraphs    \
 	invalid-assign \
-	field-parameters
+	field-parameters \
+	functions-as-parameters
 
 .PHONY: clean test
 
@@ -159,6 +160,11 @@ invalid-assign: invalid-assign-ok
 
 $(eval $(call maketest,field-parameters,qcc))
 field-parameters:
+	@$(VM) $< > $@/output
+	@diff $@/output $@/expected
+
+$(eval $(call maketest,functions-as-parameters,qcc))
+functions-as-parameters:
 	@$(VM) $< > $@/output
 	@diff $@/output $@/expected
 
