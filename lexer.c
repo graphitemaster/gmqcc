@@ -294,6 +294,27 @@ static bool isxdigit_only(int ch)
     return (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
 }
 
+/* Append a character to the token buffer */
+static bool GMQCC_WARN lex_tokench(lex_file *lex, int ch)
+{
+    if (!token_value_add(&lex->tok, ch)) {
+        lexerror(lex, "out of memory");
+        return false;
+    }
+    return true;
+}
+
+/* Append a trailing null-byte */
+static bool GMQCC_WARN lex_endtoken(lex_file *lex)
+{
+    if (!token_value_add(&lex->tok, 0)) {
+        lexerror(lex, "out of memory");
+        return false;
+    }
+    lex->tok.value_count--;
+    return true;
+}
+
 /* Skip whitespace and comments and return the first
  * non-white character.
  * As this makes use of the above getch() ungetch() functions,
@@ -333,7 +354,27 @@ static int lex_skipwhite(lex_file *lex)
     do
     {
         ch = lex_getch(lex);
-        while (ch != EOF && isspace(ch)) ch = lex_getch(lex);
+        while (ch != EOF && isspace(ch)) {
+            if (lex->flags.preprocessing) {
+                if (ch == '\n') {
+                    /* end-of-line */
+                    /* see if there was whitespace first */
+                    if (lex->tok.value_count) {
+                        lex_ungetch(lex, ch);
+                        if (!lex_endtoken(lex))
+                            return TOKEN_FATAL;
+                        return TOKEN_WHITE;
+                    }
+                    /* otherwise return EOL */
+                    return TOKEN_EOL;
+                }
+                if (!lex_tokench(lex, ch))
+                    return TOKEN_FATAL;
+            }
+            ch = lex_getch(lex);
+        }
+        if (lex->flags.preprocessing && !lex_tokench(lex, ch))
+            return TOKEN_FATAL;
 
         if (ch == '/') {
             ch = lex_getch(lex);
@@ -342,30 +383,59 @@ static int lex_skipwhite(lex_file *lex)
                 /* one line comment */
                 ch = lex_getch(lex);
 
-                /* check for special: '/', '/', '*', '/' */
-                if (ch == '*') {
-                    ch = lex_getch(lex);
-                    if (ch == '/') {
-                        ch = ' ';
-                        continue;
+                if (lex->flags.preprocessing) {
+                    if (!lex_tokench(lex, ' ') ||
+                        !lex_tokench(lex, ' '))
+                    {
+                        return TOKEN_FATAL;
                     }
                 }
 
                 while (ch != EOF && ch != '\n') {
                     ch = lex_getch(lex);
+                    if (lex->flags.preprocessing && !lex_tokench(lex, ' '))
+                        return TOKEN_FATAL;
+                }
+                if (lex->flags.preprocessing) {
+                    lex_ungetch(lex, '\n');
+                    if (!lex_endtoken(lex))
+                        return TOKEN_FATAL;
+                    return TOKEN_WHITE;
                 }
                 continue;
             }
             if (ch == '*')
             {
                 /* multiline comment */
+                if (lex->flags.preprocessing) {
+                    if (!lex_tokench(lex, ' ') ||
+                        !lex_tokench(lex, ' '))
+                    {
+                        return TOKEN_FATAL;
+                    }
+                }
+
                 while (ch != EOF)
                 {
                     ch = lex_getch(lex);
                     if (ch == '*') {
                         ch = lex_getch(lex);
-                        if (ch == '/')
+                        if (ch == '/') {
+                            if (lex->flags.preprocessing) {
+                                if (!lex_tokench(lex, ' ') ||
+                                    !lex_tokench(lex, ' '))
+                                {
+                                    return TOKEN_FATAL;
+                                }
+                            }
                             break;
+                        }
+                    }
+                    if (lex->flags.preprocessing) {
+                        if (ch != '\n')
+                            ch = ' ';
+                        if (!lex_tokench(lex, ch))
+                            return TOKEN_FATAL;
                     }
                 }
                 ch = ' '; /* cause TRUE in the isspace check */
@@ -379,27 +449,6 @@ static int lex_skipwhite(lex_file *lex)
     } while (ch != EOF && isspace(ch));
 
     return ch;
-}
-
-/* Append a character to the token buffer */
-static bool GMQCC_WARN lex_tokench(lex_file *lex, int ch)
-{
-    if (!token_value_add(&lex->tok, ch)) {
-        lexerror(lex, "out of memory");
-        return false;
-    }
-    return true;
-}
-
-/* Append a trailing null-byte */
-static bool GMQCC_WARN lex_endtoken(lex_file *lex)
-{
-    if (!token_value_add(&lex->tok, 0)) {
-        lexerror(lex, "out of memory");
-        return false;
-    }
-    lex->tok.value_count--;
-    return true;
 }
 
 /* Get a token */
@@ -625,6 +674,10 @@ int lex_do(lex_file *lex)
     lex->sline = lex->line;
     lex->tok.ctx.line = lex->sline;
     lex->tok.ctx.file = lex->name;
+
+    if (lex->flags.preprocessing && (ch == TOKEN_WHITE || ch == TOKEN_EOL || TOKEN_FATAL)) {
+        return (lex->tok.ttype = ch);
+    }
 
     if (lex->eof)
         return (lex->tok.ttype = TOKEN_FATAL);

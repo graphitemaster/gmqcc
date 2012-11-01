@@ -57,6 +57,9 @@ enum {
     TOKEN_INTCONST,
     TOKEN_FLOATCONST,
 
+    TOKEN_WHITE,
+    TOKEN_EOL,
+
     TOKEN_EOF,
 
     /* We use '< TOKEN_ERROR', so TOKEN_FATAL must come after it and any
@@ -78,6 +81,8 @@ static const char *_tokennames[] = {
     "TOKEN_VECTORCONST",
     "TOKEN_INTCONST",
     "TOKEN_FLOATCONST",
+    "TOKEN_WHITE",
+    "TOKEN_EOL",
     "TOKEN_EOF",
     "TOKEN_ERROR",
     "TOKEN_FATAL",
@@ -109,6 +114,7 @@ typedef struct {
 	struct {
 	    bool noops;
 	    bool nodigraphs; /* used when lexing string constants */
+	    bool preprocessing; /* whitespace and EOLs become actual tokens */
 	} flags;
 
     int framevalue;
