@@ -991,7 +991,21 @@ int lex_do(lex_file *lex)
                  !strcmp(v, "local")  ||
                  !strcmp(v, "return") ||
                  !strcmp(v, "const"))
+        {
             lex->tok.ttype = TOKEN_KEYWORD;
+        }
+        else if (opts_standard != COMPILER_QCC)
+        {
+            /* other standards reserve these keywords */
+            if (!strcmp(v, "switch") ||
+                !strcmp(v, "struct") ||
+                !strcmp(v, "union")  ||
+                !strcmp(v, "break")  ||
+                !strcmp(v, "continue"))
+            {
+                lex->tok.ttype = TOKEN_KEYWORD;
+            }
+        }
 
         return lex->tok.ttype;
     }
