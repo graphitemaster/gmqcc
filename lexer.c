@@ -259,7 +259,7 @@ static int lex_getch(lex_file *lex)
         lex->line++;
     else if (ch == '?')
         return lex_try_trigraph(lex, ch);
-    else if (ch == '<' || ch == ':' || ch == '%')
+    else if (!lex->flags.nodigraphs && (ch == '<' || ch == ':' || ch == '%'))
         return lex_try_digraph(lex, ch);
     return ch;
 }
@@ -998,6 +998,7 @@ int lex_do(lex_file *lex)
 
     if (ch == '"')
     {
+        lex->flags.nodigraphs = true;
         lex->tok.ttype = lex_finish_string(lex, '"');
         while (lex->tok.ttype == TOKEN_STRINGCONST)
         {
@@ -1010,6 +1011,7 @@ int lex_do(lex_file *lex)
 
             lex->tok.ttype = lex_finish_string(lex, '"');
         }
+        lex->flags.nodigraphs = false;
         if (!lex_endtoken(lex))
             return (lex->tok.ttype = TOKEN_FATAL);
         return lex->tok.ttype;

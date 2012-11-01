@@ -108,6 +108,7 @@ typedef struct {
 
 	struct {
 	    bool noops;
+	    bool nodigraphs; /* used when lexing string constants */
 	} flags;
 
     int framevalue;
