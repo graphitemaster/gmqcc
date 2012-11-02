@@ -350,6 +350,7 @@ printf(   "line one\n"
 static int lex_skipwhite(lex_file *lex)
 {
     int ch = 0;
+    bool haswhite = false;
 
     do
     {
@@ -359,7 +360,7 @@ static int lex_skipwhite(lex_file *lex)
                 if (ch == '\n') {
                     /* end-of-line */
                     /* see if there was whitespace first */
-                    if (lex->tok.value_count) {
+                    if (haswhite) { /* (lex->tok.value_count) { */
                         lex_ungetch(lex, ch);
                         if (!lex_endtoken(lex))
                             return TOKEN_FATAL;
@@ -368,19 +369,19 @@ static int lex_skipwhite(lex_file *lex)
                     /* otherwise return EOL */
                     return TOKEN_EOL;
                 }
+                haswhite = true;
                 if (!lex_tokench(lex, ch))
                     return TOKEN_FATAL;
             }
             ch = lex_getch(lex);
         }
-        if (lex->flags.preprocessing && !lex_tokench(lex, ch))
-            return TOKEN_FATAL;
 
         if (ch == '/') {
             ch = lex_getch(lex);
             if (ch == '/')
             {
                 /* one line comment */
+                haswhite = true;
                 ch = lex_getch(lex);
 
                 if (lex->flags.preprocessing) {
@@ -407,6 +408,7 @@ static int lex_skipwhite(lex_file *lex)
             if (ch == '*')
             {
                 /* multiline comment */
+                haswhite = true;
                 if (lex->flags.preprocessing) {
                     if (!lex_tokench(lex, ' ') ||
                         !lex_tokench(lex, ' '))
@@ -448,6 +450,12 @@ static int lex_skipwhite(lex_file *lex)
         }
     } while (ch != EOF && isspace(ch));
 
+    if (haswhite) {
+        if (!lex_endtoken(lex))
+            return TOKEN_FATAL;
+        lex_ungetch(lex, ch);
+        return TOKEN_WHITE;
+    }
     return ch;
 }
 
@@ -675,7 +683,7 @@ int lex_do(lex_file *lex)
     lex->tok.ctx.line = lex->sline;
     lex->tok.ctx.file = lex->name;
 
-    if (lex->flags.preprocessing && (ch == TOKEN_WHITE || ch == TOKEN_EOL || TOKEN_FATAL)) {
+    if (lex->flags.preprocessing && (ch == TOKEN_WHITE || ch == TOKEN_EOL || ch == TOKEN_FATAL)) {
         return (lex->tok.ttype = ch);
     }
 

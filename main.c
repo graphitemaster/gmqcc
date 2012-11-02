@@ -460,6 +460,14 @@ int main(int argc, char **argv) {
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
 
+            if (opts_pp_only) {
+                if (!preprocess(items_data[itr].filename)) {
+                    retval = 1;
+                    goto cleanup;
+                }
+                continue;
+            }
+
             if (!parser_compile(items_data[itr].filename)) {
                 retval = 1;
                 goto cleanup;
