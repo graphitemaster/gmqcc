@@ -385,17 +385,17 @@ static int lex_skipwhite(lex_file *lex)
                 ch = lex_getch(lex);
 
                 if (lex->flags.preprocessing) {
-                    if (!lex_tokench(lex, ' ') ||
-                        !lex_tokench(lex, ' '))
+                    if (!lex_tokench(lex, '/') ||
+                        !lex_tokench(lex, '/'))
                     {
                         return TOKEN_FATAL;
                     }
                 }
 
                 while (ch != EOF && ch != '\n') {
-                    ch = lex_getch(lex);
-                    if (lex->flags.preprocessing && !lex_tokench(lex, ' '))
+                    if (lex->flags.preprocessing && !lex_tokench(lex, ch))
                         return TOKEN_FATAL;
+                    ch = lex_getch(lex);
                 }
                 if (lex->flags.preprocessing) {
                     lex_ungetch(lex, '\n');
@@ -410,8 +410,8 @@ static int lex_skipwhite(lex_file *lex)
                 /* multiline comment */
                 haswhite = true;
                 if (lex->flags.preprocessing) {
-                    if (!lex_tokench(lex, ' ') ||
-                        !lex_tokench(lex, ' '))
+                    if (!lex_tokench(lex, '/') ||
+                        !lex_tokench(lex, '*'))
                     {
                         return TOKEN_FATAL;
                     }
@@ -424,8 +424,8 @@ static int lex_skipwhite(lex_file *lex)
                         ch = lex_getch(lex);
                         if (ch == '/') {
                             if (lex->flags.preprocessing) {
-                                if (!lex_tokench(lex, ' ') ||
-                                    !lex_tokench(lex, ' '))
+                                if (!lex_tokench(lex, '*') ||
+                                    !lex_tokench(lex, '/'))
                                 {
                                     return TOKEN_FATAL;
                                 }
@@ -434,8 +434,6 @@ static int lex_skipwhite(lex_file *lex)
                         }
                     }
                     if (lex->flags.preprocessing) {
-                        if (ch != '\n')
-                            ch = ' ';
                         if (!lex_tokench(lex, ch))
                             return TOKEN_FATAL;
                     }
