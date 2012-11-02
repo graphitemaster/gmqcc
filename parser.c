@@ -415,6 +415,9 @@ static ast_value *parse_type(parser_t *parser, int basetype, bool *isfunc)
             goto on_error;
     }
 
+    if (params.p_count > 8)
+        parseerror(parser, "more than 8 parameters are currently not supported");
+
     var = ast_value_new(ctx, "<unnamed>", vtype);
     if (!var)
         goto on_error;
