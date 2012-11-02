@@ -25,8 +25,8 @@ bool preprocess(const char *filename)
             printf("\n");
         else if (tok >= TOKEN_START && tok < TOKEN_EOF)
             printf("%s", lex->tok.value);
-        else
-            printf("%c", tok);
+        else if (tok < TOKEN_START)
+            printf("%c", tok); /* these are characters */
 #endif
     } while (tok < TOKEN_EOF);
 
