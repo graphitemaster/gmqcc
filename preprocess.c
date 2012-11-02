@@ -9,6 +9,7 @@ bool preprocess(const char *filename)
 
     do {
         tok = lex_do(lex);
+        /*
         if (tok == TOKEN_EOL)
             printf("EOL");
         else if (tok >= TOKEN_START && tok <= TOKEN_FATAL)
@@ -19,6 +20,13 @@ bool preprocess(const char *filename)
             printf(">>%s<<\n", lex->tok.value);
         else
             printf("\n");
+        */
+        if (tok == TOKEN_EOL)
+            printf("\n");
+        else if (tok >= TOKEN_START && tok < TOKEN_EOF)
+            printf("%s", lex->tok.value);
+        else
+            printf("%c", tok);
     } while (tok < TOKEN_EOF);
 
     lex_close(lex);
