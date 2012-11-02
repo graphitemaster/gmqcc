@@ -816,6 +816,7 @@ static void prog_main_setparams(qc_program *prog)
     }
 }
 
+void prog_disasm_function(qc_program *prog, size_t id);
 int main(int argc, char **argv)
 {
     size_t      i;
@@ -824,6 +825,7 @@ int main(int argc, char **argv)
     size_t      xflags = VMXF_DEFAULT;
     bool        opts_printfields = false;
     bool        opts_printdefs   = false;
+    bool        opts_disasm      = false;
     bool        opts_info  = false;
 
     arg0 = argv[0];
@@ -846,6 +848,11 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
             opts_info = true;
+        }
+        else if (!strcmp(argv[1], "-disasm")) {
+            --argc;
+            ++argv;
+            opts_disasm = true;
         }
         else if (!strcmp(argv[1], "-printdefs")) {
             --argc;
@@ -914,6 +921,11 @@ int main(int argc, char **argv)
         prog_delete(prog);
         return 0;
     }
+    if (opts_disasm) {
+        for (i = 0; i < prog->functions_count; ++i)
+            prog_disasm_function(prog, i);
+        return 0;
+    }
     if (opts_printdefs) {
         for (i = 0; i < prog->defs_count; ++i) {
             printf("Global: %8s %-16s at %u\n",
@@ -943,5 +955,19 @@ int main(int argc, char **argv)
 
     prog_delete(prog);
     return 0;
+}
+
+void prog_disasm_function(qc_program *prog, size_t id)
+{
+    prog_section_function *fdef = prog->functions + id;
+    prog_section_statement *st;
+
+    printf("FUNCTION \"%s\"\n", prog_getstring(prog, fdef->name));
+
+    st = prog->code + fdef->entry;
+    while (st->opcode != AINSTR_END) {
+        prog_print_statement(prog, st);
+        ++st;
+    }
 }
 #endif
