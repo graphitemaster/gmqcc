@@ -34,6 +34,7 @@ bool        opts_memchk   = false;
 bool        opts_dump     = false;
 bool        opts_werror   = false;
 bool        opts_forcecrc = false;
+bool        opts_pp_only  = false;
 
 uint16_t    opts_forced_crc;
 
@@ -61,6 +62,7 @@ static int usage() {
     printf("  -o, --output=file      output file, defaults to progs.dat\n"
            "  -a filename            add an asm file to be assembled\n"
            "  -s filename            add a progs.src file to be used\n");
+    printf("  -E                     stop after preprocessing\n");
     printf("  -f<flag>               enable a flag\n"
            "  -fno-<flag>            disable a flag\n"
            "  -std standard          select one of the following standards\n"
@@ -210,6 +212,10 @@ static bool options_parse(int argc, char **argv) {
                 case 'h':
                     usage();
                     exit(0);
+                    break;
+
+                case 'E':
+                    opts_pp_only = true;
                     break;
 
                 /* handle all -fflags */

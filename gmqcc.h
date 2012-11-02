@@ -1012,6 +1012,7 @@ extern bool        opts_dump;
 extern bool        opts_werror;
 extern bool        opts_forcecrc;
 extern uint16_t    opts_forced_crc;
+extern bool        opts_pp_only;
 
 /*===================================================================*/
 #define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))
