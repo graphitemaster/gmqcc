@@ -364,17 +364,11 @@ static int lex_skipwhite(lex_file *lex)
                     ch = lex_getch(lex);
                     if (ch == '*') {
                         ch = lex_getch(lex);
-                        if (ch == '/') {
-                            ch = lex_getch(lex);
+                        if (ch == '/')
                             break;
-                        }
                     }
                 }
-                if (ch == '/') /* allow *//* direct following comment */
-                {
-                    lex_ungetch(lex, ch);
-                    ch = ' '; /* cause TRUE in the isspace check */
-                }
+                ch = ' '; /* cause TRUE in the isspace check */
                 continue;
             }
             /* Otherwise roll back to the slash and break out of the loop */
