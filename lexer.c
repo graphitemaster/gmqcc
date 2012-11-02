@@ -381,10 +381,10 @@ static int lex_skipwhite(lex_file *lex)
             if (ch == '/')
             {
                 /* one line comment */
-                haswhite = true;
                 ch = lex_getch(lex);
 
                 if (lex->flags.preprocessing) {
+                    haswhite = true;
                     if (!lex_tokench(lex, '/') ||
                         !lex_tokench(lex, '/'))
                     {
@@ -408,8 +408,8 @@ static int lex_skipwhite(lex_file *lex)
             if (ch == '*')
             {
                 /* multiline comment */
-                haswhite = true;
                 if (lex->flags.preprocessing) {
+                    haswhite = true;
                     if (!lex_tokench(lex, '/') ||
                         !lex_tokench(lex, '*'))
                     {
@@ -550,7 +550,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
         if (ch == quote)
             return TOKEN_STRINGCONST;
 
-        if (ch == '\\') {
+        if (!lex->flags.preprocessing && ch == '\\') {
             ch = lex_getch(lex);
             if (ch == EOF) {
                 lexerror(lex, "unexpected end of file");
@@ -1066,8 +1066,12 @@ int lex_do(lex_file *lex)
     if (ch == '"')
     {
         lex->flags.nodigraphs = true;
+        if (lex->flags.preprocessing && !lex_tokench(lex, ch))
+            return TOKEN_FATAL;
         lex->tok.ttype = lex_finish_string(lex, '"');
-        while (lex->tok.ttype == TOKEN_STRINGCONST)
+        if (lex->flags.preprocessing && !lex_tokench(lex, ch))
+            return TOKEN_FATAL;
+        while (!lex->flags.preprocessing && lex->tok.ttype == TOKEN_STRINGCONST)
         {
             /* Allow c style "string" "continuation" */
             ch = lex_skipwhite(lex);
@@ -1091,23 +1095,27 @@ int lex_do(lex_file *lex)
          * Likewise actual unescaping has to be done by the parser.
          * The difference is we don't allow 'char' 'continuation'.
          */
-         lex->tok.ttype = lex_finish_string(lex, '\'');
-         if (!lex_endtoken(lex))
-              return (lex->tok.ttype = TOKEN_FATAL);
+        if (lex->flags.preprocessing && !lex_tokench(lex, ch))
+            return TOKEN_FATAL;
+        lex->tok.ttype = lex_finish_string(lex, '\'');
+        if (lex->flags.preprocessing && !lex_tokench(lex, ch))
+            return TOKEN_FATAL;
+        if (!lex_endtoken(lex))
+            return (lex->tok.ttype = TOKEN_FATAL);
 
          /* It's a vector if we can successfully scan 3 floats */
 #ifdef WIN32
-         if (sscanf_s(lex->tok.value, " %f %f %f ",
-                    &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
+        if (sscanf_s(lex->tok.value, " %f %f %f ",
+                   &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
 #else
-         if (sscanf(lex->tok.value, " %f %f %f ",
-                    &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
+        if (sscanf(lex->tok.value, " %f %f %f ",
+                   &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
 #endif
-         {
-              lex->tok.ttype = TOKEN_VECTORCONST;
-         }
+        {
+             lex->tok.ttype = TOKEN_VECTORCONST;
+        }
 
-         return lex->tok.ttype;
+        return lex->tok.ttype;
     }
 
     if (isdigit(ch))
