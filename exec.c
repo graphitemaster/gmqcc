@@ -922,7 +922,7 @@ int main(int argc, char **argv)
         return 0;
     }
     if (opts_disasm) {
-        for (i = 0; i < prog->functions_count; ++i)
+        for (i = 1; i < prog->functions_count; ++i)
             prog_disasm_function(prog, i);
         return 0;
     }
@@ -962,7 +962,12 @@ void prog_disasm_function(qc_program *prog, size_t id)
     prog_section_function *fdef = prog->functions + id;
     prog_section_statement *st;
 
-    printf("FUNCTION \"%s\"\n", prog_getstring(prog, fdef->name));
+    if (fdef->entry < 0) {
+        printf("FUNCTION \"%s\" = builtin #%i\n", prog_getstring(prog, fdef->name), (int)-fdef->entry);
+        return;
+    }
+    else
+        printf("FUNCTION \"%s\"\n", prog_getstring(prog, fdef->name));
 
     st = prog->code + fdef->entry;
     while (st->opcode != AINSTR_END) {
