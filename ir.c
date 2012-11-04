@@ -2779,7 +2779,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_FLOAT:
     {
         if (global->isconst) {
-            iptr = (int32_t*)&global->constval.vfloat;
+            iptr = (int32_t*)&global->constval.ivec[0];
             ir_value_code_setaddr(global, code_globals_add(*iptr));
         } else {
             ir_value_code_setaddr(global, code_globals_add(0));
@@ -2808,7 +2808,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         size_t d;
         if (global->isconst) {
-            iptr = (int32_t*)&global->constval.vvec;
+            iptr = (int32_t*)&global->constval.ivec[0];
             ir_value_code_setaddr(global, code_globals_add(iptr[0]));
             if (global->code.globaladdr < 0)
                 return false;

@@ -1408,8 +1408,8 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     ir_block *cond = func->curblock;
     ir_block *ontrue;
     ir_block *onfalse;
-    ir_block *ontrue_endblock;
-    ir_block *onfalse_endblock;
+    ir_block *ontrue_endblock = NULL;
+    ir_block *onfalse_endblock = NULL;
     ir_block *merge;
 
     /* We don't output any value, thus also don't care about r/lvalue */

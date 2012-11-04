@@ -451,6 +451,7 @@ MEM_VEC_FUNCTIONS(shunt, sy_elem, ops)
 static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     sy_elem e;
     e.etype = 0;
+    e.off   = 0;
     e.out   = v;
     e.block = NULL;
     e.ctx   = ctx;
@@ -461,6 +462,7 @@ static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
 static sy_elem syblock(lex_ctx ctx, ast_block *v) {
     sy_elem e;
     e.etype = 0;
+    e.off   = 0;
     e.out   = (ast_expression*)v;
     e.block = v;
     e.ctx   = ctx;
@@ -471,6 +473,7 @@ static sy_elem syblock(lex_ctx ctx, ast_block *v) {
 static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     sy_elem e;
     e.etype = 1 + (op - operators);
+    e.off   = 0;
     e.out   = NULL;
     e.block = NULL;
     e.ctx   = ctx;
@@ -1966,8 +1969,8 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     ast_expression *framenum  = NULL;
     ast_expression *nextthink = NULL;
     /* None of the following have to be deleted */
-    ast_expression *fld_think, *fld_nextthink, *fld_frame;
-    ast_expression *gbl_time, *gbl_self;
+    ast_expression *fld_think = NULL, *fld_nextthink = NULL, *fld_frame = NULL;
+    ast_expression *gbl_time = NULL, *gbl_self = NULL;
     bool            has_frame_think;
 
     bool retval = true;

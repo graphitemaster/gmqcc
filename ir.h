@@ -52,6 +52,7 @@ typedef struct ir_value_s {
         float    vfloat;
         int      vint;
         vector   vvec;
+        int32_t  ivec[3];
         char    *vstring;
         struct ir_value_s *vpointer;
         struct ir_function_s *vfunc;
