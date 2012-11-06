@@ -2986,8 +2986,6 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
 #ifdef WIN32
 # define strncat(dst, src, sz) strncat_s(dst, sz, src, _TRUNCATE)
-#else
-# define strncat strncat
 #endif
 
 const char *qc_opname(int op)
