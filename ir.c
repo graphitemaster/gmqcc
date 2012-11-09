@@ -75,6 +75,22 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_V, /* variant, should never be accessed */
 };
 
+uint16_t field_store_instr[TYPE_COUNT] = {
+    INSTR_STORE_FLD,
+    INSTR_STORE_FLD,
+    INSTR_STORE_FLD,
+    INSTR_STORE_V,
+    INSTR_STORE_FLD,
+    INSTR_STORE_FLD,
+    INSTR_STORE_FLD,
+    INSTR_STORE_FLD,
+#if 0
+    INSTR_STORE_FLD, /* integer type */
+#endif
+
+    INSTR_STORE_V, /* variant, should never be accessed */
+};
+
 uint16_t type_storep_instr[TYPE_COUNT] = {
     INSTR_STOREP_F, /* should use I when having integer support */
     INSTR_STOREP_S,
@@ -2502,7 +2518,10 @@ tailcall:
                 stmt.opcode = INSTR_STORE_F;
                 stmt.o3.u1 = 0;
 
-                stmt.opcode = type_store_instr[param->vtype];
+                if (param->vtype == TYPE_FIELD)
+                    stmt.opcode = field_store_instr[param->fieldtype];
+                else
+                    stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
                 if (code_statements_add(stmt) < 0)
@@ -2521,7 +2540,10 @@ tailcall:
             if (retvalue && retvalue->store != store_return && retvalue->life_count)
             {
                 /* not to be kept in OFS_RETURN */
-                stmt.opcode = type_store_instr[retvalue->vtype];
+                if (retvalue->vtype == TYPE_FIELD)
+                    stmt.opcode = field_store_instr[retvalue->vtype];
+                else
+                    stmt.opcode = type_store_instr[retvalue->vtype];
                 stmt.o1.u1 = OFS_RETURN;
                 stmt.o2.u1 = ir_value_code_addr(retvalue);
                 stmt.o3.u1 = 0;
