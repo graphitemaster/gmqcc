@@ -2284,6 +2284,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
     lex_ctx         ctx;
 
     ast_value      *var = NULL;
+    ast_value      *fld = NULL;
     bool cleanvar = false;
 
     varentry_t      varent;
@@ -2297,10 +2298,21 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
     bool isparam;
 
     bool retval = true;
+    bool isfield = false;
 
     /* go */
 
-    int basetype = parser_token(parser)->constval.t;
+    int basetype;
+
+    if (parser->tok == '.') {
+        isfield = true;
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected typename for field definition");
+            return false;
+        }
+    }
+
+    basetype = parser_token(parser)->constval.t;
 
     if (!parser_next(parser)) {
         parseerror(parser, "expected variable definition");
@@ -2338,71 +2350,24 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
         }
 
         if (!localblock) {
-            if      (!strcmp(parser_tokval(parser), "end_sys_globals"))
+            bool was_end = false;
+            if      (!strcmp(parser_tokval(parser), "end_sys_globals")) {
                 parser->crc_globals = parser->globals_count;
-            else if (!strcmp(parser_tokval(parser), "end_sys_fields"))
-                parser->crc_fields = parser->fields_count;
-        }
-
-        if (!isfunc) {
-            if (!localblock && (olddecl = parser_find_global(parser, parser_tokval(parser)))) {
-                parseerror(parser, "global `%s` already declared here: %s:%i",
-                           parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                retval = false;
-                goto cleanup;
+                was_end = true;
             }
-
-            if (localblock) {
-                olddecl = parser_find_local(parser, parser_tokval(parser), parser->blocklocal, &isparam);
-                if (opts_standard == COMPILER_GMQCC)
+            else if (!strcmp(parser_tokval(parser), "end_sys_fields")) {
+                parser->crc_fields = parser->fields_count;
+                was_end = true;
+            }
+            if (isfield && was_end) {
+                if (parsewarning(parser, WARN_END_SYS_FIELDS,
+                                 "global '%s' hint should not be a field",
+                                 parser_tokval(parser)))
                 {
-                    if (olddecl)
-                    {
-                        if (!isparam) {
-                            parseerror(parser, "local `%s` already declared here: %s:%i",
-                                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                            retval = false;
-                            goto cleanup;
-                        }
-                    }
+                    retval = false;
+                    goto cleanup;
+                }
 
-                    if( (!isparam && olddecl) ||
-                        (olddecl = parser_find_local(parser, parser_tokval(parser), 0, &isparam))
-                      )
-                    {
-                        if (parsewarning(parser, WARN_LOCAL_SHADOWS,
-                                         "local `%s` is shadowing a parameter", parser_tokval(parser)))
-                        {
-                            parseerror(parser, "local `%s` already declared here: %s:%i",
-                                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                            retval = false;
-                            goto cleanup;
-                        }
-                    }
-                }
-                else
-                {
-                    if (olddecl)
-                    {
-                        ast_value_delete(var);
-                        var = NULL;
-                        if (isparam &&
-                            parsewarning(parser, WARN_LOCAL_SHADOWS,
-                                         "a parameter is shadowing local `%s`", parser_tokval(parser)))
-                        {
-                            retval = false;
-                            goto cleanup;
-                        }
-                        else if (!isparam)
-                        {
-                            parseerror(parser, "local `%s` already declared here: %s:%i",
-                                       parser_tokval(parser), ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                            retval = false;
-                            goto cleanup;
-                        }
-                        goto nextvar;
-                    }
-                }
             }
         }
 
@@ -2480,13 +2445,144 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
             var = fval;
         }
 
+        if (isfield) {
+            ast_value *tmp;
+            fld = ast_value_new(ctx, var->name, TYPE_FIELD);
+            fld->expression.next = (ast_expression*)var;
+            tmp = var;
+            var = fld;
+            fld = tmp;
+        }
+        else
+            fld = var;
+
+        if (!isfunc) {
+            if (!localblock)
+            {
+                olddecl = parser_find_global(parser, var->name);
+                if (olddecl) {
+                    if (!isfield) {
+                        parseerror(parser, "global `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                    else if (opts_standard == COMPILER_QCC) {
+                        parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+                        parseerror(parser, "global `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                }
+                olddecl = parser_find_field(parser, var->name);
+                if (olddecl && opts_standard == COMPILER_QCC) {
+                    if (!isfield) {
+                        parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+                        parseerror(parser, "field `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                    else
+                    {
+                        if (parsewarning(parser, WARN_FIELD_REDECLARED, "field `%s` already declared here: %s:%i",
+                                         var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line))
+                        {
+                            retval = false;
+                            goto cleanup;
+                        }
+                        if (!ast_compare_type(olddecl, (ast_expression*)var)) {
+                            parseerror(parser, "field %s has previously been declared with a different type here: %s:%i",
+                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                            retval = false;
+                            goto cleanup;
+                        }
+                        ast_delete(var);
+                        var = NULL;
+                        goto nextvar;
+                    }
+                }
+                else if (olddecl) {
+                    parseerror(parser, "field `%s` already declared here: %s:%i",
+                               var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                    retval = false;
+                    goto cleanup;
+                }
+            }
+            else /* if it's a local: */
+            {
+                olddecl = parser_find_local(parser, var->name, parser->blocklocal, &isparam);
+                if (opts_standard == COMPILER_GMQCC)
+                {
+                    if (olddecl)
+                    {
+                        if (!isparam) {
+                            parseerror(parser, "local `%s` already declared here: %s:%i",
+                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                            retval = false;
+                            goto cleanup;
+                        }
+                    }
+
+                    if( (!isparam && olddecl) ||
+                        (olddecl = parser_find_local(parser, var->name, 0, &isparam))
+                      )
+                    {
+                        if (parsewarning(parser, WARN_LOCAL_SHADOWS,
+                                         "local `%s` is shadowing a parameter", var->name))
+                        {
+                            parseerror(parser, "local `%s` already declared here: %s:%i",
+                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                            retval = false;
+                            goto cleanup;
+                        }
+                    }
+                }
+                else
+                {
+                    if (olddecl)
+                    {
+                        if (isparam &&
+                            parsewarning(parser, WARN_LOCAL_SHADOWS,
+                                         "a parameter is shadowing local `%s`", var->name))
+                        {
+                            ast_value_delete(var);
+                            var = NULL;
+                            retval = false;
+                            goto cleanup;
+                        }
+                        else if (!isparam)
+                        {
+                            parseerror(parser, "local `%s` already declared here: %s:%i",
+                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                            ast_value_delete(var);
+                            var = NULL;
+                            retval = false;
+                            goto cleanup;
+                        }
+                        ast_value_delete(var);
+                        var = NULL;
+                        goto nextvar;
+                    }
+                }
+            }
+        }
+
+
         if (!hadproto) {
             varent.name = util_strdup(var->name);
             varent.var = (ast_expression*)var;
 
             if (!localblock) {
-                if (!(retval = parser_t_globals_add(parser, varent)))
-                    goto cleanup;
+                if (!isfield) {
+                    if (!(retval = parser_t_globals_add(parser, varent)))
+                        goto cleanup;
+                }
+                else {
+                    if (!(retval = parser_t_fields_add(parser, varent)))
+                        goto cleanup;
+                }
             } else {
                 if (!(retval = parser_t_locals_add(parser, varent)))
                     goto cleanup;
@@ -2496,7 +2592,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
                 }
             }
 
-            if (var->expression.vtype == TYPE_VECTOR)
+            if (fld->expression.vtype == TYPE_VECTOR)
             {
                 size_t e;
                 if (!create_vector_members(parser, var, ve)) {
@@ -2506,8 +2602,14 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
 
                 if (!localblock) {
                     for (e = 0; e < 3; ++e) {
-                        if (!(retval = parser_t_globals_add(parser, ve[e])))
-                            break;
+                        if (!isfield) {
+                            if (!(retval = parser_t_globals_add(parser, ve[e])))
+                                break;
+                        }
+                        else {
+                            if (!(retval = parser_t_fields_add(parser, ve[e])))
+                                break;
+                        }
                     }
                     if (!retval) {
                         parser->globals_count -= e+1;
@@ -2548,6 +2650,12 @@ nextvar:
             if (!(retval = parser_next(parser)))
                 goto cleanup;
             continue;
+        }
+
+        if (!localblock && isfield) {
+            parseerror(parser, "missing semicolon");
+            ast_value_delete(typevar);
+            return false;
         }
 
         /* NOTE: only 'typevar' needs to be deleted from here on, so 'cleanup' won't be used
@@ -2696,7 +2804,7 @@ cleanup:
 
 static bool parser_global_statement(parser_t *parser)
 {
-    if (parser->tok == TOKEN_TYPENAME)
+    if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
         return parse_variable(parser, NULL);
     }
@@ -2704,151 +2812,6 @@ static bool parser_global_statement(parser_t *parser)
     {
         /* handle 'var' and 'const' */
         return false;
-    }
-    else if (parser->tok == '.')
-    {
-        ast_value *var;
-        ast_value *typevar;
-        ast_value *fld;
-        ast_expression *oldex;
-        bool       isfunc = false;
-        int        basetype;
-        lex_ctx    ctx = parser_ctx(parser);
-        varentry_t varent;
-
-        /* entity-member declaration */
-        if (!parser_next(parser) || parser->tok != TOKEN_TYPENAME) {
-            parseerror(parser, "expected member variable definition");
-            return false;
-        }
-
-        /* remember the base/return type */
-        basetype = parser_token(parser)->constval.t;
-
-        /* parse into the declaration */
-        if (!parser_next(parser)) {
-            parseerror(parser, "expected field definition");
-            return false;
-        }
-
-        /* parse the field type fully */
-        typevar = var = parse_type(parser, basetype, &isfunc);
-        if (!var)
-            return false;
-
-        while (true) {
-            var = ast_value_copy(typevar);
-            /* now the field name */
-            if (parser->tok != TOKEN_IDENT) {
-                parseerror(parser, "expected field name");
-                ast_delete(var);
-                return false;
-            }
-
-            /* check for an existing field
-             * in original qc we also have to check for an existing
-             * global named like the field
-             */
-            if (opts_standard == COMPILER_QCC) {
-                if (parser_find_global(parser, parser_tokval(parser))) {
-                    parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
-                    ast_delete(var);
-                    return false;
-                }
-            }
-
-            if (isfunc) {
-                ast_value *fval;
-                fval = ast_value_new(ctx, var->name, TYPE_FUNCTION);
-                if (!fval) {
-                    ast_value_delete(var);
-                    return false;
-                }
-                fval->expression.next = (ast_expression*)var;
-                MEM_VECTOR_MOVE(&var->expression, params, &fval->expression, params);
-                fval->expression.variadic = var->expression.variadic;
-                var = fval;
-            }
-
-            if (!strcmp(parser_tokval(parser), "end_sys_fields")) {
-                if (parsewarning(parser, WARN_END_SYS_FIELDS, "by convention end_sys_fields should be declared as global, rather than a field")) {
-                    ast_value_delete(var);
-                    return false;
-                }
-            }
-
-            /* turn it into a field */
-            fld = ast_value_new(ctx, parser_tokval(parser), TYPE_FIELD);
-            fld->expression.next = (ast_expression*)var;
-
-            if ( (oldex = parser_find_field(parser, parser_tokval(parser)))) {
-                if (ast_istype(oldex, ast_member)) {
-                    parseerror(parser, "cannot declare a field with the same name as a vector component, component %s has been declared here: %s:%i",
-                               parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line);
-                    ast_delete(fld);
-                    return false;
-                }
-                if (!ast_istype(oldex, ast_value)) {
-                    /* not possible / sanity check */
-                    parseerror(parser, "internal error: %s is not an ast_value", parser_tokval(parser));
-                    ast_delete(fld);
-                    return false;
-                }
-
-                if (!ast_compare_type(oldex, (ast_expression*)fld)) {
-                    parseerror(parser, "field %s has previously been declared with a different type here: %s:%i",
-                               parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line);
-                    ast_delete(fld);
-                    return false;
-                } else {
-                    if (parsewarning(parser, WARN_FIELD_REDECLARED, "field `%s` has already been declared here: %s:%i",
-                                     parser_tokval(parser), ast_ctx(oldex).file, (int)ast_ctx(oldex).line))
-                    {
-                        ast_delete(fld);
-                        return false;
-                    }
-                }
-
-                ast_delete(fld);
-                goto nextfield;
-            }
-
-            varent.var = (ast_expression*)fld;
-            varent.name = util_strdup(fld->name);
-            (void)!parser_t_fields_add(parser, varent);
-
-            if (var->expression.vtype == TYPE_VECTOR)
-            {
-                /* create _x, _y and _z fields as well */
-                varentry_t ve[3];
-                if (!create_vector_members(parser, fld, ve)) {
-                    ast_delete(fld);
-                    return false;
-                }
-                (void)!parser_t_fields_add(parser, ve[0]);
-                (void)!parser_t_fields_add(parser, ve[1]);
-                (void)!parser_t_fields_add(parser, ve[2]);
-            }
-
-nextfield:
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected semicolon or another field name");
-                return false;
-            }
-            if (parser->tok == ';')
-                break;
-            if (parser->tok != ',' || !parser_next(parser)) {
-                parseerror(parser, "expected semicolon or another field name");
-                return false;
-            }
-        }
-        ast_delete(typevar);
-
-        /* skip the semicolon */
-        if (!parser_next(parser))
-            return parser->tok == TOKEN_EOF;
-
-        return true;
     }
     else if (parser->tok == '$')
     {
