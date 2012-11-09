@@ -306,6 +306,7 @@ static ast_expression* parser_find_var(parser_t *parser, const char *name)
     return v;
 }
 
+#if 0
 typedef struct {
     MEM_VECTOR_MAKE(ast_value*, p);
 } paramlist_t;
@@ -430,6 +431,7 @@ on_error:
     MEM_VECTOR_CLEAR(&params, p);
     return NULL;
 }
+#endif
 
 typedef struct
 {
@@ -2278,8 +2280,627 @@ enderr:
     return false;
 }
 
+typedef struct {
+    MEM_VECTOR_MAKE(ast_value*, p);
+} paramlist_t;
+MEM_VEC_FUNCTIONS(paramlist_t, ast_value*, p)
+
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase);
+static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
+{
+    lex_ctx     ctx;
+    size_t      i;
+    paramlist_t params;
+    ast_value  *param;
+    ast_value  *fval;
+    bool        first = true;
+    bool        variadic = false;
+
+    ctx = parser_ctx(parser);
+
+    /* for the sake of less code we parse-in in this function */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected parameter list");
+        return NULL;
+    }
+
+    MEM_VECTOR_INIT(&params, p);
+
+    /* parse variables until we hit a closing paren */
+    while (parser->tok != ')') {
+        if (!first) {
+            /* there must be commas between them */
+            if (parser->tok != ',') {
+                parseerror(parser, "expected comma or end of parameter list");
+                goto on_error;
+            }
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected parameter");
+                goto on_error;
+            }
+        }
+        first = false;
+
+        if (parser->tok == TOKEN_DOTS) {
+            /* '...' indicates a varargs function */
+            variadic = true;
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected parameter");
+                return NULL;
+            }
+            if (parser->tok != ')') {
+                parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
+                goto on_error;
+            }
+        }
+        else
+        {
+            /* for anything else just parse a typename */
+            param = parse_typename(parser, NULL);
+            if (!param)
+                goto on_error;
+            if (!paramlist_t_p_add(&params, param))
+                goto on_error;
+        }
+    }
+
+    /* sanity check */
+    if (params.p_count > 8)
+        parseerror(parser, "more than 8 parameters are currently not supported");
+
+    /* parse-out */
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error after typename");
+        goto on_error;
+    }
+
+    /* now turn 'var' into a function type */
+    fval = ast_value_new(ctx, "<type()>", TYPE_FUNCTION);
+    fval->expression.next     = (ast_expression*)var;
+    fval->expression.variadic = variadic;
+    var = fval;
+
+    MEM_VECTOR_MOVE(&params, p, &var->expression, params);
+
+    return var;
+
+on_error:
+    ast_delete(var);
+    for (i = 0; i < params.p_count; ++i)
+        ast_delete(params.p[i]);
+    MEM_VECTOR_CLEAR(&params, p);
+    return NULL;
+}
+
+/* Parse a complete typename.
+ * for single-variables (ie. function parameters or typedefs) storebase should be NULL
+ * but when parsing variables separated by comma
+ * 'storebase' should point to where the base-type should be kept.
+ * The base type makes up every bit of type information which comes *before* the
+ * variable name.
+ *
+ * The following will be parsed in its entirety:
+ *     void() foo()
+ * The 'basetype' in this case is 'void()'
+ * and if there's a comma after it, say:
+ *     void() foo(), bar
+ * then the type-information 'void()' can be stored in 'storebase'
+ */
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
+{
+    ast_value *var, *tmp;
+    lex_ctx    ctx;
+
+    const char *name = NULL;
+    bool        isfield = false;
+
+    ctx = parser_ctx(parser);
+
+    /* types may start with a dot */
+    if (parser->tok == '.') {
+        isfield = true;
+        /* if we parsed a dot we need a typename now */
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected typename for field definition");
+            return NULL;
+        }
+        if (parser->tok != TOKEN_TYPENAME) {
+            parseerror(parser, "expected typename");
+            return NULL;
+        }
+    }
+
+    /* generate the basic type value */
+    var = ast_value_new(ctx, "<type>", parser_token(parser)->constval.t);
+    /* do not yet turn into a field - remember:
+     * .void() foo; is a field too
+     * .void()() foo; is a function
+     */
+
+    /* parse on */
+    if (!parser_next(parser)) {
+        ast_delete(var);
+        parseerror(parser, "parse error after typename");
+        return NULL;
+    }
+
+    /* an opening paren now starts the parameter-list of a function */
+    if (parser->tok == '(') {
+        var = parse_parameter_list(parser, var);
+        if (!var)
+            return NULL;
+    }
+    /* This is the point where we can turn it into a field */
+    if (isfield) {
+        /* turn it into a field if desired */
+        tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
+        tmp->expression.next = (ast_expression*)var;
+        var = tmp;
+    }
+
+    while (parser->tok == '(') {
+        var = parse_parameter_list(parser, var);
+        if (!var)
+            return NULL;
+    }
+
+    /* store the base if requested */
+    if (storebase) {
+        *storebase = ast_value_copy(var);
+    }
+
+    /* there may be a name now */
+    if (parser->tok == TOKEN_IDENT) {
+        name = util_strdup(parser_tokval(parser));
+        /* parse on */
+        if (!parser_next(parser)) {
+            parseerror(parser, "error after variable or field declaration");
+            return NULL;
+        }
+    }
+
+    /* now there may be function parens again */
+    while (parser->tok == '(') {
+        var = parse_parameter_list(parser, var);
+        if (!var) {
+            if (name)
+                mem_d((void*)name);
+            return NULL;
+        }
+    }
+
+    /* finally name it */
+    if (name) {
+        if (!ast_value_set_name(var, name)) {
+            ast_delete(var);
+            parseerror(parser, "internal error: failed to set name");
+            return NULL;
+        }
+        /* free the name, ast_value_set_name duplicates */
+        mem_d((void*)name);
+    }
+
+    return var;
+}
+
 static bool parse_variable(parser_t *parser, ast_block *localblock)
 {
+    ast_value *var;
+    ast_value *proto;
+    ast_expression *old;
+    bool       was_end;
+    size_t     i;
+
+    ast_value *basetype = NULL;
+    bool      retval    = true;
+    bool      isparam   = false;
+    bool      isvector  = false;
+    bool      cleanvar  = true;
+
+    varentry_t varent, ve[3];
+
+    /* get the first complete variable */
+    var = parse_typename(parser, &basetype);
+    if (!var) {
+        if (basetype)
+            ast_delete(basetype);
+        return false;
+    }
+
+    memset(&varent, 0, sizeof(varent));
+    memset(&ve, 0, sizeof(ve));
+
+    while (true) {
+        proto = NULL;
+
+        /* Part 0: finish the type */
+        while (parser->tok == '(') {
+            var = parse_parameter_list(parser, var);
+            if (!var) {
+                retval = false;
+                goto cleanup;
+            }
+        }
+
+        /* Part 1:
+         * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
+         * Also: if there was a prototype, `var` will be deleted and set to `proto` which
+         * is then filled with the previous definition and the parameter-names replaced.
+         */
+        if (!localblock) {
+            /* Deal with end_sys_ vars */
+            was_end = false;
+            if (!strcmp(var->name, "end_sys_globals")) {
+                parser->crc_globals = parser->globals_count;
+                was_end = true;
+            }
+            else if (!strcmp(var->name, "end_sys_fields")) {
+                parser->crc_fields = parser->fields_count;
+                was_end = true;
+            }
+            if (was_end && var->expression.vtype == TYPE_FIELD) {
+                if (parsewarning(parser, WARN_END_SYS_FIELDS,
+                                 "global '%s' hint should not be a field",
+                                 parser_tokval(parser)))
+                {
+                    retval = false;
+                    goto cleanup;
+                }
+            }
+
+            if (var->expression.vtype == TYPE_FIELD)
+            {
+                /* deal with field declarations */
+                old = parser_find_field(parser, var->name);
+                if (old) {
+                    if (parsewarning(parser, WARN_FIELD_REDECLARED, "field `%s` already declared here: %s:%i",
+                                     var->name, ast_ctx(old).file, (int)ast_ctx(old).line))
+                    {
+                        retval = false;
+                        goto cleanup;
+                    }
+                    ast_delete(var);
+                    var = NULL;
+                    goto skipvar;
+                    /*
+                    parseerror(parser, "field `%s` already declared here: %s:%i",
+                               var->name, ast_ctx(old).file, ast_ctx(old).line);
+                    retval = false;
+                    goto cleanup;
+                    */
+                }
+                if (opts_standard == COMPILER_QCC &&
+                    (old = parser_find_global(parser, var->name)))
+                {
+                    parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+                    parseerror(parser, "field `%s` already declared here: %s:%i",
+                               var->name, ast_ctx(old).file, ast_ctx(old).line);
+                    retval = false;
+                    goto cleanup;
+                }
+            }
+            else
+            {
+                /* deal with other globals */
+                old = parser_find_global(parser, var->name);
+                if (old && var->expression.vtype == TYPE_FUNCTION && old->expression.vtype == TYPE_FUNCTION)
+                {
+                    /* This is a function which had a prototype */
+                    if (!ast_istype(old, ast_value)) {
+                        parseerror(parser, "internal error: prototype is not an ast_value");
+                        retval = false;
+                        goto cleanup;
+                    }
+                    proto = (ast_value*)old;
+                    if (!ast_compare_type((ast_expression*)proto, (ast_expression*)var)) {
+                        parseerror(parser, "conflicting types for `%s`, previous declaration was here: %s:%i",
+                                   proto->name,
+                                   ast_ctx(proto).file, ast_ctx(proto).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                    /* we need the new parameter-names */
+                    for (i = 0; i < proto->expression.params_count; ++i)
+                        ast_value_set_name(proto->expression.params[i], var->expression.params[i]->name);
+                    ast_delete(var);
+                    var = proto;
+                }
+                else
+                {
+                    /* other globals */
+                    if (old) {
+                        parseerror(parser, "global `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(old).file, ast_ctx(old).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                    if (opts_standard == COMPILER_QCC &&
+                        (old = parser_find_field(parser, var->name)))
+                    {
+                        parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
+                        parseerror(parser, "global `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(old).file, ast_ctx(old).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                }
+            }
+        }
+        else /* it's not a global */
+        {
+            old = parser_find_local(parser, var->name, parser->blocklocal, &isparam);
+            if (old && !isparam) {
+                parseerror(parser, "local `%s` already declared here: %s:%i",
+                           var->name, ast_ctx(old).file, (int)ast_ctx(old).line);
+                retval = false;
+                goto cleanup;
+            }
+            old = parser_find_local(parser, var->name, 0, &isparam);
+            if (old && isparam) {
+                if (parsewarning(parser, WARN_LOCAL_SHADOWS,
+                                 "local `%s` is shadowing a parameter", var->name))
+                {
+                    parseerror(parser, "local `%s` already declared here: %s:%i",
+                               var->name, ast_ctx(old).file, (int)ast_ctx(old).line);
+                    retval = false;
+                    goto cleanup;
+                }
+                if (opts_standard != COMPILER_GMQCC) {
+                    ast_delete(var);
+                    var = NULL;
+                    goto skipvar;
+                }
+            }
+        }
+
+        /* Part 2:
+         * Create the global/local, and deal with vector types.
+         */
+        if (!proto) {
+            if (var->expression.vtype == TYPE_VECTOR)
+                isvector = true;
+            else if (var->expression.vtype == TYPE_FIELD &&
+                     var->expression.next->expression.vtype == TYPE_VECTOR)
+                isvector = true;
+
+            if (isvector) {
+                if (!create_vector_members(parser, var, ve)) {
+                    retval = false;
+                    goto cleanup;
+                }
+            }
+
+            varent.name = util_strdup(var->name);
+            varent.var  = (ast_expression*)var;
+
+            if (!localblock) {
+                /* deal with global variables, fields, functions */
+                if (var->expression.vtype == TYPE_FIELD) {
+                    if (!(retval = parser_t_fields_add(parser, varent)))
+                        goto cleanup;
+                    if (isvector) {
+                        for (i = 0; i < 3; ++i) {
+                            if (!(retval = parser_t_fields_add(parser, ve[i])))
+                                break;
+                        }
+                        if (!retval) {
+                            parser->fields_count -= i+1;
+                            goto cleanup;
+                        }
+                    }
+                }
+                else {
+                    if (!(retval = parser_t_globals_add(parser, varent)))
+                        goto cleanup;
+                    if (isvector) {
+                        for (i = 0; i < 3; ++i) {
+                            if (!(retval = parser_t_globals_add(parser, ve[i])))
+                                break;
+                        }
+                        if (!retval) {
+                            parser->globals_count -= i+1;
+                            goto cleanup;
+                        }
+                    }
+                }
+            } else {
+                if (!(retval = parser_t_locals_add(parser, varent)))
+                    goto cleanup;
+                if (!(retval = ast_block_locals_add(localblock, var))) {
+                    parser->locals_count--;
+                    goto cleanup;
+                }
+                if (isvector) {
+                    for (i = 0; i < 3; ++i) {
+                        if (!(retval = parser_t_locals_add(parser, ve[i])))
+                            break;
+                        if (!(retval = ast_block_collect(localblock, ve[i].var)))
+                            break;
+                        ve[i].var = NULL; /* from here it's being collected in the block */
+                    }
+                    if (!retval) {
+                        parser->locals_count -= i+1;
+                        localblock->locals_count--;
+                        goto cleanup;
+                    }
+                }
+            }
+
+            varent.name = NULL;
+            ve[0].name = ve[1].name = ve[2].name = NULL;
+            ve[0].var  = ve[1].var  = ve[2].var  = NULL;
+            cleanvar = false;
+        }
+
+skipvar:
+        if (parser->tok == ';') {
+            ast_delete(basetype);
+            if (!parser_next(parser)) {
+                parseerror(parser, "error after variable declaration");
+                return false;
+            }
+            return true;
+        }
+
+        if (parser->tok == ',')
+            goto another;
+
+        if (!var || (!localblock && basetype->expression.vtype == TYPE_FIELD)) {
+            parseerror(parser, "missing comma or semicolon while parsing variables");
+            break;
+        }
+
+        if (localblock && opts_standard == COMPILER_QCC) {
+            if (parsewarning(parser, WARN_LOCAL_CONSTANTS,
+                             "initializing expression turns variable `%s` into a constant in this standard",
+                             var->name) )
+            {
+                break;
+            }
+        }
+
+        if (parser->tok != '=') {
+            parseerror(parser, "missing semicolon or initializer");
+            break;
+        }
+
+        if (!parser_next(parser)) {
+            parseerror(parser, "error parsing initializer");
+            break;
+        }
+
+        if (parser->tok == '#') {
+            ast_function *func;
+
+            if (localblock) {
+                parseerror(parser, "cannot declare builtins within functions");
+                break;
+            }
+            if (var->expression.vtype != TYPE_FUNCTION) {
+                parseerror(parser, "unexpected builtin number, '%s' is not a function", var->name);
+                break;
+            }
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected builtin number");
+                break;
+            }
+            if (parser->tok != TOKEN_INTCONST) {
+                parseerror(parser, "builtin number must be an integer constant");
+                break;
+            }
+            if (parser_token(parser)->constval.i <= 0) {
+                parseerror(parser, "builtin number must be an integer greater than zero");
+                break;
+            }
+
+            func = ast_function_new(ast_ctx(var), var->name, var);
+            if (!func) {
+                parseerror(parser, "failed to allocate function for `%s`", var->name);
+                break;
+            }
+            if (!parser_t_functions_add(parser, func)) {
+                parseerror(parser, "failed to allocate slot for function `%s`", var->name);
+                ast_function_delete(func);
+                var->constval.vfunc = NULL;
+                break;
+            }
+
+            func->builtin = -parser_token(parser)->constval.i;
+
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected comma or semicolon");
+                ast_function_delete(func);
+                var->constval.vfunc = NULL;
+                break;
+            }
+        }
+        else if (parser->tok == '{' || parser->tok == '[')
+        {
+            if (localblock) {
+                parseerror(parser, "cannot declare functions within functions");
+                break;
+            }
+
+            if (!parse_function_body(parser, var))
+                break;
+            ast_delete(basetype);
+            return true;
+        } else {
+            ast_expression *cexp;
+            ast_value      *cval;
+
+            cexp = parse_expression_leave(parser, true);
+            if (!cexp)
+                break;
+
+            cval = (ast_value*)cexp;
+            if (!ast_istype(cval, ast_value) || !cval->isconst)
+                parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
+            else
+            {
+                var->isconst = true;
+                if (cval->expression.vtype == TYPE_STRING)
+                    var->constval.vstring = parser_strdup(cval->constval.vstring);
+                else
+                    memcpy(&var->constval, &cval->constval, sizeof(var->constval));
+                ast_unref(cval);
+            }
+        }
+
+another:
+        if (parser->tok == ',') {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected another variable");
+                break;
+            }
+
+            if (parser->tok != TOKEN_IDENT) {
+                parseerror(parser, "expected another variable");
+                break;
+            }
+            var = ast_value_copy(basetype);
+            cleanvar = true;
+            ast_value_set_name(var, parser_tokval(parser));
+            if (!parser_next(parser)) {
+                parseerror(parser, "error parsing variable declaration");
+                break;
+            }
+            continue;
+        }
+
+        if (parser->tok != ';') {
+            parseerror(parser, "missing semicolon after variables");
+            break;
+        }
+
+        if (!parser_next(parser)) {
+            parseerror(parser, "parse error after variable declaration");
+            break;
+        }
+
+        ast_delete(basetype);
+        return true;
+    }
+
+    if (cleanvar && var)
+        ast_delete(var);
+    ast_delete(basetype);
+    return false;
+
+cleanup:
+    ast_delete(basetype);
+    if (cleanvar && var)
+        ast_delete(var);
+    if (varent.name) mem_d(varent.name);
+    if (ve[0].name)  mem_d(ve[0].name);
+    if (ve[1].name)  mem_d(ve[1].name);
+    if (ve[2].name)  mem_d(ve[2].name);
+    if (ve[0].var)   mem_d(ve[0].var);
+    if (ve[1].var)   mem_d(ve[1].var);
+    if (ve[2].var)   mem_d(ve[2].var);
+    return retval;
+
+#if 0
     bool            isfunc = false;
     lex_ctx         ctx;
 
@@ -2800,6 +3421,7 @@ cleanup:
     if (ve[2].var)   mem_d(ve[2].var);
 
     return retval;
+#endif
 }
 
 static bool parser_global_statement(parser_t *parser)
