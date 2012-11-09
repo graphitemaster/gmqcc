@@ -2510,61 +2510,61 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
                     goto cleanup;
                 }
             }
-            else /* if it's a local: */
+        }
+        if (localblock)    /* if it's a local: */
+        {
+            olddecl = parser_find_local(parser, var->name, parser->blocklocal, &isparam);
+            if (opts_standard == COMPILER_GMQCC)
             {
-                olddecl = parser_find_local(parser, var->name, parser->blocklocal, &isparam);
-                if (opts_standard == COMPILER_GMQCC)
+                if (olddecl)
                 {
-                    if (olddecl)
-                    {
-                        if (!isparam) {
-                            parseerror(parser, "local `%s` already declared here: %s:%i",
-                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                            retval = false;
-                            goto cleanup;
-                        }
-                    }
-
-                    if( (!isparam && olddecl) ||
-                        (olddecl = parser_find_local(parser, var->name, 0, &isparam))
-                      )
-                    {
-                        if (parsewarning(parser, WARN_LOCAL_SHADOWS,
-                                         "local `%s` is shadowing a parameter", var->name))
-                        {
-                            parseerror(parser, "local `%s` already declared here: %s:%i",
-                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                            retval = false;
-                            goto cleanup;
-                        }
+                    if (!isparam) {
+                        parseerror(parser, "local `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                        retval = false;
+                        goto cleanup;
                     }
                 }
-                else
+
+                if( (!isparam && olddecl) ||
+                    (olddecl = parser_find_local(parser, var->name, 0, &isparam))
+                  )
                 {
-                    if (olddecl)
+                    if (parsewarning(parser, WARN_LOCAL_SHADOWS,
+                                     "local `%s` is shadowing a parameter", var->name))
                     {
-                        if (isparam &&
-                            parsewarning(parser, WARN_LOCAL_SHADOWS,
-                                         "a parameter is shadowing local `%s`", var->name))
-                        {
-                            ast_value_delete(var);
-                            var = NULL;
-                            retval = false;
-                            goto cleanup;
-                        }
-                        else if (!isparam)
-                        {
-                            parseerror(parser, "local `%s` already declared here: %s:%i",
-                                       var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
-                            ast_value_delete(var);
-                            var = NULL;
-                            retval = false;
-                            goto cleanup;
-                        }
+                        parseerror(parser, "local `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                        retval = false;
+                        goto cleanup;
+                    }
+                }
+            }
+            else
+            {
+                if (olddecl)
+                {
+                    if (isparam &&
+                        parsewarning(parser, WARN_LOCAL_SHADOWS,
+                                     "a parameter is shadowing local `%s`", var->name))
+                    {
                         ast_value_delete(var);
                         var = NULL;
-                        goto nextvar;
+                        retval = false;
+                        goto cleanup;
                     }
+                    else if (!isparam)
+                    {
+                        parseerror(parser, "local `%s` already declared here: %s:%i",
+                                   var->name, ast_ctx(olddecl).file, (int)ast_ctx(olddecl).line);
+                        ast_value_delete(var);
+                        var = NULL;
+                        retval = false;
+                        goto cleanup;
+                    }
+                    ast_value_delete(var);
+                    var = NULL;
+                    goto nextvar;
                 }
             }
         }
