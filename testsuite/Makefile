@@ -17,7 +17,8 @@ TESTLIST = \
 	ngraphs    \
 	invalid-assign \
 	field-parameters \
-	functions-as-parameters
+	functions-as-parameters \
+	shadow-qcc shadow-gmqcc
 
 .PHONY: clean test
 
@@ -166,6 +167,16 @@ field-parameters:
 $(eval $(call maketest,functions-as-parameters,qcc))
 functions-as-parameters:
 	@$(VM) $< > $@/output
+	@diff $@/output $@/expected
+
+$(eval $(call maketest,shadow-qcc,qcc))
+shadow-qcc:
+	@$(VM) -vector '33 44 55' $< > $@/output
+	@diff $@/output $@/expected
+
+$(eval $(call maketest,shadow-gmqcc,gm))
+shadow-gmqcc:
+	@$(VM) -vector '33 44 55' $< > $@/output
 	@diff $@/output $@/expected
 
 #######################################################################
