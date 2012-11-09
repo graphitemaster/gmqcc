@@ -2759,14 +2759,16 @@ skipvar:
             }
         }
 
-        if (parser->tok != '=') {
-            parseerror(parser, "missing semicolon or initializer");
-            break;
-        }
+        if (parser->tok != '{') {
+            if (parser->tok != '=') {
+                parseerror(parser, "missing semicolon or initializer");
+                break;
+            }
 
-        if (!parser_next(parser)) {
-            parseerror(parser, "error parsing initializer");
-            break;
+            if (!parser_next(parser)) {
+                parseerror(parser, "error parsing initializer");
+                break;
+            }
         }
 
         if (parser->tok == '#') {
