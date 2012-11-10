@@ -2643,6 +2643,9 @@ skipvar:
                 break;
             }
         }
+        else if (opts_standard == COMPILER_QCC) {
+            parseerror(parser, "expected '=' before function body in this standard");
+        }
 
         if (parser->tok == '#') {
             ast_function *func;
