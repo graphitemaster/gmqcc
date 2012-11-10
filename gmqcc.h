@@ -193,6 +193,7 @@ FILE *util_fopen(const char *filename, const char *mode);
 
 void *util_memory_a      (unsigned int, unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
+void *util_memory_r      (void       *, unsigned int, unsigned int, const char *);
 void  util_meminfo       ();
 
 bool  util_strupper      (const char *);
@@ -214,11 +215,13 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
 #ifdef NOTRACK
-#    define mem_a(x) malloc(x)
-#    define mem_d(x) free  (x)
+#    define mem_a(x)   malloc(x)
+#    define mem_d(x)   free  (x)
+#    define mem_r(x,y) realloc((x),(y))
 #else
-#    define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
+#    define mem_a(x)   util_memory_a((x), __LINE__, __FILE__)
+#    define mem_d(x)   util_memory_d((x), __LINE__, __FILE__)
+#    define mem_r(x,y) util_memory_r((x), (y), __LINE__, __FILE__)
 #endif
 
 /*

@@ -41,8 +41,8 @@ static struct memblock_t *mem_start = NULL;
 
 void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
     struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
-    void              *data =(void*)((unsigned char*)info+sizeof(struct memblock_t));
-    if (!data) return NULL;
+    void              *data = (void*)(info+1);
+    if (!info) return NULL;
     info->line = line;
     info->byte = byte;
     info->file = file;
@@ -52,7 +52,7 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
         mem_start->prev = info;
     mem_start = info;
 
-    util_debug("MEM", "allocation: % 8u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
+    util_debug("MEM", "allocation:   % 8u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
     mem_at++;
     mem_ab += info->byte;
 
@@ -60,14 +60,12 @@ void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
 }
 
 void util_memory_d(void *ptrn, unsigned int line, const char *file) {
-    void              *data = NULL;
     struct memblock_t *info = NULL;
 
     if (!ptrn) return;
-    data = (void*)((unsigned char *)ptrn-sizeof(struct memblock_t));
-    info = (struct memblock_t*)data;
+    info = ((struct memblock_t*)ptrn - 1);
 
-    util_debug("MEM", "released:   % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, ptrn, file, line);
+    util_debug("MEM", "released:     % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, ptrn, file, line);
     mem_db += info->byte;
     mem_dt++;
 
@@ -78,7 +76,49 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     if (info == mem_start)
         mem_start = info->next;
 
-    free(data);
+    free(info);
+}
+
+void *util_memory_r(void *ptrn, unsigned int byte, unsigned int line, const char *file) {
+    struct memblock_t *oldinfo = NULL;
+
+    struct memblock_t *newinfo;
+
+    if (!ptrn)
+        return util_memory_a(byte, line, file);
+    if (!byte) {
+        util_memory_d(ptrn, line, file);
+        return NULL;
+    }
+
+    oldinfo = ((struct memblock_t*)ptrn - 1);
+    newinfo = malloc(sizeof(struct memblock_t) + byte);
+
+    util_debug("MEM", "reallocation: % 8u -> %u (bytes) address 0x%08X -> 0x%08X @ %s:%u\n", oldinfo->byte, byte, ptrn, (void*)(newinfo+1), file, line);
+
+    /* new data */
+    if (!newinfo) {
+        util_memory_d(oldinfo+1, line, file);
+        return NULL;
+    }
+    newinfo->line = line;
+    newinfo->byte = byte;
+    newinfo->file = file;
+    newinfo->next = oldinfo->next;
+    newinfo->prev = oldinfo->prev;
+    if (mem_start == oldinfo)
+        mem_start = newinfo;
+
+    /* copy old */
+    memcpy(newinfo+1, oldinfo+1, oldinfo->byte);
+
+    /* drop old */
+    mem_db += newinfo->byte;
+    mem_db -= oldinfo->byte;
+    free(oldinfo);
+
+    /* update */
+    return newinfo+1;
 }
 
 void util_meminfo() {
