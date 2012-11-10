@@ -290,6 +290,9 @@ enum {
     TYPE_POINTER  ,
     TYPE_INTEGER  ,
     TYPE_VARIANT  ,
+    TYPE_STRUCT   ,
+    TYPE_UNION    ,
+    TYPE_ARRAY    ,
 
     TYPE_COUNT
 };

@@ -38,10 +38,11 @@ const char *type_name[TYPE_COUNT] = {
     "field",
     "function",
     "pointer",
-#if 0
     "integer",
-#endif
-    "variant"
+    "variant",
+    "struct",
+    "union",
+    "array"
 };
 
 size_t type_sizeof[TYPE_COUNT] = {
@@ -53,10 +54,11 @@ size_t type_sizeof[TYPE_COUNT] = {
     1, /* TYPE_FIELD    */
     1, /* TYPE_FUNCTION */
     1, /* TYPE_POINTER  */
-#if 0
     1, /* TYPE_INTEGER  */
-#endif
     3, /* TYPE_VARIANT  */
+    0, /* TYPE_STRUCT   */
+    0, /* TYPE_UNION    */
+    0, /* TYPE_ARRAY    */
 };
 
 uint16_t type_store_instr[TYPE_COUNT] = {
@@ -70,9 +72,15 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_ENT, /* should use I */
 #if 0
     INSTR_STORE_I, /* integer type */
+#else
+    INSTR_STORE_F,
 #endif
 
     INSTR_STORE_V, /* variant, should never be accessed */
+
+    AINSTR_END, /* struct */
+    AINSTR_END, /* union  */
+    AINSTR_END, /* array  */
 };
 
 uint16_t field_store_instr[TYPE_COUNT] = {
@@ -86,9 +94,15 @@ uint16_t field_store_instr[TYPE_COUNT] = {
     INSTR_STORE_FLD,
 #if 0
     INSTR_STORE_FLD, /* integer type */
+#else
+    INSTR_STORE_FLD,
 #endif
 
     INSTR_STORE_V, /* variant, should never be accessed */
+
+    AINSTR_END, /* struct */
+    AINSTR_END, /* union  */
+    AINSTR_END, /* array  */
 };
 
 uint16_t type_storep_instr[TYPE_COUNT] = {
@@ -102,9 +116,15 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
     INSTR_STOREP_ENT, /* should use I */
 #if 0
     INSTR_STOREP_ENT, /* integer type */
+#else
+    INSTR_STOREP_F,
 #endif
 
     INSTR_STOREP_V, /* variant, should never be accessed */
+
+    AINSTR_END, /* struct */
+    AINSTR_END, /* union  */
+    AINSTR_END, /* array  */
 };
 
 uint16_t type_eq_instr[TYPE_COUNT] = {
@@ -118,9 +138,15 @@ uint16_t type_eq_instr[TYPE_COUNT] = {
     INSTR_EQ_E, /* should use I */
 #if 0
     INSTR_EQ_I,
+#else
+    INSTR_EQ_F,
 #endif
 
     INSTR_EQ_V, /* variant, should never be accessed */
+
+    AINSTR_END, /* struct */
+    AINSTR_END, /* union  */
+    AINSTR_END, /* array  */
 };
 
 uint16_t type_ne_instr[TYPE_COUNT] = {
@@ -134,9 +160,15 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
     INSTR_NE_E, /* should use I */
 #if 0
     INSTR_NE_I,
+#else
+    INSTR_NE_F,
 #endif
 
     INSTR_NE_V, /* variant, should never be accessed */
+
+    AINSTR_END, /* struct */
+    AINSTR_END, /* union  */
+    AINSTR_END, /* array  */
 };
 
 MEM_VEC_FUNCTIONS(ir_value_vector, ir_value*, v)
@@ -1561,6 +1593,7 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, const char *label, ir_va
         case TYPE_INTEGER: op = INSTR_LOAD_I;   break;
 #endif
         default:
+            irerror(self->context, "invalid type for ir_block_create_load_from_ent: %s", type_name[outype]);
             return NULL;
     }
 
@@ -1577,6 +1610,7 @@ ir_value* ir_block_create_add(ir_block *self,
     if (l == r) {
         switch (l) {
             default:
+                irerror(self->context, "invalid type for ir_block_create_add: %s", type_name[l]);
                 return NULL;
             case TYPE_FLOAT:
                 op = INSTR_ADD_F;
@@ -1598,7 +1632,10 @@ ir_value* ir_block_create_add(ir_block *self,
             op = INSTR_ADD_IF;
         else
 #endif
+        {
+            irerror(self->context, "invalid type for ir_block_create_add: %s", type_name[l]);
             return NULL;
+        }
     }
     return ir_block_create_binop(self, label, op, left, right);
 }
@@ -1614,6 +1651,7 @@ ir_value* ir_block_create_sub(ir_block *self,
 
         switch (l) {
             default:
+                irerror(self->context, "invalid type for ir_block_create_sub: %s", type_name[l]);
                 return NULL;
             case TYPE_FLOAT:
                 op = INSTR_SUB_F;
@@ -1635,7 +1673,10 @@ ir_value* ir_block_create_sub(ir_block *self,
             op = INSTR_SUB_IF;
         else
 #endif
+        {
+            irerror(self->context, "invalid type for ir_block_create_sub: %s", type_name[l]);
             return NULL;
+        }
     }
     return ir_block_create_binop(self, label, op, left, right);
 }
@@ -1651,6 +1692,7 @@ ir_value* ir_block_create_mul(ir_block *self,
 
         switch (l) {
             default:
+                irerror(self->context, "invalid type for ir_block_create_mul: %s", type_name[l]);
                 return NULL;
             case TYPE_FLOAT:
                 op = INSTR_MUL_F;
@@ -1679,8 +1721,10 @@ ir_value* ir_block_create_mul(ir_block *self,
         else if ( (l == TYPE_INTEGER && r == TYPE_FLOAT) )
             op = INSTR_MUL_IF;
 #endif
-        else
+        else {
+            irerror(self->context, "invalid type for ir_block_create_mul: %s", type_name[l]);
             return NULL;
+        }
     }
     return ir_block_create_binop(self, label, op, left, right);
 }
@@ -1696,6 +1740,7 @@ ir_value* ir_block_create_div(ir_block *self,
 
         switch (l) {
             default:
+                irerror(self->context, "invalid type for ir_block_create_div: %s", type_name[l]);
                 return NULL;
             case TYPE_FLOAT:
                 op = INSTR_DIV_F;
@@ -1716,7 +1761,10 @@ ir_value* ir_block_create_div(ir_block *self,
             op = INSTR_DIV_IF;
         else
 #endif
+        {
+            irerror(self->context, "invalid type for ir_block_create_div: %s", type_name[l]);
             return NULL;
+        }
     }
     return ir_block_create_binop(self, label, op, left, right);
 }

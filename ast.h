@@ -116,6 +116,8 @@ typedef struct
     ast_expression_codegen *codegen;
     int                     vtype;
     ast_expression         *next;
+    /* arrays get a member-count */
+    size_t                  count;
     MEM_VECTOR_MAKE(ast_value*, params);
     bool                    variadic;
     /* The codegen functions should store their output values

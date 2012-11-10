@@ -2314,21 +2314,12 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
         return NULL;
     }
 
-    /* an opening paren now starts the parameter-list of a function */
+    /* an opening paren now starts the parameter-list of a function
+     * this is where original-QC has parameter lists.
+     * We allow a single parameter list here.
+     * Much like fteqcc we don't allow `float()() x`
+     */
     if (parser->tok == '(') {
-        var = parse_parameter_list(parser, var);
-        if (!var)
-            return NULL;
-    }
-    /* This is the point where we can turn it into a field */
-    if (isfield) {
-        /* turn it into a field if desired */
-        tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
-        tmp->expression.next = (ast_expression*)var;
-        var = tmp;
-    }
-
-    while (parser->tok == '(') {
         var = parse_parameter_list(parser, var);
         if (!var)
             return NULL;
@@ -2337,6 +2328,11 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     /* store the base if requested */
     if (storebase) {
         *storebase = ast_value_copy(var);
+        if (isfield) {
+            tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
+            tmp->expression.next = (ast_expression*)*storebase;
+            *storebase = tmp;
+        }
     }
 
     /* there may be a name now */
@@ -2344,9 +2340,58 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
         name = util_strdup(parser_tokval(parser));
         /* parse on */
         if (!parser_next(parser)) {
+            ast_delete(var);
             parseerror(parser, "error after variable or field declaration");
             return NULL;
         }
+    }
+
+    /* now this may be an array */
+    if (parser->tok == '[') {
+        ast_expression *cexp = parse_expression_leave(parser, true);
+        ast_value      *cval;
+        if (!cexp || !ast_istype(cexp, ast_value)) {
+            if (cexp) ast_delete(cexp);
+            ast_delete(var);
+            parseerror(parser, "expected array-size as constant positive integer");
+            return NULL;
+        }
+        cval = (ast_value*)cexp;
+
+        tmp = ast_value_new(ctx, "<type[]>", TYPE_ARRAY);
+        tmp->expression.next = (ast_expression*)var;
+        var = tmp;
+
+        if (cval->expression.vtype == TYPE_INTEGER)
+            tmp->expression.count = cval->constval.vint;
+        else if (cval->expression.vtype == TYPE_FLOAT)
+            tmp->expression.count = cval->constval.vfloat;
+        else {
+            ast_delete(cexp);
+            ast_delete(var);
+            parseerror(parser, "array-size must be a positive integer constant");
+            return NULL;
+        }
+        ast_delete(cexp);
+
+        if (parser->tok != ']') {
+            ast_delete(var);
+            parseerror(parser, "expected ']' after array-size");
+            return NULL;
+        }
+        if (!parser_next(parser)) {
+            ast_delete(var);
+            parseerror(parser, "error after parsing array size");
+            return NULL;
+        }
+    }
+
+    /* This is the point where we can turn it into a field */
+    if (isfield) {
+        /* turn it into a field if desired */
+        tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
+        tmp->expression.next = (ast_expression*)var;
+        var = tmp;
     }
 
     /* now there may be function parens again */
@@ -2357,6 +2402,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
         if (!var) {
             if (name)
                 mem_d((void*)name);
+            ast_delete(var);
             return NULL;
         }
     }
