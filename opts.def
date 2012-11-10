@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2012
+ *     Wolfgang Bumiller
+ *     Dale Weiler
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+#ifndef GMQCC_DEFINE_FLAG
+#   define GMQCC_DEFINE_FLAG(x)
+#endif
+
+/* codegen flags */
+#ifdef GMQCC_TYPE_FLAGS
+    GMQCC_DEFINE_FLAG(OVERLAP_LOCALS)
+    GMQCC_DEFINE_FLAG(DARKPLACES_STRING_TABLE_BUG)
+    GMQCC_DEFINE_FLAG(OMIT_NULL_BYTES)
+    GMQCC_DEFINE_FLAG(ADJUST_VECTOR_FIELDS)
+#endif
+
+/* warning flags */
+#ifdef GMQCC_TYPE_WARNS
+    GMQCC_DEFINE_FLAG(DEBUG)
+    GMQCC_DEFINE_FLAG(UNUSED_VARIABLE)
+    GMQCC_DEFINE_FLAG(USED_UNINITIALIZED)
+    GMQCC_DEFINE_FLAG(UNKNOWN_CONTROL_SEQUENCE)
+    GMQCC_DEFINE_FLAG(EXTENSIONS)
+    GMQCC_DEFINE_FLAG(FIELD_REDECLARED)
+    GMQCC_DEFINE_FLAG(MISSING_RETURN_VALUES)
+    GMQCC_DEFINE_FLAG(TOO_FEW_PARAMETERS)
+    GMQCC_DEFINE_FLAG(LOCAL_SHADOWS)
+    GMQCC_DEFINE_FLAG(LOCAL_CONSTANTS)
+    GMQCC_DEFINE_FLAG(VOID_VARIABLES)
+    GMQCC_DEFINE_FLAG(IMPLICIT_FUNCTION_POINTER)
+    GMQCC_DEFINE_FLAG(VARIADIC_FUNCTION)
+    GMQCC_DEFINE_FLAG(FRAME_MACROS)
+    GMQCC_DEFINE_FLAG(EFFECTLESS_STATEMENT)
+    GMQCC_DEFINE_FLAG(END_SYS_FIELDS)
+    GMQCC_DEFINE_FLAG(ASSIGN_FUNCTION_TYPES)
+#endif
+
+/* some cleanup so we don't have to */
+#undef GMQCC_TYPE_FLAGS
+#undef GMQCC_TYPE_WARNS
+#undef GMQCC_DEFINE_FLAG

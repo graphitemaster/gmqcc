@@ -193,7 +193,6 @@ FILE *util_fopen(const char *filename, const char *mode);
 
 void *util_memory_a      (unsigned int, unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
-void *util_memory_r      (void       *, unsigned int, unsigned int, const char *);
 void  util_meminfo       ();
 
 bool  util_strupper      (const char *);
@@ -215,13 +214,11 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
 #ifdef NOTRACK
-#    define mem_a(x)   malloc(x)
-#    define mem_d(x)   free  (x)
-#    define mem_r(x,y) realloc((x),(y))
+#    define mem_a(x) malloc(x)
+#    define mem_d(x) free  (x)
 #else
-#    define mem_a(x)   util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x)   util_memory_d((x), __LINE__, __FILE__)
-#    define mem_r(x,y) util_memory_r((x), (y), __LINE__, __FILE__)
+#    define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
+#    define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
 #endif
 
 /*
@@ -974,28 +971,28 @@ typedef struct {
 /*===================================================================*/
 /* list of -f flags, like -fdarkplaces-string-table-bug */
 enum {
+# define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) X,
-#  include "flags.def"
-# undef GMQCC_DEFINE_FLAG
+#  include "opts.def"
     COUNT_FLAGS
 };
 static const opts_flag_def opts_flag_list[] = {
+# define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
-#  include "flags.def"
-# undef GMQCC_DEFINE_FLAG
+#  include "opts.def"
     { NULL, LONGBIT(0) }
 };
 
 enum {
+# define GMQCC_TYPE_WARNS
 # define GMQCC_DEFINE_FLAG(X) WARN_##X,
-#  include "warns.def"
-# undef GMQCC_DEFINE_FLAG
+#  include "opts.def"
     COUNT_WARNINGS
 };
 static const opts_flag_def opts_warn_list[] = {
+# define GMQCC_TYPE_WARNS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
-#  include "warns.def"
-# undef GMQCC_DEFINE_FLAG
+#  include "opts.def"
     { NULL, LONGBIT(0) }
 };
 
