@@ -2333,6 +2333,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     }
 
     /* now there may be function parens again */
+    if (parser->tok == '(' && opts_standard == COMPILER_QCC)
+        parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
     while (parser->tok == '(') {
         var = parse_parameter_list(parser, var);
         if (!var) {
@@ -2388,6 +2390,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
 
         /* Part 0: finish the type */
         while (parser->tok == '(') {
+            if (opts_standard == COMPILER_QCC)
+                parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
             var = parse_parameter_list(parser, var);
             if (!var) {
                 retval = false;
