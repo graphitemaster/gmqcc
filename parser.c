@@ -48,7 +48,7 @@ MEM_VEC_FUNCTIONS(parser_t, varentry_t, locals)
 MEM_VEC_FUNCTIONS(parser_t, ast_function*, functions)
 
 static bool GMQCC_WARN parser_pop_local(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields);
 static ast_block* parse_block(parser_t *parser, bool warnreturn);
 static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
 static ast_expression* parse_statement_or_block(parser_t *parser);
@@ -1498,7 +1498,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
 
         parseerror(parser, "TODO: assignment of new variables to be non-const");
         goto onerr;
-        if (!parse_variable(parser, block))
+        if (!parse_variable(parser, block, true))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -1594,7 +1594,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block))
+        if (!parse_variable(parser, block, false))
             return false;
         *out = NULL;
         return true;
@@ -1611,7 +1611,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
                 parseerror(parser, "expected variable declaration");
                 return false;
             }
-            if (!parse_variable(parser, block))
+            if (!parse_variable(parser, block, true))
                 return false;
             *out = NULL;
             return true;
@@ -2358,7 +2358,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     return var;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields)
 {
     ast_value *var;
     ast_value *proto;
@@ -2425,7 +2425,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
                 }
             }
 
-            if (var->expression.vtype == TYPE_FIELD)
+            if (!nofields && var->expression.vtype == TYPE_FIELD)
             {
                 /* deal with field declarations */
                 old = parser_find_field(parser, var->name);
@@ -2552,7 +2552,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock)
 
             if (!localblock) {
                 /* deal with global variables, fields, functions */
-                if (var->expression.vtype == TYPE_FIELD) {
+                if (!nofields && var->expression.vtype == TYPE_FIELD) {
                     if (!(retval = parser_t_fields_add(parser, varent)))
                         goto cleanup;
                     if (isvector) {
@@ -2622,7 +2622,7 @@ skipvar:
         if (parser->tok == ',')
             goto another;
 
-        if (!var || (!localblock && basetype->expression.vtype == TYPE_FIELD)) {
+        if (!var || (!localblock && !nofields && basetype->expression.vtype == TYPE_FIELD)) {
             parseerror(parser, "missing comma or semicolon while parsing variables");
             break;
         }
@@ -2787,11 +2787,18 @@ static bool parser_global_statement(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL);
+        return parse_variable(parser, NULL, false);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
         /* handle 'var' and 'const' */
+        if (!strcmp(parser_tokval(parser), "var")) {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected variable declaration after 'var'");
+                return false;
+            }
+            return parse_variable(parser, NULL, true);
+        }
         return false;
     }
     else if (parser->tok == '$')

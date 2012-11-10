@@ -1054,7 +1054,8 @@ int lex_do(lex_file *lex)
                 !strcmp(v, "struct") ||
                 !strcmp(v, "union")  ||
                 !strcmp(v, "break")  ||
-                !strcmp(v, "continue"))
+                !strcmp(v, "continue") ||
+                !strcmp(v, "var"))
             {
                 lex->tok.ttype = TOKEN_KEYWORD;
             }
