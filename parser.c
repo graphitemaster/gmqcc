@@ -32,6 +32,9 @@ typedef struct {
 
     size_t errors;
 
+    /* we store the '=' operator info */
+    const oper_info *assign_op;
+
     /* TYPE_FIELD -> parser_find_fields is used instead of find_var
      * TODO: TYPE_VECTOR -> x, y and z are accepted in the gmqcc standard
      * anything else: type error
@@ -2729,17 +2732,43 @@ skipvar:
             if (!cexp)
                 break;
 
-            cval = (ast_value*)cexp;
-            if (!ast_istype(cval, ast_value) || !cval->isconst)
-                parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
-            else
-            {
-                var->isconst = true;
-                if (cval->expression.vtype == TYPE_STRING)
-                    var->constval.vstring = parser_strdup(cval->constval.vstring);
+            if (!localblock) {
+                cval = (ast_value*)cexp;
+                if (!ast_istype(cval, ast_value) || !cval->isconst)
+                    parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
-                    memcpy(&var->constval, &cval->constval, sizeof(var->constval));
-                ast_unref(cval);
+                {
+                    var->isconst = true;
+                    if (cval->expression.vtype == TYPE_STRING)
+                        var->constval.vstring = parser_strdup(cval->constval.vstring);
+                    else
+                        memcpy(&var->constval, &cval->constval, sizeof(var->constval));
+                    ast_unref(cval);
+                }
+            } else {
+                shunt sy;
+                MEM_VECTOR_INIT(&sy, out);
+                MEM_VECTOR_INIT(&sy, ops);
+                if (!shunt_out_add(&sy, syexp(ast_ctx(var), (ast_expression*)var)) ||
+                    !shunt_out_add(&sy, syexp(ast_ctx(cexp), (ast_expression*)cexp)) ||
+                    !shunt_ops_add(&sy, syop(ast_ctx(var), parser->assign_op)))
+                {
+                    parseerror(parser, "internal error: failed to prepare initializer");
+                    ast_unref(cexp);
+                }
+                else if (!parser_sy_pop(parser, &sy))
+                    ast_unref(cexp);
+                else {
+                    if (sy.out_count != 1 && sy.ops_count != 0)
+                        parseerror(parser, "internal error: leaked operands");
+                    else if (!ast_block_exprs_add(localblock, (ast_expression*)sy.out[0].out)) {
+                        parseerror(parser, "failed to create intializing expression");
+                        ast_unref(sy.out[0].out);
+                        ast_unref(cexp);
+                    }
+                }
+                MEM_VECTOR_CLEAR(&sy, out);
+                MEM_VECTOR_CLEAR(&sy, ops);
             }
         }
 
@@ -2834,11 +2863,24 @@ static parser_t *parser;
 
 bool parser_init()
 {
+    size_t i;
     parser = (parser_t*)mem_a(sizeof(parser_t));
     if (!parser)
         return false;
 
     memset(parser, 0, sizeof(*parser));
+
+    for (i = 0; i < operator_count; ++i) {
+        if (operators[i].id == opid1('=')) {
+            parser->assign_op = operators+i;
+            break;
+        }
+    }
+    if (!parser->assign_op) {
+        printf("internal error: initializing parser: failed to find assign operator\n");
+        mem_d(parser);
+        return false;
+    }
     return true;
 }
 
