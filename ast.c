@@ -912,6 +912,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         asterror(ast_ctx(self), "ir_builder_create_global failed");
         return false;
     }
+    if (self->expression.vtype == TYPE_FIELD)
+        v->fieldtype = self->expression.next->expression.vtype;
     v->context = ast_ctx(self);
 
     if (self->isconst) {

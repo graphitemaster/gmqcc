@@ -747,7 +747,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         case opid1('='):
             if (ast_istype(exprs[0], ast_entfield)) {
                 ast_expression *field = ((ast_entfield*)exprs[0])->field;
-                assignop = type_storep_instr[exprs[0]->expression.vtype];
+                if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) &&
+                    exprs[0]->expression.vtype == TYPE_FIELD &&
+                    exprs[0]->expression.next->expression.vtype == TYPE_VECTOR)
+                {
+                    assignop = type_storep_instr[TYPE_VECTOR];
+                }
+                else
+                    assignop = type_storep_instr[exprs[0]->expression.vtype];
                 if (!ast_compare_type(field->expression.next, exprs[1])) {
                     char ty1[1024];
                     char ty2[1024];
@@ -769,7 +776,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             else
             {
-                assignop = type_store_instr[exprs[0]->expression.vtype];
+                if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) &&
+                    exprs[0]->expression.vtype == TYPE_FIELD &&
+                    exprs[0]->expression.next->expression.vtype == TYPE_VECTOR)
+                {
+                    assignop = type_store_instr[TYPE_VECTOR];
+                }
+                else
+                    assignop = type_store_instr[exprs[0]->expression.vtype];
                 if (!ast_compare_type(exprs[0], exprs[1])) {
                     char ty1[1024];
                     char ty2[1024];
