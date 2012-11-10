@@ -877,7 +877,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
     return true;
 }
 
-bool ast_global_codegen(ast_value *self, ir_builder *ir)
+bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
@@ -894,7 +894,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         return true;
     }
 
-    if (self->expression.vtype == TYPE_FIELD) {
+    if (isfield && self->expression.vtype == TYPE_FIELD) {
         v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
         if (!v)
             return false;

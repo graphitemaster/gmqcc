@@ -2994,7 +2994,7 @@ bool parser_finish(const char *output)
             field = (ast_value*)parser->fields[i].var;
             isconst = field->isconst;
             field->isconst = false;
-            if (!ast_global_codegen((ast_value*)field, ir)) {
+            if (!ast_global_codegen((ast_value*)field, ir, true)) {
                 printf("failed to generate field %s\n", field->name);
                 ir_builder_delete(ir);
                 return false;
@@ -3025,28 +3025,28 @@ bool parser_finish(const char *output)
                                                    "unused global: `%s`", asvalue->name);
                 }
             }
-            if (!ast_global_codegen(asvalue, ir)) {
+            if (!ast_global_codegen(asvalue, ir, false)) {
                 printf("failed to generate global %s\n", parser->globals[i].name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->imm_float_count; ++i) {
-            if (!ast_global_codegen(parser->imm_float[i], ir)) {
+            if (!ast_global_codegen(parser->imm_float[i], ir, false)) {
                 printf("failed to generate global %s\n", parser->imm_float[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->imm_string_count; ++i) {
-            if (!ast_global_codegen(parser->imm_string[i], ir)) {
+            if (!ast_global_codegen(parser->imm_string[i], ir, false)) {
                 printf("failed to generate global %s\n", parser->imm_string[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->imm_vector_count; ++i) {
-            if (!ast_global_codegen(parser->imm_vector[i], ir)) {
+            if (!ast_global_codegen(parser->imm_vector[i], ir, false)) {
                 printf("failed to generate global %s\n", parser->imm_vector[i]->name);
                 ir_builder_delete(ir);
                 return false;

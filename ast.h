@@ -171,7 +171,7 @@ bool ast_value_set_name(ast_value*, const char *name);
 
 bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
 bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
-bool ast_global_codegen(ast_value *self, ir_builder *ir);
+bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield);
 
 bool GMQCC_WARN ast_value_params_add(ast_value*, ast_value*);
 
