@@ -1,6 +1,5 @@
 CC     ?= clang
-CFLAGS += -Wall -I. -pedantic-errors
-
+CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector -O3
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
 	CFLAGS +=                  \
@@ -46,13 +45,11 @@ test_ir:  $(OBJ_I) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 qcvm:     $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS) -lm
-exec.o: execloop.h
-exec-standalone.o: execloop.h
 test: test_ast test_ir
 
 # compiler target
 gmqcc: $(OBJ_C) $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o $@ $^ $(CFLAGS)
 
 #all target is test and all
 all: test gmqcc

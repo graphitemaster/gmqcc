@@ -1111,6 +1111,7 @@ int lex_do(lex_file *lex)
         if (sscanf(lex->tok.value, " %f %f %f ",
                    &lex->tok.constval.v.x, &lex->tok.constval.v.y, &lex->tok.constval.v.z) == 3)
 #endif
+
         {
              lex->tok.ttype = TOKEN_VECTORCONST;
         }
