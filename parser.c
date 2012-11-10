@@ -1148,6 +1148,10 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             parseerror(parser, "internal error: '(' should be classified as operator");
             goto onerr;
         }
+        else if (parser->tok == '[') {
+            parseerror(parser, "internal error: '[' should be classified as operator");
+            goto onerr;
+        }
         else if (parser->tok == ')') {
             if (wantop) {
                 DEBUGSHUNTDO(printf("do[op] )\n"));
