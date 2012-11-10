@@ -86,6 +86,10 @@ void *util_memory_r(void *ptrn, unsigned int byte, unsigned int line, const char
 
     if (!ptrn)
         return util_memory_a(byte, line, file);
+    if (!byte) {
+        util_memory_d(ptrn, line, file);
+        return NULL;
+    }
 
     oldinfo = ((struct memblock_t*)ptrn - 1);
     newinfo = malloc(sizeof(struct memblock_t) + byte);
