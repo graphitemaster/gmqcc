@@ -1597,7 +1597,7 @@ onerr:
 
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
 {
-    if (parser->tok == TOKEN_TYPENAME)
+    if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
         /* local variable */
         if (!block) {
