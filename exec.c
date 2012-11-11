@@ -1300,7 +1300,7 @@ while (1) {
 
 			if(!OPA->function || OPA->function >= (unsigned int)prog->functions_count)
 			{
-				qcvmerror(prog, "CALL outside the program in `%s`", prog->filename);
+				qcvmerror(prog, "CALL outside the program in `%s` (%i)", prog->filename, (int)OPA->function);
 				goto cleanup;
 			}
 

@@ -1160,12 +1160,14 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
     if (self->setter) {
         if (!ast_global_codegen(self->setter, func->owner, false) ||
-            !ast_function_codegen(self->setter->constval.vfunc, func->owner))
+            !ast_function_codegen(self->setter->constval.vfunc, func->owner) ||
+            !ir_function_finalize(self->setter->constval.vfunc->ir_func))
             return false;
     }
     if (self->getter) {
         if (!ast_global_codegen(self->getter, func->owner, false) ||
-            !ast_function_codegen(self->getter->constval.vfunc, func->owner))
+            !ast_function_codegen(self->getter->constval.vfunc, func->owner) ||
+            !ir_function_finalize(self->getter->constval.vfunc->ir_func))
             return false;
     }
     return true;

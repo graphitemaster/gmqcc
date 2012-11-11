@@ -3586,7 +3586,8 @@ bool parser_finish(const char *output)
             asvalue = (ast_value*)(parser->globals[i].var);
             if (asvalue->setter) {
                 if (!ast_global_codegen(asvalue->setter, ir, false) ||
-                    !ast_function_codegen(asvalue->setter->constval.vfunc, ir))
+                    !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
+                    !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
                 {
                     printf("failed to generate setter for %s\n", parser->globals[i].name);
                     ir_builder_delete(ir);
@@ -3595,7 +3596,8 @@ bool parser_finish(const char *output)
             }
             if (asvalue->getter) {
                 if (!ast_global_codegen(asvalue->getter, ir, false) ||
-                    !ast_function_codegen(asvalue->getter->constval.vfunc, ir))
+                    !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
+                    !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
                 {
                     printf("failed to generate getter for %s\n", parser->globals[i].name);
                     ir_builder_delete(ir);
