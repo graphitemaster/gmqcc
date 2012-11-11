@@ -1244,9 +1244,9 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
     ast_expression_codegen *cgen;
     ir_value *left, *right;
 
-    ast_array_index *ai;
     ast_value       *arr;
     ast_value       *idx;
+    ast_array_index *ai = NULL;
 
     if (lvalue && self->expression.outl) {
         *out = self->expression.outl;
