@@ -2354,7 +2354,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     lex_ctx    ctx;
 
     const char *name = NULL;
-    bool        isfield = false;
+    bool        isfield  = false;
+    bool        wasarray = false;
 
     ctx = parser_ctx(parser);
 
@@ -2420,6 +2421,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
 
     /* now this may be an array */
     if (parser->tok == '[') {
+        wasarray = true;
         var = parse_arraysize(parser, var);
         if (!var)
             return NULL;
@@ -2436,6 +2438,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     /* now there may be function parens again */
     if (parser->tok == '(' && opts_standard == COMPILER_QCC)
         parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
+    if (parser->tok == '(' && wasarray)
+        parseerror(parser, "arrays as part of a return type is not supported");
     while (parser->tok == '(') {
         var = parse_parameter_list(parser, var);
         if (!var) {
@@ -2512,7 +2516,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
         if (parser->tok == '(' && wasarray) {
-            parseerror(parser, "functions cannot return arrays");
+            parseerror(parser, "arrays as part of a return type is not supported");
             /* we'll still parse the type completely for now */
         }
         /* for functions returning functions */
