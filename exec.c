@@ -50,6 +50,8 @@ MEM_VEC_FUN_RESIZE(qc_program,  size_t, profile)
 
 MEM_VEC_FUNCTIONS(qc_program,   prog_builtin, builtins)
 
+MEM_VEC_FUNCTIONS(qc_program,   const char*, function_stack)
+
 static void loaderror(const char *fmt, ...)
 {
     int     err = errno;
@@ -417,6 +419,12 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
         printf("<illegal instruction %d>\n", st->opcode);
         return;
     }
+    if ((prog->xflags & VMXF_TRACE) && prog->function_stack_count) {
+        size_t i;
+        for (i = 0; i < prog->function_stack_count; ++i)
+            printf("->");
+        printf("%s:", prog->function_stack[prog->function_stack_count-1]);
+    }
     printf(" <> %-12s", asm_instr[st->opcode].m);
     if (st->opcode >= INSTR_IF &&
         st->opcode <= INSTR_IFNOT)
@@ -514,6 +522,10 @@ static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
     st.stmt     = prog->statement;
     st.function = func;
 
+    if (prog->xflags & VMXF_TRACE) {
+        (void)!qc_program_function_stack_add(prog, prog_getstring(prog, func->name));
+    }
+
 #ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS
     if (prog->stack_count)
     {
@@ -565,6 +577,11 @@ static qcint prog_leavefunction(qc_program *prog)
     size_t oldsp;
 
     qc_exec_stack st = prog->stack[prog->stack_count-1];
+
+    if (prog->xflags & VMXF_TRACE) {
+        if (prog->function_stack_count)
+            prog->function_stack_count--;
+    }
 
 #ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS
     if (prog->stack_count > 1) {
