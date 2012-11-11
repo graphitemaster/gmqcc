@@ -427,6 +427,7 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
     else if (st->opcode >= INSTR_CALL0 &&
              st->opcode <= INSTR_CALL8)
     {
+        trace_print_global(prog, st->o1.u1, TYPE_FUNCTION);
         printf("\n");
     }
     else if (st->opcode == INSTR_GOTO)
