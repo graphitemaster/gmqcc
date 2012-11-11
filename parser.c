@@ -2266,6 +2266,60 @@ on_error:
     return NULL;
 }
 
+static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
+{
+    ast_expression *cexp;
+    ast_value      *cval, *tmp;
+    lex_ctx ctx;
+
+    ctx = parser_ctx(parser);
+
+    if (!parser_next(parser)) {
+        ast_delete(var);
+        parseerror(parser, "expected array-size");
+        return NULL;
+    }
+
+    cexp = parse_expression_leave(parser, true);
+
+    if (!cexp || !ast_istype(cexp, ast_value)) {
+        if (cexp)
+            ast_delete(cexp);
+        ast_delete(var);
+        parseerror(parser, "expected array-size as constant positive integer");
+        return NULL;
+    }
+    cval = (ast_value*)cexp;
+
+    tmp = ast_value_new(ctx, "<type[]>", TYPE_ARRAY);
+    tmp->expression.next = (ast_expression*)var;
+    var = tmp;
+
+    if (cval->expression.vtype == TYPE_INTEGER)
+        tmp->expression.count = cval->constval.vint;
+    else if (cval->expression.vtype == TYPE_FLOAT)
+        tmp->expression.count = cval->constval.vfloat;
+    else {
+        ast_delete(cexp);
+        ast_delete(var);
+        parseerror(parser, "array-size must be a positive integer constant");
+        return NULL;
+    }
+    ast_delete(cexp);
+
+    if (parser->tok != ']') {
+        ast_delete(var);
+        parseerror(parser, "expected ']' after array-size");
+        return NULL;
+    }
+    if (!parser_next(parser)) {
+        ast_delete(var);
+        parseerror(parser, "error after parsing array size");
+        return NULL;
+    }
+    return var;
+}
+
 /* Parse a complete typename.
  * for single-variables (ie. function parameters or typedefs) storebase should be NULL
  * but when parsing variables separated by comma
@@ -2352,42 +2406,9 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
 
     /* now this may be an array */
     if (parser->tok == '[') {
-        ast_expression *cexp = parse_expression_leave(parser, true);
-        ast_value      *cval;
-        if (!cexp || !ast_istype(cexp, ast_value)) {
-            if (cexp) ast_delete(cexp);
-            ast_delete(var);
-            parseerror(parser, "expected array-size as constant positive integer");
+        var = parse_arraysize(parser, var);
+        if (!var)
             return NULL;
-        }
-        cval = (ast_value*)cexp;
-
-        tmp = ast_value_new(ctx, "<type[]>", TYPE_ARRAY);
-        tmp->expression.next = (ast_expression*)var;
-        var = tmp;
-
-        if (cval->expression.vtype == TYPE_INTEGER)
-            tmp->expression.count = cval->constval.vint;
-        else if (cval->expression.vtype == TYPE_FLOAT)
-            tmp->expression.count = cval->constval.vfloat;
-        else {
-            ast_delete(cexp);
-            ast_delete(var);
-            parseerror(parser, "array-size must be a positive integer constant");
-            return NULL;
-        }
-        ast_delete(cexp);
-
-        if (parser->tok != ']') {
-            ast_delete(var);
-            parseerror(parser, "expected ']' after array-size");
-            return NULL;
-        }
-        if (!parser_next(parser)) {
-            ast_delete(var);
-            parseerror(parser, "error after parsing array size");
-            return NULL;
-        }
     }
 
     /* This is the point where we can turn it into a field */
@@ -2438,6 +2459,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     bool      isparam   = false;
     bool      isvector  = false;
     bool      cleanvar  = true;
+    bool      wasarray  = false;
 
     varentry_t varent, ve[3];
 
@@ -2454,8 +2476,32 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
     while (true) {
         proto = NULL;
+        wasarray = false;
 
         /* Part 0: finish the type */
+        if (parser->tok == '(') {
+            if (opts_standard == COMPILER_QCC)
+                parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
+            var = parse_parameter_list(parser, var);
+            if (!var) {
+                retval = false;
+                goto cleanup;
+            }
+        }
+        /* we only allow 1-dimensional arrays */
+        if (parser->tok == '[') {
+            wasarray = true;
+            var = parse_arraysize(parser, var);
+            if (!var) {
+                retval = false;
+                goto cleanup;
+            }
+        }
+        if (parser->tok == '(' && wasarray) {
+            parseerror(parser, "functions cannot return arrays");
+            /* we'll still parse the type completely for now */
+        }
+        /* for functions returning functions */
         while (parser->tok == '(') {
             if (opts_standard == COMPILER_QCC)
                 parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
