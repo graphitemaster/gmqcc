@@ -968,6 +968,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
         ast_expression_common *elemtype = &self->expression.next->expression;
         int vtype = elemtype->vtype;
+
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
         if (!self->expression.count || self->expression.count > opts_max_array_size) {
             asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
@@ -1070,18 +1071,65 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         return false;
     }
 
-    if (self->expression.vtype == TYPE_ARRAY)
-    {
-        asterror(ast_ctx(self), "TODO: ast_local_codgen for TYPE_ARRAY");
-        return false;
-    }
+    if (self->expression.vtype == TYPE_ARRAY) {
+        size_t ai;
+        char   *name;
+        size_t  namelen;
 
-    v = ir_function_create_local(func, self->name, self->expression.vtype, param);
-    if (!v)
-        return false;
-    if (self->expression.vtype == TYPE_FIELD)
-        v->fieldtype = self->expression.next->expression.vtype;
-    v->context = ast_ctx(self);
+        ast_expression_common *elemtype = &self->expression.next->expression;
+        int vtype = elemtype->vtype;
+
+        if (param) {
+            asterror(ast_ctx(self), "array-parameters are not supported");
+            return false;
+        }
+
+        /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
+        if (!self->expression.count || self->expression.count > opts_max_array_size) {
+            asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+        }
+
+        self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
+        if (!self->ir_values) {
+            asterror(ast_ctx(self), "failed to allocate array values");
+            return false;
+        }
+
+        v = ir_function_create_local(func, self->name, vtype, param);
+        if (!v) {
+            asterror(ast_ctx(self), "ir_function_create_local failed");
+            return false;
+        }
+        if (vtype == TYPE_FIELD)
+            v->fieldtype = elemtype->next->expression.vtype;
+        v->context = ast_ctx(self);
+
+        namelen = strlen(self->name);
+        name    = (char*)mem_a(namelen + 16);
+        strcpy(name, self->name);
+
+        self->ir_values[0] = v;
+        for (ai = 1; ai < self->expression.count; ++ai) {
+            snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+            self->ir_values[ai] = ir_function_create_local(func, name, vtype, param);
+            if (!self->ir_values[ai]) {
+                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                return false;
+            }
+            if (vtype == TYPE_FIELD)
+                self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+            self->ir_values[ai]->context = ast_ctx(self);
+        }
+    }
+    else
+    {
+        v = ir_function_create_local(func, self->name, self->expression.vtype, param);
+        if (!v)
+            return false;
+        if (self->expression.vtype == TYPE_FIELD)
+            v->fieldtype = self->expression.next->expression.vtype;
+        v->context = ast_ctx(self);
+    }
 
     /* A constant local... hmmm...
      * I suppose the IR will have to deal with this
@@ -1109,6 +1157,17 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
     /* link us to the ir_value */
     self->ir_v = v;
+
+    if (self->setter) {
+        if (!ast_global_codegen(self->setter, func->owner, false) ||
+            !ast_function_codegen(self->setter->constval.vfunc, func->owner))
+            return false;
+    }
+    if (self->getter) {
+        if (!ast_global_codegen(self->getter, func->owner, false) ||
+            !ast_function_codegen(self->getter->constval.vfunc, func->owner))
+            return false;
+    }
     return true;
 
 error: /* clean up */
