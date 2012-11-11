@@ -375,7 +375,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
             len = printf("$");
         else
             len = printf("%s ", name);
-        vtype = def->type;
+        vtype = def->type & DEF_TYPEMASK;
     }
     else
         len = printf("[@%u] ", glob);
