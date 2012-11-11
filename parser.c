@@ -326,6 +326,10 @@ typedef struct
 MEM_VEC_FUNCTIONS(shunt, sy_elem, out)
 MEM_VEC_FUNCTIONS(shunt, sy_elem, ops)
 
+#define SY_PAREN_EXPR '('
+#define SY_PAREN_FUNC 'f'
+#define SY_PAREN_INDEX '['
+
 static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     sy_elem e;
     e.etype = 0;
@@ -986,12 +990,12 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
     }
     */
     while (sy->ops_count) {
-        if (sy->ops[sy->ops_count-1].paren == 'f') {
+        if (sy->ops[sy->ops_count-1].paren == SY_PAREN_FUNC) {
             if (!parser_close_call(parser, sy))
                 return false;
             break;
         }
-        if (sy->ops[sy->ops_count-1].paren == 1) {
+        if (sy->ops[sy->ops_count-1].paren == SY_PAREN_EXPR) {
             sy->ops_count--;
             return !functions_only;
         }
@@ -1253,13 +1257,13 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     DEBUGSHUNTDO(printf("push [op] (\n"));
                     ++parens;
                     /* we expected an operator, this is the function-call operator */
-                    if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
+                    if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), SY_PAREN_FUNC, sy.out_count-1))) {
                         parseerror(parser, "out of memory");
                         goto onerr;
                     }
                 } else {
                     ++parens;
-                    if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 1, 0))) {
+                    if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), SY_PAREN_EXPR, 0))) {
                         parseerror(parser, "out of memory");
                         goto onerr;
                     }
