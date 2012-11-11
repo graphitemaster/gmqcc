@@ -867,6 +867,8 @@ int lex_do(lex_file *lex)
         case '{':
         case '}':
         case '[':
+            if (!lex->flags.noops)
+                return (lex->tok.ttype = TOKEN_OPERATOR);
         case ']':
 
         case '#':

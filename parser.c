@@ -999,6 +999,10 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
             sy->ops_count--;
             return !functions_only;
         }
+        if (sy->ops[sy->ops_count-1].paren == SY_PAREN_INDEX) {
+            sy->ops_count--;
+            return true;
+        }
         if (!parser_sy_pop(parser, sy))
             return false;
     }
@@ -1183,6 +1187,16 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             }
             wantop = true;
         }
+        else if (parser->tok == ']') {
+            if (!wantop)
+                parseerror(parser, "operand expected");
+            --parens;
+            if (parens < 0)
+                break;
+            if (!parser_close_paren(parser, &sy, false))
+                goto onerr;
+            wantop = true;
+        }
         else if (parser->tok != TOKEN_OPERATOR) {
             if (wantop) {
                 parseerror(parser, "expected operator or end of statement");
@@ -1270,6 +1284,16 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     DEBUGSHUNTDO(printf("push [nop] (\n"));
                 }
                 wantop = false;
+            } else if (op->id == opid1('[')) {
+                if (!wantop) {
+                    parseerror(parser, "unexpected array subscript");
+                    goto onerr;
+                }
+                ++parens;
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0))) {
+                    parseerror(parser, "out of memory");
+                    goto onerr;
+                }
             } else {
                 DEBUGSHUNTDO(printf("push operator %s\n", op->op));
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
