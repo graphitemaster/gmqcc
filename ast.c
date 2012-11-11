@@ -276,6 +276,17 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             buf[pos++] = ')';
             return pos;
 
+        case TYPE_ARRAY:
+            pos = ast_type_to_string_impl(e->expression.next, buf, bufsize, pos);
+            if (pos + 1 >= bufsize)
+                goto full;
+            buf[pos++] = '[';
+            pos += snprintf(buf + pos, bufsize - pos - 1, "%i", (int)e->expression.count);
+            if (pos + 1 >= bufsize)
+                goto full;
+            buf[pos++] = ']';
+            return pos;
+
         default:
             typestr = type_name[e->expression.vtype];
             typelen = strlen(typestr);
@@ -340,6 +351,8 @@ void ast_value_delete(ast_value* self)
             break;
         }
     }
+    if (self->ir_values)
+        mem_d(self->ir_values);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
@@ -911,12 +924,47 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
     if (self->expression.vtype == TYPE_ARRAY) {
         size_t ai;
+        char   *name;
+        size_t  namelen;
+
+        ast_expression_common *elemtype = &self->expression.next->expression;
+        int vtype = elemtype->vtype;
+printf("Generating `%s`\n", self->name);
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
         if (!self->expression.count || self->expression.count > opts_max_array_size) {
             asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
         }
-        for (ai = 0; ai < self->expression.count; ++ai) {
-            asterror(ast_ctx(self), "TODO: array gen");
+
+        self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
+        if (!self->ir_values) {
+            asterror(ast_ctx(self), "failed to allocate array values");
+            return false;
+        }
+
+        v = ir_builder_create_global(ir, self->name, vtype);
+        if (!v) {
+            asterror(ast_ctx(self), "ir_builder_create_global failed");
+            return false;
+        }
+        if (vtype == TYPE_FIELD)
+            v->fieldtype = elemtype->next->expression.vtype;
+        v->context = ast_ctx(self);
+
+        namelen = strlen(self->name);
+        name    = (char*)mem_a(namelen + 16);
+        strcpy(name, self->name);
+
+        self->ir_values[0] = v;
+        for (ai = 1; ai < self->expression.count; ++ai) {
+            snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+            self->ir_values[ai] = ir_builder_create_global(ir, name, vtype);
+            if (!self->ir_values[ai]) {
+                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                return false;
+            }
+            if (vtype == TYPE_FIELD)
+                self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+            self->ir_values[ai]->context = ast_ctx(self);
         }
     }
     else
