@@ -1537,47 +1537,42 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
         return false;
     }
 
-    if (!ast_istype(self->index, ast_value)) {
-        if (lvalue) {
-            asterror(ast_ctx(self), "array indexing here needs a compile-time constant");
-            return false;
-        } else {
-            /* Time to use accessor functions */
-            ast_expression_codegen *cgen;
-            ir_value               *iridx, *funval;
-            ir_instr               *call;
-
-            if (!arr->getter) {
-                asterror(ast_ctx(self), "value has no getter, don't know how to index it");
-                return false;
-            }
-
-            cgen = self->index->expression.codegen;
-            if (!(*cgen)((ast_expression*)(self->index), func, true, &iridx))
-                return false;
-
-            cgen = arr->getter->expression.codegen;
-            if (!(*cgen)((ast_expression*)(arr->getter), func, true, &funval))
-                return false;
-
-            call = ir_block_create_call(func->curblock, ast_function_label(func, "fetch"), funval);
-            if (!call)
-                return false;
-            if (!ir_call_param(call, iridx))
-                return false;
-
-            *out = ir_call_value(call);
-            self->expression.outr = *out;
-            return true;
-        }
-    }
-
     arr = (ast_value*)self->array;
     idx = (ast_value*)self->index;
 
-    if (!idx->isconst) {
-        asterror(ast_ctx(self), "(.2) array indexing here needs a compile-time constant");
-        return false;
+    if (!ast_istype(self->index, ast_value) || !idx->isconst) {
+        /* Time to use accessor functions */
+        ast_expression_codegen *cgen;
+        ir_value               *iridx, *funval;
+        ir_instr               *call;
+
+        if (lvalue) {
+            asterror(ast_ctx(self), "(.2) array indexing here needs a compile-time constant");
+            return false;
+        }
+
+        if (!arr->getter) {
+            asterror(ast_ctx(self), "value has no getter, don't know how to index it");
+            return false;
+        }
+
+        cgen = self->index->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->index), func, true, &iridx))
+            return false;
+
+        cgen = arr->getter->expression.codegen;
+        if (!(*cgen)((ast_expression*)(arr->getter), func, true, &funval))
+            return false;
+
+        call = ir_block_create_call(func->curblock, ast_function_label(func, "fetch"), funval);
+        if (!call)
+            return false;
+        if (!ir_call_param(call, iridx))
+            return false;
+
+        *out = ir_call_value(call);
+        self->expression.outr = *out;
+        return true;
     }
 
     if (idx->expression.vtype == TYPE_FLOAT)
