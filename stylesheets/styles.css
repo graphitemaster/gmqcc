@@ -222,6 +222,16 @@ header {
 	-webkit-font-smoothing: antialiased;
 }
 
+.fork {
+    background-image: url('https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png');
+    padding:0;
+    height:149px;
+    width:149px;
+    position:fixed;
+    right:0;
+    top:0;
+}
+
 p.header {
 	font-size: 16px;
 }
@@ -300,6 +310,11 @@ a.github {
 	background: url(../images/octocat-small.png) no-repeat 1px;
 }
 
+a.issues {
+    padding: 2px 2px 2px 21px;
+    background: url(../images/bug.png) no-repeat 0px;
+}
+
 a.buttons:hover {
 	color: #fff;
 	text-decoration: none;
@@ -311,7 +326,7 @@ a.buttons:hover {
 section {
   width:650px;
   float:right;
-  padding-bottom:50px;
+  padding-bottom:80px;
 }
 
 
@@ -322,7 +337,7 @@ footer {
   float:left;
   position:fixed;
   bottom:10px;
-	padding-left: 50px;
+	padding-left: 20px;
 }
 
 @media print, screen and (max-width: 960px) {
