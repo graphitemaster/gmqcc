@@ -2239,8 +2239,16 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
             param = parse_typename(parser, NULL);
             if (!param)
                 goto on_error;
-            if (!paramlist_t_p_add(&params, param))
+            if (!paramlist_t_p_add(&params, param)) {
+                ast_delete(param);
                 goto on_error;
+            }
+            if (param->expression.vtype >= TYPE_VARIANT) {
+                char typename[1024];
+                ast_type_to_string((ast_expression*)param, typename, sizeof(typename));
+                parseerror(parser, "type not supported as part of a parameter list: %s", typename);
+                goto on_error;
+            }
         }
     }
 
