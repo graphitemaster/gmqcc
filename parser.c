@@ -2219,7 +2219,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             }
             ve[e].var = NULL; /* collected */
         }
-        if (e != e) {
+        if (e != 3) {
             parser->locals -= e;
             do {
                 mem_d(ve[e].name);
