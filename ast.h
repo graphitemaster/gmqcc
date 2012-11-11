@@ -162,6 +162,8 @@ struct ast_value_s
     size_t uses;
 
     ir_value *ir_v;
+    ir_value **ir_values;
+    size_t   ir_value_count;
 };
 
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);

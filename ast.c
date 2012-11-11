@@ -312,7 +312,9 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->uses    = 0;
     memset(&self->constval, 0, sizeof(self->constval));
 
-    self->ir_v    = NULL;
+    self->ir_v           = NULL;
+    self->ir_values      = NULL;
+    self->ir_value_count = 0;
 
     return self;
 }
