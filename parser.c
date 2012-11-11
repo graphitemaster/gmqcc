@@ -1000,7 +1000,13 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
             return !functions_only;
         }
         if (sy->ops[sy->ops_count-1].paren == SY_PAREN_INDEX) {
+            if (functions_only)
+                return false;
+            /* pop off the parenthesis */
             sy->ops_count--;
+            /* then apply the index operator */
+            if (!parser_sy_pop(parser, sy))
+                return false;
             return true;
         }
         if (!parser_sy_pop(parser, sy))
@@ -1290,10 +1296,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     goto onerr;
                 }
                 ++parens;
-                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0))) {
-                    parseerror(parser, "out of memory");
+                /* push both the operator and the paren, this makes life easier */
+                if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
                     goto onerr;
-                }
+                if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0)))
+                    goto onerr;
+                wantop = false;
             } else {
                 DEBUGSHUNTDO(printf("push operator %s\n", op->op));
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
@@ -1304,7 +1312,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         if (!parser_next(parser)) {
             goto onerr;
         }
-        if (parser->tok == ';' || parser->tok == ']') {
+        if (parser->tok == ';' || (!parens && parser->tok == ']')) {
             break;
         }
     }
