@@ -2284,7 +2284,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
 
     if (!cexp || !ast_istype(cexp, ast_value)) {
         if (cexp)
-            ast_delete(cexp);
+            ast_unref(cexp);
         ast_delete(var);
         parseerror(parser, "expected array-size as constant positive integer");
         return NULL;
@@ -2300,12 +2300,12 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
     else if (cval->expression.vtype == TYPE_FLOAT)
         tmp->expression.count = cval->constval.vfloat;
     else {
-        ast_delete(cexp);
+        ast_unref(cexp);
         ast_delete(var);
         parseerror(parser, "array-size must be a positive integer constant");
         return NULL;
     }
-    ast_delete(cexp);
+    ast_unref(cexp);
 
     if (parser->tok != ']') {
         ast_delete(var);
