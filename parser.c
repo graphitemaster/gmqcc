@@ -387,6 +387,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     size_t i, assignop;
     qcint  generated_op = 0;
 
+    char ty1[1024];
+    char ty2[1024];
+
     if (!sy->ops_count) {
         parseerror(parser, "internal error: missing operator");
         return false;
@@ -759,8 +762,6 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 else
                     assignop = type_storep_instr[exprs[0]->expression.vtype];
                 if (!ast_compare_type(field->expression.next, exprs[1])) {
-                    char ty1[1024];
-                    char ty2[1024];
                     ast_type_to_string(field->expression.next, ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (opts_standard == COMPILER_QCC &&
@@ -785,11 +786,16 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 {
                     assignop = type_store_instr[TYPE_VECTOR];
                 }
-                else
+                else {
                     assignop = type_store_instr[exprs[0]->expression.vtype];
-                if (!ast_compare_type(exprs[0], exprs[1])) {
-                    char ty1[1024];
-                    char ty2[1024];
+                }
+
+                if (assignop == AINSTR_END) {
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                }
+                else if (!ast_compare_type(exprs[0], exprs[1])) {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (opts_standard == COMPILER_QCC &&
