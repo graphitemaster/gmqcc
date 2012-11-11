@@ -166,6 +166,10 @@ struct ast_value_s
     ir_value *ir_v;
     ir_value **ir_values;
     size_t   ir_value_count;
+
+    /* ONLY for arrays in progs version up to 6 */
+    ast_value *setter;
+    ast_value *getter;
 };
 
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int qctype);

@@ -2327,7 +2327,6 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
     ast_value      *fval = NULL;
     ast_block      *body;
     ast_value      *index, *value;
-    varentry_t     entry;
 
     if (!ast_istype(array->expression.next, ast_value)) {
         parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
@@ -2389,14 +2388,7 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
     if (!ast_function_blocks_add(func, body))
         goto cleanup2;
 
-    entry.name = util_strdup(funcname);
-    entry.var  = (ast_expression*)fval;
-    if (!parser_t_globals_add(parser, entry)) {
-        mem_d(entry.name);
-        goto cleanup2;
-    }
-    if (!parser_t_functions_add(parser, func))
-        goto cleanup2;
+    array->setter = fval;
 
     return true;
 cleanup:
@@ -2417,7 +2409,6 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     ast_value      *fval = NULL;
     ast_block      *body;
     ast_value      *index;
-    varentry_t     entry;
 
     if (!ast_istype(array->expression.next, ast_value)) {
         parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
@@ -2471,14 +2462,7 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     if (!ast_function_blocks_add(func, body))
         goto cleanup2;
 
-    entry.name = util_strdup(funcname);
-    entry.var  = (ast_expression*)fval;
-    if (!parser_t_globals_add(parser, entry)) {
-        mem_d(entry.name);
-        goto cleanup2;
-    }
-    if (!parser_t_functions_add(parser, func))
-        goto cleanup2;
+    array->getter = fval;
 
     return true;
 cleanup:
@@ -3543,6 +3527,30 @@ bool parser_finish(const char *output)
                 printf("failed to generate global %s\n", parser->imm_vector[i]->name);
                 ir_builder_delete(ir);
                 return false;
+            }
+        }
+        for (i = 0; i < parser->globals_count; ++i) {
+            ast_value *asvalue;
+            if (!ast_istype(parser->globals[i].var, ast_value))
+                continue;
+            asvalue = (ast_value*)(parser->globals[i].var);
+            if (asvalue->setter) {
+                if (!ast_global_codegen(asvalue->setter, ir, false) ||
+                    !ast_function_codegen(asvalue->setter->constval.vfunc, ir))
+                {
+                    printf("failed to generate setter for %s\n", parser->globals[i].name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+            }
+            if (asvalue->getter) {
+                if (!ast_global_codegen(asvalue->getter, ir, false) ||
+                    !ast_function_codegen(asvalue->getter->constval.vfunc, ir))
+                {
+                    printf("failed to generate getter for %s\n", parser->globals[i].name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
             }
         }
         for (i = 0; i < parser->functions_count; ++i) {

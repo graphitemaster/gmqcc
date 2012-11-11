@@ -327,6 +327,9 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->ir_values      = NULL;
     self->ir_value_count = 0;
 
+    self->setter = NULL;
+    self->getter = NULL;
+
     return self;
 }
 
@@ -918,7 +921,9 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * on all the globals.
      */
     if (!self->ir_v) {
-        asterror(ast_ctx(self), "ast_value used before generated (%s)", self->name);
+        char typename[1024];
+        ast_type_to_string((ast_expression*)self, typename, sizeof(typename));
+        asterror(ast_ctx(self), "ast_value used before generated %s %s", typename, self->name);
         return false;
     }
     *out = self->ir_v;
@@ -928,6 +933,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
+
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
     {
         ir_function *func = ir_builder_create_function(ir, self->name, self->expression.next->expression.vtype);
