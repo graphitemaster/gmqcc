@@ -852,6 +852,7 @@ int lex_do(lex_file *lex)
     /* single-character tokens */
     switch (ch)
     {
+        case '[':
         case '(':
             if (!lex_tokench(lex, ch) ||
                 !lex_endtoken(lex))
@@ -866,14 +867,6 @@ int lex_do(lex_file *lex)
         case ';':
         case '{':
         case '}':
-        case '[':
-            if (!lex_tokench(lex, ch) ||
-                !lex_endtoken(lex))
-            {
-                return (lex->tok.ttype = TOKEN_FATAL);
-            }
-            if (!lex->flags.noops)
-                return (lex->tok.ttype = TOKEN_OPERATOR);
         case ']':
 
         case '#':
