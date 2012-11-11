@@ -460,7 +460,7 @@ int main(int argc, char **argv) {
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
 
-            if (!parser_compile(items_data[itr].filename)) {
+            if (!parser_compile_file(items_data[itr].filename)) {
                 retval = 1;
                 goto cleanup;
             }
@@ -500,7 +500,7 @@ int main(int argc, char **argv) {
             if (!line[0] || (line[0] == '/' && line[1] == '/'))
                 continue;
             printf("  src: %s\n", line);
-            if (!parser_compile(line)) {
+            if (!parser_compile_file(line)) {
                 retval = 1;
                 goto srcdone;
             }

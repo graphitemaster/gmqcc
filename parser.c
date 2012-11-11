@@ -2840,14 +2840,8 @@ bool parser_init()
     return true;
 }
 
-bool parser_compile(const char *filename)
+bool parser_compile()
 {
-    parser->lex = lex_open(filename);
-    if (!parser->lex) {
-        printf("failed to open file \"%s\"\n", filename);
-        return false;
-    }
-
     /* initial lexer/parser state */
     parser->lex->flags.noops = true;
 
@@ -2876,6 +2870,26 @@ bool parser_compile(const char *filename)
     parser->lex = NULL;
 
     return !parser->errors;
+}
+
+bool parser_compile_file(const char *filename)
+{
+    parser->lex = lex_open(filename);
+    if (!parser->lex) {
+        printf("failed to open file \"%s\"\n", filename);
+        return false;
+    }
+    return parser_compile();
+}
+
+bool parser_compile_string(const char *name, const char *str)
+{
+    parser->lex = lex_open_string(str, strlen(str), name);
+    if (!parser->lex) {
+        printf("failed to create lexer for string \"%s\"\n", name);
+        return false;
+    }
+    return parser_compile();
 }
 
 void parser_cleanup()

@@ -939,10 +939,11 @@ void cprintmsg (lex_ctx ctx, int lvl, const char *msgtype, const char *msg, ...)
 /*===================== parser.c commandline ========================*/
 /*===================================================================*/
 
-bool parser_init   ();
-bool parser_compile(const char *filename);
-bool parser_finish (const char *output);
-void parser_cleanup();
+bool parser_init          ();
+bool parser_compile_file  (const char *filename);
+bool parser_compile_string(const char *name, const char *str);
+bool parser_finish        (const char *output);
+void parser_cleanup       ();
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
