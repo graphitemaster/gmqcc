@@ -463,6 +463,20 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             }
             break;
 
+        case opid1('['):
+            if (exprs[0]->expression.vtype != TYPE_ARRAY) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                parseerror(parser, "cannot index value of type %s", ty1);
+                return false;
+            }
+            if (exprs[1]->expression.vtype != TYPE_FLOAT) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                parseerror(parser, "index must be of type float, not %s", ty1);
+                return false;
+            }
+            out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
+            break;
+
         case opid1(','):
             if (blocks[0]) {
                 if (!ast_block_exprs_add(blocks[0], exprs[1]))
