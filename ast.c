@@ -909,14 +909,30 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         return true;
     }
 
-    v = ir_builder_create_global(ir, self->name, self->expression.vtype);
-    if (!v) {
-        asterror(ast_ctx(self), "ir_builder_create_global failed");
-        return false;
+    if (self->expression.vtype == TYPE_ARRAY) {
+        size_t ai;
+        /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
+        if (!self->expression.count || self->expression.count > opts_max_array_size) {
+            asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+        }
+        for (ai = 0; ai < self->expression.count; ++ai) {
+            asterror(ast_ctx(self), "TODO: array gen");
+        }
     }
-    if (self->expression.vtype == TYPE_FIELD)
-        v->fieldtype = self->expression.next->expression.vtype;
-    v->context = ast_ctx(self);
+    else
+    {
+        /* Arrays don't do this since there's no "array" value which spans across the
+         * whole thing.
+         */
+        v = ir_builder_create_global(ir, self->name, self->expression.vtype);
+        if (!v) {
+            asterror(ast_ctx(self), "ir_builder_create_global failed");
+            return false;
+        }
+        if (self->expression.vtype == TYPE_FIELD)
+            v->fieldtype = self->expression.next->expression.vtype;
+        v->context = ast_ctx(self);
+    }
 
     if (self->isconst) {
         switch (self->expression.vtype)
@@ -932,6 +948,9 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             case TYPE_STRING:
                 if (!ir_value_set_string(v, self->constval.vstring))
                     goto error;
+                break;
+            case TYPE_ARRAY:
+                asterror(ast_ctx(self), "TODO: global constant array");
                 break;
             case TYPE_FUNCTION:
                 asterror(ast_ctx(self), "global of type function not properly generated");
@@ -962,6 +981,12 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         /* Do we allow local functions? I think not...
          * this is NOT a function pointer atm.
          */
+        return false;
+    }
+
+    if (self->expression.vtype == TYPE_ARRAY)
+    {
+        asterror(ast_ctx(self), "TODO: ast_local_codgen for TYPE_ARRAY");
         return false;
     }
 

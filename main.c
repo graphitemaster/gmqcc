@@ -35,6 +35,7 @@ bool        opts_dump     = false;
 bool        opts_werror   = false;
 bool        opts_forcecrc = false;
 bool        opts_pp_only  = false;
+size_t      opts_max_array_size = 1024;
 
 uint16_t    opts_forced_crc;
 
