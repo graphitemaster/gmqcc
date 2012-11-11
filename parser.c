@@ -2180,6 +2180,317 @@ enderr:
     return false;
 }
 
+static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast_value *index, ast_value *value, size_t from, size_t afterend)
+{
+    lex_ctx ctx = ast_ctx(array);
+
+    if (from+1 == afterend) {
+        // set this value
+        ast_block       *block;
+        ast_return      *ret;
+        ast_array_index *subscript;
+        int assignop = type_store_instr[value->expression.vtype];
+
+        if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
+            assignop = INSTR_STORE_V;
+
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser_const_float(parser, from));
+        if (!subscript)
+            return NULL;
+
+        ast_store *st = ast_store_new(ctx, assignop, (ast_expression*)subscript, (ast_expression*)value);
+        if (!st) {
+            ast_delete(subscript);
+            return NULL;
+        }
+
+        block = ast_block_new(ctx);
+        if (!block) {
+            ast_delete(st);
+            return NULL;
+        }
+
+        if (!ast_block_exprs_add(block, (ast_expression*)st)) {
+            ast_delete(block);
+            return NULL;
+        }
+
+        ret = ast_return_new(ctx, NULL);
+        if (!ret) {
+            ast_delete(block);
+            return NULL;
+        }
+
+        if (!ast_block_exprs_add(block, (ast_expression*)ret)) {
+            ast_delete(block);
+            return NULL;
+        }
+
+        return (ast_expression*)block;
+    } else {
+        ast_ifthen *ifthen;
+        ast_expression *left, *right;
+        ast_binary *cmp;
+
+        size_t diff = afterend - from;
+        size_t middle = from + diff/2;
+
+        left  = array_setter_node(parser, array, index, value, from, middle);
+        right = array_setter_node(parser, array, index, value, middle, afterend);
+        if (!left || !right) {
+            if (left)  ast_delete(left);
+            if (right) ast_delete(right);
+            return NULL;
+        }
+
+        cmp = ast_binary_new(ctx, INSTR_LT,
+                             (ast_expression*)index,
+                             (ast_expression*)parser_const_float(parser, from + diff/2));
+        if (!cmp) {
+            ast_delete(left);
+            ast_delete(right);
+            parseerror(parser, "internal error: failed to create comparison for array setter");
+            return NULL;
+        }
+
+        ifthen = ast_ifthen_new(ctx, (ast_expression*)cmp, left, right);
+        if (!ifthen) {
+            ast_delete(cmp); /* will delete left and right */
+            parseerror(parser, "internal error: failed to create conditional jump for array setter");
+            return NULL;
+        }
+
+        return (ast_expression*)ifthen;
+    }
+}
+
+static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast_value *index, size_t from, size_t afterend)
+{
+    lex_ctx ctx = ast_ctx(array);
+
+    if (from+1 == afterend) {
+        ast_return      *ret;
+        ast_array_index *subscript;
+
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser_const_float(parser, from));
+        if (!subscript)
+            return NULL;
+
+        ret = ast_return_new(ctx, (ast_expression*)subscript);
+        if (!ret) {
+            ast_delete(subscript);
+            return NULL;
+        }
+
+        return (ast_expression*)ret;
+    } else {
+        ast_ifthen *ifthen;
+        ast_expression *left, *right;
+        ast_binary *cmp;
+
+        size_t diff = afterend - from;
+        size_t middle = from + diff/2;
+
+        left  = array_getter_node(parser, array, index, from, middle);
+        right = array_getter_node(parser, array, index, middle, afterend);
+        if (!left || !right) {
+            if (left)  ast_delete(left);
+            if (right) ast_delete(right);
+            return NULL;
+        }
+
+        cmp = ast_binary_new(ctx, INSTR_LT,
+                             (ast_expression*)index,
+                             (ast_expression*)parser_const_float(parser, from + diff/2));
+        if (!cmp) {
+            ast_delete(left);
+            ast_delete(right);
+            parseerror(parser, "internal error: failed to create comparison for array setter");
+            return NULL;
+        }
+
+        ifthen = ast_ifthen_new(ctx, (ast_expression*)cmp, left, right);
+        if (!ifthen) {
+            ast_delete(cmp); /* will delete left and right */
+            parseerror(parser, "internal error: failed to create conditional jump for array setter");
+            return NULL;
+        }
+
+        return (ast_expression*)ifthen;
+    }
+}
+
+static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
+{
+    ast_expression *root = NULL;
+    ast_function   *func = NULL;
+    ast_value      *fval = NULL;
+    ast_block      *body;
+    ast_value      *index, *value;
+    varentry_t     entry;
+
+    if (!ast_istype(array->expression.next, ast_value)) {
+        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
+        return false;
+    }
+
+    body = ast_block_new(ast_ctx(array));
+    if (!body) {
+        parseerror(parser, "failed to create block for array accessor");
+        return false;
+    }
+
+    index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
+    value = ast_value_copy((ast_value*)array->expression.next);
+
+    if (!index || !value) {
+        ast_delete(body);
+        if (index) ast_delete(index);
+        if (value) ast_delete(value);
+        parseerror(parser, "failed to create locals for array accessor");
+        return false;
+    }
+
+    root = array_setter_node(parser, array, index, value, 0, array->expression.count);
+    if (!root) {
+        parseerror(parser, "failed to build accessor search tree");
+        goto cleanup;
+    }
+
+    if (!ast_block_exprs_add(body, root)) {
+        parseerror(parser, "failed to build accessor search block");
+        goto cleanup;
+    }
+
+    fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
+    if (!fval) {
+        parseerror(parser, "failed to create accessor function value");
+        goto cleanup;
+    }
+    fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
+
+    (void)!ast_value_set_name(value, "value"); /* not important */
+    if (!ast_expression_common_params_add(&fval->expression, index)) {
+        parseerror(parser, "failed to build array setter");
+        goto cleanup;
+    }
+    if (!ast_expression_common_params_add(&fval->expression, value)) {
+        ast_delete(index);
+        parseerror(parser, "failed to build array setter");
+        goto cleanup2;
+    }
+
+    func = ast_function_new(ast_ctx(array), funcname, fval);
+    if (!func) {
+        parseerror(parser, "failed to create accessor function node");
+        goto cleanup2;
+    }
+
+    if (!ast_function_blocks_add(func, body))
+        goto cleanup2;
+
+    entry.name = util_strdup(funcname);
+    entry.var  = (ast_expression*)fval;
+    if (!parser_t_globals_add(parser, entry)) {
+        mem_d(entry.name);
+        goto cleanup2;
+    }
+    if (!parser_t_functions_add(parser, func))
+        goto cleanup2;
+
+    return true;
+cleanup:
+    ast_delete(index);
+    ast_delete(value);
+cleanup2:
+    ast_delete(body);
+    if (root) ast_delete(root);
+    if (func) ast_delete(func);
+    if (fval) ast_delete(fval);
+    return false;
+}
+
+static bool parser_create_array_getter(parser_t *parser, ast_value *array, const char *funcname)
+{
+    ast_expression *root = NULL;
+    ast_function   *func = NULL;
+    ast_value      *fval = NULL;
+    ast_block      *body;
+    ast_value      *index;
+    varentry_t     entry;
+
+    if (!ast_istype(array->expression.next, ast_value)) {
+        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
+        return false;
+    }
+
+    body = ast_block_new(ast_ctx(array));
+    if (!body) {
+        parseerror(parser, "failed to create block for array accessor");
+        return false;
+    }
+
+    index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
+
+    if (!index) {
+        ast_delete(body);
+        if (index) ast_delete(index);
+        parseerror(parser, "failed to create locals for array accessor");
+        return false;
+    }
+
+    root = array_getter_node(parser, array, index, 0, array->expression.count);
+    if (!root) {
+        parseerror(parser, "failed to build accessor search tree");
+        goto cleanup;
+    }
+
+    if (!ast_block_exprs_add(body, root)) {
+        parseerror(parser, "failed to build accessor search block");
+        goto cleanup;
+    }
+
+    fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
+    if (!fval) {
+        parseerror(parser, "failed to create accessor function value");
+        goto cleanup;
+    }
+    fval->expression.next = ast_type_copy(ast_ctx(array), array->expression.next);
+
+    if (!ast_expression_common_params_add(&fval->expression, index)) {
+        parseerror(parser, "failed to build array setter");
+        goto cleanup;
+    }
+
+    func = ast_function_new(ast_ctx(array), funcname, fval);
+    if (!func) {
+        parseerror(parser, "failed to create accessor function node");
+        goto cleanup2;
+    }
+
+    if (!ast_function_blocks_add(func, body))
+        goto cleanup2;
+
+    entry.name = util_strdup(funcname);
+    entry.var  = (ast_expression*)fval;
+    if (!parser_t_globals_add(parser, entry)) {
+        mem_d(entry.name);
+        goto cleanup2;
+    }
+    if (!parser_t_functions_add(parser, func))
+        goto cleanup2;
+
+    return true;
+cleanup:
+    ast_delete(index);
+cleanup2:
+    ast_delete(body);
+    if (root) ast_delete(root);
+    if (func) ast_delete(func);
+    if (fval) ast_delete(fval);
+    return false;
+}
+
 typedef struct {
     MEM_VECTOR_MAKE(ast_value*, p);
 } paramlist_t;
@@ -2738,6 +3049,18 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             ve[0].name = ve[1].name = ve[2].name = NULL;
             ve[0].var  = ve[1].var  = ve[2].var  = NULL;
             cleanvar = false;
+        }
+        /* Part 2.2
+         * deal with arrays
+         */
+        if (var->expression.vtype == TYPE_ARRAY) {
+            char          name[1024];
+            snprintf(name, sizeof(name), "%s::SET", var->name);
+            if (!parser_create_array_setter(parser, var, name))
+                goto cleanup;
+            snprintf(name, sizeof(name), "%s::GET", var->name);
+            if (!parser_create_array_getter(parser, var, name))
+                goto cleanup;
         }
 
 skipvar:

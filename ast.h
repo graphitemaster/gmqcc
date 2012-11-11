@@ -31,20 +31,21 @@
 typedef union ast_node_u ast_node;
 typedef union ast_expression_u ast_expression;
 
-typedef struct ast_value_s      ast_value;
-typedef struct ast_function_s   ast_function;
-typedef struct ast_block_s      ast_block;
-typedef struct ast_binary_s     ast_binary;
-typedef struct ast_store_s      ast_store;
-typedef struct ast_binstore_s   ast_binstore;
-typedef struct ast_entfield_s   ast_entfield;
-typedef struct ast_ifthen_s     ast_ifthen;
-typedef struct ast_ternary_s    ast_ternary;
-typedef struct ast_loop_s       ast_loop;
-typedef struct ast_call_s       ast_call;
-typedef struct ast_unary_s      ast_unary;
-typedef struct ast_return_s     ast_return;
-typedef struct ast_member_s     ast_member;
+typedef struct ast_value_s       ast_value;
+typedef struct ast_function_s    ast_function;
+typedef struct ast_block_s       ast_block;
+typedef struct ast_binary_s      ast_binary;
+typedef struct ast_store_s       ast_store;
+typedef struct ast_binstore_s    ast_binstore;
+typedef struct ast_entfield_s    ast_entfield;
+typedef struct ast_ifthen_s      ast_ifthen;
+typedef struct ast_ternary_s     ast_ternary;
+typedef struct ast_loop_s        ast_loop;
+typedef struct ast_call_s        ast_call;
+typedef struct ast_unary_s       ast_unary;
+typedef struct ast_return_s      ast_return;
+typedef struct ast_member_s      ast_member;
+typedef struct ast_array_index_s ast_array_index;
 
 enum {
     TYPE_ast_node,
@@ -62,7 +63,8 @@ enum {
     TYPE_ast_call,
     TYPE_ast_unary,
     TYPE_ast_return,
-    TYPE_ast_member
+    TYPE_ast_member,
+    TYPE_ast_array_index
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
@@ -304,6 +306,27 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 void ast_member_delete(ast_member*);
 
 bool ast_member_codegen(ast_member*, ast_function*, bool lvalue, ir_value**);
+
+/* Array index access:
+ *
+ * QC forces us to take special action on arrays:
+ * an ast_store on an ast_array_index must not codegen the index,
+ * but call its setter - unless we have an instruction set which supports
+ * what we need.
+ * Any other array index access will be codegened to a call to the getter.
+ * In any case, accessing an element via a compiletime-constant index will
+ * result in quick access to that variable.
+ */
+struct ast_array_index_s
+{
+    ast_expression_common expression;
+    ast_expression *array;
+    ast_expression *index;
+};
+ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index);
+void ast_array_index_delete(ast_array_index*);
+
+bool ast_array_index_codegen(ast_array_index*, ast_function*, bool lvalue, ir_value**);
 
 /* Store
  *

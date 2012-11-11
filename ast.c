@@ -563,6 +563,39 @@ void ast_member_delete(ast_member *self)
     mem_d(self);
 }
 
+ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index)
+{
+    const ast_expression *outtype;
+    ast_instantiate(ast_array_index, ctx, ast_array_index_delete);
+
+    outtype = array->expression.next;
+    if (!outtype) {
+        mem_d(self);
+        /* Error: field has no type... */
+        return NULL;
+    }
+
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_array_index_codegen);
+
+    self->array = array;
+    self->index = index;
+
+    if (!ast_type_adopt(self, outtype)) {
+        ast_array_index_delete(self);
+        return NULL;
+    }
+
+    return self;
+}
+
+void ast_array_index_delete(ast_array_index *self)
+{
+    ast_unref(self->array);
+    ast_unref(self->index);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
 {
     ast_instantiate(ast_ifthen, ctx, ast_ifthen_delete);
@@ -929,7 +962,6 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
         ast_expression_common *elemtype = &self->expression.next->expression;
         int vtype = elemtype->vtype;
-printf("Generating `%s`\n", self->name);
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
         if (!self->expression.count || self->expression.count > opts_max_array_size) {
             asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
@@ -1475,6 +1507,48 @@ bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_va
     self->expression.outl = *out;
 
     return (*out != NULL);
+}
+
+bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_value *arr;
+    ast_value *idx;
+
+    if (!ast_istype(self->array, ast_value)) {
+        asterror(ast_ctx(self), "array indexing this way is not supported");
+        return false;
+    }
+
+    if (!ast_istype(self->index, ast_value)) {
+        if (lvalue) {
+            asterror(ast_ctx(self), "array indexing here needs a compile-time constant");
+            return false;
+        } else {
+            /* Time to use accessor functions */
+            /*
+            ast_expression_codegen *cgen;
+            ir_value               *iridx;
+            */
+        }
+    }
+
+    arr = (ast_value*)self->array;
+    idx = (ast_value*)self->index;
+
+    if (!idx->isconst) {
+        asterror(ast_ctx(self), "(.2) array indexing here needs a compile-time constant");
+        return false;
+    }
+
+    if (idx->expression.vtype == TYPE_FLOAT)
+        *out = arr->ir_values[(int)idx->constval.vfloat];
+    else if (idx->expression.vtype == TYPE_INTEGER)
+        *out = arr->ir_values[idx->constval.vint];
+    else {
+        asterror(ast_ctx(self), "array indexing here needs an integer constant");
+        return false;
+    }
+    return true;
 }
 
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)
