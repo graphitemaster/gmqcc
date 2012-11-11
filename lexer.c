@@ -162,6 +162,34 @@ lex_file* lex_open(const char *file)
     return lex;
 }
 
+lex_file* lex_open_string(const char *str, size_t len, const char *name)
+{
+    lex_file *lex;
+
+    lex = (lex_file*)mem_a(sizeof(*lex));
+    if (!lex) {
+        lexerror(NULL, "out of memory\n");
+        return NULL;
+    }
+
+    memset(lex, 0, sizeof(*lex));
+
+    lex->file = NULL;
+    lex->open_string        = str;
+    lex->open_string_length = len;
+    lex->open_string_pos    = 0;
+
+    lex->name = util_strdup(name ? name : "<string-source>");
+    lex->line = 1; /* we start counting at 1 */
+
+    lex->peekpos = 0;
+    lex->eof = false;
+
+    lex_filenames_add(lex->name);
+
+    return lex;
+}
+
 void lex_cleanup(void)
 {
     size_t i;
@@ -192,6 +220,18 @@ void lex_close(lex_file *lex)
     mem_d(lex);
 }
 
+static int lex_fgetc(lex_file *lex)
+{
+    if (lex->file)
+        return fgetc(lex->file);
+    if (lex->open_string) {
+        if (lex->open_string_pos >= lex->open_string_length)
+            return EOF;
+        return lex->open_string[lex->open_string_pos++];
+    }
+    return EOF;
+}
+
 /* Get or put-back data
  * The following to functions do NOT understand what kind of data they
  * are working on.
@@ -201,13 +241,13 @@ static void lex_ungetch(lex_file *lex, int ch);
 static int lex_try_trigraph(lex_file *lex, int old)
 {
     int c2, c3;
-    c2 = fgetc(lex->file);
+    c2 = lex_fgetc(lex);
     if (c2 != '?') {
         lex_ungetch(lex, c2);
         return old;
     }
 
-    c3 = fgetc(lex->file);
+    c3 = lex_fgetc(lex);
     switch (c3) {
         case '=': return '#';
         case '/': return '\\';
@@ -228,7 +268,7 @@ static int lex_try_trigraph(lex_file *lex, int old)
 static int lex_try_digraph(lex_file *lex, int ch)
 {
     int c2;
-    c2 = fgetc(lex->file);
+    c2 = lex_fgetc(lex);
     if      (ch == '<' && c2 == ':')
         return '[';
     else if (ch == ':' && c2 == '>')
@@ -254,7 +294,7 @@ static int lex_getch(lex_file *lex)
         return lex->peek[lex->peekpos];
     }
 
-    ch = fgetc(lex->file);
+    ch = lex_fgetc(lex);
     if (ch == '\n')
         lex->line++;
     else if (ch == '?')

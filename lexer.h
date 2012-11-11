@@ -100,6 +100,10 @@ typedef struct {
 
 typedef struct {
 	FILE   *file;
+	const char *open_string;
+	size_t      open_string_length;
+	size_t      open_string_pos;
+
 	char   *name;
 	size_t  line;
 	size_t  sline; /* line at the start of a token */
@@ -125,6 +129,7 @@ typedef struct {
 MEM_VECTOR_PROTO(lex_file, char, token);
 
 lex_file* lex_open (const char *file);
+lex_file* lex_open_string(const char *str, size_t len, const char *name);
 void      lex_close(lex_file   *lex);
 int       lex_do   (lex_file   *lex);
 void      lex_cleanup(void);
