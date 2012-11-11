@@ -1520,8 +1520,20 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
     ast_value *arr;
     ast_value *idx;
 
+    if (!lvalue && self->expression.outr) {
+        *out = self->expression.outr;
+    }
+    if (lvalue && self->expression.outl) {
+        *out = self->expression.outl;
+    }
+
     if (!ast_istype(self->array, ast_value)) {
         asterror(ast_ctx(self), "array indexing this way is not supported");
+        /* note this would actually be pointer indexing because the left side is
+         * not an actual array but (hopefully) an indexable expression.
+         * Once we get integer arithmetic, and GADDRESS/GSTORE/GLOAD instruction
+         * support this path will be filled.
+         */
         return false;
     }
 
@@ -1531,10 +1543,32 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
             return false;
         } else {
             /* Time to use accessor functions */
-            /*
             ast_expression_codegen *cgen;
-            ir_value               *iridx;
-            */
+            ir_value               *iridx, *funval;
+            ir_instr               *call;
+
+            if (!arr->getter) {
+                asterror(ast_ctx(self), "value has no getter, don't know how to index it");
+                return false;
+            }
+
+            cgen = self->index->expression.codegen;
+            if (!(*cgen)((ast_expression*)(self->index), func, true, &iridx))
+                return false;
+
+            cgen = arr->getter->expression.codegen;
+            if (!(*cgen)((ast_expression*)(arr->getter), func, true, &funval))
+                return false;
+
+            call = ir_block_create_call(func->curblock, ast_function_label(func, "fetch"), funval);
+            if (!call)
+                return false;
+            if (!ir_call_param(call, iridx))
+                return false;
+
+            *out = ir_call_value(call);
+            self->expression.outr = *out;
+            return true;
         }
     }
 
