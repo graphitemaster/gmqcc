@@ -30,10 +30,30 @@ body {
   font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 14px;
 	color: #232323;
-	background-color: #FBFAF7;
+	/*background-color: #FBFAF7;*/
 	margin: 0;
 	line-height: 1.8em;
 	-webkit-font-smoothing: antialiased;    
+    
+     	
+
+/* IE10 Consumer Preview */ 
+background-image: -ms-radial-gradient(right bottom, ellipse farthest-corner, #0D0D0D 0%, #FBFAF7 100%);
+
+/* Mozilla Firefox */ 
+background-image: -moz-radial-gradient(right bottom, ellipse farthest-corner, #0D0D0D 0%, #FBFAF7 100%);
+
+/* Opera */ 
+background-image: -o-radial-gradient(right bottom, ellipse farthest-corner, #0D0D0D 0%, #FBFAF7 100%);
+
+/* Webkit (Safari/Chrome 10) */ 
+background-image: -webkit-gradient(radial, right bottom, 0, right bottom, 1012, color-stop(0, #0D0D0D), color-stop(1, #FBFAF7));
+
+/* Webkit (Chrome 11+) */ 
+background-image: -webkit-radial-gradient(right bottom, ellipse farthest-corner, #0D0D0D 0%, #FBFAF7 100%);
+
+/* W3C Markup, IE10 Release Preview */ 
+background-image: radial-gradient(ellipse farthest-corner at right bottom, #0D0D0D 0%, #FBFAF7 100%);
 
 }
 
@@ -307,20 +327,10 @@ header li:hover {
 
 a.buttons {
 	-webkit-font-smoothing: antialiased;
-	background: url(../images/arrow-down.png) no-repeat;
 	font-weight: normal;
 	text-shadow: rgba(0, 0, 0, 0.4) 0 -1px 0;
 	padding: 2px 2px 2px 22px;
 	height: 30px;
-}
-
-a.github {
-	background: url(../images/octocat-small.png) no-repeat 1px;
-}
-
-a.issues {
-    padding: 2px 2px 2px 21px;
-    background: url(../images/bug.png) no-repeat 0px;
 }
 
 a.buttons:hover {
