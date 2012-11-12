@@ -2353,7 +2353,10 @@ static ast_expression *array_field_setter_node(
         if (!subscript)
             return NULL;
 
-        entfield = ast_entfield_new(ctx, (ast_expression*)entity, (ast_expression*)subscript);
+        entfield = ast_entfield_new_force(ctx,
+                                          (ast_expression*)entity,
+                                          (ast_expression*)subscript,
+                                          (ast_expression*)subscript);
         if (!entfield) {
             ast_delete(subscript);
             return NULL;
@@ -3740,7 +3743,7 @@ bool parser_finish(const char *output)
                     !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
                     !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
                 {
-                    printf("failed to generate setter for %s\n", parser->globals[i].name);
+                    printf("failed to generate setter for %s\n", parser->fields[i].name);
                     ir_builder_delete(ir);
                     return false;
                 }
@@ -3750,7 +3753,7 @@ bool parser_finish(const char *output)
                     !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
                     !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
                 {
-                    printf("failed to generate getter for %s\n", parser->globals[i].name);
+                    printf("failed to generate getter for %s\n", parser->fields[i].name);
                     ir_builder_delete(ir);
                     return false;
                 }

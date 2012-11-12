@@ -291,6 +291,7 @@ struct ast_entfield_s
     ast_expression *field;
 };
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field);
+ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype);
 void ast_entfield_delete(ast_entfield*);
 
 bool ast_entfield_codegen(ast_entfield*, ast_function*, bool lvalue, ir_value**);

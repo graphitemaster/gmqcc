@@ -483,17 +483,17 @@ void ast_return_delete(ast_return *self)
 
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field)
 {
-    const ast_expression *outtype;
-
-    ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
-
     if (field->expression.vtype != TYPE_FIELD) {
         asterror(ctx, "ast_entfield_new with expression not of type field");
-        mem_d(self);
         return NULL;
     }
+    return ast_entfield_new_force(ctx, entity, field, field->expression.next);
+}
 
-    outtype = field->expression.next;
+ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
+{
+    ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
+
     if (!outtype) {
         mem_d(self);
         /* Error: field has no type... */
