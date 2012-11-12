@@ -949,15 +949,72 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     }
 
     if (isfield && self->expression.vtype == TYPE_FIELD) {
-        v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
-        if (!v)
-            return false;
-        v->context = ast_ctx(self);
+        ast_expression *fieldtype = self->expression.next;
+
         if (self->isconst) {
             asterror(ast_ctx(self), "TODO: constant field pointers with value");
             goto error;
         }
-        self->ir_v = v;
+
+        if (fieldtype->expression.vtype == TYPE_ARRAY) {
+            size_t ai;
+            char   *name;
+            size_t  namelen;
+
+            ast_expression_common *elemtype;
+            int                    vtype;
+            ast_value             *array = (ast_value*)fieldtype;
+
+            if (!ast_istype(fieldtype, ast_value)) {
+                asterror(ast_ctx(self), "internal error: ast_value required");
+                return false;
+            }
+
+            /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
+            if (!array->expression.count || array->expression.count > opts_max_array_size)
+                asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
+
+            elemtype = &array->expression.next->expression;
+            vtype = elemtype->vtype;
+
+            v = ir_builder_create_field(ir, self->name, vtype);
+            if (!v) {
+                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                return false;
+            }
+            if (vtype == TYPE_FIELD)
+                v->fieldtype = elemtype->next->expression.vtype;
+            v->context = ast_ctx(self);
+            array->ir_v = self->ir_v = v;
+
+            namelen = strlen(self->name);
+            name    = (char*)mem_a(namelen + 16);
+            strcpy(name, self->name);
+
+            array->ir_values = (ir_value**)mem_a(sizeof(array->ir_values[0]) * array->expression.count);
+            array->ir_values[0] = v;
+            for (ai = 1; ai < array->expression.count; ++ai) {
+                snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+                array->ir_values[ai] = ir_builder_create_field(ir, name, vtype);
+                if (!array->ir_values[ai]) {
+                    mem_d(name);
+                    asterror(ast_ctx(self), "ir_builder_create_global failed");
+                    return false;
+                }
+                if (vtype == TYPE_FIELD)
+                    array->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+                array->ir_values[ai]->context = ast_ctx(self);
+            }
+            mem_d(name);
+        }
+        else
+        {
+            v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
+            if (!v)
+                return false;
+            v->context = ast_ctx(self);
+            self->ir_v = v;
+        }
         return true;
     }
 
@@ -969,16 +1026,9 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         ast_expression_common *elemtype = &self->expression.next->expression;
         int vtype = elemtype->vtype;
 
-        /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-        if (!self->expression.count || self->expression.count > opts_max_array_size) {
+        /* same as with field arrays */
+        if (!self->expression.count || self->expression.count > opts_max_array_size)
             asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
-        }
-
-        self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
-        if (!self->ir_values) {
-            asterror(ast_ctx(self), "failed to allocate array values");
-            return false;
-        }
 
         v = ir_builder_create_global(ir, self->name, vtype);
         if (!v) {
@@ -993,11 +1043,13 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         name    = (char*)mem_a(namelen + 16);
         strcpy(name, self->name);
 
+        self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
         self->ir_values[0] = v;
         for (ai = 1; ai < self->expression.count; ++ai) {
             snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
             self->ir_values[ai] = ir_builder_create_global(ir, name, vtype);
             if (!self->ir_values[ai]) {
+                mem_d(name);
                 asterror(ast_ctx(self), "ir_builder_create_global failed");
                 return false;
             }
@@ -1005,6 +1057,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
             self->ir_values[ai]->context = ast_ctx(self);
         }
+        mem_d(name);
     }
     else
     {
