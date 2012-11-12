@@ -3599,6 +3599,35 @@ bool parser_finish(const char *output)
                 }
             }
         }
+        for (i = 0; i < parser->fields_count; ++i) {
+            ast_value *asvalue;
+            asvalue = (ast_value*)(parser->fields[i].var->expression.next);
+
+            if (!ast_istype((ast_expression*)asvalue, ast_value))
+                continue;
+            if (asvalue->expression.vtype != TYPE_ARRAY)
+                continue;
+            if (asvalue->setter) {
+                if (!ast_global_codegen(asvalue->setter, ir, false) ||
+                    !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
+                    !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
+                {
+                    printf("failed to generate setter for %s\n", parser->globals[i].name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+            }
+            if (asvalue->getter) {
+                if (!ast_global_codegen(asvalue->getter, ir, false) ||
+                    !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
+                    !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
+                {
+                    printf("failed to generate getter for %s\n", parser->globals[i].name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+            }
+        }
         for (i = 0; i < parser->functions_count; ++i) {
             if (!ast_function_codegen(parser->functions[i], ir)) {
                 printf("failed to generate function %s\n", parser->functions[i]->name);
