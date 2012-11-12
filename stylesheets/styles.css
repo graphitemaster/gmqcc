@@ -55,6 +55,9 @@ background-image: -webkit-radial-gradient(right bottom, ellipse farthest-corner,
 /* W3C Markup, IE10 Release Preview */ 
 background-image: radial-gradient(ellipse farthest-corner at right bottom, #0D0D0D 0%, #FBFAF7 100%);
 
+/* Others */
+background-image: radial-gradient(right bottom, ellipse farthest-corner, #0D0D0D 0%, #FBFAF7 100%);
+
 }
 
 textarea {
