@@ -1215,8 +1215,7 @@ while (1) {
 			}
 
 			ed = prog_getedict(prog, OPA->edict);
-			OPC->_int = ((qcint*)ed) - prog->entitydata;
-			OPC->_int += OPB->_int;
+			OPC->_int = ((qcint*)ed) - prog->entitydata + OPB->_int;
 			break;
 
 		case INSTR_STORE_F:
