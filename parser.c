@@ -2344,10 +2344,10 @@ static ast_expression *array_field_setter_node(
         ast_return      *ret;
         ast_entfield    *entfield;
         ast_array_index *subscript;
-        int assignop = type_store_instr[value->expression.vtype];
+        int assignop = type_storep_instr[value->expression.vtype];
 
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
-            assignop = INSTR_STORE_V;
+            assignop = INSTR_STOREP_V;
 
         subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser_const_float(parser, from));
         if (!subscript)
