@@ -453,14 +453,21 @@ int main(int argc, char **argv) {
         printf("Mode: manual\n");
         printf("There are %lu items to compile:\n", (unsigned long)items_elements);
         for (itr = 0; itr < items_elements; ++itr) {
+            #ifndef JS
             printf("  item: %s (%s)\n",
                    items_data[itr].filename,
                    ( (items_data[itr].type == TYPE_QC ? "qc" :
                      (items_data[itr].type == TYPE_ASM ? "asm" :
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
+            #endif
 
-            if (!parser_compile_file(items_data[itr].filename)) {
+        #ifdef JS
+            if (!parser_compile_string("js.qc", items_data[itr].filename))
+        #else
+            if (!parser_compile_file(items_data[itr].filename))
+        #endif
+        {
                 retval = 1;
                 goto cleanup;
             }
