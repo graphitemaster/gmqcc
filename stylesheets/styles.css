@@ -33,8 +33,16 @@ body {
 	background-color: #FBFAF7;
 	margin: 0;
 	line-height: 1.8em;
-	-webkit-font-smoothing: antialiased;
+	-webkit-font-smoothing: antialiased;    
 
+}
+
+textarea {
+    outline: none;
+    resize: none;
+    background-color: #FBFAF7;
+    border: 1;
+    border-color: red;
 }
 
 h1, h2, h3, h4, h5, h6 {
