@@ -569,7 +569,7 @@ void ast_member_delete(ast_member *self)
 
 ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index)
 {
-    const ast_expression *outtype;
+    ast_expression *outtype;
     ast_instantiate(ast_array_index, ctx, ast_array_index_delete);
 
     outtype = array->expression.next;
