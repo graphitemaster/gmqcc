@@ -464,7 +464,10 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
 
         case opid1('['):
-            if (exprs[0]->expression.vtype != TYPE_ARRAY) {
+            if (exprs[0]->expression.vtype != TYPE_ARRAY &&
+                !(exprs[0]->expression.vtype == TYPE_FIELD &&
+                  exprs[0]->expression.next->expression.vtype == TYPE_ARRAY))
+            {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 parseerror(parser, "cannot index value of type %s", ty1);
                 return false;

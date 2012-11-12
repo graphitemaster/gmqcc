@@ -588,6 +588,15 @@ ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_exp
         ast_array_index_delete(self);
         return NULL;
     }
+    if (array->expression.vtype == TYPE_FIELD && outtype->expression.vtype == TYPE_ARRAY) {
+        if (self->expression.vtype != TYPE_ARRAY) {
+            asterror(ast_ctx(self), "array_index node on type");
+            ast_array_index_delete(self);
+            return NULL;
+        }
+        self->array = outtype;
+        self->expression.vtype = TYPE_FIELD;
+    }
 
     return self;
 }
