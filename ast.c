@@ -488,6 +488,7 @@ ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expressi
     ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
 
     if (field->expression.vtype != TYPE_FIELD) {
+        asterror(ctx, "ast_entfield_new with expression not of type field");
         mem_d(self);
         return NULL;
     }
