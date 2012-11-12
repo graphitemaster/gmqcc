@@ -380,6 +380,42 @@ static sy_elem syparen(lex_ctx ctx, int p, size_t off) {
 # define DEBUGSHUNTDO(x)
 #endif
 
+/* With regular precedence rules, ent.foo[n] is the same as (ent.foo)[n],
+ * so we need to rotate it to become ent.(foo[n]).
+ */
+static void rotate_entfield_array_index_nodes(ast_expression **out)
+{
+    ast_array_index *index;
+    ast_entfield    *entfield;
+
+    ast_value       *field;
+    ast_expression  *sub;
+    ast_expression  *entity;
+
+    lex_ctx ctx = ast_ctx(*out);
+
+    if (!ast_istype(*out, ast_array_index))
+        return;
+    index = (ast_array_index*)*out;
+
+    if (!ast_istype(index->array, ast_entfield))
+        return;
+    entfield = (ast_entfield*)index->array;
+
+    if (!ast_istype(entfield->field, ast_value))
+        return;
+    field = (ast_value*)entfield->field;
+
+    sub    = index->index;
+    entity = entfield->entity;
+
+    ast_delete(index);
+
+    index = ast_array_index_new(ctx, (ast_expression*)field, sub);
+    entfield = ast_entfield_new(ctx, entity, (ast_expression*)index);
+    *out = (ast_expression*)entfield;
+}
+
 static bool parser_sy_pop(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
@@ -478,6 +514,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 return false;
             }
             out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
+            rotate_entfield_array_index_nodes(&out);
             break;
 
         case opid1(','):
