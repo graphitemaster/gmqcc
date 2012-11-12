@@ -317,5 +317,7 @@ void mem_free(void *ptr) {
 int main() {
     mem_init(1330);
     char *p = mem_alloc(sizeof(char) * 5);
+    mem_free(p);
+    mem_destroy();
     /* blows up on second alloc, why?  char *x = mem_alloc(200); */
 }
