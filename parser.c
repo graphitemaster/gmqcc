@@ -2327,6 +2327,77 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
     }
 }
 
+static ast_expression *array_field_setter_node(
+    parser_t  *parser,
+    ast_value *array,
+    ast_value *entity,
+    ast_value *index,
+    ast_value *value,
+    size_t     from,
+    size_t     afterend)
+{
+    lex_ctx ctx = ast_ctx(array);
+
+    if (from+1 == afterend) {
+        // set this value
+        ast_block       *block;
+        ast_return      *ret;
+        ast_entfield    *entfield;
+        ast_array_index *subscript;
+        int assignop = type_store_instr[value->expression.vtype];
+
+        if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
+            assignop = INSTR_STORE_V;
+
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser_const_float(parser, from));
+        if (!subscript)
+            return NULL;
+
+        entfield = ast_entfield_new(ctx, (ast_expression*)entity, (ast_expression*)subscript);
+        if (!entfield) {
+            ast_delete(subscript);
+            return NULL;
+        }
+
+        ast_store *st = ast_store_new(ctx, assignop, (ast_expression*)entfield, (ast_expression*)value);
+        if (!st) {
+            ast_delete(entfield);
+            return NULL;
+        }
+
+        block = ast_block_new(ctx);
+        if (!block) {
+            ast_delete(st);
+            return NULL;
+        }
+
+        if (!ast_block_exprs_add(block, (ast_expression*)st)) {
+            ast_delete(block);
+            return NULL;
+        }
+
+        ret = ast_return_new(ctx, NULL);
+        if (!ret) {
+            ast_delete(block);
+            return NULL;
+        }
+
+        if (!ast_block_exprs_add(block, (ast_expression*)ret)) {
+            ast_delete(block);
+            return NULL;
+        }
+
+        return (ast_expression*)block;
+    } else {
+        ast_expression *left, *right;
+        size_t diff = afterend - from;
+        size_t middle = from + diff/2;
+        left  = array_field_setter_node(parser, array, entity, index, value, from, middle);
+        right = array_field_setter_node(parser, array, entity, index, value, middle, afterend);
+        return array_accessor_split(parser, array, index, middle, left, right);
+    }
+}
+
 static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast_value *index, size_t from, size_t afterend)
 {
     lex_ctx ctx = ast_ctx(array);
@@ -2430,6 +2501,65 @@ cleanup:
     if (index) ast_delete(index);
     if (value) ast_delete(value);
     if (root)  ast_delete(root);
+    ast_delete(func);
+    ast_delete(fval);
+    return false;
+}
+
+static bool parser_create_array_field_setter(parser_t *parser, ast_value *array, const char *funcname)
+{
+    ast_expression *root = NULL;
+    ast_block      *body = NULL;
+    ast_value      *entity = NULL;
+    ast_value      *index = NULL;
+    ast_value      *value = NULL;
+    ast_function   *func;
+    ast_value      *fval;
+
+    if (!ast_istype(array->expression.next, ast_value)) {
+        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
+        return false;
+    }
+
+    if (!parser_create_array_accessor(parser, array, funcname, &fval))
+        return false;
+    func = fval->constval.vfunc;
+    fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
+
+    body = ast_block_new(ast_ctx(array));
+    if (!body) {
+        parseerror(parser, "failed to create block for array accessor");
+        goto cleanup;
+    }
+
+    entity = ast_value_new(ast_ctx(array), "entity", TYPE_ENTITY);
+    index  = ast_value_new(ast_ctx(array), "index",  TYPE_FLOAT);
+    value  = ast_value_copy((ast_value*)array->expression.next);
+    if (!entity || !index || !value) {
+        parseerror(parser, "failed to create locals for array accessor");
+        goto cleanup;
+    }
+    (void)!ast_value_set_name(value, "value"); /* not important */
+    (void)!ast_expression_common_params_add(&fval->expression, entity);
+    (void)!ast_expression_common_params_add(&fval->expression, index);
+    (void)!ast_expression_common_params_add(&fval->expression, value);
+
+    root = array_field_setter_node(parser, array, entity, index, value, 0, array->expression.count);
+    if (!root) {
+        parseerror(parser, "failed to build accessor search tree");
+        goto cleanup;
+    }
+
+    (void)!ast_block_exprs_add(body, root);
+    (void)!ast_function_blocks_add(func, body);
+    array->setter = fval;
+    return true;
+cleanup:
+    if (body)   ast_delete(body);
+    if (entity) ast_delete(entity);
+    if (index)  ast_delete(index);
+    if (value)  ast_delete(value);
+    if (root)   ast_delete(root);
     ast_delete(func);
     ast_delete(fval);
     return false;
@@ -3074,11 +3204,9 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 goto cleanup;
             }
 
-            /*
             snprintf(name, sizeof(name), "%s##SETF", var->name);
-            if (!parser_create_array_field_setter(parser, var, name))
+            if (!parser_create_array_field_setter(parser, array, name))
                 goto cleanup;
-            */
 
             telem = ast_type_copy(ast_ctx(var), array->expression.next);
             tfield = ast_value_new(ast_ctx(var), "<.type>", TYPE_FIELD);
