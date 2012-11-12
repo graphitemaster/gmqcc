@@ -2230,6 +2230,46 @@ enderr:
     return false;
 }
 
+static ast_expression *array_accessor_split(
+    parser_t  *parser,
+    ast_value *array,
+    ast_value *index,
+    size_t     middle,
+    ast_expression *left,
+    ast_expression *right
+    )
+{
+    ast_ifthen *ifthen;
+    ast_binary *cmp;
+
+    lex_ctx ctx = ast_ctx(array);
+
+    if (!left || !right) {
+        if (left)  ast_delete(left);
+        if (right) ast_delete(right);
+        return NULL;
+    }
+
+    cmp = ast_binary_new(ctx, INSTR_LT,
+                         (ast_expression*)index,
+                         (ast_expression*)parser_const_float(parser, middle));
+    if (!cmp) {
+        ast_delete(left);
+        ast_delete(right);
+        parseerror(parser, "internal error: failed to create comparison for array setter");
+        return NULL;
+    }
+
+    ifthen = ast_ifthen_new(ctx, (ast_expression*)cmp, left, right);
+    if (!ifthen) {
+        ast_delete(cmp); /* will delete left and right */
+        parseerror(parser, "internal error: failed to create conditional jump for array setter");
+        return NULL;
+    }
+
+    return (ast_expression*)ifthen;
+}
+
 static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast_value *index, ast_value *value, size_t from, size_t afterend)
 {
     lex_ctx ctx = ast_ctx(array);
@@ -2278,39 +2318,12 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
 
         return (ast_expression*)block;
     } else {
-        ast_ifthen *ifthen;
         ast_expression *left, *right;
-        ast_binary *cmp;
-
         size_t diff = afterend - from;
         size_t middle = from + diff/2;
-
         left  = array_setter_node(parser, array, index, value, from, middle);
         right = array_setter_node(parser, array, index, value, middle, afterend);
-        if (!left || !right) {
-            if (left)  ast_delete(left);
-            if (right) ast_delete(right);
-            return NULL;
-        }
-
-        cmp = ast_binary_new(ctx, INSTR_LT,
-                             (ast_expression*)index,
-                             (ast_expression*)parser_const_float(parser, from + diff/2));
-        if (!cmp) {
-            ast_delete(left);
-            ast_delete(right);
-            parseerror(parser, "internal error: failed to create comparison for array setter");
-            return NULL;
-        }
-
-        ifthen = ast_ifthen_new(ctx, (ast_expression*)cmp, left, right);
-        if (!ifthen) {
-            ast_delete(cmp); /* will delete left and right */
-            parseerror(parser, "internal error: failed to create conditional jump for array setter");
-            return NULL;
-        }
-
-        return (ast_expression*)ifthen;
+        return array_accessor_split(parser, array, index, middle, left, right);
     }
 }
 
@@ -2334,39 +2347,12 @@ static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast
 
         return (ast_expression*)ret;
     } else {
-        ast_ifthen *ifthen;
         ast_expression *left, *right;
-        ast_binary *cmp;
-
         size_t diff = afterend - from;
         size_t middle = from + diff/2;
-
         left  = array_getter_node(parser, array, index, from, middle);
         right = array_getter_node(parser, array, index, middle, afterend);
-        if (!left || !right) {
-            if (left)  ast_delete(left);
-            if (right) ast_delete(right);
-            return NULL;
-        }
-
-        cmp = ast_binary_new(ctx, INSTR_LT,
-                             (ast_expression*)index,
-                             (ast_expression*)parser_const_float(parser, from + diff/2));
-        if (!cmp) {
-            ast_delete(left);
-            ast_delete(right);
-            parseerror(parser, "internal error: failed to create comparison for array setter");
-            return NULL;
-        }
-
-        ifthen = ast_ifthen_new(ctx, (ast_expression*)cmp, left, right);
-        if (!ifthen) {
-            ast_delete(cmp); /* will delete left and right */
-            parseerror(parser, "internal error: failed to create conditional jump for array setter");
-            return NULL;
-        }
-
-        return (ast_expression*)ifthen;
+        return array_accessor_split(parser, array, index, middle, left, right);
     }
 }
 
