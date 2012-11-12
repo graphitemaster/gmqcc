@@ -2361,11 +2361,6 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
     ast_function   *func = NULL;
     ast_value      *fval = NULL;
 
-    if (!ast_istype(array->expression.next, ast_value)) {
-        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
-        return false;
-    }
-
     fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
     if (!fval) {
         parseerror(parser, "failed to create accessor function value");
@@ -2392,6 +2387,11 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
     ast_value      *value = NULL;
     ast_function   *func;
     ast_value      *fval;
+
+    if (!ast_istype(array->expression.next, ast_value)) {
+        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
+        return false;
+    }
 
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
         return false;
@@ -2435,7 +2435,7 @@ cleanup:
     return false;
 }
 
-static bool parser_create_array_getter(parser_t *parser, ast_value *array, const char *funcname)
+static bool parser_create_array_getter(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname)
 {
     ast_expression *root = NULL;
     ast_block      *body = NULL;
@@ -2443,10 +2443,18 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     ast_value      *fval;
     ast_function   *func;
 
+    /* NOTE: checking array->expression.next rather than elemtype since
+     * for fields elemtype is a temporary fieldtype.
+     */
+    if (!ast_istype(array->expression.next, ast_value)) {
+        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
+        return false;
+    }
+
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
         return false;
     func = fval->constval.vfunc;
-    fval->expression.next = ast_type_copy(ast_ctx(array), array->expression.next);
+    fval->expression.next = ast_type_copy(ast_ctx(array), elemtype);
 
     body = ast_block_new(ast_ctx(array));
     if (!body) {
@@ -3044,13 +3052,43 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
          * deal with arrays
          */
         if (var->expression.vtype == TYPE_ARRAY) {
-            char          name[1024];
-            snprintf(name, sizeof(name), "%s::SET", var->name);
+            char name[1024];
+            snprintf(name, sizeof(name), "%s##SET", var->name);
             if (!parser_create_array_setter(parser, var, name))
                 goto cleanup;
-            snprintf(name, sizeof(name), "%s::GET", var->name);
-            if (!parser_create_array_getter(parser, var, name))
+            snprintf(name, sizeof(name), "%s##GET", var->name);
+            if (!parser_create_array_getter(parser, var, var->expression.next, name))
                 goto cleanup;
+        }
+        else if (!localblock && !nofields &&
+                 var->expression.vtype == TYPE_FIELD &&
+                 var->expression.next->expression.vtype == TYPE_ARRAY)
+        {
+            char name[1024];
+            ast_expression *telem;
+            ast_value      *tfield;
+            ast_value      *array = (ast_value*)var->expression.next;
+
+            if (!ast_istype(var->expression.next, ast_value)) {
+                parseerror(parser, "internal error: field element type must be an ast_value");
+                goto cleanup;
+            }
+
+            /*
+            snprintf(name, sizeof(name), "%s##SETF", var->name);
+            if (!parser_create_array_field_setter(parser, var, name))
+                goto cleanup;
+            */
+
+            telem = ast_type_copy(ast_ctx(var), array->expression.next);
+            tfield = ast_value_new(ast_ctx(var), "<.type>", TYPE_FIELD);
+            tfield->expression.next = telem;
+            snprintf(name, sizeof(name), "%s##GETFP", var->name);
+            if (!parser_create_array_getter(parser, array, (ast_expression*)tfield, name)) {
+                ast_delete(tfield);
+                goto cleanup;
+            }
+            ast_delete(tfield);
         }
 
 skipvar:
