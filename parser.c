@@ -2356,35 +2356,64 @@ static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast
     }
 }
 
-static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
+static bool parser_create_array_accessor(parser_t *parser, ast_value *array, const char *funcname, ast_value **out)
 {
-    ast_expression *root = NULL;
     ast_function   *func = NULL;
     ast_value      *fval = NULL;
-    ast_block      *body;
-    ast_value      *index, *value;
 
     if (!ast_istype(array->expression.next, ast_value)) {
         parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
         return false;
     }
 
+    fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
+    if (!fval) {
+        parseerror(parser, "failed to create accessor function value");
+        return false;
+    }
+
+    func = ast_function_new(ast_ctx(array), funcname, fval);
+    if (!func) {
+        ast_delete(fval);
+        parseerror(parser, "failed to create accessor function node");
+        return false;
+    }
+
+    *out = fval;
+
+    return true;
+}
+
+static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
+{
+    ast_expression *root = NULL;
+    ast_block      *body = NULL;
+    ast_value      *index = NULL;
+    ast_value      *value = NULL;
+    ast_function   *func;
+    ast_value      *fval;
+
+    if (!parser_create_array_accessor(parser, array, funcname, &fval))
+        return false;
+    func = fval->constval.vfunc;
+    fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
+
     body = ast_block_new(ast_ctx(array));
     if (!body) {
         parseerror(parser, "failed to create block for array accessor");
-        return false;
+        goto cleanup;
     }
 
     index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
     value = ast_value_copy((ast_value*)array->expression.next);
 
     if (!index || !value) {
-        ast_delete(body);
-        if (index) ast_delete(index);
-        if (value) ast_delete(value);
         parseerror(parser, "failed to create locals for array accessor");
-        return false;
+        goto cleanup;
     }
+    (void)!ast_value_set_name(value, "value"); /* not important */
+    (void)!ast_expression_common_params_add(&fval->expression, index);
+    (void)!ast_expression_common_params_add(&fval->expression, value);
 
     root = array_setter_node(parser, array, index, value, 0, array->expression.count);
     if (!root) {
@@ -2392,79 +2421,46 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    if (!ast_block_exprs_add(body, root)) {
-        parseerror(parser, "failed to build accessor search block");
-        goto cleanup;
-    }
-
-    fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
-    if (!fval) {
-        parseerror(parser, "failed to create accessor function value");
-        goto cleanup;
-    }
-    fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
-
-    (void)!ast_value_set_name(value, "value"); /* not important */
-    if (!ast_expression_common_params_add(&fval->expression, index)) {
-        parseerror(parser, "failed to build array setter");
-        goto cleanup;
-    }
-    if (!ast_expression_common_params_add(&fval->expression, value)) {
-        ast_delete(index);
-        parseerror(parser, "failed to build array setter");
-        goto cleanup2;
-    }
-
-    func = ast_function_new(ast_ctx(array), funcname, fval);
-    if (!func) {
-        parseerror(parser, "failed to create accessor function node");
-        goto cleanup2;
-    }
-
-    if (!ast_function_blocks_add(func, body))
-        goto cleanup2;
-
+    (void)!ast_block_exprs_add(body, root);
+    (void)!ast_function_blocks_add(func, body);
     array->setter = fval;
-
     return true;
 cleanup:
-    ast_delete(index);
-    ast_delete(value);
-cleanup2:
-    ast_delete(body);
-    if (root) ast_delete(root);
-    if (func) ast_delete(func);
-    if (fval) ast_delete(fval);
+    if (body)  ast_delete(body);
+    if (index) ast_delete(index);
+    if (value) ast_delete(value);
+    if (root)  ast_delete(root);
+    ast_delete(func);
+    ast_delete(fval);
     return false;
 }
 
 static bool parser_create_array_getter(parser_t *parser, ast_value *array, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_function   *func = NULL;
-    ast_value      *fval = NULL;
-    ast_block      *body;
-    ast_value      *index;
+    ast_block      *body = NULL;
+    ast_value      *index = NULL;
+    ast_value      *fval;
+    ast_function   *func;
 
-    if (!ast_istype(array->expression.next, ast_value)) {
-        parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
+    if (!parser_create_array_accessor(parser, array, funcname, &fval))
         return false;
-    }
+    func = fval->constval.vfunc;
+    fval->expression.next = ast_type_copy(ast_ctx(array), array->expression.next);
 
     body = ast_block_new(ast_ctx(array));
     if (!body) {
         parseerror(parser, "failed to create block for array accessor");
-        return false;
+        goto cleanup;
     }
 
     index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
 
     if (!index) {
-        ast_delete(body);
-        if (index) ast_delete(index);
         parseerror(parser, "failed to create locals for array accessor");
-        return false;
+        goto cleanup;
     }
+    (void)!ast_expression_common_params_add(&fval->expression, index);
 
     root = array_getter_node(parser, array, index, 0, array->expression.count);
     if (!root) {
@@ -2472,42 +2468,16 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    if (!ast_block_exprs_add(body, root)) {
-        parseerror(parser, "failed to build accessor search block");
-        goto cleanup;
-    }
-
-    fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
-    if (!fval) {
-        parseerror(parser, "failed to create accessor function value");
-        goto cleanup;
-    }
-    fval->expression.next = ast_type_copy(ast_ctx(array), array->expression.next);
-
-    if (!ast_expression_common_params_add(&fval->expression, index)) {
-        parseerror(parser, "failed to build array setter");
-        goto cleanup;
-    }
-
-    func = ast_function_new(ast_ctx(array), funcname, fval);
-    if (!func) {
-        parseerror(parser, "failed to create accessor function node");
-        goto cleanup2;
-    }
-
-    if (!ast_function_blocks_add(func, body))
-        goto cleanup2;
-
+    (void)!ast_block_exprs_add(body, root);
+    (void)!ast_function_blocks_add(func, body);
     array->getter = fval;
-
     return true;
 cleanup:
-    ast_delete(index);
-cleanup2:
-    ast_delete(body);
-    if (root) ast_delete(root);
-    if (func) ast_delete(func);
-    if (fval) ast_delete(fval);
+    if (body)  ast_delete(body);
+    if (index) ast_delete(index);
+    if (root)  ast_delete(root);
+    ast_delete(func);
+    ast_delete(fval);
     return false;
 }
 
