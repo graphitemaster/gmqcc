@@ -10,10 +10,14 @@
  */
 #define GMQCC_MEM_USED  0xEDCA10A1EDCA10A1
 #define GMQCC_MEM_FREE  0xEEF8EEF8EEF8EEF8
-#define GMQCC_MEM_CORE  0x00000000000000AA
 #define GMQCC_MEM_BSL  -1
 #define GMQCC_MEM_BSR   1
 #define GMQCC_MEM_DEBUG 1
+
+/* debug info for dumping heap contents nicely */
+#define GMQCC_MEM_DEBUG_BPL 32 /* bytes per line    */
+#define GMQCC_MEM_DEBUG_BIG 8  /* bytes in group    */
+#define GMQCC_MEM_DEBUG_BSG 4  /* bytes split group */
 
 #ifdef  GMQCC_MEM_DEBUG
 #   include <stdio.h>
@@ -34,11 +38,15 @@ static size_t  mem_look = 0;  /* lookup table offset */
 static size_t  mem_size = 0;  /* heap size           */
 
 /* read or write to heap */
-#define GMQCC_MEM_WRITEHEAP(OFFSET, TYPE, VALUE) *((TYPE *) ((unsigned char*)mem_heap + (OFFSET))) = (VALUE)
+#define GMQCC_MEM_WRITEHEAP(OFFSET, TYPE, VALUE)                \
+    do {                                                        \
+        TYPE *T = (TYPE*)((unsigned char*)mem_heap + (OFFSET)); \
+        *T = VALUE;                                             \
+    } while (0)
 #define GMQCC_MEM_READHEAP(OFFSET, TYPE)  ((TYPE)*((TYPE *)(((unsigned char*)mem_heap + (OFFSET)))))
 
 /* read of write first block to heap */
-#define GMQCC_MEM_WRITEFBA(SIZE, ADDR) GMQCC_MEM_WRITEHEAP(mem_look + (SIZE) * sizeof(mem_addr), mem_addr, ADDR)
+#define GMQCC_MEM_WRITEFBA(SIZE, ADDR) GMQCC_MEM_WRITEHEAP(mem_look + (SIZE) * sizeof(mem_addr), mem_addr, (ADDR))
 #define GMQCC_MEM_READFBA(SIZE)        GMQCC_MEM_READHEAP (mem_look + (SIZE) * sizeof(mem_addr), mem_addr)
 
 /* read and write block sizes from heap */
@@ -59,11 +67,44 @@ static size_t  mem_size = 0;  /* heap size           */
 #define GMQCC_MEM_MARKFREE(ADDR) GMQCC_MEM_WRITEHEAP((ADDR) + 1 * sizeof(mem_addr), mem_addr, GMQCC_MEM_FREE)
 
 /* Has block? */
-#define GMQCC_MEM_HASBLOCK(SIZE) (GMQCC_MEM_READFBA(size) != 0)
+#define GMQCC_MEM_HASBLOCK(SIZE) (GMQCC_MEM_READFBA(SIZE) != 0)
+
+/* Block free? */
+#define GMQCC_MEM_BLOCKFREE(ADDR) ((GMQCC_MEM_READHEAP((ADDR) + 1 * sizeof(mem_addr), mem_addr)) == GMQCC_MEM_FREE)
+
+/*
+ * Must be first since it's used internally, but also should be exposed
+ * to the outside, statics exist after this.
+ */
+void mem_dump() {
+    size_t         addr = 0;
+    unsigned char *ptr  = (unsigned char*)mem_heap;
+    
+    while (addr < mem_size) {
+        size_t offset = 0;
+        printf("% 8X:  ", addr);
+        while (offset < GMQCC_MEM_DEBUG_BPL) {
+            if (addr + offset >= mem_size)
+                break;
+                
+            ptr    ++;
+            offset ++;
+            
+            printf (
+                !(offset%GMQCC_MEM_DEBUG_BSG) && 
+                 (offset%GMQCC_MEM_DEBUG_BIG) ? "%02X  "   :
+                !(offset%GMQCC_MEM_DEBUG_BIG) ? "%02X    " : "%02X ",
+                *ptr
+            );
+        }
+        printf("\n");
+        addr += GMQCC_MEM_DEBUG_BPL;
+    }
+}
 
 static void mem_init_table(size_t size) {
-    GMQCC_MEM_TRACE("flow", "(%lu)", size);
     size_t i;
+    GMQCC_MEM_TRACE("flow", "(%lu)", size);
     
     mem_look = 8 * ((mem_addr)1 << (size - 1)) + sizeof(mem_addr);
     
@@ -97,6 +138,8 @@ static size_t mem_getnbs(const size_t need) {
 static void mem_removeblock(mem_addr a, size_t size) {
     mem_addr p = GMQCC_MEM_GETADDROFPS(a);
     mem_addr n = GMQCC_MEM_GETADDROFFS(a);
+    
+    GMQCC_MEM_TRACE("flow", "(%lu, %lu)", a, size);
     
     GMQCC_MEM_SETADDROFPS(a, ~((mem_addr)0));
     GMQCC_MEM_SETADDROFFS(a, ~((mem_addr)0));
@@ -137,7 +180,8 @@ static int mem_createblock(const size_t size) {
         abort();
 
     /* recrusive ... */
-    if ((test = mem_createblock(size + 1)) != 0)
+    test = mem_createblock(size + 1);
+    if (test != 0)
         return test;
         
     /* safe splits assured */
@@ -154,7 +198,7 @@ static int mem_createblock(const size_t size) {
         
         GMQCC_MEM_TRACE(
             "dump",
-            "block info:\n    left  addr: %lu\n    right addr: %lu\n    prev  addr: %lu",
+            "left: %lu right: %lu parent: %lu",
             left, right, parent
         );
         
@@ -169,6 +213,7 @@ static int mem_createblock(const size_t size) {
         GMQCC_MEM_SETADDROFPS(right, left);
         GMQCC_MEM_SETADDROFPS(right, 0);
     }
+    mem_dump();
     return 0;
 }
 
@@ -194,16 +239,17 @@ static mem_addr mem_allocblock(const size_t size) {
 }
 
 static int mem_getside(mem_addr addr, const size_t size) {
-    size_t  real = addr - sizeof(mem_addr);
-    size_t  next = ((mem_addr)1 << (size));
-    assert((real % 8) == 0); /* blow up */
-    real /= 8;
+    size_t start = addr - sizeof(mem_addr);
+    size_t test  = 0;
+    start /= 8;
+    test   = ((mem_addr)1 << (size));
     
-    return ((real % next) == 0)? GMQCC_MEM_BSL : GMQCC_MEM_BSR;
+    return ((start % test) == 0) ? GMQCC_MEM_BSL : GMQCC_MEM_BSR;
 }
 
 static mem_addr mem_getaddr(mem_addr start, const size_t size) {
-    size_t length = (((mem_addr)1 << (size - 1)) * 8);
+    size_t length = ((mem_addr)1 << (size - 1));
+    length *= 8;
     
     switch (mem_getside(start, size)) {
         case GMQCC_MEM_BSL: return start + length;
@@ -240,7 +286,7 @@ void mem_init(size_t size) {
     if (!(mem_heap = malloc(size)))
         abort();
     
-    memset(mem_heap, GMQCC_MEM_CORE, size);
+    memset(mem_heap, 170, size);
     mem_size = size;
     alloc    -= 2 * sizeof(mem_addr);
     
@@ -293,7 +339,7 @@ void mem_free(void *ptr) {
     GMQCC_MEM_MARKFREE(start);
     
     /* while free block merge */
-    while ((GMQCC_MEM_READHEAP(addr + 1 * sizeof(mem_addr), mem_addr)) == (mem_addr)GMQCC_MEM_FREE) {
+    while (GMQCC_MEM_BLOCKFREE(addr)) {
         GMQCC_MEM_TRACE("dump", "merging ...");
         mem_removeblock(addr, size);
         
@@ -311,13 +357,4 @@ void mem_free(void *ptr) {
     /* add it */
     GMQCC_MEM_WRITEBS(start, size);
     mem_addblock     (start, size);
-}
-
-#include <stdio.h>
-int main() {
-    mem_init(1330);
-    char *p = mem_alloc(sizeof(char) * 5);
-    mem_free(p);
-    mem_destroy();
-    /* blows up on second alloc, why?  char *x = mem_alloc(200); */
 }
