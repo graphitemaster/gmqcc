@@ -1,80 +1,72 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>GMQCC by graphitemaster</title>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="chrome=1">
+        <title>GMQCC by graphitemaster</title>
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <a href="https://github.com/graphitemaster/gmqcc"><div class="fork"></div></a>
-    <div class="wrapper">
-      <header>
-          
-        <h1 class="header">GMQCC</h1>
-        <p class="header">An Improved Quake C Compiler</p>
+        <link rel="stylesheet" href="stylesheets/styles.css">
+        <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+        <script src="javascripts/scale.fix.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <!--[if lt IE 9]>
+        <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <a href="https://github.com/graphitemaster/gmqcc"><div class="fork"></div></a>
+        <div class="wrapper">
+            <header>
+                <h1 class="header">GMQCC</h1>
+                <p class="header">An Improved Quake C Compiler</p>
 
-        <ul>
-          <li class="download"><a href="https://github.com/graphitemaster/gmqcc/zipball/master">Download ZIP</a></li>
-          <li class="download"><a href="https://github.com/graphitemaster/gmqcc/tarball/master">Download TAR</a></li>
-          <li class="buttons"><a href="https://github.com/graphitemaster/gmqcc/issues">Issues</a></li>
-          <li class="buttons"><a href="test.html">Try it</a></li>
-          <li class="buttons"><a href="https://github.com/graphitemaster/gmqcc">View On GitHub</a></li>
-        </ul>
+                <ul>
+                    <li class="download"><a href="https://github.com/graphitemaster/gmqcc/zipball/master">Download ZIP</a></li>
+                    <li class="download"><a href="https://github.com/graphitemaster/gmqcc/tarball/master">Download TAR</a></li>
+                    <li class="buttons"><a href="https://github.com/graphitemaster/gmqcc/issues">Issues</a></li>
+                    <li class="buttons"><a href="test.html">Try it</a></li>
+                    <li class="buttons"><a href="https://github.com/graphitemaster/gmqcc">View On GitHub</a></li>
+                </ul>
+            </header>
+            <section>
+                <h3>Welcome</h3>
+                <p>For an enduring period of time the options for a decent compiler for the
+                Quake C programming language were confined to a specific compiler known as QCC.
+                Attempts were made to extend and improve upon the design of QCC, but many foreseen
+                the consequences of building on a broken foundation.
+                The solution was obvious, a new compiler; one born from the NIH realm of sarcastic wit.
+                We welcome you. You won't find a better Quake C compiler.</p>
+                
+                <h3>Modern Compiler Design</h3>
+                GMQCC Imploys several modern strategies for lexing, parsing, understanding and
+                generating executable bytecode.  These stratagies are unlike anything present
+                in any existing QuakeC compiler.  With them GMQCC is capable of generating correct
+                optimal byte code while preventing you from writing broken code.
+                <p>
+                </p>
 
+                <h3>Compatability With Code</h3>
+                <p>GMQCC is committed to keeping backwards compatability with your existing QuakeC code,
+                to do this we support the oddities, and otherwise broken or incorrect behaviour of existing compilers
+                such as QCC and FTEQCC, so that you can rest easy knowing your code will work.
+                </p>
 
-      </header>
-      <section>
-          
-        <h3>Welcome</h3>
+                <h3>Obtain The Development Repository</h3
+                <p>If you're interested on used the latest, you may obtain the development
+                repository as such</p>
+                <pre><code>$ git clone git://github.com/graphitemaster/gmqcc.git
+                $ cd gmqcc
+                $ make
+                </code></pre>
 
-<p>For an enduring period of time the options for a decent compiler for the
-Quake C programming language were confined to a specific compiler known as QCC.
-Attempts were made to extend and improve upon the design of QCC, but many foreseen
-the consequences of building on a broken foundation.
-The solution was obvious, a new compiler; one born from the NIH realm of sarcastic wit.
-We welcome you. You won't find a better Quake C compiler.</p>
+                <h3>Support or Contact</h3>
 
-
-<h3>Modern Compiler Design</h3>
-GMQCC Imploys several modern strategies for lexing, parsing, understanding and
-generating executable bytecode.  These stratagies are unlike anything present
-in any existing QuakeC compiler.  With them GMQCC is capable of generating correct
-optimal byte code while preventing you from writing broken code.
-<p>
-</p>
-
-<h3>Compatability With Code</h3>
-
-<p>GMQCC is committed to keeping backwards compatability with your existing QuakeC code,
-to do this we support the oddities, and otherwise broken or incorrect behaviour of existing compilers
-such as QCC and FTEQCC, so that you can rest easy knowing your code will work.
-</p>
-
-<h3>Obtain The Development Repository</h3
-<p>If you're interested on used the latest, you may obtain the development
-repository as such</p>
-<pre><code>$ git clone git://github.com/graphitemaster/gmqcc.git
-$ cd gmqcc
-$ make
-</code></pre>
-
-<h3>Support or Contact</h3>
-
-<p>Having trouble with GMQCC? Join our IRC channel at #kf-engine on irc.freenode.net or contact <a href="mailto:cube2killfild@gmail.com">Us</a> 
-      </section>
-      <footer>
-        <script type="text/javascript" src="http://www.ohloh.net/p/602517/widgets/project_partner_badge.js"></script>
-      </footer>
-    </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		
-  </body>
+                <p>Having trouble with GMQCC? Join our IRC channel at #kf-engine on irc.freenode.net or contact <a href="mailto:cube2killfild@gmail.com">Us</a> 
+            </section>
+            <footer>
+                <script type="text/javascript" src="http://www.ohloh.net/p/602517/widgets/project_partner_badge.js"></script>
+            </footer>
+        </div>
+        <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    </body>
 </html>
