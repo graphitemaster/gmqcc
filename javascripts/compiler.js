@@ -189,14 +189,12 @@ function update() {
     
     doc.value = examples[sel[sel.selectedIndex].value - 1];
 }
-
 function compile() {
-    //run ([
-    //    document.getElementById("eg").selectedIndex.toString(),
-    //    document.getElementById("args")
-    //]);
-    //document.write("Hello World\n");
-    run (["hello.dat"]);
+    var args = [
+        'dat/' + document.getElementById("eg").selectedIndex.toString() + '.dat'
+    ].concat(document.getElementById("args").value.split());
+    document.getElementById("output").value = "Executing " + args.toString().replace(',', ' ');
+    run (args);
 }
 
 /* set initial */
