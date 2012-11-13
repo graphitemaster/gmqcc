@@ -1043,6 +1043,7 @@ int lex_do(lex_file *lex)
                  !strcmp(v, "else")   ||
                  !strcmp(v, "local")  ||
                  !strcmp(v, "return") ||
+                 !strcmp(v, "not")    ||
                  !strcmp(v, "const"))
         {
             lex->tok.ttype = TOKEN_KEYWORD;
