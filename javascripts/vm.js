@@ -949,1103 +949,6 @@ Module["preloadedAudios"] = {}; // maps url to audio data
 // Note: Some Emscripten settings will significantly limit the speed of the generated code.
 // Note: Some Emscripten settings may limit the speed of the generated code.
 
-function _qc_program_code_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+8)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+8)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=$2;
-      var $22=(($21+4)|0);
-      var $23=HEAP32[(($22)>>2)];
-      var $24=(($23+($20<<3))|0);
-      var $25=$i;
-      var $26=((($25)+(1))|0);
-      var $27=$2;
-      var $28=(($27+4)|0);
-      var $29=HEAP32[(($28)>>2)];
-      var $30=(($29+($26<<3))|0);
-      var $31=$24;
-      var $32=$30;
-      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP16[(($31)>>1)]=HEAP16[(($32)>>1)];HEAP16[((($31)+(2))>>1)]=HEAP16[((($32)+(2))>>1)];HEAP16[((($31)+(4))>>1)]=HEAP16[((($32)+(4))>>1)];HEAP16[((($31)+(6))>>1)]=HEAP16[((($32)+(6))>>1)];
-      __label__ = 7; break;
-    case 7: 
-      var $34=$i;
-      var $35=((($34)+(1))|0);
-      $i=$35;
-      __label__ = 5; break;
-    case 8: 
-      var $37=$2;
-      var $38=(($37+8)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=((($39)-(1))|0);
-      HEAP32[(($38)>>2)]=$40;
-      var $41=$2;
-      var $42=(($41+8)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=$2;
-      var $45=(($44+8)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=Math.floor(((($46)>>>0))/(2));
-      var $48=(($43)>>>0) < (($47)>>>0);
-      if ($48) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $50=$2;
-      var $51=(($50+12)|0);
-      var $52=HEAP32[(($51)>>2)];
-      var $53=Math.floor(((($52)>>>0))/(2));
-      HEAP32[(($51)>>2)]=$53;
-      var $54=$2;
-      var $55=(($54+8)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56<<3))|0);
-      var $58=_util_memory_a($57, 32, ((STRING_TABLE.__str)|0));
-      var $59=$58;
-      $reall=$59;
-      var $60=$reall;
-      var $61=(($60)|0)!=0;
-      if ($61) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $64=$reall;
-      var $65=$64;
-      var $66=$2;
-      var $67=(($66+4)|0);
-      var $68=HEAP32[(($67)>>2)];
-      var $69=$68;
-      var $70=$2;
-      var $71=(($70+8)|0);
-      var $72=HEAP32[(($71)>>2)];
-      var $73=((($72<<3))|0);
-      assert($73 % 1 === 0, 'memcpy given ' + $73 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($65, $69, $73, 2);
-      var $74=$2;
-      var $75=(($74+4)|0);
-      var $76=HEAP32[(($75)>>2)];
-      var $77=$76;
-      _util_memory_d($77, 32, ((STRING_TABLE.__str)|0));
-      var $78=$reall;
-      var $79=$2;
-      var $80=(($79+4)|0);
-      HEAP32[(($80)>>2)]=$78;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $83=$1;
-      ;
-      return $83;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_code_remove["X"]=1;
-
-function _qc_program_code_add($self, $f) {
-  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
-  var tempParam = $f; $f = STACKTOP;STACKTOP += 8;assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack");HEAP32[(($f)>>2)]=HEAP32[((tempParam)>>2)];HEAP32[((($f)+(4))>>2)]=HEAP32[(((tempParam)+(4))>>2)];
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $reall;
-      $2=$self;
-      var $3=$2;
-      var $4=(($3+8)|0);
-      var $5=HEAP32[(($4)>>2)];
-      var $6=$2;
-      var $7=(($6+12)|0);
-      var $8=HEAP32[(($7)>>2)];
-      var $9=(($5)|0)==(($8)|0);
-      if ($9) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $11=$2;
-      var $12=(($11+12)|0);
-      var $13=HEAP32[(($12)>>2)];
-      var $14=(($13)|0)!=0;
-      if ($14) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $16=$2;
-      var $17=(($16+12)|0);
-      HEAP32[(($17)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $19=$2;
-      var $20=(($19+12)|0);
-      var $21=HEAP32[(($20)>>2)];
-      var $22=((($21<<1))|0);
-      HEAP32[(($20)>>2)]=$22;
-      __label__ = 6; break;
-    case 6: 
-      var $24=$2;
-      var $25=(($24+12)|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=((($26<<3))|0);
-      var $28=_util_memory_a($27, 32, ((STRING_TABLE.__str)|0));
-      var $29=$28;
-      $reall=$29;
-      var $30=$reall;
-      var $31=(($30)|0)!=0;
-      if ($31) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $34=$reall;
-      var $35=$34;
-      var $36=$2;
-      var $37=(($36+4)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=$38;
-      var $40=$2;
-      var $41=(($40+8)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=((($42<<3))|0);
-      assert($43 % 1 === 0, 'memcpy given ' + $43 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($35, $39, $43, 2);
-      var $44=$2;
-      var $45=(($44+4)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=$46;
-      _util_memory_d($47, 32, ((STRING_TABLE.__str)|0));
-      var $48=$reall;
-      var $49=$2;
-      var $50=(($49+4)|0);
-      HEAP32[(($50)>>2)]=$48;
-      __label__ = 9; break;
-    case 9: 
-      var $52=$2;
-      var $53=(($52+8)|0);
-      var $54=HEAP32[(($53)>>2)];
-      var $55=((($54)+(1))|0);
-      HEAP32[(($53)>>2)]=$55;
-      var $56=$2;
-      var $57=(($56+4)|0);
-      var $58=HEAP32[(($57)>>2)];
-      var $59=(($58+($54<<3))|0);
-      var $60=$59;
-      var $61=$f;
-      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP16[(($60)>>1)]=HEAP16[(($61)>>1)];HEAP16[((($60)+(2))>>1)]=HEAP16[((($61)+(2))>>1)];HEAP16[((($60)+(4))>>1)]=HEAP16[((($61)+(4))>>1)];HEAP16[((($60)+(6))>>1)]=HEAP16[((($61)+(6))>>1)];
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      STACKTOP = __stackBase__;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_code_add["X"]=1;
-
-function _qc_program_defs_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+20)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+20)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=$2;
-      var $22=(($21+16)|0);
-      var $23=HEAP32[(($22)>>2)];
-      var $24=(($23+($20<<3))|0);
-      var $25=$i;
-      var $26=((($25)+(1))|0);
-      var $27=$2;
-      var $28=(($27+16)|0);
-      var $29=HEAP32[(($28)>>2)];
-      var $30=(($29+($26<<3))|0);
-      var $31=$24;
-      var $32=$30;
-      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($31)>>2)]=HEAP32[(($32)>>2)];HEAP32[((($31)+(4))>>2)]=HEAP32[((($32)+(4))>>2)];
-      __label__ = 7; break;
-    case 7: 
-      var $34=$i;
-      var $35=((($34)+(1))|0);
-      $i=$35;
-      __label__ = 5; break;
-    case 8: 
-      var $37=$2;
-      var $38=(($37+20)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=((($39)-(1))|0);
-      HEAP32[(($38)>>2)]=$40;
-      var $41=$2;
-      var $42=(($41+20)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=$2;
-      var $45=(($44+20)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=Math.floor(((($46)>>>0))/(2));
-      var $48=(($43)>>>0) < (($47)>>>0);
-      if ($48) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $50=$2;
-      var $51=(($50+24)|0);
-      var $52=HEAP32[(($51)>>2)];
-      var $53=Math.floor(((($52)>>>0))/(2));
-      HEAP32[(($51)>>2)]=$53;
-      var $54=$2;
-      var $55=(($54+20)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56<<3))|0);
-      var $58=_util_memory_a($57, 33, ((STRING_TABLE.__str)|0));
-      var $59=$58;
-      $reall=$59;
-      var $60=$reall;
-      var $61=(($60)|0)!=0;
-      if ($61) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $64=$reall;
-      var $65=$64;
-      var $66=$2;
-      var $67=(($66+16)|0);
-      var $68=HEAP32[(($67)>>2)];
-      var $69=$68;
-      var $70=$2;
-      var $71=(($70+20)|0);
-      var $72=HEAP32[(($71)>>2)];
-      var $73=((($72<<3))|0);
-      assert($73 % 1 === 0, 'memcpy given ' + $73 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($65, $69, $73, 4);
-      var $74=$2;
-      var $75=(($74+16)|0);
-      var $76=HEAP32[(($75)>>2)];
-      var $77=$76;
-      _util_memory_d($77, 33, ((STRING_TABLE.__str)|0));
-      var $78=$reall;
-      var $79=$2;
-      var $80=(($79+16)|0);
-      HEAP32[(($80)>>2)]=$78;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $83=$1;
-      ;
-      return $83;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_defs_remove["X"]=1;
-
-function _qc_program_defs_add($self, $f) {
-  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
-  var tempParam = $f; $f = STACKTOP;STACKTOP += 8;assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack");HEAP32[(($f)>>2)]=HEAP32[((tempParam)>>2)];HEAP32[((($f)+(4))>>2)]=HEAP32[(((tempParam)+(4))>>2)];
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $reall;
-      $2=$self;
-      var $3=$2;
-      var $4=(($3+20)|0);
-      var $5=HEAP32[(($4)>>2)];
-      var $6=$2;
-      var $7=(($6+24)|0);
-      var $8=HEAP32[(($7)>>2)];
-      var $9=(($5)|0)==(($8)|0);
-      if ($9) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $11=$2;
-      var $12=(($11+24)|0);
-      var $13=HEAP32[(($12)>>2)];
-      var $14=(($13)|0)!=0;
-      if ($14) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $16=$2;
-      var $17=(($16+24)|0);
-      HEAP32[(($17)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $19=$2;
-      var $20=(($19+24)|0);
-      var $21=HEAP32[(($20)>>2)];
-      var $22=((($21<<1))|0);
-      HEAP32[(($20)>>2)]=$22;
-      __label__ = 6; break;
-    case 6: 
-      var $24=$2;
-      var $25=(($24+24)|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=((($26<<3))|0);
-      var $28=_util_memory_a($27, 33, ((STRING_TABLE.__str)|0));
-      var $29=$28;
-      $reall=$29;
-      var $30=$reall;
-      var $31=(($30)|0)!=0;
-      if ($31) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $34=$reall;
-      var $35=$34;
-      var $36=$2;
-      var $37=(($36+16)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=$38;
-      var $40=$2;
-      var $41=(($40+20)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=((($42<<3))|0);
-      assert($43 % 1 === 0, 'memcpy given ' + $43 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($35, $39, $43, 4);
-      var $44=$2;
-      var $45=(($44+16)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=$46;
-      _util_memory_d($47, 33, ((STRING_TABLE.__str)|0));
-      var $48=$reall;
-      var $49=$2;
-      var $50=(($49+16)|0);
-      HEAP32[(($50)>>2)]=$48;
-      __label__ = 9; break;
-    case 9: 
-      var $52=$2;
-      var $53=(($52+20)|0);
-      var $54=HEAP32[(($53)>>2)];
-      var $55=((($54)+(1))|0);
-      HEAP32[(($53)>>2)]=$55;
-      var $56=$2;
-      var $57=(($56+16)|0);
-      var $58=HEAP32[(($57)>>2)];
-      var $59=(($58+($54<<3))|0);
-      var $60=$59;
-      var $61=$f;
-      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($60)>>2)]=HEAP32[(($61)>>2)];HEAP32[((($60)+(4))>>2)]=HEAP32[((($61)+(4))>>2)];
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      STACKTOP = __stackBase__;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_defs_add["X"]=1;
-
-function _qc_program_fields_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+32)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+32)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=$2;
-      var $22=(($21+28)|0);
-      var $23=HEAP32[(($22)>>2)];
-      var $24=(($23+($20<<3))|0);
-      var $25=$i;
-      var $26=((($25)+(1))|0);
-      var $27=$2;
-      var $28=(($27+28)|0);
-      var $29=HEAP32[(($28)>>2)];
-      var $30=(($29+($26<<3))|0);
-      var $31=$24;
-      var $32=$30;
-      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($31)>>2)]=HEAP32[(($32)>>2)];HEAP32[((($31)+(4))>>2)]=HEAP32[((($32)+(4))>>2)];
-      __label__ = 7; break;
-    case 7: 
-      var $34=$i;
-      var $35=((($34)+(1))|0);
-      $i=$35;
-      __label__ = 5; break;
-    case 8: 
-      var $37=$2;
-      var $38=(($37+32)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=((($39)-(1))|0);
-      HEAP32[(($38)>>2)]=$40;
-      var $41=$2;
-      var $42=(($41+32)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=$2;
-      var $45=(($44+32)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=Math.floor(((($46)>>>0))/(2));
-      var $48=(($43)>>>0) < (($47)>>>0);
-      if ($48) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $50=$2;
-      var $51=(($50+36)|0);
-      var $52=HEAP32[(($51)>>2)];
-      var $53=Math.floor(((($52)>>>0))/(2));
-      HEAP32[(($51)>>2)]=$53;
-      var $54=$2;
-      var $55=(($54+32)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56<<3))|0);
-      var $58=_util_memory_a($57, 34, ((STRING_TABLE.__str)|0));
-      var $59=$58;
-      $reall=$59;
-      var $60=$reall;
-      var $61=(($60)|0)!=0;
-      if ($61) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $64=$reall;
-      var $65=$64;
-      var $66=$2;
-      var $67=(($66+28)|0);
-      var $68=HEAP32[(($67)>>2)];
-      var $69=$68;
-      var $70=$2;
-      var $71=(($70+32)|0);
-      var $72=HEAP32[(($71)>>2)];
-      var $73=((($72<<3))|0);
-      assert($73 % 1 === 0, 'memcpy given ' + $73 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($65, $69, $73, 4);
-      var $74=$2;
-      var $75=(($74+28)|0);
-      var $76=HEAP32[(($75)>>2)];
-      var $77=$76;
-      _util_memory_d($77, 34, ((STRING_TABLE.__str)|0));
-      var $78=$reall;
-      var $79=$2;
-      var $80=(($79+28)|0);
-      HEAP32[(($80)>>2)]=$78;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $83=$1;
-      ;
-      return $83;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_fields_remove["X"]=1;
-
-function _qc_program_fields_add($self, $f) {
-  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
-  var tempParam = $f; $f = STACKTOP;STACKTOP += 8;assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack");HEAP32[(($f)>>2)]=HEAP32[((tempParam)>>2)];HEAP32[((($f)+(4))>>2)]=HEAP32[(((tempParam)+(4))>>2)];
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $reall;
-      $2=$self;
-      var $3=$2;
-      var $4=(($3+32)|0);
-      var $5=HEAP32[(($4)>>2)];
-      var $6=$2;
-      var $7=(($6+36)|0);
-      var $8=HEAP32[(($7)>>2)];
-      var $9=(($5)|0)==(($8)|0);
-      if ($9) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $11=$2;
-      var $12=(($11+36)|0);
-      var $13=HEAP32[(($12)>>2)];
-      var $14=(($13)|0)!=0;
-      if ($14) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $16=$2;
-      var $17=(($16+36)|0);
-      HEAP32[(($17)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $19=$2;
-      var $20=(($19+36)|0);
-      var $21=HEAP32[(($20)>>2)];
-      var $22=((($21<<1))|0);
-      HEAP32[(($20)>>2)]=$22;
-      __label__ = 6; break;
-    case 6: 
-      var $24=$2;
-      var $25=(($24+36)|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=((($26<<3))|0);
-      var $28=_util_memory_a($27, 34, ((STRING_TABLE.__str)|0));
-      var $29=$28;
-      $reall=$29;
-      var $30=$reall;
-      var $31=(($30)|0)!=0;
-      if ($31) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $34=$reall;
-      var $35=$34;
-      var $36=$2;
-      var $37=(($36+28)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=$38;
-      var $40=$2;
-      var $41=(($40+32)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=((($42<<3))|0);
-      assert($43 % 1 === 0, 'memcpy given ' + $43 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($35, $39, $43, 4);
-      var $44=$2;
-      var $45=(($44+28)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=$46;
-      _util_memory_d($47, 34, ((STRING_TABLE.__str)|0));
-      var $48=$reall;
-      var $49=$2;
-      var $50=(($49+28)|0);
-      HEAP32[(($50)>>2)]=$48;
-      __label__ = 9; break;
-    case 9: 
-      var $52=$2;
-      var $53=(($52+32)|0);
-      var $54=HEAP32[(($53)>>2)];
-      var $55=((($54)+(1))|0);
-      HEAP32[(($53)>>2)]=$55;
-      var $56=$2;
-      var $57=(($56+28)|0);
-      var $58=HEAP32[(($57)>>2)];
-      var $59=(($58+($54<<3))|0);
-      var $60=$59;
-      var $61=$f;
-      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($60)>>2)]=HEAP32[(($61)>>2)];HEAP32[((($60)+(4))>>2)]=HEAP32[((($61)+(4))>>2)];
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      STACKTOP = __stackBase__;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_fields_add["X"]=1;
-
-function _qc_program_functions_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+44)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+44)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=$2;
-      var $22=(($21+40)|0);
-      var $23=HEAP32[(($22)>>2)];
-      var $24=(($23+($20)*(36))|0);
-      var $25=$i;
-      var $26=((($25)+(1))|0);
-      var $27=$2;
-      var $28=(($27+40)|0);
-      var $29=HEAP32[(($28)>>2)];
-      var $30=(($29+($26)*(36))|0);
-      var $31=$24;
-      var $32=$30;
-      assert(36 % 1 === 0, 'memcpy given ' + 36 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');for (var $$src = $32>>2, $$dest = $31>>2, $$stop = $$src + 9; $$src < $$stop; $$src++, $$dest++) {
-        HEAP32[$$dest] = HEAP32[$$src]
-      };
-      __label__ = 7; break;
-    case 7: 
-      var $34=$i;
-      var $35=((($34)+(1))|0);
-      $i=$35;
-      __label__ = 5; break;
-    case 8: 
-      var $37=$2;
-      var $38=(($37+44)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=((($39)-(1))|0);
-      HEAP32[(($38)>>2)]=$40;
-      var $41=$2;
-      var $42=(($41+44)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=$2;
-      var $45=(($44+44)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=Math.floor(((($46)>>>0))/(2));
-      var $48=(($43)>>>0) < (($47)>>>0);
-      if ($48) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $50=$2;
-      var $51=(($50+48)|0);
-      var $52=HEAP32[(($51)>>2)];
-      var $53=Math.floor(((($52)>>>0))/(2));
-      HEAP32[(($51)>>2)]=$53;
-      var $54=$2;
-      var $55=(($54+44)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56)*(36))|0);
-      var $58=_util_memory_a($57, 35, ((STRING_TABLE.__str)|0));
-      var $59=$58;
-      $reall=$59;
-      var $60=$reall;
-      var $61=(($60)|0)!=0;
-      if ($61) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $64=$reall;
-      var $65=$64;
-      var $66=$2;
-      var $67=(($66+40)|0);
-      var $68=HEAP32[(($67)>>2)];
-      var $69=$68;
-      var $70=$2;
-      var $71=(($70+44)|0);
-      var $72=HEAP32[(($71)>>2)];
-      var $73=((($72)*(36))|0);
-      assert($73 % 1 === 0, 'memcpy given ' + $73 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($65, $69, $73, 4);
-      var $74=$2;
-      var $75=(($74+40)|0);
-      var $76=HEAP32[(($75)>>2)];
-      var $77=$76;
-      _util_memory_d($77, 35, ((STRING_TABLE.__str)|0));
-      var $78=$reall;
-      var $79=$2;
-      var $80=(($79+40)|0);
-      HEAP32[(($80)>>2)]=$78;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $83=$1;
-      ;
-      return $83;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_functions_remove["X"]=1;
-
-function _qc_program_functions_add($self, $f) {
-  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
-  var tempParam = $f; $f = STACKTOP;STACKTOP += 36;assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack");for (var $$src = tempParam>>2, $$dest = $f>>2, $$stop = $$src + 9; $$src < $$stop; $$src++, $$dest++) {
-  HEAP32[$$dest] = HEAP32[$$src]
-};
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $reall;
-      $2=$self;
-      var $3=$2;
-      var $4=(($3+44)|0);
-      var $5=HEAP32[(($4)>>2)];
-      var $6=$2;
-      var $7=(($6+48)|0);
-      var $8=HEAP32[(($7)>>2)];
-      var $9=(($5)|0)==(($8)|0);
-      if ($9) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $11=$2;
-      var $12=(($11+48)|0);
-      var $13=HEAP32[(($12)>>2)];
-      var $14=(($13)|0)!=0;
-      if ($14) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $16=$2;
-      var $17=(($16+48)|0);
-      HEAP32[(($17)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $19=$2;
-      var $20=(($19+48)|0);
-      var $21=HEAP32[(($20)>>2)];
-      var $22=((($21<<1))|0);
-      HEAP32[(($20)>>2)]=$22;
-      __label__ = 6; break;
-    case 6: 
-      var $24=$2;
-      var $25=(($24+48)|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=((($26)*(36))|0);
-      var $28=_util_memory_a($27, 35, ((STRING_TABLE.__str)|0));
-      var $29=$28;
-      $reall=$29;
-      var $30=$reall;
-      var $31=(($30)|0)!=0;
-      if ($31) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $34=$reall;
-      var $35=$34;
-      var $36=$2;
-      var $37=(($36+40)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=$38;
-      var $40=$2;
-      var $41=(($40+44)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=((($42)*(36))|0);
-      assert($43 % 1 === 0, 'memcpy given ' + $43 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($35, $39, $43, 4);
-      var $44=$2;
-      var $45=(($44+40)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=$46;
-      _util_memory_d($47, 35, ((STRING_TABLE.__str)|0));
-      var $48=$reall;
-      var $49=$2;
-      var $50=(($49+40)|0);
-      HEAP32[(($50)>>2)]=$48;
-      __label__ = 9; break;
-    case 9: 
-      var $52=$2;
-      var $53=(($52+44)|0);
-      var $54=HEAP32[(($53)>>2)];
-      var $55=((($54)+(1))|0);
-      HEAP32[(($53)>>2)]=$55;
-      var $56=$2;
-      var $57=(($56+40)|0);
-      var $58=HEAP32[(($57)>>2)];
-      var $59=(($58+($54)*(36))|0);
-      var $60=$59;
-      var $61=$f;
-      assert(36 % 1 === 0, 'memcpy given ' + 36 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');for (var $$src = $61>>2, $$dest = $60>>2, $$stop = $$src + 9; $$src < $$stop; $$src++, $$dest++) {
-        HEAP32[$$dest] = HEAP32[$$src]
-      };
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      STACKTOP = __stackBase__;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_functions_add["X"]=1;
-
-function _qc_program_strings_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+56)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+56)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+52)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+$21)|0);
-      var $26=HEAP8[($25)];
-      var $27=$i;
-      var $28=$2;
-      var $29=(($28+52)|0);
-      var $30=HEAP32[(($29)>>2)];
-      var $31=(($30+$27)|0);
-      HEAP8[($31)]=$26;
-      __label__ = 7; break;
-    case 7: 
-      var $33=$i;
-      var $34=((($33)+(1))|0);
-      $i=$34;
-      __label__ = 5; break;
-    case 8: 
-      var $36=$2;
-      var $37=(($36+56)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=((($38)-(1))|0);
-      HEAP32[(($37)>>2)]=$39;
-      var $40=$2;
-      var $41=(($40+56)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=$2;
-      var $44=(($43+56)|0);
-      var $45=HEAP32[(($44)>>2)];
-      var $46=Math.floor(((($45)>>>0))/(2));
-      var $47=(($42)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $49=$2;
-      var $50=(($49+60)|0);
-      var $51=HEAP32[(($50)>>2)];
-      var $52=Math.floor(((($51)>>>0))/(2));
-      HEAP32[(($50)>>2)]=$52;
-      var $53=$2;
-      var $54=(($53+56)|0);
-      var $55=HEAP32[(($54)>>2)];
-      var $56=(($55)|0);
-      var $57=_util_memory_a($56, 36, ((STRING_TABLE.__str)|0));
-      $reall=$57;
-      var $58=$reall;
-      var $59=(($58)|0)!=0;
-      if ($59) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $62=$reall;
-      var $63=$2;
-      var $64=(($63+52)|0);
-      var $65=HEAP32[(($64)>>2)];
-      var $66=$2;
-      var $67=(($66+56)|0);
-      var $68=HEAP32[(($67)>>2)];
-      var $69=(($68)|0);
-      assert($69 % 1 === 0, 'memcpy given ' + $69 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($62, $65, $69, 1);
-      var $70=$2;
-      var $71=(($70+52)|0);
-      var $72=HEAP32[(($71)>>2)];
-      _util_memory_d($72, 36, ((STRING_TABLE.__str)|0));
-      var $73=$reall;
-      var $74=$2;
-      var $75=(($74+52)|0);
-      HEAP32[(($75)>>2)]=$73;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $78=$1;
-      ;
-      return $78;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_strings_remove["X"]=1;
-
-function _qc_program_strings_add($self, $f) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $reall;
-      $2=$self;
-      $3=$f;
-      var $4=$2;
-      var $5=(($4+56)|0);
-      var $6=HEAP32[(($5)>>2)];
-      var $7=$2;
-      var $8=(($7+60)|0);
-      var $9=HEAP32[(($8)>>2)];
-      var $10=(($6)|0)==(($9)|0);
-      if ($10) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $12=$2;
-      var $13=(($12+60)|0);
-      var $14=HEAP32[(($13)>>2)];
-      var $15=(($14)|0)!=0;
-      if ($15) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $17=$2;
-      var $18=(($17+60)|0);
-      HEAP32[(($18)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $20=$2;
-      var $21=(($20+60)|0);
-      var $22=HEAP32[(($21)>>2)];
-      var $23=((($22<<1))|0);
-      HEAP32[(($21)>>2)]=$23;
-      __label__ = 6; break;
-    case 6: 
-      var $25=$2;
-      var $26=(($25+60)|0);
-      var $27=HEAP32[(($26)>>2)];
-      var $28=(($27)|0);
-      var $29=_util_memory_a($28, 36, ((STRING_TABLE.__str)|0));
-      $reall=$29;
-      var $30=$reall;
-      var $31=(($30)|0)!=0;
-      if ($31) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $34=$reall;
-      var $35=$2;
-      var $36=(($35+52)|0);
-      var $37=HEAP32[(($36)>>2)];
-      var $38=$2;
-      var $39=(($38+56)|0);
-      var $40=HEAP32[(($39)>>2)];
-      var $41=(($40)|0);
-      assert($41 % 1 === 0, 'memcpy given ' + $41 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($34, $37, $41, 1);
-      var $42=$2;
-      var $43=(($42+52)|0);
-      var $44=HEAP32[(($43)>>2)];
-      _util_memory_d($44, 36, ((STRING_TABLE.__str)|0));
-      var $45=$reall;
-      var $46=$2;
-      var $47=(($46+52)|0);
-      HEAP32[(($47)>>2)]=$45;
-      __label__ = 9; break;
-    case 9: 
-      var $49=$3;
-      var $50=$2;
-      var $51=(($50+56)|0);
-      var $52=HEAP32[(($51)>>2)];
-      var $53=((($52)+(1))|0);
-      HEAP32[(($51)>>2)]=$53;
-      var $54=$2;
-      var $55=(($54+52)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=(($56+$52)|0);
-      HEAP8[($57)]=$49;
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $59=$1;
-      ;
-      return $59;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_strings_add["X"]=1;
-
 function _qc_program_strings_append($s, $p, $c) {
   ;
   var __label__;
@@ -2310,347 +1213,6 @@ function _qc_program_strings_resize($s, $c) {
 }
 _qc_program_strings_resize["X"]=1;
 
-function _qc_program_globals_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+68)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+68)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+64)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+($21<<2))|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=$i;
-      var $28=$2;
-      var $29=(($28+64)|0);
-      var $30=HEAP32[(($29)>>2)];
-      var $31=(($30+($27<<2))|0);
-      HEAP32[(($31)>>2)]=$26;
-      __label__ = 7; break;
-    case 7: 
-      var $33=$i;
-      var $34=((($33)+(1))|0);
-      $i=$34;
-      __label__ = 5; break;
-    case 8: 
-      var $36=$2;
-      var $37=(($36+68)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=((($38)-(1))|0);
-      HEAP32[(($37)>>2)]=$39;
-      var $40=$2;
-      var $41=(($40+68)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=$2;
-      var $44=(($43+68)|0);
-      var $45=HEAP32[(($44)>>2)];
-      var $46=Math.floor(((($45)>>>0))/(2));
-      var $47=(($42)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $49=$2;
-      var $50=(($49+72)|0);
-      var $51=HEAP32[(($50)>>2)];
-      var $52=Math.floor(((($51)>>>0))/(2));
-      HEAP32[(($50)>>2)]=$52;
-      var $53=$2;
-      var $54=(($53+68)|0);
-      var $55=HEAP32[(($54)>>2)];
-      var $56=((($55<<2))|0);
-      var $57=_util_memory_a($56, 39, ((STRING_TABLE.__str)|0));
-      var $58=$57;
-      $reall=$58;
-      var $59=$reall;
-      var $60=(($59)|0)!=0;
-      if ($60) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $63=$reall;
-      var $64=$63;
-      var $65=$2;
-      var $66=(($65+64)|0);
-      var $67=HEAP32[(($66)>>2)];
-      var $68=$67;
-      var $69=$2;
-      var $70=(($69+68)|0);
-      var $71=HEAP32[(($70)>>2)];
-      var $72=((($71<<2))|0);
-      assert($72 % 1 === 0, 'memcpy given ' + $72 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($64, $68, $72, 4);
-      var $73=$2;
-      var $74=(($73+64)|0);
-      var $75=HEAP32[(($74)>>2)];
-      var $76=$75;
-      _util_memory_d($76, 39, ((STRING_TABLE.__str)|0));
-      var $77=$reall;
-      var $78=$2;
-      var $79=(($78+64)|0);
-      HEAP32[(($79)>>2)]=$77;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $82=$1;
-      ;
-      return $82;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_globals_remove["X"]=1;
-
-function _qc_program_globals_add($self, $f) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $reall;
-      $2=$self;
-      $3=$f;
-      var $4=$2;
-      var $5=(($4+68)|0);
-      var $6=HEAP32[(($5)>>2)];
-      var $7=$2;
-      var $8=(($7+72)|0);
-      var $9=HEAP32[(($8)>>2)];
-      var $10=(($6)|0)==(($9)|0);
-      if ($10) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $12=$2;
-      var $13=(($12+72)|0);
-      var $14=HEAP32[(($13)>>2)];
-      var $15=(($14)|0)!=0;
-      if ($15) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $17=$2;
-      var $18=(($17+72)|0);
-      HEAP32[(($18)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $20=$2;
-      var $21=(($20+72)|0);
-      var $22=HEAP32[(($21)>>2)];
-      var $23=((($22<<1))|0);
-      HEAP32[(($21)>>2)]=$23;
-      __label__ = 6; break;
-    case 6: 
-      var $25=$2;
-      var $26=(($25+72)|0);
-      var $27=HEAP32[(($26)>>2)];
-      var $28=((($27<<2))|0);
-      var $29=_util_memory_a($28, 39, ((STRING_TABLE.__str)|0));
-      var $30=$29;
-      $reall=$30;
-      var $31=$reall;
-      var $32=(($31)|0)!=0;
-      if ($32) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $35=$reall;
-      var $36=$35;
-      var $37=$2;
-      var $38=(($37+64)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=$39;
-      var $41=$2;
-      var $42=(($41+68)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=((($43<<2))|0);
-      assert($44 % 1 === 0, 'memcpy given ' + $44 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($36, $40, $44, 4);
-      var $45=$2;
-      var $46=(($45+64)|0);
-      var $47=HEAP32[(($46)>>2)];
-      var $48=$47;
-      _util_memory_d($48, 39, ((STRING_TABLE.__str)|0));
-      var $49=$reall;
-      var $50=$2;
-      var $51=(($50+64)|0);
-      HEAP32[(($51)>>2)]=$49;
-      __label__ = 9; break;
-    case 9: 
-      var $53=$3;
-      var $54=$2;
-      var $55=(($54+68)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56)+(1))|0);
-      HEAP32[(($55)>>2)]=$57;
-      var $58=$2;
-      var $59=(($58+64)|0);
-      var $60=HEAP32[(($59)>>2)];
-      var $61=(($60+($56<<2))|0);
-      HEAP32[(($61)>>2)]=$53;
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      ;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_globals_add["X"]=1;
-
-function _qc_program_entitydata_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+80)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+80)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+76)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+($21<<2))|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=$i;
-      var $28=$2;
-      var $29=(($28+76)|0);
-      var $30=HEAP32[(($29)>>2)];
-      var $31=(($30+($27<<2))|0);
-      HEAP32[(($31)>>2)]=$26;
-      __label__ = 7; break;
-    case 7: 
-      var $33=$i;
-      var $34=((($33)+(1))|0);
-      $i=$34;
-      __label__ = 5; break;
-    case 8: 
-      var $36=$2;
-      var $37=(($36+80)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=((($38)-(1))|0);
-      HEAP32[(($37)>>2)]=$39;
-      var $40=$2;
-      var $41=(($40+80)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=$2;
-      var $44=(($43+80)|0);
-      var $45=HEAP32[(($44)>>2)];
-      var $46=Math.floor(((($45)>>>0))/(2));
-      var $47=(($42)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $49=$2;
-      var $50=(($49+84)|0);
-      var $51=HEAP32[(($50)>>2)];
-      var $52=Math.floor(((($51)>>>0))/(2));
-      HEAP32[(($50)>>2)]=$52;
-      var $53=$2;
-      var $54=(($53+80)|0);
-      var $55=HEAP32[(($54)>>2)];
-      var $56=((($55<<2))|0);
-      var $57=_util_memory_a($56, 40, ((STRING_TABLE.__str)|0));
-      var $58=$57;
-      $reall=$58;
-      var $59=$reall;
-      var $60=(($59)|0)!=0;
-      if ($60) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $63=$reall;
-      var $64=$63;
-      var $65=$2;
-      var $66=(($65+76)|0);
-      var $67=HEAP32[(($66)>>2)];
-      var $68=$67;
-      var $69=$2;
-      var $70=(($69+80)|0);
-      var $71=HEAP32[(($70)>>2)];
-      var $72=((($71<<2))|0);
-      assert($72 % 1 === 0, 'memcpy given ' + $72 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($64, $68, $72, 4);
-      var $73=$2;
-      var $74=(($73+76)|0);
-      var $75=HEAP32[(($74)>>2)];
-      var $76=$75;
-      _util_memory_d($76, 40, ((STRING_TABLE.__str)|0));
-      var $77=$reall;
-      var $78=$2;
-      var $79=(($78+76)|0);
-      HEAP32[(($79)>>2)]=$77;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $82=$1;
-      ;
-      return $82;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_entitydata_remove["X"]=1;
-
 function _qc_program_entitydata_add($self, $f) {
   ;
   var __label__;
@@ -2748,126 +1310,6 @@ function _qc_program_entitydata_add($self, $f) {
 }
 _qc_program_entitydata_add["X"]=1;
 
-function _qc_program_entitypool_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+92)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+92)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+88)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+$21)|0);
-      var $26=HEAP8[($25)];
-      var $27=(($26) & 1);
-      var $28=$i;
-      var $29=$2;
-      var $30=(($29+88)|0);
-      var $31=HEAP32[(($30)>>2)];
-      var $32=(($31+$28)|0);
-      var $33=(($27)&1);
-      HEAP8[($32)]=$33;
-      __label__ = 7; break;
-    case 7: 
-      var $35=$i;
-      var $36=((($35)+(1))|0);
-      $i=$36;
-      __label__ = 5; break;
-    case 8: 
-      var $38=$2;
-      var $39=(($38+92)|0);
-      var $40=HEAP32[(($39)>>2)];
-      var $41=((($40)-(1))|0);
-      HEAP32[(($39)>>2)]=$41;
-      var $42=$2;
-      var $43=(($42+92)|0);
-      var $44=HEAP32[(($43)>>2)];
-      var $45=$2;
-      var $46=(($45+92)|0);
-      var $47=HEAP32[(($46)>>2)];
-      var $48=Math.floor(((($47)>>>0))/(2));
-      var $49=(($44)>>>0) < (($48)>>>0);
-      if ($49) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $51=$2;
-      var $52=(($51+96)|0);
-      var $53=HEAP32[(($52)>>2)];
-      var $54=Math.floor(((($53)>>>0))/(2));
-      HEAP32[(($52)>>2)]=$54;
-      var $55=$2;
-      var $56=(($55+92)|0);
-      var $57=HEAP32[(($56)>>2)];
-      var $58=(($57)|0);
-      var $59=_util_memory_a($58, 41, ((STRING_TABLE.__str)|0));
-      $reall=$59;
-      var $60=$reall;
-      var $61=(($60)|0)!=0;
-      if ($61) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $64=$reall;
-      var $65=$2;
-      var $66=(($65+88)|0);
-      var $67=HEAP32[(($66)>>2)];
-      var $68=$2;
-      var $69=(($68+92)|0);
-      var $70=HEAP32[(($69)>>2)];
-      var $71=(($70)|0);
-      assert($71 % 1 === 0, 'memcpy given ' + $71 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($64, $67, $71, 1);
-      var $72=$2;
-      var $73=(($72+88)|0);
-      var $74=HEAP32[(($73)>>2)];
-      _util_memory_d($74, 41, ((STRING_TABLE.__str)|0));
-      var $75=$reall;
-      var $76=$2;
-      var $77=(($76+88)|0);
-      HEAP32[(($77)>>2)]=$75;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $80=$1;
-      ;
-      return $80;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_entitypool_remove["X"]=1;
-
 function _qc_program_entitypool_add($self, $f) {
   ;
   var __label__;
@@ -2963,225 +1405,6 @@ function _qc_program_entitypool_add($self, $f) {
   }
 }
 _qc_program_entitypool_add["X"]=1;
-
-function _qc_program_localstack_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+156)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+156)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+152)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+($21<<2))|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=$i;
-      var $28=$2;
-      var $29=(($28+152)|0);
-      var $30=HEAP32[(($29)>>2)];
-      var $31=(($30+($27<<2))|0);
-      HEAP32[(($31)>>2)]=$26;
-      __label__ = 7; break;
-    case 7: 
-      var $33=$i;
-      var $34=((($33)+(1))|0);
-      $i=$34;
-      __label__ = 5; break;
-    case 8: 
-      var $36=$2;
-      var $37=(($36+156)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=((($38)-(1))|0);
-      HEAP32[(($37)>>2)]=$39;
-      var $40=$2;
-      var $41=(($40+156)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=$2;
-      var $44=(($43+156)|0);
-      var $45=HEAP32[(($44)>>2)];
-      var $46=Math.floor(((($45)>>>0))/(2));
-      var $47=(($42)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $49=$2;
-      var $50=(($49+160)|0);
-      var $51=HEAP32[(($50)>>2)];
-      var $52=Math.floor(((($51)>>>0))/(2));
-      HEAP32[(($50)>>2)]=$52;
-      var $53=$2;
-      var $54=(($53+156)|0);
-      var $55=HEAP32[(($54)>>2)];
-      var $56=((($55<<2))|0);
-      var $57=_util_memory_a($56, 43, ((STRING_TABLE.__str)|0));
-      var $58=$57;
-      $reall=$58;
-      var $59=$reall;
-      var $60=(($59)|0)!=0;
-      if ($60) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $63=$reall;
-      var $64=$63;
-      var $65=$2;
-      var $66=(($65+152)|0);
-      var $67=HEAP32[(($66)>>2)];
-      var $68=$67;
-      var $69=$2;
-      var $70=(($69+156)|0);
-      var $71=HEAP32[(($70)>>2)];
-      var $72=((($71<<2))|0);
-      assert($72 % 1 === 0, 'memcpy given ' + $72 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($64, $68, $72, 4);
-      var $73=$2;
-      var $74=(($73+152)|0);
-      var $75=HEAP32[(($74)>>2)];
-      var $76=$75;
-      _util_memory_d($76, 43, ((STRING_TABLE.__str)|0));
-      var $77=$reall;
-      var $78=$2;
-      var $79=(($78+152)|0);
-      HEAP32[(($79)>>2)]=$77;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $82=$1;
-      ;
-      return $82;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_localstack_remove["X"]=1;
-
-function _qc_program_localstack_add($self, $f) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $reall;
-      $2=$self;
-      $3=$f;
-      var $4=$2;
-      var $5=(($4+156)|0);
-      var $6=HEAP32[(($5)>>2)];
-      var $7=$2;
-      var $8=(($7+160)|0);
-      var $9=HEAP32[(($8)>>2)];
-      var $10=(($6)|0)==(($9)|0);
-      if ($10) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $12=$2;
-      var $13=(($12+160)|0);
-      var $14=HEAP32[(($13)>>2)];
-      var $15=(($14)|0)!=0;
-      if ($15) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $17=$2;
-      var $18=(($17+160)|0);
-      HEAP32[(($18)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $20=$2;
-      var $21=(($20+160)|0);
-      var $22=HEAP32[(($21)>>2)];
-      var $23=((($22<<1))|0);
-      HEAP32[(($21)>>2)]=$23;
-      __label__ = 6; break;
-    case 6: 
-      var $25=$2;
-      var $26=(($25+160)|0);
-      var $27=HEAP32[(($26)>>2)];
-      var $28=((($27<<2))|0);
-      var $29=_util_memory_a($28, 43, ((STRING_TABLE.__str)|0));
-      var $30=$29;
-      $reall=$30;
-      var $31=$reall;
-      var $32=(($31)|0)!=0;
-      if ($32) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $35=$reall;
-      var $36=$35;
-      var $37=$2;
-      var $38=(($37+152)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=$39;
-      var $41=$2;
-      var $42=(($41+156)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=((($43<<2))|0);
-      assert($44 % 1 === 0, 'memcpy given ' + $44 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($36, $40, $44, 4);
-      var $45=$2;
-      var $46=(($45+152)|0);
-      var $47=HEAP32[(($46)>>2)];
-      var $48=$47;
-      _util_memory_d($48, 43, ((STRING_TABLE.__str)|0));
-      var $49=$reall;
-      var $50=$2;
-      var $51=(($50+152)|0);
-      HEAP32[(($51)>>2)]=$49;
-      __label__ = 9; break;
-    case 9: 
-      var $53=$3;
-      var $54=$2;
-      var $55=(($54+156)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56)+(1))|0);
-      HEAP32[(($55)>>2)]=$57;
-      var $58=$2;
-      var $59=(($58+152)|0);
-      var $60=HEAP32[(($59)>>2)];
-      var $61=(($60+($56<<2))|0);
-      HEAP32[(($61)>>2)]=$53;
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      ;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_localstack_add["X"]=1;
 
 function _qc_program_localstack_append($s, $p, $c) {
   ;
@@ -3688,225 +1911,6 @@ function _qc_program_stack_add($self, $f_0, $f_1, $f_2) {
 }
 _qc_program_stack_add["X"]=1;
 
-function _qc_program_profile_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+120)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+120)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+116)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+($21<<2))|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=$i;
-      var $28=$2;
-      var $29=(($28+116)|0);
-      var $30=HEAP32[(($29)>>2)];
-      var $31=(($30+($27<<2))|0);
-      HEAP32[(($31)>>2)]=$26;
-      __label__ = 7; break;
-    case 7: 
-      var $33=$i;
-      var $34=((($33)+(1))|0);
-      $i=$34;
-      __label__ = 5; break;
-    case 8: 
-      var $36=$2;
-      var $37=(($36+120)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=((($38)-(1))|0);
-      HEAP32[(($37)>>2)]=$39;
-      var $40=$2;
-      var $41=(($40+120)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=$2;
-      var $44=(($43+120)|0);
-      var $45=HEAP32[(($44)>>2)];
-      var $46=Math.floor(((($45)>>>0))/(2));
-      var $47=(($42)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $49=$2;
-      var $50=(($49+124)|0);
-      var $51=HEAP32[(($50)>>2)];
-      var $52=Math.floor(((($51)>>>0))/(2));
-      HEAP32[(($50)>>2)]=$52;
-      var $53=$2;
-      var $54=(($53+120)|0);
-      var $55=HEAP32[(($54)>>2)];
-      var $56=((($55<<2))|0);
-      var $57=_util_memory_a($56, 48, ((STRING_TABLE.__str)|0));
-      var $58=$57;
-      $reall=$58;
-      var $59=$reall;
-      var $60=(($59)|0)!=0;
-      if ($60) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $63=$reall;
-      var $64=$63;
-      var $65=$2;
-      var $66=(($65+116)|0);
-      var $67=HEAP32[(($66)>>2)];
-      var $68=$67;
-      var $69=$2;
-      var $70=(($69+120)|0);
-      var $71=HEAP32[(($70)>>2)];
-      var $72=((($71<<2))|0);
-      assert($72 % 1 === 0, 'memcpy given ' + $72 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($64, $68, $72, 4);
-      var $73=$2;
-      var $74=(($73+116)|0);
-      var $75=HEAP32[(($74)>>2)];
-      var $76=$75;
-      _util_memory_d($76, 48, ((STRING_TABLE.__str)|0));
-      var $77=$reall;
-      var $78=$2;
-      var $79=(($78+116)|0);
-      HEAP32[(($79)>>2)]=$77;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $82=$1;
-      ;
-      return $82;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_profile_remove["X"]=1;
-
-function _qc_program_profile_add($self, $f) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $reall;
-      $2=$self;
-      $3=$f;
-      var $4=$2;
-      var $5=(($4+120)|0);
-      var $6=HEAP32[(($5)>>2)];
-      var $7=$2;
-      var $8=(($7+124)|0);
-      var $9=HEAP32[(($8)>>2)];
-      var $10=(($6)|0)==(($9)|0);
-      if ($10) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $12=$2;
-      var $13=(($12+124)|0);
-      var $14=HEAP32[(($13)>>2)];
-      var $15=(($14)|0)!=0;
-      if ($15) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $17=$2;
-      var $18=(($17+124)|0);
-      HEAP32[(($18)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $20=$2;
-      var $21=(($20+124)|0);
-      var $22=HEAP32[(($21)>>2)];
-      var $23=((($22<<1))|0);
-      HEAP32[(($21)>>2)]=$23;
-      __label__ = 6; break;
-    case 6: 
-      var $25=$2;
-      var $26=(($25+124)|0);
-      var $27=HEAP32[(($26)>>2)];
-      var $28=((($27<<2))|0);
-      var $29=_util_memory_a($28, 48, ((STRING_TABLE.__str)|0));
-      var $30=$29;
-      $reall=$30;
-      var $31=$reall;
-      var $32=(($31)|0)!=0;
-      if ($32) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $35=$reall;
-      var $36=$35;
-      var $37=$2;
-      var $38=(($37+116)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=$39;
-      var $41=$2;
-      var $42=(($41+120)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=((($43<<2))|0);
-      assert($44 % 1 === 0, 'memcpy given ' + $44 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($36, $40, $44, 4);
-      var $45=$2;
-      var $46=(($45+116)|0);
-      var $47=HEAP32[(($46)>>2)];
-      var $48=$47;
-      _util_memory_d($48, 48, ((STRING_TABLE.__str)|0));
-      var $49=$reall;
-      var $50=$2;
-      var $51=(($50+116)|0);
-      HEAP32[(($51)>>2)]=$49;
-      __label__ = 9; break;
-    case 9: 
-      var $53=$3;
-      var $54=$2;
-      var $55=(($54+120)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56)+(1))|0);
-      HEAP32[(($55)>>2)]=$57;
-      var $58=$2;
-      var $59=(($58+116)|0);
-      var $60=HEAP32[(($59)>>2)];
-      var $61=(($60+($56<<2))|0);
-      HEAP32[(($61)>>2)]=$53;
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      ;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_profile_add["X"]=1;
-
 function _qc_program_profile_resize($s, $c) {
   ;
   var __label__;
@@ -4027,225 +2031,6 @@ function _qc_program_profile_resize($s, $c) {
   }
 }
 _qc_program_profile_resize["X"]=1;
-
-function _qc_program_builtins_remove($self, $idx) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $i;
-      var $reall;
-      $2=$self;
-      $3=$idx;
-      var $4=$3;
-      var $5=$2;
-      var $6=(($5+132)|0);
-      var $7=HEAP32[(($6)>>2)];
-      var $8=(($4)>>>0) >= (($7)>>>0);
-      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
-    case 3: 
-      $1=1;
-      __label__ = 13; break;
-    case 4: 
-      var $11=$3;
-      $i=$11;
-      __label__ = 5; break;
-    case 5: 
-      var $13=$i;
-      var $14=$2;
-      var $15=(($14+132)|0);
-      var $16=HEAP32[(($15)>>2)];
-      var $17=((($16)-(1))|0);
-      var $18=(($13)>>>0) < (($17)>>>0);
-      if ($18) { __label__ = 6; break; } else { __label__ = 8; break; }
-    case 6: 
-      var $20=$i;
-      var $21=((($20)+(1))|0);
-      var $22=$2;
-      var $23=(($22+128)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=(($24+($21<<2))|0);
-      var $26=HEAP32[(($25)>>2)];
-      var $27=$i;
-      var $28=$2;
-      var $29=(($28+128)|0);
-      var $30=HEAP32[(($29)>>2)];
-      var $31=(($30+($27<<2))|0);
-      HEAP32[(($31)>>2)]=$26;
-      __label__ = 7; break;
-    case 7: 
-      var $33=$i;
-      var $34=((($33)+(1))|0);
-      $i=$34;
-      __label__ = 5; break;
-    case 8: 
-      var $36=$2;
-      var $37=(($36+132)|0);
-      var $38=HEAP32[(($37)>>2)];
-      var $39=((($38)-(1))|0);
-      HEAP32[(($37)>>2)]=$39;
-      var $40=$2;
-      var $41=(($40+132)|0);
-      var $42=HEAP32[(($41)>>2)];
-      var $43=$2;
-      var $44=(($43+132)|0);
-      var $45=HEAP32[(($44)>>2)];
-      var $46=Math.floor(((($45)>>>0))/(2));
-      var $47=(($42)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 9; break; } else { __label__ = 12; break; }
-    case 9: 
-      var $49=$2;
-      var $50=(($49+136)|0);
-      var $51=HEAP32[(($50)>>2)];
-      var $52=Math.floor(((($51)>>>0))/(2));
-      HEAP32[(($50)>>2)]=$52;
-      var $53=$2;
-      var $54=(($53+132)|0);
-      var $55=HEAP32[(($54)>>2)];
-      var $56=((($55<<2))|0);
-      var $57=_util_memory_a($56, 51, ((STRING_TABLE.__str)|0));
-      var $58=$57;
-      $reall=$58;
-      var $59=$reall;
-      var $60=(($59)|0)!=0;
-      if ($60) { __label__ = 11; break; } else { __label__ = 10; break; }
-    case 10: 
-      $1=0;
-      __label__ = 13; break;
-    case 11: 
-      var $63=$reall;
-      var $64=$63;
-      var $65=$2;
-      var $66=(($65+128)|0);
-      var $67=HEAP32[(($66)>>2)];
-      var $68=$67;
-      var $69=$2;
-      var $70=(($69+132)|0);
-      var $71=HEAP32[(($70)>>2)];
-      var $72=((($71<<2))|0);
-      assert($72 % 1 === 0, 'memcpy given ' + $72 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($64, $68, $72, 4);
-      var $73=$2;
-      var $74=(($73+128)|0);
-      var $75=HEAP32[(($74)>>2)];
-      var $76=$75;
-      _util_memory_d($76, 51, ((STRING_TABLE.__str)|0));
-      var $77=$reall;
-      var $78=$2;
-      var $79=(($78+128)|0);
-      HEAP32[(($79)>>2)]=$77;
-      __label__ = 12; break;
-    case 12: 
-      $1=1;
-      __label__ = 13; break;
-    case 13: 
-      var $82=$1;
-      ;
-      return $82;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_builtins_remove["X"]=1;
-
-function _qc_program_builtins_add($self, $f) {
-  ;
-  var __label__;
-  __label__ = 2; 
-  while(1) switch(__label__) {
-    case 2: 
-      var $1;
-      var $2;
-      var $3;
-      var $reall;
-      $2=$self;
-      $3=$f;
-      var $4=$2;
-      var $5=(($4+132)|0);
-      var $6=HEAP32[(($5)>>2)];
-      var $7=$2;
-      var $8=(($7+136)|0);
-      var $9=HEAP32[(($8)>>2)];
-      var $10=(($6)|0)==(($9)|0);
-      if ($10) { __label__ = 3; break; } else { __label__ = 9; break; }
-    case 3: 
-      var $12=$2;
-      var $13=(($12+136)|0);
-      var $14=HEAP32[(($13)>>2)];
-      var $15=(($14)|0)!=0;
-      if ($15) { __label__ = 5; break; } else { __label__ = 4; break; }
-    case 4: 
-      var $17=$2;
-      var $18=(($17+136)|0);
-      HEAP32[(($18)>>2)]=16;
-      __label__ = 6; break;
-    case 5: 
-      var $20=$2;
-      var $21=(($20+136)|0);
-      var $22=HEAP32[(($21)>>2)];
-      var $23=((($22<<1))|0);
-      HEAP32[(($21)>>2)]=$23;
-      __label__ = 6; break;
-    case 6: 
-      var $25=$2;
-      var $26=(($25+136)|0);
-      var $27=HEAP32[(($26)>>2)];
-      var $28=((($27<<2))|0);
-      var $29=_util_memory_a($28, 51, ((STRING_TABLE.__str)|0));
-      var $30=$29;
-      $reall=$30;
-      var $31=$reall;
-      var $32=(($31)|0)!=0;
-      if ($32) { __label__ = 8; break; } else { __label__ = 7; break; }
-    case 7: 
-      $1=0;
-      __label__ = 10; break;
-    case 8: 
-      var $35=$reall;
-      var $36=$35;
-      var $37=$2;
-      var $38=(($37+128)|0);
-      var $39=HEAP32[(($38)>>2)];
-      var $40=$39;
-      var $41=$2;
-      var $42=(($41+132)|0);
-      var $43=HEAP32[(($42)>>2)];
-      var $44=((($43<<2))|0);
-      assert($44 % 1 === 0, 'memcpy given ' + $44 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($36, $40, $44, 4);
-      var $45=$2;
-      var $46=(($45+128)|0);
-      var $47=HEAP32[(($46)>>2)];
-      var $48=$47;
-      _util_memory_d($48, 51, ((STRING_TABLE.__str)|0));
-      var $49=$reall;
-      var $50=$2;
-      var $51=(($50+128)|0);
-      HEAP32[(($51)>>2)]=$49;
-      __label__ = 9; break;
-    case 9: 
-      var $53=$3;
-      var $54=$2;
-      var $55=(($54+132)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=((($56)+(1))|0);
-      HEAP32[(($55)>>2)]=$57;
-      var $58=$2;
-      var $59=(($58+128)|0);
-      var $60=HEAP32[(($59)>>2)];
-      var $61=(($60+($56<<2))|0);
-      HEAP32[(($61)>>2)]=$53;
-      $1=1;
-      __label__ = 10; break;
-    case 10: 
-      var $63=$1;
-      ;
-      return $63;
-    default: assert(0, "bad label: " + __label__);
-  }
-}
-_qc_program_builtins_add["X"]=1;
 
 function _prog_load($filename) {
   var __stackBase__  = STACKTOP; STACKTOP += 60; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
@@ -4903,7 +2688,7 @@ function _loaderror($fmt) {
   ;
   var $9=$err;
   var $10=_strerror($9);
-  var $11=_printf(((STRING_TABLE.__str110)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$10,tempInt));
+  var $11=_printf(((STRING_TABLE.__str147)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$10,tempInt));
   STACKTOP = __stackBase__;
   return;
 }
@@ -19187,7 +16972,7 @@ function _prog_print_statement($prog, $st) {
       var $10=(($9)|0);
       var $11=HEAP16[(($10)>>1)];
       var $12=(($11)&65535);
-      var $13=_printf(((STRING_TABLE.__str27)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$12,tempInt));
+      var $13=_printf(((STRING_TABLE.__str65)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$12,tempInt));
       __label__ = 42; break;
     case 4: 
       var $15=$2;
@@ -19197,7 +16982,7 @@ function _prog_print_statement($prog, $st) {
       var $19=((_asm_instr+($18)*(12))|0);
       var $20=(($19)|0);
       var $21=HEAP32[(($20)>>2)];
-      var $22=_printf(((STRING_TABLE.__str28)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$21,tempInt));
+      var $22=_printf(((STRING_TABLE.__str66)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$21,tempInt));
       var $23=$2;
       var $24=(($23)|0);
       var $25=HEAP16[(($24)>>1)];
@@ -19224,7 +17009,7 @@ function _prog_print_statement($prog, $st) {
       var $43=$42;
       var $44=HEAP16[(($43)>>1)];
       var $45=(($44 << 16) >> 16);
-      var $46=_printf(((STRING_TABLE.__str29)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$45,tempInt));
+      var $46=_printf(((STRING_TABLE.__str67)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$45,tempInt));
       __label__ = 41; break;
     case 7: 
       var $48=$2;
@@ -19241,7 +17026,7 @@ function _prog_print_statement($prog, $st) {
       var $58=(($57)|0) <= 59;
       if ($58) { __label__ = 9; break; } else { __label__ = 10; break; }
     case 9: 
-      var $60=_printf(((STRING_TABLE.__str30)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $60=_printf(((STRING_TABLE.__str64)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       __label__ = 40; break;
     case 10: 
       var $62=$2;
@@ -19256,7 +17041,7 @@ function _prog_print_statement($prog, $st) {
       var $70=$69;
       var $71=HEAP16[(($70)>>1)];
       var $72=(($71 << 16) >> 16);
-      var $73=_printf(((STRING_TABLE.__str31)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$72,tempInt));
+      var $73=_printf(((STRING_TABLE.__str68)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$72,tempInt));
       __label__ = 39; break;
     case 12: 
       var $75=$t;
@@ -19450,7 +17235,7 @@ function _prog_print_statement($prog, $st) {
       _trace_print_global($143, $148, $150);
       __label__ = 32; break;
     case 31: 
-      var $152=_printf(((STRING_TABLE.__str32)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $152=_printf(((STRING_TABLE.__str69)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       __label__ = 32; break;
     case 32: 
       var $154=(($t+4)|0);
@@ -19469,7 +17254,7 @@ function _prog_print_statement($prog, $st) {
       _trace_print_global($158, $163, $165);
       __label__ = 35; break;
     case 34: 
-      var $167=_printf(((STRING_TABLE.__str32)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $167=_printf(((STRING_TABLE.__str69)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       __label__ = 35; break;
     case 35: 
       var $169=(($t+8)|0);
@@ -19488,10 +17273,10 @@ function _prog_print_statement($prog, $st) {
       _trace_print_global($173, $178, $180);
       __label__ = 38; break;
     case 37: 
-      var $182=_printf(((STRING_TABLE.__str33)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $182=_printf(((STRING_TABLE.__str70)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       __label__ = 38; break;
     case 38: 
-      var $184=_printf(((STRING_TABLE.__str30)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $184=_printf(((STRING_TABLE.__str64)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       __label__ = 39; break;
     case 39: 
       __label__ = 40; break;
@@ -19508,6 +17293,1582 @@ function _prog_print_statement($prog, $st) {
   }
 }
 _prog_print_statement["X"]=1;
+
+function _main_params_add($element_0, $element_1) {
+  var __stackBase__  = STACKTOP; STACKTOP += 8; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $element=__stackBase__;
+      var $temp;
+      var $2=(($element)|0);
+      HEAP32[(($2)>>2)]=$element_0;
+      var $3=(($element+4)|0);
+      HEAP32[(($3)>>2)]=$element_1;
+      $temp=0;
+      var $4=HEAP32[((_main_params_elements)>>2)];
+      var $5=HEAP32[((_main_params_allocated)>>2)];
+      var $6=(($4)|0)==(($5)|0);
+      if ($6) { __label__ = 3; break; } else { __label__ = 9; break; }
+    case 3: 
+      var $8=HEAP32[((_main_params_allocated)>>2)];
+      var $9=(($8)|0)==0;
+      if ($9) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      HEAP32[((_main_params_allocated)>>2)]=12;
+      __label__ = 6; break;
+    case 5: 
+      var $12=HEAP32[((_main_params_allocated)>>2)];
+      var $13=((($12<<1))|0);
+      HEAP32[((_main_params_allocated)>>2)]=$13;
+      __label__ = 6; break;
+    case 6: 
+      var $15=HEAP32[((_main_params_allocated)>>2)];
+      var $16=((($15<<3))|0);
+      var $17=_util_memory_a($16, 678, ((STRING_TABLE.__str)|0));
+      $temp=$17;
+      var $18=(($17)|0)!=0;
+      if ($18) { __label__ = 8; break; } else { __label__ = 7; break; }
+    case 7: 
+      var $20=$temp;
+      _util_memory_d($20, 678, ((STRING_TABLE.__str)|0));
+      $1=-1;
+      __label__ = 10; break;
+    case 8: 
+      var $22=$temp;
+      var $23=HEAP32[((_main_params_data)>>2)];
+      var $24=$23;
+      var $25=HEAP32[((_main_params_elements)>>2)];
+      var $26=((($25<<3))|0);
+      assert($26 % 1 === 0, 'memcpy given ' + $26 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($22, $24, $26, 1);
+      var $27=HEAP32[((_main_params_data)>>2)];
+      var $28=$27;
+      _util_memory_d($28, 678, ((STRING_TABLE.__str)|0));
+      var $29=$temp;
+      var $30=$29;
+      HEAP32[((_main_params_data)>>2)]=$30;
+      __label__ = 9; break;
+    case 9: 
+      var $32=HEAP32[((_main_params_elements)>>2)];
+      var $33=HEAP32[((_main_params_data)>>2)];
+      var $34=(($33+($32<<3))|0);
+      var $35=$34;
+      var $36=$element;
+      assert(8 % 1 === 0, 'memcpy given ' + 8 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($35)>>2)]=HEAP32[(($36)>>2)];HEAP32[((($35)+(4))>>2)]=HEAP32[((($36)+(4))>>2)];
+      var $37=HEAP32[((_main_params_elements)>>2)];
+      var $38=((($37)+(1))|0);
+      HEAP32[((_main_params_elements)>>2)]=$38;
+      $1=$37;
+      __label__ = 10; break;
+    case 10: 
+      var $40=$1;
+      STACKTOP = __stackBase__;
+      return $40;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_main_params_add["X"]=1;
+
+function _prog_enterfunction($prog, $func) {
+  var __stackBase__  = STACKTOP; STACKTOP += 12; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $st=__stackBase__;
+      var $p;
+      var $parampos;
+      var $globals;
+      var $s;
+      $1=$prog;
+      $2=$func;
+      var $3=$1;
+      var $4=(($3+156)|0);
+      var $5=HEAP32[(($4)>>2)];
+      var $6=(($st+4)|0);
+      HEAP32[(($6)>>2)]=$5;
+      var $7=$1;
+      var $8=(($7+176)|0);
+      var $9=HEAP32[(($8)>>2)];
+      var $10=(($st)|0);
+      HEAP32[(($10)>>2)]=$9;
+      var $11=$2;
+      var $12=(($st+8)|0);
+      HEAP32[(($12)>>2)]=$11;
+      var $13=$1;
+      var $14=(($13+64)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=$2;
+      var $17=(($16+4)|0);
+      var $18=HEAP32[(($17)>>2)];
+      var $19=(($15+($18<<2))|0);
+      $globals=$19;
+      var $20=$1;
+      var $21=$globals;
+      var $22=$2;
+      var $23=(($22+8)|0);
+      var $24=HEAP32[(($23)>>2)];
+      var $25=_qc_program_localstack_append($20, $21, $24);
+      if ($25) { __label__ = 4; break; } else { __label__ = 3; break; }
+    case 3: 
+      var $27=_printf(((STRING_TABLE.__str146)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      _exit(1);
+      throw "Reached an unreachable!"
+    case 4: 
+      var $29=$2;
+      var $30=(($29+4)|0);
+      var $31=HEAP32[(($30)>>2)];
+      $parampos=$31;
+      $p=0;
+      __label__ = 5; break;
+    case 5: 
+      var $33=$p;
+      var $34=$2;
+      var $35=(($34+24)|0);
+      var $36=HEAP32[(($35)>>2)];
+      var $37=(($33)>>>0) < (($36)>>>0);
+      if ($37) { __label__ = 6; break; } else { __label__ = 12; break; }
+    case 6: 
+      $s=0;
+      __label__ = 7; break;
+    case 7: 
+      var $40=$s;
+      var $41=$p;
+      var $42=$2;
+      var $43=(($42+28)|0);
+      var $44=(($43+$41)|0);
+      var $45=HEAP8[($44)];
+      var $46=(($45)&255);
+      var $47=(($40)>>>0) < (($46)>>>0);
+      if ($47) { __label__ = 8; break; } else { __label__ = 10; break; }
+    case 8: 
+      var $49=$p;
+      var $50=((($49)*(3))|0);
+      var $51=((($50)+(4))|0);
+      var $52=$s;
+      var $53=((($51)+($52))|0);
+      var $54=$1;
+      var $55=(($54+64)|0);
+      var $56=HEAP32[(($55)>>2)];
+      var $57=(($56+($53<<2))|0);
+      var $58=HEAP32[(($57)>>2)];
+      var $59=$parampos;
+      var $60=$1;
+      var $61=(($60+64)|0);
+      var $62=HEAP32[(($61)>>2)];
+      var $63=(($62+($59<<2))|0);
+      HEAP32[(($63)>>2)]=$58;
+      var $64=$parampos;
+      var $65=((($64)+(1))|0);
+      $parampos=$65;
+      __label__ = 9; break;
+    case 9: 
+      var $67=$s;
+      var $68=((($67)+(1))|0);
+      $s=$68;
+      __label__ = 7; break;
+    case 10: 
+      __label__ = 11; break;
+    case 11: 
+      var $71=$p;
+      var $72=((($71)+(1))|0);
+      $p=$72;
+      __label__ = 5; break;
+    case 12: 
+      var $74=$1;
+      var $75=(($st)|0);
+      var $76=HEAP32[(($75)>>2)];
+      var $77=(($st+4)|0);
+      var $78=HEAP32[(($77)>>2)];
+      var $79=(($st+8)|0);
+      var $80=HEAP32[(($79)>>2)];
+      var $81=_qc_program_stack_add($74, $76, $78, $80);
+      if ($81) { __label__ = 14; break; } else { __label__ = 13; break; }
+    case 13: 
+      var $83=_printf(((STRING_TABLE.__str146)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      _exit(1);
+      throw "Reached an unreachable!"
+    case 14: 
+      var $85=$2;
+      var $86=(($85)|0);
+      var $87=HEAP32[(($86)>>2)];
+      STACKTOP = __stackBase__;
+      return $87;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_prog_enterfunction["X"]=1;
+
+function _prog_leavefunction($prog) {
+  var __stackBase__  = STACKTOP; STACKTOP += 12; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $prev;
+      var $oldsp;
+      var $st=__stackBase__;
+      var $globals;
+      $1=$prog;
+      $prev=0;
+      var $2=$1;
+      var $3=(($2+168)|0);
+      var $4=HEAP32[(($3)>>2)];
+      var $5=((($4)-(1))|0);
+      var $6=$1;
+      var $7=(($6+164)|0);
+      var $8=HEAP32[(($7)>>2)];
+      var $9=(($8+($5)*(12))|0);
+      var $10=$st;
+      var $11=$9;
+      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($10)>>2)]=HEAP32[(($11)>>2)];HEAP32[((($10)+(4))>>2)]=HEAP32[((($11)+(4))>>2)];HEAP32[((($10)+(8))>>2)]=HEAP32[((($11)+(8))>>2)];
+      var $12=$1;
+      var $13=(($12+168)|0);
+      var $14=HEAP32[(($13)>>2)];
+      var $15=((($14)-(1))|0);
+      var $16=$1;
+      var $17=(($16+164)|0);
+      var $18=HEAP32[(($17)>>2)];
+      var $19=(($18+($15)*(12))|0);
+      var $20=(($19+8)|0);
+      var $21=HEAP32[(($20)>>2)];
+      $prev=$21;
+      var $22=$1;
+      var $23=(($22+168)|0);
+      var $24=HEAP32[(($23)>>2)];
+      var $25=((($24)-(1))|0);
+      var $26=$1;
+      var $27=(($26+164)|0);
+      var $28=HEAP32[(($27)>>2)];
+      var $29=(($28+($25)*(12))|0);
+      var $30=(($29+4)|0);
+      var $31=HEAP32[(($30)>>2)];
+      $oldsp=$31;
+      var $32=$prev;
+      var $33=(($32)|0)!=0;
+      if ($33) { __label__ = 3; break; } else { __label__ = 6; break; }
+    case 3: 
+      var $35=$1;
+      var $36=(($35+64)|0);
+      var $37=HEAP32[(($36)>>2)];
+      var $38=$prev;
+      var $39=(($38+4)|0);
+      var $40=HEAP32[(($39)>>2)];
+      var $41=(($37+($40<<2))|0);
+      $globals=$41;
+      var $42=$globals;
+      var $43=$42;
+      var $44=$1;
+      var $45=(($44+152)|0);
+      var $46=HEAP32[(($45)>>2)];
+      var $47=$oldsp;
+      var $48=(($46+($47<<2))|0);
+      var $49=$48;
+      var $50=$prev;
+      var $51=(($50+8)|0);
+      var $52=HEAP32[(($51)>>2)];
+      assert($52 % 1 === 0, 'memcpy given ' + $52 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($43, $49, $52, 4);
+      var $53=$1;
+      var $54=$oldsp;
+      var $55=_qc_program_localstack_resize($53, $54);
+      if ($55) { __label__ = 5; break; } else { __label__ = 4; break; }
+    case 4: 
+      var $57=_printf(((STRING_TABLE.__str146)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      _exit(1);
+      throw "Reached an unreachable!"
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $60=$1;
+      var $61=$1;
+      var $62=(($61+168)|0);
+      var $63=HEAP32[(($62)>>2)];
+      var $64=((($63)-(1))|0);
+      var $65=_qc_program_stack_remove($60, $64);
+      if ($65) { __label__ = 8; break; } else { __label__ = 7; break; }
+    case 7: 
+      var $67=_printf(((STRING_TABLE.__str146)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      _exit(1);
+      throw "Reached an unreachable!"
+    case 8: 
+      var $69=(($st)|0);
+      var $70=HEAP32[(($69)>>2)];
+      var $71=((($70)-(1))|0);
+      STACKTOP = __stackBase__;
+      return $71;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_prog_leavefunction["X"]=1;
+
+function _usage() {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+
+  var $1=HEAP32[((_arg0)>>2)];
+  var $2=_printf(((STRING_TABLE.__str36)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$1,tempInt));
+  _exit(1);
+  throw "Reached an unreachable!"
+  STACKTOP = __stackBase__;
+  return;
+}
+
+
+function _prog_disasm_function($prog, $id) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $fdef;
+      var $st;
+      $1=$prog;
+      $2=$id;
+      var $3=$1;
+      var $4=(($3+40)|0);
+      var $5=HEAP32[(($4)>>2)];
+      var $6=$2;
+      var $7=(($5+($6)*(36))|0);
+      $fdef=$7;
+      var $8=$fdef;
+      var $9=(($8)|0);
+      var $10=HEAP32[(($9)>>2)];
+      var $11=(($10)|0) < 0;
+      if ($11) { __label__ = 3; break; } else { __label__ = 4; break; }
+    case 3: 
+      var $13=$1;
+      var $14=$fdef;
+      var $15=(($14+16)|0);
+      var $16=HEAP32[(($15)>>2)];
+      var $17=_prog_getstring($13, $16);
+      var $18=$fdef;
+      var $19=(($18)|0);
+      var $20=HEAP32[(($19)>>2)];
+      var $21=(((-$20))|0);
+      var $22=_printf(((STRING_TABLE.__str54)|0), (tempInt=STACKTOP,STACKTOP += 8,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$17,HEAP32[(((tempInt)+(4))>>2)]=$21,tempInt));
+      __label__ = 8; break;
+    case 4: 
+      var $24=$1;
+      var $25=$fdef;
+      var $26=(($25+16)|0);
+      var $27=HEAP32[(($26)>>2)];
+      var $28=_prog_getstring($24, $27);
+      var $29=_printf(((STRING_TABLE.__str55)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$28,tempInt));
+      __label__ = 5; break;
+    case 5: 
+      var $31=$1;
+      var $32=(($31+4)|0);
+      var $33=HEAP32[(($32)>>2)];
+      var $34=$fdef;
+      var $35=(($34)|0);
+      var $36=HEAP32[(($35)>>2)];
+      var $37=(($33+($36<<3))|0);
+      $st=$37;
+      __label__ = 6; break;
+    case 6: 
+      var $39=$st;
+      var $40=(($39)|0);
+      var $41=HEAP16[(($40)>>1)];
+      var $42=(($41)&65535);
+      var $43=(($42)|0)!=66;
+      if ($43) { __label__ = 7; break; } else { __label__ = 8; break; }
+    case 7: 
+      var $45=$1;
+      var $46=$st;
+      _prog_print_statement($45, $46);
+      var $47=$st;
+      var $48=(($47+8)|0);
+      $st=$48;
+      __label__ = 6; break;
+    case 8: 
+      STACKTOP = __stackBase__;
+      return;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_prog_disasm_function["X"]=1;
+
+function _prog_main_setparams($prog) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $i;
+      var $arg;
+      $1=$prog;
+      $i=0;
+      __label__ = 3; break;
+    case 3: 
+      var $3=$i;
+      var $4=HEAP32[((_main_params_elements)>>2)];
+      var $5=(($3)>>>0) < (($4)>>>0);
+      if ($5) { __label__ = 4; break; } else { __label__ = 11; break; }
+    case 4: 
+      var $7=$1;
+      var $8=(($7+64)|0);
+      var $9=HEAP32[(($8)>>2)];
+      var $10=$i;
+      var $11=((($10)*(3))|0);
+      var $12=((($11)+(4))|0);
+      var $13=(($9+($12<<2))|0);
+      var $14=$13;
+      $arg=$14;
+      var $15=$arg;
+      var $16=$15;
+      var $17=(($16)|0);
+      HEAPF32[(($17)>>2)]=0;
+      var $18=$arg;
+      var $19=$18;
+      var $20=(($19+4)|0);
+      HEAPF32[(($20)>>2)]=0;
+      var $21=$arg;
+      var $22=$21;
+      var $23=(($22+8)|0);
+      HEAPF32[(($23)>>2)]=0;
+      var $24=$i;
+      var $25=HEAP32[((_main_params_data)>>2)];
+      var $26=(($25+($24<<3))|0);
+      var $27=(($26)|0);
+      var $28=HEAP32[(($27)>>2)];
+      if ((($28)|0) == 3) {
+        __label__ = 5; break;
+      }
+      else if ((($28)|0) == 2) {
+        __label__ = 6; break;
+      }
+      else if ((($28)|0) == 1) {
+        __label__ = 7; break;
+      }
+      else {
+      __label__ = 8; break;
+      }
+      
+    case 5: 
+      var $30=$i;
+      var $31=HEAP32[((_main_params_data)>>2)];
+      var $32=(($31+($30<<3))|0);
+      var $33=(($32+4)|0);
+      var $34=HEAP32[(($33)>>2)];
+      var $35=$arg;
+      var $36=$35;
+      var $37=(($36)|0);
+      var $38=$arg;
+      var $39=$38;
+      var $40=(($39+4)|0);
+      var $41=$arg;
+      var $42=$41;
+      var $43=(($42+8)|0);
+      var $44=_sscanf($34, ((STRING_TABLE.__str56)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$37,HEAP32[(((tempInt)+(4))>>2)]=$40,HEAP32[(((tempInt)+(8))>>2)]=$43,tempInt));
+      __label__ = 9; break;
+    case 6: 
+      var $46=$i;
+      var $47=HEAP32[((_main_params_data)>>2)];
+      var $48=(($47+($46<<3))|0);
+      var $49=(($48+4)|0);
+      var $50=HEAP32[(($49)>>2)];
+      var $51=_atof($50);
+      var $52=$51;
+      var $53=$arg;
+      var $54=$53;
+      HEAPF32[(($54)>>2)]=$52;
+      __label__ = 9; break;
+    case 7: 
+      var $56=$1;
+      var $57=$i;
+      var $58=HEAP32[((_main_params_data)>>2)];
+      var $59=(($58+($57<<3))|0);
+      var $60=(($59+4)|0);
+      var $61=HEAP32[(($60)>>2)];
+      var $62=_prog_tempstring($56, $61);
+      var $63=$arg;
+      var $64=$63;
+      HEAP32[(($64)>>2)]=$62;
+      __label__ = 9; break;
+    case 8: 
+      var $66=$i;
+      var $67=HEAP32[((_main_params_data)>>2)];
+      var $68=(($67+($66<<3))|0);
+      var $69=(($68)|0);
+      var $70=HEAP32[(($69)>>2)];
+      var $71=_printf(((STRING_TABLE.__str57)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$70,tempInt));
+      __label__ = 9; break;
+    case 9: 
+      __label__ = 10; break;
+    case 10: 
+      var $74=$i;
+      var $75=((($74)+(1))|0);
+      $i=$75;
+      __label__ = 3; break;
+    case 11: 
+      STACKTOP = __stackBase__;
+      return;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_prog_main_setparams["X"]=1;
+
+function _qc_print($prog) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $i;
+      var $laststr;
+      var $str;
+      var $len;
+      $1=$prog;
+      $laststr=0;
+      $i=0;
+      __label__ = 3; break;
+    case 3: 
+      var $3=$i;
+      var $4=$1;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($3)>>>0) < (($6)>>>0);
+      if ($7) { __label__ = 4; break; } else { __label__ = 6; break; }
+    case 4: 
+      var $9=$1;
+      var $10=(($9+64)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=(($11+16)|0);
+      var $13=$i;
+      var $14=((($13)*(3))|0);
+      var $15=(($12+($14<<2))|0);
+      var $16=$15;
+      $str=$16;
+      var $17=$1;
+      var $18=$str;
+      var $19=$18;
+      var $20=HEAP32[(($19)>>2)];
+      var $21=_prog_getstring($17, $20);
+      $laststr=$21;
+      var $22=_printf(((STRING_TABLE.__str63)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$21,tempInt));
+      __label__ = 5; break;
+    case 5: 
+      var $24=$i;
+      var $25=((($24)+(1))|0);
+      $i=$25;
+      __label__ = 3; break;
+    case 6: 
+      var $27=$laststr;
+      var $28=(($27)|0)!=0;
+      if ($28) { __label__ = 7; break; } else { __label__ = 12; break; }
+    case 7: 
+      var $30=$1;
+      var $31=(($30+180)|0);
+      var $32=HEAP32[(($31)>>2)];
+      var $33=$32 & 1;
+      var $34=(($33)|0)!=0;
+      if ($34) { __label__ = 8; break; } else { __label__ = 12; break; }
+    case 8: 
+      var $36=$laststr;
+      var $37=_strlen($36);
+      $len=$37;
+      var $38=$len;
+      var $39=(($38)|0)!=0;
+      if ($39) { __label__ = 9; break; } else { __label__ = 10; break; }
+    case 9: 
+      var $41=$len;
+      var $42=((($41)-(1))|0);
+      var $43=$laststr;
+      var $44=(($43+$42)|0);
+      var $45=HEAP8[($44)];
+      var $46=(($45 << 24) >> 24);
+      var $47=(($46)|0)!=10;
+      if ($47) { __label__ = 10; break; } else { __label__ = 11; break; }
+    case 10: 
+      var $49=_printf(((STRING_TABLE.__str64)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      __label__ = 11; break;
+    case 11: 
+      __label__ = 12; break;
+    case 12: 
+      STACKTOP = __stackBase__;
+      return 0;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_qc_print["X"]=1;
+
+function _qc_ftos($prog) {
+  var __stackBase__  = STACKTOP; STACKTOP += 524; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $buffer=__stackBase__;
+      var $num;
+      var $str=(__stackBase__)+(512);
+      $2=$prog;
+      __label__ = 3; break;
+    case 3: 
+      var $4=$2;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($6)|0)!=1;
+      if ($7) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      var $9=$2;
+      var $10=(($9+112)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=((($11)+(1))|0);
+      HEAP32[(($10)>>2)]=$12;
+      var $13=$2;
+      var $14=(($13+184)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=_printf(((STRING_TABLE.__str58)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=((STRING_TABLE.___FUNCTION___qc_ftos)|0),HEAP32[(((tempInt)+(4))>>2)]=$15,HEAP32[(((tempInt)+(8))>>2)]=1,tempInt));
+      $1=-1;
+      __label__ = 7; break;
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $19=$2;
+      var $20=(($19+64)|0);
+      var $21=HEAP32[(($20)>>2)];
+      var $22=(($21+16)|0);
+      var $23=$22;
+      $num=$23;
+      var $24=(($buffer)|0);
+      var $25=$num;
+      var $26=$25;
+      var $27=HEAPF32[(($26)>>2)];
+      var $28=$27;
+      var $29=_snprintf($24, 512, ((STRING_TABLE.__str62)|0), (tempInt=STACKTOP,STACKTOP += 8,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),(tempDoubleF64[0]=$28,HEAP32[((tempInt)>>2)]=tempDoubleI32[0],HEAP32[(((tempInt)+(4))>>2)]=tempDoubleI32[1]),tempInt));
+      var $30=$2;
+      var $31=(($buffer)|0);
+      var $32=_prog_tempstring($30, $31);
+      var $33=$str;
+      HEAP32[(($33)>>2)]=$32;
+      var $34=$2;
+      var $35=(($34+64)|0);
+      var $36=HEAP32[(($35)>>2)];
+      var $37=(($36+4)|0);
+      var $38=$37;
+      var $39=$38;
+      var $40=$str;
+      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($39)>>2)]=HEAP32[(($40)>>2)];HEAP32[((($39)+(4))>>2)]=HEAP32[((($40)+(4))>>2)];HEAP32[((($39)+(8))>>2)]=HEAP32[((($40)+(8))>>2)];
+      $1=0;
+      __label__ = 7; break;
+    case 7: 
+      var $42=$1;
+      STACKTOP = __stackBase__;
+      return $42;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_qc_ftos["X"]=1;
+
+function _qc_spawn($prog) {
+  var __stackBase__  = STACKTOP; STACKTOP += 12; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $ent=__stackBase__;
+      $2=$prog;
+      __label__ = 3; break;
+    case 3: 
+      var $4=$2;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($6)|0)!=0;
+      if ($7) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      var $9=$2;
+      var $10=(($9+112)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=((($11)+(1))|0);
+      HEAP32[(($10)>>2)]=$12;
+      var $13=$2;
+      var $14=(($13+184)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=_printf(((STRING_TABLE.__str58)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=((STRING_TABLE.___FUNCTION___qc_spawn)|0),HEAP32[(((tempInt)+(4))>>2)]=$15,HEAP32[(((tempInt)+(8))>>2)]=0,tempInt));
+      $1=-1;
+      __label__ = 7; break;
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $19=$2;
+      var $20=_prog_spawn_entity($19);
+      var $21=$ent;
+      HEAP32[(($21)>>2)]=$20;
+      var $22=$2;
+      var $23=(($22+64)|0);
+      var $24=HEAP32[(($23)>>2)];
+      var $25=(($24+4)|0);
+      var $26=$25;
+      var $27=$26;
+      var $28=$ent;
+      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($27)>>2)]=HEAP32[(($28)>>2)];HEAP32[((($27)+(4))>>2)]=HEAP32[((($28)+(4))>>2)];HEAP32[((($27)+(8))>>2)]=HEAP32[((($28)+(8))>>2)];
+      var $29=$ent;
+      var $30=HEAP32[(($29)>>2)];
+      var $31=(($30)|0)!=0;
+      var $32=$31 ? 0 : -1;
+      $1=$32;
+      __label__ = 7; break;
+    case 7: 
+      var $34=$1;
+      STACKTOP = __stackBase__;
+      return $34;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+
+
+function _main($argc, $argv) {
+  var __stackBase__  = STACKTOP; STACKTOP += 8; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $i;
+      var $fnmain;
+      var $prog;
+      var $xflags;
+      var $opts_printfields;
+      var $opts_printdefs;
+      var $opts_disasm;
+      var $opts_info;
+      var $p=__stackBase__;
+      var $name;
+      $1=0;
+      $2=$argc;
+      $3=$argv;
+      $fnmain=-1;
+      $xflags=0;
+      $opts_printfields=0;
+      $opts_printdefs=0;
+      $opts_disasm=0;
+      $opts_info=0;
+      var $4=$3;
+      var $5=(($4)|0);
+      var $6=HEAP32[(($5)>>2)];
+      HEAP32[((_arg0)>>2)]=$6;
+      var $7=$2;
+      var $8=(($7)|0) < 2;
+      if ($8) { __label__ = 3; break; } else { __label__ = 4; break; }
+    case 3: 
+      _usage();
+      __label__ = 4; break;
+    case 4: 
+      __label__ = 5; break;
+    case 5: 
+      var $12=$2;
+      var $13=(($12)|0) > 2;
+      if ($13) { __label__ = 6; break; } else { __label__ = 44; break; }
+    case 6: 
+      var $15=$3;
+      var $16=(($15+4)|0);
+      var $17=HEAP32[(($16)>>2)];
+      var $18=_strcmp($17, ((STRING_TABLE.__str37)|0));
+      var $19=(($18)|0)!=0;
+      if ($19) { __label__ = 8; break; } else { __label__ = 7; break; }
+    case 7: 
+      var $21=$2;
+      var $22=((($21)-(1))|0);
+      $2=$22;
+      var $23=$3;
+      var $24=(($23+4)|0);
+      $3=$24;
+      var $25=$xflags;
+      var $26=$25 | 1;
+      $xflags=$26;
+      __label__ = 43; break;
+    case 8: 
+      var $28=$3;
+      var $29=(($28+4)|0);
+      var $30=HEAP32[(($29)>>2)];
+      var $31=_strcmp($30, ((STRING_TABLE.__str38)|0));
+      var $32=(($31)|0)!=0;
+      if ($32) { __label__ = 10; break; } else { __label__ = 9; break; }
+    case 9: 
+      var $34=$2;
+      var $35=((($34)-(1))|0);
+      $2=$35;
+      var $36=$3;
+      var $37=(($36+4)|0);
+      $3=$37;
+      var $38=$xflags;
+      var $39=$38 | 2;
+      $xflags=$39;
+      __label__ = 42; break;
+    case 10: 
+      var $41=$3;
+      var $42=(($41+4)|0);
+      var $43=HEAP32[(($42)>>2)];
+      var $44=_strcmp($43, ((STRING_TABLE.__str39)|0));
+      var $45=(($44)|0)!=0;
+      if ($45) { __label__ = 12; break; } else { __label__ = 11; break; }
+    case 11: 
+      var $47=$2;
+      var $48=((($47)-(1))|0);
+      $2=$48;
+      var $49=$3;
+      var $50=(($49+4)|0);
+      $3=$50;
+      $opts_info=1;
+      __label__ = 41; break;
+    case 12: 
+      var $52=$3;
+      var $53=(($52+4)|0);
+      var $54=HEAP32[(($53)>>2)];
+      var $55=_strcmp($54, ((STRING_TABLE.__str40)|0));
+      var $56=(($55)|0)!=0;
+      if ($56) { __label__ = 14; break; } else { __label__ = 13; break; }
+    case 13: 
+      var $58=$2;
+      var $59=((($58)-(1))|0);
+      $2=$59;
+      var $60=$3;
+      var $61=(($60+4)|0);
+      $3=$61;
+      $opts_disasm=1;
+      __label__ = 40; break;
+    case 14: 
+      var $63=$3;
+      var $64=(($63+4)|0);
+      var $65=HEAP32[(($64)>>2)];
+      var $66=_strcmp($65, ((STRING_TABLE.__str41)|0));
+      var $67=(($66)|0)!=0;
+      if ($67) { __label__ = 16; break; } else { __label__ = 15; break; }
+    case 15: 
+      var $69=$2;
+      var $70=((($69)-(1))|0);
+      $2=$70;
+      var $71=$3;
+      var $72=(($71+4)|0);
+      $3=$72;
+      $opts_printdefs=1;
+      __label__ = 39; break;
+    case 16: 
+      var $74=$3;
+      var $75=(($74+4)|0);
+      var $76=HEAP32[(($75)>>2)];
+      var $77=_strcmp($76, ((STRING_TABLE.__str42)|0));
+      var $78=(($77)|0)!=0;
+      if ($78) { __label__ = 18; break; } else { __label__ = 17; break; }
+    case 17: 
+      var $80=$2;
+      var $81=((($80)-(1))|0);
+      $2=$81;
+      var $82=$3;
+      var $83=(($82+4)|0);
+      $3=$83;
+      $opts_printfields=1;
+      __label__ = 38; break;
+    case 18: 
+      var $85=$3;
+      var $86=(($85+4)|0);
+      var $87=HEAP32[(($86)>>2)];
+      var $88=_strcmp($87, ((STRING_TABLE.__str43)|0));
+      var $89=(($88)|0)!=0;
+      if ($89) { __label__ = 19; break; } else { __label__ = 21; break; }
+    case 19: 
+      var $91=$3;
+      var $92=(($91+4)|0);
+      var $93=HEAP32[(($92)>>2)];
+      var $94=_strcmp($93, ((STRING_TABLE.__str44)|0));
+      var $95=(($94)|0)!=0;
+      if ($95) { __label__ = 20; break; } else { __label__ = 21; break; }
+    case 20: 
+      var $97=$3;
+      var $98=(($97+4)|0);
+      var $99=HEAP32[(($98)>>2)];
+      var $100=_strcmp($99, ((STRING_TABLE.__str45)|0));
+      var $101=(($100)|0)!=0;
+      if ($101) { __label__ = 36; break; } else { __label__ = 21; break; }
+    case 21: 
+      var $103=$3;
+      var $104=(($103+4)|0);
+      var $105=HEAP32[(($104)>>2)];
+      var $106=(($105+1)|0);
+      var $107=HEAP8[($106)];
+      var $108=(($107 << 24) >> 24);
+      var $109=(($108)|0)==102;
+      if ($109) { __label__ = 22; break; } else { __label__ = 23; break; }
+    case 22: 
+      var $111=(($p)|0);
+      HEAP32[(($111)>>2)]=2;
+      __label__ = 29; break;
+    case 23: 
+      var $113=$3;
+      var $114=(($113+4)|0);
+      var $115=HEAP32[(($114)>>2)];
+      var $116=(($115+1)|0);
+      var $117=HEAP8[($116)];
+      var $118=(($117 << 24) >> 24);
+      var $119=(($118)|0)==115;
+      if ($119) { __label__ = 24; break; } else { __label__ = 25; break; }
+    case 24: 
+      var $121=(($p)|0);
+      HEAP32[(($121)>>2)]=1;
+      __label__ = 28; break;
+    case 25: 
+      var $123=$3;
+      var $124=(($123+4)|0);
+      var $125=HEAP32[(($124)>>2)];
+      var $126=(($125+1)|0);
+      var $127=HEAP8[($126)];
+      var $128=(($127 << 24) >> 24);
+      var $129=(($128)|0)==118;
+      if ($129) { __label__ = 26; break; } else { __label__ = 27; break; }
+    case 26: 
+      var $131=(($p)|0);
+      HEAP32[(($131)>>2)]=3;
+      __label__ = 27; break;
+    case 27: 
+      __label__ = 28; break;
+    case 28: 
+      __label__ = 29; break;
+    case 29: 
+      var $135=$2;
+      var $136=((($135)-(1))|0);
+      $2=$136;
+      var $137=$3;
+      var $138=(($137+4)|0);
+      $3=$138;
+      var $139=$2;
+      var $140=(($139)|0) < 3;
+      if ($140) { __label__ = 30; break; } else { __label__ = 31; break; }
+    case 30: 
+      _usage();
+      __label__ = 31; break;
+    case 31: 
+      var $143=$3;
+      var $144=(($143+4)|0);
+      var $145=HEAP32[(($144)>>2)];
+      var $146=(($p+4)|0);
+      HEAP32[(($146)>>2)]=$145;
+      var $147=(($p)|0);
+      var $148=HEAP32[(($147)>>2)];
+      var $149=(($p+4)|0);
+      var $150=HEAP32[(($149)>>2)];
+      var $151=_main_params_add($148, $150);
+      var $152=(($151)|0) < 0;
+      if ($152) { __label__ = 32; break; } else { __label__ = 35; break; }
+    case 32: 
+      var $154=HEAP32[((_main_params_data)>>2)];
+      var $155=(($154)|0)!=0;
+      if ($155) { __label__ = 33; break; } else { __label__ = 34; break; }
+    case 33: 
+      var $157=HEAP32[((_main_params_data)>>2)];
+      var $158=$157;
+      _util_memory_d($158, 912, ((STRING_TABLE.__str)|0));
+      __label__ = 34; break;
+    case 34: 
+      var $160=_printf(((STRING_TABLE.__str46)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      _exit(1);
+      throw "Reached an unreachable!"
+    case 35: 
+      var $162=$2;
+      var $163=((($162)-(1))|0);
+      $2=$163;
+      var $164=$3;
+      var $165=(($164+4)|0);
+      $3=$165;
+      __label__ = 37; break;
+    case 36: 
+      _usage();
+      __label__ = 37; break;
+    case 37: 
+      __label__ = 38; break;
+    case 38: 
+      __label__ = 39; break;
+    case 39: 
+      __label__ = 40; break;
+    case 40: 
+      __label__ = 41; break;
+    case 41: 
+      __label__ = 42; break;
+    case 42: 
+      __label__ = 43; break;
+    case 43: 
+      __label__ = 5; break;
+    case 44: 
+      var $175=$3;
+      var $176=(($175+4)|0);
+      var $177=HEAP32[(($176)>>2)];
+      var $178=_prog_load($177);
+      $prog=$178;
+      var $179=$prog;
+      var $180=(($179)|0)!=0;
+      if ($180) { __label__ = 46; break; } else { __label__ = 45; break; }
+    case 45: 
+      var $182=$3;
+      var $183=(($182+4)|0);
+      var $184=HEAP32[(($183)>>2)];
+      var $185=_printf(((STRING_TABLE.__str47)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$184,tempInt));
+      _exit(1);
+      throw "Reached an unreachable!"
+    case 46: 
+      var $187=$prog;
+      var $188=(($187+128)|0);
+      HEAP32[(($188)>>2)]=((_qc_builtins)|0);
+      var $189=HEAP32[((_qc_builtins_count)>>2)];
+      var $190=$prog;
+      var $191=(($190+132)|0);
+      HEAP32[(($191)>>2)]=$189;
+      var $192=$prog;
+      var $193=(($192+136)|0);
+      HEAP32[(($193)>>2)]=0;
+      var $194=$opts_info;
+      var $195=(($194) & 1);
+      if ($195) { __label__ = 47; break; } else { __label__ = 48; break; }
+    case 47: 
+      var $197=$prog;
+      var $198=(($197+100)|0);
+      var $199=HEAP16[(($198)>>1)];
+      var $200=(($199)&65535);
+      var $201=_printf(((STRING_TABLE.__str48)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$200,tempInt));
+      var $202=$prog;
+      var $203=(($202+144)|0);
+      var $204=HEAP32[(($203)>>2)];
+      var $205=_printf(((STRING_TABLE.__str49)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$204,tempInt));
+      __label__ = 48; break;
+    case 48: 
+      $i=1;
+      __label__ = 49; break;
+    case 49: 
+      var $208=$i;
+      var $209=$prog;
+      var $210=(($209+44)|0);
+      var $211=HEAP32[(($210)>>2)];
+      var $212=(($208)>>>0) < (($211)>>>0);
+      if ($212) { __label__ = 50; break; } else { __label__ = 54; break; }
+    case 50: 
+      var $214=$prog;
+      var $215=$i;
+      var $216=$prog;
+      var $217=(($216+40)|0);
+      var $218=HEAP32[(($217)>>2)];
+      var $219=(($218+($215)*(36))|0);
+      var $220=(($219+16)|0);
+      var $221=HEAP32[(($220)>>2)];
+      var $222=_prog_getstring($214, $221);
+      $name=$222;
+      var $223=$name;
+      var $224=_strcmp($223, ((STRING_TABLE.__str50)|0));
+      var $225=(($224)|0)!=0;
+      if ($225) { __label__ = 52; break; } else { __label__ = 51; break; }
+    case 51: 
+      var $227=$i;
+      $fnmain=$227;
+      __label__ = 52; break;
+    case 52: 
+      __label__ = 53; break;
+    case 53: 
+      var $230=$i;
+      var $231=((($230)+(1))|0);
+      $i=$231;
+      __label__ = 49; break;
+    case 54: 
+      var $233=$opts_info;
+      var $234=(($233) & 1);
+      if ($234) { __label__ = 55; break; } else { __label__ = 56; break; }
+    case 55: 
+      var $236=$prog;
+      _prog_delete($236);
+      $1=0;
+      __label__ = 80; break;
+    case 56: 
+      var $238=$opts_disasm;
+      var $239=(($238) & 1);
+      if ($239) { __label__ = 57; break; } else { __label__ = 62; break; }
+    case 57: 
+      $i=1;
+      __label__ = 58; break;
+    case 58: 
+      var $242=$i;
+      var $243=$prog;
+      var $244=(($243+44)|0);
+      var $245=HEAP32[(($244)>>2)];
+      var $246=(($242)>>>0) < (($245)>>>0);
+      if ($246) { __label__ = 59; break; } else { __label__ = 61; break; }
+    case 59: 
+      var $248=$prog;
+      var $249=$i;
+      _prog_disasm_function($248, $249);
+      __label__ = 60; break;
+    case 60: 
+      var $251=$i;
+      var $252=((($251)+(1))|0);
+      $i=$252;
+      __label__ = 58; break;
+    case 61: 
+      $1=0;
+      __label__ = 80; break;
+    case 62: 
+      var $255=$opts_printdefs;
+      var $256=(($255) & 1);
+      if ($256) { __label__ = 63; break; } else { __label__ = 68; break; }
+    case 63: 
+      $i=0;
+      __label__ = 64; break;
+    case 64: 
+      var $259=$i;
+      var $260=$prog;
+      var $261=(($260+20)|0);
+      var $262=HEAP32[(($261)>>2)];
+      var $263=(($259)>>>0) < (($262)>>>0);
+      if ($263) { __label__ = 65; break; } else { __label__ = 67; break; }
+    case 65: 
+      var $265=$i;
+      var $266=$prog;
+      var $267=(($266+16)|0);
+      var $268=HEAP32[(($267)>>2)];
+      var $269=(($268+($265<<3))|0);
+      var $270=(($269)|0);
+      var $271=HEAP16[(($270)>>1)];
+      var $272=(($271)&65535);
+      var $273=$272 & 32767;
+      var $274=((_type_name+($273<<2))|0);
+      var $275=HEAP32[(($274)>>2)];
+      var $276=$prog;
+      var $277=$i;
+      var $278=$prog;
+      var $279=(($278+16)|0);
+      var $280=HEAP32[(($279)>>2)];
+      var $281=(($280+($277<<3))|0);
+      var $282=(($281+4)|0);
+      var $283=HEAP32[(($282)>>2)];
+      var $284=_prog_getstring($276, $283);
+      var $285=$i;
+      var $286=$prog;
+      var $287=(($286+16)|0);
+      var $288=HEAP32[(($287)>>2)];
+      var $289=(($288+($285<<3))|0);
+      var $290=(($289+2)|0);
+      var $291=HEAP16[(($290)>>1)];
+      var $292=(($291)&65535);
+      var $293=_printf(((STRING_TABLE.__str51)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$275,HEAP32[(((tempInt)+(4))>>2)]=$284,HEAP32[(((tempInt)+(8))>>2)]=$292,tempInt));
+      __label__ = 66; break;
+    case 66: 
+      var $295=$i;
+      var $296=((($295)+(1))|0);
+      $i=$296;
+      __label__ = 64; break;
+    case 67: 
+      __label__ = 79; break;
+    case 68: 
+      var $299=$opts_printfields;
+      var $300=(($299) & 1);
+      if ($300) { __label__ = 69; break; } else { __label__ = 74; break; }
+    case 69: 
+      $i=0;
+      __label__ = 70; break;
+    case 70: 
+      var $303=$i;
+      var $304=$prog;
+      var $305=(($304+32)|0);
+      var $306=HEAP32[(($305)>>2)];
+      var $307=(($303)>>>0) < (($306)>>>0);
+      if ($307) { __label__ = 71; break; } else { __label__ = 73; break; }
+    case 71: 
+      var $309=$i;
+      var $310=$prog;
+      var $311=(($310+28)|0);
+      var $312=HEAP32[(($311)>>2)];
+      var $313=(($312+($309<<3))|0);
+      var $314=(($313)|0);
+      var $315=HEAP16[(($314)>>1)];
+      var $316=(($315)&65535);
+      var $317=((_type_name+($316<<2))|0);
+      var $318=HEAP32[(($317)>>2)];
+      var $319=$prog;
+      var $320=$i;
+      var $321=$prog;
+      var $322=(($321+28)|0);
+      var $323=HEAP32[(($322)>>2)];
+      var $324=(($323+($320<<3))|0);
+      var $325=(($324+4)|0);
+      var $326=HEAP32[(($325)>>2)];
+      var $327=_prog_getstring($319, $326);
+      var $328=$i;
+      var $329=$prog;
+      var $330=(($329+28)|0);
+      var $331=HEAP32[(($330)>>2)];
+      var $332=(($331+($328<<3))|0);
+      var $333=(($332+2)|0);
+      var $334=HEAP16[(($333)>>1)];
+      var $335=(($334)&65535);
+      var $336=_printf(((STRING_TABLE.__str52)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$318,HEAP32[(((tempInt)+(4))>>2)]=$327,HEAP32[(((tempInt)+(8))>>2)]=$335,tempInt));
+      __label__ = 72; break;
+    case 72: 
+      var $338=$i;
+      var $339=((($338)+(1))|0);
+      $i=$339;
+      __label__ = 70; break;
+    case 73: 
+      __label__ = 78; break;
+    case 74: 
+      var $342=$fnmain;
+      var $343=(($342)|0) > 0;
+      if ($343) { __label__ = 75; break; } else { __label__ = 76; break; }
+    case 75: 
+      var $345=$prog;
+      _prog_main_setparams($345);
+      var $346=$prog;
+      var $347=$fnmain;
+      var $348=$prog;
+      var $349=(($348+40)|0);
+      var $350=HEAP32[(($349)>>2)];
+      var $351=(($350+($347)*(36))|0);
+      var $352=$xflags;
+      var $353=_prog_exec($346, $351, $352, 1000000);
+      __label__ = 77; break;
+    case 76: 
+      var $355=_printf(((STRING_TABLE.__str53)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      __label__ = 77; break;
+    case 77: 
+      __label__ = 78; break;
+    case 78: 
+      __label__ = 79; break;
+    case 79: 
+      var $359=$prog;
+      _prog_delete($359);
+      $1=0;
+      __label__ = 80; break;
+    case 80: 
+      var $361=$1;
+      STACKTOP = __stackBase__;
+      return $361;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+Module["_main"] = _main;_main["X"]=1;
+
+function _qc_kill($prog) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $ent;
+      $2=$prog;
+      __label__ = 3; break;
+    case 3: 
+      var $4=$2;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($6)|0)!=1;
+      if ($7) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      var $9=$2;
+      var $10=(($9+112)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=((($11)+(1))|0);
+      HEAP32[(($10)>>2)]=$12;
+      var $13=$2;
+      var $14=(($13+184)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=_printf(((STRING_TABLE.__str58)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=((STRING_TABLE.___FUNCTION___qc_kill)|0),HEAP32[(((tempInt)+(4))>>2)]=$15,HEAP32[(((tempInt)+(8))>>2)]=1,tempInt));
+      $1=-1;
+      __label__ = 7; break;
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $19=$2;
+      var $20=(($19+64)|0);
+      var $21=HEAP32[(($20)>>2)];
+      var $22=(($21+16)|0);
+      var $23=$22;
+      $ent=$23;
+      var $24=$2;
+      var $25=$ent;
+      var $26=$25;
+      var $27=HEAP32[(($26)>>2)];
+      _prog_free_entity($24, $27);
+      $1=0;
+      __label__ = 7; break;
+    case 7: 
+      var $29=$1;
+      STACKTOP = __stackBase__;
+      return $29;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+
+
+function _qc_vtos($prog) {
+  var __stackBase__  = STACKTOP; STACKTOP += 524; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $buffer=__stackBase__;
+      var $num;
+      var $str=(__stackBase__)+(512);
+      $2=$prog;
+      __label__ = 3; break;
+    case 3: 
+      var $4=$2;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($6)|0)!=1;
+      if ($7) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      var $9=$2;
+      var $10=(($9+112)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=((($11)+(1))|0);
+      HEAP32[(($10)>>2)]=$12;
+      var $13=$2;
+      var $14=(($13+184)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=_printf(((STRING_TABLE.__str58)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=((STRING_TABLE.___FUNCTION___qc_vtos)|0),HEAP32[(((tempInt)+(4))>>2)]=$15,HEAP32[(((tempInt)+(8))>>2)]=1,tempInt));
+      $1=-1;
+      __label__ = 7; break;
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $19=$2;
+      var $20=(($19+64)|0);
+      var $21=HEAP32[(($20)>>2)];
+      var $22=(($21+16)|0);
+      var $23=$22;
+      $num=$23;
+      var $24=(($buffer)|0);
+      var $25=$num;
+      var $26=$25;
+      var $27=(($26)|0);
+      var $28=HEAPF32[(($27)>>2)];
+      var $29=$28;
+      var $30=$num;
+      var $31=$30;
+      var $32=(($31+4)|0);
+      var $33=HEAPF32[(($32)>>2)];
+      var $34=$33;
+      var $35=$num;
+      var $36=$35;
+      var $37=(($36+8)|0);
+      var $38=HEAPF32[(($37)>>2)];
+      var $39=$38;
+      var $40=_snprintf($24, 512, ((STRING_TABLE.__str61)|0), (tempInt=STACKTOP,STACKTOP += 24,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),(tempDoubleF64[0]=$29,HEAP32[((tempInt)>>2)]=tempDoubleI32[0],HEAP32[(((tempInt)+(4))>>2)]=tempDoubleI32[1]),(tempDoubleF64[0]=$34,HEAP32[(((tempInt)+(8))>>2)]=tempDoubleI32[0],HEAP32[((((tempInt)+(8))+(4))>>2)]=tempDoubleI32[1]),(tempDoubleF64[0]=$39,HEAP32[(((tempInt)+(16))>>2)]=tempDoubleI32[0],HEAP32[((((tempInt)+(16))+(4))>>2)]=tempDoubleI32[1]),tempInt));
+      var $41=$2;
+      var $42=(($buffer)|0);
+      var $43=_prog_tempstring($41, $42);
+      var $44=$str;
+      HEAP32[(($44)>>2)]=$43;
+      var $45=$2;
+      var $46=(($45+64)|0);
+      var $47=HEAP32[(($46)>>2)];
+      var $48=(($47+4)|0);
+      var $49=$48;
+      var $50=$49;
+      var $51=$str;
+      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($50)>>2)]=HEAP32[(($51)>>2)];HEAP32[((($50)+(4))>>2)]=HEAP32[((($51)+(4))>>2)];HEAP32[((($50)+(8))>>2)]=HEAP32[((($51)+(8))>>2)];
+      $1=0;
+      __label__ = 7; break;
+    case 7: 
+      var $53=$1;
+      STACKTOP = __stackBase__;
+      return $53;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_qc_vtos["X"]=1;
+
+function _qc_error($prog) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+
+  var $1;
+  $1=$prog;
+  var $2=_printf(((STRING_TABLE.__str60)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+  var $3=$1;
+  var $4=_qc_print($3);
+  var $5=$1;
+  var $6=(($5+112)|0);
+  var $7=HEAP32[(($6)>>2)];
+  var $8=((($7)+(1))|0);
+  HEAP32[(($6)>>2)]=$8;
+  STACKTOP = __stackBase__;
+  return -1;
+}
+
+
+function _qc_vlen($prog) {
+  var __stackBase__  = STACKTOP; STACKTOP += 12; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $vec;
+      var $len=__stackBase__;
+      $2=$prog;
+      __label__ = 3; break;
+    case 3: 
+      var $4=$2;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($6)|0)!=1;
+      if ($7) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      var $9=$2;
+      var $10=(($9+112)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=((($11)+(1))|0);
+      HEAP32[(($10)>>2)]=$12;
+      var $13=$2;
+      var $14=(($13+184)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=_printf(((STRING_TABLE.__str58)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=((STRING_TABLE.___FUNCTION___qc_vlen)|0),HEAP32[(((tempInt)+(4))>>2)]=$15,HEAP32[(((tempInt)+(8))>>2)]=1,tempInt));
+      $1=-1;
+      __label__ = 7; break;
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $19=$2;
+      var $20=(($19+64)|0);
+      var $21=HEAP32[(($20)>>2)];
+      var $22=(($21+16)|0);
+      var $23=$22;
+      $vec=$23;
+      var $24=$vec;
+      var $25=$24;
+      var $26=(($25)|0);
+      var $27=HEAPF32[(($26)>>2)];
+      var $28=$vec;
+      var $29=$28;
+      var $30=(($29)|0);
+      var $31=HEAPF32[(($30)>>2)];
+      var $32=($27)*($31);
+      var $33=$vec;
+      var $34=$33;
+      var $35=(($34+4)|0);
+      var $36=HEAPF32[(($35)>>2)];
+      var $37=$vec;
+      var $38=$37;
+      var $39=(($38+4)|0);
+      var $40=HEAPF32[(($39)>>2)];
+      var $41=($36)*($40);
+      var $42=($32)+($41);
+      var $43=$vec;
+      var $44=$43;
+      var $45=(($44+8)|0);
+      var $46=HEAPF32[(($45)>>2)];
+      var $47=$vec;
+      var $48=$47;
+      var $49=(($48+8)|0);
+      var $50=HEAPF32[(($49)>>2)];
+      var $51=($46)*($50);
+      var $52=($42)+($51);
+      var $53=$52;
+      var $54=_sqrt($53);
+      var $55=$54;
+      var $56=$len;
+      HEAPF32[(($56)>>2)]=$55;
+      var $57=$2;
+      var $58=(($57+64)|0);
+      var $59=HEAP32[(($58)>>2)];
+      var $60=(($59+4)|0);
+      var $61=$60;
+      var $62=$61;
+      var $63=$len;
+      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($62)>>2)]=HEAP32[(($63)>>2)];HEAP32[((($62)+(4))>>2)]=HEAP32[((($63)+(4))>>2)];HEAP32[((($62)+(8))>>2)]=HEAP32[((($63)+(8))>>2)];
+      $1=0;
+      __label__ = 7; break;
+    case 7: 
+      var $65=$1;
+      STACKTOP = __stackBase__;
+      return $65;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_qc_vlen["X"]=1;
+
+function _qc_etos($prog) {
+  var __stackBase__  = STACKTOP; STACKTOP += 524; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $buffer=__stackBase__;
+      var $num;
+      var $str=(__stackBase__)+(512);
+      $2=$prog;
+      __label__ = 3; break;
+    case 3: 
+      var $4=$2;
+      var $5=(($4+184)|0);
+      var $6=HEAP32[(($5)>>2)];
+      var $7=(($6)|0)!=1;
+      if ($7) { __label__ = 4; break; } else { __label__ = 5; break; }
+    case 4: 
+      var $9=$2;
+      var $10=(($9+112)|0);
+      var $11=HEAP32[(($10)>>2)];
+      var $12=((($11)+(1))|0);
+      HEAP32[(($10)>>2)]=$12;
+      var $13=$2;
+      var $14=(($13+184)|0);
+      var $15=HEAP32[(($14)>>2)];
+      var $16=_printf(((STRING_TABLE.__str58)|0), (tempInt=STACKTOP,STACKTOP += 12,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=((STRING_TABLE.___FUNCTION___qc_etos)|0),HEAP32[(((tempInt)+(4))>>2)]=$15,HEAP32[(((tempInt)+(8))>>2)]=1,tempInt));
+      $1=-1;
+      __label__ = 7; break;
+    case 5: 
+      __label__ = 6; break;
+    case 6: 
+      var $19=$2;
+      var $20=(($19+64)|0);
+      var $21=HEAP32[(($20)>>2)];
+      var $22=(($21+16)|0);
+      var $23=$22;
+      $num=$23;
+      var $24=(($buffer)|0);
+      var $25=$num;
+      var $26=$25;
+      var $27=HEAP32[(($26)>>2)];
+      var $28=_snprintf($24, 512, ((STRING_TABLE.__str59)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$27,tempInt));
+      var $29=$2;
+      var $30=(($buffer)|0);
+      var $31=_prog_tempstring($29, $30);
+      var $32=$str;
+      HEAP32[(($32)>>2)]=$31;
+      var $33=$2;
+      var $34=(($33+64)|0);
+      var $35=HEAP32[(($34)>>2)];
+      var $36=(($35+4)|0);
+      var $37=$36;
+      var $38=$37;
+      var $39=$str;
+      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($38)>>2)]=HEAP32[(($39)>>2)];HEAP32[((($38)+(4))>>2)]=HEAP32[((($39)+(4))>>2)];HEAP32[((($38)+(8))>>2)]=HEAP32[((($39)+(8))>>2)];
+      $1=0;
+      __label__ = 7; break;
+    case 7: 
+      var $41=$1;
+      STACKTOP = __stackBase__;
+      return $41;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_qc_etos["X"]=1;
 
 function _trace_print_global($prog, $glob, $vtype) {
   var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
@@ -19529,7 +18890,7 @@ function _trace_print_global($prog, $glob, $vtype) {
       var $5=(($4)|0)!=0;
       if ($5) { __label__ = 4; break; } else { __label__ = 3; break; }
     case 3: 
-      var $7=_printf(((STRING_TABLE.__str34)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $7=_printf(((STRING_TABLE.__str71)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       $len=$7;
       __label__ = 17; break;
     case 4: 
@@ -19561,12 +18922,12 @@ function _trace_print_global($prog, $glob, $vtype) {
       var $30=(($29)|0)==35;
       if ($30) { __label__ = 6; break; } else { __label__ = 7; break; }
     case 6: 
-      var $32=_printf(((STRING_TABLE.__str35)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $32=_printf(((STRING_TABLE.__str72)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       $len=$32;
       __label__ = 8; break;
     case 7: 
       var $34=$name;
-      var $35=_printf(((STRING_TABLE.__str36)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$34,tempInt));
+      var $35=_printf(((STRING_TABLE.__str73)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$34,tempInt));
       $len=$35;
       __label__ = 8; break;
     case 8: 
@@ -19578,7 +18939,7 @@ function _trace_print_global($prog, $glob, $vtype) {
       __label__ = 10; break;
     case 9: 
       var $42=$2;
-      var $43=_printf(((STRING_TABLE.__str37)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$42,tempInt));
+      var $43=_printf(((STRING_TABLE.__str74)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$42,tempInt));
       $len=$43;
       __label__ = 10; break;
     case 10: 
@@ -19603,7 +18964,7 @@ function _trace_print_global($prog, $glob, $vtype) {
       var $47=$value;
       var $48=$47;
       var $49=HEAP32[(($48)>>2)];
-      var $50=_printf(((STRING_TABLE.__str38)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$49,tempInt));
+      var $50=_printf(((STRING_TABLE.__str75)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$49,tempInt));
       var $51=$len;
       var $52=((($51)+($50))|0);
       $len=$52;
@@ -19624,7 +18985,7 @@ function _trace_print_global($prog, $glob, $vtype) {
       var $66=(($65+8)|0);
       var $67=HEAPF32[(($66)>>2)];
       var $68=$67;
-      var $69=_printf(((STRING_TABLE.__str39)|0), (tempInt=STACKTOP,STACKTOP += 24,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),(tempDoubleF64[0]=$58,HEAP32[((tempInt)>>2)]=tempDoubleI32[0],HEAP32[(((tempInt)+(4))>>2)]=tempDoubleI32[1]),(tempDoubleF64[0]=$63,HEAP32[(((tempInt)+(8))>>2)]=tempDoubleI32[0],HEAP32[((((tempInt)+(8))+(4))>>2)]=tempDoubleI32[1]),(tempDoubleF64[0]=$68,HEAP32[(((tempInt)+(16))>>2)]=tempDoubleI32[0],HEAP32[((((tempInt)+(16))+(4))>>2)]=tempDoubleI32[1]),tempInt));
+      var $69=_printf(((STRING_TABLE.__str76)|0), (tempInt=STACKTOP,STACKTOP += 24,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),(tempDoubleF64[0]=$58,HEAP32[((tempInt)>>2)]=tempDoubleI32[0],HEAP32[(((tempInt)+(4))>>2)]=tempDoubleI32[1]),(tempDoubleF64[0]=$63,HEAP32[(((tempInt)+(8))>>2)]=tempDoubleI32[0],HEAP32[((((tempInt)+(8))+(4))>>2)]=tempDoubleI32[1]),(tempDoubleF64[0]=$68,HEAP32[(((tempInt)+(16))>>2)]=tempDoubleI32[0],HEAP32[((((tempInt)+(16))+(4))>>2)]=tempDoubleI32[1]),tempInt));
       var $70=$len;
       var $71=((($70)+($69))|0);
       $len=$71;
@@ -19642,7 +19003,7 @@ function _trace_print_global($prog, $glob, $vtype) {
       var $82=$len;
       var $83=((($82)+($81))|0);
       $len=$83;
-      var $84=_printf(((STRING_TABLE.__str40)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $84=_printf(((STRING_TABLE.__str77)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
       var $85=$len;
       var $86=((($85)+($84))|0);
       $len=$86;
@@ -19654,7 +19015,7 @@ function _trace_print_global($prog, $glob, $vtype) {
       var $90=$89;
       var $91=HEAPF32[(($90)>>2)];
       var $92=$91;
-      var $93=_printf(((STRING_TABLE.__str41)|0), (tempInt=STACKTOP,STACKTOP += 8,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),(tempDoubleF64[0]=$92,HEAP32[((tempInt)>>2)]=tempDoubleI32[0],HEAP32[(((tempInt)+(4))>>2)]=tempDoubleI32[1]),tempInt));
+      var $93=_printf(((STRING_TABLE.__str78)|0), (tempInt=STACKTOP,STACKTOP += 8,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),(tempDoubleF64[0]=$92,HEAP32[((tempInt)>>2)]=tempDoubleI32[0],HEAP32[(((tempInt)+(4))>>2)]=tempDoubleI32[1]),tempInt));
       var $94=$len;
       var $95=((($94)+($93))|0);
       $len=$95;
@@ -19865,245 +19226,9221 @@ function _print_escaped_string($str, $maxlen) {
 }
 _print_escaped_string["X"]=1;
 
-function _prog_enterfunction($prog, $func) {
-  var __stackBase__  = STACKTOP; STACKTOP += 12; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+function _util_memory_a($byte, $line, $file) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
   var __label__;
   __label__ = 2; 
   while(1) switch(__label__) {
     case 2: 
       var $1;
       var $2;
-      var $st=__stackBase__;
-      var $p;
-      var $parampos;
-      var $globals;
-      var $s;
-      $1=$prog;
-      $2=$func;
-      var $3=$1;
-      var $4=(($3+156)|0);
-      var $5=HEAP32[(($4)>>2)];
-      var $6=(($st+4)|0);
-      HEAP32[(($6)>>2)]=$5;
-      var $7=$1;
-      var $8=(($7+176)|0);
-      var $9=HEAP32[(($8)>>2)];
-      var $10=(($st)|0);
-      HEAP32[(($10)>>2)]=$9;
-      var $11=$2;
-      var $12=(($st+8)|0);
-      HEAP32[(($12)>>2)]=$11;
-      var $13=$1;
-      var $14=(($13+64)|0);
-      var $15=HEAP32[(($14)>>2)];
-      var $16=$2;
-      var $17=(($16+4)|0);
-      var $18=HEAP32[(($17)>>2)];
-      var $19=(($15+($18<<2))|0);
-      $globals=$19;
-      var $20=$1;
-      var $21=$globals;
-      var $22=$2;
-      var $23=(($22+8)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=_qc_program_localstack_append($20, $21, $24);
-      if ($25) { __label__ = 4; break; } else { __label__ = 3; break; }
+      var $3;
+      var $4;
+      var $info;
+      var $data;
+      $2=$byte;
+      $3=$line;
+      $4=$file;
+      var $5=$2;
+      var $6=((($5)+(20))|0);
+      var $7=_malloc($6);
+      var $8=$7;
+      $info=$8;
+      var $9=$info;
+      var $10=(($9+20)|0);
+      var $11=$10;
+      $data=$11;
+      var $12=$info;
+      var $13=(($12)|0)!=0;
+      if ($13) { __label__ = 4; break; } else { __label__ = 3; break; }
     case 3: 
-      var $27=_printf(((STRING_TABLE.__str109)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
-      _exit(1);
-      throw "Reached an unreachable!"
+      $1=0;
+      __label__ = 7; break;
     case 4: 
-      var $29=$2;
-      var $30=(($29+4)|0);
-      var $31=HEAP32[(($30)>>2)];
-      $parampos=$31;
-      $p=0;
-      __label__ = 5; break;
+      var $16=$3;
+      var $17=$info;
+      var $18=(($17+4)|0);
+      HEAP32[(($18)>>2)]=$16;
+      var $19=$2;
+      var $20=$info;
+      var $21=(($20+8)|0);
+      HEAP32[(($21)>>2)]=$19;
+      var $22=$4;
+      var $23=$info;
+      var $24=(($23)|0);
+      HEAP32[(($24)>>2)]=$22;
+      var $25=$info;
+      var $26=(($25+16)|0);
+      HEAP32[(($26)>>2)]=0;
+      var $27=HEAP32[((_mem_start)>>2)];
+      var $28=$info;
+      var $29=(($28+12)|0);
+      HEAP32[(($29)>>2)]=$27;
+      var $30=HEAP32[((_mem_start)>>2)];
+      var $31=(($30)|0)!=0;
+      if ($31) { __label__ = 5; break; } else { __label__ = 6; break; }
     case 5: 
-      var $33=$p;
-      var $34=$2;
-      var $35=(($34+24)|0);
-      var $36=HEAP32[(($35)>>2)];
-      var $37=(($33)>>>0) < (($36)>>>0);
-      if ($37) { __label__ = 6; break; } else { __label__ = 12; break; }
+      var $33=$info;
+      var $34=HEAP32[((_mem_start)>>2)];
+      var $35=(($34+16)|0);
+      HEAP32[(($35)>>2)]=$33;
+      __label__ = 6; break;
     case 6: 
-      $s=0;
+      var $37=$info;
+      HEAP32[((_mem_start)>>2)]=$37;
+      var $38=$2;
+      var $39=$data;
+      var $40=$4;
+      var $41=$3;
+      _util_debug(((STRING_TABLE.__str148)|0), ((STRING_TABLE.__str1149)|0), (tempInt=STACKTOP,STACKTOP += 16,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$38,HEAP32[(((tempInt)+(4))>>2)]=$39,HEAP32[(((tempInt)+(8))>>2)]=$40,HEAP32[(((tempInt)+(12))>>2)]=$41,tempInt));
+      var $st$7$0=((_mem_at)|0);
+      var $42$0=HEAP32[(($st$7$0)>>2)];
+      var $st$7$1=((_mem_at+4)|0);
+      var $42$1=HEAP32[(($st$7$1)>>2)];
+      var $$emscripten$temp$0$0=1;
+      var $$emscripten$temp$0$1=0;
+      var $43$0 = (i64Math.add($42$0,$42$1,$$emscripten$temp$0$0,$$emscripten$temp$0$1),i64Math.result[0]); var $43$1 = i64Math.result[1];
+      var $st$14$0=((_mem_at)|0);
+      HEAP32[(($st$14$0)>>2)]=$43$0;
+      var $st$14$1=((_mem_at+4)|0);
+      HEAP32[(($st$14$1)>>2)]=$43$1;
+      var $44=$info;
+      var $45=(($44+8)|0);
+      var $46=HEAP32[(($45)>>2)];
+      var $47$0=$46;
+      var $47$1=0;
+      var $st$23$0=((_mem_ab)|0);
+      var $48$0=HEAP32[(($st$23$0)>>2)];
+      var $st$23$1=((_mem_ab+4)|0);
+      var $48$1=HEAP32[(($st$23$1)>>2)];
+      var $49$0 = (i64Math.add($48$0,$48$1,$47$0,$47$1),i64Math.result[0]); var $49$1 = i64Math.result[1];
+      var $st$28$0=((_mem_ab)|0);
+      HEAP32[(($st$28$0)>>2)]=$49$0;
+      var $st$28$1=((_mem_ab+4)|0);
+      HEAP32[(($st$28$1)>>2)]=$49$1;
+      var $50=$data;
+      $1=$50;
       __label__ = 7; break;
     case 7: 
-      var $40=$s;
-      var $41=$p;
-      var $42=$2;
-      var $43=(($42+28)|0);
-      var $44=(($43+$41)|0);
-      var $45=HEAP8[($44)];
-      var $46=(($45)&255);
-      var $47=(($40)>>>0) < (($46)>>>0);
-      if ($47) { __label__ = 8; break; } else { __label__ = 10; break; }
-    case 8: 
-      var $49=$p;
-      var $50=((($49)*(3))|0);
-      var $51=((($50)+(4))|0);
-      var $52=$s;
-      var $53=((($51)+($52))|0);
-      var $54=$1;
-      var $55=(($54+64)|0);
-      var $56=HEAP32[(($55)>>2)];
-      var $57=(($56+($53<<2))|0);
-      var $58=HEAP32[(($57)>>2)];
-      var $59=$parampos;
-      var $60=$1;
-      var $61=(($60+64)|0);
-      var $62=HEAP32[(($61)>>2)];
-      var $63=(($62+($59<<2))|0);
-      HEAP32[(($63)>>2)]=$58;
-      var $64=$parampos;
-      var $65=((($64)+(1))|0);
-      $parampos=$65;
-      __label__ = 9; break;
-    case 9: 
-      var $67=$s;
-      var $68=((($67)+(1))|0);
-      $s=$68;
-      __label__ = 7; break;
-    case 10: 
-      __label__ = 11; break;
-    case 11: 
-      var $71=$p;
-      var $72=((($71)+(1))|0);
-      $p=$72;
-      __label__ = 5; break;
-    case 12: 
-      var $74=$1;
-      var $75=(($st)|0);
-      var $76=HEAP32[(($75)>>2)];
-      var $77=(($st+4)|0);
-      var $78=HEAP32[(($77)>>2)];
-      var $79=(($st+8)|0);
-      var $80=HEAP32[(($79)>>2)];
-      var $81=_qc_program_stack_add($74, $76, $78, $80);
-      if ($81) { __label__ = 14; break; } else { __label__ = 13; break; }
-    case 13: 
-      var $83=_printf(((STRING_TABLE.__str109)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
-      _exit(1);
-      throw "Reached an unreachable!"
-    case 14: 
-      var $85=$2;
-      var $86=(($85)|0);
-      var $87=HEAP32[(($86)>>2)];
+      var $52=$1;
       STACKTOP = __stackBase__;
-      return $87;
+      return $52;
     default: assert(0, "bad label: " + __label__);
   }
 }
-_prog_enterfunction["X"]=1;
+_util_memory_a["X"]=1;
 
-function _prog_leavefunction($prog) {
-  var __stackBase__  = STACKTOP; STACKTOP += 12; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+function _util_debug($area, $ms) {
+  var __stackBase__  = STACKTOP; STACKTOP += 4; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
   var __label__;
   __label__ = 2; 
   while(1) switch(__label__) {
     case 2: 
       var $1;
-      var $prev;
-      var $oldsp;
-      var $st=__stackBase__;
-      var $globals;
-      $1=$prog;
-      $prev=0;
-      var $2=$1;
-      var $3=(($2+168)|0);
-      var $4=HEAP32[(($3)>>2)];
-      var $5=((($4)-(1))|0);
-      var $6=$1;
-      var $7=(($6+164)|0);
-      var $8=HEAP32[(($7)>>2)];
-      var $9=(($8+($5)*(12))|0);
-      var $10=$st;
-      var $11=$9;
-      assert(12 % 1 === 0, 'memcpy given ' + 12 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($10)>>2)]=HEAP32[(($11)>>2)];HEAP32[((($10)+(4))>>2)]=HEAP32[((($11)+(4))>>2)];HEAP32[((($10)+(8))>>2)]=HEAP32[((($11)+(8))>>2)];
-      var $12=$1;
-      var $13=(($12+168)|0);
-      var $14=HEAP32[(($13)>>2)];
-      var $15=((($14)-(1))|0);
-      var $16=$1;
-      var $17=(($16+164)|0);
-      var $18=HEAP32[(($17)>>2)];
-      var $19=(($18+($15)*(12))|0);
-      var $20=(($19+8)|0);
-      var $21=HEAP32[(($20)>>2)];
-      $prev=$21;
-      var $22=$1;
-      var $23=(($22+168)|0);
-      var $24=HEAP32[(($23)>>2)];
-      var $25=((($24)-(1))|0);
-      var $26=$1;
-      var $27=(($26+164)|0);
-      var $28=HEAP32[(($27)>>2)];
-      var $29=(($28+($25)*(12))|0);
-      var $30=(($29+4)|0);
-      var $31=HEAP32[(($30)>>2)];
-      $oldsp=$31;
-      var $32=$prev;
-      var $33=(($32)|0)!=0;
-      if ($33) { __label__ = 3; break; } else { __label__ = 6; break; }
+      var $2;
+      var $va=__stackBase__;
+      $1=$area;
+      $2=$ms;
+      var $3=HEAP8[(_opts_debug)];
+      var $4=(($3) & 1);
+      if ($4) { __label__ = 4; break; } else { __label__ = 3; break; }
     case 3: 
-      var $35=$1;
-      var $36=(($35+64)|0);
-      var $37=HEAP32[(($36)>>2)];
-      var $38=$prev;
-      var $39=(($38+4)|0);
-      var $40=HEAP32[(($39)>>2)];
-      var $41=(($37+($40<<2))|0);
-      $globals=$41;
-      var $42=$globals;
-      var $43=$42;
-      var $44=$1;
-      var $45=(($44+152)|0);
-      var $46=HEAP32[(($45)>>2)];
-      var $47=$oldsp;
-      var $48=(($46+($47<<2))|0);
-      var $49=$48;
-      var $50=$prev;
-      var $51=(($50+8)|0);
-      var $52=HEAP32[(($51)>>2)];
-      assert($52 % 1 === 0, 'memcpy given ' + $52 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($43, $49, $52, 4);
-      var $53=$1;
-      var $54=$oldsp;
-      var $55=_qc_program_localstack_resize($53, $54);
-      if ($55) { __label__ = 5; break; } else { __label__ = 4; break; }
+      __label__ = 8; break;
     case 4: 
-      var $57=_printf(((STRING_TABLE.__str109)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
-      _exit(1);
-      throw "Reached an unreachable!"
+      var $7=$1;
+      var $8=_strcmp($7, ((STRING_TABLE.__str148)|0));
+      var $9=(($8)|0)!=0;
+      if ($9) { __label__ = 7; break; } else { __label__ = 5; break; }
     case 5: 
-      __label__ = 6; break;
+      var $11=HEAP8[(_opts_memchk)];
+      var $12=(($11) & 1);
+      if ($12) { __label__ = 7; break; } else { __label__ = 6; break; }
     case 6: 
-      var $60=$1;
-      var $61=$1;
-      var $62=(($61+168)|0);
-      var $63=HEAP32[(($62)>>2)];
-      var $64=((($63)-(1))|0);
-      var $65=_qc_program_stack_remove($60, $64);
-      if ($65) { __label__ = 8; break; } else { __label__ = 7; break; }
+      __label__ = 8; break;
     case 7: 
-      var $67=_printf(((STRING_TABLE.__str109)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
-      _exit(1);
-      throw "Reached an unreachable!"
+      var $15=$va;
+      HEAP32[(($15)>>2)]=arguments[_util_debug.length];
+      var $16=HEAP32[((_stdout)>>2)];
+      var $17=_fprintf($16, ((STRING_TABLE.__str7155)|0), (tempInt=STACKTOP,STACKTOP += 1,STACKTOP = ((((STACKTOP)+3)>>2)<<2),assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=0,tempInt));
+      var $18=HEAP32[((_stdout)>>2)];
+      var $19=_fputc(91, $18);
+      var $20=HEAP32[((_stdout)>>2)];
+      var $21=$1;
+      var $22=_fprintf($20, ((STRING_TABLE.__str8156)|0), (tempInt=STACKTOP,STACKTOP += 4,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$21,tempInt));
+      var $23=HEAP32[((_stdout)>>2)];
+      var $24=_fputs(((STRING_TABLE.__str9157)|0), $23);
+      var $25=HEAP32[((_stdout)>>2)];
+      var $26=$2;
+      var $27=HEAP32[(($va)>>2)];
+      var $28=_vfprintf($25, $26, $27);
+      var $29=$va;
+      ;
+      __label__ = 8; break;
     case 8: 
-      var $69=(($st)|0);
-      var $70=HEAP32[(($69)>>2)];
-      var $71=((($70)-(1))|0);
       STACKTOP = __stackBase__;
-      return $71;
+      return;
     default: assert(0, "bad label: " + __label__);
   }
 }
-_prog_leavefunction["X"]=1;
+
+
+function _util_memory_d($ptrn, $line, $file) {
+  var __stackBase__  = STACKTOP; assert(STACKTOP % 4 == 0, "Stack is unaligned"); assert(STACKTOP < STACK_MAX, "Ran out of stack");
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $info;
+      $1=$ptrn;
+      $2=$line;
+      $3=$file;
+      $info=0;
+      var $4=$1;
+      var $5=(($4)|0)!=0;
+      if ($5) { __label__ = 4; break; } else { __label__ = 3; break; }
+    case 3: 
+      __label__ = 11; break;
+    case 4: 
+      var $8=$1;
+      var $9=$8;
+      var $10=((($9)-(20))|0);
+      $info=$10;
+      var $11=$info;
+      var $12=(($11+8)|0);
+      var $13=HEAP32[(($12)>>2)];
+      var $14=$1;
+      var $15=$3;
+      var $16=$2;
+      _util_debug(((STRING_TABLE.__str148)|0), ((STRING_TABLE.__str2150)|0), (tempInt=STACKTOP,STACKTOP += 16,assert(STACKTOP < STACK_ROOT + STACK_MAX, "Ran out of stack"),HEAP32[((tempInt)>>2)]=$13,HEAP32[(((tempInt)+(4))>>2)]=$14,HEAP32[(((tempInt)+(8))>>2)]=$15,HEAP32[(((tempInt)+(12))>>2)]=$16,tempInt));
+      var $17=$info;
+      var $18=(($17+8)|0);
+      var $19=HEAP32[(($18)>>2)];
+      var $20$0=$19;
+      var $20$1=0;
+      var $st$16$0=((_mem_db)|0);
+      var $21$0=HEAP32[(($st$16$0)>>2)];
+      var $st$16$1=((_mem_db+4)|0);
+      var $21$1=HEAP32[(($st$16$1)>>2)];
+      var $22$0 = (i64Math.add($21$0,$21$1,$20$0,$20$1),i64Math.result[0]); var $22$1 = i64Math.result[1];
+      var $st$21$0=((_mem_db)|0);
+      HEAP32[(($st$21$0)>>2)]=$22$0;
+      var $st$21$1=((_mem_db+4)|0);
+      HEAP32[(($st$21$1)>>2)]=$22$1;
+      var $st$25$0=((_mem_dt)|0);
+      var $23$0=HEAP32[(($st$25$0)>>2)];
+      var $st$25$1=((_mem_dt+4)|0);
+      var $23$1=HEAP32[(($st$25$1)>>2)];
+      var $$emscripten$temp$0$0=1;
+      var $$emscripten$temp$0$1=0;
+      var $24$0 = (i64Math.add($23$0,$23$1,$$emscripten$temp$0$0,$$emscripten$temp$0$1),i64Math.result[0]); var $24$1 = i64Math.result[1];
+      var $st$32$0=((_mem_dt)|0);
+      HEAP32[(($st$32$0)>>2)]=$24$0;
+      var $st$32$1=((_mem_dt+4)|0);
+      HEAP32[(($st$32$1)>>2)]=$24$1;
+      var $25=$info;
+      var $26=(($25+16)|0);
+      var $27=HEAP32[(($26)>>2)];
+      var $28=(($27)|0)!=0;
+      if ($28) { __label__ = 5; break; } else { __label__ = 6; break; }
+    case 5: 
+      var $30=$info;
+      var $31=(($30+12)|0);
+      var $32=HEAP32[(($31)>>2)];
+      var $33=$info;
+      var $34=(($33+16)|0);
+      var $35=HEAP32[(($34)>>2)];
+      var $36=(($35+12)|0);
+      HEAP32[(($36)>>2)]=$32;
+      __label__ = 6; break;
+    case 6: 
+      var $38=$info;
+      var $39=(($38+12)|0);
+      var $40=HEAP32[(($39)>>2)];
+      var $41=(($40)|0)!=0;
+      if ($41) { __label__ = 7; break; } else { __label__ = 8; break; }
+    case 7: 
+      var $43=$info;
+      var $44=(($43+16)|0);
+      var $45=HEAP32[(($44)>>2)];
+      var $46=$info;
+      var $47=(($46+12)|0);
+      var $48=HEAP32[(($47)>>2)];
+      var $49=(($48+16)|0);
+      HEAP32[(($49)>>2)]=$45;
+      __label__ = 8; break;
+    case 8: 
+      var $51=$info;
+      var $52=HEAP32[((_mem_start)>>2)];
+      var $53=(($51)|0)==(($52)|0);
+      if ($53) { __label__ = 9; break; } else { __label__ = 10; break; }
+    case 9: 
+      var $55=$info;
+      var $56=(($55+12)|0);
+      var $57=HEAP32[(($56)>>2)];
+      HEAP32[((_mem_start)>>2)]=$57;
+      __label__ = 10; break;
+    case 10: 
+      var $59=$info;
+      var $60=$59;
+      _free($60);
+      __label__ = 11; break;
+    case 11: 
+      STACKTOP = __stackBase__;
+      return;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_util_memory_d["X"]=1;
+
+function _util_strdup($s) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $len;
+      var $ptr;
+      $2=$s;
+      $len=0;
+      $ptr=0;
+      var $3=$2;
+      var $4=(($3)|0)!=0;
+      if ($4) { __label__ = 4; break; } else { __label__ = 3; break; }
+    case 3: 
+      $1=0;
+      __label__ = 8; break;
+    case 4: 
+      var $7=$2;
+      var $8=_strlen($7);
+      $len=$8;
+      var $9=(($8)|0)!=0;
+      if ($9) { __label__ = 5; break; } else { __label__ = 7; break; }
+    case 5: 
+      var $11=$len;
+      var $12=((($11)+(1))|0);
+      var $13=_util_memory_a($12, 161, ((STRING_TABLE.__str6154)|0));
+      $ptr=$13;
+      var $14=(($13)|0)!=0;
+      if ($14) { __label__ = 6; break; } else { __label__ = 7; break; }
+    case 6: 
+      var $16=$ptr;
+      var $17=$2;
+      var $18=$len;
+      assert($18 % 1 === 0, 'memcpy given ' + $18 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');_memcpy($16, $17, $18, 1);
+      var $19=$len;
+      var $20=$ptr;
+      var $21=(($20+$19)|0);
+      HEAP8[($21)]=0;
+      __label__ = 7; break;
+    case 7: 
+      var $23=$ptr;
+      $1=$23;
+      __label__ = 8; break;
+    case 8: 
+      var $25=$1;
+      ;
+      return $25;
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+
+
+function _util_fopen($filename, $mode) {
+  ;
+  var __label__;
+
+  var $1;
+  var $2;
+  $1=$filename;
+  $2=$mode;
+  var $3=$1;
+  var $4=$2;
+  var $5=_fopen($3, $4);
+  ;
+  return $5;
+}
+
+
+function _malloc($bytes) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $mem;
+      var $nb;
+      var $idx;
+      var $smallbits;
+      var $b;
+      var $p;
+      var $F;
+      var $b1;
+      var $p2;
+      var $r;
+      var $rsize;
+      var $i;
+      var $leftbits;
+      var $leastbit;
+      var $Y;
+      var $K;
+      var $N;
+      var $F3;
+      var $DVS;
+      var $DV;
+      var $I;
+      var $B;
+      var $F4;
+      var $rsize5;
+      var $p6;
+      var $r7;
+      var $dvs;
+      var $rsize8;
+      var $p9;
+      var $r10;
+      $1=$bytes;
+      var $2=$1; //@line 4629 "/root/emscripten/system/lib/dlmalloc.c"
+      var $3=(($2)>>>0) <= 244; //@line 4629 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($3) { __label__ = 3; break; } else { __label__ = 38; break; } //@line 4629 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $5=$1; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=(($5)>>>0) < 11; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($6) { __label__ = 4; break; } else { __label__ = 5; break; } //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $14 = 16;__label__ = 6; break; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $9=$1; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=((($9)+(4))|0); //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=((($10)+(7))|0); //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=$11 & -8; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14 = $12;__label__ = 6; break; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $14; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      $nb=$14; //@line 4632 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$nb; //@line 4633 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=$15 >>> 3; //@line 4633 "/root/emscripten/system/lib/dlmalloc.c"
+      $idx=$16; //@line 4633 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=HEAP32[((((__gm_)|0))>>2)]; //@line 4634 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=$idx; //@line 4634 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=$17 >>> (($18)>>>0); //@line 4634 "/root/emscripten/system/lib/dlmalloc.c"
+      $smallbits=$19; //@line 4634 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=$smallbits; //@line 4636 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=$20 & 3; //@line 4636 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=(($21)|0)!=0; //@line 4636 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($22) { __label__ = 7; break; } else { __label__ = 14; break; } //@line 4636 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $24=$smallbits; //@line 4638 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$24 ^ -1; //@line 4638 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=$25 & 1; //@line 4638 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$idx; //@line 4638 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=((($27)+($26))|0); //@line 4638 "/root/emscripten/system/lib/dlmalloc.c"
+      $idx=$28; //@line 4638 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=$idx; //@line 4639 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$29 << 1; //@line 4639 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=((((__gm_+40)|0)+($30<<2))|0); //@line 4639 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=$31; //@line 4639 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$32; //@line 4639 "/root/emscripten/system/lib/dlmalloc.c"
+      $b=$33; //@line 4639 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=$b; //@line 4640 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=(($34+8)|0); //@line 4640 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=HEAP32[(($35)>>2)]; //@line 4640 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$36; //@line 4640 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=$p; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=(($37+8)|0); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=HEAP32[(($38)>>2)]; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$39; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=$b; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$F; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=(($40)|0)==(($41)|0); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($42) { __label__ = 8; break; } else { __label__ = 9; break; } //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $44=$idx; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=1 << $44; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=$45 ^ -1; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=HEAP32[((((__gm_)|0))>>2)]; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $48=$47 & $46; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_)|0))>>2)]=$48; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 13; break; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $50=$F; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=$50; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=(($51)>>>0) >= (($52)>>>0); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=(($53)&1); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=(($54)==(1)); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=(($55)|0)!=0; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($56) { __label__ = 10; break; } else { __label__ = 11; break; } //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $58=$F; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=$b; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=(($59+8)|0); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($60)>>2)]=$58; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=$b; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $62=$F; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=(($62+12)|0); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($63)>>2)]=$61; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 12; break; //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      _abort(); //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4642 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      __label__ = 13; break;
+    case 13: 
+      var $67=$idx; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=$67 << 3; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=$68 | 1; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=$69 | 2; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=$p; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=(($71+4)|0); //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($72)>>2)]=$70; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=$p; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=$73; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=$idx; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=$75 << 3; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=(($74+$76)|0); //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $78=$77; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $79=(($78+4)|0); //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=HEAP32[(($79)>>2)]; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=$80 | 1; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($79)>>2)]=$81; //@line 4643 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=$p; //@line 4644 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=$82; //@line 4644 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=(($83+8)|0); //@line 4644 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$84; //@line 4644 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 54; break; //@line 4646 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $86=$nb; //@line 4649 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=HEAP32[((((__gm_+8)|0))>>2)]; //@line 4649 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=(($86)>>>0) > (($87)>>>0); //@line 4649 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($88) { __label__ = 15; break; } else { __label__ = 36; break; } //@line 4649 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $90=$smallbits; //@line 4650 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=(($90)|0)!=0; //@line 4650 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($91) { __label__ = 16; break; } else { __label__ = 31; break; } //@line 4650 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      var $93=$smallbits; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $94=$idx; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=$93 << $94; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $96=$idx; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $97=1 << $96; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=$97 << 1; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=$idx; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=1 << $99; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$100 << 1; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=(((-$101))|0); //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=$98 | $102; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=$95 & $103; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      $leftbits=$104; //@line 4654 "/root/emscripten/system/lib/dlmalloc.c"
+      var $105=$leftbits; //@line 4655 "/root/emscripten/system/lib/dlmalloc.c"
+      var $106=$leftbits; //@line 4655 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=(((-$106))|0); //@line 4655 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=$105 & $107; //@line 4655 "/root/emscripten/system/lib/dlmalloc.c"
+      $leastbit=$108; //@line 4655 "/root/emscripten/system/lib/dlmalloc.c"
+      var $109=$leastbit; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $110=((($109)-(1))|0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$110; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $111=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $112=$111 >>> 12; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=$112 & 16; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$113; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=$K; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$114; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=$K; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $117=$116 >>> (($115)>>>0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$117; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $118=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $119=$118 >>> 5; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $120=$119 & 8; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$120; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=$N; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=((($121)+($120))|0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$122; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $123=$K; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $124=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=$124 >>> (($123)>>>0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$125; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=$126 >>> 2; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=$127 & 4; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$128; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=$N; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=((($129)+($128))|0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$130; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $131=$K; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $132=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=$132 >>> (($131)>>>0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$133; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=$134 >>> 1; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $136=$135 & 2; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$136; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $137=$N; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $138=((($137)+($136))|0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$138; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $139=$K; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $140=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $141=$140 >>> (($139)>>>0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$141; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $143=$142 >>> 1; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144=$143 & 1; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$144; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=$N; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $146=((($145)+($144))|0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$146; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=$K; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $148=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $149=$148 >>> (($147)>>>0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$149; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $150=$N; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $151=$Y; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=((($150)+($151))|0); //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      $i=$152; //@line 4656 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=$i; //@line 4657 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=$153 << 1; //@line 4657 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=((((__gm_+40)|0)+($154<<2))|0); //@line 4657 "/root/emscripten/system/lib/dlmalloc.c"
+      var $156=$155; //@line 4657 "/root/emscripten/system/lib/dlmalloc.c"
+      var $157=$156; //@line 4657 "/root/emscripten/system/lib/dlmalloc.c"
+      $b1=$157; //@line 4657 "/root/emscripten/system/lib/dlmalloc.c"
+      var $158=$b1; //@line 4658 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=(($158+8)|0); //@line 4658 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=HEAP32[(($159)>>2)]; //@line 4658 "/root/emscripten/system/lib/dlmalloc.c"
+      $p2=$160; //@line 4658 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=$p2; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=(($161+8)|0); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $163=HEAP32[(($162)>>2)]; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      $F3=$163; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $164=$b1; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $165=$F3; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $166=(($164)|0)==(($165)|0); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($166) { __label__ = 17; break; } else { __label__ = 18; break; } //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $168=$i; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=1 << $168; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $170=$169 ^ -1; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $171=HEAP32[((((__gm_)|0))>>2)]; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=$171 & $170; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_)|0))>>2)]=$172; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 22; break; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $174=$F3; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $175=$174; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $176=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $177=(($175)>>>0) >= (($176)>>>0); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $178=(($177)&1); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $179=(($178)==(1)); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $180=(($179)|0)!=0; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($180) { __label__ = 19; break; } else { __label__ = 20; break; } //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      var $182=$F3; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=$b1; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $184=(($183+8)|0); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($184)>>2)]=$182; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $185=$b1; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $186=$F3; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      var $187=(($186+12)|0); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($187)>>2)]=$185; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 21; break; //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      _abort(); //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4660 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      __label__ = 22; break;
+    case 22: 
+      var $191=$i; //@line 4661 "/root/emscripten/system/lib/dlmalloc.c"
+      var $192=$191 << 3; //@line 4661 "/root/emscripten/system/lib/dlmalloc.c"
+      var $193=$nb; //@line 4661 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=((($192)-($193))|0); //@line 4661 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$194; //@line 4661 "/root/emscripten/system/lib/dlmalloc.c"
+      var $195=$nb; //@line 4666 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=$195 | 1; //@line 4666 "/root/emscripten/system/lib/dlmalloc.c"
+      var $197=$196 | 2; //@line 4666 "/root/emscripten/system/lib/dlmalloc.c"
+      var $198=$p2; //@line 4666 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199=(($198+4)|0); //@line 4666 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($199)>>2)]=$197; //@line 4666 "/root/emscripten/system/lib/dlmalloc.c"
+      var $200=$p2; //@line 4667 "/root/emscripten/system/lib/dlmalloc.c"
+      var $201=$200; //@line 4667 "/root/emscripten/system/lib/dlmalloc.c"
+      var $202=$nb; //@line 4667 "/root/emscripten/system/lib/dlmalloc.c"
+      var $203=(($201+$202)|0); //@line 4667 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=$203; //@line 4667 "/root/emscripten/system/lib/dlmalloc.c"
+      $r=$204; //@line 4667 "/root/emscripten/system/lib/dlmalloc.c"
+      var $205=$rsize; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $206=$205 | 1; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=$r; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=(($207+4)|0); //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($208)>>2)]=$206; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $209=$rsize; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $210=$r; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $211=$210; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $212=$rsize; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $213=(($211+$212)|0); //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $214=$213; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $215=(($214)|0); //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($215)>>2)]=$209; //@line 4668 "/root/emscripten/system/lib/dlmalloc.c"
+      var $216=HEAP32[((((__gm_+8)|0))>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      $DVS=$216; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $217=$DVS; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $218=(($217)|0)!=0; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($218) { __label__ = 23; break; } else { __label__ = 30; break; } //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      var $220=HEAP32[((((__gm_+20)|0))>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      $DV=$220; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $221=$DVS; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $222=$221 >>> 3; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$222; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $223=$I; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $224=$223 << 1; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $225=((((__gm_+40)|0)+($224<<2))|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $226=$225; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=$226; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      $B=$227; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=$B; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      $F4=$228; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $229=HEAP32[((((__gm_)|0))>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230=$I; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $231=1 << $230; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $232=$229 & $231; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $233=(($232)|0)!=0; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($233) { __label__ = 25; break; } else { __label__ = 24; break; } //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $235=$I; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $236=1 << $235; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=HEAP32[((((__gm_)|0))>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $238=$237 | $236; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_)|0))>>2)]=$238; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 29; break; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      var $240=$B; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $241=(($240+8)|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $242=HEAP32[(($241)>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=$242; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $245=(($243)>>>0) >= (($244)>>>0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=(($245)&1); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=(($246)==(1)); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=(($247)|0)!=0; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($248) { __label__ = 26; break; } else { __label__ = 27; break; } //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $250=$B; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $251=(($250+8)|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $252=HEAP32[(($251)>>2)]; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      $F4=$252; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 28; break; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 27: 
+      _abort(); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      __label__ = 29; break;
+    case 29: 
+      var $256=$DV; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $257=$B; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $258=(($257+8)|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($258)>>2)]=$256; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=$DV; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=$F4; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $261=(($260+12)|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($261)>>2)]=$259; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $262=$F4; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $263=$DV; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $264=(($263+8)|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($264)>>2)]=$262; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $265=$B; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $266=$DV; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $267=(($266+12)|0); //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($267)>>2)]=$265; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 30; break; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      var $269=$rsize; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=$269; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $270=$r; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+20)|0))>>2)]=$270; //@line 4669 "/root/emscripten/system/lib/dlmalloc.c"
+      var $271=$p2; //@line 4671 "/root/emscripten/system/lib/dlmalloc.c"
+      var $272=$271; //@line 4671 "/root/emscripten/system/lib/dlmalloc.c"
+      var $273=(($272+8)|0); //@line 4671 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$273; //@line 4671 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 54; break; //@line 4673 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $275=HEAP32[((((__gm_+4)|0))>>2)]; //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=(($275)|0)!=0; //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($276) { __label__ = 32; break; } else { __label__ = 34; break; } //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $278=$nb; //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=_tmalloc_small(__gm_, $278); //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$279; //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $280=(($279)|0)!=0; //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($280) { __label__ = 33; break; } else { __label__ = 34; break; } //@line 4676 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      __label__ = 54; break; //@line 4678 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      __label__ = 35; break;
+    case 35: 
+      __label__ = 36; break; //@line 4680 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      __label__ = 37; break;
+    case 37: 
+      __label__ = 45; break; //@line 4681 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      var $287=$1; //@line 4682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=(($287)>>>0) >= 4294967232; //@line 4682 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($288) { __label__ = 39; break; } else { __label__ = 40; break; } //@line 4682 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      $nb=-1; //@line 4683 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 44; break; //@line 4683 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      var $291=$1; //@line 4685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $292=((($291)+(4))|0); //@line 4685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $293=((($292)+(7))|0); //@line 4685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $294=$293 & -8; //@line 4685 "/root/emscripten/system/lib/dlmalloc.c"
+      $nb=$294; //@line 4685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $295=HEAP32[((((__gm_+4)|0))>>2)]; //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+      var $296=(($295)|0)!=0; //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($296) { __label__ = 41; break; } else { __label__ = 43; break; } //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+    case 41: 
+      var $298=$nb; //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+      var $299=_tmalloc_large(__gm_, $298); //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$299; //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+      var $300=(($299)|0)!=0; //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($300) { __label__ = 42; break; } else { __label__ = 43; break; } //@line 4686 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      __label__ = 54; break; //@line 4688 "/root/emscripten/system/lib/dlmalloc.c"
+    case 43: 
+      __label__ = 44; break;
+    case 44: 
+      __label__ = 45; break;
+    case 45: 
+      var $305=$nb; //@line 4692 "/root/emscripten/system/lib/dlmalloc.c"
+      var $306=HEAP32[((((__gm_+8)|0))>>2)]; //@line 4692 "/root/emscripten/system/lib/dlmalloc.c"
+      var $307=(($305)>>>0) <= (($306)>>>0); //@line 4692 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($307) { __label__ = 46; break; } else { __label__ = 50; break; } //@line 4692 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      var $309=HEAP32[((((__gm_+8)|0))>>2)]; //@line 4693 "/root/emscripten/system/lib/dlmalloc.c"
+      var $310=$nb; //@line 4693 "/root/emscripten/system/lib/dlmalloc.c"
+      var $311=((($309)-($310))|0); //@line 4693 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize5=$311; //@line 4693 "/root/emscripten/system/lib/dlmalloc.c"
+      var $312=HEAP32[((((__gm_+20)|0))>>2)]; //@line 4694 "/root/emscripten/system/lib/dlmalloc.c"
+      $p6=$312; //@line 4694 "/root/emscripten/system/lib/dlmalloc.c"
+      var $313=$rsize5; //@line 4695 "/root/emscripten/system/lib/dlmalloc.c"
+      var $314=(($313)>>>0) >= 16; //@line 4695 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($314) { __label__ = 47; break; } else { __label__ = 48; break; } //@line 4695 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      var $316=$p6; //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=$316; //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      var $318=$nb; //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      var $319=(($317+$318)|0); //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      var $320=$319; //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+20)|0))>>2)]=$320; //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      $r7=$320; //@line 4696 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=$rsize5; //@line 4697 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=$321; //@line 4697 "/root/emscripten/system/lib/dlmalloc.c"
+      var $322=$rsize5; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=$322 | 1; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=$r7; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=(($324+4)|0); //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($325)>>2)]=$323; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=$rsize5; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $327=$r7; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $328=$327; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $329=$rsize5; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $330=(($328+$329)|0); //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $331=$330; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $332=(($331)|0); //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($332)>>2)]=$326; //@line 4698 "/root/emscripten/system/lib/dlmalloc.c"
+      var $333=$nb; //@line 4699 "/root/emscripten/system/lib/dlmalloc.c"
+      var $334=$333 | 1; //@line 4699 "/root/emscripten/system/lib/dlmalloc.c"
+      var $335=$334 | 2; //@line 4699 "/root/emscripten/system/lib/dlmalloc.c"
+      var $336=$p6; //@line 4699 "/root/emscripten/system/lib/dlmalloc.c"
+      var $337=(($336+4)|0); //@line 4699 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($337)>>2)]=$335; //@line 4699 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 49; break; //@line 4700 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      var $339=HEAP32[((((__gm_+8)|0))>>2)]; //@line 4702 "/root/emscripten/system/lib/dlmalloc.c"
+      $dvs=$339; //@line 4702 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=0; //@line 4703 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+20)|0))>>2)]=0; //@line 4704 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=$dvs; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=$340 | 1; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=$341 | 2; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $343=$p6; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $344=(($343+4)|0); //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($344)>>2)]=$342; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $345=$p6; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=$345; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=$dvs; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348=(($346+$347)|0); //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $349=$348; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=(($349+4)|0); //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=HEAP32[(($350)>>2)]; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=$351 | 1; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($350)>>2)]=$352; //@line 4705 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 49; break;
+    case 49: 
+      var $354=$p6; //@line 4707 "/root/emscripten/system/lib/dlmalloc.c"
+      var $355=$354; //@line 4707 "/root/emscripten/system/lib/dlmalloc.c"
+      var $356=(($355+8)|0); //@line 4707 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$356; //@line 4707 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 54; break; //@line 4709 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      var $358=$nb; //@line 4712 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=HEAP32[((((__gm_+12)|0))>>2)]; //@line 4712 "/root/emscripten/system/lib/dlmalloc.c"
+      var $360=(($358)>>>0) < (($359)>>>0); //@line 4712 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($360) { __label__ = 51; break; } else { __label__ = 52; break; } //@line 4712 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      var $362=$nb; //@line 4713 "/root/emscripten/system/lib/dlmalloc.c"
+      var $363=HEAP32[((((__gm_+12)|0))>>2)]; //@line 4713 "/root/emscripten/system/lib/dlmalloc.c"
+      var $364=((($363)-($362))|0); //@line 4713 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+12)|0))>>2)]=$364; //@line 4713 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize8=$364; //@line 4713 "/root/emscripten/system/lib/dlmalloc.c"
+      var $365=HEAP32[((((__gm_+24)|0))>>2)]; //@line 4714 "/root/emscripten/system/lib/dlmalloc.c"
+      $p9=$365; //@line 4714 "/root/emscripten/system/lib/dlmalloc.c"
+      var $366=$p9; //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=$366; //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=$nb; //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=(($367+$368)|0); //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      var $370=$369; //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+24)|0))>>2)]=$370; //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      $r10=$370; //@line 4715 "/root/emscripten/system/lib/dlmalloc.c"
+      var $371=$rsize8; //@line 4716 "/root/emscripten/system/lib/dlmalloc.c"
+      var $372=$371 | 1; //@line 4716 "/root/emscripten/system/lib/dlmalloc.c"
+      var $373=$r10; //@line 4716 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374=(($373+4)|0); //@line 4716 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($374)>>2)]=$372; //@line 4716 "/root/emscripten/system/lib/dlmalloc.c"
+      var $375=$nb; //@line 4717 "/root/emscripten/system/lib/dlmalloc.c"
+      var $376=$375 | 1; //@line 4717 "/root/emscripten/system/lib/dlmalloc.c"
+      var $377=$376 | 2; //@line 4717 "/root/emscripten/system/lib/dlmalloc.c"
+      var $378=$p9; //@line 4717 "/root/emscripten/system/lib/dlmalloc.c"
+      var $379=(($378+4)|0); //@line 4717 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($379)>>2)]=$377; //@line 4717 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=$p9; //@line 4718 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=$380; //@line 4718 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=(($381+8)|0); //@line 4718 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$382; //@line 4718 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 54; break; //@line 4721 "/root/emscripten/system/lib/dlmalloc.c"
+    case 52: 
+      __label__ = 53; break;
+    case 53: 
+      var $385=$nb; //@line 4724 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=_sys_alloc(__gm_, $385); //@line 4724 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$386; //@line 4724 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 54; break; //@line 4724 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      var $388=$mem; //@line 4728 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $388; //@line 4728 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+Module["_malloc"] = _malloc;_malloc["X"]=1;
+
+function _tmalloc_small($m, $nb) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $t;
+      var $v;
+      var $rsize;
+      var $i;
+      var $leastbit;
+      var $Y;
+      var $K;
+      var $N;
+      var $trem;
+      var $r;
+      var $XP;
+      var $R;
+      var $F;
+      var $RP;
+      var $CP;
+      var $H;
+      var $C0;
+      var $C1;
+      var $DVS;
+      var $DV;
+      var $I;
+      var $B;
+      var $F1;
+      $1=$m;
+      $2=$nb;
+      var $3=$1; //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $4=(($3+4)|0); //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=HEAP32[(($4)>>2)]; //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=$1; //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=(($6+4)|0); //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=HEAP32[(($7)>>2)]; //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=(((-$8))|0); //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=$5 & $9; //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      $leastbit=$10; //@line 4269 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=$leastbit; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=((($11)-(1))|0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$12; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=$13 >>> 12; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$14 & 16; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$15; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=$K; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$16; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=$K; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=$18 >>> (($17)>>>0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$19; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=$20 >>> 5; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=$21 & 8; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$22; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=$N; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=((($23)+($22))|0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$24; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$K; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$26 >>> (($25)>>>0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$27; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=$28 >>> 2; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$29 & 4; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$30; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=$N; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=((($31)+($30))|0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$32; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$K; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=$34 >>> (($33)>>>0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$35; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=$36 >>> 1; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=$37 & 2; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$38; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=$N; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=((($39)+($38))|0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$40; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$K; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=$42 >>> (($41)>>>0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$43; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$44 >>> 1; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=$45 & 1; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$46; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=$N; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $48=((($47)+($46))|0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$48; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=$K; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=$50 >>> (($49)>>>0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$51; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=$N; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=$Y; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=((($52)+($53))|0); //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      $i=$54; //@line 4270 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=$i; //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$1; //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($56+304)|0); //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=(($57+($55<<2))|0); //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=HEAP32[(($58)>>2)]; //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$59; //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      $v=$59; //@line 4271 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=$t; //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=(($60+4)|0); //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      var $62=HEAP32[(($61)>>2)]; //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=$62 & -8; //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=$2; //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=((($63)-($64))|0); //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$65; //@line 4272 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 3; break; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $67=$t; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=(($67+16)|0); //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=(($68)|0); //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=HEAP32[(($69)>>2)]; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=(($70)|0)!=0; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($71) { __label__ = 4; break; } else { __label__ = 5; break; } //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $73=$t; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=(($73+16)|0); //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=(($74)|0); //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=HEAP32[(($75)>>2)]; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83 = $76;__label__ = 6; break; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $78=$t; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $79=(($78+16)|0); //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=(($79+4)|0); //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=HEAP32[(($80)>>2)]; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83 = $81;__label__ = 6; break; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $83; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$83; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=(($83)|0)!=0; //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($84) { __label__ = 7; break; } else { __label__ = 10; break; } //@line 4274 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $86=$t; //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=(($86+4)|0); //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=HEAP32[(($87)>>2)]; //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=$88 & -8; //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=$2; //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=((($89)-($90))|0); //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      $trem=$91; //@line 4275 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=$trem; //@line 4276 "/root/emscripten/system/lib/dlmalloc.c"
+      var $93=$rsize; //@line 4276 "/root/emscripten/system/lib/dlmalloc.c"
+      var $94=(($92)>>>0) < (($93)>>>0); //@line 4276 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($94) { __label__ = 8; break; } else { __label__ = 9; break; } //@line 4276 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $96=$trem; //@line 4277 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$96; //@line 4277 "/root/emscripten/system/lib/dlmalloc.c"
+      var $97=$t; //@line 4278 "/root/emscripten/system/lib/dlmalloc.c"
+      $v=$97; //@line 4278 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 9; break; //@line 4279 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      __label__ = 3; break; //@line 4280 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $100=$v; //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$100; //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=$1; //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=(($102+16)|0); //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=HEAP32[(($103)>>2)]; //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $105=(($101)>>>0) >= (($104)>>>0); //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $106=(($105)&1); //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=(($106)==(1)); //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=(($107)|0)!=0; //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($108) { __label__ = 11; break; } else { __label__ = 70; break; } //@line 4282 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $110=$v; //@line 4283 "/root/emscripten/system/lib/dlmalloc.c"
+      var $111=$110; //@line 4283 "/root/emscripten/system/lib/dlmalloc.c"
+      var $112=$2; //@line 4283 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=(($111+$112)|0); //@line 4283 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=$113; //@line 4283 "/root/emscripten/system/lib/dlmalloc.c"
+      $r=$114; //@line 4283 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=$v; //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=$115; //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $117=$r; //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $118=$117; //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $119=(($116)>>>0) < (($118)>>>0); //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $120=(($119)&1); //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=(($120)==(1)); //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=(($121)|0)!=0; //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($122) { __label__ = 12; break; } else { __label__ = 69; break; } //@line 4285 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $124=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=(($124+24)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=HEAP32[(($125)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $XP=$126; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=(($127+12)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=HEAP32[(($128)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $131=(($129)|0)!=(($130)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($131) { __label__ = 13; break; } else { __label__ = 17; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $133=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=(($133+8)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=HEAP32[(($134)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$135; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $136=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $137=(($136+12)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $138=HEAP32[(($137)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$138; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $139=$F; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $140=$139; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $141=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=(($141+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $143=HEAP32[(($142)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144=(($140)>>>0) >= (($143)>>>0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=(($144)&1); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $146=(($145)==(1)); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=(($146)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($147) { __label__ = 14; break; } else { __label__ = 15; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $149=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $150=$F; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $151=(($150+12)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($151)>>2)]=$149; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=$F; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=(($153+8)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($154)>>2)]=$152; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 16; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      _abort(); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      __label__ = 29; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $158=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=(($158+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=(($159+4)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$160; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=HEAP32[(($160)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$161; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=(($161)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($162) { __label__ = 19; break; } else { __label__ = 18; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $164=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $165=(($164+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $166=(($165)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$166; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $167=HEAP32[(($166)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$167; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $168=(($167)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($168) { __label__ = 19; break; } else { __label__ = 28; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      __label__ = 20; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      var $171=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=(($171+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $173=(($172+4)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$173; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $174=HEAP32[(($173)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $175=(($174)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($175) { var $183 = 1;__label__ = 22; break; } else { __label__ = 21; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      var $177=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $178=(($177+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $179=(($178)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$179; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $180=HEAP32[(($179)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $181=(($180)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183 = $181;__label__ = 22; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      var $183;
+      if ($183) { __label__ = 23; break; } else { __label__ = 24; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      var $185=$CP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$185; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $186=HEAP32[(($185)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$186; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 20; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $188=$RP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $189=$188; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $190=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $191=(($190+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $192=HEAP32[(($191)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $193=(($189)>>>0) >= (($192)>>>0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=(($193)&1); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $195=(($194)==(1)); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=(($195)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($196) { __label__ = 25; break; } else { __label__ = 26; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      var $198=$RP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($198)>>2)]=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 27; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      _abort(); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 27: 
+      __label__ = 28; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      __label__ = 29; break;
+    case 29: 
+      var $203=$XP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=(($203)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($204) { __label__ = 30; break; } else { __label__ = 57; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      var $206=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=(($206+28)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=HEAP32[(($207)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $209=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $210=(($209+304)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $211=(($210+($208<<2))|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $H=$211; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $212=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $213=$H; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $214=HEAP32[(($213)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $215=(($212)|0)==(($214)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($215) { __label__ = 31; break; } else { __label__ = 34; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $217=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $218=$H; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($218)>>2)]=$217; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $219=(($217)|0)==0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($219) { __label__ = 32; break; } else { __label__ = 33; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $221=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $222=(($221+28)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $223=HEAP32[(($222)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $224=1 << $223; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $225=$224 ^ -1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $226=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=(($226+4)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=HEAP32[(($227)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $229=$228 & $225; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($227)>>2)]=$229; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 33; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      __label__ = 41; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      var $232=$XP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $233=$232; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $234=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $235=(($234+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $236=HEAP32[(($235)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=(($233)>>>0) >= (($236)>>>0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $238=(($237)&1); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $239=(($238)==(1)); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $240=(($239)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($240) { __label__ = 35; break; } else { __label__ = 39; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 35: 
+      var $242=$XP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=(($242+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=(($243)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $245=HEAP32[(($244)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=(($245)|0)==(($246)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($247) { __label__ = 36; break; } else { __label__ = 37; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      var $249=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $250=$XP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $251=(($250+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $252=(($251)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($252)>>2)]=$249; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 38; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      var $254=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $255=$XP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $256=(($255+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $257=(($256+4)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($257)>>2)]=$254; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 38; break;
+    case 38: 
+      __label__ = 40; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      _abort(); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      __label__ = 41; break;
+    case 41: 
+      var $262=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $263=(($262)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($263) { __label__ = 42; break; } else { __label__ = 56; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      var $265=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $266=$265; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $267=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $268=(($267+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $269=HEAP32[(($268)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $270=(($266)>>>0) >= (($269)>>>0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $271=(($270)&1); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $272=(($271)==(1)); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $273=(($272)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($273) { __label__ = 43; break; } else { __label__ = 54; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 43: 
+      var $275=$XP; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $277=(($276+24)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($277)>>2)]=$275; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $278=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=(($278+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $280=(($279)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $281=HEAP32[(($280)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $C0=$281; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=(($281)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($282) { __label__ = 44; break; } else { __label__ = 48; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 44: 
+      var $284=$C0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $285=$284; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $286=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=(($286+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=HEAP32[(($287)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $289=(($285)>>>0) >= (($288)>>>0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $290=(($289)&1); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $291=(($290)==(1)); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $292=(($291)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($292) { __label__ = 45; break; } else { __label__ = 46; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      var $294=$C0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $295=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $296=(($295+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $297=(($296)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($297)>>2)]=$294; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $298=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $299=$C0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $300=(($299+24)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($300)>>2)]=$298; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 47; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      _abort(); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      __label__ = 48; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      var $304=$v; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $305=(($304+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $306=(($305+4)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $307=HEAP32[(($306)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      $C1=$307; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $308=(($307)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($308) { __label__ = 49; break; } else { __label__ = 53; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 49: 
+      var $310=$C1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $311=$310; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $312=$1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $313=(($312+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $314=HEAP32[(($313)>>2)]; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=(($311)>>>0) >= (($314)>>>0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=(($315)&1); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=(($316)==(1)); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $318=(($317)|0)!=0; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($318) { __label__ = 50; break; } else { __label__ = 51; break; } //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      var $320=$C1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $322=(($321+16)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=(($322+4)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($323)>>2)]=$320; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=$R; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=$C1; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=(($325+24)|0); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($326)>>2)]=$324; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 52; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      _abort(); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 52: 
+      __label__ = 53; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 53: 
+      __label__ = 55; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      _abort(); //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 55: 
+      __label__ = 56; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 56: 
+      __label__ = 57; break; //@line 4286 "/root/emscripten/system/lib/dlmalloc.c"
+    case 57: 
+      var $334=$rsize; //@line 4287 "/root/emscripten/system/lib/dlmalloc.c"
+      var $335=(($334)>>>0) < 16; //@line 4287 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($335) { __label__ = 58; break; } else { __label__ = 59; break; } //@line 4287 "/root/emscripten/system/lib/dlmalloc.c"
+    case 58: 
+      var $337=$rsize; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $338=$2; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=((($337)+($338))|0); //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=$339 | 1; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=$340 | 2; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=$v; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $343=(($342+4)|0); //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($343)>>2)]=$341; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $344=$v; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $345=$344; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=$rsize; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=$2; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348=((($346)+($347))|0); //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $349=(($345+$348)|0); //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=$349; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=(($350+4)|0); //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=HEAP32[(($351)>>2)]; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      var $353=$352 | 1; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($351)>>2)]=$353; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 68; break; //@line 4288 "/root/emscripten/system/lib/dlmalloc.c"
+    case 59: 
+      var $355=$2; //@line 4290 "/root/emscripten/system/lib/dlmalloc.c"
+      var $356=$355 | 1; //@line 4290 "/root/emscripten/system/lib/dlmalloc.c"
+      var $357=$356 | 2; //@line 4290 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=$v; //@line 4290 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=(($358+4)|0); //@line 4290 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($359)>>2)]=$357; //@line 4290 "/root/emscripten/system/lib/dlmalloc.c"
+      var $360=$rsize; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $361=$360 | 1; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $362=$r; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $363=(($362+4)|0); //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($363)>>2)]=$361; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $364=$rsize; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $365=$r; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $366=$365; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=$rsize; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=(($366+$367)|0); //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=$368; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $370=(($369)|0); //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($370)>>2)]=$364; //@line 4291 "/root/emscripten/system/lib/dlmalloc.c"
+      var $371=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $372=(($371+8)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $373=HEAP32[(($372)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      $DVS=$373; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374=$DVS; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $375=(($374)|0)!=0; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($375) { __label__ = 60; break; } else { __label__ = 67; break; } //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 60: 
+      var $377=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $378=(($377+20)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $379=HEAP32[(($378)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      $DV=$379; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=$DVS; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=$380 >>> 3; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$381; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=$I; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $383=$382 << 1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $384=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $385=(($384+40)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=(($385+($383<<2))|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=$386; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $388=$387; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      $B=$388; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $389=$B; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      $F1=$389; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $390=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $391=(($390)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $392=HEAP32[(($391)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $393=$I; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $394=1 << $393; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $395=$392 & $394; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $396=(($395)|0)!=0; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($396) { __label__ = 62; break; } else { __label__ = 61; break; } //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 61: 
+      var $398=$I; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $399=1 << $398; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $400=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $401=(($400)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $402=HEAP32[(($401)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $403=$402 | $399; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($401)>>2)]=$403; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 66; break; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 62: 
+      var $405=$B; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $406=(($405+8)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $407=HEAP32[(($406)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $408=$407; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $409=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $410=(($409+16)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $411=HEAP32[(($410)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $412=(($408)>>>0) >= (($411)>>>0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $413=(($412)&1); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $414=(($413)==(1)); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $415=(($414)|0)!=0; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($415) { __label__ = 63; break; } else { __label__ = 64; break; } //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 63: 
+      var $417=$B; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $418=(($417+8)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $419=HEAP32[(($418)>>2)]; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      $F1=$419; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 65; break; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 64: 
+      _abort(); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 65: 
+      __label__ = 66; break;
+    case 66: 
+      var $423=$DV; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $424=$B; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $425=(($424+8)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($425)>>2)]=$423; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $426=$DV; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $427=$F1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $428=(($427+12)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($428)>>2)]=$426; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $429=$F1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $430=$DV; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $431=(($430+8)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($431)>>2)]=$429; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $432=$B; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $433=$DV; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $434=(($433+12)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($434)>>2)]=$432; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 67; break; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+    case 67: 
+      var $436=$rsize; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $437=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $438=(($437+8)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($438)>>2)]=$436; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $439=$r; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $440=$1; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      var $441=(($440+20)|0); //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($441)>>2)]=$439; //@line 4292 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 68; break;
+    case 68: 
+      var $443=$v; //@line 4294 "/root/emscripten/system/lib/dlmalloc.c"
+      var $444=$443; //@line 4294 "/root/emscripten/system/lib/dlmalloc.c"
+      var $445=(($444+8)|0); //@line 4294 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $445; //@line 4294 "/root/emscripten/system/lib/dlmalloc.c"
+    case 69: 
+      __label__ = 70; break; //@line 4296 "/root/emscripten/system/lib/dlmalloc.c"
+    case 70: 
+      _abort(); //@line 4298 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4298 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_tmalloc_small["X"]=1;
+
+function _tmalloc_large($m, $nb) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $v;
+      var $rsize;
+      var $t;
+      var $idx;
+      var $X;
+      var $Y;
+      var $N;
+      var $K;
+      var $sizebits;
+      var $rst;
+      var $rt;
+      var $trem;
+      var $leftbits;
+      var $i;
+      var $leastbit;
+      var $Y1;
+      var $K2;
+      var $N3;
+      var $trem4;
+      var $r;
+      var $XP;
+      var $R;
+      var $F;
+      var $RP;
+      var $CP;
+      var $H;
+      var $C0;
+      var $C1;
+      var $I;
+      var $B;
+      var $F5;
+      var $TP;
+      var $H6;
+      var $I7;
+      var $X8;
+      var $Y9;
+      var $N10;
+      var $K11;
+      var $T;
+      var $K12;
+      var $C;
+      var $F13;
+      $2=$m;
+      $3=$nb;
+      $v=0; //@line 4195 "/root/emscripten/system/lib/dlmalloc.c"
+      var $4=$3; //@line 4196 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=(((-$4))|0); //@line 4196 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$5; //@line 4196 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=$3; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=$6 >>> 8; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $X=$7; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$X; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=(($8)|0)==0; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($9) { __label__ = 3; break; } else { __label__ = 4; break; } //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      $idx=0; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 8; break; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $12=$X; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=(($12)>>>0) > 65535; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($13) { __label__ = 5; break; } else { __label__ = 6; break; } //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      $idx=31; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 7; break; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $16=$X; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$16; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=$Y; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=((($17)-(256))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=$18 >>> 16; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=$19 & 8; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$20; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=$N; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=$Y; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=$22 << $21; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$23; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=((($23)-(4096))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$24 >>> 16; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=$25 & 4; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$26; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$K; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$N; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=((($28)+($27))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$29; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$K; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=$Y; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=$31 << $30; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$32; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=((($32)-(16384))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=$33 >>> 16; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=$34 & 2; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$35; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$N; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=((($36)+($35))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$37; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=$N; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=(((14)-($38))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=$K; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$Y; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=$41 << $40; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$42; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=$42 >>> 15; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=((($39)+($43))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$44; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$K; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=$45 << 1; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=$3; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $48=$K; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=((($48)+(7))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=$47 >>> (($49)>>>0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=$50 & 1; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=((($46)+($51))|0); //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      $idx=$52; //@line 4199 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 7; break;
+    case 7: 
+      __label__ = 8; break;
+    case 8: 
+      var $55=$idx; //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$2; //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($56+304)|0); //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=(($57+($55<<2))|0); //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=HEAP32[(($58)>>2)]; //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$59; //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=(($59)|0)!=0; //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($60) { __label__ = 9; break; } else { __label__ = 24; break; } //@line 4200 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $62=$3; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=$idx; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=(($63)|0)==31; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($64) { __label__ = 10; break; } else { __label__ = 11; break; } //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $73 = 0;__label__ = 12; break; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $67=$idx; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=$67 >>> 1; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=((($68)+(8))|0); //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=((($69)-(2))|0); //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=(((31)-($70))|0); //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73 = $71;__label__ = 12; break; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $73; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=$62 << $73; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      $sizebits=$74; //@line 4202 "/root/emscripten/system/lib/dlmalloc.c"
+      $rst=0; //@line 4203 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 13; break; //@line 4204 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $76=$t; //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=(($76+4)|0); //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      var $78=HEAP32[(($77)>>2)]; //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      var $79=$78 & -8; //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=$3; //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=((($79)-($80))|0); //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      $trem=$81; //@line 4206 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=$trem; //@line 4207 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=$rsize; //@line 4207 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=(($82)>>>0) < (($83)>>>0); //@line 4207 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($84) { __label__ = 14; break; } else { __label__ = 17; break; } //@line 4207 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $86=$t; //@line 4208 "/root/emscripten/system/lib/dlmalloc.c"
+      $v=$86; //@line 4208 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=$trem; //@line 4209 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$87; //@line 4209 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=(($87)|0)==0; //@line 4209 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($88) { __label__ = 15; break; } else { __label__ = 16; break; } //@line 4209 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      __label__ = 23; break; //@line 4210 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      __label__ = 17; break; //@line 4211 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $92=$t; //@line 4212 "/root/emscripten/system/lib/dlmalloc.c"
+      var $93=(($92+16)|0); //@line 4212 "/root/emscripten/system/lib/dlmalloc.c"
+      var $94=(($93+4)|0); //@line 4212 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=HEAP32[(($94)>>2)]; //@line 4212 "/root/emscripten/system/lib/dlmalloc.c"
+      $rt=$95; //@line 4212 "/root/emscripten/system/lib/dlmalloc.c"
+      var $96=$sizebits; //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $97=$96 >>> 31; //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=$97 & 1; //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=$t; //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=(($99+16)|0); //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=(($100+($98<<2))|0); //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=HEAP32[(($101)>>2)]; //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$102; //@line 4213 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=$rt; //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=(($103)|0)!=0; //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($104) { __label__ = 18; break; } else { __label__ = 20; break; } //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $106=$rt; //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=$t; //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=(($106)|0)!=(($107)|0); //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($108) { __label__ = 19; break; } else { __label__ = 20; break; } //@line 4214 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      var $110=$rt; //@line 4215 "/root/emscripten/system/lib/dlmalloc.c"
+      $rst=$110; //@line 4215 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 20; break; //@line 4215 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      var $112=$t; //@line 4216 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=(($112)|0)==0; //@line 4216 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($113) { __label__ = 21; break; } else { __label__ = 22; break; } //@line 4216 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      var $115=$rst; //@line 4217 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$115; //@line 4217 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 23; break; //@line 4218 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      var $117=$sizebits; //@line 4220 "/root/emscripten/system/lib/dlmalloc.c"
+      var $118=$117 << 1; //@line 4220 "/root/emscripten/system/lib/dlmalloc.c"
+      $sizebits=$118; //@line 4220 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 13; break; //@line 4221 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      __label__ = 24; break; //@line 4222 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $121=$t; //@line 4223 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=(($121)|0)==0; //@line 4223 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($122) { __label__ = 25; break; } else { __label__ = 29; break; } //@line 4223 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      var $124=$v; //@line 4223 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=(($124)|0)==0; //@line 4223 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($125) { __label__ = 26; break; } else { __label__ = 29; break; } //@line 4223 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $127=$idx; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=1 << $127; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=$128 << 1; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=$idx; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $131=1 << $130; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $132=$131 << 1; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=(((-$132))|0); //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=$129 | $133; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=$2; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $136=(($135+4)|0); //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $137=HEAP32[(($136)>>2)]; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $138=$134 & $137; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      $leftbits=$138; //@line 4224 "/root/emscripten/system/lib/dlmalloc.c"
+      var $139=$leftbits; //@line 4225 "/root/emscripten/system/lib/dlmalloc.c"
+      var $140=(($139)|0)!=0; //@line 4225 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($140) { __label__ = 27; break; } else { __label__ = 28; break; } //@line 4225 "/root/emscripten/system/lib/dlmalloc.c"
+    case 27: 
+      var $142=$leftbits; //@line 4227 "/root/emscripten/system/lib/dlmalloc.c"
+      var $143=$leftbits; //@line 4227 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144=(((-$143))|0); //@line 4227 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=$142 & $144; //@line 4227 "/root/emscripten/system/lib/dlmalloc.c"
+      $leastbit=$145; //@line 4227 "/root/emscripten/system/lib/dlmalloc.c"
+      var $146=$leastbit; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=((($146)-(1))|0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y1=$147; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $148=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $149=$148 >>> 12; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $150=$149 & 16; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$150; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $151=$K2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $N3=$151; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=$K2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=$153 >>> (($152)>>>0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y1=$154; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $156=$155 >>> 5; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $157=$156 & 8; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$157; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $158=$N3; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=((($158)+($157))|0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $N3=$159; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=$K2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=$161 >>> (($160)>>>0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y1=$162; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $163=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $164=$163 >>> 2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $165=$164 & 4; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$165; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $166=$N3; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $167=((($166)+($165))|0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $N3=$167; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $168=$K2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $170=$169 >>> (($168)>>>0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y1=$170; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $171=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=$171 >>> 1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $173=$172 & 2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$173; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $174=$N3; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $175=((($174)+($173))|0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $N3=$175; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $176=$K2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $177=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $178=$177 >>> (($176)>>>0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y1=$178; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $179=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $180=$179 >>> 1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $181=$180 & 1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$181; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $182=$N3; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=((($182)+($181))|0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $N3=$183; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $184=$K2; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $185=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $186=$185 >>> (($184)>>>0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y1=$186; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $187=$N3; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $188=$Y1; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $189=((($187)+($188))|0); //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      $i=$189; //@line 4228 "/root/emscripten/system/lib/dlmalloc.c"
+      var $190=$i; //@line 4229 "/root/emscripten/system/lib/dlmalloc.c"
+      var $191=$2; //@line 4229 "/root/emscripten/system/lib/dlmalloc.c"
+      var $192=(($191+304)|0); //@line 4229 "/root/emscripten/system/lib/dlmalloc.c"
+      var $193=(($192+($190<<2))|0); //@line 4229 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=HEAP32[(($193)>>2)]; //@line 4229 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$194; //@line 4229 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 28; break; //@line 4230 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      __label__ = 29; break; //@line 4231 "/root/emscripten/system/lib/dlmalloc.c"
+    case 29: 
+      __label__ = 30; break; //@line 4233 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      var $198=$t; //@line 4233 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199=(($198)|0)!=0; //@line 4233 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($199) { __label__ = 31; break; } else { __label__ = 37; break; } //@line 4233 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $201=$t; //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      var $202=(($201+4)|0); //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      var $203=HEAP32[(($202)>>2)]; //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=$203 & -8; //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      var $205=$3; //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      var $206=((($204)-($205))|0); //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      $trem4=$206; //@line 4234 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=$trem4; //@line 4235 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=$rsize; //@line 4235 "/root/emscripten/system/lib/dlmalloc.c"
+      var $209=(($207)>>>0) < (($208)>>>0); //@line 4235 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($209) { __label__ = 32; break; } else { __label__ = 33; break; } //@line 4235 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $211=$trem4; //@line 4236 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$211; //@line 4236 "/root/emscripten/system/lib/dlmalloc.c"
+      var $212=$t; //@line 4237 "/root/emscripten/system/lib/dlmalloc.c"
+      $v=$212; //@line 4237 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 33; break; //@line 4238 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      var $214=$t; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $215=(($214+16)|0); //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $216=(($215)|0); //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $217=HEAP32[(($216)>>2)]; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $218=(($217)|0)!=0; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($218) { __label__ = 34; break; } else { __label__ = 35; break; } //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      var $220=$t; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $221=(($220+16)|0); //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $222=(($221)|0); //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $223=HEAP32[(($222)>>2)]; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230 = $223;__label__ = 36; break; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+    case 35: 
+      var $225=$t; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $226=(($225+16)|0); //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=(($226+4)|0); //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=HEAP32[(($227)>>2)]; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230 = $228;__label__ = 36; break; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      var $230; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      $t=$230; //@line 4239 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 30; break; //@line 4240 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      var $232=$v; //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $233=(($232)|0)!=0; //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($233) { __label__ = 38; break; } else { __label__ = 127; break; } //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      var $235=$rsize; //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $236=$2; //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=(($236+8)|0); //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $238=HEAP32[(($237)>>2)]; //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $239=$3; //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $240=((($238)-($239))|0); //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      var $241=(($235)>>>0) < (($240)>>>0); //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($241) { __label__ = 39; break; } else { __label__ = 127; break; } //@line 4243 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      var $243=$v; //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=$243; //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $245=$2; //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=(($245+16)|0); //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=HEAP32[(($246)>>2)]; //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=(($244)>>>0) >= (($247)>>>0); //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $249=(($248)&1); //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $250=(($249)==(1)); //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      var $251=(($250)|0)!=0; //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($251) { __label__ = 40; break; } else { __label__ = 126; break; } //@line 4244 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      var $253=$v; //@line 4245 "/root/emscripten/system/lib/dlmalloc.c"
+      var $254=$253; //@line 4245 "/root/emscripten/system/lib/dlmalloc.c"
+      var $255=$3; //@line 4245 "/root/emscripten/system/lib/dlmalloc.c"
+      var $256=(($254+$255)|0); //@line 4245 "/root/emscripten/system/lib/dlmalloc.c"
+      var $257=$256; //@line 4245 "/root/emscripten/system/lib/dlmalloc.c"
+      $r=$257; //@line 4245 "/root/emscripten/system/lib/dlmalloc.c"
+      var $258=$v; //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=$258; //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=$r; //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $261=$260; //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $262=(($259)>>>0) < (($261)>>>0); //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $263=(($262)&1); //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $264=(($263)==(1)); //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      var $265=(($264)|0)!=0; //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($265) { __label__ = 41; break; } else { __label__ = 125; break; } //@line 4247 "/root/emscripten/system/lib/dlmalloc.c"
+    case 41: 
+      var $267=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $268=(($267+24)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $269=HEAP32[(($268)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $XP=$269; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $270=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $271=(($270+12)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $272=HEAP32[(($271)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $273=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $274=(($272)|0)!=(($273)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($274) { __label__ = 42; break; } else { __label__ = 46; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      var $276=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $277=(($276+8)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $278=HEAP32[(($277)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$278; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $280=(($279+12)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $281=HEAP32[(($280)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$281; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=$F; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $283=$282; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $284=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $285=(($284+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $286=HEAP32[(($285)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=(($283)>>>0) >= (($286)>>>0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=(($287)&1); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $289=(($288)==(1)); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $290=(($289)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($290) { __label__ = 43; break; } else { __label__ = 44; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 43: 
+      var $292=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $293=$F; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $294=(($293+12)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($294)>>2)]=$292; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $295=$F; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $296=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $297=(($296+8)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($297)>>2)]=$295; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 45; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 44: 
+      _abort(); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      __label__ = 58; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      var $301=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $302=(($301+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $303=(($302+4)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$303; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $304=HEAP32[(($303)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$304; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $305=(($304)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($305) { __label__ = 48; break; } else { __label__ = 47; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      var $307=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $308=(($307+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $309=(($308)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$309; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $310=HEAP32[(($309)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$310; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $311=(($310)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($311) { __label__ = 48; break; } else { __label__ = 57; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      __label__ = 49; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 49: 
+      var $314=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=(($314+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=(($315+4)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$316; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=HEAP32[(($316)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $318=(($317)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($318) { var $326 = 1;__label__ = 51; break; } else { __label__ = 50; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      var $320=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=(($320+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $322=(($321)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$322; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=HEAP32[(($322)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=(($323)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326 = $324;__label__ = 51; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      var $326;
+      if ($326) { __label__ = 52; break; } else { __label__ = 53; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 52: 
+      var $328=$CP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$328; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $329=HEAP32[(($328)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$329; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 49; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 53: 
+      var $331=$RP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $332=$331; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $333=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $334=(($333+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $335=HEAP32[(($334)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $336=(($332)>>>0) >= (($335)>>>0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $337=(($336)&1); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $338=(($337)==(1)); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=(($338)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($339) { __label__ = 54; break; } else { __label__ = 55; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      var $341=$RP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($341)>>2)]=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 56; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 55: 
+      _abort(); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 56: 
+      __label__ = 57; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 57: 
+      __label__ = 58; break;
+    case 58: 
+      var $346=$XP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=(($346)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($347) { __label__ = 59; break; } else { __label__ = 86; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 59: 
+      var $349=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=(($349+28)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=HEAP32[(($350)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $353=(($352+304)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $354=(($353+($351<<2))|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $H=$354; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $355=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $356=$H; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $357=HEAP32[(($356)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=(($355)|0)==(($357)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($358) { __label__ = 60; break; } else { __label__ = 63; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 60: 
+      var $360=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $361=$H; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($361)>>2)]=$360; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $362=(($360)|0)==0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($362) { __label__ = 61; break; } else { __label__ = 62; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 61: 
+      var $364=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $365=(($364+28)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $366=HEAP32[(($365)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=1 << $366; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=$367 ^ -1; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $370=(($369+4)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $371=HEAP32[(($370)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $372=$371 & $368; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($370)>>2)]=$372; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 62; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 62: 
+      __label__ = 70; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 63: 
+      var $375=$XP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $376=$375; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $377=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $378=(($377+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $379=HEAP32[(($378)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=(($376)>>>0) >= (($379)>>>0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=(($380)&1); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=(($381)==(1)); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $383=(($382)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($383) { __label__ = 64; break; } else { __label__ = 68; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 64: 
+      var $385=$XP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=(($385+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=(($386)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $388=HEAP32[(($387)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $389=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $390=(($388)|0)==(($389)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($390) { __label__ = 65; break; } else { __label__ = 66; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 65: 
+      var $392=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $393=$XP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $394=(($393+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $395=(($394)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($395)>>2)]=$392; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 67; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 66: 
+      var $397=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $398=$XP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $399=(($398+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $400=(($399+4)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($400)>>2)]=$397; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 67; break;
+    case 67: 
+      __label__ = 69; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 68: 
+      _abort(); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 69: 
+      __label__ = 70; break;
+    case 70: 
+      var $405=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $406=(($405)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($406) { __label__ = 71; break; } else { __label__ = 85; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 71: 
+      var $408=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $409=$408; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $410=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $411=(($410+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $412=HEAP32[(($411)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $413=(($409)>>>0) >= (($412)>>>0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $414=(($413)&1); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $415=(($414)==(1)); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $416=(($415)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($416) { __label__ = 72; break; } else { __label__ = 83; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 72: 
+      var $418=$XP; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $419=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $420=(($419+24)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($420)>>2)]=$418; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $421=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $422=(($421+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $423=(($422)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $424=HEAP32[(($423)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $C0=$424; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $425=(($424)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($425) { __label__ = 73; break; } else { __label__ = 77; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 73: 
+      var $427=$C0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $428=$427; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $429=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $430=(($429+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $431=HEAP32[(($430)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $432=(($428)>>>0) >= (($431)>>>0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $433=(($432)&1); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $434=(($433)==(1)); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $435=(($434)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($435) { __label__ = 74; break; } else { __label__ = 75; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 74: 
+      var $437=$C0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $438=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $439=(($438+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $440=(($439)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($440)>>2)]=$437; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $441=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $442=$C0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $443=(($442+24)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($443)>>2)]=$441; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 76; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 75: 
+      _abort(); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 76: 
+      __label__ = 77; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 77: 
+      var $447=$v; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $448=(($447+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $449=(($448+4)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $450=HEAP32[(($449)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      $C1=$450; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $451=(($450)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($451) { __label__ = 78; break; } else { __label__ = 82; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 78: 
+      var $453=$C1; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $454=$453; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $455=$2; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $456=(($455+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $457=HEAP32[(($456)>>2)]; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $458=(($454)>>>0) >= (($457)>>>0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $459=(($458)&1); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $460=(($459)==(1)); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $461=(($460)|0)!=0; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($461) { __label__ = 79; break; } else { __label__ = 80; break; } //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 79: 
+      var $463=$C1; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $464=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $465=(($464+16)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $466=(($465+4)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($466)>>2)]=$463; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $467=$R; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $468=$C1; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      var $469=(($468+24)|0); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($469)>>2)]=$467; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 81; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 80: 
+      _abort(); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 81: 
+      __label__ = 82; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 82: 
+      __label__ = 84; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 83: 
+      _abort(); //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 84: 
+      __label__ = 85; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 85: 
+      __label__ = 86; break; //@line 4248 "/root/emscripten/system/lib/dlmalloc.c"
+    case 86: 
+      var $477=$rsize; //@line 4249 "/root/emscripten/system/lib/dlmalloc.c"
+      var $478=(($477)>>>0) < 16; //@line 4249 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($478) { __label__ = 87; break; } else { __label__ = 88; break; } //@line 4249 "/root/emscripten/system/lib/dlmalloc.c"
+    case 87: 
+      var $480=$rsize; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $481=$3; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $482=((($480)+($481))|0); //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $483=$482 | 1; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $484=$483 | 2; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $485=$v; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $486=(($485+4)|0); //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($486)>>2)]=$484; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $487=$v; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $488=$487; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $489=$rsize; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $490=$3; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $491=((($489)+($490))|0); //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $492=(($488+$491)|0); //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $493=$492; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $494=(($493+4)|0); //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $495=HEAP32[(($494)>>2)]; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      var $496=$495 | 1; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($494)>>2)]=$496; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 124; break; //@line 4250 "/root/emscripten/system/lib/dlmalloc.c"
+    case 88: 
+      var $498=$3; //@line 4252 "/root/emscripten/system/lib/dlmalloc.c"
+      var $499=$498 | 1; //@line 4252 "/root/emscripten/system/lib/dlmalloc.c"
+      var $500=$499 | 2; //@line 4252 "/root/emscripten/system/lib/dlmalloc.c"
+      var $501=$v; //@line 4252 "/root/emscripten/system/lib/dlmalloc.c"
+      var $502=(($501+4)|0); //@line 4252 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($502)>>2)]=$500; //@line 4252 "/root/emscripten/system/lib/dlmalloc.c"
+      var $503=$rsize; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $504=$503 | 1; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $505=$r; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $506=(($505+4)|0); //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($506)>>2)]=$504; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $507=$rsize; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $508=$r; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $509=$508; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $510=$rsize; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $511=(($509+$510)|0); //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $512=$511; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $513=(($512)|0); //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($513)>>2)]=$507; //@line 4253 "/root/emscripten/system/lib/dlmalloc.c"
+      var $514=$rsize; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $515=$514 >>> 3; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $516=(($515)>>>0) < 32; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($516) { __label__ = 89; break; } else { __label__ = 96; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 89: 
+      var $518=$rsize; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $519=$518 >>> 3; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$519; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $520=$I; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $521=$520 << 1; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $522=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $523=(($522+40)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $524=(($523+($521<<2))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $525=$524; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $526=$525; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $B=$526; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $527=$B; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $F5=$527; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $528=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $529=(($528)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $530=HEAP32[(($529)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $531=$I; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $532=1 << $531; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $533=$530 & $532; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $534=(($533)|0)!=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($534) { __label__ = 91; break; } else { __label__ = 90; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 90: 
+      var $536=$I; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $537=1 << $536; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $538=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $539=(($538)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $540=HEAP32[(($539)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $541=$540 | $537; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($539)>>2)]=$541; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 95; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 91: 
+      var $543=$B; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $544=(($543+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $545=HEAP32[(($544)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $546=$545; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $547=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $548=(($547+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $549=HEAP32[(($548)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $550=(($546)>>>0) >= (($549)>>>0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $551=(($550)&1); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $552=(($551)==(1)); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $553=(($552)|0)!=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($553) { __label__ = 92; break; } else { __label__ = 93; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 92: 
+      var $555=$B; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $556=(($555+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $557=HEAP32[(($556)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $F5=$557; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 94; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 93: 
+      _abort(); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 94: 
+      __label__ = 95; break;
+    case 95: 
+      var $561=$r; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $562=$B; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $563=(($562+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($563)>>2)]=$561; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $564=$r; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $565=$F5; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $566=(($565+12)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($566)>>2)]=$564; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $567=$F5; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $568=$r; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $569=(($568+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($569)>>2)]=$567; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $570=$B; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $571=$r; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $572=(($571+12)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($572)>>2)]=$570; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 123; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 96: 
+      var $574=$r; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $575=$574; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $TP=$575; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $576=$rsize; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $577=$576 >>> 8; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $X8=$577; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $578=$X8; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $579=(($578)|0)==0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($579) { __label__ = 97; break; } else { __label__ = 98; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 97: 
+      $I7=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 102; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 98: 
+      var $582=$X8; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $583=(($582)>>>0) > 65535; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($583) { __label__ = 99; break; } else { __label__ = 100; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 99: 
+      $I7=31; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 101; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 100: 
+      var $586=$X8; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y9=$586; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $587=$Y9; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $588=((($587)-(256))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $589=$588 >>> 16; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $590=$589 & 8; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $N10=$590; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $591=$N10; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $592=$Y9; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $593=$592 << $591; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y9=$593; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $594=((($593)-(4096))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $595=$594 >>> 16; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $596=$595 & 4; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $K11=$596; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $597=$K11; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $598=$N10; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $599=((($598)+($597))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $N10=$599; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $600=$K11; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $601=$Y9; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $602=$601 << $600; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y9=$602; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $603=((($602)-(16384))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $604=$603 >>> 16; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $605=$604 & 2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $K11=$605; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $606=$N10; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $607=((($606)+($605))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $N10=$607; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $608=$N10; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $609=(((14)-($608))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $610=$K11; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $611=$Y9; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $612=$611 << $610; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y9=$612; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $613=$612 >>> 15; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $614=((($609)+($613))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $K11=$614; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $615=$K11; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $616=$615 << 1; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $617=$rsize; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $618=$K11; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $619=((($618)+(7))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $620=$617 >>> (($619)>>>0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $621=$620 & 1; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $622=((($616)+($621))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $I7=$622; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 101; break;
+    case 101: 
+      __label__ = 102; break;
+    case 102: 
+      var $625=$I7; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $626=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $627=(($626+304)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $628=(($627+($625<<2))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $H6=$628; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $629=$I7; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $630=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $631=(($630+28)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($631)>>2)]=$629; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $632=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $633=(($632+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $634=(($633+4)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($634)>>2)]=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $635=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $636=(($635+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $637=(($636)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($637)>>2)]=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $638=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $639=(($638+4)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $640=HEAP32[(($639)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $641=$I7; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $642=1 << $641; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $643=$640 & $642; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $644=(($643)|0)!=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($644) { __label__ = 104; break; } else { __label__ = 103; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 103: 
+      var $646=$I7; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $647=1 << $646; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $648=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $649=(($648+4)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $650=HEAP32[(($649)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $651=$650 | $647; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($649)>>2)]=$651; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $652=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $653=$H6; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($653)>>2)]=$652; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $654=$H6; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $655=$654; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $656=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $657=(($656+24)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($657)>>2)]=$655; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $658=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $659=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $660=(($659+12)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($660)>>2)]=$658; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $661=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $662=(($661+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($662)>>2)]=$658; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 122; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 104: 
+      var $664=$H6; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $665=HEAP32[(($664)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$665; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $666=$rsize; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $667=$I7; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $668=(($667)|0)==31; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($668) { __label__ = 105; break; } else { __label__ = 106; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 105: 
+      var $677 = 0;__label__ = 107; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 106: 
+      var $671=$I7; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $672=$671 >>> 1; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $673=((($672)+(8))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $674=((($673)-(2))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $675=(((31)-($674))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $677 = $675;__label__ = 107; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 107: 
+      var $677; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $678=$666 << $677; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $K12=$678; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 108; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 108: 
+      var $680=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $681=(($680+4)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $682=HEAP32[(($681)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $683=$682 & -8; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $684=$rsize; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $685=(($683)|0)!=(($684)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($685) { __label__ = 109; break; } else { __label__ = 115; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 109: 
+      var $687=$K12; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $688=$687 >>> 31; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $689=$688 & 1; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $690=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $691=(($690+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $692=(($691+($689<<2))|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $C=$692; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $693=$K12; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $694=$693 << 1; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $K12=$694; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $695=$C; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $696=HEAP32[(($695)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $697=(($696)|0)!=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($697) { __label__ = 110; break; } else { __label__ = 111; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 110: 
+      var $699=$C; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $700=HEAP32[(($699)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$700; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 114; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 111: 
+      var $702=$C; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $703=$702; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $704=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $705=(($704+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $706=HEAP32[(($705)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $707=(($703)>>>0) >= (($706)>>>0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $708=(($707)&1); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $709=(($708)==(1)); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $710=(($709)|0)!=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($710) { __label__ = 112; break; } else { __label__ = 113; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 112: 
+      var $712=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $713=$C; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($713)>>2)]=$712; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $714=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $715=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $716=(($715+24)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($716)>>2)]=$714; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $717=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $718=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $719=(($718+12)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($719)>>2)]=$717; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $720=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $721=(($720+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($721)>>2)]=$717; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 121; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 113: 
+      _abort(); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 114: 
+      __label__ = 120; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 115: 
+      var $725=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $726=(($725+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $727=HEAP32[(($726)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      $F13=$727; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $728=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $729=$728; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $730=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $731=(($730+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $732=HEAP32[(($731)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $733=(($729)>>>0) >= (($732)>>>0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($733) { __label__ = 116; break; } else { var $742 = 0;__label__ = 117; break; } //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 116: 
+      var $735=$F13; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $736=$735; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $737=$2; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $738=(($737+16)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $739=HEAP32[(($738)>>2)]; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $740=(($736)>>>0) >= (($739)>>>0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $742 = $740;__label__ = 117; break;
+    case 117: 
+      var $742;
+      var $743=(($742)&1);
+      var $744=(($743)==(1));
+      var $745=(($744)|0)!=0;
+      if ($745) { __label__ = 118; break; } else { __label__ = 119; break; }
+    case 118: 
+      var $747=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $748=$F13; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $749=(($748+12)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($749)>>2)]=$747; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $750=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $751=(($750+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($751)>>2)]=$747; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $752=$F13; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $753=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $754=(($753+8)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($754)>>2)]=$752; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $755=$T; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $756=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $757=(($756+12)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($757)>>2)]=$755; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $758=$TP; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      var $759=(($758+24)|0); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($759)>>2)]=0; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 121; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 119: 
+      _abort(); //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 120: 
+      __label__ = 108; break; //@line 4254 "/root/emscripten/system/lib/dlmalloc.c"
+    case 121: 
+      __label__ = 122; break;
+    case 122: 
+      __label__ = 123; break;
+    case 123: 
+      __label__ = 124; break;
+    case 124: 
+      var $766=$v; //@line 4256 "/root/emscripten/system/lib/dlmalloc.c"
+      var $767=$766; //@line 4256 "/root/emscripten/system/lib/dlmalloc.c"
+      var $768=(($767+8)|0); //@line 4256 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=$768; //@line 4256 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 128; break; //@line 4256 "/root/emscripten/system/lib/dlmalloc.c"
+    case 125: 
+      __label__ = 126; break; //@line 4258 "/root/emscripten/system/lib/dlmalloc.c"
+    case 126: 
+      _abort(); //@line 4259 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4259 "/root/emscripten/system/lib/dlmalloc.c"
+    case 127: 
+      $1=0; //@line 4261 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 128; break; //@line 4261 "/root/emscripten/system/lib/dlmalloc.c"
+    case 128: 
+      var $773=$1; //@line 4262 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $773; //@line 4262 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_tmalloc_large["X"]=1;
+
+function _sys_alloc($m, $nb) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $tbase;
+      var $tsize;
+      var $mmap_flag;
+      var $mem;
+      var $br;
+      var $ss;
+      var $asize;
+      var $base;
+      var $esize;
+      var $end;
+      var $asize1;
+      var $br2;
+      var $end3;
+      var $ssize;
+      var $mn;
+      var $sp;
+      var $oldbase;
+      var $rsize;
+      var $p;
+      var $r;
+      $2=$m;
+      $3=$nb;
+      $tbase=-1; //@line 3876 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=0; //@line 3877 "/root/emscripten/system/lib/dlmalloc.c"
+      $mmap_flag=0; //@line 3878 "/root/emscripten/system/lib/dlmalloc.c"
+      var $4=HEAP32[((((_mparams)|0))>>2)]; //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=(($4)|0)!=0; //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($5) { var $10 = 1;__label__ = 4; break; } else { __label__ = 3; break; } //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $7=_init_mparams(); //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=(($7)|0)!=0; //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10 = $8;__label__ = 4; break; //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $10;
+      var $11=(($10)&1); //@line 3880 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=$2; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=(($12+440)|0); //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=HEAP32[(($13)>>2)]; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$14 & 0; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=(($15)|0)!=0; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($16) { __label__ = 5; break; } else { __label__ = 10; break; } //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $18=$3; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=HEAP32[((((_mparams+12)|0))>>2)]; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=(($18)>>>0) >= (($19)>>>0); //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($20) { __label__ = 6; break; } else { __label__ = 10; break; } //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $22=$2; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=(($22+12)|0); //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=HEAP32[(($23)>>2)]; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=(($24)|0)!=0; //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($25) { __label__ = 7; break; } else { __label__ = 10; break; } //@line 3883 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $27=$2; //@line 3884 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$3; //@line 3884 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=_mmap_alloc($27, $28); //@line 3884 "/root/emscripten/system/lib/dlmalloc.c"
+      $mem=$29; //@line 3884 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$mem; //@line 3885 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=(($30)|0)!=0; //@line 3885 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($31) { __label__ = 8; break; } else { __label__ = 9; break; } //@line 3885 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $33=$mem; //@line 3886 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=$33; //@line 3886 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 93; break; //@line 3886 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      __label__ = 10; break; //@line 3887 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $36=$2; //@line 3911 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=(($36+440)|0); //@line 3911 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=HEAP32[(($37)>>2)]; //@line 3911 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=$38 & 4; //@line 3911 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=(($39)|0)!=0; //@line 3911 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($40) { __label__ = 43; break; } else { __label__ = 11; break; } //@line 3911 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      $br=-1; //@line 3912 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=$2; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=(($42+24)|0); //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=HEAP32[(($43)>>2)]; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=(($44)|0)==0; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($45) { __label__ = 12; break; } else { __label__ = 13; break; } //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $55 = 0;__label__ = 14; break; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $48=$2; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=$2; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=(($49+24)|0); //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=HEAP32[(($50)>>2)]; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=$51; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=_segment_holding($48, $52); //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55 = $53;__label__ = 14; break; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $55; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      $ss=$55; //@line 3913 "/root/emscripten/system/lib/dlmalloc.c"
+      $asize=0; //@line 3914 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$ss; //@line 3917 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($56)|0)==0; //@line 3917 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($57) { __label__ = 15; break; } else { __label__ = 23; break; } //@line 3917 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $59=_sbrk(0); //@line 3918 "/root/emscripten/system/lib/dlmalloc.c"
+      $base=$59; //@line 3918 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=$base; //@line 3919 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=(($60)|0)!=-1; //@line 3919 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($61) { __label__ = 16; break; } else { __label__ = 22; break; } //@line 3919 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      var $63=$3; //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=((($63)+(48))|0); //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $66=((($65)-(1))|0); //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $67=((($64)+($66))|0); //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=((($68)-(1))|0); //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=$69 ^ -1; //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=$67 & $70; //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      $asize=$71; //@line 3920 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=$base; //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=$72; //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=HEAP32[((((_mparams+4)|0))>>2)]; //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=((($74)-(1))|0); //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=$73 & $75; //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=(($76)|0)==0; //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($77) { __label__ = 18; break; } else { __label__ = 17; break; } //@line 3922 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $79=$base; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=$79; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=HEAP32[((((_mparams+4)|0))>>2)]; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=((($81)-(1))|0); //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=((($80)+($82))|0); //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=HEAP32[((((_mparams+4)|0))>>2)]; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $85=((($84)-(1))|0); //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $86=$85 ^ -1; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=$83 & $86; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=$base; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=$88; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=((($87)-($89))|0); //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=$asize; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=((($91)+($90))|0); //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      $asize=$92; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 18; break; //@line 3923 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $94=$asize; //@line 3925 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=(($94)>>>0) < 2147483647; //@line 3925 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($95) { __label__ = 19; break; } else { __label__ = 21; break; } //@line 3925 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      var $97=$asize; //@line 3926 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=_sbrk($97); //@line 3926 "/root/emscripten/system/lib/dlmalloc.c"
+      $br=$98; //@line 3926 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=$base; //@line 3926 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=(($98)|0)==(($99)|0); //@line 3926 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($100) { __label__ = 20; break; } else { __label__ = 21; break; } //@line 3926 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      var $102=$base; //@line 3927 "/root/emscripten/system/lib/dlmalloc.c"
+      $tbase=$102; //@line 3927 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=$asize; //@line 3928 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=$103; //@line 3928 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 21; break; //@line 3929 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      __label__ = 22; break; //@line 3930 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      __label__ = 27; break; //@line 3931 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      var $107=$3; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=$2; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $109=(($108+12)|0); //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $110=HEAP32[(($109)>>2)]; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $111=((($107)-($110))|0); //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $112=((($111)+(48))|0); //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=((($113)-(1))|0); //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=((($112)+($114))|0); //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $117=((($116)-(1))|0); //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $118=$117 ^ -1; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $119=$115 & $118; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      $asize=$119; //@line 3934 "/root/emscripten/system/lib/dlmalloc.c"
+      var $120=$asize; //@line 3936 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=(($120)>>>0) < 2147483647; //@line 3936 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($121) { __label__ = 24; break; } else { __label__ = 26; break; } //@line 3936 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $123=$asize; //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $124=_sbrk($123); //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      $br=$124; //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=$ss; //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=(($125)|0); //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=HEAP32[(($126)>>2)]; //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=$ss; //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=(($128+4)|0); //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=HEAP32[(($129)>>2)]; //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $131=(($127+$130)|0); //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      var $132=(($124)|0)==(($131)|0); //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($132) { __label__ = 25; break; } else { __label__ = 26; break; } //@line 3937 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      var $134=$br; //@line 3938 "/root/emscripten/system/lib/dlmalloc.c"
+      $tbase=$134; //@line 3938 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=$asize; //@line 3939 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=$135; //@line 3939 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 26; break; //@line 3940 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      __label__ = 27; break;
+    case 27: 
+      var $138=$tbase; //@line 3943 "/root/emscripten/system/lib/dlmalloc.c"
+      var $139=(($138)|0)==-1; //@line 3943 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($139) { __label__ = 28; break; } else { __label__ = 42; break; } //@line 3943 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      var $141=$br; //@line 3944 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=(($141)|0)!=-1; //@line 3944 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($142) { __label__ = 29; break; } else { __label__ = 38; break; } //@line 3944 "/root/emscripten/system/lib/dlmalloc.c"
+    case 29: 
+      var $144=$asize; //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=(($144)>>>0) < 2147483647; //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($145) { __label__ = 30; break; } else { __label__ = 37; break; } //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      var $147=$asize; //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+      var $148=$3; //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+      var $149=((($148)+(48))|0); //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+      var $150=(($147)>>>0) < (($149)>>>0); //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($150) { __label__ = 31; break; } else { __label__ = 37; break; } //@line 3945 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $152=$3; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=((($152)+(48))|0); //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=$asize; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=((($153)-($154))|0); //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $156=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $157=((($156)-(1))|0); //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $158=((($155)+($157))|0); //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=((($159)-(1))|0); //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=$160 ^ -1; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=$158 & $161; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      $esize=$162; //@line 3947 "/root/emscripten/system/lib/dlmalloc.c"
+      var $163=$esize; //@line 3948 "/root/emscripten/system/lib/dlmalloc.c"
+      var $164=(($163)>>>0) < 2147483647; //@line 3948 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($164) { __label__ = 32; break; } else { __label__ = 36; break; } //@line 3948 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $166=$esize; //@line 3949 "/root/emscripten/system/lib/dlmalloc.c"
+      var $167=_sbrk($166); //@line 3949 "/root/emscripten/system/lib/dlmalloc.c"
+      $end=$167; //@line 3949 "/root/emscripten/system/lib/dlmalloc.c"
+      var $168=$end; //@line 3950 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=(($168)|0)!=-1; //@line 3950 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($169) { __label__ = 33; break; } else { __label__ = 34; break; } //@line 3950 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      var $171=$esize; //@line 3951 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=$asize; //@line 3951 "/root/emscripten/system/lib/dlmalloc.c"
+      var $173=((($172)+($171))|0); //@line 3951 "/root/emscripten/system/lib/dlmalloc.c"
+      $asize=$173; //@line 3951 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 35; break; //@line 3951 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      var $175=$asize; //@line 3953 "/root/emscripten/system/lib/dlmalloc.c"
+      var $176=(((-$175))|0); //@line 3953 "/root/emscripten/system/lib/dlmalloc.c"
+      var $177=_sbrk($176); //@line 3953 "/root/emscripten/system/lib/dlmalloc.c"
+      $br=-1; //@line 3954 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 35; break;
+    case 35: 
+      __label__ = 36; break; //@line 3956 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      __label__ = 37; break; //@line 3957 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      __label__ = 38; break; //@line 3958 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      var $182=$br; //@line 3959 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=(($182)|0)!=-1; //@line 3959 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($183) { __label__ = 39; break; } else { __label__ = 40; break; } //@line 3959 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      var $185=$br; //@line 3960 "/root/emscripten/system/lib/dlmalloc.c"
+      $tbase=$185; //@line 3960 "/root/emscripten/system/lib/dlmalloc.c"
+      var $186=$asize; //@line 3961 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=$186; //@line 3961 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 41; break; //@line 3962 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      var $188=$2; //@line 3964 "/root/emscripten/system/lib/dlmalloc.c"
+      var $189=(($188+440)|0); //@line 3964 "/root/emscripten/system/lib/dlmalloc.c"
+      var $190=HEAP32[(($189)>>2)]; //@line 3964 "/root/emscripten/system/lib/dlmalloc.c"
+      var $191=$190 | 4; //@line 3964 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($189)>>2)]=$191; //@line 3964 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 41; break;
+    case 41: 
+      __label__ = 42; break; //@line 3965 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      __label__ = 43; break; //@line 3968 "/root/emscripten/system/lib/dlmalloc.c"
+    case 43: 
+      var $195=$tbase; //@line 3982 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=(($195)|0)==-1; //@line 3982 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($196) { __label__ = 44; break; } else { __label__ = 53; break; } //@line 3982 "/root/emscripten/system/lib/dlmalloc.c"
+    case 44: 
+      var $198=$3; //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199=((($198)+(48))|0); //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $200=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $201=((($200)-(1))|0); //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $202=((($199)+($201))|0); //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $203=HEAP32[((((_mparams+8)|0))>>2)]; //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=((($203)-(1))|0); //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $205=$204 ^ -1; //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $206=$202 & $205; //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      $asize1=$206; //@line 3983 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=$asize1; //@line 3984 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=(($207)>>>0) < 2147483647; //@line 3984 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($208) { __label__ = 45; break; } else { __label__ = 52; break; } //@line 3984 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      $br2=-1; //@line 3985 "/root/emscripten/system/lib/dlmalloc.c"
+      $end3=-1; //@line 3986 "/root/emscripten/system/lib/dlmalloc.c"
+      var $210=$asize1; //@line 3988 "/root/emscripten/system/lib/dlmalloc.c"
+      var $211=_sbrk($210); //@line 3988 "/root/emscripten/system/lib/dlmalloc.c"
+      $br2=$211; //@line 3988 "/root/emscripten/system/lib/dlmalloc.c"
+      var $212=_sbrk(0); //@line 3989 "/root/emscripten/system/lib/dlmalloc.c"
+      $end3=$212; //@line 3989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $213=$br2; //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      var $214=(($213)|0)!=-1; //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($214) { __label__ = 46; break; } else { __label__ = 51; break; } //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      var $216=$end3; //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      var $217=(($216)|0)!=-1; //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($217) { __label__ = 47; break; } else { __label__ = 51; break; } //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      var $219=$br2; //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      var $220=$end3; //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      var $221=(($219)>>>0) < (($220)>>>0); //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($221) { __label__ = 48; break; } else { __label__ = 51; break; } //@line 3991 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      var $223=$end3; //@line 3992 "/root/emscripten/system/lib/dlmalloc.c"
+      var $224=$br2; //@line 3992 "/root/emscripten/system/lib/dlmalloc.c"
+      var $225=$223; //@line 3992 "/root/emscripten/system/lib/dlmalloc.c"
+      var $226=$224; //@line 3992 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=((($225)-($226))|0); //@line 3992 "/root/emscripten/system/lib/dlmalloc.c"
+      $ssize=$227; //@line 3992 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=$ssize; //@line 3993 "/root/emscripten/system/lib/dlmalloc.c"
+      var $229=$3; //@line 3993 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230=((($229)+(40))|0); //@line 3993 "/root/emscripten/system/lib/dlmalloc.c"
+      var $231=(($228)>>>0) > (($230)>>>0); //@line 3993 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($231) { __label__ = 49; break; } else { __label__ = 50; break; } //@line 3993 "/root/emscripten/system/lib/dlmalloc.c"
+    case 49: 
+      var $233=$br2; //@line 3994 "/root/emscripten/system/lib/dlmalloc.c"
+      $tbase=$233; //@line 3994 "/root/emscripten/system/lib/dlmalloc.c"
+      var $234=$ssize; //@line 3995 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=$234; //@line 3995 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 50; break; //@line 3996 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      __label__ = 51; break; //@line 3997 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      __label__ = 52; break; //@line 3998 "/root/emscripten/system/lib/dlmalloc.c"
+    case 52: 
+      __label__ = 53; break; //@line 3999 "/root/emscripten/system/lib/dlmalloc.c"
+    case 53: 
+      var $239=$tbase; //@line 4001 "/root/emscripten/system/lib/dlmalloc.c"
+      var $240=(($239)|0)!=-1; //@line 4001 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($240) { __label__ = 54; break; } else { __label__ = 92; break; } //@line 4001 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      var $242=$tsize; //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=$2; //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=(($243+432)|0); //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $245=HEAP32[(($244)>>2)]; //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=((($245)+($242))|0); //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($244)>>2)]=$246; //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=$2; //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=(($247+436)|0); //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $249=HEAP32[(($248)>>2)]; //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      var $250=(($246)>>>0) > (($249)>>>0); //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($250) { __label__ = 55; break; } else { __label__ = 56; break; } //@line 4003 "/root/emscripten/system/lib/dlmalloc.c"
+    case 55: 
+      var $252=$2; //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+      var $253=(($252+432)|0); //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+      var $254=HEAP32[(($253)>>2)]; //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+      var $255=$2; //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+      var $256=(($255+436)|0); //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($256)>>2)]=$254; //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 56; break; //@line 4004 "/root/emscripten/system/lib/dlmalloc.c"
+    case 56: 
+      var $258=$2; //@line 4006 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=(($258+24)|0); //@line 4006 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=HEAP32[(($259)>>2)]; //@line 4006 "/root/emscripten/system/lib/dlmalloc.c"
+      var $261=(($260)|0)!=0; //@line 4006 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($261) { __label__ = 64; break; } else { __label__ = 57; break; } //@line 4006 "/root/emscripten/system/lib/dlmalloc.c"
+    case 57: 
+      var $263=$2; //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $264=(($263+16)|0); //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $265=HEAP32[(($264)>>2)]; //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $266=(($265)|0)==0; //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($266) { __label__ = 59; break; } else { __label__ = 58; break; } //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+    case 58: 
+      var $268=$tbase; //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $269=$2; //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $270=(($269+16)|0); //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $271=HEAP32[(($270)>>2)]; //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      var $272=(($268)>>>0) < (($271)>>>0); //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($272) { __label__ = 59; break; } else { __label__ = 60; break; } //@line 4007 "/root/emscripten/system/lib/dlmalloc.c"
+    case 59: 
+      var $274=$tbase; //@line 4008 "/root/emscripten/system/lib/dlmalloc.c"
+      var $275=$2; //@line 4008 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=(($275+16)|0); //@line 4008 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($276)>>2)]=$274; //@line 4008 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 60; break; //@line 4008 "/root/emscripten/system/lib/dlmalloc.c"
+    case 60: 
+      var $278=$tbase; //@line 4009 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=$2; //@line 4009 "/root/emscripten/system/lib/dlmalloc.c"
+      var $280=(($279+444)|0); //@line 4009 "/root/emscripten/system/lib/dlmalloc.c"
+      var $281=(($280)|0); //@line 4009 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($281)>>2)]=$278; //@line 4009 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=$tsize; //@line 4010 "/root/emscripten/system/lib/dlmalloc.c"
+      var $283=$2; //@line 4010 "/root/emscripten/system/lib/dlmalloc.c"
+      var $284=(($283+444)|0); //@line 4010 "/root/emscripten/system/lib/dlmalloc.c"
+      var $285=(($284+4)|0); //@line 4010 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($285)>>2)]=$282; //@line 4010 "/root/emscripten/system/lib/dlmalloc.c"
+      var $286=$mmap_flag; //@line 4011 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=$2; //@line 4011 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=(($287+444)|0); //@line 4011 "/root/emscripten/system/lib/dlmalloc.c"
+      var $289=(($288+12)|0); //@line 4011 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($289)>>2)]=$286; //@line 4011 "/root/emscripten/system/lib/dlmalloc.c"
+      var $290=HEAP32[((((_mparams)|0))>>2)]; //@line 4012 "/root/emscripten/system/lib/dlmalloc.c"
+      var $291=$2; //@line 4012 "/root/emscripten/system/lib/dlmalloc.c"
+      var $292=(($291+36)|0); //@line 4012 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($292)>>2)]=$290; //@line 4012 "/root/emscripten/system/lib/dlmalloc.c"
+      var $293=$2; //@line 4013 "/root/emscripten/system/lib/dlmalloc.c"
+      var $294=(($293+32)|0); //@line 4013 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($294)>>2)]=-1; //@line 4013 "/root/emscripten/system/lib/dlmalloc.c"
+      var $295=$2; //@line 4014 "/root/emscripten/system/lib/dlmalloc.c"
+      _init_bins($295); //@line 4014 "/root/emscripten/system/lib/dlmalloc.c"
+      var $296=$2; //@line 4016 "/root/emscripten/system/lib/dlmalloc.c"
+      var $297=(($296)|0)==((__gm_)|0); //@line 4016 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($297) { __label__ = 61; break; } else { __label__ = 62; break; } //@line 4016 "/root/emscripten/system/lib/dlmalloc.c"
+    case 61: 
+      var $299=$2; //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+      var $300=$tbase; //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+      var $301=$300; //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+      var $302=$tsize; //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+      var $303=((($302)-(40))|0); //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+      _init_top($299, $301, $303); //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 63; break; //@line 4017 "/root/emscripten/system/lib/dlmalloc.c"
+    case 62: 
+      var $305=$2; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $306=$305; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $307=((($306)-(8))|0); //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $308=$307; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $309=$308; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $310=$2; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $311=$310; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $312=((($311)-(8))|0); //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $313=$312; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $314=(($313+4)|0); //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=HEAP32[(($314)>>2)]; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=$315 & -8; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=(($309+$316)|0); //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $318=$317; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      $mn=$318; //@line 4022 "/root/emscripten/system/lib/dlmalloc.c"
+      var $319=$2; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $320=$mn; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=$tbase; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $322=$tsize; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=(($321+$322)|0); //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=$mn; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=$324; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=$323; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $327=$325; //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $328=((($326)-($327))|0); //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      var $329=((($328)-(40))|0); //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      _init_top($319, $320, $329); //@line 4023 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 63; break;
+    case 63: 
+      __label__ = 89; break; //@line 4025 "/root/emscripten/system/lib/dlmalloc.c"
+    case 64: 
+      var $332=$2; //@line 4029 "/root/emscripten/system/lib/dlmalloc.c"
+      var $333=(($332+444)|0); //@line 4029 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$333; //@line 4029 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 65; break; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+    case 65: 
+      var $335=$sp; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $336=(($335)|0)!=0; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($336) { __label__ = 66; break; } else { var $348 = 0;__label__ = 67; break; } //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+    case 66: 
+      var $338=$tbase; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=$sp; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=(($339)|0); //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=HEAP32[(($340)>>2)]; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=$sp; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $343=(($342+4)|0); //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $344=HEAP32[(($343)>>2)]; //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $345=(($341+$344)|0); //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=(($338)|0)!=(($345)|0); //@line 4031 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348 = $346;__label__ = 67; break;
+    case 67: 
+      var $348;
+      if ($348) { __label__ = 68; break; } else { __label__ = 69; break; }
+    case 68: 
+      var $350=$sp; //@line 4032 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=(($350+8)|0); //@line 4032 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=HEAP32[(($351)>>2)]; //@line 4032 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$352; //@line 4032 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 65; break; //@line 4032 "/root/emscripten/system/lib/dlmalloc.c"
+    case 69: 
+      var $354=$sp; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $355=(($354)|0)!=0; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($355) { __label__ = 70; break; } else { __label__ = 75; break; } //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+    case 70: 
+      var $357=$sp; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=(($357+12)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=HEAP32[(($358)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $360=$359 & 8; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $361=(($360)|0)!=0; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($361) { __label__ = 75; break; } else { __label__ = 71; break; } //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+    case 71: 
+      var $363=$sp; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $364=(($363+12)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $365=HEAP32[(($364)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $366=$365 & 0; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=$mmap_flag; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=(($366)|0)==(($367)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($368) { __label__ = 72; break; } else { __label__ = 75; break; } //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+    case 72: 
+      var $370=$2; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $371=(($370+24)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $372=HEAP32[(($371)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $373=$372; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374=$sp; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $375=(($374)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $376=HEAP32[(($375)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $377=(($373)>>>0) >= (($376)>>>0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($377) { __label__ = 73; break; } else { __label__ = 75; break; } //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+    case 73: 
+      var $379=$2; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=(($379+24)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=HEAP32[(($380)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=$381; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $383=$sp; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $384=(($383)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $385=HEAP32[(($384)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=$sp; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=(($386+4)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $388=HEAP32[(($387)>>2)]; //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $389=(($385+$388)|0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $390=(($382)>>>0) < (($389)>>>0); //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($390) { __label__ = 74; break; } else { __label__ = 75; break; } //@line 4033 "/root/emscripten/system/lib/dlmalloc.c"
+    case 74: 
+      var $392=$tsize; //@line 4037 "/root/emscripten/system/lib/dlmalloc.c"
+      var $393=$sp; //@line 4037 "/root/emscripten/system/lib/dlmalloc.c"
+      var $394=(($393+4)|0); //@line 4037 "/root/emscripten/system/lib/dlmalloc.c"
+      var $395=HEAP32[(($394)>>2)]; //@line 4037 "/root/emscripten/system/lib/dlmalloc.c"
+      var $396=((($395)+($392))|0); //@line 4037 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($394)>>2)]=$396; //@line 4037 "/root/emscripten/system/lib/dlmalloc.c"
+      var $397=$2; //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $398=$2; //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $399=(($398+24)|0); //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $400=HEAP32[(($399)>>2)]; //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $401=$2; //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $402=(($401+12)|0); //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $403=HEAP32[(($402)>>2)]; //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $404=$tsize; //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      var $405=((($403)+($404))|0); //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      _init_top($397, $400, $405); //@line 4038 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 88; break; //@line 4039 "/root/emscripten/system/lib/dlmalloc.c"
+    case 75: 
+      var $407=$tbase; //@line 4041 "/root/emscripten/system/lib/dlmalloc.c"
+      var $408=$2; //@line 4041 "/root/emscripten/system/lib/dlmalloc.c"
+      var $409=(($408+16)|0); //@line 4041 "/root/emscripten/system/lib/dlmalloc.c"
+      var $410=HEAP32[(($409)>>2)]; //@line 4041 "/root/emscripten/system/lib/dlmalloc.c"
+      var $411=(($407)>>>0) < (($410)>>>0); //@line 4041 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($411) { __label__ = 76; break; } else { __label__ = 77; break; } //@line 4041 "/root/emscripten/system/lib/dlmalloc.c"
+    case 76: 
+      var $413=$tbase; //@line 4042 "/root/emscripten/system/lib/dlmalloc.c"
+      var $414=$2; //@line 4042 "/root/emscripten/system/lib/dlmalloc.c"
+      var $415=(($414+16)|0); //@line 4042 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($415)>>2)]=$413; //@line 4042 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 77; break; //@line 4042 "/root/emscripten/system/lib/dlmalloc.c"
+    case 77: 
+      var $417=$2; //@line 4043 "/root/emscripten/system/lib/dlmalloc.c"
+      var $418=(($417+444)|0); //@line 4043 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$418; //@line 4043 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 78; break; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+    case 78: 
+      var $420=$sp; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $421=(($420)|0)!=0; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($421) { __label__ = 79; break; } else { var $431 = 0;__label__ = 80; break; } //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+    case 79: 
+      var $423=$sp; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $424=(($423)|0); //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $425=HEAP32[(($424)>>2)]; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $426=$tbase; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $427=$tsize; //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $428=(($426+$427)|0); //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $429=(($425)|0)!=(($428)|0); //@line 4044 "/root/emscripten/system/lib/dlmalloc.c"
+      var $431 = $429;__label__ = 80; break;
+    case 80: 
+      var $431;
+      if ($431) { __label__ = 81; break; } else { __label__ = 82; break; }
+    case 81: 
+      var $433=$sp; //@line 4045 "/root/emscripten/system/lib/dlmalloc.c"
+      var $434=(($433+8)|0); //@line 4045 "/root/emscripten/system/lib/dlmalloc.c"
+      var $435=HEAP32[(($434)>>2)]; //@line 4045 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$435; //@line 4045 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 78; break; //@line 4045 "/root/emscripten/system/lib/dlmalloc.c"
+    case 82: 
+      var $437=$sp; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $438=(($437)|0)!=0; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($438) { __label__ = 83; break; } else { __label__ = 86; break; } //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+    case 83: 
+      var $440=$sp; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $441=(($440+12)|0); //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $442=HEAP32[(($441)>>2)]; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $443=$442 & 8; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $444=(($443)|0)!=0; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($444) { __label__ = 86; break; } else { __label__ = 84; break; } //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+    case 84: 
+      var $446=$sp; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $447=(($446+12)|0); //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $448=HEAP32[(($447)>>2)]; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $449=$448 & 0; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $450=$mmap_flag; //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      var $451=(($449)|0)==(($450)|0); //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($451) { __label__ = 85; break; } else { __label__ = 86; break; } //@line 4046 "/root/emscripten/system/lib/dlmalloc.c"
+    case 85: 
+      var $453=$sp; //@line 4049 "/root/emscripten/system/lib/dlmalloc.c"
+      var $454=(($453)|0); //@line 4049 "/root/emscripten/system/lib/dlmalloc.c"
+      var $455=HEAP32[(($454)>>2)]; //@line 4049 "/root/emscripten/system/lib/dlmalloc.c"
+      $oldbase=$455; //@line 4049 "/root/emscripten/system/lib/dlmalloc.c"
+      var $456=$tbase; //@line 4050 "/root/emscripten/system/lib/dlmalloc.c"
+      var $457=$sp; //@line 4050 "/root/emscripten/system/lib/dlmalloc.c"
+      var $458=(($457)|0); //@line 4050 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($458)>>2)]=$456; //@line 4050 "/root/emscripten/system/lib/dlmalloc.c"
+      var $459=$tsize; //@line 4051 "/root/emscripten/system/lib/dlmalloc.c"
+      var $460=$sp; //@line 4051 "/root/emscripten/system/lib/dlmalloc.c"
+      var $461=(($460+4)|0); //@line 4051 "/root/emscripten/system/lib/dlmalloc.c"
+      var $462=HEAP32[(($461)>>2)]; //@line 4051 "/root/emscripten/system/lib/dlmalloc.c"
+      var $463=((($462)+($459))|0); //@line 4051 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($461)>>2)]=$463; //@line 4051 "/root/emscripten/system/lib/dlmalloc.c"
+      var $464=$2; //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+      var $465=$tbase; //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+      var $466=$oldbase; //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+      var $467=$3; //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+      var $468=_prepend_alloc($464, $465, $466, $467); //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=$468; //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 93; break; //@line 4052 "/root/emscripten/system/lib/dlmalloc.c"
+    case 86: 
+      var $470=$2; //@line 4055 "/root/emscripten/system/lib/dlmalloc.c"
+      var $471=$tbase; //@line 4055 "/root/emscripten/system/lib/dlmalloc.c"
+      var $472=$tsize; //@line 4055 "/root/emscripten/system/lib/dlmalloc.c"
+      var $473=$mmap_flag; //@line 4055 "/root/emscripten/system/lib/dlmalloc.c"
+      _add_segment($470, $471, $472, $473); //@line 4055 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 87; break;
+    case 87: 
+      __label__ = 88; break;
+    case 88: 
+      __label__ = 89; break;
+    case 89: 
+      var $477=$3; //@line 4059 "/root/emscripten/system/lib/dlmalloc.c"
+      var $478=$2; //@line 4059 "/root/emscripten/system/lib/dlmalloc.c"
+      var $479=(($478+12)|0); //@line 4059 "/root/emscripten/system/lib/dlmalloc.c"
+      var $480=HEAP32[(($479)>>2)]; //@line 4059 "/root/emscripten/system/lib/dlmalloc.c"
+      var $481=(($477)>>>0) < (($480)>>>0); //@line 4059 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($481) { __label__ = 90; break; } else { __label__ = 91; break; } //@line 4059 "/root/emscripten/system/lib/dlmalloc.c"
+    case 90: 
+      var $483=$3; //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      var $484=$2; //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      var $485=(($484+12)|0); //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      var $486=HEAP32[(($485)>>2)]; //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      var $487=((($486)-($483))|0); //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($485)>>2)]=$487; //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      $rsize=$487; //@line 4060 "/root/emscripten/system/lib/dlmalloc.c"
+      var $488=$2; //@line 4061 "/root/emscripten/system/lib/dlmalloc.c"
+      var $489=(($488+24)|0); //@line 4061 "/root/emscripten/system/lib/dlmalloc.c"
+      var $490=HEAP32[(($489)>>2)]; //@line 4061 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$490; //@line 4061 "/root/emscripten/system/lib/dlmalloc.c"
+      var $491=$p; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $492=$491; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $493=$3; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $494=(($492+$493)|0); //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $495=$494; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $496=$2; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $497=(($496+24)|0); //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($497)>>2)]=$495; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      $r=$495; //@line 4062 "/root/emscripten/system/lib/dlmalloc.c"
+      var $498=$rsize; //@line 4063 "/root/emscripten/system/lib/dlmalloc.c"
+      var $499=$498 | 1; //@line 4063 "/root/emscripten/system/lib/dlmalloc.c"
+      var $500=$r; //@line 4063 "/root/emscripten/system/lib/dlmalloc.c"
+      var $501=(($500+4)|0); //@line 4063 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($501)>>2)]=$499; //@line 4063 "/root/emscripten/system/lib/dlmalloc.c"
+      var $502=$3; //@line 4064 "/root/emscripten/system/lib/dlmalloc.c"
+      var $503=$502 | 1; //@line 4064 "/root/emscripten/system/lib/dlmalloc.c"
+      var $504=$503 | 2; //@line 4064 "/root/emscripten/system/lib/dlmalloc.c"
+      var $505=$p; //@line 4064 "/root/emscripten/system/lib/dlmalloc.c"
+      var $506=(($505+4)|0); //@line 4064 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($506)>>2)]=$504; //@line 4064 "/root/emscripten/system/lib/dlmalloc.c"
+      var $507=$p; //@line 4067 "/root/emscripten/system/lib/dlmalloc.c"
+      var $508=$507; //@line 4067 "/root/emscripten/system/lib/dlmalloc.c"
+      var $509=(($508+8)|0); //@line 4067 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=$509; //@line 4067 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 93; break; //@line 4067 "/root/emscripten/system/lib/dlmalloc.c"
+    case 91: 
+      __label__ = 92; break; //@line 4069 "/root/emscripten/system/lib/dlmalloc.c"
+    case 92: 
+      var $512=___errno(); //@line 4071 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($512)>>2)]=12; //@line 4071 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=0; //@line 4072 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 93; break; //@line 4072 "/root/emscripten/system/lib/dlmalloc.c"
+    case 93: 
+      var $514=$1; //@line 4073 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $514; //@line 4073 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_sys_alloc["X"]=1;
+
+function _free($mem) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $p;
+      var $psize;
+      var $next;
+      var $prevsize;
+      var $prev;
+      var $F;
+      var $B;
+      var $I;
+      var $TP;
+      var $XP;
+      var $R;
+      var $F1;
+      var $RP;
+      var $CP;
+      var $H;
+      var $C0;
+      var $C1;
+      var $tsize;
+      var $dsize;
+      var $nsize;
+      var $F2;
+      var $B3;
+      var $I4;
+      var $TP5;
+      var $XP6;
+      var $R7;
+      var $F8;
+      var $RP9;
+      var $CP10;
+      var $H11;
+      var $C012;
+      var $C113;
+      var $I14;
+      var $B15;
+      var $F16;
+      var $tp;
+      var $H17;
+      var $I18;
+      var $X;
+      var $Y;
+      var $N;
+      var $K;
+      var $T;
+      var $K19;
+      var $C;
+      var $F20;
+      $1=$mem;
+      var $2=$1; //@line 4741 "/root/emscripten/system/lib/dlmalloc.c"
+      var $3=(($2)|0)!=0; //@line 4741 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($3) { __label__ = 3; break; } else { __label__ = 197; break; } //@line 4741 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $5=$1; //@line 4742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=((($5)-(8))|0); //@line 4742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=$6; //@line 4742 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$7; //@line 4742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$p; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=$8; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=(($9)>>>0) >= (($10)>>>0); //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($11) { __label__ = 4; break; } else { var $19 = 0;__label__ = 5; break; } //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $13=$p; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=(($13+4)|0); //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=HEAP32[(($14)>>2)]; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=$15 & 3; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=(($16)|0)!=1; //@line 4754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19 = $17;__label__ = 5; break;
+    case 5: 
+      var $19;
+      var $20=(($19)&1);
+      var $21=(($20)==(1));
+      var $22=(($21)|0)!=0;
+      if ($22) { __label__ = 6; break; } else { __label__ = 194; break; }
+    case 6: 
+      var $24=$p; //@line 4755 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=(($24+4)|0); //@line 4755 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=HEAP32[(($25)>>2)]; //@line 4755 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$26 & -8; //@line 4755 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$27; //@line 4755 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$p; //@line 4756 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=$28; //@line 4756 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$psize; //@line 4756 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=(($29+$30)|0); //@line 4756 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=$31; //@line 4756 "/root/emscripten/system/lib/dlmalloc.c"
+      $next=$32; //@line 4756 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$p; //@line 4757 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=(($33+4)|0); //@line 4757 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=HEAP32[(($34)>>2)]; //@line 4757 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$35 & 1; //@line 4757 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=(($36)|0)!=0; //@line 4757 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($37) { __label__ = 78; break; } else { __label__ = 7; break; } //@line 4757 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $39=$p; //@line 4758 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=(($39)|0); //@line 4758 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=HEAP32[(($40)>>2)]; //@line 4758 "/root/emscripten/system/lib/dlmalloc.c"
+      $prevsize=$41; //@line 4758 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=$p; //@line 4759 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=(($42+4)|0); //@line 4759 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=HEAP32[(($43)>>2)]; //@line 4759 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$44 & 3; //@line 4759 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=(($45)|0)==0; //@line 4759 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($46) { __label__ = 8; break; } else { __label__ = 9; break; } //@line 4759 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $48=$prevsize; //@line 4760 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=((($48)+(16))|0); //@line 4760 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=$psize; //@line 4760 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=((($50)+($49))|0); //@line 4760 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$51; //@line 4760 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 196; break; //@line 4763 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $53=$p; //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=$53; //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=$prevsize; //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=(((-$55))|0); //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($54+$56)|0); //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=$57; //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      $prev=$58; //@line 4766 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=$prevsize; //@line 4767 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=$psize; //@line 4767 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=((($60)+($59))|0); //@line 4767 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$61; //@line 4767 "/root/emscripten/system/lib/dlmalloc.c"
+      var $62=$prev; //@line 4768 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$62; //@line 4768 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=$prev; //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=$63; //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      var $66=(($64)>>>0) >= (($65)>>>0); //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      var $67=(($66)&1); //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=(($67)==(1)); //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=(($68)|0)!=0; //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($69) { __label__ = 10; break; } else { __label__ = 75; break; } //@line 4769 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $71=$p; //@line 4770 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=HEAP32[((((__gm_+20)|0))>>2)]; //@line 4770 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=(($71)|0)!=(($72)|0); //@line 4770 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($73) { __label__ = 11; break; } else { __label__ = 71; break; } //@line 4770 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $75=$prevsize; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=$75 >>> 3; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=(($76)>>>0) < 32; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($77) { __label__ = 12; break; } else { __label__ = 24; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $79=$p; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=(($79+8)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=HEAP32[(($80)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$81; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=$p; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=(($82+12)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=HEAP32[(($83)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $B=$84; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $85=$prevsize; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $86=$85 >>> 3; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$86; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=$F; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=$B; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=(($87)|0)==(($88)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($89) { __label__ = 13; break; } else { __label__ = 14; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $91=$I; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=1 << $91; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $93=$92 ^ -1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $94=HEAP32[((((__gm_)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=$94 & $93; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_)|0))>>2)]=$95; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 23; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $97=$F; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=$I; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=$98 << 1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=((((__gm_+40)|0)+($99<<2))|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$100; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=$101; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=(($97)|0)==(($102)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($103) { __label__ = 16; break; } else { __label__ = 15; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $105=$F; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $106=$105; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=(($106)>>>0) >= (($107)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($108) { __label__ = 16; break; } else { var $125 = 0;__label__ = 19; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      var $110=$B; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $111=$I; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $112=$111 << 1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=((((__gm_+40)|0)+($112<<2))|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=$113; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=$114; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=(($110)|0)==(($115)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($116) { var $123 = 1;__label__ = 18; break; } else { __label__ = 17; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $118=$B; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $119=$118; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $120=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=(($119)>>>0) >= (($120)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $123 = $121;__label__ = 18; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $123;
+      var $125 = $123;__label__ = 19; break;
+    case 19: 
+      var $125;
+      var $126=(($125)&1);
+      var $127=(($126)==(1));
+      var $128=(($127)|0)!=0;
+      if ($128) { __label__ = 20; break; } else { __label__ = 21; break; }
+    case 20: 
+      var $130=$B; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $131=$F; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $132=(($131+12)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($132)>>2)]=$130; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=$F; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=$B; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=(($134+8)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($135)>>2)]=$133; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 22; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      __label__ = 23; break;
+    case 23: 
+      __label__ = 70; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $140=$p; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $141=$140; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $TP=$141; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $143=(($142+24)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144=HEAP32[(($143)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $XP=$144; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $146=(($145+12)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=HEAP32[(($146)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $148=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $149=(($147)|0)!=(($148)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($149) { __label__ = 25; break; } else { __label__ = 29; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      var $151=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=(($151+8)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=HEAP32[(($152)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $F1=$153; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=(($154+12)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $156=HEAP32[(($155)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$156; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $157=$F1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $158=$157; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=(($158)>>>0) >= (($159)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=(($160)&1); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=(($161)==(1)); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $163=(($162)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($163) { __label__ = 26; break; } else { __label__ = 27; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $165=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $166=$F1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $167=(($166+12)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($167)>>2)]=$165; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $168=$F1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $170=(($169+8)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($170)>>2)]=$168; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 28; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 27: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      __label__ = 41; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 29: 
+      var $174=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $175=(($174+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $176=(($175+4)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$176; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $177=HEAP32[(($176)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$177; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $178=(($177)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($178) { __label__ = 31; break; } else { __label__ = 30; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      var $180=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $181=(($180+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $182=(($181)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$182; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=HEAP32[(($182)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$183; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $184=(($183)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($184) { __label__ = 31; break; } else { __label__ = 40; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      __label__ = 32; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $187=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $188=(($187+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $189=(($188+4)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$189; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $190=HEAP32[(($189)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $191=(($190)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($191) { var $199 = 1;__label__ = 34; break; } else { __label__ = 33; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      var $193=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=(($193+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $195=(($194)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$195; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=HEAP32[(($195)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $197=(($196)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199 = $197;__label__ = 34; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      var $199;
+      if ($199) { __label__ = 35; break; } else { __label__ = 36; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 35: 
+      var $201=$CP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$201; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $202=HEAP32[(($201)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$202; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 32; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      var $204=$RP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $205=$204; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $206=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=(($205)>>>0) >= (($206)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=(($207)&1); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $209=(($208)==(1)); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $210=(($209)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($210) { __label__ = 37; break; } else { __label__ = 38; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      var $212=$RP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($212)>>2)]=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 39; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      __label__ = 40; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      __label__ = 41; break;
+    case 41: 
+      var $217=$XP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $218=(($217)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($218) { __label__ = 42; break; } else { __label__ = 69; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      var $220=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $221=(($220+28)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $222=HEAP32[(($221)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $223=((((__gm_+304)|0)+($222<<2))|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $H=$223; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $224=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $225=$H; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $226=HEAP32[(($225)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=(($224)|0)==(($226)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($227) { __label__ = 43; break; } else { __label__ = 46; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 43: 
+      var $229=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230=$H; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($230)>>2)]=$229; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $231=(($229)|0)==0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($231) { __label__ = 44; break; } else { __label__ = 45; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 44: 
+      var $233=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $234=(($233+28)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $235=HEAP32[(($234)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $236=1 << $235; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=$236 ^ -1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $238=HEAP32[((((__gm_+4)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $239=$238 & $237; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+4)|0))>>2)]=$239; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 45; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      __label__ = 53; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      var $242=$XP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=$242; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $245=(($243)>>>0) >= (($244)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=(($245)&1); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=(($246)==(1)); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=(($247)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($248) { __label__ = 47; break; } else { __label__ = 51; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      var $250=$XP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $251=(($250+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $252=(($251)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $253=HEAP32[(($252)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $254=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $255=(($253)|0)==(($254)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($255) { __label__ = 48; break; } else { __label__ = 49; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      var $257=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $258=$XP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=(($258+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=(($259)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($260)>>2)]=$257; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 50; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 49: 
+      var $262=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $263=$XP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $264=(($263+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $265=(($264+4)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($265)>>2)]=$262; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 50; break;
+    case 50: 
+      __label__ = 52; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 52: 
+      __label__ = 53; break;
+    case 53: 
+      var $270=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $271=(($270)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($271) { __label__ = 54; break; } else { __label__ = 68; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      var $273=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $274=$273; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $275=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=(($274)>>>0) >= (($275)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $277=(($276)&1); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $278=(($277)==(1)); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=(($278)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($279) { __label__ = 55; break; } else { __label__ = 66; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 55: 
+      var $281=$XP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $283=(($282+24)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($283)>>2)]=$281; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $284=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $285=(($284+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $286=(($285)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=HEAP32[(($286)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $C0=$287; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=(($287)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($288) { __label__ = 56; break; } else { __label__ = 60; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 56: 
+      var $290=$C0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $291=$290; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $292=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $293=(($291)>>>0) >= (($292)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $294=(($293)&1); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $295=(($294)==(1)); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $296=(($295)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($296) { __label__ = 57; break; } else { __label__ = 58; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 57: 
+      var $298=$C0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $299=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $300=(($299+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $301=(($300)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($301)>>2)]=$298; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $302=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $303=$C0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $304=(($303+24)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($304)>>2)]=$302; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 59; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 58: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 59: 
+      __label__ = 60; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 60: 
+      var $308=$TP; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $309=(($308+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $310=(($309+4)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $311=HEAP32[(($310)>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      $C1=$311; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $312=(($311)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($312) { __label__ = 61; break; } else { __label__ = 65; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 61: 
+      var $314=$C1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=$314; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=(($315)>>>0) >= (($316)>>>0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $318=(($317)&1); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $319=(($318)==(1)); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $320=(($319)|0)!=0; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($320) { __label__ = 62; break; } else { __label__ = 63; break; } //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 62: 
+      var $322=$C1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=(($323+16)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=(($324+4)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($325)>>2)]=$322; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=$R; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $327=$C1; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      var $328=(($327+24)|0); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($328)>>2)]=$326; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 64; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 63: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 64: 
+      __label__ = 65; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 65: 
+      __label__ = 67; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 66: 
+      _abort(); //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 67: 
+      __label__ = 68; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 68: 
+      __label__ = 69; break; //@line 4771 "/root/emscripten/system/lib/dlmalloc.c"
+    case 69: 
+      __label__ = 70; break;
+    case 70: 
+      __label__ = 74; break; //@line 4772 "/root/emscripten/system/lib/dlmalloc.c"
+    case 71: 
+      var $338=$next; //@line 4773 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=(($338+4)|0); //@line 4773 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=HEAP32[(($339)>>2)]; //@line 4773 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=$340 & 3; //@line 4773 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=(($341)|0)==3; //@line 4773 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($342) { __label__ = 72; break; } else { __label__ = 73; break; } //@line 4773 "/root/emscripten/system/lib/dlmalloc.c"
+    case 72: 
+      var $344=$psize; //@line 4774 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=$344; //@line 4774 "/root/emscripten/system/lib/dlmalloc.c"
+      var $345=$next; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=(($345+4)|0); //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=HEAP32[(($346)>>2)]; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348=$347 & -2; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($346)>>2)]=$348; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $349=$psize; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=$349 | 1; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=$p; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=(($351+4)|0); //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($352)>>2)]=$350; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $353=$psize; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $354=$p; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $355=$354; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $356=$psize; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $357=(($355+$356)|0); //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=$357; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=(($358)|0); //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($359)>>2)]=$353; //@line 4775 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 196; break; //@line 4776 "/root/emscripten/system/lib/dlmalloc.c"
+    case 73: 
+      __label__ = 74; break;
+    case 74: 
+      __label__ = 76; break; //@line 4778 "/root/emscripten/system/lib/dlmalloc.c"
+    case 75: 
+      __label__ = 195; break; //@line 4780 "/root/emscripten/system/lib/dlmalloc.c"
+    case 76: 
+      __label__ = 77; break;
+    case 77: 
+      __label__ = 78; break; //@line 4782 "/root/emscripten/system/lib/dlmalloc.c"
+    case 78: 
+      var $366=$p; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=$366; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=$next; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=$368; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $370=(($367)>>>0) < (($369)>>>0); //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($370) { __label__ = 79; break; } else { var $378 = 0;__label__ = 80; break; } //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+    case 79: 
+      var $372=$next; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $373=(($372+4)|0); //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374=HEAP32[(($373)>>2)]; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $375=$374 & 1; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $376=(($375)|0)!=0; //@line 4784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $378 = $376;__label__ = 80; break;
+    case 80: 
+      var $378;
+      var $379=(($378)&1);
+      var $380=(($379)==(1));
+      var $381=(($380)|0)!=0;
+      if ($381) { __label__ = 81; break; } else { __label__ = 193; break; }
+    case 81: 
+      var $383=$next; //@line 4785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $384=(($383+4)|0); //@line 4785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $385=HEAP32[(($384)>>2)]; //@line 4785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=$385 & 2; //@line 4785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=(($386)|0)!=0; //@line 4785 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($387) { __label__ = 154; break; } else { __label__ = 82; break; } //@line 4785 "/root/emscripten/system/lib/dlmalloc.c"
+    case 82: 
+      var $389=$next; //@line 4786 "/root/emscripten/system/lib/dlmalloc.c"
+      var $390=HEAP32[((((__gm_+24)|0))>>2)]; //@line 4786 "/root/emscripten/system/lib/dlmalloc.c"
+      var $391=(($389)|0)==(($390)|0); //@line 4786 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($391) { __label__ = 83; break; } else { __label__ = 88; break; } //@line 4786 "/root/emscripten/system/lib/dlmalloc.c"
+    case 83: 
+      var $393=$psize; //@line 4787 "/root/emscripten/system/lib/dlmalloc.c"
+      var $394=HEAP32[((((__gm_+12)|0))>>2)]; //@line 4787 "/root/emscripten/system/lib/dlmalloc.c"
+      var $395=((($394)+($393))|0); //@line 4787 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+12)|0))>>2)]=$395; //@line 4787 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=$395; //@line 4787 "/root/emscripten/system/lib/dlmalloc.c"
+      var $396=$p; //@line 4788 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+24)|0))>>2)]=$396; //@line 4788 "/root/emscripten/system/lib/dlmalloc.c"
+      var $397=$tsize; //@line 4789 "/root/emscripten/system/lib/dlmalloc.c"
+      var $398=$397 | 1; //@line 4789 "/root/emscripten/system/lib/dlmalloc.c"
+      var $399=$p; //@line 4789 "/root/emscripten/system/lib/dlmalloc.c"
+      var $400=(($399+4)|0); //@line 4789 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($400)>>2)]=$398; //@line 4789 "/root/emscripten/system/lib/dlmalloc.c"
+      var $401=$p; //@line 4790 "/root/emscripten/system/lib/dlmalloc.c"
+      var $402=HEAP32[((((__gm_+20)|0))>>2)]; //@line 4790 "/root/emscripten/system/lib/dlmalloc.c"
+      var $403=(($401)|0)==(($402)|0); //@line 4790 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($403) { __label__ = 84; break; } else { __label__ = 85; break; } //@line 4790 "/root/emscripten/system/lib/dlmalloc.c"
+    case 84: 
+      HEAP32[((((__gm_+20)|0))>>2)]=0; //@line 4791 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=0; //@line 4792 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 85; break; //@line 4793 "/root/emscripten/system/lib/dlmalloc.c"
+    case 85: 
+      var $406=$tsize; //@line 4794 "/root/emscripten/system/lib/dlmalloc.c"
+      var $407=HEAP32[((((__gm_+28)|0))>>2)]; //@line 4794 "/root/emscripten/system/lib/dlmalloc.c"
+      var $408=(($406)>>>0) > (($407)>>>0); //@line 4794 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($408) { __label__ = 86; break; } else { __label__ = 87; break; } //@line 4794 "/root/emscripten/system/lib/dlmalloc.c"
+    case 86: 
+      var $410=_sys_trim(__gm_, 0); //@line 4795 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 87; break; //@line 4795 "/root/emscripten/system/lib/dlmalloc.c"
+    case 87: 
+      __label__ = 196; break; //@line 4796 "/root/emscripten/system/lib/dlmalloc.c"
+    case 88: 
+      var $413=$next; //@line 4798 "/root/emscripten/system/lib/dlmalloc.c"
+      var $414=HEAP32[((((__gm_+20)|0))>>2)]; //@line 4798 "/root/emscripten/system/lib/dlmalloc.c"
+      var $415=(($413)|0)==(($414)|0); //@line 4798 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($415) { __label__ = 89; break; } else { __label__ = 90; break; } //@line 4798 "/root/emscripten/system/lib/dlmalloc.c"
+    case 89: 
+      var $417=$psize; //@line 4799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $418=HEAP32[((((__gm_+8)|0))>>2)]; //@line 4799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $419=((($418)+($417))|0); //@line 4799 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=$419; //@line 4799 "/root/emscripten/system/lib/dlmalloc.c"
+      $dsize=$419; //@line 4799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $420=$p; //@line 4800 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+20)|0))>>2)]=$420; //@line 4800 "/root/emscripten/system/lib/dlmalloc.c"
+      var $421=$dsize; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $422=$421 | 1; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $423=$p; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $424=(($423+4)|0); //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($424)>>2)]=$422; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $425=$dsize; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $426=$p; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $427=$426; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $428=$dsize; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $429=(($427+$428)|0); //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $430=$429; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $431=(($430)|0); //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($431)>>2)]=$425; //@line 4801 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 196; break; //@line 4802 "/root/emscripten/system/lib/dlmalloc.c"
+    case 90: 
+      var $433=$next; //@line 4805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $434=(($433+4)|0); //@line 4805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $435=HEAP32[(($434)>>2)]; //@line 4805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $436=$435 & -8; //@line 4805 "/root/emscripten/system/lib/dlmalloc.c"
+      $nsize=$436; //@line 4805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $437=$nsize; //@line 4806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $438=$psize; //@line 4806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $439=((($438)+($437))|0); //@line 4806 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$439; //@line 4806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $440=$nsize; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $441=$440 >>> 3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $442=(($441)>>>0) < 32; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($442) { __label__ = 91; break; } else { __label__ = 103; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 91: 
+      var $444=$next; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $445=(($444+8)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $446=HEAP32[(($445)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $F2=$446; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $447=$next; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $448=(($447+12)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $449=HEAP32[(($448)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $B3=$449; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $450=$nsize; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $451=$450 >>> 3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $I4=$451; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $452=$F2; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $453=$B3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $454=(($452)|0)==(($453)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($454) { __label__ = 92; break; } else { __label__ = 93; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 92: 
+      var $456=$I4; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $457=1 << $456; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $458=$457 ^ -1; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $459=HEAP32[((((__gm_)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $460=$459 & $458; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_)|0))>>2)]=$460; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 102; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 93: 
+      var $462=$F2; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $463=$I4; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $464=$463 << 1; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $465=((((__gm_+40)|0)+($464<<2))|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $466=$465; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $467=$466; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $468=(($462)|0)==(($467)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($468) { __label__ = 95; break; } else { __label__ = 94; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 94: 
+      var $470=$F2; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $471=$470; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $472=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $473=(($471)>>>0) >= (($472)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($473) { __label__ = 95; break; } else { var $490 = 0;__label__ = 98; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 95: 
+      var $475=$B3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $476=$I4; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $477=$476 << 1; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $478=((((__gm_+40)|0)+($477<<2))|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $479=$478; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $480=$479; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $481=(($475)|0)==(($480)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($481) { var $488 = 1;__label__ = 97; break; } else { __label__ = 96; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 96: 
+      var $483=$B3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $484=$483; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $485=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $486=(($484)>>>0) >= (($485)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $488 = $486;__label__ = 97; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 97: 
+      var $488;
+      var $490 = $488;__label__ = 98; break;
+    case 98: 
+      var $490;
+      var $491=(($490)&1);
+      var $492=(($491)==(1));
+      var $493=(($492)|0)!=0;
+      if ($493) { __label__ = 99; break; } else { __label__ = 100; break; }
+    case 99: 
+      var $495=$B3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $496=$F2; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $497=(($496+12)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($497)>>2)]=$495; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $498=$F2; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $499=$B3; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $500=(($499+8)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($500)>>2)]=$498; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 101; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 100: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 101: 
+      __label__ = 102; break;
+    case 102: 
+      __label__ = 149; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 103: 
+      var $505=$next; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $506=$505; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $TP5=$506; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $507=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $508=(($507+24)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $509=HEAP32[(($508)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $XP6=$509; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $510=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $511=(($510+12)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $512=HEAP32[(($511)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $513=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $514=(($512)|0)!=(($513)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($514) { __label__ = 104; break; } else { __label__ = 108; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 104: 
+      var $516=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $517=(($516+8)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $518=HEAP32[(($517)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $F8=$518; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $519=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $520=(($519+12)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $521=HEAP32[(($520)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $R7=$521; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $522=$F8; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $523=$522; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $524=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $525=(($523)>>>0) >= (($524)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $526=(($525)&1); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $527=(($526)==(1)); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $528=(($527)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($528) { __label__ = 105; break; } else { __label__ = 106; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 105: 
+      var $530=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $531=$F8; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $532=(($531+12)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($532)>>2)]=$530; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $533=$F8; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $534=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $535=(($534+8)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($535)>>2)]=$533; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 107; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 106: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 107: 
+      __label__ = 120; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 108: 
+      var $539=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $540=(($539+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $541=(($540+4)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP9=$541; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $542=HEAP32[(($541)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $R7=$542; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $543=(($542)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($543) { __label__ = 110; break; } else { __label__ = 109; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 109: 
+      var $545=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $546=(($545+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $547=(($546)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP9=$547; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $548=HEAP32[(($547)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $R7=$548; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $549=(($548)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($549) { __label__ = 110; break; } else { __label__ = 119; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 110: 
+      __label__ = 111; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 111: 
+      var $552=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $553=(($552+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $554=(($553+4)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP10=$554; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $555=HEAP32[(($554)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $556=(($555)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($556) { var $564 = 1;__label__ = 113; break; } else { __label__ = 112; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 112: 
+      var $558=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $559=(($558+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $560=(($559)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP10=$560; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $561=HEAP32[(($560)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $562=(($561)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $564 = $562;__label__ = 113; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 113: 
+      var $564;
+      if ($564) { __label__ = 114; break; } else { __label__ = 115; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 114: 
+      var $566=$CP10; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP9=$566; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $567=HEAP32[(($566)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $R7=$567; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 111; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 115: 
+      var $569=$RP9; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $570=$569; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $571=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $572=(($570)>>>0) >= (($571)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $573=(($572)&1); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $574=(($573)==(1)); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $575=(($574)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($575) { __label__ = 116; break; } else { __label__ = 117; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 116: 
+      var $577=$RP9; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($577)>>2)]=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 118; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 117: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 118: 
+      __label__ = 119; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 119: 
+      __label__ = 120; break;
+    case 120: 
+      var $582=$XP6; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $583=(($582)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($583) { __label__ = 121; break; } else { __label__ = 148; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 121: 
+      var $585=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $586=(($585+28)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $587=HEAP32[(($586)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $588=((((__gm_+304)|0)+($587<<2))|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $H11=$588; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $589=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $590=$H11; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $591=HEAP32[(($590)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $592=(($589)|0)==(($591)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($592) { __label__ = 122; break; } else { __label__ = 125; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 122: 
+      var $594=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $595=$H11; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($595)>>2)]=$594; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $596=(($594)|0)==0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($596) { __label__ = 123; break; } else { __label__ = 124; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 123: 
+      var $598=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $599=(($598+28)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $600=HEAP32[(($599)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $601=1 << $600; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $602=$601 ^ -1; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $603=HEAP32[((((__gm_+4)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $604=$603 & $602; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+4)|0))>>2)]=$604; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 124; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 124: 
+      __label__ = 132; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 125: 
+      var $607=$XP6; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $608=$607; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $609=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $610=(($608)>>>0) >= (($609)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $611=(($610)&1); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $612=(($611)==(1)); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $613=(($612)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($613) { __label__ = 126; break; } else { __label__ = 130; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 126: 
+      var $615=$XP6; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $616=(($615+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $617=(($616)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $618=HEAP32[(($617)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $619=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $620=(($618)|0)==(($619)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($620) { __label__ = 127; break; } else { __label__ = 128; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 127: 
+      var $622=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $623=$XP6; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $624=(($623+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $625=(($624)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($625)>>2)]=$622; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 129; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 128: 
+      var $627=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $628=$XP6; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $629=(($628+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $630=(($629+4)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($630)>>2)]=$627; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 129; break;
+    case 129: 
+      __label__ = 131; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 130: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 131: 
+      __label__ = 132; break;
+    case 132: 
+      var $635=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $636=(($635)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($636) { __label__ = 133; break; } else { __label__ = 147; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 133: 
+      var $638=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $639=$638; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $640=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $641=(($639)>>>0) >= (($640)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $642=(($641)&1); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $643=(($642)==(1)); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $644=(($643)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($644) { __label__ = 134; break; } else { __label__ = 145; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 134: 
+      var $646=$XP6; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $647=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $648=(($647+24)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($648)>>2)]=$646; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $649=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $650=(($649+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $651=(($650)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $652=HEAP32[(($651)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $C012=$652; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $653=(($652)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($653) { __label__ = 135; break; } else { __label__ = 139; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 135: 
+      var $655=$C012; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $656=$655; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $657=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $658=(($656)>>>0) >= (($657)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $659=(($658)&1); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $660=(($659)==(1)); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $661=(($660)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($661) { __label__ = 136; break; } else { __label__ = 137; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 136: 
+      var $663=$C012; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $664=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $665=(($664+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $666=(($665)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($666)>>2)]=$663; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $667=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $668=$C012; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $669=(($668+24)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($669)>>2)]=$667; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 138; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 137: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 138: 
+      __label__ = 139; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 139: 
+      var $673=$TP5; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $674=(($673+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $675=(($674+4)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $676=HEAP32[(($675)>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      $C113=$676; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $677=(($676)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($677) { __label__ = 140; break; } else { __label__ = 144; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 140: 
+      var $679=$C113; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $680=$679; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $681=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $682=(($680)>>>0) >= (($681)>>>0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $683=(($682)&1); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $684=(($683)==(1)); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $685=(($684)|0)!=0; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($685) { __label__ = 141; break; } else { __label__ = 142; break; } //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 141: 
+      var $687=$C113; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $688=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $689=(($688+16)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $690=(($689+4)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($690)>>2)]=$687; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $691=$R7; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $692=$C113; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $693=(($692+24)|0); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($693)>>2)]=$691; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 143; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 142: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 143: 
+      __label__ = 144; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 144: 
+      __label__ = 146; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 145: 
+      _abort(); //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 146: 
+      __label__ = 147; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 147: 
+      __label__ = 148; break; //@line 4807 "/root/emscripten/system/lib/dlmalloc.c"
+    case 148: 
+      __label__ = 149; break;
+    case 149: 
+      var $702=$psize; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $703=$702 | 1; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $704=$p; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $705=(($704+4)|0); //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($705)>>2)]=$703; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $706=$psize; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $707=$p; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $708=$707; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $709=$psize; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $710=(($708+$709)|0); //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $711=$710; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $712=(($711)|0); //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($712)>>2)]=$706; //@line 4808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $713=$p; //@line 4809 "/root/emscripten/system/lib/dlmalloc.c"
+      var $714=HEAP32[((((__gm_+20)|0))>>2)]; //@line 4809 "/root/emscripten/system/lib/dlmalloc.c"
+      var $715=(($713)|0)==(($714)|0); //@line 4809 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($715) { __label__ = 150; break; } else { __label__ = 151; break; } //@line 4809 "/root/emscripten/system/lib/dlmalloc.c"
+    case 150: 
+      var $717=$psize; //@line 4810 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+8)|0))>>2)]=$717; //@line 4810 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 196; break; //@line 4811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 151: 
+      __label__ = 152; break;
+    case 152: 
+      __label__ = 153; break;
+    case 153: 
+      __label__ = 155; break; //@line 4814 "/root/emscripten/system/lib/dlmalloc.c"
+    case 154: 
+      var $722=$next; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $723=(($722+4)|0); //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $724=HEAP32[(($723)>>2)]; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $725=$724 & -2; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($723)>>2)]=$725; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $726=$psize; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $727=$726 | 1; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $728=$p; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $729=(($728+4)|0); //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($729)>>2)]=$727; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $730=$psize; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $731=$p; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $732=$731; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $733=$psize; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $734=(($732+$733)|0); //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $735=$734; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $736=(($735)|0); //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($736)>>2)]=$730; //@line 4816 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 155; break;
+    case 155: 
+      var $738=$psize; //@line 4818 "/root/emscripten/system/lib/dlmalloc.c"
+      var $739=$738 >>> 3; //@line 4818 "/root/emscripten/system/lib/dlmalloc.c"
+      var $740=(($739)>>>0) < 32; //@line 4818 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($740) { __label__ = 156; break; } else { __label__ = 163; break; } //@line 4818 "/root/emscripten/system/lib/dlmalloc.c"
+    case 156: 
+      var $742=$psize; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $743=$742 >>> 3; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      $I14=$743; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $744=$I14; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $745=$744 << 1; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $746=((((__gm_+40)|0)+($745<<2))|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $747=$746; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $748=$747; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      $B15=$748; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $749=$B15; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      $F16=$749; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $750=HEAP32[((((__gm_)|0))>>2)]; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $751=$I14; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $752=1 << $751; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $753=$750 & $752; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $754=(($753)|0)!=0; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($754) { __label__ = 158; break; } else { __label__ = 157; break; } //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+    case 157: 
+      var $756=$I14; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $757=1 << $756; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $758=HEAP32[((((__gm_)|0))>>2)]; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $759=$758 | $757; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_)|0))>>2)]=$759; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 162; break; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+    case 158: 
+      var $761=$B15; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $762=(($761+8)|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $763=HEAP32[(($762)>>2)]; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $764=$763; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $765=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $766=(($764)>>>0) >= (($765)>>>0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $767=(($766)&1); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $768=(($767)==(1)); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $769=(($768)|0)!=0; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($769) { __label__ = 159; break; } else { __label__ = 160; break; } //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+    case 159: 
+      var $771=$B15; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $772=(($771+8)|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $773=HEAP32[(($772)>>2)]; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      $F16=$773; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 161; break; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+    case 160: 
+      _abort(); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+    case 161: 
+      __label__ = 162; break;
+    case 162: 
+      var $777=$p; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $778=$B15; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $779=(($778+8)|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($779)>>2)]=$777; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $780=$p; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $781=$F16; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $782=(($781+12)|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($782)>>2)]=$780; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $783=$F16; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $784=$p; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $785=(($784+8)|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($785)>>2)]=$783; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $786=$B15; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $787=$p; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      var $788=(($787+12)|0); //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($788)>>2)]=$786; //@line 4819 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 192; break; //@line 4821 "/root/emscripten/system/lib/dlmalloc.c"
+    case 163: 
+      var $790=$p; //@line 4823 "/root/emscripten/system/lib/dlmalloc.c"
+      var $791=$790; //@line 4823 "/root/emscripten/system/lib/dlmalloc.c"
+      $tp=$791; //@line 4823 "/root/emscripten/system/lib/dlmalloc.c"
+      var $792=$psize; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $793=$792 >>> 8; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $X=$793; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $794=$X; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $795=(($794)|0)==0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($795) { __label__ = 164; break; } else { __label__ = 165; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 164: 
+      $I18=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 169; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 165: 
+      var $798=$X; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $799=(($798)>>>0) > 65535; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($799) { __label__ = 166; break; } else { __label__ = 167; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 166: 
+      $I18=31; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 168; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 167: 
+      var $802=$X; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$802; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $803=$Y; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $804=((($803)-(256))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $805=$804 >>> 16; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $806=$805 & 8; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$806; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $807=$N; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $808=$Y; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $809=$808 << $807; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$809; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $810=((($809)-(4096))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $811=$810 >>> 16; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $812=$811 & 4; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$812; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $813=$K; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $814=$N; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $815=((($814)+($813))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$815; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $816=$K; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $817=$Y; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $818=$817 << $816; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$818; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $819=((($818)-(16384))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $820=$819 >>> 16; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $821=$820 & 2; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$821; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $822=$N; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $823=((($822)+($821))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$823; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $824=$N; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $825=(((14)-($824))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $826=$K; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $827=$Y; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $828=$827 << $826; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$828; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $829=$828 >>> 15; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $830=((($825)+($829))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$830; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $831=$K; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $832=$831 << 1; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $833=$psize; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $834=$K; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $835=((($834)+(7))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $836=$833 >>> (($835)>>>0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $837=$836 & 1; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $838=((($832)+($837))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $I18=$838; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 168; break;
+    case 168: 
+      __label__ = 169; break;
+    case 169: 
+      var $841=$I18; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $842=((((__gm_+304)|0)+($841<<2))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $H17=$842; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $843=$I18; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $844=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $845=(($844+28)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($845)>>2)]=$843; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $846=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $847=(($846+16)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $848=(($847+4)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($848)>>2)]=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $849=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $850=(($849+16)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $851=(($850)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($851)>>2)]=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $852=HEAP32[((((__gm_+4)|0))>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $853=$I18; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $854=1 << $853; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $855=$852 & $854; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $856=(($855)|0)!=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($856) { __label__ = 171; break; } else { __label__ = 170; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 170: 
+      var $858=$I18; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $859=1 << $858; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $860=HEAP32[((((__gm_+4)|0))>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $861=$860 | $859; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+4)|0))>>2)]=$861; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $862=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $863=$H17; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($863)>>2)]=$862; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $864=$H17; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $865=$864; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $866=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $867=(($866+24)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($867)>>2)]=$865; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $868=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $869=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $870=(($869+12)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($870)>>2)]=$868; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $871=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $872=(($871+8)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($872)>>2)]=$868; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 189; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 171: 
+      var $874=$H17; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $875=HEAP32[(($874)>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$875; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $876=$psize; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $877=$I18; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $878=(($877)|0)==31; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($878) { __label__ = 172; break; } else { __label__ = 173; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 172: 
+      var $887 = 0;__label__ = 174; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 173: 
+      var $881=$I18; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $882=$881 >>> 1; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $883=((($882)+(8))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $884=((($883)-(2))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $885=(((31)-($884))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $887 = $885;__label__ = 174; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 174: 
+      var $887; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $888=$876 << $887; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $K19=$888; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 175; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 175: 
+      var $890=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $891=(($890+4)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $892=HEAP32[(($891)>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $893=$892 & -8; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $894=$psize; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $895=(($893)|0)!=(($894)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($895) { __label__ = 176; break; } else { __label__ = 182; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 176: 
+      var $897=$K19; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $898=$897 >>> 31; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $899=$898 & 1; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $900=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $901=(($900+16)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $902=(($901+($899<<2))|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $C=$902; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $903=$K19; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $904=$903 << 1; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $K19=$904; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $905=$C; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $906=HEAP32[(($905)>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $907=(($906)|0)!=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($907) { __label__ = 177; break; } else { __label__ = 178; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 177: 
+      var $909=$C; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $910=HEAP32[(($909)>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$910; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 181; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 178: 
+      var $912=$C; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $913=$912; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $914=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $915=(($913)>>>0) >= (($914)>>>0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $916=(($915)&1); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $917=(($916)==(1)); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $918=(($917)|0)!=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($918) { __label__ = 179; break; } else { __label__ = 180; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 179: 
+      var $920=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $921=$C; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($921)>>2)]=$920; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $922=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $923=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $924=(($923+24)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($924)>>2)]=$922; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $925=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $926=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $927=(($926+12)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($927)>>2)]=$925; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $928=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $929=(($928+8)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($929)>>2)]=$925; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 188; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 180: 
+      _abort(); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 181: 
+      __label__ = 187; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 182: 
+      var $933=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $934=(($933+8)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $935=HEAP32[(($934)>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      $F20=$935; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $936=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $937=$936; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $938=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $939=(($937)>>>0) >= (($938)>>>0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($939) { __label__ = 183; break; } else { var $946 = 0;__label__ = 184; break; } //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 183: 
+      var $941=$F20; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $942=$941; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $943=HEAP32[((((__gm_+16)|0))>>2)]; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $944=(($942)>>>0) >= (($943)>>>0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $946 = $944;__label__ = 184; break;
+    case 184: 
+      var $946;
+      var $947=(($946)&1);
+      var $948=(($947)==(1));
+      var $949=(($948)|0)!=0;
+      if ($949) { __label__ = 185; break; } else { __label__ = 186; break; }
+    case 185: 
+      var $951=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $952=$F20; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $953=(($952+12)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($953)>>2)]=$951; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $954=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $955=(($954+8)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($955)>>2)]=$951; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $956=$F20; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $957=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $958=(($957+8)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($958)>>2)]=$956; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $959=$T; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $960=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $961=(($960+12)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($961)>>2)]=$959; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $962=$tp; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $963=(($962+24)|0); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($963)>>2)]=0; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 188; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 186: 
+      _abort(); //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 187: 
+      __label__ = 175; break; //@line 4824 "/root/emscripten/system/lib/dlmalloc.c"
+    case 188: 
+      __label__ = 189; break;
+    case 189: 
+      var $968=HEAP32[((((__gm_+32)|0))>>2)]; //@line 4826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $969=((($968)-(1))|0); //@line 4826 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+32)|0))>>2)]=$969; //@line 4826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $970=(($969)|0)==0; //@line 4826 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($970) { __label__ = 190; break; } else { __label__ = 191; break; } //@line 4826 "/root/emscripten/system/lib/dlmalloc.c"
+    case 190: 
+      var $972=_release_unused_segments(__gm_); //@line 4827 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 191; break; //@line 4827 "/root/emscripten/system/lib/dlmalloc.c"
+    case 191: 
+      __label__ = 192; break;
+    case 192: 
+      __label__ = 196; break; //@line 4829 "/root/emscripten/system/lib/dlmalloc.c"
+    case 193: 
+      __label__ = 194; break; //@line 4831 "/root/emscripten/system/lib/dlmalloc.c"
+    case 194: 
+      __label__ = 195; break; //@line 4831 "/root/emscripten/system/lib/dlmalloc.c"
+    case 195: 
+      _abort(); //@line 4833 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4833 "/root/emscripten/system/lib/dlmalloc.c"
+    case 196: 
+      __label__ = 197; break; //@line 4837 "/root/emscripten/system/lib/dlmalloc.c"
+    case 197: 
+      ;
+      return; //@line 4841 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+Module["_free"] = _free;_free["X"]=1;
+
+function _sys_trim($m, $pad) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $released;
+      var $unit;
+      var $extra;
+      var $sp;
+      var $old_br;
+      var $rel_br;
+      var $new_br;
+      $1=$m;
+      $2=$pad;
+      $released=0; //@line 4126 "/root/emscripten/system/lib/dlmalloc.c"
+      var $3=HEAP32[((((_mparams)|0))>>2)]; //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+      var $4=(($3)|0)!=0; //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($4) { var $9 = 1;__label__ = 4; break; } else { __label__ = 3; break; } //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $6=_init_mparams(); //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=(($6)|0)!=0; //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9 = $7;__label__ = 4; break; //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $9;
+      var $10=(($9)&1); //@line 4127 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=$2; //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=(($11)>>>0) < 4294967232; //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($12) { __label__ = 5; break; } else { __label__ = 26; break; } //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $14=$1; //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=(($14+24)|0); //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=HEAP32[(($15)>>2)]; //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=(($16)|0)!=0; //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($17) { __label__ = 6; break; } else { __label__ = 26; break; } //@line 4128 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $19=$2; //@line 4129 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=((($19)+(40))|0); //@line 4129 "/root/emscripten/system/lib/dlmalloc.c"
+      $2=$20; //@line 4129 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=$1; //@line 4131 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=(($21+12)|0); //@line 4131 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=HEAP32[(($22)>>2)]; //@line 4131 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=$2; //@line 4131 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=(($23)>>>0) > (($24)>>>0); //@line 4131 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($25) { __label__ = 7; break; } else { __label__ = 22; break; } //@line 4131 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $27=HEAP32[((((_mparams+8)|0))>>2)]; //@line 4133 "/root/emscripten/system/lib/dlmalloc.c"
+      $unit=$27; //@line 4133 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$1; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=(($28+12)|0); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=HEAP32[(($29)>>2)]; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=$2; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=((($30)-($31))|0); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$unit; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=((($33)-(1))|0); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=((($32)+($34))|0); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$unit; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=Math.floor(((($35)>>>0))/((($36)>>>0))); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=((($37)-(1))|0); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=$unit; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=((($38)*($39))|0); //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      $extra=$40; //@line 4135 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$1; //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=$1; //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=(($42+24)|0); //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=HEAP32[(($43)>>2)]; //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$44; //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=_segment_holding($41, $45); //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$46; //@line 4136 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=$sp; //@line 4138 "/root/emscripten/system/lib/dlmalloc.c"
+      var $48=(($47+12)|0); //@line 4138 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=HEAP32[(($48)>>2)]; //@line 4138 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=$49 & 8; //@line 4138 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=(($50)|0)!=0; //@line 4138 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($51) { __label__ = 19; break; } else { __label__ = 8; break; } //@line 4138 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $53=$sp; //@line 4139 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=(($53+12)|0); //@line 4139 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=HEAP32[(($54)>>2)]; //@line 4139 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$55 & 0; //@line 4139 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($56)|0)!=0; //@line 4139 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($57) { __label__ = 9; break; } else { __label__ = 10; break; } //@line 4139 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      __label__ = 18; break; //@line 4151 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $60=$extra; //@line 4153 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=(($60)>>>0) >= 2147483647; //@line 4153 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($61) { __label__ = 11; break; } else { __label__ = 12; break; } //@line 4153 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $63=$unit; //@line 4154 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=(((-2147483648)-($63))|0); //@line 4154 "/root/emscripten/system/lib/dlmalloc.c"
+      $extra=$64; //@line 4154 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 12; break; //@line 4154 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $66=_sbrk(0); //@line 4158 "/root/emscripten/system/lib/dlmalloc.c"
+      $old_br=$66; //@line 4158 "/root/emscripten/system/lib/dlmalloc.c"
+      var $67=$old_br; //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=$sp; //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=(($68)|0); //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=HEAP32[(($69)>>2)]; //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=$sp; //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=(($71+4)|0); //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=HEAP32[(($72)>>2)]; //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=(($70+$73)|0); //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=(($67)|0)==(($74)|0); //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($75) { __label__ = 13; break; } else { __label__ = 17; break; } //@line 4159 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $77=$extra; //@line 4160 "/root/emscripten/system/lib/dlmalloc.c"
+      var $78=(((-$77))|0); //@line 4160 "/root/emscripten/system/lib/dlmalloc.c"
+      var $79=_sbrk($78); //@line 4160 "/root/emscripten/system/lib/dlmalloc.c"
+      $rel_br=$79; //@line 4160 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=_sbrk(0); //@line 4161 "/root/emscripten/system/lib/dlmalloc.c"
+      $new_br=$80; //@line 4161 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=$rel_br; //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=(($81)|0)!=-1; //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($82) { __label__ = 14; break; } else { __label__ = 16; break; } //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $84=$new_br; //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+      var $85=$old_br; //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+      var $86=(($84)>>>0) < (($85)>>>0); //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($86) { __label__ = 15; break; } else { __label__ = 16; break; } //@line 4162 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $88=$old_br; //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=$new_br; //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=$88; //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=$89; //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=((($90)-($91))|0); //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+      $released=$92; //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 16; break; //@line 4163 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      __label__ = 17; break; //@line 4164 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      __label__ = 18; break;
+    case 18: 
+      __label__ = 19; break; //@line 4168 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      var $97=$released; //@line 4170 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=(($97)|0)!=0; //@line 4170 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($98) { __label__ = 20; break; } else { __label__ = 21; break; } //@line 4170 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      var $100=$released; //@line 4171 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$sp; //@line 4171 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=(($101+4)|0); //@line 4171 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=HEAP32[(($102)>>2)]; //@line 4171 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=((($103)-($100))|0); //@line 4171 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($102)>>2)]=$104; //@line 4171 "/root/emscripten/system/lib/dlmalloc.c"
+      var $105=$released; //@line 4172 "/root/emscripten/system/lib/dlmalloc.c"
+      var $106=$1; //@line 4172 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=(($106+432)|0); //@line 4172 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=HEAP32[(($107)>>2)]; //@line 4172 "/root/emscripten/system/lib/dlmalloc.c"
+      var $109=((($108)-($105))|0); //@line 4172 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($107)>>2)]=$109; //@line 4172 "/root/emscripten/system/lib/dlmalloc.c"
+      var $110=$1; //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $111=$1; //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $112=(($111+24)|0); //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=HEAP32[(($112)>>2)]; //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=$1; //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=(($114+12)|0); //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=HEAP32[(($115)>>2)]; //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $117=$released; //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      var $118=((($116)-($117))|0); //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      _init_top($110, $113, $118); //@line 4173 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 21; break; //@line 4175 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      __label__ = 22; break; //@line 4176 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      var $121=$released; //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=(($121)|0)==0; //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($122) { __label__ = 23; break; } else { __label__ = 25; break; } //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      var $124=$1; //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=(($124+12)|0); //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=HEAP32[(($125)>>2)]; //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=$1; //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=(($127+28)|0); //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=HEAP32[(($128)>>2)]; //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=(($126)>>>0) > (($129)>>>0); //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($130) { __label__ = 24; break; } else { __label__ = 25; break; } //@line 4183 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $132=$1; //@line 4184 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=(($132+28)|0); //@line 4184 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($133)>>2)]=-1; //@line 4184 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 25; break; //@line 4184 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      __label__ = 26; break; //@line 4185 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $136=$released; //@line 4187 "/root/emscripten/system/lib/dlmalloc.c"
+      var $137=(($136)|0)!=0; //@line 4187 "/root/emscripten/system/lib/dlmalloc.c"
+      var $138=$137 ? 1 : 0; //@line 4187 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $138; //@line 4187 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_sys_trim["X"]=1;
+
+function _segment_holding($m, $addr) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $sp;
+      $2=$m;
+      $3=$addr;
+      var $4=$2; //@line 2562 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=(($4+444)|0); //@line 2562 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$5; //@line 2562 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 3; break; //@line 2563 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $7=$3; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$sp; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=(($8)|0); //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=HEAP32[(($9)>>2)]; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=(($7)>>>0) >= (($10)>>>0); //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($11) { __label__ = 4; break; } else { __label__ = 6; break; } //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $13=$3; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=$sp; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=(($14)|0); //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=HEAP32[(($15)>>2)]; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=$sp; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=(($17+4)|0); //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=HEAP32[(($18)>>2)]; //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=(($16+$19)|0); //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=(($13)>>>0) < (($20)>>>0); //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($21) { __label__ = 5; break; } else { __label__ = 6; break; } //@line 2564 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $23=$sp; //@line 2565 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=$23; //@line 2565 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 9; break; //@line 2565 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $25=$sp; //@line 2566 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=(($25+8)|0); //@line 2566 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=HEAP32[(($26)>>2)]; //@line 2566 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$27; //@line 2566 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=(($27)|0)==0; //@line 2566 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($28) { __label__ = 7; break; } else { __label__ = 8; break; } //@line 2566 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      $1=0; //@line 2567 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 9; break; //@line 2567 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      __label__ = 3; break; //@line 2568 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $32=$1; //@line 2569 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $32; //@line 2569 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+
+
+function _release_unused_segments($m) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $released;
+      var $nsegs;
+      var $pred;
+      var $sp;
+      var $base;
+      var $size;
+      var $next;
+      var $p;
+      var $psize;
+      var $tp;
+      var $XP;
+      var $R;
+      var $F;
+      var $RP;
+      var $CP;
+      var $H;
+      var $C0;
+      var $C1;
+      var $H1;
+      var $I;
+      var $X;
+      var $Y;
+      var $N;
+      var $K;
+      var $T;
+      var $K2;
+      var $C;
+      var $F3;
+      $1=$m;
+      $released=0; //@line 4079 "/root/emscripten/system/lib/dlmalloc.c"
+      $nsegs=0; //@line 4080 "/root/emscripten/system/lib/dlmalloc.c"
+      var $2=$1; //@line 4081 "/root/emscripten/system/lib/dlmalloc.c"
+      var $3=(($2+444)|0); //@line 4081 "/root/emscripten/system/lib/dlmalloc.c"
+      $pred=$3; //@line 4081 "/root/emscripten/system/lib/dlmalloc.c"
+      var $4=$pred; //@line 4082 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=(($4+8)|0); //@line 4082 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=HEAP32[(($5)>>2)]; //@line 4082 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$6; //@line 4082 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 3; break; //@line 4083 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $8=$sp; //@line 4083 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=(($8)|0)!=0; //@line 4083 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($9) { __label__ = 4; break; } else { __label__ = 88; break; } //@line 4083 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $11=$sp; //@line 4084 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=(($11)|0); //@line 4084 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=HEAP32[(($12)>>2)]; //@line 4084 "/root/emscripten/system/lib/dlmalloc.c"
+      $base=$13; //@line 4084 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=$sp; //@line 4085 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=(($14+4)|0); //@line 4085 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=HEAP32[(($15)>>2)]; //@line 4085 "/root/emscripten/system/lib/dlmalloc.c"
+      $size=$16; //@line 4085 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=$sp; //@line 4086 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=(($17+8)|0); //@line 4086 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=HEAP32[(($18)>>2)]; //@line 4086 "/root/emscripten/system/lib/dlmalloc.c"
+      $next=$19; //@line 4086 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=$nsegs; //@line 4087 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=((($20)+(1))|0); //@line 4087 "/root/emscripten/system/lib/dlmalloc.c"
+      $nsegs=$21; //@line 4087 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=$sp; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=(($22+12)|0); //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=HEAP32[(($23)>>2)]; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$24 & 0; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=(($25)|0)!=0; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($26) { __label__ = 5; break; } else { __label__ = 87; break; } //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $28=$sp; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=(($28+12)|0); //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=HEAP32[(($29)>>2)]; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=$30 & 8; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=(($31)|0)!=0; //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($32) { __label__ = 87; break; } else { __label__ = 6; break; } //@line 4088 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $34=$base; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=$base; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=(($35+8)|0); //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=$36; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=$37 & 7; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=(($38)|0)==0; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($39) { __label__ = 7; break; } else { __label__ = 8; break; } //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $49 = 0;__label__ = 9; break; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $42=$base; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=(($42+8)|0); //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=$43; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$44 & 7; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=(((8)-($45))|0); //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=$46 & 7; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49 = $47;__label__ = 9; break; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $49; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=(($34+$49)|0); //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=$50; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$51; //@line 4089 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=$p; //@line 4090 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=(($52+4)|0); //@line 4090 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=HEAP32[(($53)>>2)]; //@line 4090 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=$54 & -8; //@line 4090 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$55; //@line 4090 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$p; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($56+4)|0); //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=HEAP32[(($57)>>2)]; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=$58 & 3; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=(($59)|0)!=1; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($60) { __label__ = 86; break; } else { __label__ = 10; break; } //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $62=$p; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=$62; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=$psize; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=(($63+$64)|0); //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $66=$base; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $67=$size; //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=(($66+$67)|0); //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=((($68)-(40))|0); //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=(($65)>>>0) >= (($69)>>>0); //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($70) { __label__ = 11; break; } else { __label__ = 86; break; } //@line 4092 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $72=$p; //@line 4093 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=$72; //@line 4093 "/root/emscripten/system/lib/dlmalloc.c"
+      $tp=$73; //@line 4093 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=$p; //@line 4095 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=$1; //@line 4095 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=(($75+20)|0); //@line 4095 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=HEAP32[(($76)>>2)]; //@line 4095 "/root/emscripten/system/lib/dlmalloc.c"
+      var $78=(($74)|0)==(($77)|0); //@line 4095 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($78) { __label__ = 12; break; } else { __label__ = 13; break; } //@line 4095 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $80=$1; //@line 4096 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=(($80+20)|0); //@line 4096 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($81)>>2)]=0; //@line 4096 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=$1; //@line 4097 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=(($82+8)|0); //@line 4097 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($83)>>2)]=0; //@line 4097 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 59; break; //@line 4098 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $85=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $86=(($85+24)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=HEAP32[(($86)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $XP=$87; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=(($88+12)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=HEAP32[(($89)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=(($90)|0)!=(($91)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($92) { __label__ = 14; break; } else { __label__ = 18; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $94=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=(($94+8)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $96=HEAP32[(($95)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$96; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $97=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=(($97+12)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=HEAP32[(($98)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$99; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=$F; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$100; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=(($102+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=HEAP32[(($103)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $105=(($101)>>>0) >= (($104)>>>0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $106=(($105)&1); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=(($106)==(1)); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=(($107)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($108) { __label__ = 15; break; } else { __label__ = 16; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $110=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $111=$F; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $112=(($111+12)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($112)>>2)]=$110; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=$F; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=(($114+8)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($115)>>2)]=$113; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 17; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      _abort(); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      __label__ = 30; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $119=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $120=(($119+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=(($120+4)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$121; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=HEAP32[(($121)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$122; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $123=(($122)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($123) { __label__ = 20; break; } else { __label__ = 19; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      var $125=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=(($125+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=(($126)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$127; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=HEAP32[(($127)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$128; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=(($128)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($129) { __label__ = 20; break; } else { __label__ = 29; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      __label__ = 21; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 21: 
+      var $132=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=(($132+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=(($133+4)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$134; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=HEAP32[(($134)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $136=(($135)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($136) { var $144 = 1;__label__ = 23; break; } else { __label__ = 22; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      var $138=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $139=(($138+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $140=(($139)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$140; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $141=HEAP32[(($140)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=(($141)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144 = $142;__label__ = 23; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      var $144;
+      if ($144) { __label__ = 24; break; } else { __label__ = 25; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $146=$CP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$146; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=HEAP32[(($146)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$147; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 21; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      var $149=$RP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $150=$149; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $151=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=(($151+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=HEAP32[(($152)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=(($150)>>>0) >= (($153)>>>0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=(($154)&1); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $156=(($155)==(1)); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $157=(($156)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($157) { __label__ = 26; break; } else { __label__ = 27; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $159=$RP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($159)>>2)]=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 28; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 27: 
+      _abort(); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      __label__ = 29; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 29: 
+      __label__ = 30; break;
+    case 30: 
+      var $164=$XP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $165=(($164)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($165) { __label__ = 31; break; } else { __label__ = 58; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $167=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $168=(($167+28)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=HEAP32[(($168)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $170=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $171=(($170+304)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=(($171+($169<<2))|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $H=$172; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $173=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $174=$H; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $175=HEAP32[(($174)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $176=(($173)|0)==(($175)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($176) { __label__ = 32; break; } else { __label__ = 35; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $178=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $179=$H; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($179)>>2)]=$178; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $180=(($178)|0)==0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($180) { __label__ = 33; break; } else { __label__ = 34; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      var $182=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=(($182+28)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $184=HEAP32[(($183)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $185=1 << $184; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $186=$185 ^ -1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $187=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $188=(($187+4)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $189=HEAP32[(($188)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $190=$189 & $186; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($188)>>2)]=$190; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 34; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      __label__ = 42; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 35: 
+      var $193=$XP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=$193; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $195=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=(($195+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $197=HEAP32[(($196)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $198=(($194)>>>0) >= (($197)>>>0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199=(($198)&1); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $200=(($199)==(1)); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $201=(($200)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($201) { __label__ = 36; break; } else { __label__ = 40; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      var $203=$XP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=(($203+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $205=(($204)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $206=HEAP32[(($205)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=(($206)|0)==(($207)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($208) { __label__ = 37; break; } else { __label__ = 38; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      var $210=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $211=$XP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $212=(($211+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $213=(($212)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($213)>>2)]=$210; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 39; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      var $215=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $216=$XP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $217=(($216+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $218=(($217+4)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($218)>>2)]=$215; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 39; break;
+    case 39: 
+      __label__ = 41; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      _abort(); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 41: 
+      __label__ = 42; break;
+    case 42: 
+      var $223=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $224=(($223)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($224) { __label__ = 43; break; } else { __label__ = 57; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 43: 
+      var $226=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=$226; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $229=(($228+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230=HEAP32[(($229)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $231=(($227)>>>0) >= (($230)>>>0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $232=(($231)&1); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $233=(($232)==(1)); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $234=(($233)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($234) { __label__ = 44; break; } else { __label__ = 55; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 44: 
+      var $236=$XP; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $238=(($237+24)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($238)>>2)]=$236; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $239=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $240=(($239+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $241=(($240)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $242=HEAP32[(($241)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $C0=$242; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=(($242)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($243) { __label__ = 45; break; } else { __label__ = 49; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      var $245=$C0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=$245; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=(($247+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $249=HEAP32[(($248)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $250=(($246)>>>0) >= (($249)>>>0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $251=(($250)&1); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $252=(($251)==(1)); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $253=(($252)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($253) { __label__ = 46; break; } else { __label__ = 47; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      var $255=$C0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $256=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $257=(($256+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $258=(($257)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($258)>>2)]=$255; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=$C0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $261=(($260+24)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($261)>>2)]=$259; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 48; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      _abort(); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      __label__ = 49; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 49: 
+      var $265=$tp; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $266=(($265+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $267=(($266+4)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $268=HEAP32[(($267)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      $C1=$268; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $269=(($268)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($269) { __label__ = 50; break; } else { __label__ = 54; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      var $271=$C1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $272=$271; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $273=$1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $274=(($273+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $275=HEAP32[(($274)>>2)]; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=(($272)>>>0) >= (($275)>>>0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $277=(($276)&1); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $278=(($277)==(1)); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=(($278)|0)!=0; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($279) { __label__ = 51; break; } else { __label__ = 52; break; } //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      var $281=$C1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $283=(($282+16)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $284=(($283+4)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($284)>>2)]=$281; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $285=$R; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $286=$C1; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=(($286+24)|0); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($287)>>2)]=$285; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 53; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 52: 
+      _abort(); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 53: 
+      __label__ = 54; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      __label__ = 56; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 55: 
+      _abort(); //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 56: 
+      __label__ = 57; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 57: 
+      __label__ = 58; break; //@line 4100 "/root/emscripten/system/lib/dlmalloc.c"
+    case 58: 
+      __label__ = 59; break;
+    case 59: 
+      var $296=$psize; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $297=$296 >>> 8; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $X=$297; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $298=$X; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $299=(($298)|0)==0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($299) { __label__ = 60; break; } else { __label__ = 61; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 60: 
+      $I=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 65; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 61: 
+      var $302=$X; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $303=(($302)>>>0) > 65535; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($303) { __label__ = 62; break; } else { __label__ = 63; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 62: 
+      $I=31; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 64; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 63: 
+      var $306=$X; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$306; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $307=$Y; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $308=((($307)-(256))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $309=$308 >>> 16; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $310=$309 & 8; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$310; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $311=$N; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $312=$Y; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $313=$312 << $311; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$313; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $314=((($313)-(4096))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=$314 >>> 16; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=$315 & 4; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$316; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=$K; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $318=$N; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $319=((($318)+($317))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$319; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $320=$K; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=$Y; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $322=$321 << $320; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$322; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=((($322)-(16384))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=$323 >>> 16; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=$324 & 2; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$325; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=$N; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $327=((($326)+($325))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$327; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $328=$N; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $329=(((14)-($328))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $330=$K; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $331=$Y; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $332=$331 << $330; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$332; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $333=$332 >>> 15; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $334=((($329)+($333))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$334; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $335=$K; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $336=$335 << 1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $337=$psize; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $338=$K; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=((($338)+(7))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=$337 >>> (($339)>>>0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=$340 & 1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=((($336)+($341))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$342; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 64; break;
+    case 64: 
+      __label__ = 65; break;
+    case 65: 
+      var $345=$I; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=$1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=(($346+304)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348=(($347+($345<<2))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $H1=$348; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $349=$I; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=(($350+28)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($351)>>2)]=$349; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $353=(($352+16)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $354=(($353+4)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($354)>>2)]=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $355=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $356=(($355+16)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $357=(($356)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($357)>>2)]=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=$1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=(($358+4)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $360=HEAP32[(($359)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $361=$I; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $362=1 << $361; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $363=$360 & $362; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $364=(($363)|0)!=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($364) { __label__ = 67; break; } else { __label__ = 66; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 66: 
+      var $366=$I; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=1 << $366; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=$1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=(($368+4)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $370=HEAP32[(($369)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $371=$370 | $367; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($369)>>2)]=$371; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $372=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $373=$H1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($373)>>2)]=$372; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374=$H1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $375=$374; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $376=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $377=(($376+24)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($377)>>2)]=$375; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $378=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $379=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=(($379+12)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($380)>>2)]=$378; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=(($381+8)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($382)>>2)]=$378; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 85; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 67: 
+      var $384=$H1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $385=HEAP32[(($384)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$385; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=$psize; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=$I; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $388=(($387)|0)==31; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($388) { __label__ = 68; break; } else { __label__ = 69; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 68: 
+      var $397 = 0;__label__ = 70; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 69: 
+      var $391=$I; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $392=$391 >>> 1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $393=((($392)+(8))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $394=((($393)-(2))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $395=(((31)-($394))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $397 = $395;__label__ = 70; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 70: 
+      var $397; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $398=$386 << $397; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$398; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 71; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 71: 
+      var $400=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $401=(($400+4)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $402=HEAP32[(($401)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $403=$402 & -8; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $404=$psize; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $405=(($403)|0)!=(($404)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($405) { __label__ = 72; break; } else { __label__ = 78; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 72: 
+      var $407=$K2; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $408=$407 >>> 31; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $409=$408 & 1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $410=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $411=(($410+16)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $412=(($411+($409<<2))|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $C=$412; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $413=$K2; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $414=$413 << 1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$414; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $415=$C; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $416=HEAP32[(($415)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $417=(($416)|0)!=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($417) { __label__ = 73; break; } else { __label__ = 74; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 73: 
+      var $419=$C; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $420=HEAP32[(($419)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$420; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 77; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 74: 
+      var $422=$C; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $423=$422; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $424=$1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $425=(($424+16)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $426=HEAP32[(($425)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $427=(($423)>>>0) >= (($426)>>>0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $428=(($427)&1); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $429=(($428)==(1)); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $430=(($429)|0)!=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($430) { __label__ = 75; break; } else { __label__ = 76; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 75: 
+      var $432=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $433=$C; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($433)>>2)]=$432; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $434=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $435=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $436=(($435+24)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($436)>>2)]=$434; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $437=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $438=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $439=(($438+12)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($439)>>2)]=$437; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $440=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $441=(($440+8)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($441)>>2)]=$437; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 84; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 76: 
+      _abort(); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 77: 
+      __label__ = 83; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 78: 
+      var $445=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $446=(($445+8)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $447=HEAP32[(($446)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      $F3=$447; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $448=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $449=$448; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $450=$1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $451=(($450+16)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $452=HEAP32[(($451)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $453=(($449)>>>0) >= (($452)>>>0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($453) { __label__ = 79; break; } else { var $462 = 0;__label__ = 80; break; } //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 79: 
+      var $455=$F3; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $456=$455; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $457=$1; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $458=(($457+16)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $459=HEAP32[(($458)>>2)]; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $460=(($456)>>>0) >= (($459)>>>0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $462 = $460;__label__ = 80; break;
+    case 80: 
+      var $462;
+      var $463=(($462)&1);
+      var $464=(($463)==(1));
+      var $465=(($464)|0)!=0;
+      if ($465) { __label__ = 81; break; } else { __label__ = 82; break; }
+    case 81: 
+      var $467=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $468=$F3; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $469=(($468+12)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($469)>>2)]=$467; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $470=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $471=(($470+8)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($471)>>2)]=$467; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $472=$F3; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $473=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $474=(($473+8)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($474)>>2)]=$472; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $475=$T; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $476=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $477=(($476+12)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($477)>>2)]=$475; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $478=$tp; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      var $479=(($478+24)|0); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($479)>>2)]=0; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 84; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 82: 
+      _abort(); //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 83: 
+      __label__ = 71; break; //@line 4110 "/root/emscripten/system/lib/dlmalloc.c"
+    case 84: 
+      __label__ = 85; break;
+    case 85: 
+      __label__ = 86; break; //@line 4112 "/root/emscripten/system/lib/dlmalloc.c"
+    case 86: 
+      __label__ = 87; break; //@line 4113 "/root/emscripten/system/lib/dlmalloc.c"
+    case 87: 
+      var $486=$sp; //@line 4116 "/root/emscripten/system/lib/dlmalloc.c"
+      $pred=$486; //@line 4116 "/root/emscripten/system/lib/dlmalloc.c"
+      var $487=$next; //@line 4117 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$487; //@line 4117 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 3; break; //@line 4118 "/root/emscripten/system/lib/dlmalloc.c"
+    case 88: 
+      var $489=$nsegs; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      var $490=(($489)>>>0) > 4294967295; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($490) { __label__ = 89; break; } else { __label__ = 90; break; } //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+    case 89: 
+      var $492=$nsegs; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      var $495 = $492;__label__ = 91; break; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+    case 90: 
+      var $495 = -1;__label__ = 91; break; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+    case 91: 
+      var $495; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      var $496=$1; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      var $497=(($496+32)|0); //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($497)>>2)]=$495; //@line 4120 "/root/emscripten/system/lib/dlmalloc.c"
+      var $498=$released; //@line 4122 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $498; //@line 4122 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_release_unused_segments["X"]=1;
+
+function _init_mparams() {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $magic;
+      var $psize;
+      var $gsize;
+      var $1=HEAP32[((((_mparams)|0))>>2)]; //@line 2965 "/root/emscripten/system/lib/dlmalloc.c"
+      var $2=(($1)|0)==0; //@line 2965 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($2) { __label__ = 3; break; } else { __label__ = 7; break; } //@line 2965 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $4=_sysconf(8); //@line 2971 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$4; //@line 2971 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=$psize; //@line 2972 "/root/emscripten/system/lib/dlmalloc.c"
+      $gsize=$5; //@line 2972 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=$gsize; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=$gsize; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=((($7)-(1))|0); //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=$6 & $8; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=(($9)|0)!=0; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($10) { __label__ = 5; break; } else { __label__ = 4; break; } //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $12=$psize; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=$psize; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=((($13)-(1))|0); //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$12 & $14; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=(($15)|0)!=0; //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($16) { __label__ = 5; break; } else { __label__ = 6; break; } //@line 2989 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      _abort(); //@line 2997 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 2997 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $19=$gsize; //@line 2999 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((_mparams+8)|0))>>2)]=$19; //@line 2999 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=$psize; //@line 3000 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((_mparams+4)|0))>>2)]=$20; //@line 3000 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((_mparams+12)|0))>>2)]=-1; //@line 3001 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((_mparams+16)|0))>>2)]=2097152; //@line 3002 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((_mparams+20)|0))>>2)]=0; //@line 3004 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=HEAP32[((((_mparams+20)|0))>>2)]; //@line 3011 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((__gm_+440)|0))>>2)]=$21; //@line 3011 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=_time(0); //@line 3030 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=$22 ^ 1431655765; //@line 3030 "/root/emscripten/system/lib/dlmalloc.c"
+      $magic=$23; //@line 3030 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=$magic; //@line 3032 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$24 | 8; //@line 3032 "/root/emscripten/system/lib/dlmalloc.c"
+      $magic=$25; //@line 3032 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=$magic; //@line 3033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$26 & -8; //@line 3033 "/root/emscripten/system/lib/dlmalloc.c"
+      $magic=$27; //@line 3033 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$magic; //@line 3034 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[((((_mparams)|0))>>2)]=$28; //@line 3034 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 7; break; //@line 3036 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      ;
+      return 1; //@line 3039 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+
+
+function _init_top($m, $p, $psize) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $offset;
+      $1=$m;
+      $2=$p;
+      $3=$psize;
+      var $4=$2; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=$4; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=(($5+8)|0); //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=$6; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$7 & 7; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=(($8)|0)==0; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($9) { __label__ = 3; break; } else { __label__ = 4; break; } //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $20 = 0;__label__ = 5; break; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $12=$2; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=$12; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=(($13+8)|0); //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$14; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=$15 & 7; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=(((8)-($16))|0); //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=$17 & 7; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20 = $18;__label__ = 5; break; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $20; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      $offset=$20; //@line 3736 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=$2; //@line 3737 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=$21; //@line 3737 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=$offset; //@line 3737 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=(($22+$23)|0); //@line 3737 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$24; //@line 3737 "/root/emscripten/system/lib/dlmalloc.c"
+      $2=$25; //@line 3737 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=$offset; //@line 3738 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$3; //@line 3738 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=((($27)-($26))|0); //@line 3738 "/root/emscripten/system/lib/dlmalloc.c"
+      $3=$28; //@line 3738 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=$2; //@line 3740 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$1; //@line 3740 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=(($30+24)|0); //@line 3740 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($31)>>2)]=$29; //@line 3740 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=$3; //@line 3741 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$1; //@line 3741 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=(($33+12)|0); //@line 3741 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($34)>>2)]=$32; //@line 3741 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=$3; //@line 3742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$35 | 1; //@line 3742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=$2; //@line 3742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=(($37+4)|0); //@line 3742 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($38)>>2)]=$36; //@line 3742 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=$2; //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=$39; //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$3; //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=(($40+$41)|0); //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=$42; //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=(($43+4)|0); //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($44)>>2)]=40; //@line 3744 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=HEAP32[((((_mparams+16)|0))>>2)]; //@line 3745 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=$1; //@line 3745 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=(($46+28)|0); //@line 3745 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($47)>>2)]=$45; //@line 3745 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return; //@line 3746 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_init_top["X"]=1;
+
+function _mmap_alloc($m, $nb) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $mmsize;
+      var $mm;
+      var $offset;
+      var $psize;
+      var $p;
+      $2=$m;
+      $3=$nb;
+      var $4=$3; //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $5=((($4)+(24))|0); //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=((($5)+(7))|0); //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=HEAP32[((((_mparams+4)|0))>>2)]; //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=((($7)-(1))|0); //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=((($6)+($8))|0); //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=HEAP32[((((_mparams+4)|0))>>2)]; //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=((($10)-(1))|0); //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=$11 ^ -1; //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=$9 & $12; //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      $mmsize=$13; //@line 3672 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=$mmsize; //@line 3673 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$3; //@line 3673 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=(($14)>>>0) > (($15)>>>0); //@line 3673 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($16) { __label__ = 3; break; } else { __label__ = 14; break; } //@line 3673 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      $mm=-1; //@line 3674 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=$mm; //@line 3675 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=(($18)|0)!=-1; //@line 3675 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($19) { __label__ = 4; break; } else { __label__ = 13; break; } //@line 3675 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $21=$mm; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=(($21+8)|0); //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=$22; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=$23 & 7; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=(($24)|0)==0; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($25) { __label__ = 5; break; } else { __label__ = 6; break; } //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $35 = 0;__label__ = 7; break; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $28=$mm; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=(($28+8)|0); //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $30=$29; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $31=$30 & 7; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=(((8)-($31))|0); //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$32 & 7; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35 = $33;__label__ = 7; break; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $35; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      $offset=$35; //@line 3676 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$mmsize; //@line 3677 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=$offset; //@line 3677 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38=((($36)-($37))|0); //@line 3677 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=((($38)-(16))|0); //@line 3677 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$39; //@line 3677 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=$mm; //@line 3678 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$offset; //@line 3678 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=(($40+$41)|0); //@line 3678 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=$42; //@line 3678 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$43; //@line 3678 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=$offset; //@line 3679 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$p; //@line 3679 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=(($45)|0); //@line 3679 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($46)>>2)]=$44; //@line 3679 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=$psize; //@line 3680 "/root/emscripten/system/lib/dlmalloc.c"
+      var $48=$p; //@line 3680 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=(($48+4)|0); //@line 3680 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($49)>>2)]=$47; //@line 3680 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=$p; //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=$50; //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=$psize; //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=(($51+$52)|0); //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=$53; //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=(($54+4)|0); //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($55)>>2)]=7; //@line 3682 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$p; //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=$56; //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=$psize; //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=((($58)+(4))|0); //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=(($57+$59)|0); //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=$60; //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $62=(($61+4)|0); //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($62)>>2)]=0; //@line 3683 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=$2; //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=(($63+16)|0); //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=HEAP32[(($64)>>2)]; //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $66=(($65)|0)==0; //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($66) { __label__ = 9; break; } else { __label__ = 8; break; } //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $68=$mm; //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=$2; //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=(($69+16)|0); //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=HEAP32[(($70)>>2)]; //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=(($68)>>>0) < (($71)>>>0); //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($72) { __label__ = 9; break; } else { __label__ = 10; break; } //@line 3685 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $74=$mm; //@line 3686 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=$2; //@line 3686 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=(($75+16)|0); //@line 3686 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($76)>>2)]=$74; //@line 3686 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 10; break; //@line 3686 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $78=$mmsize; //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $79=$2; //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=(($79+432)|0); //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=HEAP32[(($80)>>2)]; //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=((($81)+($78))|0); //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($80)>>2)]=$82; //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=$2; //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=(($83+436)|0); //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $85=HEAP32[(($84)>>2)]; //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      var $86=(($82)>>>0) > (($85)>>>0); //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($86) { __label__ = 11; break; } else { __label__ = 12; break; } //@line 3687 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $88=$2; //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=(($88+432)|0); //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=HEAP32[(($89)>>2)]; //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=$2; //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=(($91+436)|0); //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($92)>>2)]=$90; //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 12; break; //@line 3688 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $94=$p; //@line 3691 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=$94; //@line 3691 "/root/emscripten/system/lib/dlmalloc.c"
+      var $96=(($95+8)|0); //@line 3691 "/root/emscripten/system/lib/dlmalloc.c"
+      $1=$96; //@line 3691 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 15; break; //@line 3691 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      __label__ = 14; break; //@line 3693 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      $1=0; //@line 3694 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 15; break; //@line 3694 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $100=$1; //@line 3695 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $100; //@line 3695 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_mmap_alloc["X"]=1;
+
+function _init_bins($m) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $i;
+      var $bin;
+      $1=$m;
+      $i=0; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 3; break; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $3=$i; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+      var $4=(($3)>>>0) < 32; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($4) { __label__ = 4; break; } else { __label__ = 6; break; } //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $6=$i; //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=$6 << 1; //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$1; //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=(($8+40)|0); //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=(($9+($7<<2))|0); //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=$10; //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=$11; //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      $bin=$12; //@line 3753 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=$bin; //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=$bin; //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=(($14+12)|0); //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($15)>>2)]=$13; //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=$bin; //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=(($16+8)|0); //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($17)>>2)]=$13; //@line 3754 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 5; break; //@line 3755 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $19=$i; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=((($19)+(1))|0); //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+      $i=$20; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 3; break; //@line 3752 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      ;
+      return; //@line 3756 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+
+
+function _prepend_alloc($m, $newbase, $oldbase, $nb) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $4;
+      var $p;
+      var $oldfirst;
+      var $psize;
+      var $q;
+      var $qsize;
+      var $tsize;
+      var $dsize;
+      var $nsize;
+      var $F;
+      var $B;
+      var $I;
+      var $TP;
+      var $XP;
+      var $R;
+      var $F1;
+      var $RP;
+      var $CP;
+      var $H;
+      var $C0;
+      var $C1;
+      var $I2;
+      var $B3;
+      var $F4;
+      var $TP5;
+      var $H6;
+      var $I7;
+      var $X;
+      var $Y;
+      var $N;
+      var $K;
+      var $T;
+      var $K8;
+      var $C;
+      var $F9;
+      $1=$m;
+      $2=$newbase;
+      $3=$oldbase;
+      $4=$nb;
+      var $5=$2; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=$2; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=(($6+8)|0); //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$7; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=$8 & 7; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=(($9)|0)==0; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($10) { __label__ = 3; break; } else { __label__ = 4; break; } //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $20 = 0;__label__ = 5; break; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $13=$2; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=(($13+8)|0); //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$14; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=$15 & 7; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=(((8)-($16))|0); //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=$17 & 7; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20 = $18;__label__ = 5; break; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $20; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=(($5+$20)|0); //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=$21; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$22; //@line 3780 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=$3; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=$3; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=(($24+8)|0); //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=$25; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$26 & 7; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=(($27)|0)==0; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($28) { __label__ = 6; break; } else { __label__ = 7; break; } //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $38 = 0;__label__ = 8; break; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $31=$3; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $32=(($31+8)|0); //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=$32; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=$33 & 7; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=(((8)-($34))|0); //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=$35 & 7; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $38 = $36;__label__ = 8; break; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $38; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39=(($23+$38)|0); //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=$39; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      $oldfirst=$40; //@line 3781 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$oldfirst; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=$41; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=$p; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=$43; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=$42; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=$44; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $47=((($45)-($46))|0); //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$47; //@line 3782 "/root/emscripten/system/lib/dlmalloc.c"
+      var $48=$p; //@line 3783 "/root/emscripten/system/lib/dlmalloc.c"
+      var $49=$48; //@line 3783 "/root/emscripten/system/lib/dlmalloc.c"
+      var $50=$4; //@line 3783 "/root/emscripten/system/lib/dlmalloc.c"
+      var $51=(($49+$50)|0); //@line 3783 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52=$51; //@line 3783 "/root/emscripten/system/lib/dlmalloc.c"
+      $q=$52; //@line 3783 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=$psize; //@line 3784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=$4; //@line 3784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=((($53)-($54))|0); //@line 3784 "/root/emscripten/system/lib/dlmalloc.c"
+      $qsize=$55; //@line 3784 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$4; //@line 3785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=$56 | 1; //@line 3785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=$57 | 2; //@line 3785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=$p; //@line 3785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=(($59+4)|0); //@line 3785 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($60)>>2)]=$58; //@line 3785 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=$oldfirst; //@line 3792 "/root/emscripten/system/lib/dlmalloc.c"
+      var $62=$1; //@line 3792 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=(($62+24)|0); //@line 3792 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=HEAP32[(($63)>>2)]; //@line 3792 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=(($61)|0)==(($64)|0); //@line 3792 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($65) { __label__ = 9; break; } else { __label__ = 10; break; } //@line 3792 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $67=$qsize; //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=$1; //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=(($68+12)|0); //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=HEAP32[(($69)>>2)]; //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=((($70)+($67))|0); //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($69)>>2)]=$71; //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      $tsize=$71; //@line 3793 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=$q; //@line 3794 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=$1; //@line 3794 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=(($73+24)|0); //@line 3794 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($74)>>2)]=$72; //@line 3794 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=$tsize; //@line 3795 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=$75 | 1; //@line 3795 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=$q; //@line 3795 "/root/emscripten/system/lib/dlmalloc.c"
+      var $78=(($77+4)|0); //@line 3795 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($78)>>2)]=$76; //@line 3795 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 110; break; //@line 3797 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $80=$oldfirst; //@line 3798 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=$1; //@line 3798 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=(($81+20)|0); //@line 3798 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=HEAP32[(($82)>>2)]; //@line 3798 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=(($80)|0)==(($83)|0); //@line 3798 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($84) { __label__ = 11; break; } else { __label__ = 12; break; } //@line 3798 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      var $86=$qsize; //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=$1; //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=(($87+8)|0); //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=HEAP32[(($88)>>2)]; //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=((($89)+($86))|0); //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($88)>>2)]=$90; //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      $dsize=$90; //@line 3799 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=$q; //@line 3800 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=$1; //@line 3800 "/root/emscripten/system/lib/dlmalloc.c"
+      var $93=(($92+20)|0); //@line 3800 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($93)>>2)]=$91; //@line 3800 "/root/emscripten/system/lib/dlmalloc.c"
+      var $94=$dsize; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=$94 | 1; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $96=$q; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $97=(($96+4)|0); //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($97)>>2)]=$95; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=$dsize; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=$q; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=$99; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$dsize; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=(($100+$101)|0); //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=$102; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=(($103)|0); //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($104)>>2)]=$98; //@line 3801 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 109; break; //@line 3802 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      var $106=$oldfirst; //@line 3804 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=(($106+4)|0); //@line 3804 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=HEAP32[(($107)>>2)]; //@line 3804 "/root/emscripten/system/lib/dlmalloc.c"
+      var $109=$108 & 3; //@line 3804 "/root/emscripten/system/lib/dlmalloc.c"
+      var $110=(($109)|0)!=1; //@line 3804 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($110) { __label__ = 73; break; } else { __label__ = 13; break; } //@line 3804 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $112=$oldfirst; //@line 3805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $113=(($112+4)|0); //@line 3805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $114=HEAP32[(($113)>>2)]; //@line 3805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $115=$114 & -8; //@line 3805 "/root/emscripten/system/lib/dlmalloc.c"
+      $nsize=$115; //@line 3805 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=$nsize; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $117=$116 >>> 3; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $118=(($117)>>>0) < 32; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($118) { __label__ = 14; break; } else { __label__ = 26; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $120=$oldfirst; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=(($120+8)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=HEAP32[(($121)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$122; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $123=$oldfirst; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $124=(($123+12)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=HEAP32[(($124)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $B=$125; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=$nsize; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=$126 >>> 3; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$127; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=$F; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=$B; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=(($128)|0)==(($129)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($130) { __label__ = 15; break; } else { __label__ = 16; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $132=$I; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=1 << $132; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=$133 ^ -1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $136=(($135)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $137=HEAP32[(($136)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $138=$137 & $134; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($136)>>2)]=$138; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 25; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      var $140=$F; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $141=$I; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=$141 << 1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $143=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144=(($143+40)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=(($144+($142<<2))|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $146=$145; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=$146; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $148=(($140)|0)==(($147)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($148) { __label__ = 18; break; } else { __label__ = 17; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $150=$F; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $151=$150; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=(($152+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=HEAP32[(($153)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=(($151)>>>0) >= (($154)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($155) { __label__ = 18; break; } else { var $176 = 0;__label__ = 21; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $157=$B; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $158=$I; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=$158 << 1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=(($160+40)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=(($161+($159<<2))|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $163=$162; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $164=$163; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $165=(($157)|0)==(($164)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($165) { var $174 = 1;__label__ = 20; break; } else { __label__ = 19; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      var $167=$B; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $168=$167; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $170=(($169+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $171=HEAP32[(($170)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=(($168)>>>0) >= (($171)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $174 = $172;__label__ = 20; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      var $174;
+      var $176 = $174;__label__ = 21; break;
+    case 21: 
+      var $176;
+      var $177=(($176)&1);
+      var $178=(($177)==(1));
+      var $179=(($178)|0)!=0;
+      if ($179) { __label__ = 22; break; } else { __label__ = 23; break; }
+    case 22: 
+      var $181=$B; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $182=$F; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=(($182+12)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($183)>>2)]=$181; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $184=$F; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $185=$B; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $186=(($185+8)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($186)>>2)]=$184; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 24; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      __label__ = 25; break;
+    case 25: 
+      __label__ = 72; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $191=$oldfirst; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $192=$191; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $TP=$192; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $193=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=(($193+24)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $195=HEAP32[(($194)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $XP=$195; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $197=(($196+12)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $198=HEAP32[(($197)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $200=(($198)|0)!=(($199)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($200) { __label__ = 27; break; } else { __label__ = 31; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 27: 
+      var $202=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $203=(($202+8)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=HEAP32[(($203)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $F1=$204; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $205=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $206=(($205+12)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=HEAP32[(($206)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$207; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=$F1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $209=$208; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $210=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $211=(($210+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $212=HEAP32[(($211)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $213=(($209)>>>0) >= (($212)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $214=(($213)&1); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $215=(($214)==(1)); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $216=(($215)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($216) { __label__ = 28; break; } else { __label__ = 29; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 28: 
+      var $218=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $219=$F1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $220=(($219+12)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($220)>>2)]=$218; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $221=$F1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $222=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $223=(($222+8)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($223)>>2)]=$221; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 30; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 29: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      __label__ = 43; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $227=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=(($227+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $229=(($228+4)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$229; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230=HEAP32[(($229)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$230; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $231=(($230)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($231) { __label__ = 33; break; } else { __label__ = 32; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $233=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $234=(($233+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $235=(($234)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$235; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $236=HEAP32[(($235)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$236; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=(($236)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($237) { __label__ = 33; break; } else { __label__ = 42; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      __label__ = 34; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      var $240=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $241=(($240+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $242=(($241+4)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$242; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=HEAP32[(($242)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=(($243)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($244) { var $252 = 1;__label__ = 36; break; } else { __label__ = 35; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 35: 
+      var $246=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=(($246+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=(($247)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $CP=$248; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $249=HEAP32[(($248)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $250=(($249)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $252 = $250;__label__ = 36; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      var $252;
+      if ($252) { __label__ = 37; break; } else { __label__ = 38; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      var $254=$CP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $RP=$254; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $255=HEAP32[(($254)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $R=$255; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 34; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      var $257=$RP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $258=$257; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=(($259+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $261=HEAP32[(($260)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $262=(($258)>>>0) >= (($261)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $263=(($262)&1); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $264=(($263)==(1)); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $265=(($264)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($265) { __label__ = 39; break; } else { __label__ = 40; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      var $267=$RP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($267)>>2)]=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 41; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 41: 
+      __label__ = 42; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      __label__ = 43; break;
+    case 43: 
+      var $272=$XP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $273=(($272)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($273) { __label__ = 44; break; } else { __label__ = 71; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 44: 
+      var $275=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=(($275+28)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $277=HEAP32[(($276)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $278=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=(($278+304)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $280=(($279+($277<<2))|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $H=$280; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $281=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=$H; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $283=HEAP32[(($282)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $284=(($281)|0)==(($283)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($284) { __label__ = 45; break; } else { __label__ = 48; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      var $286=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=$H; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($287)>>2)]=$286; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=(($286)|0)==0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($288) { __label__ = 46; break; } else { __label__ = 47; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      var $290=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $291=(($290+28)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $292=HEAP32[(($291)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $293=1 << $292; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $294=$293 ^ -1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $295=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $296=(($295+4)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $297=HEAP32[(($296)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $298=$297 & $294; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($296)>>2)]=$298; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 47; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      __label__ = 55; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 48: 
+      var $301=$XP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $302=$301; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $303=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $304=(($303+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $305=HEAP32[(($304)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $306=(($302)>>>0) >= (($305)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $307=(($306)&1); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $308=(($307)==(1)); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $309=(($308)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($309) { __label__ = 49; break; } else { __label__ = 53; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 49: 
+      var $311=$XP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $312=(($311+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $313=(($312)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $314=HEAP32[(($313)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=(($314)|0)==(($315)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($316) { __label__ = 50; break; } else { __label__ = 51; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      var $318=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $319=$XP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $320=(($319+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=(($320)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($321)>>2)]=$318; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 52; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 51: 
+      var $323=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=$XP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=(($324+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=(($325+4)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($326)>>2)]=$323; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 52; break;
+    case 52: 
+      __label__ = 54; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 53: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 54: 
+      __label__ = 55; break;
+    case 55: 
+      var $331=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $332=(($331)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($332) { __label__ = 56; break; } else { __label__ = 70; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 56: 
+      var $334=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $335=$334; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $336=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $337=(($336+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $338=HEAP32[(($337)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=(($335)>>>0) >= (($338)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=(($339)&1); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=(($340)==(1)); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=(($341)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($342) { __label__ = 57; break; } else { __label__ = 68; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 57: 
+      var $344=$XP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $345=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=(($345+24)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($346)>>2)]=$344; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348=(($347+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $349=(($348)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=HEAP32[(($349)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $C0=$350; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=(($350)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($351) { __label__ = 58; break; } else { __label__ = 62; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 58: 
+      var $353=$C0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $354=$353; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $355=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $356=(($355+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $357=HEAP32[(($356)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=(($354)>>>0) >= (($357)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=(($358)&1); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $360=(($359)==(1)); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $361=(($360)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($361) { __label__ = 59; break; } else { __label__ = 60; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 59: 
+      var $363=$C0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $364=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $365=(($364+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $366=(($365)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($366)>>2)]=$363; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $367=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=$C0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=(($368+24)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($369)>>2)]=$367; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 61; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 60: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 61: 
+      __label__ = 62; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 62: 
+      var $373=$TP; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374=(($373+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $375=(($374+4)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $376=HEAP32[(($375)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      $C1=$376; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $377=(($376)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($377) { __label__ = 63; break; } else { __label__ = 67; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 63: 
+      var $379=$C1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=$379; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=$1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=(($381+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $383=HEAP32[(($382)>>2)]; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $384=(($380)>>>0) >= (($383)>>>0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $385=(($384)&1); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=(($385)==(1)); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=(($386)|0)!=0; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($387) { __label__ = 64; break; } else { __label__ = 65; break; } //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 64: 
+      var $389=$C1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $390=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $391=(($390+16)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $392=(($391+4)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($392)>>2)]=$389; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $393=$R; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $394=$C1; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      var $395=(($394+24)|0); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($395)>>2)]=$393; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 66; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 65: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 66: 
+      __label__ = 67; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 67: 
+      __label__ = 69; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 68: 
+      _abort(); //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 69: 
+      __label__ = 70; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 70: 
+      __label__ = 71; break; //@line 3806 "/root/emscripten/system/lib/dlmalloc.c"
+    case 71: 
+      __label__ = 72; break;
+    case 72: 
+      var $404=$oldfirst; //@line 3807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $405=$404; //@line 3807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $406=$nsize; //@line 3807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $407=(($405+$406)|0); //@line 3807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $408=$407; //@line 3807 "/root/emscripten/system/lib/dlmalloc.c"
+      $oldfirst=$408; //@line 3807 "/root/emscripten/system/lib/dlmalloc.c"
+      var $409=$nsize; //@line 3808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $410=$qsize; //@line 3808 "/root/emscripten/system/lib/dlmalloc.c"
+      var $411=((($410)+($409))|0); //@line 3808 "/root/emscripten/system/lib/dlmalloc.c"
+      $qsize=$411; //@line 3808 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 73; break; //@line 3809 "/root/emscripten/system/lib/dlmalloc.c"
+    case 73: 
+      var $413=$oldfirst; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $414=(($413+4)|0); //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $415=HEAP32[(($414)>>2)]; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $416=$415 & -2; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($414)>>2)]=$416; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $417=$qsize; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $418=$417 | 1; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $419=$q; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $420=(($419+4)|0); //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($420)>>2)]=$418; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $421=$qsize; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $422=$q; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $423=$422; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $424=$qsize; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $425=(($423+$424)|0); //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $426=$425; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $427=(($426)|0); //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($427)>>2)]=$421; //@line 3810 "/root/emscripten/system/lib/dlmalloc.c"
+      var $428=$qsize; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $429=$428 >>> 3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $430=(($429)>>>0) < 32; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($430) { __label__ = 74; break; } else { __label__ = 81; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 74: 
+      var $432=$qsize; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $433=$432 >>> 3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $I2=$433; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $434=$I2; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $435=$434 << 1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $436=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $437=(($436+40)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $438=(($437+($435<<2))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $439=$438; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $440=$439; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $B3=$440; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $441=$B3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $F4=$441; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $442=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $443=(($442)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $444=HEAP32[(($443)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $445=$I2; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $446=1 << $445; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $447=$444 & $446; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $448=(($447)|0)!=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($448) { __label__ = 76; break; } else { __label__ = 75; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 75: 
+      var $450=$I2; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $451=1 << $450; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $452=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $453=(($452)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $454=HEAP32[(($453)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $455=$454 | $451; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($453)>>2)]=$455; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 80; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 76: 
+      var $457=$B3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $458=(($457+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $459=HEAP32[(($458)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $460=$459; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $461=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $462=(($461+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $463=HEAP32[(($462)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $464=(($460)>>>0) >= (($463)>>>0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $465=(($464)&1); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $466=(($465)==(1)); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $467=(($466)|0)!=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($467) { __label__ = 77; break; } else { __label__ = 78; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 77: 
+      var $469=$B3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $470=(($469+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $471=HEAP32[(($470)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $F4=$471; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 79; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 78: 
+      _abort(); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 79: 
+      __label__ = 80; break;
+    case 80: 
+      var $475=$q; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $476=$B3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $477=(($476+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($477)>>2)]=$475; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $478=$q; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $479=$F4; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $480=(($479+12)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($480)>>2)]=$478; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $481=$F4; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $482=$q; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $483=(($482+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($483)>>2)]=$481; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $484=$B3; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $485=$q; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $486=(($485+12)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($486)>>2)]=$484; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 108; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 81: 
+      var $488=$q; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $489=$488; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $TP5=$489; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $490=$qsize; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $491=$490 >>> 8; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $X=$491; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $492=$X; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $493=(($492)|0)==0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($493) { __label__ = 82; break; } else { __label__ = 83; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 82: 
+      $I7=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 87; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 83: 
+      var $496=$X; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $497=(($496)>>>0) > 65535; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($497) { __label__ = 84; break; } else { __label__ = 85; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 84: 
+      $I7=31; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 86; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 85: 
+      var $500=$X; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$500; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $501=$Y; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $502=((($501)-(256))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $503=$502 >>> 16; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $504=$503 & 8; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$504; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $505=$N; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $506=$Y; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $507=$506 << $505; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$507; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $508=((($507)-(4096))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $509=$508 >>> 16; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $510=$509 & 4; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$510; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $511=$K; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $512=$N; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $513=((($512)+($511))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$513; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $514=$K; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $515=$Y; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $516=$515 << $514; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$516; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $517=((($516)-(16384))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $518=$517 >>> 16; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $519=$518 & 2; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$519; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $520=$N; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $521=((($520)+($519))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$521; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $522=$N; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $523=(((14)-($522))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $524=$K; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $525=$Y; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $526=$525 << $524; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$526; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $527=$526 >>> 15; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $528=((($523)+($527))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$528; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $529=$K; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $530=$529 << 1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $531=$qsize; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $532=$K; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $533=((($532)+(7))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $534=$531 >>> (($533)>>>0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $535=$534 & 1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $536=((($530)+($535))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $I7=$536; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 86; break;
+    case 86: 
+      __label__ = 87; break;
+    case 87: 
+      var $539=$I7; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $540=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $541=(($540+304)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $542=(($541+($539<<2))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $H6=$542; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $543=$I7; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $544=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $545=(($544+28)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($545)>>2)]=$543; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $546=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $547=(($546+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $548=(($547+4)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($548)>>2)]=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $549=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $550=(($549+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $551=(($550)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($551)>>2)]=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $552=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $553=(($552+4)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $554=HEAP32[(($553)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $555=$I7; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $556=1 << $555; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $557=$554 & $556; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $558=(($557)|0)!=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($558) { __label__ = 89; break; } else { __label__ = 88; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 88: 
+      var $560=$I7; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $561=1 << $560; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $562=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $563=(($562+4)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $564=HEAP32[(($563)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $565=$564 | $561; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($563)>>2)]=$565; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $566=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $567=$H6; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($567)>>2)]=$566; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $568=$H6; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $569=$568; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $570=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $571=(($570+24)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($571)>>2)]=$569; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $572=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $573=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $574=(($573+12)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($574)>>2)]=$572; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $575=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $576=(($575+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($576)>>2)]=$572; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 107; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 89: 
+      var $578=$H6; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $579=HEAP32[(($578)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$579; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $580=$qsize; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $581=$I7; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $582=(($581)|0)==31; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($582) { __label__ = 90; break; } else { __label__ = 91; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 90: 
+      var $591 = 0;__label__ = 92; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 91: 
+      var $585=$I7; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $586=$585 >>> 1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $587=((($586)+(8))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $588=((($587)-(2))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $589=(((31)-($588))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $591 = $589;__label__ = 92; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 92: 
+      var $591; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $592=$580 << $591; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $K8=$592; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 93; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 93: 
+      var $594=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $595=(($594+4)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $596=HEAP32[(($595)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $597=$596 & -8; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $598=$qsize; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $599=(($597)|0)!=(($598)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($599) { __label__ = 94; break; } else { __label__ = 100; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 94: 
+      var $601=$K8; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $602=$601 >>> 31; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $603=$602 & 1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $604=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $605=(($604+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $606=(($605+($603<<2))|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $C=$606; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $607=$K8; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $608=$607 << 1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $K8=$608; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $609=$C; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $610=HEAP32[(($609)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $611=(($610)|0)!=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($611) { __label__ = 95; break; } else { __label__ = 96; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 95: 
+      var $613=$C; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $614=HEAP32[(($613)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$614; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 99; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 96: 
+      var $616=$C; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $617=$616; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $618=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $619=(($618+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $620=HEAP32[(($619)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $621=(($617)>>>0) >= (($620)>>>0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $622=(($621)&1); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $623=(($622)==(1)); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $624=(($623)|0)!=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($624) { __label__ = 97; break; } else { __label__ = 98; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 97: 
+      var $626=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $627=$C; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($627)>>2)]=$626; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $628=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $629=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $630=(($629+24)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($630)>>2)]=$628; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $631=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $632=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $633=(($632+12)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($633)>>2)]=$631; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $634=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $635=(($634+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($635)>>2)]=$631; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 106; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 98: 
+      _abort(); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 99: 
+      __label__ = 105; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 100: 
+      var $639=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $640=(($639+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $641=HEAP32[(($640)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      $F9=$641; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $642=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $643=$642; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $644=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $645=(($644+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $646=HEAP32[(($645)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $647=(($643)>>>0) >= (($646)>>>0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($647) { __label__ = 101; break; } else { var $656 = 0;__label__ = 102; break; } //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 101: 
+      var $649=$F9; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $650=$649; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $651=$1; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $652=(($651+16)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $653=HEAP32[(($652)>>2)]; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $654=(($650)>>>0) >= (($653)>>>0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $656 = $654;__label__ = 102; break;
+    case 102: 
+      var $656;
+      var $657=(($656)&1);
+      var $658=(($657)==(1));
+      var $659=(($658)|0)!=0;
+      if ($659) { __label__ = 103; break; } else { __label__ = 104; break; }
+    case 103: 
+      var $661=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $662=$F9; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $663=(($662+12)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($663)>>2)]=$661; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $664=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $665=(($664+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($665)>>2)]=$661; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $666=$F9; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $667=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $668=(($667+8)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($668)>>2)]=$666; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $669=$T; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $670=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $671=(($670+12)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($671)>>2)]=$669; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $672=$TP5; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      var $673=(($672+24)|0); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($673)>>2)]=0; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 106; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 104: 
+      _abort(); //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 105: 
+      __label__ = 93; break; //@line 3811 "/root/emscripten/system/lib/dlmalloc.c"
+    case 106: 
+      __label__ = 107; break;
+    case 107: 
+      __label__ = 108; break;
+    case 108: 
+      __label__ = 109; break;
+    case 109: 
+      __label__ = 110; break;
+    case 110: 
+      var $681=$p; //@line 3816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $682=$681; //@line 3816 "/root/emscripten/system/lib/dlmalloc.c"
+      var $683=(($682+8)|0); //@line 3816 "/root/emscripten/system/lib/dlmalloc.c"
+      ;
+      return $683; //@line 3816 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_prepend_alloc["X"]=1;
+
+function _add_segment($m, $tbase, $tsize, $mmapped) {
+  ;
+  var __label__;
+  __label__ = 2; 
+  while(1) switch(__label__) {
+    case 2: 
+      var $1;
+      var $2;
+      var $3;
+      var $4;
+      var $old_top;
+      var $oldsp;
+      var $old_end;
+      var $ssize;
+      var $rawsp;
+      var $offset;
+      var $asp;
+      var $csp;
+      var $sp;
+      var $ss;
+      var $tnext;
+      var $p;
+      var $nfences;
+      var $nextp;
+      var $q;
+      var $psize;
+      var $tn;
+      var $I;
+      var $B;
+      var $F;
+      var $TP;
+      var $H;
+      var $I1;
+      var $X;
+      var $Y;
+      var $N;
+      var $K;
+      var $T;
+      var $K2;
+      var $C;
+      var $F3;
+      $1=$m;
+      $2=$tbase;
+      $3=$tsize;
+      $4=$mmapped;
+      var $5=$1; //@line 3822 "/root/emscripten/system/lib/dlmalloc.c"
+      var $6=(($5+24)|0); //@line 3822 "/root/emscripten/system/lib/dlmalloc.c"
+      var $7=HEAP32[(($6)>>2)]; //@line 3822 "/root/emscripten/system/lib/dlmalloc.c"
+      var $8=$7; //@line 3822 "/root/emscripten/system/lib/dlmalloc.c"
+      $old_top=$8; //@line 3822 "/root/emscripten/system/lib/dlmalloc.c"
+      var $9=$1; //@line 3823 "/root/emscripten/system/lib/dlmalloc.c"
+      var $10=$old_top; //@line 3823 "/root/emscripten/system/lib/dlmalloc.c"
+      var $11=_segment_holding($9, $10); //@line 3823 "/root/emscripten/system/lib/dlmalloc.c"
+      $oldsp=$11; //@line 3823 "/root/emscripten/system/lib/dlmalloc.c"
+      var $12=$oldsp; //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $13=(($12)|0); //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $14=HEAP32[(($13)>>2)]; //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $15=$oldsp; //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $16=(($15+4)|0); //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $17=HEAP32[(($16)>>2)]; //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      var $18=(($14+$17)|0); //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      $old_end=$18; //@line 3824 "/root/emscripten/system/lib/dlmalloc.c"
+      $ssize=24; //@line 3825 "/root/emscripten/system/lib/dlmalloc.c"
+      var $19=$old_end; //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $20=$ssize; //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $21=((($20)+(16))|0); //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $22=((($21)+(7))|0); //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $23=(((-$22))|0); //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $24=(($19+$23)|0); //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      $rawsp=$24; //@line 3826 "/root/emscripten/system/lib/dlmalloc.c"
+      var $25=$rawsp; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $26=(($25+8)|0); //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $27=$26; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $28=$27 & 7; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $29=(($28)|0)==0; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($29) { __label__ = 3; break; } else { __label__ = 4; break; } //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+    case 3: 
+      var $39 = 0;__label__ = 5; break; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+    case 4: 
+      var $32=$rawsp; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $33=(($32+8)|0); //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $34=$33; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $35=$34 & 7; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $36=(((8)-($35))|0); //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $37=$36 & 7; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $39 = $37;__label__ = 5; break; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+    case 5: 
+      var $39; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      $offset=$39; //@line 3827 "/root/emscripten/system/lib/dlmalloc.c"
+      var $40=$rawsp; //@line 3828 "/root/emscripten/system/lib/dlmalloc.c"
+      var $41=$offset; //@line 3828 "/root/emscripten/system/lib/dlmalloc.c"
+      var $42=(($40+$41)|0); //@line 3828 "/root/emscripten/system/lib/dlmalloc.c"
+      $asp=$42; //@line 3828 "/root/emscripten/system/lib/dlmalloc.c"
+      var $43=$asp; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      var $44=$old_top; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      var $45=(($44+16)|0); //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      var $46=(($43)>>>0) < (($45)>>>0); //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($46) { __label__ = 6; break; } else { __label__ = 7; break; } //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+    case 6: 
+      var $48=$old_top; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52 = $48;__label__ = 8; break; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+    case 7: 
+      var $50=$asp; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      var $52 = $50;__label__ = 8; break; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+    case 8: 
+      var $52; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      $csp=$52; //@line 3829 "/root/emscripten/system/lib/dlmalloc.c"
+      var $53=$csp; //@line 3830 "/root/emscripten/system/lib/dlmalloc.c"
+      var $54=$53; //@line 3830 "/root/emscripten/system/lib/dlmalloc.c"
+      $sp=$54; //@line 3830 "/root/emscripten/system/lib/dlmalloc.c"
+      var $55=$sp; //@line 3831 "/root/emscripten/system/lib/dlmalloc.c"
+      var $56=$55; //@line 3831 "/root/emscripten/system/lib/dlmalloc.c"
+      var $57=(($56+8)|0); //@line 3831 "/root/emscripten/system/lib/dlmalloc.c"
+      var $58=$57; //@line 3831 "/root/emscripten/system/lib/dlmalloc.c"
+      $ss=$58; //@line 3831 "/root/emscripten/system/lib/dlmalloc.c"
+      var $59=$sp; //@line 3832 "/root/emscripten/system/lib/dlmalloc.c"
+      var $60=$59; //@line 3832 "/root/emscripten/system/lib/dlmalloc.c"
+      var $61=$ssize; //@line 3832 "/root/emscripten/system/lib/dlmalloc.c"
+      var $62=(($60+$61)|0); //@line 3832 "/root/emscripten/system/lib/dlmalloc.c"
+      var $63=$62; //@line 3832 "/root/emscripten/system/lib/dlmalloc.c"
+      $tnext=$63; //@line 3832 "/root/emscripten/system/lib/dlmalloc.c"
+      var $64=$tnext; //@line 3833 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$64; //@line 3833 "/root/emscripten/system/lib/dlmalloc.c"
+      $nfences=0; //@line 3834 "/root/emscripten/system/lib/dlmalloc.c"
+      var $65=$1; //@line 3837 "/root/emscripten/system/lib/dlmalloc.c"
+      var $66=$2; //@line 3837 "/root/emscripten/system/lib/dlmalloc.c"
+      var $67=$66; //@line 3837 "/root/emscripten/system/lib/dlmalloc.c"
+      var $68=$3; //@line 3837 "/root/emscripten/system/lib/dlmalloc.c"
+      var $69=((($68)-(40))|0); //@line 3837 "/root/emscripten/system/lib/dlmalloc.c"
+      _init_top($65, $67, $69); //@line 3837 "/root/emscripten/system/lib/dlmalloc.c"
+      var $70=$ssize; //@line 3841 "/root/emscripten/system/lib/dlmalloc.c"
+      var $71=$70 | 1; //@line 3841 "/root/emscripten/system/lib/dlmalloc.c"
+      var $72=$71 | 2; //@line 3841 "/root/emscripten/system/lib/dlmalloc.c"
+      var $73=$sp; //@line 3841 "/root/emscripten/system/lib/dlmalloc.c"
+      var $74=(($73+4)|0); //@line 3841 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($74)>>2)]=$72; //@line 3841 "/root/emscripten/system/lib/dlmalloc.c"
+      var $75=$ss; //@line 3842 "/root/emscripten/system/lib/dlmalloc.c"
+      var $76=$1; //@line 3842 "/root/emscripten/system/lib/dlmalloc.c"
+      var $77=(($76+444)|0); //@line 3842 "/root/emscripten/system/lib/dlmalloc.c"
+      var $78=$75; //@line 3842 "/root/emscripten/system/lib/dlmalloc.c"
+      var $79=$77; //@line 3842 "/root/emscripten/system/lib/dlmalloc.c"
+      assert(16 % 1 === 0, 'memcpy given ' + 16 + ' bytes to copy. Problem with quantum=1 corrections perhaps?');HEAP32[(($78)>>2)]=HEAP32[(($79)>>2)];HEAP32[((($78)+(4))>>2)]=HEAP32[((($79)+(4))>>2)];HEAP32[((($78)+(8))>>2)]=HEAP32[((($79)+(8))>>2)];HEAP32[((($78)+(12))>>2)]=HEAP32[((($79)+(12))>>2)]; //@line 3842 "/root/emscripten/system/lib/dlmalloc.c"
+      var $80=$2; //@line 3843 "/root/emscripten/system/lib/dlmalloc.c"
+      var $81=$1; //@line 3843 "/root/emscripten/system/lib/dlmalloc.c"
+      var $82=(($81+444)|0); //@line 3843 "/root/emscripten/system/lib/dlmalloc.c"
+      var $83=(($82)|0); //@line 3843 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($83)>>2)]=$80; //@line 3843 "/root/emscripten/system/lib/dlmalloc.c"
+      var $84=$3; //@line 3844 "/root/emscripten/system/lib/dlmalloc.c"
+      var $85=$1; //@line 3844 "/root/emscripten/system/lib/dlmalloc.c"
+      var $86=(($85+444)|0); //@line 3844 "/root/emscripten/system/lib/dlmalloc.c"
+      var $87=(($86+4)|0); //@line 3844 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($87)>>2)]=$84; //@line 3844 "/root/emscripten/system/lib/dlmalloc.c"
+      var $88=$4; //@line 3845 "/root/emscripten/system/lib/dlmalloc.c"
+      var $89=$1; //@line 3845 "/root/emscripten/system/lib/dlmalloc.c"
+      var $90=(($89+444)|0); //@line 3845 "/root/emscripten/system/lib/dlmalloc.c"
+      var $91=(($90+12)|0); //@line 3845 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($91)>>2)]=$88; //@line 3845 "/root/emscripten/system/lib/dlmalloc.c"
+      var $92=$ss; //@line 3846 "/root/emscripten/system/lib/dlmalloc.c"
+      var $93=$1; //@line 3846 "/root/emscripten/system/lib/dlmalloc.c"
+      var $94=(($93+444)|0); //@line 3846 "/root/emscripten/system/lib/dlmalloc.c"
+      var $95=(($94+8)|0); //@line 3846 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($95)>>2)]=$92; //@line 3846 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 9; break; //@line 3849 "/root/emscripten/system/lib/dlmalloc.c"
+    case 9: 
+      var $97=$p; //@line 3850 "/root/emscripten/system/lib/dlmalloc.c"
+      var $98=$97; //@line 3850 "/root/emscripten/system/lib/dlmalloc.c"
+      var $99=(($98+4)|0); //@line 3850 "/root/emscripten/system/lib/dlmalloc.c"
+      var $100=$99; //@line 3850 "/root/emscripten/system/lib/dlmalloc.c"
+      $nextp=$100; //@line 3850 "/root/emscripten/system/lib/dlmalloc.c"
+      var $101=$p; //@line 3851 "/root/emscripten/system/lib/dlmalloc.c"
+      var $102=(($101+4)|0); //@line 3851 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($102)>>2)]=7; //@line 3851 "/root/emscripten/system/lib/dlmalloc.c"
+      var $103=$nfences; //@line 3852 "/root/emscripten/system/lib/dlmalloc.c"
+      var $104=((($103)+(1))|0); //@line 3852 "/root/emscripten/system/lib/dlmalloc.c"
+      $nfences=$104; //@line 3852 "/root/emscripten/system/lib/dlmalloc.c"
+      var $105=$nextp; //@line 3853 "/root/emscripten/system/lib/dlmalloc.c"
+      var $106=(($105+4)|0); //@line 3853 "/root/emscripten/system/lib/dlmalloc.c"
+      var $107=$106; //@line 3853 "/root/emscripten/system/lib/dlmalloc.c"
+      var $108=$old_end; //@line 3853 "/root/emscripten/system/lib/dlmalloc.c"
+      var $109=(($107)>>>0) < (($108)>>>0); //@line 3853 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($109) { __label__ = 10; break; } else { __label__ = 11; break; } //@line 3853 "/root/emscripten/system/lib/dlmalloc.c"
+    case 10: 
+      var $111=$nextp; //@line 3854 "/root/emscripten/system/lib/dlmalloc.c"
+      $p=$111; //@line 3854 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 12; break; //@line 3854 "/root/emscripten/system/lib/dlmalloc.c"
+    case 11: 
+      __label__ = 13; break; //@line 3856 "/root/emscripten/system/lib/dlmalloc.c"
+    case 12: 
+      __label__ = 9; break; //@line 3857 "/root/emscripten/system/lib/dlmalloc.c"
+    case 13: 
+      var $115=$csp; //@line 3861 "/root/emscripten/system/lib/dlmalloc.c"
+      var $116=$old_top; //@line 3861 "/root/emscripten/system/lib/dlmalloc.c"
+      var $117=(($115)|0)!=(($116)|0); //@line 3861 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($117) { __label__ = 14; break; } else { __label__ = 50; break; } //@line 3861 "/root/emscripten/system/lib/dlmalloc.c"
+    case 14: 
+      var $119=$old_top; //@line 3862 "/root/emscripten/system/lib/dlmalloc.c"
+      var $120=$119; //@line 3862 "/root/emscripten/system/lib/dlmalloc.c"
+      $q=$120; //@line 3862 "/root/emscripten/system/lib/dlmalloc.c"
+      var $121=$csp; //@line 3863 "/root/emscripten/system/lib/dlmalloc.c"
+      var $122=$old_top; //@line 3863 "/root/emscripten/system/lib/dlmalloc.c"
+      var $123=$121; //@line 3863 "/root/emscripten/system/lib/dlmalloc.c"
+      var $124=$122; //@line 3863 "/root/emscripten/system/lib/dlmalloc.c"
+      var $125=((($123)-($124))|0); //@line 3863 "/root/emscripten/system/lib/dlmalloc.c"
+      $psize=$125; //@line 3863 "/root/emscripten/system/lib/dlmalloc.c"
+      var $126=$q; //@line 3864 "/root/emscripten/system/lib/dlmalloc.c"
+      var $127=$126; //@line 3864 "/root/emscripten/system/lib/dlmalloc.c"
+      var $128=$psize; //@line 3864 "/root/emscripten/system/lib/dlmalloc.c"
+      var $129=(($127+$128)|0); //@line 3864 "/root/emscripten/system/lib/dlmalloc.c"
+      var $130=$129; //@line 3864 "/root/emscripten/system/lib/dlmalloc.c"
+      $tn=$130; //@line 3864 "/root/emscripten/system/lib/dlmalloc.c"
+      var $131=$tn; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $132=(($131+4)|0); //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $133=HEAP32[(($132)>>2)]; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $134=$133 & -2; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($132)>>2)]=$134; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $135=$psize; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $136=$135 | 1; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $137=$q; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $138=(($137+4)|0); //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($138)>>2)]=$136; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $139=$psize; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $140=$q; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $141=$140; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $142=$psize; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $143=(($141+$142)|0); //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $144=$143; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $145=(($144)|0); //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($145)>>2)]=$139; //@line 3865 "/root/emscripten/system/lib/dlmalloc.c"
+      var $146=$psize; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $147=$146 >>> 3; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $148=(($147)>>>0) < 32; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($148) { __label__ = 15; break; } else { __label__ = 22; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 15: 
+      var $150=$psize; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $151=$150 >>> 3; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $I=$151; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $152=$I; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $153=$152 << 1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $154=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $155=(($154+40)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $156=(($155+($153<<2))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $157=$156; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $158=$157; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $B=$158; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $159=$B; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$159; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $160=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $161=(($160)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $162=HEAP32[(($161)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $163=$I; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $164=1 << $163; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $165=$162 & $164; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $166=(($165)|0)!=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($166) { __label__ = 17; break; } else { __label__ = 16; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 16: 
+      var $168=$I; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $169=1 << $168; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $170=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $171=(($170)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $172=HEAP32[(($171)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $173=$172 | $169; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($171)>>2)]=$173; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 21; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 17: 
+      var $175=$B; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $176=(($175+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $177=HEAP32[(($176)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $178=$177; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $179=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $180=(($179+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $181=HEAP32[(($180)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $182=(($178)>>>0) >= (($181)>>>0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $183=(($182)&1); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $184=(($183)==(1)); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $185=(($184)|0)!=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($185) { __label__ = 18; break; } else { __label__ = 19; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 18: 
+      var $187=$B; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $188=(($187+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $189=HEAP32[(($188)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $F=$189; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 20; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 19: 
+      _abort(); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 20: 
+      __label__ = 21; break;
+    case 21: 
+      var $193=$q; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $194=$B; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $195=(($194+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($195)>>2)]=$193; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $196=$q; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $197=$F; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $198=(($197+12)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($198)>>2)]=$196; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $199=$F; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $200=$q; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $201=(($200+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($201)>>2)]=$199; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $202=$B; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $203=$q; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $204=(($203+12)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($204)>>2)]=$202; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 49; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 22: 
+      var $206=$q; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $207=$206; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $TP=$207; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $208=$psize; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $209=$208 >>> 8; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $X=$209; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $210=$X; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $211=(($210)|0)==0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($211) { __label__ = 23; break; } else { __label__ = 24; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 23: 
+      $I1=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 28; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 24: 
+      var $214=$X; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $215=(($214)>>>0) > 65535; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($215) { __label__ = 25; break; } else { __label__ = 26; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 25: 
+      $I1=31; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 27; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 26: 
+      var $218=$X; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$218; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $219=$Y; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $220=((($219)-(256))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $221=$220 >>> 16; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $222=$221 & 8; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$222; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $223=$N; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $224=$Y; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $225=$224 << $223; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$225; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $226=((($225)-(4096))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $227=$226 >>> 16; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $228=$227 & 4; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$228; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $229=$K; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $230=$N; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $231=((($230)+($229))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$231; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $232=$K; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $233=$Y; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $234=$233 << $232; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$234; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $235=((($234)-(16384))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $236=$235 >>> 16; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $237=$236 & 2; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$237; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $238=$N; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $239=((($238)+($237))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $N=$239; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $240=$N; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $241=(((14)-($240))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $242=$K; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $243=$Y; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $244=$243 << $242; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $Y=$244; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $245=$244 >>> 15; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $246=((($241)+($245))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $K=$246; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $247=$K; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $248=$247 << 1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $249=$psize; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $250=$K; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $251=((($250)+(7))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $252=$249 >>> (($251)>>>0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $253=$252 & 1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $254=((($248)+($253))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $I1=$254; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 27; break;
+    case 27: 
+      __label__ = 28; break;
+    case 28: 
+      var $257=$I1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $258=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $259=(($258+304)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $260=(($259+($257<<2))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $H=$260; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $261=$I1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $262=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $263=(($262+28)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($263)>>2)]=$261; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $264=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $265=(($264+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $266=(($265+4)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($266)>>2)]=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $267=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $268=(($267+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $269=(($268)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($269)>>2)]=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $270=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $271=(($270+4)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $272=HEAP32[(($271)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $273=$I1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $274=1 << $273; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $275=$272 & $274; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $276=(($275)|0)!=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($276) { __label__ = 30; break; } else { __label__ = 29; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 29: 
+      var $278=$I1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $279=1 << $278; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $280=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $281=(($280+4)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $282=HEAP32[(($281)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $283=$282 | $279; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($281)>>2)]=$283; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $284=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $285=$H; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($285)>>2)]=$284; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $286=$H; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $287=$286; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $288=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $289=(($288+24)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($289)>>2)]=$287; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $290=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $291=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $292=(($291+12)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($292)>>2)]=$290; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $293=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $294=(($293+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($294)>>2)]=$290; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 48; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 30: 
+      var $296=$H; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $297=HEAP32[(($296)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$297; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $298=$psize; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $299=$I1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $300=(($299)|0)==31; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($300) { __label__ = 31; break; } else { __label__ = 32; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 31: 
+      var $309 = 0;__label__ = 33; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 32: 
+      var $303=$I1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $304=$303 >>> 1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $305=((($304)+(8))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $306=((($305)-(2))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $307=(((31)-($306))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $309 = $307;__label__ = 33; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 33: 
+      var $309; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $310=$298 << $309; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$310; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 34; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 34: 
+      var $312=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $313=(($312+4)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $314=HEAP32[(($313)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $315=$314 & -8; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $316=$psize; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $317=(($315)|0)!=(($316)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($317) { __label__ = 35; break; } else { __label__ = 41; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 35: 
+      var $319=$K2; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $320=$319 >>> 31; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $321=$320 & 1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $322=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $323=(($322+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $324=(($323+($321<<2))|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $C=$324; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $325=$K2; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $326=$325 << 1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $K2=$326; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $327=$C; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $328=HEAP32[(($327)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $329=(($328)|0)!=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($329) { __label__ = 36; break; } else { __label__ = 37; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 36: 
+      var $331=$C; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $332=HEAP32[(($331)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $T=$332; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 40; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 37: 
+      var $334=$C; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $335=$334; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $336=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $337=(($336+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $338=HEAP32[(($337)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $339=(($335)>>>0) >= (($338)>>>0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $340=(($339)&1); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $341=(($340)==(1)); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $342=(($341)|0)!=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($342) { __label__ = 38; break; } else { __label__ = 39; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 38: 
+      var $344=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $345=$C; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($345)>>2)]=$344; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $346=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $347=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $348=(($347+24)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($348)>>2)]=$346; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $349=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $350=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $351=(($350+12)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($351)>>2)]=$349; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $352=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $353=(($352+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($353)>>2)]=$349; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 47; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 39: 
+      _abort(); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 40: 
+      __label__ = 46; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 41: 
+      var $357=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $358=(($357+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $359=HEAP32[(($358)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      $F3=$359; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $360=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $361=$360; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $362=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $363=(($362+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $364=HEAP32[(($363)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $365=(($361)>>>0) >= (($364)>>>0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      if ($365) { __label__ = 42; break; } else { var $374 = 0;__label__ = 43; break; } //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 42: 
+      var $367=$F3; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $368=$367; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $369=$1; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $370=(($369+16)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $371=HEAP32[(($370)>>2)]; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $372=(($368)>>>0) >= (($371)>>>0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $374 = $372;__label__ = 43; break;
+    case 43: 
+      var $374;
+      var $375=(($374)&1);
+      var $376=(($375)==(1));
+      var $377=(($376)|0)!=0;
+      if ($377) { __label__ = 44; break; } else { __label__ = 45; break; }
+    case 44: 
+      var $379=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $380=$F3; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $381=(($380+12)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($381)>>2)]=$379; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $382=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $383=(($382+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($383)>>2)]=$379; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $384=$F3; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $385=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $386=(($385+8)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($386)>>2)]=$384; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $387=$T; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $388=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $389=(($388+12)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($389)>>2)]=$387; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $390=$TP; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      var $391=(($390+24)|0); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      HEAP32[(($391)>>2)]=0; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      __label__ = 47; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 45: 
+      _abort(); //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+      throw "Reached an unreachable!" //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 46: 
+      __label__ = 34; break; //@line 3866 "/root/emscripten/system/lib/dlmalloc.c"
+    case 47: 
+      __label__ = 48; break;
+    case 48: 
+      __label__ = 49; break;
+    case 49: 
+      __label__ = 50; break; //@line 3867 "/root/emscripten/system/lib/dlmalloc.c"
+    case 50: 
+      ;
+      return; //@line 3870 "/root/emscripten/system/lib/dlmalloc.c"
+    default: assert(0, "bad label: " + __label__);
+  }
+}
+_add_segment["X"]=1;
 
 // Note: Some Emscripten settings will significantly limit the speed of the generated code.
 // Note: Some Emscripten settings may limit the speed of the generated code.
-// Warning: printing of i64 values may be slightly rounded! No deep i64 math used, so precise i64 code not included
-var i64Math = null;
+// TODO: strip out parts of this we do not need
+
+//======= begin closure i64 code =======
+
+// Copyright 2009 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Defines a Long class for representing a 64-bit two's-complement
+ * integer value, which faithfully simulates the behavior of a Java "long". This
+ * implementation is derived from LongLib in GWT.
+ *
+ */
+
+var i64Math = (function() { // Emscripten wrapper
+  var goog = { math: {} };
+
+
+  /**
+   * Constructs a 64-bit two's-complement integer, given its low and high 32-bit
+   * values as *signed* integers.  See the from* functions below for more
+   * convenient ways of constructing Longs.
+   *
+   * The internal representation of a long is the two given signed, 32-bit values.
+   * We use 32-bit pieces because these are the size of integers on which
+   * Javascript performs bit-operations.  For operations like addition and
+   * multiplication, we split each number into 16-bit pieces, which can easily be
+   * multiplied within Javascript's floating-point representation without overflow
+   * or change in sign.
+   *
+   * In the algorithms below, we frequently reduce the negative case to the
+   * positive case by negating the input(s) and then post-processing the result.
+   * Note that we must ALWAYS check specially whether those values are MIN_VALUE
+   * (-2^63) because -MIN_VALUE == MIN_VALUE (since 2^63 cannot be represented as
+   * a positive number, it overflows back into a negative).  Not handling this
+   * case would often result in infinite recursion.
+   *
+   * @param {number} low  The low (signed) 32 bits of the long.
+   * @param {number} high  The high (signed) 32 bits of the long.
+   * @constructor
+   */
+  goog.math.Long = function(low, high) {
+    /**
+     * @type {number}
+     * @private
+     */
+    this.low_ = low | 0;  // force into 32 signed bits.
+
+    /**
+     * @type {number}
+     * @private
+     */
+    this.high_ = high | 0;  // force into 32 signed bits.
+  };
+
+
+  // NOTE: Common constant values ZERO, ONE, NEG_ONE, etc. are defined below the
+  // from* methods on which they depend.
+
+
+  /**
+   * A cache of the Long representations of small integer values.
+   * @type {!Object}
+   * @private
+   */
+  goog.math.Long.IntCache_ = {};
+
+
+  /**
+   * Returns a Long representing the given (32-bit) integer value.
+   * @param {number} value The 32-bit integer in question.
+   * @return {!goog.math.Long} The corresponding Long value.
+   */
+  goog.math.Long.fromInt = function(value) {
+    if (-128 <= value && value < 128) {
+      var cachedObj = goog.math.Long.IntCache_[value];
+      if (cachedObj) {
+        return cachedObj;
+      }
+    }
+
+    var obj = new goog.math.Long(value | 0, value < 0 ? -1 : 0);
+    if (-128 <= value && value < 128) {
+      goog.math.Long.IntCache_[value] = obj;
+    }
+    return obj;
+  };
+
+
+  /**
+   * Returns a Long representing the given value, provided that it is a finite
+   * number.  Otherwise, zero is returned.
+   * @param {number} value The number in question.
+   * @return {!goog.math.Long} The corresponding Long value.
+   */
+  goog.math.Long.fromNumber = function(value) {
+    if (isNaN(value) || !isFinite(value)) {
+      return goog.math.Long.ZERO;
+    } else if (value <= -goog.math.Long.TWO_PWR_63_DBL_) {
+      return goog.math.Long.MIN_VALUE;
+    } else if (value + 1 >= goog.math.Long.TWO_PWR_63_DBL_) {
+      return goog.math.Long.MAX_VALUE;
+    } else if (value < 0) {
+      return goog.math.Long.fromNumber(-value).negate();
+    } else {
+      return new goog.math.Long(
+          (value % goog.math.Long.TWO_PWR_32_DBL_) | 0,
+          (value / goog.math.Long.TWO_PWR_32_DBL_) | 0);
+    }
+  };
+
+
+  /**
+   * Returns a Long representing the 64-bit integer that comes by concatenating
+   * the given high and low bits.  Each is assumed to use 32 bits.
+   * @param {number} lowBits The low 32-bits.
+   * @param {number} highBits The high 32-bits.
+   * @return {!goog.math.Long} The corresponding Long value.
+   */
+  goog.math.Long.fromBits = function(lowBits, highBits) {
+    return new goog.math.Long(lowBits, highBits);
+  };
+
+
+  /**
+   * Returns a Long representation of the given string, written using the given
+   * radix.
+   * @param {string} str The textual representation of the Long.
+   * @param {number=} opt_radix The radix in which the text is written.
+   * @return {!goog.math.Long} The corresponding Long value.
+   */
+  goog.math.Long.fromString = function(str, opt_radix) {
+    if (str.length == 0) {
+      throw Error('number format error: empty string');
+    }
+
+    var radix = opt_radix || 10;
+    if (radix < 2 || 36 < radix) {
+      throw Error('radix out of range: ' + radix);
+    }
+
+    if (str.charAt(0) == '-') {
+      return goog.math.Long.fromString(str.substring(1), radix).negate();
+    } else if (str.indexOf('-') >= 0) {
+      throw Error('number format error: interior "-" character: ' + str);
+    }
+
+    // Do several (8) digits each time through the loop, so as to
+    // minimize the calls to the very expensive emulated div.
+    var radixToPower = goog.math.Long.fromNumber(Math.pow(radix, 8));
+
+    var result = goog.math.Long.ZERO;
+    for (var i = 0; i < str.length; i += 8) {
+      var size = Math.min(8, str.length - i);
+      var value = parseInt(str.substring(i, i + size), radix);
+      if (size < 8) {
+        var power = goog.math.Long.fromNumber(Math.pow(radix, size));
+        result = result.multiply(power).add(goog.math.Long.fromNumber(value));
+      } else {
+        result = result.multiply(radixToPower);
+        result = result.add(goog.math.Long.fromNumber(value));
+      }
+    }
+    return result;
+  };
+
+
+  // NOTE: the compiler should inline these constant values below and then remove
+  // these variables, so there should be no runtime penalty for these.
+
+
+  /**
+   * Number used repeated below in calculations.  This must appear before the
+   * first call to any from* function below.
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_16_DBL_ = 1 << 16;
+
+
+  /**
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_24_DBL_ = 1 << 24;
+
+
+  /**
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_32_DBL_ =
+      goog.math.Long.TWO_PWR_16_DBL_ * goog.math.Long.TWO_PWR_16_DBL_;
+
+
+  /**
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_31_DBL_ =
+      goog.math.Long.TWO_PWR_32_DBL_ / 2;
+
+
+  /**
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_48_DBL_ =
+      goog.math.Long.TWO_PWR_32_DBL_ * goog.math.Long.TWO_PWR_16_DBL_;
+
+
+  /**
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_64_DBL_ =
+      goog.math.Long.TWO_PWR_32_DBL_ * goog.math.Long.TWO_PWR_32_DBL_;
+
+
+  /**
+   * @type {number}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_63_DBL_ =
+      goog.math.Long.TWO_PWR_64_DBL_ / 2;
+
+
+  /** @type {!goog.math.Long} */
+  goog.math.Long.ZERO = goog.math.Long.fromInt(0);
+
+
+  /** @type {!goog.math.Long} */
+  goog.math.Long.ONE = goog.math.Long.fromInt(1);
+
+
+  /** @type {!goog.math.Long} */
+  goog.math.Long.NEG_ONE = goog.math.Long.fromInt(-1);
+
+
+  /** @type {!goog.math.Long} */
+  goog.math.Long.MAX_VALUE =
+      goog.math.Long.fromBits(0xFFFFFFFF | 0, 0x7FFFFFFF | 0);
+
+
+  /** @type {!goog.math.Long} */
+  goog.math.Long.MIN_VALUE = goog.math.Long.fromBits(0, 0x80000000 | 0);
+
+
+  /**
+   * @type {!goog.math.Long}
+   * @private
+   */
+  goog.math.Long.TWO_PWR_24_ = goog.math.Long.fromInt(1 << 24);
+
+
+  /** @return {number} The value, assuming it is a 32-bit integer. */
+  goog.math.Long.prototype.toInt = function() {
+    return this.low_;
+  };
+
+
+  /** @return {number} The closest floating-point representation to this value. */
+  goog.math.Long.prototype.toNumber = function() {
+    return this.high_ * goog.math.Long.TWO_PWR_32_DBL_ +
+           this.getLowBitsUnsigned();
+  };
+
+
+  /**
+   * @param {number=} opt_radix The radix in which the text should be written.
+   * @return {string} The textual representation of this value.
+   */
+  goog.math.Long.prototype.toString = function(opt_radix) {
+    var radix = opt_radix || 10;
+    if (radix < 2 || 36 < radix) {
+      throw Error('radix out of range: ' + radix);
+    }
+
+    if (this.isZero()) {
+      return '0';
+    }
+
+    if (this.isNegative()) {
+      if (this.equals(goog.math.Long.MIN_VALUE)) {
+        // We need to change the Long value before it can be negated, so we remove
+        // the bottom-most digit in this base and then recurse to do the rest.
+        var radixLong = goog.math.Long.fromNumber(radix);
+        var div = this.div(radixLong);
+        var rem = div.multiply(radixLong).subtract(this);
+        return div.toString(radix) + rem.toInt().toString(radix);
+      } else {
+        return '-' + this.negate().toString(radix);
+      }
+    }
+
+    // Do several (6) digits each time through the loop, so as to
+    // minimize the calls to the very expensive emulated div.
+    var radixToPower = goog.math.Long.fromNumber(Math.pow(radix, 6));
+
+    var rem = this;
+    var result = '';
+    while (true) {
+      var remDiv = rem.div(radixToPower);
+      var intval = rem.subtract(remDiv.multiply(radixToPower)).toInt();
+      var digits = intval.toString(radix);
+
+      rem = remDiv;
+      if (rem.isZero()) {
+        return digits + result;
+      } else {
+        while (digits.length < 6) {
+          digits = '0' + digits;
+        }
+        result = '' + digits + result;
+      }
+    }
+  };
+
+
+  /** @return {number} The high 32-bits as a signed value. */
+  goog.math.Long.prototype.getHighBits = function() {
+    return this.high_;
+  };
+
+
+  /** @return {number} The low 32-bits as a signed value. */
+  goog.math.Long.prototype.getLowBits = function() {
+    return this.low_;
+  };
+
+
+  /** @return {number} The low 32-bits as an unsigned value. */
+  goog.math.Long.prototype.getLowBitsUnsigned = function() {
+    return (this.low_ >= 0) ?
+        this.low_ : goog.math.Long.TWO_PWR_32_DBL_ + this.low_;
+  };
+
+
+  /**
+   * @return {number} Returns the number of bits needed to represent the absolute
+   *     value of this Long.
+   */
+  goog.math.Long.prototype.getNumBitsAbs = function() {
+    if (this.isNegative()) {
+      if (this.equals(goog.math.Long.MIN_VALUE)) {
+        return 64;
+      } else {
+        return this.negate().getNumBitsAbs();
+      }
+    } else {
+      var val = this.high_ != 0 ? this.high_ : this.low_;
+      for (var bit = 31; bit > 0; bit--) {
+        if ((val & (1 << bit)) != 0) {
+          break;
+        }
+      }
+      return this.high_ != 0 ? bit + 33 : bit + 1;
+    }
+  };
+
+
+  /** @return {boolean} Whether this value is zero. */
+  goog.math.Long.prototype.isZero = function() {
+    return this.high_ == 0 && this.low_ == 0;
+  };
+
+
+  /** @return {boolean} Whether this value is negative. */
+  goog.math.Long.prototype.isNegative = function() {
+    return this.high_ < 0;
+  };
+
+
+  /** @return {boolean} Whether this value is odd. */
+  goog.math.Long.prototype.isOdd = function() {
+    return (this.low_ & 1) == 1;
+  };
+
+
+  /**
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {boolean} Whether this Long equals the other.
+   */
+  goog.math.Long.prototype.equals = function(other) {
+    return (this.high_ == other.high_) && (this.low_ == other.low_);
+  };
+
+
+  /**
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {boolean} Whether this Long does not equal the other.
+   */
+  goog.math.Long.prototype.notEquals = function(other) {
+    return (this.high_ != other.high_) || (this.low_ != other.low_);
+  };
+
+
+  /**
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {boolean} Whether this Long is less than the other.
+   */
+  goog.math.Long.prototype.lessThan = function(other) {
+    return this.compare(other) < 0;
+  };
+
+
+  /**
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {boolean} Whether this Long is less than or equal to the other.
+   */
+  goog.math.Long.prototype.lessThanOrEqual = function(other) {
+    return this.compare(other) <= 0;
+  };
+
+
+  /**
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {boolean} Whether this Long is greater than the other.
+   */
+  goog.math.Long.prototype.greaterThan = function(other) {
+    return this.compare(other) > 0;
+  };
+
+
+  /**
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {boolean} Whether this Long is greater than or equal to the other.
+   */
+  goog.math.Long.prototype.greaterThanOrEqual = function(other) {
+    return this.compare(other) >= 0;
+  };
+
+
+  /**
+   * Compares this Long with the given one.
+   * @param {goog.math.Long} other Long to compare against.
+   * @return {number} 0 if they are the same, 1 if the this is greater, and -1
+   *     if the given one is greater.
+   */
+  goog.math.Long.prototype.compare = function(other) {
+    if (this.equals(other)) {
+      return 0;
+    }
+
+    var thisNeg = this.isNegative();
+    var otherNeg = other.isNegative();
+    if (thisNeg && !otherNeg) {
+      return -1;
+    }
+    if (!thisNeg && otherNeg) {
+      return 1;
+    }
+
+    // at this point, the signs are the same, so subtraction will not overflow
+    if (this.subtract(other).isNegative()) {
+      return -1;
+    } else {
+      return 1;
+    }
+  };
+
+
+  /** @return {!goog.math.Long} The negation of this value. */
+  goog.math.Long.prototype.negate = function() {
+    if (this.equals(goog.math.Long.MIN_VALUE)) {
+      return goog.math.Long.MIN_VALUE;
+    } else {
+      return this.not().add(goog.math.Long.ONE);
+    }
+  };
+
+
+  /**
+   * Returns the sum of this and the given Long.
+   * @param {goog.math.Long} other Long to add to this one.
+   * @return {!goog.math.Long} The sum of this and the given Long.
+   */
+  goog.math.Long.prototype.add = function(other) {
+    // Divide each number into 4 chunks of 16 bits, and then sum the chunks.
+
+    var a48 = this.high_ >>> 16;
+    var a32 = this.high_ & 0xFFFF;
+    var a16 = this.low_ >>> 16;
+    var a00 = this.low_ & 0xFFFF;
+
+    var b48 = other.high_ >>> 16;
+    var b32 = other.high_ & 0xFFFF;
+    var b16 = other.low_ >>> 16;
+    var b00 = other.low_ & 0xFFFF;
+
+    var c48 = 0, c32 = 0, c16 = 0, c00 = 0;
+    c00 += a00 + b00;
+    c16 += c00 >>> 16;
+    c00 &= 0xFFFF;
+    c16 += a16 + b16;
+    c32 += c16 >>> 16;
+    c16 &= 0xFFFF;
+    c32 += a32 + b32;
+    c48 += c32 >>> 16;
+    c32 &= 0xFFFF;
+    c48 += a48 + b48;
+    c48 &= 0xFFFF;
+    return goog.math.Long.fromBits((c16 << 16) | c00, (c48 << 16) | c32);
+  };
+
+
+  /**
+   * Returns the difference of this and the given Long.
+   * @param {goog.math.Long} other Long to subtract from this.
+   * @return {!goog.math.Long} The difference of this and the given Long.
+   */
+  goog.math.Long.prototype.subtract = function(other) {
+    return this.add(other.negate());
+  };
+
+
+  /**
+   * Returns the product of this and the given long.
+   * @param {goog.math.Long} other Long to multiply with this.
+   * @return {!goog.math.Long} The product of this and the other.
+   */
+  goog.math.Long.prototype.multiply = function(other) {
+    if (this.isZero()) {
+      return goog.math.Long.ZERO;
+    } else if (other.isZero()) {
+      return goog.math.Long.ZERO;
+    }
+
+    if (this.equals(goog.math.Long.MIN_VALUE)) {
+      return other.isOdd() ? goog.math.Long.MIN_VALUE : goog.math.Long.ZERO;
+    } else if (other.equals(goog.math.Long.MIN_VALUE)) {
+      return this.isOdd() ? goog.math.Long.MIN_VALUE : goog.math.Long.ZERO;
+    }
+
+    if (this.isNegative()) {
+      if (other.isNegative()) {
+        return this.negate().multiply(other.negate());
+      } else {
+        return this.negate().multiply(other).negate();
+      }
+    } else if (other.isNegative()) {
+      return this.multiply(other.negate()).negate();
+    }
+
+    // If both longs are small, use float multiplication
+    if (this.lessThan(goog.math.Long.TWO_PWR_24_) &&
+        other.lessThan(goog.math.Long.TWO_PWR_24_)) {
+      return goog.math.Long.fromNumber(this.toNumber() * other.toNumber());
+    }
+
+    // Divide each long into 4 chunks of 16 bits, and then add up 4x4 products.
+    // We can skip products that would overflow.
+
+    var a48 = this.high_ >>> 16;
+    var a32 = this.high_ & 0xFFFF;
+    var a16 = this.low_ >>> 16;
+    var a00 = this.low_ & 0xFFFF;
+
+    var b48 = other.high_ >>> 16;
+    var b32 = other.high_ & 0xFFFF;
+    var b16 = other.low_ >>> 16;
+    var b00 = other.low_ & 0xFFFF;
+
+    var c48 = 0, c32 = 0, c16 = 0, c00 = 0;
+    c00 += a00 * b00;
+    c16 += c00 >>> 16;
+    c00 &= 0xFFFF;
+    c16 += a16 * b00;
+    c32 += c16 >>> 16;
+    c16 &= 0xFFFF;
+    c16 += a00 * b16;
+    c32 += c16 >>> 16;
+    c16 &= 0xFFFF;
+    c32 += a32 * b00;
+    c48 += c32 >>> 16;
+    c32 &= 0xFFFF;
+    c32 += a16 * b16;
+    c48 += c32 >>> 16;
+    c32 &= 0xFFFF;
+    c32 += a00 * b32;
+    c48 += c32 >>> 16;
+    c32 &= 0xFFFF;
+    c48 += a48 * b00 + a32 * b16 + a16 * b32 + a00 * b48;
+    c48 &= 0xFFFF;
+    return goog.math.Long.fromBits((c16 << 16) | c00, (c48 << 16) | c32);
+  };
+
+
+  /**
+   * Returns this Long divided by the given one.
+   * @param {goog.math.Long} other Long by which to divide.
+   * @return {!goog.math.Long} This Long divided by the given one.
+   */
+  goog.math.Long.prototype.div = function(other) {
+    if (other.isZero()) {
+      throw Error('division by zero');
+    } else if (this.isZero()) {
+      return goog.math.Long.ZERO;
+    }
+
+    if (this.equals(goog.math.Long.MIN_VALUE)) {
+      if (other.equals(goog.math.Long.ONE) ||
+          other.equals(goog.math.Long.NEG_ONE)) {
+        return goog.math.Long.MIN_VALUE;  // recall that -MIN_VALUE == MIN_VALUE
+      } else if (other.equals(goog.math.Long.MIN_VALUE)) {
+        return goog.math.Long.ONE;
+      } else {
+        // At this point, we have |other| >= 2, so |this/other| < |MIN_VALUE|.
+        var halfThis = this.shiftRight(1);
+        var approx = halfThis.div(other).shiftLeft(1);
+        if (approx.equals(goog.math.Long.ZERO)) {
+          return other.isNegative() ? goog.math.Long.ONE : goog.math.Long.NEG_ONE;
+        } else {
+          var rem = this.subtract(other.multiply(approx));
+          var result = approx.add(rem.div(other));
+          return result;
+        }
+      }
+    } else if (other.equals(goog.math.Long.MIN_VALUE)) {
+      return goog.math.Long.ZERO;
+    }
+
+    if (this.isNegative()) {
+      if (other.isNegative()) {
+        return this.negate().div(other.negate());
+      } else {
+        return this.negate().div(other).negate();
+      }
+    } else if (other.isNegative()) {
+      return this.div(other.negate()).negate();
+    }
+
+    // Repeat the following until the remainder is less than other:  find a
+    // floating-point that approximates remainder / other *from below*, add this
+    // into the result, and subtract it from the remainder.  It is critical that
+    // the approximate value is less than or equal to the real value so that the
+    // remainder never becomes negative.
+    var res = goog.math.Long.ZERO;
+    var rem = this;
+    while (rem.greaterThanOrEqual(other)) {
+      // Approximate the result of division. This may be a little greater or
+      // smaller than the actual value.
+      var approx = Math.max(1, Math.floor(rem.toNumber() / other.toNumber()));
+
+      // We will tweak the approximate result by changing it in the 48-th digit or
+      // the smallest non-fractional digit, whichever is larger.
+      var log2 = Math.ceil(Math.log(approx) / Math.LN2);
+      var delta = (log2 <= 48) ? 1 : Math.pow(2, log2 - 48);
+
+      // Decrease the approximation until it is smaller than the remainder.  Note
+      // that if it is too large, the product overflows and is negative.
+      var approxRes = goog.math.Long.fromNumber(approx);
+      var approxRem = approxRes.multiply(other);
+      while (approxRem.isNegative() || approxRem.greaterThan(rem)) {
+        approx -= delta;
+        approxRes = goog.math.Long.fromNumber(approx);
+        approxRem = approxRes.multiply(other);
+      }
+
+      // We know the answer can't be zero... and actually, zero would cause
+      // infinite recursion since we would make no progress.
+      if (approxRes.isZero()) {
+        approxRes = goog.math.Long.ONE;
+      }
+
+      res = res.add(approxRes);
+      rem = rem.subtract(approxRem);
+    }
+    return res;
+  };
+
+
+  /**
+   * Returns this Long modulo the given one.
+   * @param {goog.math.Long} other Long by which to mod.
+   * @return {!goog.math.Long} This Long modulo the given one.
+   */
+  goog.math.Long.prototype.modulo = function(other) {
+    return this.subtract(this.div(other).multiply(other));
+  };
+
+
+  /** @return {!goog.math.Long} The bitwise-NOT of this value. */
+  goog.math.Long.prototype.not = function() {
+    return goog.math.Long.fromBits(~this.low_, ~this.high_);
+  };
+
+
+  /**
+   * Returns the bitwise-AND of this Long and the given one.
+   * @param {goog.math.Long} other The Long with which to AND.
+   * @return {!goog.math.Long} The bitwise-AND of this and the other.
+   */
+  goog.math.Long.prototype.and = function(other) {
+    return goog.math.Long.fromBits(this.low_ & other.low_,
+                                   this.high_ & other.high_);
+  };
+
+
+  /**
+   * Returns the bitwise-OR of this Long and the given one.
+   * @param {goog.math.Long} other The Long with which to OR.
+   * @return {!goog.math.Long} The bitwise-OR of this and the other.
+   */
+  goog.math.Long.prototype.or = function(other) {
+    return goog.math.Long.fromBits(this.low_ | other.low_,
+                                   this.high_ | other.high_);
+  };
+
+
+  /**
+   * Returns the bitwise-XOR of this Long and the given one.
+   * @param {goog.math.Long} other The Long with which to XOR.
+   * @return {!goog.math.Long} The bitwise-XOR of this and the other.
+   */
+  goog.math.Long.prototype.xor = function(other) {
+    return goog.math.Long.fromBits(this.low_ ^ other.low_,
+                                   this.high_ ^ other.high_);
+  };
+
+
+  /**
+   * Returns this Long with bits shifted to the left by the given amount.
+   * @param {number} numBits The number of bits by which to shift.
+   * @return {!goog.math.Long} This shifted to the left by the given amount.
+   */
+  goog.math.Long.prototype.shiftLeft = function(numBits) {
+    numBits &= 63;
+    if (numBits == 0) {
+      return this;
+    } else {
+      var low = this.low_;
+      if (numBits < 32) {
+        var high = this.high_;
+        return goog.math.Long.fromBits(
+            low << numBits,
+            (high << numBits) | (low >>> (32 - numBits)));
+      } else {
+        return goog.math.Long.fromBits(0, low << (numBits - 32));
+      }
+    }
+  };
+
+
+  /**
+   * Returns this Long with bits shifted to the right by the given amount.
+   * @param {number} numBits The number of bits by which to shift.
+   * @return {!goog.math.Long} This shifted to the right by the given amount.
+   */
+  goog.math.Long.prototype.shiftRight = function(numBits) {
+    numBits &= 63;
+    if (numBits == 0) {
+      return this;
+    } else {
+      var high = this.high_;
+      if (numBits < 32) {
+        var low = this.low_;
+        return goog.math.Long.fromBits(
+            (low >>> numBits) | (high << (32 - numBits)),
+            high >> numBits);
+      } else {
+        return goog.math.Long.fromBits(
+            high >> (numBits - 32),
+            high >= 0 ? 0 : -1);
+      }
+    }
+  };
+
+
+  /**
+   * Returns this Long with bits shifted to the right by the given amount, with
+   * the new top bits matching the current sign bit.
+   * @param {number} numBits The number of bits by which to shift.
+   * @return {!goog.math.Long} This shifted to the right by the given amount, with
+   *     zeros placed into the new leading bits.
+   */
+  goog.math.Long.prototype.shiftRightUnsigned = function(numBits) {
+    numBits &= 63;
+    if (numBits == 0) {
+      return this;
+    } else {
+      var high = this.high_;
+      if (numBits < 32) {
+        var low = this.low_;
+        return goog.math.Long.fromBits(
+            (low >>> numBits) | (high << (32 - numBits)),
+            high >>> numBits);
+      } else if (numBits == 32) {
+        return goog.math.Long.fromBits(high, 0);
+      } else {
+        return goog.math.Long.fromBits(high >>> (numBits - 32), 0);
+      }
+    }
+  };
+
+  //======= begin jsbn =======
+
+  var navigator = { appName: 'Modern Browser' }; // polyfill a little
+
+  // Copyright (c) 2005  Tom Wu
+  // All Rights Reserved.
+  // http://www-cs-students.stanford.edu/~tjw/jsbn/
+
+  /*
+   * Copyright (c) 2003-2005  Tom Wu
+   * All Rights Reserved.
+   *
+   * Permission is hereby granted, free of charge, to any person obtaining
+   * a copy of this software and associated documentation files (the
+   * "Software"), to deal in the Software without restriction, including
+   * without limitation the rights to use, copy, modify, merge, publish,
+   * distribute, sublicense, and/or sell copies of the Software, and to
+   * permit persons to whom the Software is furnished to do so, subject to
+   * the following conditions:
+   *
+   * The above copyright notice and this permission notice shall be
+   * included in all copies or substantial portions of the Software.
+   *
+   * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+   * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+   * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+   *
+   * IN NO EVENT SHALL TOM WU BE LIABLE FOR ANY SPECIAL, INCIDENTAL,
+   * INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND, OR ANY DAMAGES WHATSOEVER
+   * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER OR NOT ADVISED OF
+   * THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF LIABILITY, ARISING OUT
+   * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   *
+   * In addition, the following condition applies:
+   *
+   * All redistributions must retain an intact copy of this copyright notice
+   * and disclaimer.
+   */
+
+  // Basic JavaScript BN library - subset useful for RSA encryption.
+
+  // Bits per digit
+  var dbits;
+
+  // JavaScript engine analysis
+  var canary = 0xdeadbeefcafe;
+  var j_lm = ((canary&0xffffff)==0xefcafe);
+
+  // (public) Constructor
+  function BigInteger(a,b,c) {
+    if(a != null)
+      if("number" == typeof a) this.fromNumber(a,b,c);
+      else if(b == null && "string" != typeof a) this.fromString(a,256);
+      else this.fromString(a,b);
+  }
+
+  // return new, unset BigInteger
+  function nbi() { return new BigInteger(null); }
+
+  // am: Compute w_j += (x*this_i), propagate carries,
+  // c is initial carry, returns final carry.
+  // c < 3*dvalue, x < 2*dvalue, this_i < dvalue
+  // We need to select the fastest one that works in this environment.
+
+  // am1: use a single mult and divide to get the high bits,
+  // max digit bits should be 26 because
+  // max internal value = 2*dvalue^2-2*dvalue (< 2^53)
+  function am1(i,x,w,j,c,n) {
+    while(--n >= 0) {
+      var v = x*this[i++]+w[j]+c;
+      c = Math.floor(v/0x4000000);
+      w[j++] = v&0x3ffffff;
+    }
+    return c;
+  }
+  // am2 avoids a big mult-and-extract completely.
+  // Max digit bits should be <= 30 because we do bitwise ops
+  // on values up to 2*hdvalue^2-hdvalue-1 (< 2^31)
+  function am2(i,x,w,j,c,n) {
+    var xl = x&0x7fff, xh = x>>15;
+    while(--n >= 0) {
+      var l = this[i]&0x7fff;
+      var h = this[i++]>>15;
+      var m = xh*l+h*xl;
+      l = xl*l+((m&0x7fff)<<15)+w[j]+(c&0x3fffffff);
+      c = (l>>>30)+(m>>>15)+xh*h+(c>>>30);
+      w[j++] = l&0x3fffffff;
+    }
+    return c;
+  }
+  // Alternately, set max digit bits to 28 since some
+  // browsers slow down when dealing with 32-bit numbers.
+  function am3(i,x,w,j,c,n) {
+    var xl = x&0x3fff, xh = x>>14;
+    while(--n >= 0) {
+      var l = this[i]&0x3fff;
+      var h = this[i++]>>14;
+      var m = xh*l+h*xl;
+      l = xl*l+((m&0x3fff)<<14)+w[j]+c;
+      c = (l>>28)+(m>>14)+xh*h;
+      w[j++] = l&0xfffffff;
+    }
+    return c;
+  }
+  if(j_lm && (navigator.appName == "Microsoft Internet Explorer")) {
+    BigInteger.prototype.am = am2;
+    dbits = 30;
+  }
+  else if(j_lm && (navigator.appName != "Netscape")) {
+    BigInteger.prototype.am = am1;
+    dbits = 26;
+  }
+  else { // Mozilla/Netscape seems to prefer am3
+    BigInteger.prototype.am = am3;
+    dbits = 28;
+  }
+
+  BigInteger.prototype.DB = dbits;
+  BigInteger.prototype.DM = ((1<<dbits)-1);
+  BigInteger.prototype.DV = (1<<dbits);
+
+  var BI_FP = 52;
+  BigInteger.prototype.FV = Math.pow(2,BI_FP);
+  BigInteger.prototype.F1 = BI_FP-dbits;
+  BigInteger.prototype.F2 = 2*dbits-BI_FP;
+
+  // Digit conversions
+  var BI_RM = "0123456789abcdefghijklmnopqrstuvwxyz";
+  var BI_RC = new Array();
+  var rr,vv;
+  rr = "0".charCodeAt(0);
+  for(vv = 0; vv <= 9; ++vv) BI_RC[rr++] = vv;
+  rr = "a".charCodeAt(0);
+  for(vv = 10; vv < 36; ++vv) BI_RC[rr++] = vv;
+  rr = "A".charCodeAt(0);
+  for(vv = 10; vv < 36; ++vv) BI_RC[rr++] = vv;
+
+  function int2char(n) { return BI_RM.charAt(n); }
+  function intAt(s,i) {
+    var c = BI_RC[s.charCodeAt(i)];
+    return (c==null)?-1:c;
+  }
+
+  // (protected) copy this to r
+  function bnpCopyTo(r) {
+    for(var i = this.t-1; i >= 0; --i) r[i] = this[i];
+    r.t = this.t;
+    r.s = this.s;
+  }
+
+  // (protected) set from integer value x, -DV <= x < DV
+  function bnpFromInt(x) {
+    this.t = 1;
+    this.s = (x<0)?-1:0;
+    if(x > 0) this[0] = x;
+    else if(x < -1) this[0] = x+DV;
+    else this.t = 0;
+  }
+
+  // return bigint initialized to value
+  function nbv(i) { var r = nbi(); r.fromInt(i); return r; }
+
+  // (protected) set from string and radix
+  function bnpFromString(s,b) {
+    var k;
+    if(b == 16) k = 4;
+    else if(b == 8) k = 3;
+    else if(b == 256) k = 8; // byte array
+    else if(b == 2) k = 1;
+    else if(b == 32) k = 5;
+    else if(b == 4) k = 2;
+    else { this.fromRadix(s,b); return; }
+    this.t = 0;
+    this.s = 0;
+    var i = s.length, mi = false, sh = 0;
+    while(--i >= 0) {
+      var x = (k==8)?s[i]&0xff:intAt(s,i);
+      if(x < 0) {
+        if(s.charAt(i) == "-") mi = true;
+        continue;
+      }
+      mi = false;
+      if(sh == 0)
+        this[this.t++] = x;
+      else if(sh+k > this.DB) {
+        this[this.t-1] |= (x&((1<<(this.DB-sh))-1))<<sh;
+        this[this.t++] = (x>>(this.DB-sh));
+      }
+      else
+        this[this.t-1] |= x<<sh;
+      sh += k;
+      if(sh >= this.DB) sh -= this.DB;
+    }
+    if(k == 8 && (s[0]&0x80) != 0) {
+      this.s = -1;
+      if(sh > 0) this[this.t-1] |= ((1<<(this.DB-sh))-1)<<sh;
+    }
+    this.clamp();
+    if(mi) BigInteger.ZERO.subTo(this,this);
+  }
+
+  // (protected) clamp off excess high words
+  function bnpClamp() {
+    var c = this.s&this.DM;
+    while(this.t > 0 && this[this.t-1] == c) --this.t;
+  }
+
+  // (public) return string representation in given radix
+  function bnToString(b) {
+    if(this.s < 0) return "-"+this.negate().toString(b);
+    var k;
+    if(b == 16) k = 4;
+    else if(b == 8) k = 3;
+    else if(b == 2) k = 1;
+    else if(b == 32) k = 5;
+    else if(b == 4) k = 2;
+    else return this.toRadix(b);
+    var km = (1<<k)-1, d, m = false, r = "", i = this.t;
+    var p = this.DB-(i*this.DB)%k;
+    if(i-- > 0) {
+      if(p < this.DB && (d = this[i]>>p) > 0) { m = true; r = int2char(d); }
+      while(i >= 0) {
+        if(p < k) {
+          d = (this[i]&((1<<p)-1))<<(k-p);
+          d |= this[--i]>>(p+=this.DB-k);
+        }
+        else {
+          d = (this[i]>>(p-=k))&km;
+          if(p <= 0) { p += this.DB; --i; }
+        }
+        if(d > 0) m = true;
+        if(m) r += int2char(d);
+      }
+    }
+    return m?r:"0";
+  }
+
+  // (public) -this
+  function bnNegate() { var r = nbi(); BigInteger.ZERO.subTo(this,r); return r; }
+
+  // (public) |this|
+  function bnAbs() { return (this.s<0)?this.negate():this; }
+
+  // (public) return + if this > a, - if this < a, 0 if equal
+  function bnCompareTo(a) {
+    var r = this.s-a.s;
+    if(r != 0) return r;
+    var i = this.t;
+    r = i-a.t;
+    if(r != 0) return r;
+    while(--i >= 0) if((r=this[i]-a[i]) != 0) return r;
+    return 0;
+  }
+
+  // returns bit length of the integer x
+  function nbits(x) {
+    var r = 1, t;
+    if((t=x>>>16) != 0) { x = t; r += 16; }
+    if((t=x>>8) != 0) { x = t; r += 8; }
+    if((t=x>>4) != 0) { x = t; r += 4; }
+    if((t=x>>2) != 0) { x = t; r += 2; }
+    if((t=x>>1) != 0) { x = t; r += 1; }
+    return r;
+  }
+
+  // (public) return the number of bits in "this"
+  function bnBitLength() {
+    if(this.t <= 0) return 0;
+    return this.DB*(this.t-1)+nbits(this[this.t-1]^(this.s&this.DM));
+  }
+
+  // (protected) r = this << n*DB
+  function bnpDLShiftTo(n,r) {
+    var i;
+    for(i = this.t-1; i >= 0; --i) r[i+n] = this[i];
+    for(i = n-1; i >= 0; --i) r[i] = 0;
+    r.t = this.t+n;
+    r.s = this.s;
+  }
+
+  // (protected) r = this >> n*DB
+  function bnpDRShiftTo(n,r) {
+    for(var i = n; i < this.t; ++i) r[i-n] = this[i];
+    r.t = Math.max(this.t-n,0);
+    r.s = this.s;
+  }
+
+  // (protected) r = this << n
+  function bnpLShiftTo(n,r) {
+    var bs = n%this.DB;
+    var cbs = this.DB-bs;
+    var bm = (1<<cbs)-1;
+    var ds = Math.floor(n/this.DB), c = (this.s<<bs)&this.DM, i;
+    for(i = this.t-1; i >= 0; --i) {
+      r[i+ds+1] = (this[i]>>cbs)|c;
+      c = (this[i]&bm)<<bs;
+    }
+    for(i = ds-1; i >= 0; --i) r[i] = 0;
+    r[ds] = c;
+    r.t = this.t+ds+1;
+    r.s = this.s;
+    r.clamp();
+  }
+
+  // (protected) r = this >> n
+  function bnpRShiftTo(n,r) {
+    r.s = this.s;
+    var ds = Math.floor(n/this.DB);
+    if(ds >= this.t) { r.t = 0; return; }
+    var bs = n%this.DB;
+    var cbs = this.DB-bs;
+    var bm = (1<<bs)-1;
+    r[0] = this[ds]>>bs;
+    for(var i = ds+1; i < this.t; ++i) {
+      r[i-ds-1] |= (this[i]&bm)<<cbs;
+      r[i-ds] = this[i]>>bs;
+    }
+    if(bs > 0) r[this.t-ds-1] |= (this.s&bm)<<cbs;
+    r.t = this.t-ds;
+    r.clamp();
+  }
+
+  // (protected) r = this - a
+  function bnpSubTo(a,r) {
+    var i = 0, c = 0, m = Math.min(a.t,this.t);
+    while(i < m) {
+      c += this[i]-a[i];
+      r[i++] = c&this.DM;
+      c >>= this.DB;
+    }
+    if(a.t < this.t) {
+      c -= a.s;
+      while(i < this.t) {
+        c += this[i];
+        r[i++] = c&this.DM;
+        c >>= this.DB;
+      }
+      c += this.s;
+    }
+    else {
+      c += this.s;
+      while(i < a.t) {
+        c -= a[i];
+        r[i++] = c&this.DM;
+        c >>= this.DB;
+      }
+      c -= a.s;
+    }
+    r.s = (c<0)?-1:0;
+    if(c < -1) r[i++] = this.DV+c;
+    else if(c > 0) r[i++] = c;
+    r.t = i;
+    r.clamp();
+  }
+
+  // (protected) r = this * a, r != this,a (HAC 14.12)
+  // "this" should be the larger one if appropriate.
+  function bnpMultiplyTo(a,r) {
+    var x = this.abs(), y = a.abs();
+    var i = x.t;
+    r.t = i+y.t;
+    while(--i >= 0) r[i] = 0;
+    for(i = 0; i < y.t; ++i) r[i+x.t] = x.am(0,y[i],r,i,0,x.t);
+    r.s = 0;
+    r.clamp();
+    if(this.s != a.s) BigInteger.ZERO.subTo(r,r);
+  }
+
+  // (protected) r = this^2, r != this (HAC 14.16)
+  function bnpSquareTo(r) {
+    var x = this.abs();
+    var i = r.t = 2*x.t;
+    while(--i >= 0) r[i] = 0;
+    for(i = 0; i < x.t-1; ++i) {
+      var c = x.am(i,x[i],r,2*i,0,1);
+      if((r[i+x.t]+=x.am(i+1,2*x[i],r,2*i+1,c,x.t-i-1)) >= x.DV) {
+        r[i+x.t] -= x.DV;
+        r[i+x.t+1] = 1;
+      }
+    }
+    if(r.t > 0) r[r.t-1] += x.am(i,x[i],r,2*i,0,1);
+    r.s = 0;
+    r.clamp();
+  }
+
+  // (protected) divide this by m, quotient and remainder to q, r (HAC 14.20)
+  // r != q, this != m.  q or r may be null.
+  function bnpDivRemTo(m,q,r) {
+    var pm = m.abs();
+    if(pm.t <= 0) return;
+    var pt = this.abs();
+    if(pt.t < pm.t) {
+      if(q != null) q.fromInt(0);
+      if(r != null) this.copyTo(r);
+      return;
+    }
+    if(r == null) r = nbi();
+    var y = nbi(), ts = this.s, ms = m.s;
+    var nsh = this.DB-nbits(pm[pm.t-1]);	// normalize modulus
+    if(nsh > 0) { pm.lShiftTo(nsh,y); pt.lShiftTo(nsh,r); }
+    else { pm.copyTo(y); pt.copyTo(r); }
+    var ys = y.t;
+    var y0 = y[ys-1];
+    if(y0 == 0) return;
+    var yt = y0*(1<<this.F1)+((ys>1)?y[ys-2]>>this.F2:0);
+    var d1 = this.FV/yt, d2 = (1<<this.F1)/yt, e = 1<<this.F2;
+    var i = r.t, j = i-ys, t = (q==null)?nbi():q;
+    y.dlShiftTo(j,t);
+    if(r.compareTo(t) >= 0) {
+      r[r.t++] = 1;
+      r.subTo(t,r);
+    }
+    BigInteger.ONE.dlShiftTo(ys,t);
+    t.subTo(y,y);	// "negative" y so we can replace sub with am later
+    while(y.t < ys) y[y.t++] = 0;
+    while(--j >= 0) {
+      // Estimate quotient digit
+      var qd = (r[--i]==y0)?this.DM:Math.floor(r[i]*d1+(r[i-1]+e)*d2);
+      if((r[i]+=y.am(0,qd,r,j,0,ys)) < qd) {	// Try it out
+        y.dlShiftTo(j,t);
+        r.subTo(t,r);
+        while(r[i] < --qd) r.subTo(t,r);
+      }
+    }
+    if(q != null) {
+      r.drShiftTo(ys,q);
+      if(ts != ms) BigInteger.ZERO.subTo(q,q);
+    }
+    r.t = ys;
+    r.clamp();
+    if(nsh > 0) r.rShiftTo(nsh,r);	// Denormalize remainder
+    if(ts < 0) BigInteger.ZERO.subTo(r,r);
+  }
+
+  // (public) this mod a
+  function bnMod(a) {
+    var r = nbi();
+    this.abs().divRemTo(a,null,r);
+    if(this.s < 0 && r.compareTo(BigInteger.ZERO) > 0) a.subTo(r,r);
+    return r;
+  }
+
+  // Modular reduction using "classic" algorithm
+  function Classic(m) { this.m = m; }
+  function cConvert(x) {
+    if(x.s < 0 || x.compareTo(this.m) >= 0) return x.mod(this.m);
+    else return x;
+  }
+  function cRevert(x) { return x; }
+  function cReduce(x) { x.divRemTo(this.m,null,x); }
+  function cMulTo(x,y,r) { x.multiplyTo(y,r); this.reduce(r); }
+  function cSqrTo(x,r) { x.squareTo(r); this.reduce(r); }
+
+  Classic.prototype.convert = cConvert;
+  Classic.prototype.revert = cRevert;
+  Classic.prototype.reduce = cReduce;
+  Classic.prototype.mulTo = cMulTo;
+  Classic.prototype.sqrTo = cSqrTo;
+
+  // (protected) return "-1/this % 2^DB"; useful for Mont. reduction
+  // justification:
+  //         xy == 1 (mod m)
+  //         xy =  1+km
+  //   xy(2-xy) = (1+km)(1-km)
+  // x[y(2-xy)] = 1-k^2m^2
+  // x[y(2-xy)] == 1 (mod m^2)
+  // if y is 1/x mod m, then y(2-xy) is 1/x mod m^2
+  // should reduce x and y(2-xy) by m^2 at each step to keep size bounded.
+  // JS multiply "overflows" differently from C/C++, so care is needed here.
+  function bnpInvDigit() {
+    if(this.t < 1) return 0;
+    var x = this[0];
+    if((x&1) == 0) return 0;
+    var y = x&3;		// y == 1/x mod 2^2
+    y = (y*(2-(x&0xf)*y))&0xf;	// y == 1/x mod 2^4
+    y = (y*(2-(x&0xff)*y))&0xff;	// y == 1/x mod 2^8
+    y = (y*(2-(((x&0xffff)*y)&0xffff)))&0xffff;	// y == 1/x mod 2^16
+    // last step - calculate inverse mod DV directly;
+    // assumes 16 < DB <= 32 and assumes ability to handle 48-bit ints
+    y = (y*(2-x*y%this.DV))%this.DV;		// y == 1/x mod 2^dbits
+    // we really want the negative inverse, and -DV < y < DV
+    return (y>0)?this.DV-y:-y;
+  }
+
+  // Montgomery reduction
+  function Montgomery(m) {
+    this.m = m;
+    this.mp = m.invDigit();
+    this.mpl = this.mp&0x7fff;
+    this.mph = this.mp>>15;
+    this.um = (1<<(m.DB-15))-1;
+    this.mt2 = 2*m.t;
+  }
+
+  // xR mod m
+  function montConvert(x) {
+    var r = nbi();
+    x.abs().dlShiftTo(this.m.t,r);
+    r.divRemTo(this.m,null,r);
+    if(x.s < 0 && r.compareTo(BigInteger.ZERO) > 0) this.m.subTo(r,r);
+    return r;
+  }
+
+  // x/R mod m
+  function montRevert(x) {
+    var r = nbi();
+    x.copyTo(r);
+    this.reduce(r);
+    return r;
+  }
+
+  // x = x/R mod m (HAC 14.32)
+  function montReduce(x) {
+    while(x.t <= this.mt2)	// pad x so am has enough room later
+      x[x.t++] = 0;
+    for(var i = 0; i < this.m.t; ++i) {
+      // faster way of calculating u0 = x[i]*mp mod DV
+      var j = x[i]&0x7fff;
+      var u0 = (j*this.mpl+(((j*this.mph+(x[i]>>15)*this.mpl)&this.um)<<15))&x.DM;
+      // use am to combine the multiply-shift-add into one call
+      j = i+this.m.t;
+      x[j] += this.m.am(0,u0,x,i,0,this.m.t);
+      // propagate carry
+      while(x[j] >= x.DV) { x[j] -= x.DV; x[++j]++; }
+    }
+    x.clamp();
+    x.drShiftTo(this.m.t,x);
+    if(x.compareTo(this.m) >= 0) x.subTo(this.m,x);
+  }
+
+  // r = "x^2/R mod m"; x != r
+  function montSqrTo(x,r) { x.squareTo(r); this.reduce(r); }
+
+  // r = "xy/R mod m"; x,y != r
+  function montMulTo(x,y,r) { x.multiplyTo(y,r); this.reduce(r); }
+
+  Montgomery.prototype.convert = montConvert;
+  Montgomery.prototype.revert = montRevert;
+  Montgomery.prototype.reduce = montReduce;
+  Montgomery.prototype.mulTo = montMulTo;
+  Montgomery.prototype.sqrTo = montSqrTo;
+
+  // (protected) true iff this is even
+  function bnpIsEven() { return ((this.t>0)?(this[0]&1):this.s) == 0; }
+
+  // (protected) this^e, e < 2^32, doing sqr and mul with "r" (HAC 14.79)
+  function bnpExp(e,z) {
+    if(e > 0xffffffff || e < 1) return BigInteger.ONE;
+    var r = nbi(), r2 = nbi(), g = z.convert(this), i = nbits(e)-1;
+    g.copyTo(r);
+    while(--i >= 0) {
+      z.sqrTo(r,r2);
+      if((e&(1<<i)) > 0) z.mulTo(r2,g,r);
+      else { var t = r; r = r2; r2 = t; }
+    }
+    return z.revert(r);
+  }
+
+  // (public) this^e % m, 0 <= e < 2^32
+  function bnModPowInt(e,m) {
+    var z;
+    if(e < 256 || m.isEven()) z = new Classic(m); else z = new Montgomery(m);
+    return this.exp(e,z);
+  }
+
+  // protected
+  BigInteger.prototype.copyTo = bnpCopyTo;
+  BigInteger.prototype.fromInt = bnpFromInt;
+  BigInteger.prototype.fromString = bnpFromString;
+  BigInteger.prototype.clamp = bnpClamp;
+  BigInteger.prototype.dlShiftTo = bnpDLShiftTo;
+  BigInteger.prototype.drShiftTo = bnpDRShiftTo;
+  BigInteger.prototype.lShiftTo = bnpLShiftTo;
+  BigInteger.prototype.rShiftTo = bnpRShiftTo;
+  BigInteger.prototype.subTo = bnpSubTo;
+  BigInteger.prototype.multiplyTo = bnpMultiplyTo;
+  BigInteger.prototype.squareTo = bnpSquareTo;
+  BigInteger.prototype.divRemTo = bnpDivRemTo;
+  BigInteger.prototype.invDigit = bnpInvDigit;
+  BigInteger.prototype.isEven = bnpIsEven;
+  BigInteger.prototype.exp = bnpExp;
+
+  // public
+  BigInteger.prototype.toString = bnToString;
+  BigInteger.prototype.negate = bnNegate;
+  BigInteger.prototype.abs = bnAbs;
+  BigInteger.prototype.compareTo = bnCompareTo;
+  BigInteger.prototype.bitLength = bnBitLength;
+  BigInteger.prototype.mod = bnMod;
+  BigInteger.prototype.modPowInt = bnModPowInt;
+
+  // "constants"
+  BigInteger.ZERO = nbv(0);
+  BigInteger.ONE = nbv(1);
+
+  // jsbn2 stuff
+
+  // (protected) convert from radix string
+  function bnpFromRadix(s,b) {
+    this.fromInt(0);
+    if(b == null) b = 10;
+    var cs = this.chunkSize(b);
+    var d = Math.pow(b,cs), mi = false, j = 0, w = 0;
+    for(var i = 0; i < s.length; ++i) {
+      var x = intAt(s,i);
+      if(x < 0) {
+        if(s.charAt(i) == "-" && this.signum() == 0) mi = true;
+        continue;
+      }
+      w = b*w+x;
+      if(++j >= cs) {
+        this.dMultiply(d);
+        this.dAddOffset(w,0);
+        j = 0;
+        w = 0;
+      }
+    }
+    if(j > 0) {
+      this.dMultiply(Math.pow(b,j));
+      this.dAddOffset(w,0);
+    }
+    if(mi) BigInteger.ZERO.subTo(this,this);
+  }
+
+  // (protected) return x s.t. r^x < DV
+  function bnpChunkSize(r) { return Math.floor(Math.LN2*this.DB/Math.log(r)); }
+
+  // (public) 0 if this == 0, 1 if this > 0
+  function bnSigNum() {
+    if(this.s < 0) return -1;
+    else if(this.t <= 0 || (this.t == 1 && this[0] <= 0)) return 0;
+    else return 1;
+  }
+
+  // (protected) this *= n, this >= 0, 1 < n < DV
+  function bnpDMultiply(n) {
+    this[this.t] = this.am(0,n-1,this,0,0,this.t);
+    ++this.t;
+    this.clamp();
+  }
+
+  // (protected) this += n << w words, this >= 0
+  function bnpDAddOffset(n,w) {
+    if(n == 0) return;
+    while(this.t <= w) this[this.t++] = 0;
+    this[w] += n;
+    while(this[w] >= this.DV) {
+      this[w] -= this.DV;
+      if(++w >= this.t) this[this.t++] = 0;
+      ++this[w];
+    }
+  }
+
+  // (protected) convert to radix string
+  function bnpToRadix(b) {
+    if(b == null) b = 10;
+    if(this.signum() == 0 || b < 2 || b > 36) return "0";
+    var cs = this.chunkSize(b);
+    var a = Math.pow(b,cs);
+    var d = nbv(a), y = nbi(), z = nbi(), r = "";
+    this.divRemTo(d,y,z);
+    while(y.signum() > 0) {
+      r = (a+z.intValue()).toString(b).substr(1) + r;
+      y.divRemTo(d,y,z);
+    }
+    return z.intValue().toString(b) + r;
+  }
+
+  // (public) return value as integer
+  function bnIntValue() {
+    if(this.s < 0) {
+      if(this.t == 1) return this[0]-this.DV;
+      else if(this.t == 0) return -1;
+    }
+    else if(this.t == 1) return this[0];
+    else if(this.t == 0) return 0;
+    // assumes 16 < DB < 32
+    return ((this[1]&((1<<(32-this.DB))-1))<<this.DB)|this[0];
+  }
+
+  // (protected) r = this + a
+  function bnpAddTo(a,r) {
+    var i = 0, c = 0, m = Math.min(a.t,this.t);
+    while(i < m) {
+      c += this[i]+a[i];
+      r[i++] = c&this.DM;
+      c >>= this.DB;
+    }
+    if(a.t < this.t) {
+      c += a.s;
+      while(i < this.t) {
+        c += this[i];
+        r[i++] = c&this.DM;
+        c >>= this.DB;
+      }
+      c += this.s;
+    }
+    else {
+      c += this.s;
+      while(i < a.t) {
+        c += a[i];
+        r[i++] = c&this.DM;
+        c >>= this.DB;
+      }
+      c += a.s;
+    }
+    r.s = (c<0)?-1:0;
+    if(c > 0) r[i++] = c;
+    else if(c < -1) r[i++] = this.DV+c;
+    r.t = i;
+    r.clamp();
+  }
+
+  BigInteger.prototype.fromRadix = bnpFromRadix;
+  BigInteger.prototype.chunkSize = bnpChunkSize;
+  BigInteger.prototype.signum = bnSigNum;
+  BigInteger.prototype.dMultiply = bnpDMultiply;
+  BigInteger.prototype.dAddOffset = bnpDAddOffset;
+  BigInteger.prototype.toRadix = bnpToRadix;
+  BigInteger.prototype.intValue = bnIntValue;
+  BigInteger.prototype.addTo = bnpAddTo;
+
+  //======= end jsbn =======
+
+  // Emscripten wrapper
+  var Wrapper = {
+    result: [0, 0], // return result stored here
+    add: function(xl, xh, yl, yh) {
+      var x = new goog.math.Long(xl, xh);
+      var y = new goog.math.Long(yl, yh);
+      var ret = x.add(y);
+      Wrapper.result[0] = ret.low_;
+      Wrapper.result[1] = ret.high_;
+    },
+    subtract: function(xl, xh, yl, yh) {
+      var x = new goog.math.Long(xl, xh);
+      var y = new goog.math.Long(yl, yh);
+      var ret = x.subtract(y);
+      Wrapper.result[0] = ret.low_;
+      Wrapper.result[1] = ret.high_;
+    },
+    multiply: function(xl, xh, yl, yh) {
+      var x = new goog.math.Long(xl, xh);
+      var y = new goog.math.Long(yl, yh);
+      var ret = x.multiply(y);
+      Wrapper.result[0] = ret.low_;
+      Wrapper.result[1] = ret.high_;
+    },
+    makeTwo32: function() {
+      Wrapper.two32 = new BigInteger();
+      Wrapper.two32.fromString('4294967296', 10);
+    },
+    lh2bignum: function(l, h) {
+      var a = new BigInteger();
+      a.fromString(h.toString(), 10);
+      var b = new BigInteger();
+      a.multiplyTo(Wrapper.two32, b);
+      var c = new BigInteger();
+      c.fromString(l.toString(), 10);
+      var d = new BigInteger();
+      c.addTo(b, d);
+      return d;
+    },
+    divide: function(xl, xh, yl, yh, unsigned) {
+      if (!Wrapper.two32) Wrapper.makeTwo32();
+      if (!unsigned) {
+        var x = new goog.math.Long(xl, xh);
+        var y = new goog.math.Long(yl, yh);
+        var ret = x.div(y);
+        Wrapper.result[0] = ret.low_;
+        Wrapper.result[1] = ret.high_;
+      } else {
+        // slow precise bignum division
+        var x = Wrapper.lh2bignum(xl >>> 0, xh >>> 0);
+        var y = Wrapper.lh2bignum(yl >>> 0, yh >>> 0);
+        var z = new BigInteger();
+        x.divRemTo(y, z, null);
+        var l = new BigInteger();
+        var h = new BigInteger();
+        z.divRemTo(Wrapper.two32, h, l);
+        Wrapper.result[0] = parseInt(l.toString()) | 0;
+        Wrapper.result[1] = parseInt(h.toString()) | 0;
+      }
+    },
+    modulo: function(xl, xh, yl, yh, unsigned) {
+      if (!Wrapper.two32) Wrapper.makeTwo32();
+      if (!unsigned) {
+        var x = new goog.math.Long(xl, xh);
+        var y = new goog.math.Long(yl, yh);
+        var ret = x.modulo(y);
+        Wrapper.result[0] = ret.low_;
+        Wrapper.result[1] = ret.high_;
+      } else {
+        // slow precise bignum division
+        var x = Wrapper.lh2bignum(xl >>> 0, xh >>> 0);
+        var y = Wrapper.lh2bignum(yl >>> 0, yh >>> 0);
+        var z = new BigInteger();
+        x.divRemTo(y, null, z);
+        var l = new BigInteger();
+        var h = new BigInteger();
+        z.divRemTo(Wrapper.two32, h, l);
+        Wrapper.result[0] = parseInt(l.toString()) | 0;
+        Wrapper.result[1] = parseInt(h.toString()) | 0;
+      }
+    },
+    stringify: function(l, h, unsigned) {
+      var ret = new goog.math.Long(l, h).toString();
+      if (unsigned && ret[0] == '-') {
+        // unsign slowly using jsbn bignums
+        if (!Wrapper.two64) {
+          Wrapper.two64 = new BigInteger();
+          Wrapper.two64.fromString('18446744073709551616', 10);
+        }
+        var bignum = new BigInteger();
+        bignum.fromString(ret, 10);
+        ret = new BigInteger();
+        Wrapper.two64.addTo(bignum, ret);
+        ret = ret.toString(10);
+      }
+      return ret;
+    }
+  };
+  return Wrapper;
+})();
+
+//======= end closure i64 code =======
+
+
 
   
   function _memcpy(dest, src, num, align) {
@@ -20145,9 +28482,6 @@ var i64Math = null;
         }
       }
     }var _llvm_memcpy_p0i8_p0i8_i32=_memcpy;
-var _util_memory_a; // stub for _util_memory_a
-var _util_memory_d; // stub for _util_memory_d
-var _util_fopen; // stub for _util_fopen
 
   
   
@@ -21229,7 +29563,6 @@ var _util_fopen; // stub for _util_fopen
         }
       }
     }var _llvm_memset_p0i8_i32=_memset;
-var _util_strdup; // stub for _util_strdup
 
   
   function _lseek(fildes, offset, whence) {
@@ -21292,6 +29625,308 @@ var _util_strdup; // stub for _util_strdup
       return _strncmp(px, py, TOTAL_MEMORY);
     }
 
+  
+  function __exit(status) {
+      // void _exit(int status);
+      // http://pubs.opengroup.org/onlinepubs/000095399/functions/exit.html
+  
+  
+      exitRuntime();
+      ABORT = true;
+  
+      throw 'exit(' + status + ') called, at ' + new Error().stack;
+    }function _exit(status) {
+      __exit(status);
+    }
+
+  
+  
+  function __isFloat(text) {
+      return !!(/^[+-]?[0-9]*\.?[0-9]+([eE][+-]?[0-9]+)?$/.exec(text));
+    }function __scanString(format, get, unget, varargs) {
+      if (!__scanString.whiteSpace) {
+        __scanString.whiteSpace = {};
+        __scanString.whiteSpace[' '.charCodeAt(0)] = 1;
+        __scanString.whiteSpace['\t'.charCodeAt(0)] = 1;
+        __scanString.whiteSpace['\n'.charCodeAt(0)] = 1;
+        __scanString.whiteSpace[' '] = 1;
+        __scanString.whiteSpace['\t'] = 1;
+        __scanString.whiteSpace['\n'] = 1;
+      }
+      // Supports %x, %4x, %d.%d, %lld, %s, %f, %lf.
+      // TODO: Support all format specifiers.
+      format = Pointer_stringify(format);
+      var soFar = 0;
+      if (format.indexOf('%n') >= 0) {
+        // need to track soFar
+        var _get = get;
+        get = function() {
+          soFar++;
+          return _get();
+        }
+        var _unget = unget;
+        unget = function() {
+          soFar--;
+          return _unget();
+        }
+      }
+      var formatIndex = 0;
+      var argsi = 0;
+      var fields = 0;
+      var argIndex = 0;
+      var next;
+  
+      next = 1;
+      mainLoop:
+      for (var formatIndex = 0; formatIndex < format.length; formatIndex++) {
+        // remove whitespace
+        while (1) {
+          next = get();
+          if (next == 0) return fields;
+          if (!(next in __scanString.whiteSpace)) break;
+        } 
+        unget(next);
+        
+        if (next <= 0) return fields;
+        var next = get();
+        if (next <= 0) return fields;  // End of input.
+  
+        if (format[formatIndex] === '%') {
+          formatIndex++;
+          var maxSpecifierStart = formatIndex;
+          while (format[formatIndex].charCodeAt(0) >= '0'.charCodeAt(0) &&
+                 format[formatIndex].charCodeAt(0) <= '9'.charCodeAt(0)) {
+            formatIndex++;
+          }
+          var max_;
+          if (formatIndex != maxSpecifierStart) {
+            max_ = parseInt(format.slice(maxSpecifierStart, formatIndex), 10);
+          }
+          var long_ = false;
+          var half = false;
+          var longLong = false;
+          if (format[formatIndex] == 'l') {
+            long_ = true;
+            formatIndex++;
+            if(format[formatIndex] == 'l') {
+              longLong = true;
+              formatIndex++;
+            }
+          } else if (format[formatIndex] == 'h') {
+            half = true;
+            formatIndex++;
+          }
+          var type = format[formatIndex];
+          formatIndex++;
+          var curr = 0;
+          var buffer = [];
+          // Read characters according to the format. floats are trickier, they may be in an unfloat state in the middle, then be a valid float later
+          if (type == 'f') {
+            var last = 0;
+            while (next > 0) {
+              buffer.push(String.fromCharCode(next));
+              if (__isFloat(buffer.join(''))) {
+                last = buffer.length;
+              }
+              next = get();
+            }
+            unget(next);
+            while (buffer.length > last) {
+              unget(buffer.pop().charCodeAt(0));
+            }
+            next = get();
+          } else if (type != 'n') {
+            var first = true;
+            while ((curr < max_ || isNaN(max_)) && next > 0) {
+              if (!(next in __scanString.whiteSpace) && // stop on whitespace
+                  (type == 's' ||
+                   ((type === 'd' || type == 'u' || type == 'i') && ((next >= '0'.charCodeAt(0) && next <= '9'.charCodeAt(0)) ||
+                                                                     (first && next == '-'.charCodeAt(0)))) ||
+                   (type === 'x' && (next >= '0'.charCodeAt(0) && next <= '9'.charCodeAt(0) ||
+                                     next >= 'a'.charCodeAt(0) && next <= 'f'.charCodeAt(0) ||
+                                     next >= 'A'.charCodeAt(0) && next <= 'F'.charCodeAt(0)))) &&
+                  (formatIndex >= format.length || next !== format[formatIndex].charCodeAt(0))) { // Stop when we read something that is coming up
+                buffer.push(String.fromCharCode(next));
+                next = get();
+                curr++;
+              } else {
+                break;
+              }
+              first = false;
+            }
+          }
+          if (buffer.length === 0 && type != 'n') return 0;  // Failure.
+          var text = buffer.join('');
+          var argPtr = HEAP32[(((varargs)+(argIndex))>>2)];
+          argIndex += Runtime.getNativeFieldSize('void*');
+          switch (type) {
+            case 'd': case 'u': case 'i':
+              if (half) {
+                HEAP16[((argPtr)>>1)]=parseInt(text, 10);
+              } else if(longLong) {
+                (tempI64 = [parseInt(text, 10)>>>0,Math.min(Math.floor((parseInt(text, 10))/4294967296), 4294967295)],HEAP32[((argPtr)>>2)]=tempI64[0],HEAP32[(((argPtr)+(4))>>2)]=tempI64[1]);
+              } else {
+                HEAP32[((argPtr)>>2)]=parseInt(text, 10);
+              }
+              break;
+            case 'x':
+              HEAP32[((argPtr)>>2)]=parseInt(text, 16)
+              break;
+            case 'f':
+              if (long_) {
+                (tempDoubleF64[0]=parseFloat(text),HEAP32[((argPtr)>>2)]=tempDoubleI32[0],HEAP32[(((argPtr)+(4))>>2)]=tempDoubleI32[1])
+              } else {
+                HEAPF32[((argPtr)>>2)]=parseFloat(text)
+              }
+              break;
+            case 's':
+              var array = intArrayFromString(text);
+              for (var j = 0; j < array.length; j++) {
+                HEAP8[((argPtr)+(j))]=array[j]
+              }
+              break;
+            case 'n':
+              HEAP32[((argPtr)>>2)]=soFar-1
+              break;
+          }
+          if (type != 'n') fields++;
+          if (next <= 0) break mainLoop;  // End of input.
+        } else if (format[formatIndex] in __scanString.whiteSpace) {
+          while (next in __scanString.whiteSpace) {
+            next = get();
+            if (next <= 0) break mainLoop;  // End of input.
+          }
+          unget(next);
+        } else {
+          // Not a specifier.
+          if (format[formatIndex].charCodeAt(0) !== next) {
+            unget(next);
+            break mainLoop;
+          }
+        }
+      }
+      // 'n' is special in that it needs no input. so it can be at the end, even with nothing left to read
+      if (format[formatIndex-1] == '%' && format[formatIndex] == 'n') {
+        var argPtr = HEAP32[(((varargs)+(argIndex))>>2)];
+        HEAP32[((argPtr)>>2)]=soFar-1
+      }
+      return fields;
+    }function _sscanf(s, format, varargs) {
+      // int sscanf(const char *restrict s, const char *restrict format, ... );
+      // http://pubs.opengroup.org/onlinepubs/000095399/functions/scanf.html
+      var index = 0;
+      var get = function() { return HEAP8[((s)+(index++))]; };
+      var unget = function() { index--; };
+      return __scanString(format, get, unget, varargs);
+    }
+
+  
+  
+  function _isspace(chr) {
+      return chr in { 32: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0 };
+    }
+  
+  function _isdigit(chr) {
+      return chr >= '0'.charCodeAt(0) && chr <= '9'.charCodeAt(0);
+    }function _strtod(str, endptr) {
+      var origin = str;
+  
+      // Skip space.
+      while (_isspace(HEAP8[(str)])) str++;
+  
+      // Check for a plus/minus sign.
+      var multiplier = 1;
+      if (HEAP8[(str)] == '-'.charCodeAt(0)) {
+        multiplier = -1;
+        str++;
+      } else if (HEAP8[(str)] == '+'.charCodeAt(0)) {
+        str++;
+      }
+  
+      var chr;
+      var ret = 0;
+  
+      // Get whole part.
+      var whole = false;
+      while(1) {
+        chr = HEAP8[(str)];
+        if (!_isdigit(chr)) break;
+        whole = true;
+        ret = ret*10 + chr - '0'.charCodeAt(0);
+        str++;
+      }
+  
+      // Get fractional part.
+      var fraction = false;
+      if (HEAP8[(str)] == '.'.charCodeAt(0)) {
+        str++;
+        var mul = 1/10;
+        while(1) {
+          chr = HEAP8[(str)];
+          if (!_isdigit(chr)) break;
+          fraction = true;
+          ret += mul*(chr - '0'.charCodeAt(0));
+          mul /= 10;
+          str++;
+        }
+      }
+  
+      if (!whole && !fraction) {
+        if (endptr) {
+          HEAP32[((endptr)>>2)]=origin
+        }
+        return 0;
+      }
+  
+      // Get exponent part.
+      chr = HEAP8[(str)];
+      if (chr == 'e'.charCodeAt(0) || chr == 'E'.charCodeAt(0)) {
+        str++;
+        var exponent = 0;
+        var expNegative = false;
+        chr = HEAP8[(str)];
+        if (chr == '-'.charCodeAt(0)) {
+          expNegative = true;
+          str++;
+        } else if (chr == '+'.charCodeAt(0)) {
+          str++;
+        }
+        chr = HEAP8[(str)];
+        while(1) {
+          if (!_isdigit(chr)) break;
+          exponent = exponent*10 + chr - '0'.charCodeAt(0);
+          str++;
+          chr = HEAP8[(str)];
+        }
+        if (expNegative) exponent = -exponent;
+        ret *= Math.pow(10, exponent);
+      }
+  
+      // Set end pointer.
+      if (endptr) {
+        HEAP32[((endptr)>>2)]=str
+      }
+  
+      return ret * multiplier;
+    }function _atof(ptr) {
+      return _strtod(ptr, null);
+    }
+
+  function _snprintf(s, n, format, varargs) {
+      // int snprintf(char *restrict s, size_t n, const char *restrict format, ...);
+      // http://pubs.opengroup.org/onlinepubs/000095399/functions/printf.html
+      var result = __formatString(format, varargs);
+      var limit = (n === undefined) ? result.length
+                                    : Math.min(result.length, n - 1);
+      for (var i = 0; i < limit; i++) {
+        HEAP8[((s)+(i))]=result[i];
+      }
+      HEAP8[((s)+(i))]=0;
+      return result.length;
+    }
+
+  var _sqrt=Math.sqrt;
+
   function _fflush(stream) {
       // int fflush(FILE *stream);
       // http://pubs.opengroup.org/onlinepubs/000095399/functions/fflush.html
@@ -21330,20 +29965,6 @@ var _util_strdup; // stub for _util_strdup
         return chr;
       }
     }var _putc=_fputc;
-
-  
-  function __exit(status) {
-      // void _exit(int status);
-      // http://pubs.opengroup.org/onlinepubs/000095399/functions/exit.html
-  
-  
-      exitRuntime();
-      ABORT = true;
-  
-      throw 'exit(' + status + ') called, at ' + new Error().stack;
-    }function _exit(status) {
-      __exit(status);
-    }
 var _llvm_va_start; // stub for _llvm_va_start
 
   var _vprintf=_printf;
@@ -21380,19 +30001,334 @@ var _llvm_va_start; // stub for _llvm_va_start
 
 
 
-  function _malloc(bytes) {
-      /* Over-allocate to make sure it is byte-aligned by 8.
-       * This will leak memory, but this is only the dummy
-       * implementation (replaced by dlmalloc normally) so
-       * not an issue.
-       */
-      ptr = Runtime.staticAlloc(bytes + 8);
-      return (ptr+8) & 0xFFFFFFF8;
+  function _fputs(s, stream) {
+      // int fputs(const char *restrict s, FILE *restrict stream);
+      // http://pubs.opengroup.org/onlinepubs/000095399/functions/fputs.html
+      return _write(stream, s, _strlen(s));
     }
-  Module["_malloc"] = _malloc;
 
-  function _free(){}
-  Module["_free"] = _free;
+  var _vfprintf=_fprintf;
+
+  
+  
+  var ___dirent_struct_layout=null;function _open(path, oflag, varargs) {
+      // int open(const char *path, int oflag, ...);
+      // http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
+      // NOTE: This implementation tries to mimic glibc rather that strictly
+      // following the POSIX standard.
+  
+      var mode = HEAP32[((varargs)>>2)];
+  
+      // Simplify flags.
+      var accessMode = oflag & 3;
+      var isWrite = accessMode != 0;
+      var isRead = accessMode != 1;
+      var isCreate = Boolean(oflag & 512);
+      var isExistCheck = Boolean(oflag & 2048);
+      var isTruncate = Boolean(oflag & 1024);
+      var isAppend = Boolean(oflag & 8);
+  
+      // Verify path.
+      var origPath = path;
+      path = FS.analyzePath(Pointer_stringify(path));
+      if (!path.parentExists) {
+        ___setErrNo(path.error);
+        return -1;
+      }
+      var target = path.object || null;
+      var finalPath;
+  
+      // Verify the file exists, create if needed and allowed.
+      if (target) {
+        if (isCreate && isExistCheck) {
+          ___setErrNo(ERRNO_CODES.EEXIST);
+          return -1;
+        }
+        if ((isWrite || isCreate || isTruncate) && target.isFolder) {
+          ___setErrNo(ERRNO_CODES.EISDIR);
+          return -1;
+        }
+        if (isRead && !target.read || isWrite && !target.write) {
+          ___setErrNo(ERRNO_CODES.EACCES);
+          return -1;
+        }
+        if (isTruncate && !target.isDevice) {
+          target.contents = [];
+        } else {
+          if (!FS.forceLoadFile(target)) {
+            ___setErrNo(ERRNO_CODES.EIO);
+            return -1;
+          }
+        }
+        finalPath = path.path;
+      } else {
+        if (!isCreate) {
+          ___setErrNo(ERRNO_CODES.ENOENT);
+          return -1;
+        }
+        if (!path.parentObject.write) {
+          ___setErrNo(ERRNO_CODES.EACCES);
+          return -1;
+        }
+        target = FS.createDataFile(path.parentObject, path.name, [],
+                                   mode & 0x100, mode & 0x80);  // S_IRUSR, S_IWUSR.
+        finalPath = path.parentPath + '/' + path.name;
+      }
+      // Actually create an open stream.
+      var id = FS.streams.length; // Keep dense
+      if (target.isFolder) {
+        var entryBuffer = 0;
+        if (___dirent_struct_layout) {
+          entryBuffer = _malloc(___dirent_struct_layout.__size__);
+        }
+        var contents = [];
+        for (var key in target.contents) contents.push(key);
+        FS.streams[id] = {
+          path: finalPath,
+          object: target,
+          // An index into contents. Special values: -2 is ".", -1 is "..".
+          position: -2,
+          isRead: true,
+          isWrite: false,
+          isAppend: false,
+          error: false,
+          eof: false,
+          ungotten: [],
+          // Folder-specific properties:
+          // Remember the contents at the time of opening in an array, so we can
+          // seek between them relying on a single order.
+          contents: contents,
+          // Each stream has its own area for readdir() returns.
+          currentEntry: entryBuffer
+        };
+      } else {
+        FS.streams[id] = {
+          path: finalPath,
+          object: target,
+          position: 0,
+          isRead: isRead,
+          isWrite: isWrite,
+          isAppend: isAppend,
+          error: false,
+          eof: false,
+          ungotten: []
+        };
+      }
+      FS.checkStreams();
+      return id;
+    }function _fopen(filename, mode) {
+      // FILE *fopen(const char *restrict filename, const char *restrict mode);
+      // http://pubs.opengroup.org/onlinepubs/000095399/functions/fopen.html
+      var flags;
+      mode = Pointer_stringify(mode);
+      if (mode[0] == 'r') {
+        if (mode.indexOf('+') != -1) {
+          flags = 2;
+        } else {
+          flags = 0;
+        }
+      } else if (mode[0] == 'w') {
+        if (mode.indexOf('+') != -1) {
+          flags = 2;
+        } else {
+          flags = 1;
+        }
+        flags |= 512;
+        flags |= 1024;
+      } else if (mode[0] == 'a') {
+        if (mode.indexOf('+') != -1) {
+          flags = 2;
+        } else {
+          flags = 1;
+        }
+        flags |= 512;
+        flags |= 8;
+      } else {
+        ___setErrNo(ERRNO_CODES.EINVAL);
+        return 0;
+      }
+      var ret = _open(filename, flags, allocate([0x1FF, 0, 0, 0], 'i32', ALLOC_STACK));  // All creation permissions.
+      return (ret == -1) ? 0 : ret;
+    }
+var _llvm_dbg_declare; // stub for _llvm_dbg_declare
+var _llvm_expect_i32; // stub for _llvm_expect_i32
+
+  function _abort() {
+      ABORT = true;
+      throw 'abort() at ' + (new Error().stack);
+    }
+
+  function _sysconf(name) {
+      // long sysconf(int name);
+      // http://pubs.opengroup.org/onlinepubs/009695399/functions/sysconf.html
+      switch(name) {
+        case 8: return PAGE_SIZE;
+        case 54:
+        case 56:
+        case 21:
+        case 61:
+        case 63:
+        case 22:
+        case 67:
+        case 23:
+        case 24:
+        case 25:
+        case 26:
+        case 27:
+        case 69:
+        case 28:
+        case 101:
+        case 70:
+        case 71:
+        case 29:
+        case 30:
+        case 199:
+        case 75:
+        case 76:
+        case 32:
+        case 43:
+        case 44:
+        case 80:
+        case 46:
+        case 47:
+        case 45:
+        case 48:
+        case 49:
+        case 42:
+        case 82:
+        case 33:
+        case 7:
+        case 108:
+        case 109:
+        case 107:
+        case 112:
+        case 119:
+        case 121:
+          return 200809;
+        case 13:
+        case 104:
+        case 94:
+        case 95:
+        case 34:
+        case 35:
+        case 77:
+        case 81:
+        case 83:
+        case 84:
+        case 85:
+        case 86:
+        case 87:
+        case 88:
+        case 89:
+        case 90:
+        case 91:
+        case 94:
+        case 95:
+        case 110:
+        case 111:
+        case 113:
+        case 114:
+        case 115:
+        case 116:
+        case 117:
+        case 118:
+        case 120:
+        case 40:
+        case 16:
+        case 79:
+        case 19:
+          return -1;
+        case 92:
+        case 93:
+        case 5:
+        case 72:
+        case 6:
+        case 74:
+        case 92:
+        case 93:
+        case 96:
+        case 97:
+        case 98:
+        case 99:
+        case 102:
+        case 103:
+        case 105:
+          return 1;
+        case 38:
+        case 66:
+        case 50:
+        case 51:
+        case 4:
+          return 1024;
+        case 15:
+        case 64:
+        case 41:
+          return 32;
+        case 55:
+        case 37:
+        case 17:
+          return 2147483647;
+        case 18:
+        case 1:
+          return 47839;
+        case 59:
+        case 57:
+          return 99;
+        case 68:
+        case 58:
+          return 2048;
+        case 0: return 2097152;
+        case 3: return 65536;
+        case 14: return 32768;
+        case 73: return 32767;
+        case 39: return 16384;
+        case 60: return 1000;
+        case 106: return 700;
+        case 52: return 256;
+        case 62: return 255;
+        case 2: return 100;
+        case 65: return 64;
+        case 36: return 20;
+        case 100: return 16;
+        case 20: return 6;
+        case 53: return 4;
+      }
+      ___setErrNo(ERRNO_CODES.EINVAL);
+      return -1;
+    }
+
+  function _time(ptr) {
+      var ret = Math.floor(Date.now()/1000);
+      if (ptr) {
+        HEAP32[((ptr)>>2)]=ret
+      }
+      return ret;
+    }
+
+  function _sbrk(bytes) {
+      // Implement a Linux-like 'memory area' for our 'process'.
+      // Changes the size of the memory area by |bytes|; returns the
+      // address of the previous top ('break') of the memory area
+  
+      // We need to make sure no one else allocates unfreeable memory!
+      // We must control this entirely. So we don't even need to do
+      // unfreeable allocations - the HEAP is ours, from STATICTOP up.
+      // TODO: We could in theory slice off the top of the HEAP when
+      //       sbrk gets a negative increment in |bytes|...
+      var self = _sbrk;
+      if (!self.called) {
+        STATICTOP = alignMemoryPage(STATICTOP); // make sure we start out aligned
+        self.called = true;
+        _sbrk.DYNAMIC_START = STATICTOP;
+      }
+      var ret = STATICTOP;
+      if (bytes != 0) Runtime.staticAlloc(bytes);
+      return ret;  // Previous break location.
+    }
+
+
+
+
 
   var Browser={mainLoop:{scheduler:null,shouldPause:false,paused:false,queue:[],pause:function () {
           Browser.mainLoop.shouldPause = true;
@@ -21734,8 +30670,60 @@ Module.callMain = function callMain(args) {
 
 
 
-var _asm_instr;
 
+
+
+
+
+
+
+var _type_name;
+var _opts_debug;
+var _opts_memchk;
+var _main_params_data;
+var _main_params_elements;
+var _main_params_allocated;
+
+var _arg0;
+
+
+
+
+
+
+
+
+
+
+
+var _qc_builtins;
+var _qc_builtins_count;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var _asm_instr;
 
 
 var _prog_print_statement_t;
@@ -21820,6 +30808,20 @@ var _stdout;
 
 
 
+var _mem_ab;
+var _mem_db;
+var _mem_at;
+var _mem_dt;
+var _mem_start;
+
+
+
+
+
+
+
+var __gm_;
+var _mparams;
 STRING_TABLE.__str=allocate([101,120,101,99,46,99,0] /* exec.c\00 */, "i8", ALLOC_STATIC);
 STRING_TABLE.__str1=allocate([114,98,0] /* rb\00 */, "i8", ALLOC_STATIC);
 STRING_TABLE.__str2=allocate([102,97,105,108,101,100,32,116,111,32,114,101,97,100,32,104,101,97,100,101,114,32,102,114,111,109,32,39,37,115,39,0] /* failed to read heade */, "i8", ALLOC_STATIC);
@@ -21847,161 +30849,236 @@ STRING_TABLE.__str23=allocate([78,85,76,76,32,102,117,110,99,116,105,111,110,32,
 STRING_TABLE.__str24=allocate([67,65,76,76,32,111,117,116,115,105,100,101,32,116,104,101,32,112,114,111,103,114,97,109,32,105,110,32,96,37,115,96,0] /* CALL outside the pro */, "i8", ALLOC_STATIC);
 STRING_TABLE.__str25=allocate([78,111,32,115,117,99,104,32,98,117,105,108,116,105,110,32,35,37,105,32,105,110,32,37,115,33,32,84,114,121,32,117,112,100,97,116,105,110,103,32,121,111,117,114,32,103,109,113,99,99,32,115,111,117,114,99,101,115,0] /* No such builtin #%i  */, "i8", ALLOC_STATIC);
 STRING_TABLE.__str26=allocate([96,37,115,96,32,116,114,105,101,100,32,116,111,32,101,120,101,99,117,116,101,32,97,32,83,84,65,84,69,32,111,112,101,114,97,116,105,111,110,0] /* `%s` tried to execut */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str27=allocate([60,105,108,108,101,103,97,108,32,105,110,115,116,114,117,99,116,105,111,110,32,37,100,62,10,0] /* _illegal instruction */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str28=allocate([32,60,62,32,37,45,49,50,115,0] /*  __ %-12s\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str27=allocate([118,111,105,100,0] /* void\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str28=allocate([115,116,114,105,110,103,0] /* string\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str29=allocate([102,108,111,97,116,0] /* float\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str30=allocate([118,101,99,116,111,114,0] /* vector\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str31=allocate([101,110,116,105,116,121,0] /* entity\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str32=allocate([102,105,101,108,100,0] /* field\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str33=allocate([102,117,110,99,116,105,111,110,0] /* function\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str34=allocate([112,111,105,110,116,101,114,0] /* pointer\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str35=allocate([118,97,114,105,97,110,116,0] /* variant\00 */, "i8", ALLOC_STATIC);
+_type_name=allocate(40, "i8", ALLOC_STATIC);
+_opts_debug=allocate(4, "i8", ALLOC_STATIC);
+_opts_memchk=allocate(4, "i8", ALLOC_STATIC);
+_main_params_data=allocate(4, "i8", ALLOC_STATIC);
+_main_params_elements=allocate(4, "i8", ALLOC_STATIC);
+_main_params_allocated=allocate(4, "i8", ALLOC_STATIC);
+STRING_TABLE.__str36=allocate([117,115,97,103,101,58,32,91,45,100,101,98,117,103,93,32,37,115,32,102,105,108,101,10,0] /* usage: [-debug] %s f */, "i8", ALLOC_STATIC);
+_arg0=allocate(4, "i8", ALLOC_STATIC);
+STRING_TABLE.__str37=allocate([45,116,114,97,99,101,0] /* -trace\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str38=allocate([45,112,114,111,102,105,108,101,0] /* -profile\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str39=allocate([45,105,110,102,111,0] /* -info\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str40=allocate([45,100,105,115,97,115,109,0] /* -disasm\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str41=allocate([45,112,114,105,110,116,100,101,102,115,0] /* -printdefs\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str42=allocate([45,112,114,105,110,116,102,105,101,108,100,115,0] /* -printfields\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str43=allocate([45,118,101,99,116,111,114,0] /* -vector\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str44=allocate([45,115,116,114,105,110,103,0] /* -string\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str45=allocate([45,102,108,111,97,116,0] /* -float\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str46=allocate([99,97,110,110,111,116,32,97,100,100,32,112,97,114,97,109,101,116,101,114,10,0] /* cannot add parameter */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str47=allocate([102,97,105,108,101,100,32,116,111,32,108,111,97,100,32,112,114,111,103,114,97,109,32,39,37,115,39,10,0] /* failed to load progr */, "i8", ALLOC_STATIC);
+_qc_builtins=allocate([0, 0, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 6, 0, 0, 0, 8, 0, 0, 0, 10, 0, 0, 0, 12, 0, 0, 0, 14, 0, 0, 0, 16, 0, 0, 0], ["*",0,0,0,"*",0,0,0,"*",0,0,0,"*",0,0,0,"*",0,0,0,"*",0,0,0,"*",0,0,0,"*",0,0,0,"*",0,0,0], ALLOC_STATIC);
+_qc_builtins_count=allocate([9], ["i32",0,0,0], ALLOC_STATIC);
+STRING_TABLE.__str48=allocate([80,114,111,103,114,97,109,39,115,32,115,121,115,116,101,109,45,99,104,101,99,107,115,117,109,32,61,32,48,120,37,48,52,120,10,0] /* Program's system-che */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str49=allocate([69,110,116,105,116,121,32,102,105,101,108,100,32,115,112,97,99,101,58,32,37,105,10,0] /* Entity field space:  */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str50=allocate([109,97,105,110,0] /* main\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str51=allocate([71,108,111,98,97,108,58,32,37,56,115,32,37,45,49,54,115,32,97,116,32,37,117,10,0] /* Global: %8s %-16s at */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str52=allocate([70,105,101,108,100,58,32,37,56,115,32,37,45,49,54,115,32,97,116,32,37,117,10,0] /* Field: %8s %-16s at  */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str53=allocate([78,111,32,109,97,105,110,32,102,117,110,99,116,105,111,110,32,102,111,117,110,100,10,0] /* No main function fou */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str54=allocate([70,85,78,67,84,73,79,78,32,34,37,115,34,32,61,32,98,117,105,108,116,105,110,32,35,37,105,10,0] /* FUNCTION \22%s\22 =  */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str55=allocate([70,85,78,67,84,73,79,78,32,34,37,115,34,10,0] /* FUNCTION \22%s\22\0A */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str56=allocate([32,37,102,32,37,102,32,37,102,32,0] /*  %f %f %f \00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str57=allocate([101,114,114,111,114,58,32,117,110,104,97,110,100,108,101,100,32,112,97,114,97,109,101,116,101,114,32,116,121,112,101,58,32,37,105,10,0] /* error: unhandled par */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str58=allocate([69,82,82,79,82,58,32,105,110,118,97,108,105,100,32,110,117,109,98,101,114,32,111,102,32,97,114,103,117,109,101,110,116,115,32,102,111,114,32,37,115,58,32,37,105,44,32,101,120,112,101,99,116,101,100,32,37,105,10,0] /* ERROR: invalid numbe */, "i8", ALLOC_STATIC);
+STRING_TABLE.___FUNCTION___qc_etos=allocate([113,99,95,101,116,111,115,0] /* qc_etos\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str59=allocate([37,105,0] /* %i\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.___FUNCTION___qc_vlen=allocate([113,99,95,118,108,101,110,0] /* qc_vlen\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str60=allocate([42,42,42,32,86,77,32,114,97,105,115,101,100,32,97,110,32,101,114,114,111,114,58,10,0] /* ___ VM raised an err */, "i8", ALLOC_STATIC);
+STRING_TABLE.___FUNCTION___qc_vtos=allocate([113,99,95,118,116,111,115,0] /* qc_vtos\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str61=allocate([39,37,103,32,37,103,32,37,103,39,0] /* '%g %g %g'\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.___FUNCTION___qc_kill=allocate([113,99,95,107,105,108,108,0] /* qc_kill\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.___FUNCTION___qc_spawn=allocate([113,99,95,115,112,97,119,110,0] /* qc_spawn\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.___FUNCTION___qc_ftos=allocate([113,99,95,102,116,111,115,0] /* qc_ftos\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str62=allocate([37,103,0] /* %g\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str63=allocate([37,115,0] /* %s\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str64=allocate([10,0] /* \0A\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str65=allocate([60,105,108,108,101,103,97,108,32,105,110,115,116,114,117,99,116,105,111,110,32,37,100,62,10,0] /* _illegal instruction */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str66=allocate([32,60,62,32,37,45,49,50,115,0] /*  __ %-12s\00 */, "i8", ALLOC_STATIC);
 _asm_instr=allocate([0, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0], ["*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0,"*",0,0,0,"i32",0,0,0,"i32",0,0,0], ALLOC_STATIC);
-STRING_TABLE.__str29=allocate([37,100,10,0] /* %d\0A\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str30=allocate([10,0] /* \0A\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str31=allocate([37,105,10,0] /* %i\0A\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str67=allocate([37,100,10,0] /* %d\0A\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str68=allocate([37,105,10,0] /* %i\0A\00 */, "i8", ALLOC_STATIC);
 _prog_print_statement_t=allocate([2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0], ["i32",0,0,0,"i32",0,0,0,"i32",0,0,0], ALLOC_STATIC);
-STRING_TABLE.__str32=allocate([40,110,111,110,101,41,44,32,32,32,32,32,32,32,32,32,32,0] /* (none),          \00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str33=allocate([40,110,111,110,101,41,0] /* (none)\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str69=allocate([40,110,111,110,101,41,44,32,32,32,32,32,32,32,32,32,32,0] /* (none),          \00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str70=allocate([40,110,111,110,101,41,0] /* (none)\00 */, "i8", ALLOC_STATIC);
 STRING_TABLE._trace_print_global_spaces=allocate([32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,0] /*                      */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str34=allocate([60,110,117,108,108,62,44,0] /* _null_,\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str35=allocate([36,0] /* $\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str36=allocate([37,115,32,0] /* %s \00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str37=allocate([91,64,37,117,93,32,0] /* [@%u] \00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str38=allocate([40,37,105,41,44,0] /* (%i),\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str39=allocate([39,37,103,32,37,103,32,37,103,39,44,0] /* '%g %g %g',\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str40=allocate([44,0] /* ,\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str41=allocate([37,103,44,0] /* %g,\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str42=allocate([68,79,78,69,0] /* DONE\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str43=allocate([77,85,76,95,70,0] /* MUL_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str44=allocate([77,85,76,95,86,0] /* MUL_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str45=allocate([77,85,76,95,70,86,0] /* MUL_FV\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str46=allocate([77,85,76,95,86,70,0] /* MUL_VF\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str47=allocate([68,73,86,0] /* DIV\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str48=allocate([65,68,68,95,70,0] /* ADD_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str49=allocate([65,68,68,95,86,0] /* ADD_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str50=allocate([83,85,66,95,70,0] /* SUB_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str51=allocate([83,85,66,95,86,0] /* SUB_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str52=allocate([69,81,95,70,0] /* EQ_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str53=allocate([69,81,95,86,0] /* EQ_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str54=allocate([69,81,95,83,0] /* EQ_S\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str55=allocate([69,81,95,69,0] /* EQ_E\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str56=allocate([69,81,95,70,78,67,0] /* EQ_FNC\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str57=allocate([78,69,95,70,0] /* NE_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str58=allocate([78,69,95,86,0] /* NE_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str59=allocate([78,69,95,83,0] /* NE_S\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str60=allocate([78,69,95,69,0] /* NE_E\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str61=allocate([78,69,95,70,78,67,0] /* NE_FNC\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str62=allocate([76,69,0] /* LE\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str63=allocate([71,69,0] /* GE\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str64=allocate([76,84,0] /* LT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str65=allocate([71,84,0] /* GT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str66=allocate([70,73,69,76,68,95,70,0] /* FIELD_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str67=allocate([70,73,69,76,68,95,86,0] /* FIELD_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str68=allocate([70,73,69,76,68,95,83,0] /* FIELD_S\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str69=allocate([70,73,69,76,68,95,69,78,84,0] /* FIELD_ENT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str70=allocate([70,73,69,76,68,95,70,76,68,0] /* FIELD_FLD\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str71=allocate([70,73,69,76,68,95,70,78,67,0] /* FIELD_FNC\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str72=allocate([65,68,68,82,69,83,83,0] /* ADDRESS\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str73=allocate([83,84,79,82,69,95,70,0] /* STORE_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str74=allocate([83,84,79,82,69,95,86,0] /* STORE_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str75=allocate([83,84,79,82,69,95,83,0] /* STORE_S\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str76=allocate([83,84,79,82,69,95,69,78,84,0] /* STORE_ENT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str77=allocate([83,84,79,82,69,95,70,76,68,0] /* STORE_FLD\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str78=allocate([83,84,79,82,69,95,70,78,67,0] /* STORE_FNC\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str79=allocate([83,84,79,82,69,80,95,70,0] /* STOREP_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str80=allocate([83,84,79,82,69,80,95,86,0] /* STOREP_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str81=allocate([83,84,79,82,69,80,95,83,0] /* STOREP_S\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str82=allocate([83,84,79,82,69,80,95,69,78,84,0] /* STOREP_ENT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str83=allocate([83,84,79,82,69,80,95,70,76,68,0] /* STOREP_FLD\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str84=allocate([83,84,79,82,69,80,95,70,78,67,0] /* STOREP_FNC\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str85=allocate([82,69,84,85,82,78,0] /* RETURN\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str86=allocate([78,79,84,95,70,0] /* NOT_F\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str87=allocate([78,79,84,95,86,0] /* NOT_V\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str88=allocate([78,79,84,95,83,0] /* NOT_S\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str89=allocate([78,79,84,95,69,78,84,0] /* NOT_ENT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str90=allocate([78,79,84,95,70,78,67,0] /* NOT_FNC\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str91=allocate([73,70,0] /* IF\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str92=allocate([73,70,78,79,84,0] /* IFNOT\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str93=allocate([67,65,76,76,48,0] /* CALL0\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str94=allocate([67,65,76,76,49,0] /* CALL1\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str95=allocate([67,65,76,76,50,0] /* CALL2\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str96=allocate([67,65,76,76,51,0] /* CALL3\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str97=allocate([67,65,76,76,52,0] /* CALL4\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str98=allocate([67,65,76,76,53,0] /* CALL5\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str99=allocate([67,65,76,76,54,0] /* CALL6\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str100=allocate([67,65,76,76,55,0] /* CALL7\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str101=allocate([67,65,76,76,56,0] /* CALL8\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str102=allocate([83,84,65,84,69,0] /* STATE\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str103=allocate([71,79,84,79,0] /* GOTO\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str104=allocate([65,78,68,0] /* AND\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str105=allocate([79,82,0] /* OR\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str106=allocate([66,73,84,65,78,68,0] /* BITAND\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str107=allocate([66,73,84,79,82,0] /* BITOR\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str108=allocate([69,78,68,0] /* END\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str109=allocate([111,117,116,32,111,102,32,109,101,109,111,114,121,10,0] /* out of memory\0A\00 */, "i8", ALLOC_STATIC);
-STRING_TABLE.__str110=allocate([58,32,37,115,10,0] /* : %s\0A\00 */, "i8", ALLOC_STATIC);
-HEAP32[((_asm_instr)>>2)]=((STRING_TABLE.__str42)|0);
-HEAP32[(((_asm_instr)+(12))>>2)]=((STRING_TABLE.__str43)|0);
-HEAP32[(((_asm_instr)+(24))>>2)]=((STRING_TABLE.__str44)|0);
-HEAP32[(((_asm_instr)+(36))>>2)]=((STRING_TABLE.__str45)|0);
-HEAP32[(((_asm_instr)+(48))>>2)]=((STRING_TABLE.__str46)|0);
-HEAP32[(((_asm_instr)+(60))>>2)]=((STRING_TABLE.__str47)|0);
-HEAP32[(((_asm_instr)+(72))>>2)]=((STRING_TABLE.__str48)|0);
-HEAP32[(((_asm_instr)+(84))>>2)]=((STRING_TABLE.__str49)|0);
-HEAP32[(((_asm_instr)+(96))>>2)]=((STRING_TABLE.__str50)|0);
-HEAP32[(((_asm_instr)+(108))>>2)]=((STRING_TABLE.__str51)|0);
-HEAP32[(((_asm_instr)+(120))>>2)]=((STRING_TABLE.__str52)|0);
-HEAP32[(((_asm_instr)+(132))>>2)]=((STRING_TABLE.__str53)|0);
-HEAP32[(((_asm_instr)+(144))>>2)]=((STRING_TABLE.__str54)|0);
-HEAP32[(((_asm_instr)+(156))>>2)]=((STRING_TABLE.__str55)|0);
-HEAP32[(((_asm_instr)+(168))>>2)]=((STRING_TABLE.__str56)|0);
-HEAP32[(((_asm_instr)+(180))>>2)]=((STRING_TABLE.__str57)|0);
-HEAP32[(((_asm_instr)+(192))>>2)]=((STRING_TABLE.__str58)|0);
-HEAP32[(((_asm_instr)+(204))>>2)]=((STRING_TABLE.__str59)|0);
-HEAP32[(((_asm_instr)+(216))>>2)]=((STRING_TABLE.__str60)|0);
-HEAP32[(((_asm_instr)+(228))>>2)]=((STRING_TABLE.__str61)|0);
-HEAP32[(((_asm_instr)+(240))>>2)]=((STRING_TABLE.__str62)|0);
-HEAP32[(((_asm_instr)+(252))>>2)]=((STRING_TABLE.__str63)|0);
-HEAP32[(((_asm_instr)+(264))>>2)]=((STRING_TABLE.__str64)|0);
-HEAP32[(((_asm_instr)+(276))>>2)]=((STRING_TABLE.__str65)|0);
-HEAP32[(((_asm_instr)+(288))>>2)]=((STRING_TABLE.__str66)|0);
-HEAP32[(((_asm_instr)+(300))>>2)]=((STRING_TABLE.__str67)|0);
-HEAP32[(((_asm_instr)+(312))>>2)]=((STRING_TABLE.__str68)|0);
-HEAP32[(((_asm_instr)+(324))>>2)]=((STRING_TABLE.__str69)|0);
-HEAP32[(((_asm_instr)+(336))>>2)]=((STRING_TABLE.__str70)|0);
-HEAP32[(((_asm_instr)+(348))>>2)]=((STRING_TABLE.__str71)|0);
-HEAP32[(((_asm_instr)+(360))>>2)]=((STRING_TABLE.__str72)|0);
-HEAP32[(((_asm_instr)+(372))>>2)]=((STRING_TABLE.__str73)|0);
-HEAP32[(((_asm_instr)+(384))>>2)]=((STRING_TABLE.__str74)|0);
-HEAP32[(((_asm_instr)+(396))>>2)]=((STRING_TABLE.__str75)|0);
-HEAP32[(((_asm_instr)+(408))>>2)]=((STRING_TABLE.__str76)|0);
-HEAP32[(((_asm_instr)+(420))>>2)]=((STRING_TABLE.__str77)|0);
-HEAP32[(((_asm_instr)+(432))>>2)]=((STRING_TABLE.__str78)|0);
-HEAP32[(((_asm_instr)+(444))>>2)]=((STRING_TABLE.__str79)|0);
-HEAP32[(((_asm_instr)+(456))>>2)]=((STRING_TABLE.__str80)|0);
-HEAP32[(((_asm_instr)+(468))>>2)]=((STRING_TABLE.__str81)|0);
-HEAP32[(((_asm_instr)+(480))>>2)]=((STRING_TABLE.__str82)|0);
-HEAP32[(((_asm_instr)+(492))>>2)]=((STRING_TABLE.__str83)|0);
-HEAP32[(((_asm_instr)+(504))>>2)]=((STRING_TABLE.__str84)|0);
-HEAP32[(((_asm_instr)+(516))>>2)]=((STRING_TABLE.__str85)|0);
-HEAP32[(((_asm_instr)+(528))>>2)]=((STRING_TABLE.__str86)|0);
-HEAP32[(((_asm_instr)+(540))>>2)]=((STRING_TABLE.__str87)|0);
-HEAP32[(((_asm_instr)+(552))>>2)]=((STRING_TABLE.__str88)|0);
-HEAP32[(((_asm_instr)+(564))>>2)]=((STRING_TABLE.__str89)|0);
-HEAP32[(((_asm_instr)+(576))>>2)]=((STRING_TABLE.__str90)|0);
-HEAP32[(((_asm_instr)+(588))>>2)]=((STRING_TABLE.__str91)|0);
-HEAP32[(((_asm_instr)+(600))>>2)]=((STRING_TABLE.__str92)|0);
-HEAP32[(((_asm_instr)+(612))>>2)]=((STRING_TABLE.__str93)|0);
-HEAP32[(((_asm_instr)+(624))>>2)]=((STRING_TABLE.__str94)|0);
-HEAP32[(((_asm_instr)+(636))>>2)]=((STRING_TABLE.__str95)|0);
-HEAP32[(((_asm_instr)+(648))>>2)]=((STRING_TABLE.__str96)|0);
-HEAP32[(((_asm_instr)+(660))>>2)]=((STRING_TABLE.__str97)|0);
-HEAP32[(((_asm_instr)+(672))>>2)]=((STRING_TABLE.__str98)|0);
-HEAP32[(((_asm_instr)+(684))>>2)]=((STRING_TABLE.__str99)|0);
-HEAP32[(((_asm_instr)+(696))>>2)]=((STRING_TABLE.__str100)|0);
-HEAP32[(((_asm_instr)+(708))>>2)]=((STRING_TABLE.__str101)|0);
-HEAP32[(((_asm_instr)+(720))>>2)]=((STRING_TABLE.__str102)|0);
-HEAP32[(((_asm_instr)+(732))>>2)]=((STRING_TABLE.__str103)|0);
-HEAP32[(((_asm_instr)+(744))>>2)]=((STRING_TABLE.__str104)|0);
-HEAP32[(((_asm_instr)+(756))>>2)]=((STRING_TABLE.__str105)|0);
-HEAP32[(((_asm_instr)+(768))>>2)]=((STRING_TABLE.__str106)|0);
-HEAP32[(((_asm_instr)+(780))>>2)]=((STRING_TABLE.__str107)|0);
-HEAP32[(((_asm_instr)+(792))>>2)]=((STRING_TABLE.__str108)|0);
-FUNCTION_TABLE = [0,0]; Module["FUNCTION_TABLE"] = FUNCTION_TABLE;
+STRING_TABLE.__str71=allocate([60,110,117,108,108,62,44,0] /* _null_,\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str72=allocate([36,0] /* $\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str73=allocate([37,115,32,0] /* %s \00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str74=allocate([91,64,37,117,93,32,0] /* [@%u] \00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str75=allocate([40,37,105,41,44,0] /* (%i),\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str76=allocate([39,37,103,32,37,103,32,37,103,39,44,0] /* '%g %g %g',\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str77=allocate([44,0] /* ,\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str78=allocate([37,103,44,0] /* %g,\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str79=allocate([68,79,78,69,0] /* DONE\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str80=allocate([77,85,76,95,70,0] /* MUL_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str81=allocate([77,85,76,95,86,0] /* MUL_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str82=allocate([77,85,76,95,70,86,0] /* MUL_FV\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str83=allocate([77,85,76,95,86,70,0] /* MUL_VF\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str84=allocate([68,73,86,0] /* DIV\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str85=allocate([65,68,68,95,70,0] /* ADD_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str86=allocate([65,68,68,95,86,0] /* ADD_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str87=allocate([83,85,66,95,70,0] /* SUB_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str88=allocate([83,85,66,95,86,0] /* SUB_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str89=allocate([69,81,95,70,0] /* EQ_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str90=allocate([69,81,95,86,0] /* EQ_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str91=allocate([69,81,95,83,0] /* EQ_S\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str92=allocate([69,81,95,69,0] /* EQ_E\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str93=allocate([69,81,95,70,78,67,0] /* EQ_FNC\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str94=allocate([78,69,95,70,0] /* NE_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str95=allocate([78,69,95,86,0] /* NE_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str96=allocate([78,69,95,83,0] /* NE_S\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str97=allocate([78,69,95,69,0] /* NE_E\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str98=allocate([78,69,95,70,78,67,0] /* NE_FNC\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str99=allocate([76,69,0] /* LE\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str100=allocate([71,69,0] /* GE\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str101=allocate([76,84,0] /* LT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str102=allocate([71,84,0] /* GT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str103=allocate([70,73,69,76,68,95,70,0] /* FIELD_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str104=allocate([70,73,69,76,68,95,86,0] /* FIELD_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str105=allocate([70,73,69,76,68,95,83,0] /* FIELD_S\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str106=allocate([70,73,69,76,68,95,69,78,84,0] /* FIELD_ENT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str107=allocate([70,73,69,76,68,95,70,76,68,0] /* FIELD_FLD\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str108=allocate([70,73,69,76,68,95,70,78,67,0] /* FIELD_FNC\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str109=allocate([65,68,68,82,69,83,83,0] /* ADDRESS\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str110=allocate([83,84,79,82,69,95,70,0] /* STORE_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str111=allocate([83,84,79,82,69,95,86,0] /* STORE_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str112=allocate([83,84,79,82,69,95,83,0] /* STORE_S\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str113=allocate([83,84,79,82,69,95,69,78,84,0] /* STORE_ENT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str114=allocate([83,84,79,82,69,95,70,76,68,0] /* STORE_FLD\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str115=allocate([83,84,79,82,69,95,70,78,67,0] /* STORE_FNC\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str116=allocate([83,84,79,82,69,80,95,70,0] /* STOREP_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str117=allocate([83,84,79,82,69,80,95,86,0] /* STOREP_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str118=allocate([83,84,79,82,69,80,95,83,0] /* STOREP_S\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str119=allocate([83,84,79,82,69,80,95,69,78,84,0] /* STOREP_ENT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str120=allocate([83,84,79,82,69,80,95,70,76,68,0] /* STOREP_FLD\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str121=allocate([83,84,79,82,69,80,95,70,78,67,0] /* STOREP_FNC\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str122=allocate([82,69,84,85,82,78,0] /* RETURN\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str123=allocate([78,79,84,95,70,0] /* NOT_F\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str124=allocate([78,79,84,95,86,0] /* NOT_V\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str125=allocate([78,79,84,95,83,0] /* NOT_S\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str126=allocate([78,79,84,95,69,78,84,0] /* NOT_ENT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str127=allocate([78,79,84,95,70,78,67,0] /* NOT_FNC\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str128=allocate([73,70,0] /* IF\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str129=allocate([73,70,78,79,84,0] /* IFNOT\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str130=allocate([67,65,76,76,48,0] /* CALL0\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str131=allocate([67,65,76,76,49,0] /* CALL1\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str132=allocate([67,65,76,76,50,0] /* CALL2\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str133=allocate([67,65,76,76,51,0] /* CALL3\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str134=allocate([67,65,76,76,52,0] /* CALL4\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str135=allocate([67,65,76,76,53,0] /* CALL5\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str136=allocate([67,65,76,76,54,0] /* CALL6\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str137=allocate([67,65,76,76,55,0] /* CALL7\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str138=allocate([67,65,76,76,56,0] /* CALL8\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str139=allocate([83,84,65,84,69,0] /* STATE\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str140=allocate([71,79,84,79,0] /* GOTO\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str141=allocate([65,78,68,0] /* AND\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str142=allocate([79,82,0] /* OR\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str143=allocate([66,73,84,65,78,68,0] /* BITAND\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str144=allocate([66,73,84,79,82,0] /* BITOR\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str145=allocate([69,78,68,0] /* END\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str146=allocate([111,117,116,32,111,102,32,109,101,109,111,114,121,10,0] /* out of memory\0A\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str147=allocate([58,32,37,115,10,0] /* : %s\0A\00 */, "i8", ALLOC_STATIC);
+_mem_ab=allocate(8, "i8", ALLOC_STATIC);
+_mem_db=allocate(8, "i8", ALLOC_STATIC);
+_mem_at=allocate(8, "i8", ALLOC_STATIC);
+_mem_dt=allocate(8, "i8", ALLOC_STATIC);
+_mem_start=allocate(4, "i8", ALLOC_STATIC);
+STRING_TABLE.__str148=allocate([77,69,77,0] /* MEM\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str1149=allocate([97,108,108,111,99,97,116,105,111,110,58,32,32,32,37,32,56,117,32,40,98,121,116,101,115,41,32,97,100,100,114,101,115,115,32,48,120,37,48,56,88,32,64,32,37,115,58,37,117,10,0] /* allocation:   % 8u ( */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str2150=allocate([114,101,108,101,97,115,101,100,58,32,32,32,32,32,37,32,56,117,32,40,98,121,116,101,115,41,32,97,100,100,114,101,115,115,32,48,120,37,48,56,88,32,64,32,37,115,58,37,117,10,0] /* released:     % 8u ( */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str6154=allocate([117,116,105,108,46,99,0] /* util.c\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str7155=allocate([68,69,66,85,71,58,32,0] /* DEBUG: \00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str8156=allocate([37,115,0] /* %s\00 */, "i8", ALLOC_STATIC);
+STRING_TABLE.__str9157=allocate([93,32,0] /* ] \00 */, "i8", ALLOC_STATIC);
+__gm_=allocate(468, "i8", ALLOC_STATIC);
+_mparams=allocate(24, "i8", ALLOC_STATIC);
+HEAP32[((_type_name)>>2)]=((STRING_TABLE.__str27)|0);
+HEAP32[(((_type_name)+(4))>>2)]=((STRING_TABLE.__str28)|0);
+HEAP32[(((_type_name)+(8))>>2)]=((STRING_TABLE.__str29)|0);
+HEAP32[(((_type_name)+(12))>>2)]=((STRING_TABLE.__str30)|0);
+HEAP32[(((_type_name)+(16))>>2)]=((STRING_TABLE.__str31)|0);
+HEAP32[(((_type_name)+(20))>>2)]=((STRING_TABLE.__str32)|0);
+HEAP32[(((_type_name)+(24))>>2)]=((STRING_TABLE.__str33)|0);
+HEAP32[(((_type_name)+(28))>>2)]=((STRING_TABLE.__str34)|0);
+HEAP32[(((_type_name)+(32))>>2)]=((STRING_TABLE.__str35)|0);
+HEAP32[((_asm_instr)>>2)]=((STRING_TABLE.__str79)|0);
+HEAP32[(((_asm_instr)+(12))>>2)]=((STRING_TABLE.__str80)|0);
+HEAP32[(((_asm_instr)+(24))>>2)]=((STRING_TABLE.__str81)|0);
+HEAP32[(((_asm_instr)+(36))>>2)]=((STRING_TABLE.__str82)|0);
+HEAP32[(((_asm_instr)+(48))>>2)]=((STRING_TABLE.__str83)|0);
+HEAP32[(((_asm_instr)+(60))>>2)]=((STRING_TABLE.__str84)|0);
+HEAP32[(((_asm_instr)+(72))>>2)]=((STRING_TABLE.__str85)|0);
+HEAP32[(((_asm_instr)+(84))>>2)]=((STRING_TABLE.__str86)|0);
+HEAP32[(((_asm_instr)+(96))>>2)]=((STRING_TABLE.__str87)|0);
+HEAP32[(((_asm_instr)+(108))>>2)]=((STRING_TABLE.__str88)|0);
+HEAP32[(((_asm_instr)+(120))>>2)]=((STRING_TABLE.__str89)|0);
+HEAP32[(((_asm_instr)+(132))>>2)]=((STRING_TABLE.__str90)|0);
+HEAP32[(((_asm_instr)+(144))>>2)]=((STRING_TABLE.__str91)|0);
+HEAP32[(((_asm_instr)+(156))>>2)]=((STRING_TABLE.__str92)|0);
+HEAP32[(((_asm_instr)+(168))>>2)]=((STRING_TABLE.__str93)|0);
+HEAP32[(((_asm_instr)+(180))>>2)]=((STRING_TABLE.__str94)|0);
+HEAP32[(((_asm_instr)+(192))>>2)]=((STRING_TABLE.__str95)|0);
+HEAP32[(((_asm_instr)+(204))>>2)]=((STRING_TABLE.__str96)|0);
+HEAP32[(((_asm_instr)+(216))>>2)]=((STRING_TABLE.__str97)|0);
+HEAP32[(((_asm_instr)+(228))>>2)]=((STRING_TABLE.__str98)|0);
+HEAP32[(((_asm_instr)+(240))>>2)]=((STRING_TABLE.__str99)|0);
+HEAP32[(((_asm_instr)+(252))>>2)]=((STRING_TABLE.__str100)|0);
+HEAP32[(((_asm_instr)+(264))>>2)]=((STRING_TABLE.__str101)|0);
+HEAP32[(((_asm_instr)+(276))>>2)]=((STRING_TABLE.__str102)|0);
+HEAP32[(((_asm_instr)+(288))>>2)]=((STRING_TABLE.__str103)|0);
+HEAP32[(((_asm_instr)+(300))>>2)]=((STRING_TABLE.__str104)|0);
+HEAP32[(((_asm_instr)+(312))>>2)]=((STRING_TABLE.__str105)|0);
+HEAP32[(((_asm_instr)+(324))>>2)]=((STRING_TABLE.__str106)|0);
+HEAP32[(((_asm_instr)+(336))>>2)]=((STRING_TABLE.__str107)|0);
+HEAP32[(((_asm_instr)+(348))>>2)]=((STRING_TABLE.__str108)|0);
+HEAP32[(((_asm_instr)+(360))>>2)]=((STRING_TABLE.__str109)|0);
+HEAP32[(((_asm_instr)+(372))>>2)]=((STRING_TABLE.__str110)|0);
+HEAP32[(((_asm_instr)+(384))>>2)]=((STRING_TABLE.__str111)|0);
+HEAP32[(((_asm_instr)+(396))>>2)]=((STRING_TABLE.__str112)|0);
+HEAP32[(((_asm_instr)+(408))>>2)]=((STRING_TABLE.__str113)|0);
+HEAP32[(((_asm_instr)+(420))>>2)]=((STRING_TABLE.__str114)|0);
+HEAP32[(((_asm_instr)+(432))>>2)]=((STRING_TABLE.__str115)|0);
+HEAP32[(((_asm_instr)+(444))>>2)]=((STRING_TABLE.__str116)|0);
+HEAP32[(((_asm_instr)+(456))>>2)]=((STRING_TABLE.__str117)|0);
+HEAP32[(((_asm_instr)+(468))>>2)]=((STRING_TABLE.__str118)|0);
+HEAP32[(((_asm_instr)+(480))>>2)]=((STRING_TABLE.__str119)|0);
+HEAP32[(((_asm_instr)+(492))>>2)]=((STRING_TABLE.__str120)|0);
+HEAP32[(((_asm_instr)+(504))>>2)]=((STRING_TABLE.__str121)|0);
+HEAP32[(((_asm_instr)+(516))>>2)]=((STRING_TABLE.__str122)|0);
+HEAP32[(((_asm_instr)+(528))>>2)]=((STRING_TABLE.__str123)|0);
+HEAP32[(((_asm_instr)+(540))>>2)]=((STRING_TABLE.__str124)|0);
+HEAP32[(((_asm_instr)+(552))>>2)]=((STRING_TABLE.__str125)|0);
+HEAP32[(((_asm_instr)+(564))>>2)]=((STRING_TABLE.__str126)|0);
+HEAP32[(((_asm_instr)+(576))>>2)]=((STRING_TABLE.__str127)|0);
+HEAP32[(((_asm_instr)+(588))>>2)]=((STRING_TABLE.__str128)|0);
+HEAP32[(((_asm_instr)+(600))>>2)]=((STRING_TABLE.__str129)|0);
+HEAP32[(((_asm_instr)+(612))>>2)]=((STRING_TABLE.__str130)|0);
+HEAP32[(((_asm_instr)+(624))>>2)]=((STRING_TABLE.__str131)|0);
+HEAP32[(((_asm_instr)+(636))>>2)]=((STRING_TABLE.__str132)|0);
+HEAP32[(((_asm_instr)+(648))>>2)]=((STRING_TABLE.__str133)|0);
+HEAP32[(((_asm_instr)+(660))>>2)]=((STRING_TABLE.__str134)|0);
+HEAP32[(((_asm_instr)+(672))>>2)]=((STRING_TABLE.__str135)|0);
+HEAP32[(((_asm_instr)+(684))>>2)]=((STRING_TABLE.__str136)|0);
+HEAP32[(((_asm_instr)+(696))>>2)]=((STRING_TABLE.__str137)|0);
+HEAP32[(((_asm_instr)+(708))>>2)]=((STRING_TABLE.__str138)|0);
+HEAP32[(((_asm_instr)+(720))>>2)]=((STRING_TABLE.__str139)|0);
+HEAP32[(((_asm_instr)+(732))>>2)]=((STRING_TABLE.__str140)|0);
+HEAP32[(((_asm_instr)+(744))>>2)]=((STRING_TABLE.__str141)|0);
+HEAP32[(((_asm_instr)+(756))>>2)]=((STRING_TABLE.__str142)|0);
+HEAP32[(((_asm_instr)+(768))>>2)]=((STRING_TABLE.__str143)|0);
+HEAP32[(((_asm_instr)+(780))>>2)]=((STRING_TABLE.__str144)|0);
+HEAP32[(((_asm_instr)+(792))>>2)]=((STRING_TABLE.__str145)|0);
+FUNCTION_TABLE = [0,0,_qc_print,0,_qc_ftos,0,_qc_spawn,0,_qc_kill,0,_qc_vtos,0,_qc_error,0,_qc_vlen,0,_qc_etos,0]; Module["FUNCTION_TABLE"] = FUNCTION_TABLE;
 
 
 function run(args) {
@@ -22061,6 +31138,318 @@ Module['run'] = run;
 
 // {{PRE_RUN_ADDITIONS}}
 
+(function() {
+
+
+function assert(check, msg) {
+  if (!check) throw msg + new Error().stack;
+}
+Module['FS_createPath']('/', 'dat', true, true);
+
+    function DataRequest() {}
+    DataRequest.prototype = {
+      requests: {},
+      open: function(mode, name) {
+        this.requests[name] = this;
+      },
+      send: function() {}
+    };
+  
+    var filePreload0 = new DataRequest();
+    filePreload0.open('GET', 'dat/0.dat', true);
+    filePreload0.responseType = 'arraybuffer';
+    filePreload0.onload = function() {
+      var arrayBuffer = filePreload0.response;
+      assert(arrayBuffer, 'Loading file dat/0.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '0.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/0.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/0.dat');
+    filePreload0.send(null);
+
+    var filePreload1 = new DataRequest();
+    filePreload1.open('GET', 'dat/1.dat', true);
+    filePreload1.responseType = 'arraybuffer';
+    filePreload1.onload = function() {
+      var arrayBuffer = filePreload1.response;
+      assert(arrayBuffer, 'Loading file dat/1.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '1.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/1.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/1.dat');
+    filePreload1.send(null);
+
+    var filePreload2 = new DataRequest();
+    filePreload2.open('GET', 'dat/2.dat', true);
+    filePreload2.responseType = 'arraybuffer';
+    filePreload2.onload = function() {
+      var arrayBuffer = filePreload2.response;
+      assert(arrayBuffer, 'Loading file dat/2.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '2.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/2.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/2.dat');
+    filePreload2.send(null);
+
+    var filePreload3 = new DataRequest();
+    filePreload3.open('GET', 'dat/3.dat', true);
+    filePreload3.responseType = 'arraybuffer';
+    filePreload3.onload = function() {
+      var arrayBuffer = filePreload3.response;
+      assert(arrayBuffer, 'Loading file dat/3.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '3.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/3.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/3.dat');
+    filePreload3.send(null);
+
+    var filePreload4 = new DataRequest();
+    filePreload4.open('GET', 'dat/4.dat', true);
+    filePreload4.responseType = 'arraybuffer';
+    filePreload4.onload = function() {
+      var arrayBuffer = filePreload4.response;
+      assert(arrayBuffer, 'Loading file dat/4.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '4.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/4.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/4.dat');
+    filePreload4.send(null);
+
+    var filePreload5 = new DataRequest();
+    filePreload5.open('GET', 'dat/5.dat', true);
+    filePreload5.responseType = 'arraybuffer';
+    filePreload5.onload = function() {
+      var arrayBuffer = filePreload5.response;
+      assert(arrayBuffer, 'Loading file dat/5.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '5.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/5.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/5.dat');
+    filePreload5.send(null);
+
+    var filePreload6 = new DataRequest();
+    filePreload6.open('GET', 'dat/6.dat', true);
+    filePreload6.responseType = 'arraybuffer';
+    filePreload6.onload = function() {
+      var arrayBuffer = filePreload6.response;
+      assert(arrayBuffer, 'Loading file dat/6.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '6.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/6.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/6.dat');
+    filePreload6.send(null);
+
+    var filePreload7 = new DataRequest();
+    filePreload7.open('GET', 'dat/7.dat', true);
+    filePreload7.responseType = 'arraybuffer';
+    filePreload7.onload = function() {
+      var arrayBuffer = filePreload7.response;
+      assert(arrayBuffer, 'Loading file dat/7.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '7.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/7.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/7.dat');
+    filePreload7.send(null);
+
+    var filePreload8 = new DataRequest();
+    filePreload8.open('GET', 'dat/8.dat', true);
+    filePreload8.responseType = 'arraybuffer';
+    filePreload8.onload = function() {
+      var arrayBuffer = filePreload8.response;
+      assert(arrayBuffer, 'Loading file dat/8.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '8.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/8.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/8.dat');
+    filePreload8.send(null);
+
+    var filePreload9 = new DataRequest();
+    filePreload9.open('GET', 'dat/9.dat', true);
+    filePreload9.responseType = 'arraybuffer';
+    filePreload9.onload = function() {
+      var arrayBuffer = filePreload9.response;
+      assert(arrayBuffer, 'Loading file dat/9.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '9.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/9.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/9.dat');
+    filePreload9.send(null);
+
+    var filePreload10 = new DataRequest();
+    filePreload10.open('GET', 'dat/10.dat', true);
+    filePreload10.responseType = 'arraybuffer';
+    filePreload10.onload = function() {
+      var arrayBuffer = filePreload10.response;
+      assert(arrayBuffer, 'Loading file dat/10.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '10.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/10.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/10.dat');
+    filePreload10.send(null);
+
+    var filePreload11 = new DataRequest();
+    filePreload11.open('GET', 'dat/11.dat', true);
+    filePreload11.responseType = 'arraybuffer';
+    filePreload11.onload = function() {
+      var arrayBuffer = filePreload11.response;
+      assert(arrayBuffer, 'Loading file dat/11.dat failed.');
+      var byteArray = !arrayBuffer.subarray ? new Uint8Array(arrayBuffer) : arrayBuffer;
+      
+      Module['FS_createPreloadedFile']('/dat', '11.dat', byteArray, true, true, function() {
+        Module['removeRunDependency']('fp dat/11.dat');
+
+      });
+    };
+    Module['addRunDependency']('fp dat/11.dat');
+    filePreload11.send(null);
+
+    if (!Module.expectedDataFileDownloads) {
+      Module.expectedDataFileDownloads = 0;
+      Module.finishedDataFileDownloads = 0;
+    }
+    Module.expectedDataFileDownloads++;
+
+    var dataFile = new XMLHttpRequest();
+    dataFile.onprogress = function(event) {
+      var url = 'vm.data';
+      if (event.loaded && event.total) {
+        if (!dataFile.addedTotal) {
+          dataFile.addedTotal = true;
+          if (!Module.dataFileDownloads) Module.dataFileDownloads = {};
+          Module.dataFileDownloads[url] = {
+            loaded: event.loaded,
+            total: event.total
+          };
+        } else {
+          Module.dataFileDownloads[url].loaded = event.loaded;
+        }
+        var total = 0;
+        var loaded = 0;
+        var num = 0;
+        for (var download in Module.dataFileDownloads) {
+          var data = Module.dataFileDownloads[download];
+          total += data.total;
+          loaded += data.loaded;
+          num++;
+        }
+        total = Math.ceil(total * Module.expectedDataFileDownloads/num);
+        Module['setStatus']('Downloading data... (' + loaded + '/' + total + ')');
+      } else if (!Module.dataFileDownloads) {
+        Module['setStatus']('Downloading data...');
+      }
+    }
+    dataFile.open('GET', 'vm.data', true);
+    dataFile.responseType = 'arraybuffer';
+    dataFile.onload = function() {
+      Module.finishedDataFileDownloads++;
+      var arrayBuffer = dataFile.response;
+      assert(arrayBuffer, 'Loading data file failed.');
+      var byteArray = new Uint8Array(arrayBuffer);
+      var curr;
+      
+        curr = DataRequest.prototype.requests['dat/0.dat'];
+        curr.response = byteArray.subarray(0,462);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/1.dat'];
+        curr.response = byteArray.subarray(462,1631);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/2.dat'];
+        curr.response = byteArray.subarray(1631,2451);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/3.dat'];
+        curr.response = byteArray.subarray(2451,3236);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/4.dat'];
+        curr.response = byteArray.subarray(3236,4841);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/5.dat'];
+        curr.response = byteArray.subarray(4841,5494);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/6.dat'];
+        curr.response = byteArray.subarray(5494,5818);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/7.dat'];
+        curr.response = byteArray.subarray(5818,6469);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/8.dat'];
+        curr.response = byteArray.subarray(6469,7345);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/9.dat'];
+        curr.response = byteArray.subarray(7345,8592);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/10.dat'];
+        curr.response = byteArray.subarray(8592,9068);
+        curr.onload();
+      
+        curr = DataRequest.prototype.requests['dat/11.dat'];
+        curr.response = byteArray.subarray(9068,9522);
+        curr.onload();
+                Module['removeRunDependency']('datafile_vm.data');
+
+    };
+    Module['addRunDependency']('datafile_vm.data');
+    dataFile.send(null);
+    if (Module['setStatus']) Module['setStatus']('Downloading...');
+  
+
+})();
+
+
+
 if (Module['preInit']) {
   if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
   while (Module['preInit'].length > 0) {
@@ -22089,5 +31478,5 @@ if (shouldRunNow) {
   // {{MODULE_ADDITIONS}}
 
 
-// EMSCRIPTEN_GENERATED_FUNCTIONS: ["_qc_program_entitydata_add","_qc_program_stack_remove","_qc_program_strings_add","_qc_program_fields_remove","_qc_program_profile_remove","_qc_program_globals_add","_qc_program_functions_add","_prog_getstring","_loaderror","_qc_program_localstack_remove","_qc_program_localstack_resize","_trace_print_global","_qc_program_localstack_add","_qc_program_globals_remove","_qc_program_strings_resize","_prog_free_entity","_qcvmerror","_qc_program_entitydata_remove","_qc_program_functions_remove","_prog_tempstring","_qc_program_fields_add","_qc_program_builtins_add","_qc_program_builtins_remove","_prog_load","_prog_spawn_entity","_prog_getdef","_prog_entfield","_prog_delete","_qc_program_defs_add","_qc_program_strings_remove","_prog_exec","_qc_program_entitypool_remove","_qc_program_code_remove","_qc_program_defs_remove","_qc_program_entitypool_add","_qc_program_stack_add","_prog_print_statement","_qc_program_strings_append","_prog_getedict","_print_escaped_string","_qc_program_localstack_append","_qc_program_profile_resize","_prog_enterfunction","_qc_program_profile_add","_prog_leavefunction","_qc_program_code_add"]
+// EMSCRIPTEN_GENERATED_FUNCTIONS: ["_sys_trim","_qc_error","_qc_program_entitydata_add","_main","_util_strdup","_tmalloc_small","_prog_print_statement","_qc_vlen","_prog_getstring","_qc_program_profile_resize","_usage","_util_fopen","_qc_program_localstack_resize","_qc_print","_trace_print_global","_prog_load","_prepend_alloc","_qc_program_strings_resize","_prog_exec","_qcvmerror","_qc_ftos","_init_top","_main_params_add","_prog_tempstring","_qc_spawn","_prog_disasm_function","_qc_vtos","_init_mparams","_mmap_alloc","_prog_spawn_entity","_prog_getdef","_prog_entfield","_segment_holding","_sys_alloc","_prog_main_setparams","_prog_delete","_util_debug","_qc_program_stack_remove","_release_unused_segments","_prog_free_entity","_qc_program_entitypool_add","_tmalloc_large","_qc_program_strings_append","_free","_prog_getedict","_print_escaped_string","_qc_program_localstack_append","_add_segment","_init_bins","_loaderror","_qc_kill","_malloc","_util_memory_a","_prog_enterfunction","_util_memory_d","_prog_leavefunction","_qc_program_stack_add","_qc_etos"]
 

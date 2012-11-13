@@ -1,0 +1,4 @@
+[0;36mglobaldefs/main.qc:1: [0;36mwarning: [0munused global: `globf`
+[0;36mglobaldefs/main.qc:2: [0;36mwarning: [0munused global: `globv`
+[0;36mglobaldefs/main.qc:3: [0;36mwarning: [0munused global: `globs`
+[0;36mglobaldefs/main.qc:4: [0;36mwarning: [0mfunction `globfunc` has no body and in QC implicitly becomes a function-pointer

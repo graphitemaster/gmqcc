@@ -3,9 +3,11 @@
  * just reference these as files, aparently that's not possible, w/e
  */
 var examples = new Array();
+var eargs    = new Array();
 
 /* example code */
 examples[0] = 'void(string) print = #1;\nvoid(string what) main = {\n\tprint(what);\n\tprint("\\n");\n};\n';
+eargs[0]    = '-string "Hello World"';
 examples[1] = '\
 void(string, ...) print = #1;\n\
 string(float) ftos = #2;\n\
@@ -21,6 +23,7 @@ void(float a, float b, float c) main = {\n\
 \tsum(sum(a, b, c), b, c));\n\
 \tprint(ftos(f), \"\\n\");\n\
 };\n';
+eargs[1] = '-float 100 -float 200 -float 300';
 examples[2] = '\
 void(string, ...) print = #1;\n\
 string(float) ftos = #2;\n\
@@ -33,6 +36,7 @@ void(float a, float b) main = {\n\
 \tif (a >= b) print("ge\\n");\n\
 \tif (a <= b) print("le\\n");\n\
 };\n';
+eargs[2] = '-float 1000 -float 2000';
 examples[3] = '\
 void(string, string) print = #1;\n\
 entity() spawn = #3;\n\
@@ -51,6 +55,7 @@ void() main = {\n\
 \te.b = "bar";\n\
 \tcallout(e, b);\n\
 };\n';
+eargs[3] = '';
 examples[4] = '\
 .float  globf;\n\
 .vector globv;\n\
@@ -98,6 +103,7 @@ void(vector a, vector b) main = {\n\
 \n\
 \tprint("vis: ", ftos(visible(targ)), "\\n");\n\
 };\n';
+eargs[5] = "-vector '100 200 0' -vector '2000 1 10'";
 examples[6] = '\
 void(string, string) print = #1;\n\
 \n\
@@ -112,6 +118,7 @@ void(string() f) printer = {\n\
 void() main = {\n\
 \tprinter(getter);\n\
 };\n';
+eargs[6] = '';
 examples[7] = '\
 .float  globf;\n\
 .vector globv;\n\
@@ -130,6 +137,7 @@ void(float c) main = {\n\
 \telse\n\
 \t\tprint("Else\\n");\n\
 };\n';
+eargs[8] = '-float 1000.45f';
 examples[9] = '\
 void(string, ...) print = #1;\n\
 string(float) ftos = #2;\n\
@@ -153,6 +161,7 @@ void(float n) main = {\n\
 \t\ti += 1;\n\
 \t} while (i < n);\n\
 };\n';
+eargs[9] = '-float 10';
 examples[10] ='\
 void(string, ...) print = #1;\n\
 string(float) ftos = #2;\n\
@@ -168,6 +177,7 @@ void(float a, float b) main = {\n\
 \tprint("&& ", ftos(a&&b), "\\n");\n\
 \tprint("|| ", ftos(a||b), "\\n");\n\
 };\n';
+eargs[10] = '-float 10 -float 20';
 examples[11] = '\
 void(string, string) print = %:1;\n\
 \n\
@@ -175,12 +185,14 @@ void() main = ??<\n\
 \tprint("??=??\'??(??)??!??<??>??-??/??/%>", "??/n");\n\
 \tprint("#^[]|{}~\\%>", "\\n");\n\
 %>;\n';
+eargs[11] = '-string "Hello " -string "World!"';
 examples[12] = '\
 void(string, ...) print = #1;\n\
 \n\
 void(string what) main = {\n\
 \tprint(what, "\\n");\n\
 };\n';
+eargs[12] = '-string "Pizza!"';
 
 /* ad-hoc eh? */
 function update() {
@@ -188,13 +200,19 @@ function update() {
     var doc = document.getElementById("input");
     
     doc.value = examples[sel[sel.selectedIndex].value - 1];
+    document.getElementById("args").value = eargs[sel[sel.selectedIndex].value - 1];
 }
 function compile() {
-    var args = [
-        'dat/' + document.getElementById("eg").selectedIndex.toString() + '.dat'
-    ].concat(document.getElementById("args").value.split());
-    document.getElementById("output").value = "Executing " + args.toString().replace(',', ' ');
-    run (args);
+    
+    var args;
+    //document.getElementById("args").value.split(' ').concat();
+    
+    args  = document.getElementById("args").value;
+    args += ' dat/' + document.getElementById("eg").selectedIndex.toString() + '.dat';
+    document.getElementById("output").value = "Executing " + args + '\n';
+    
+    run (args.match(/(".*?"|[^" \s]+)(?=\s* |\s*$)/g));
+    
 }
 
 /* set initial */

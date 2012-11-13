@@ -1,0 +1,5 @@
+[0;36minvalid-assign/main.qc:3: [0;31merror: [0mnot an l-value (binop)
+Mode: manual
+There are 1 items to compile:
+  item: invalid-assign/main.qc (qc)
+failed to generate function main
