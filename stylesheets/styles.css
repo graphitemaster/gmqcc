@@ -63,6 +63,8 @@ background-image: radial-gradient(right bottom, ellipse farthest-corner, #0D0D0D
 textarea {
     outline: none;
     resize: none;
+    font-family: "Courier New, monospace";
+    font-size: 12px;
     background-color: #FBFAF7;
     border: 1;
     border-color: red;
