@@ -1418,11 +1418,23 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_ifthen *ifthen;
     ast_expression *cond, *ontrue, *onfalse = NULL;
+    bool ifnot = false;
 
     lex_ctx ctx = parser_ctx(parser);
 
-    /* skip the 'if' and check for opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
+    /* skip the 'if', parse an optional 'not' and check for an opening paren */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected condition or 'not'");
+        return false;
+    }
+    if (parser->tok == TOKEN_KEYWORD && !strcmp(parser_tokval(parser), "not")) {
+        ifnot = true;
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected condition in parenthesis");
+            return false;
+        }
+    }
+    if (parser->tok != '(') {
         parseerror(parser, "expected 'if' condition in parenthesis");
         return false;
     }
@@ -1469,7 +1481,10 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         }
     }
 
-    ifthen = ast_ifthen_new(ctx, cond, ontrue, onfalse);
+    if (ifnot)
+        ifthen = ast_ifthen_new(ctx, cond, onfalse, ontrue);
+    else
+        ifthen = ast_ifthen_new(ctx, cond, ontrue, onfalse);
     *out = (ast_expression*)ifthen;
     return true;
 }
