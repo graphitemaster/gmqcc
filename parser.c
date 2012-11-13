@@ -383,7 +383,7 @@ static sy_elem syparen(lex_ctx ctx, int p, size_t off) {
 /* With regular precedence rules, ent.foo[n] is the same as (ent.foo)[n],
  * so we need to rotate it to become ent.(foo[n]).
  */
-static void rotate_entfield_array_index_nodes(ast_expression **out)
+static bool rotate_entfield_array_index_nodes(ast_expression **out)
 {
     ast_array_index *index;
     ast_entfield    *entfield;
@@ -395,15 +395,15 @@ static void rotate_entfield_array_index_nodes(ast_expression **out)
     lex_ctx ctx = ast_ctx(*out);
 
     if (!ast_istype(*out, ast_array_index))
-        return;
+        return false;
     index = (ast_array_index*)*out;
 
     if (!ast_istype(index->array, ast_entfield))
-        return;
+        return false;
     entfield = (ast_entfield*)index->array;
 
     if (!ast_istype(entfield->field, ast_value))
-        return;
+        return false;
     field = (ast_value*)entfield->field;
 
     sub    = index->index;
@@ -414,6 +414,8 @@ static void rotate_entfield_array_index_nodes(ast_expression **out)
     index = ast_array_index_new(ctx, (ast_expression*)field, sub);
     entfield = ast_entfield_new(ctx, entity, (ast_expression*)index);
     *out = (ast_expression*)entfield;
+
+    return true;
 }
 
 static bool parser_sy_pop(parser_t *parser, shunt *sy)
@@ -514,7 +516,14 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 return false;
             }
             out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
-            rotate_entfield_array_index_nodes(&out);
+            if (rotate_entfield_array_index_nodes(&out))
+            {
+                if (opts_standard != COMPILER_GMQCC) {
+                    /* this error doesn't need to make us bail out */
+                    (void)!parsewarning(parser, WARN_EXTENSIONS,
+                                        "accessing array-field members of an entity without parenthesis");
+                }
+            }
             break;
 
         case opid1(','):
