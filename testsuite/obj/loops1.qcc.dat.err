@@ -1,2 +1,0 @@
-[0;36mloops1/main.qc:1: [0;36mwarning: [0mvariadic functions are not available in this standard
-[0;36mloops1/main.qc:7: [0;36mwarning: [0mfor loops are not recognized in the original Quake C standard, to enable try an alternate standard --std=?
