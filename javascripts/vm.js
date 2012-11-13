@@ -1,29 +1,3 @@
-var Module = {
-    preRun: [],
-    noInitialRun: true,
-    postRun: [],
-    print: (function() {
-        var element = document.getElementById('output');
-        element.value = ''; // clear browser cache
-        return function(text) {
-            // These replacements are necessary if you render to raw HTML
-            //text = text.replace(/&/g, "&amp;");
-            //text = text.replace(/</g, "&lt;");
-            //text = text.replace(/>/g, "&gt;");
-            //text = text.replace('\n', '<br>', 'g');
-            element.value += text + "\n";
-            element.scrollTop = 99999; // focus on bottom
-        };
-    })(),
-    printErr: function(text) {
-        if (0) { // XXX disabled for safety typeof dump == 'function') {
-            dump(text + '\n'); // fast, straight to the real console
-        } else {
-            console.log(text);
-        }
-    }
-};
-
 // Note: Some Emscripten settings will significantly limit the speed of the generated code.
 // Note: Some Emscripten settings may limit the speed of the generated code.
 // TODO: " u s e   s t r i c t ";
