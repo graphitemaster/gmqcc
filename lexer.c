@@ -892,6 +892,7 @@ int lex_do(lex_file *lex)
     /* single-character tokens */
     switch (ch)
     {
+        case '[':
         case '(':
             if (!lex_tokench(lex, ch) ||
                 !lex_endtoken(lex))
@@ -906,7 +907,6 @@ int lex_do(lex_file *lex)
         case ';':
         case '{':
         case '}':
-        case '[':
         case ']':
 
         case '#':
@@ -1095,7 +1095,8 @@ int lex_do(lex_file *lex)
                 !strcmp(v, "struct") ||
                 !strcmp(v, "union")  ||
                 !strcmp(v, "break")  ||
-                !strcmp(v, "continue"))
+                !strcmp(v, "continue") ||
+                !strcmp(v, "var"))
             {
                 lex->tok.ttype = TOKEN_KEYWORD;
             }

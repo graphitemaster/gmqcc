@@ -167,6 +167,7 @@ static const oper_info c_operators[] = {
 
     { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
     { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
+    { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0 }, /* array subscript */
 
     { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
     { "~",   1, opid2('~', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
@@ -227,6 +228,7 @@ static const oper_info qcc_operators[] = {
 
     { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
     { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
+    { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0 }, /* array subscript */
 
     { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
     { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },

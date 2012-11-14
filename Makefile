@@ -1,5 +1,5 @@
 CC     ?= clang
-CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector -O3
+CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
 	CFLAGS +=                  \
@@ -29,7 +29,7 @@ OBJ     = \
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o lexer.o parser.o
-OBJ_X = exec-standalone.o util.o
+OBJ_X = exec-standalone.o util.o con.o
 
 #default is compiler only
 default: gmqcc

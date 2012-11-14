@@ -276,6 +276,17 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             buf[pos++] = ')';
             return pos;
 
+        case TYPE_ARRAY:
+            pos = ast_type_to_string_impl(e->expression.next, buf, bufsize, pos);
+            if (pos + 1 >= bufsize)
+                goto full;
+            buf[pos++] = '[';
+            pos += snprintf(buf + pos, bufsize - pos - 1, "%i", (int)e->expression.count);
+            if (pos + 1 >= bufsize)
+                goto full;
+            buf[pos++] = ']';
+            return pos;
+
         default:
             typestr = type_name[e->expression.vtype];
             typelen = strlen(typestr);
@@ -312,7 +323,12 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->uses    = 0;
     memset(&self->constval, 0, sizeof(self->constval));
 
-    self->ir_v    = NULL;
+    self->ir_v           = NULL;
+    self->ir_values      = NULL;
+    self->ir_value_count = 0;
+
+    self->setter = NULL;
+    self->getter = NULL;
 
     return self;
 }
@@ -338,6 +354,8 @@ void ast_value_delete(ast_value* self)
             break;
         }
     }
+    if (self->ir_values)
+        mem_d(self->ir_values);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
@@ -465,16 +483,17 @@ void ast_return_delete(ast_return *self)
 
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field)
 {
-    const ast_expression *outtype;
-
-    ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
-
     if (field->expression.vtype != TYPE_FIELD) {
-        mem_d(self);
+        asterror(ctx, "ast_entfield_new with expression not of type field");
         return NULL;
     }
+    return ast_entfield_new_force(ctx, entity, field, field->expression.next);
+}
 
-    outtype = field->expression.next;
+ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
+{
+    ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
+
     if (!outtype) {
         mem_d(self);
         /* Error: field has no type... */
@@ -544,6 +563,48 @@ void ast_member_delete(ast_member *self)
      * to change this: preferably by creating an alternate ast node for this
      * purpose that is not garbage-collected.
     */
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
+ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index)
+{
+    ast_expression *outtype;
+    ast_instantiate(ast_array_index, ctx, ast_array_index_delete);
+
+    outtype = array->expression.next;
+    if (!outtype) {
+        mem_d(self);
+        /* Error: field has no type... */
+        return NULL;
+    }
+
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_array_index_codegen);
+
+    self->array = array;
+    self->index = index;
+
+    if (!ast_type_adopt(self, outtype)) {
+        ast_array_index_delete(self);
+        return NULL;
+    }
+    if (array->expression.vtype == TYPE_FIELD && outtype->expression.vtype == TYPE_ARRAY) {
+        if (self->expression.vtype != TYPE_ARRAY) {
+            asterror(ast_ctx(self), "array_index node on type");
+            ast_array_index_delete(self);
+            return NULL;
+        }
+        self->array = outtype;
+        self->expression.vtype = TYPE_FIELD;
+    }
+
+    return self;
+}
+
+void ast_array_index_delete(ast_array_index *self)
+{
+    ast_unref(self->array);
+    ast_unref(self->index);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
@@ -870,16 +931,19 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * on all the globals.
      */
     if (!self->ir_v) {
-        asterror(ast_ctx(self), "ast_value used before generated (%s)", self->name);
+        char typename[1024];
+        ast_type_to_string((ast_expression*)self, typename, sizeof(typename));
+        asterror(ast_ctx(self), "ast_value used before generated %s %s", typename, self->name);
         return false;
     }
     *out = self->ir_v;
     return true;
 }
 
-bool ast_global_codegen(ast_value *self, ir_builder *ir)
+bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
+
     if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
     {
         ir_function *func = ir_builder_create_function(ir, self->name, self->expression.next->expression.vtype);
@@ -894,25 +958,131 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
         return true;
     }
 
-    if (self->expression.vtype == TYPE_FIELD) {
-        v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
-        if (!v)
-            return false;
-        v->context = ast_ctx(self);
+    if (isfield && self->expression.vtype == TYPE_FIELD) {
+        ast_expression *fieldtype = self->expression.next;
+
         if (self->isconst) {
             asterror(ast_ctx(self), "TODO: constant field pointers with value");
             goto error;
         }
-        self->ir_v = v;
+
+        if (fieldtype->expression.vtype == TYPE_ARRAY) {
+            size_t ai;
+            char   *name;
+            size_t  namelen;
+
+            ast_expression_common *elemtype;
+            int                    vtype;
+            ast_value             *array = (ast_value*)fieldtype;
+
+            if (!ast_istype(fieldtype, ast_value)) {
+                asterror(ast_ctx(self), "internal error: ast_value required");
+                return false;
+            }
+
+            /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
+            if (!array->expression.count || array->expression.count > opts_max_array_size)
+                asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
+
+            elemtype = &array->expression.next->expression;
+            vtype = elemtype->vtype;
+
+            v = ir_builder_create_field(ir, self->name, vtype);
+            if (!v) {
+                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                return false;
+            }
+            if (vtype == TYPE_FIELD)
+                v->fieldtype = elemtype->next->expression.vtype;
+            v->context = ast_ctx(self);
+            array->ir_v = self->ir_v = v;
+
+            namelen = strlen(self->name);
+            name    = (char*)mem_a(namelen + 16);
+            strcpy(name, self->name);
+
+            array->ir_values = (ir_value**)mem_a(sizeof(array->ir_values[0]) * array->expression.count);
+            array->ir_values[0] = v;
+            for (ai = 1; ai < array->expression.count; ++ai) {
+                snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+                array->ir_values[ai] = ir_builder_create_field(ir, name, vtype);
+                if (!array->ir_values[ai]) {
+                    mem_d(name);
+                    asterror(ast_ctx(self), "ir_builder_create_global failed");
+                    return false;
+                }
+                if (vtype == TYPE_FIELD)
+                    array->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+                array->ir_values[ai]->context = ast_ctx(self);
+            }
+            mem_d(name);
+        }
+        else
+        {
+            v = ir_builder_create_field(ir, self->name, self->expression.next->expression.vtype);
+            if (!v)
+                return false;
+            v->context = ast_ctx(self);
+            self->ir_v = v;
+        }
         return true;
     }
 
-    v = ir_builder_create_global(ir, self->name, self->expression.vtype);
-    if (!v) {
-        asterror(ast_ctx(self), "ir_builder_create_global failed");
-        return false;
+    if (self->expression.vtype == TYPE_ARRAY) {
+        size_t ai;
+        char   *name;
+        size_t  namelen;
+
+        ast_expression_common *elemtype = &self->expression.next->expression;
+        int vtype = elemtype->vtype;
+
+        /* same as with field arrays */
+        if (!self->expression.count || self->expression.count > opts_max_array_size)
+            asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+
+        v = ir_builder_create_global(ir, self->name, vtype);
+        if (!v) {
+            asterror(ast_ctx(self), "ir_builder_create_global failed");
+            return false;
+        }
+        if (vtype == TYPE_FIELD)
+            v->fieldtype = elemtype->next->expression.vtype;
+        v->context = ast_ctx(self);
+
+        namelen = strlen(self->name);
+        name    = (char*)mem_a(namelen + 16);
+        strcpy(name, self->name);
+
+        self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
+        self->ir_values[0] = v;
+        for (ai = 1; ai < self->expression.count; ++ai) {
+            snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+            self->ir_values[ai] = ir_builder_create_global(ir, name, vtype);
+            if (!self->ir_values[ai]) {
+                mem_d(name);
+                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                return false;
+            }
+            if (vtype == TYPE_FIELD)
+                self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+            self->ir_values[ai]->context = ast_ctx(self);
+        }
+        mem_d(name);
     }
-    v->context = ast_ctx(self);
+    else
+    {
+        /* Arrays don't do this since there's no "array" value which spans across the
+         * whole thing.
+         */
+        v = ir_builder_create_global(ir, self->name, self->expression.vtype);
+        if (!v) {
+            asterror(ast_ctx(self), "ir_builder_create_global failed");
+            return false;
+        }
+        if (self->expression.vtype == TYPE_FIELD)
+            v->fieldtype = self->expression.next->expression.vtype;
+        v->context = ast_ctx(self);
+    }
 
     if (self->isconst) {
         switch (self->expression.vtype)
@@ -928,6 +1098,9 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir)
             case TYPE_STRING:
                 if (!ir_value_set_string(v, self->constval.vstring))
                     goto error;
+                break;
+            case TYPE_ARRAY:
+                asterror(ast_ctx(self), "TODO: global constant array");
                 break;
             case TYPE_FUNCTION:
                 asterror(ast_ctx(self), "global of type function not properly generated");
@@ -961,10 +1134,65 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         return false;
     }
 
-    v = ir_function_create_local(func, self->name, self->expression.vtype, param);
-    if (!v)
-        return false;
-    v->context = ast_ctx(self);
+    if (self->expression.vtype == TYPE_ARRAY) {
+        size_t ai;
+        char   *name;
+        size_t  namelen;
+
+        ast_expression_common *elemtype = &self->expression.next->expression;
+        int vtype = elemtype->vtype;
+
+        if (param) {
+            asterror(ast_ctx(self), "array-parameters are not supported");
+            return false;
+        }
+
+        /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
+        if (!self->expression.count || self->expression.count > opts_max_array_size) {
+            asterror(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+        }
+
+        self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
+        if (!self->ir_values) {
+            asterror(ast_ctx(self), "failed to allocate array values");
+            return false;
+        }
+
+        v = ir_function_create_local(func, self->name, vtype, param);
+        if (!v) {
+            asterror(ast_ctx(self), "ir_function_create_local failed");
+            return false;
+        }
+        if (vtype == TYPE_FIELD)
+            v->fieldtype = elemtype->next->expression.vtype;
+        v->context = ast_ctx(self);
+
+        namelen = strlen(self->name);
+        name    = (char*)mem_a(namelen + 16);
+        strcpy(name, self->name);
+
+        self->ir_values[0] = v;
+        for (ai = 1; ai < self->expression.count; ++ai) {
+            snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+            self->ir_values[ai] = ir_function_create_local(func, name, vtype, param);
+            if (!self->ir_values[ai]) {
+                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                return false;
+            }
+            if (vtype == TYPE_FIELD)
+                self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+            self->ir_values[ai]->context = ast_ctx(self);
+        }
+    }
+    else
+    {
+        v = ir_function_create_local(func, self->name, self->expression.vtype, param);
+        if (!v)
+            return false;
+        if (self->expression.vtype == TYPE_FIELD)
+            v->fieldtype = self->expression.next->expression.vtype;
+        v->context = ast_ctx(self);
+    }
 
     /* A constant local... hmmm...
      * I suppose the IR will have to deal with this
@@ -992,6 +1220,19 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
     /* link us to the ir_value */
     self->ir_v = v;
+
+    if (self->setter) {
+        if (!ast_global_codegen(self->setter, func->owner, false) ||
+            !ast_function_codegen(self->setter->constval.vfunc, func->owner) ||
+            !ir_function_finalize(self->setter->constval.vfunc->ir_func))
+            return false;
+    }
+    if (self->getter) {
+        if (!ast_global_codegen(self->getter, func->owner, false) ||
+            !ast_function_codegen(self->getter->constval.vfunc, func->owner) ||
+            !ir_function_finalize(self->getter->constval.vfunc->ir_func))
+            return false;
+    }
     return true;
 
 error: /* clean up */
@@ -1127,6 +1368,10 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
     ast_expression_codegen *cgen;
     ir_value *left, *right;
 
+    ast_value       *arr;
+    ast_value       *idx;
+    ast_array_index *ai = NULL;
+
     if (lvalue && self->expression.outl) {
         *out = self->expression.outl;
         return true;
@@ -1137,20 +1382,72 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
         return true;
     }
 
-    cgen = self->dest->expression.codegen;
-    /* lvalue! */
-    if (!(*cgen)((ast_expression*)(self->dest), func, true, &left))
-        return false;
-    self->expression.outl = left;
+    if (ast_istype(self->dest, ast_array_index))
+    {
 
-    cgen = self->source->expression.codegen;
-    /* rvalue! */
-    if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
-        return false;
+        ai = (ast_array_index*)self->dest;
+        idx = (ast_value*)ai->index;
 
-    if (!ir_block_create_store_op(func->curblock, self->op, left, right))
-        return false;
-    self->expression.outr = right;
+        if (ast_istype(ai->index, ast_value) && idx->isconst)
+            ai = NULL;
+    }
+
+    if (ai) {
+        /* we need to call the setter */
+        ir_value  *iridx, *funval;
+        ir_instr  *call;
+
+        if (lvalue) {
+            asterror(ast_ctx(self), "array-subscript assignment cannot produce lvalues");
+            return false;
+        }
+
+        arr = (ast_value*)ai->array;
+        if (!ast_istype(ai->array, ast_value) || !arr->setter) {
+            asterror(ast_ctx(self), "value has no setter (%s)", arr->name);
+            return false;
+        }
+
+        cgen = idx->expression.codegen;
+        if (!(*cgen)((ast_expression*)(idx), func, false, &iridx))
+            return false;
+
+        cgen = arr->setter->expression.codegen;
+        if (!(*cgen)((ast_expression*)(arr->setter), func, true, &funval))
+            return false;
+
+        cgen = self->source->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
+            return false;
+
+        call = ir_block_create_call(func->curblock, ast_function_label(func, "store"), funval);
+        if (!call)
+            return false;
+        if (!ir_call_param(call, iridx))
+            return false;
+        if (!ir_call_param(call, right))
+            return false;
+        self->expression.outr = right;
+    }
+    else
+    {
+        /* regular code */
+
+        cgen = self->dest->expression.codegen;
+        /* lvalue! */
+        if (!(*cgen)((ast_expression*)(self->dest), func, true, &left))
+            return false;
+        self->expression.outl = left;
+
+        cgen = self->source->expression.codegen;
+        /* rvalue! */
+        if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
+            return false;
+
+        if (!ir_block_create_store_op(func->curblock, self->op, left, right))
+            return false;
+        self->expression.outr = right;
+    }
 
     /* Theoretically, an assinment returns its left side as an
      * lvalue, if we don't need an lvalue though, we return
@@ -1396,6 +1693,77 @@ bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_va
     self->expression.outl = *out;
 
     return (*out != NULL);
+}
+
+bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_value *arr;
+    ast_value *idx;
+
+    if (!lvalue && self->expression.outr) {
+        *out = self->expression.outr;
+    }
+    if (lvalue && self->expression.outl) {
+        *out = self->expression.outl;
+    }
+
+    if (!ast_istype(self->array, ast_value)) {
+        asterror(ast_ctx(self), "array indexing this way is not supported");
+        /* note this would actually be pointer indexing because the left side is
+         * not an actual array but (hopefully) an indexable expression.
+         * Once we get integer arithmetic, and GADDRESS/GSTORE/GLOAD instruction
+         * support this path will be filled.
+         */
+        return false;
+    }
+
+    arr = (ast_value*)self->array;
+    idx = (ast_value*)self->index;
+
+    if (!ast_istype(self->index, ast_value) || !idx->isconst) {
+        /* Time to use accessor functions */
+        ast_expression_codegen *cgen;
+        ir_value               *iridx, *funval;
+        ir_instr               *call;
+
+        if (lvalue) {
+            asterror(ast_ctx(self), "(.2) array indexing here needs a compile-time constant");
+            return false;
+        }
+
+        if (!arr->getter) {
+            asterror(ast_ctx(self), "value has no getter, don't know how to index it");
+            return false;
+        }
+
+        cgen = self->index->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->index), func, true, &iridx))
+            return false;
+
+        cgen = arr->getter->expression.codegen;
+        if (!(*cgen)((ast_expression*)(arr->getter), func, true, &funval))
+            return false;
+
+        call = ir_block_create_call(func->curblock, ast_function_label(func, "fetch"), funval);
+        if (!call)
+            return false;
+        if (!ir_call_param(call, iridx))
+            return false;
+
+        *out = ir_call_value(call);
+        self->expression.outr = *out;
+        return true;
+    }
+
+    if (idx->expression.vtype == TYPE_FLOAT)
+        *out = arr->ir_values[(int)idx->constval.vfloat];
+    else if (idx->expression.vtype == TYPE_INTEGER)
+        *out = arr->ir_values[idx->constval.vint];
+    else {
+        asterror(ast_ctx(self), "array indexing here needs an integer constant");
+        return false;
+    }
+    return true;
 }
 
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)

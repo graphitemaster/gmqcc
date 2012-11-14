@@ -35,6 +35,7 @@ bool        opts_dump     = false;
 bool        opts_werror   = false;
 bool        opts_forcecrc = false;
 bool        opts_pp_only  = false;
+size_t      opts_max_array_size = 1024;
 
 uint16_t    opts_forced_crc;
 
@@ -161,6 +162,22 @@ static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, cha
     return options_long_witharg_all(optname, argc_, argv_, out, 1, false);
 }
 
+static void options_set(uint32_t *flags, size_t idx, bool on)
+{
+    longbit lb = LONGBIT(idx);
+#if 0
+    if (on)
+        flags[lb.idx] |= (1<<(lb.bit));
+    else
+        flags[lb.idx] &= ~(1<<(lb.bit));
+#else
+    if (on)
+        flags[0] |= (1<<(lb));
+    else
+        flags[0] &= ~(1<<(lb));
+#endif
+}
+
 static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
@@ -175,15 +192,19 @@ static bool options_parse(int argc, char **argv) {
         if (argv[0][0] == '-') {
     /* All gcc-type long options */
             if (options_long_gcc("std", &argc, &argv, &argarg)) {
-                if      (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default"))
+                if      (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default")) {
+                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
                     opts_standard = COMPILER_GMQCC;
-                else if (!strcmp(argarg, "qcc"))
+                } else if (!strcmp(argarg, "qcc")) {
+                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     opts_standard = COMPILER_QCC;
-                else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc"))
+                } else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc")) {
+                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     opts_standard = COMPILER_FTEQCC;
-                else if (!strcmp(argarg, "qccx"))
+                } else if (!strcmp(argarg, "qccx")) {
+                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     opts_standard = COMPILER_QCCX;
-                else {
+                } else {
                     con_out("Unknown standard: %s\n", argarg);
                     return false;
                 }
@@ -349,22 +370,6 @@ static bool options_parse(int argc, char **argv) {
     return true;
 }
 
-static void options_set(uint32_t *flags, size_t idx, bool on)
-{
-    longbit lb = LONGBIT(idx);
-#if 0
-    if (on)
-        flags[lb.idx] |= (1<<(lb.bit));
-    else
-        flags[lb.idx] &= ~(1<<(lb.bit));
-#else
-    if (on)
-        flags[0] |= (1<<(lb));
-    else
-        flags[0] &= ~(1<<(lb));
-#endif
-}
-
 /* returns the line number, or -1 on error */
 static bool progs_nextline(char **out, size_t *alen,FILE *src)
 {
@@ -416,6 +421,8 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_EFFECTLESS_STATEMENT, true);
     options_set(opts_warn, WARN_END_SYS_FIELDS, true);
     options_set(opts_warn, WARN_ASSIGN_FUNCTION_TYPES, true);
+
+    options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
 
     if (!options_parse(argc, argv)) {
         return usage();

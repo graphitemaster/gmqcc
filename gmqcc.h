@@ -290,6 +290,9 @@ enum {
     TYPE_POINTER  ,
     TYPE_INTEGER  ,
     TYPE_VARIANT  ,
+    TYPE_STRUCT   ,
+    TYPE_UNION    ,
+    TYPE_ARRAY    ,
 
     TYPE_COUNT
 };
@@ -298,6 +301,7 @@ extern const char *type_name[TYPE_COUNT];
 
 extern size_t type_sizeof[TYPE_COUNT];
 extern uint16_t type_store_instr[TYPE_COUNT];
+extern uint16_t field_store_instr[TYPE_COUNT];
 /* could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
  * but this breaks when TYPE_INTEGER is added, since with the enhanced
  * instruction set, the old ones are left untouched, thus the _I instructions
@@ -881,6 +885,8 @@ typedef struct qc_program_s {
     MEM_VECTOR_MAKE(qcint,                  entitydata);
     MEM_VECTOR_MAKE(bool,                   entitypool);
 
+    MEM_VECTOR_MAKE(const char*,            function_stack);
+
     uint16_t crc16;
 
     size_t tempstring_start;
@@ -1023,6 +1029,7 @@ extern bool        opts_werror;
 extern bool        opts_forcecrc;
 extern uint16_t    opts_forced_crc;
 extern bool        opts_pp_only;
+extern size_t      opts_max_array_size;
 
 /*===================================================================*/
 #define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))
