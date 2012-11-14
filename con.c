@@ -199,6 +199,45 @@ static void con_enablecolor() {
         console.color_err = !!(isatty(STDERR_FILENO));
     if (console.handle_out == stderr || console.handle_out == stdout)
         console.color_out = !!(isatty(STDOUT_FILENO));
+        
+    #ifndef _WIN32
+    {
+        char buf[4];
+        
+        /*
+         * This is such a hack.  But I'm not linking in any libraries to
+         * do this stupidity.  It's insane there is simply not a ttyhascolor
+         * in unistd.h
+         */
+        FILE *tput = popen("tput colors", "r");
+        if  (!tput) {
+            /*
+             * disable colors since we can't determine without tput
+             * which should be guranteed on all *nix OSes
+             */
+            console.color_err = 0;
+            console.color_out = 0;
+        }
+        
+        /*
+         * Handle to tput was a success, lets read in the amount of
+         * color support.  It should be at minimal 8.
+         */
+        fread(buf, sizeof(buf), 1, tput);
+        buf[3] = '\0';
+        
+        if (atoi(buf) < 8) {
+            console.color_err = 0;
+            console.color_out = 0;
+        }
+        
+        /*
+         * We made it this far, which means we support colors in the
+         * terminal.
+         */
+        fclose(tput);
+    }
+    #endif
 }
 
 /*
