@@ -202,7 +202,7 @@ static void con_enablecolor() {
         
     #ifndef _WIN32
     {
-        char buf[4];
+        char buf[4] = {0, 0, 0, 0};
         
         /*
          * This is such a hack.  But I'm not linking in any libraries to
@@ -217,14 +217,15 @@ static void con_enablecolor() {
              */
             console.color_err = 0;
             console.color_out = 0;
+            
+            return;
         }
         
         /*
          * Handle to tput was a success, lets read in the amount of
          * color support.  It should be at minimal 8.
          */
-        fread(buf, sizeof(buf), 1, tput);
-        buf[3] = '\0';
+        fread(buf, 1, sizeof(buf)-1, tput);
         
         if (atoi(buf) < 8) {
             console.color_err = 0;
