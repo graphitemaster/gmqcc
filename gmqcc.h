@@ -529,6 +529,19 @@ uint32_t code_cachedstring(const char *string);
 qcint    code_alloc_field (size_t qcsize);
 
 /*===================================================================*/
+/*============================ con.c ================================*/
+/*===================================================================*/
+void con_close();
+void con_color(int state);
+void con_init ();
+void con_reset();
+int  con_change(const char *out, const char *err);
+int  con_verr  (const char *fmt, va_list va);
+int  con_vout  (const char *fmt, va_list va);
+int  con_err   (const char *fmt, ...);
+int  con_out   (const char *fmt, ...);
+
+/*===================================================================*/
 /*========================= assembler.c =============================*/
 /*===================================================================*/
 static const struct {
@@ -605,10 +618,6 @@ static const struct {
 
     { "END"       , 0, 3 } /* virtual assembler instruction */
 };
-
-void asm_init (const char *, FILE **);
-void asm_close(FILE *);
-void asm_parse(FILE *);
 /*===================================================================*/
 /*============================= ast.c ===============================*/
 /*===================================================================*/

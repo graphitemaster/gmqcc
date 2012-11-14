@@ -242,11 +242,8 @@ void util_debug(const char *area, const char *ms, ...) {
         return;
 
     va_start(va, ms);
-    fprintf (stdout, "DEBUG: ");
-    fputc   ('[',  stdout);
-    fprintf(stdout, "%s", area);
-    fputs   ("] ", stdout);
-    vfprintf(stdout, ms, va);
+    con_out ("[%s] ", area);
+    con_vout(ms, va); 
     va_end  (va);
 }
 

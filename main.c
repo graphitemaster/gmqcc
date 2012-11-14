@@ -54,28 +54,28 @@ VECTOR_MAKE(argitem, items);
 static const char *app_name;
 
 static int usage() {
-    printf("usage: %s [options] [files...]", app_name);
-    printf("options:\n"
+    con_out("usage: %s [options] [files...]", app_name);
+    con_out("options:\n"
            "  -h, --help             show this help message\n"
            "  -debug                 turns on compiler debug messages\n"
            "  -memchk                turns on compiler memory leak check\n");
-    printf("  -o, --output=file      output file, defaults to progs.dat\n"
+    con_out("  -o, --output=file      output file, defaults to progs.dat\n"
            "  -a filename            add an asm file to be assembled\n"
            "  -s filename            add a progs.src file to be used\n");
-    printf("  -E                     stop after preprocessing\n");
-    printf("  -f<flag>               enable a flag\n"
+    con_out("  -E                     stop after preprocessing\n");
+    con_out("  -f<flag>               enable a flag\n"
            "  -fno-<flag>            disable a flag\n"
            "  -std standard          select one of the following standards\n"
            "       -std=qcc          original QuakeC\n"
            "       -std=fteqcc       fteqcc QuakeC\n"
            "       -std=gmqcc        this compiler (default)\n");
-    printf("  -W<warning>            enable a warning\n"
+    con_out("  -W<warning>            enable a warning\n"
            "  -Wno-<warning>         disable a warning\n"
            "  -Wall                  enable all warnings\n"
            "  -Werror                treat warnings as errors\n");
-    printf("  -force-crc=num         force a specific checksum into the header\n");
-    printf("\n");
-    printf("flags:\n"
+    con_out("  -force-crc=num         force a specific checksum into the header\n");
+    con_out("\n");
+    con_out("flags:\n"
            "  -fadjust-vector-fields\n"
            "            when assigning a vector field, its _y and _z fields also get assigned\n"
            );
@@ -184,7 +184,7 @@ static bool options_parse(int argc, char **argv) {
                 else if (!strcmp(argarg, "qccx"))
                     opts_standard = COMPILER_QCCX;
                 else {
-                    printf("Unknown standard: %s\n", argarg);
+                    con_out("Unknown standard: %s\n", argarg);
                     return false;
                 }
                 continue;
@@ -222,31 +222,31 @@ static bool options_parse(int argc, char **argv) {
                 case 'f':
                     util_strtocmd(argv[0]+2, argv[0]+2, strlen(argv[0]+2)+1);
                     if (!strcmp(argv[0]+2, "HELP")) {
-                        printf("Possible flags:\n");
+                        con_out("Possible flags:\n");
                         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
                             util_strtononcmd(opts_flag_list[itr].name, buffer, sizeof(buffer));
-                            printf(" -f%s\n", buffer);
+                            con_out(" -f%s\n", buffer);
                         }
                         exit(0);
                     }
                     else if (!strncmp(argv[0]+2, "NO_", 3)) {
                         if (!options_setflag(argv[0]+5, false)) {
-                            printf("unknown flag: %s\n", argv[0]+2);
+                            con_out("unknown flag: %s\n", argv[0]+2);
                             return false;
                         }
                     }
                     else if (!options_setflag(argv[0]+2, true)) {
-                        printf("unknown flag: %s\n", argv[0]+2);
+                        con_out("unknown flag: %s\n", argv[0]+2);
                         return false;
                     }
                     break;
                 case 'W':
                     util_strtocmd(argv[0]+2, argv[0]+2, strlen(argv[0]+2)+1);
                     if (!strcmp(argv[0]+2, "HELP")) {
-                        printf("Possible warnings:\n");
+                        con_out("Possible warnings:\n");
                         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
                             util_strtononcmd(opts_warn_list[itr].name, buffer, sizeof(buffer));
-                            printf(" -W%s\n", buffer);
+                            con_out(" -W%s\n", buffer);
                         }
                         exit(0);
                     }
@@ -270,19 +270,19 @@ static bool options_parse(int argc, char **argv) {
                     }
                     if (!strncmp(argv[0]+2, "NO_", 3)) {
                         if (!options_setwarn(argv[0]+5, false)) {
-                            printf("unknown warning: %s\n", argv[0]+2);
+                            con_out("unknown warning: %s\n", argv[0]+2);
                             return false;
                         }
                     }
                     else if (!options_setwarn(argv[0]+2, true)) {
-                        printf("unknown warning: %s\n", argv[0]+2);
+                        con_out("unknown warning: %s\n", argv[0]+2);
                         return false;
                     }
                     break;
 
                 case 'O':
                     if (!options_witharg(&argc, &argv, &argarg)) {
-                        printf("option -O requires a numerical argument\n");
+                        con_out("option -O requires a numerical argument\n");
                         return false;
                     }
                     opts_O = atoi(argarg);
@@ -290,7 +290,7 @@ static bool options_parse(int argc, char **argv) {
 
                 case 'o':
                     if (!options_witharg(&argc, &argv, &argarg)) {
-                        printf("option -o requires an argument: the output file name\n");
+                        con_out("option -o requires an argument: the output file name\n");
                         return false;
                     }
                     opts_output = argarg;
@@ -301,7 +301,7 @@ static bool options_parse(int argc, char **argv) {
                 case 's':
                     item.type = argv[0][1] == 'a' ? TYPE_ASM : TYPE_SRC;
                     if (!options_witharg(&argc, &argv, &argarg)) {
-                        printf("option -a requires a filename %s\n",
+                        con_out("option -a requires a filename %s\n",
                                 (argv[0][1] == 'a' ? "containing QC-asm" : "containing a progs.src formatted list"));
                         return false;
                     }
@@ -326,14 +326,14 @@ static bool options_parse(int argc, char **argv) {
                             opts_output = argarg;
                             opts_output_wasset = true;
                         } else {
-                            printf("Unknown parameter: %s\n", argv[0]);
+                            con_out("Unknown parameter: %s\n", argv[0]);
                             return false;
                         }
                     }
                     break;
 
                 default:
-                    printf("Unknown parameter: %s\n", argv[0]);
+                    con_out("Unknown parameter: %s\n", argv[0]);
                     return false;
             }
         }
@@ -398,6 +398,7 @@ int main(int argc, char **argv) {
     bool opts_output_free = false;
 
     app_name = argv[0];
+    con_init();
 
     /* default options / warn flags */
     options_set(opts_warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
@@ -431,18 +432,18 @@ int main(int argc, char **argv) {
 
     if (opts_dump) {
         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
-            printf("Flag %s = %i\n", opts_flag_list[itr].name, OPTS_FLAG(itr));
+            con_out("Flag %s = %i\n", opts_flag_list[itr].name, OPTS_FLAG(itr));
         }
         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
-            printf("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
+            con_out("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
         }
-        printf("output = %s\n", opts_output);
-        printf("optimization level = %i\n", (int)opts_O);
-        printf("standard = %i\n", opts_standard);
+        con_out("output = %s\n", opts_output);
+        con_out("optimization level = %i\n", (int)opts_O);
+        con_out("standard = %i\n", opts_standard);
     }
 
     if (!parser_init()) {
-        printf("failed to initialize parser\n");
+        con_out("failed to initialize parser\n");
         retval = 1;
         goto cleanup;
     }
@@ -450,23 +451,17 @@ int main(int argc, char **argv) {
     util_debug("COM", "starting ...\n");
 
     if (items_elements) {
-        printf("Mode: manual\n");
-        printf("There are %lu items to compile:\n", (unsigned long)items_elements);
+        con_out("Mode: manual\n");
+        con_out("There are %lu items to compile:\n", (unsigned long)items_elements);
         for (itr = 0; itr < items_elements; ++itr) {
-            #ifndef JS
-            printf("  item: %s (%s)\n",
+            con_out("  item: %s (%s)\n",
                    items_data[itr].filename,
                    ( (items_data[itr].type == TYPE_QC ? "qc" :
                      (items_data[itr].type == TYPE_ASM ? "asm" :
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
-            #endif
 
-        #ifdef JS
-            if (!parser_compile_string("js.qc", items_data[itr].filename))
-        #else
-            if (!parser_compile_file(items_data[itr].filename))
-        #endif
+        if (!parser_compile_file(items_data[itr].filename))
         {
                 retval = 1;
                 goto cleanup;
@@ -483,17 +478,17 @@ int main(int argc, char **argv) {
         char *line;
         size_t linelen = 0;
 
-        printf("Mode: progs.src\n");
+        con_out("Mode: progs.src\n");
         src = util_fopen("progs.src", "rb");
         if (!src) {
-            printf("failed to open `progs.src` for reading\n");
+            con_out("failed to open `progs.src` for reading\n");
             retval = 1;
             goto cleanup;
         }
 
         line = NULL;
         if (!progs_nextline(&line, &linelen, src) || !line[0]) {
-            printf("illformatted progs.src file: expected output filename in first line\n");
+            con_out("illformatted progs.src file: expected output filename in first line\n");
             retval = 1;
             goto srcdone;
         }
@@ -506,7 +501,7 @@ int main(int argc, char **argv) {
         while (progs_nextline(&line, &linelen, src)) {
             if (!line[0] || (line[0] == '/' && line[1] == '/'))
                 continue;
-            printf("  src: %s\n", line);
+            con_out("  src: %s\n", line);
             if (!parser_compile_file(line)) {
                 retval = 1;
                 goto srcdone;

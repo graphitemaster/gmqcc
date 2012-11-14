@@ -24,7 +24,8 @@ OBJ     = \
           code.o      \
           ast.o       \
           ir.o        \
-          error.o
+          error.o     \
+          con.o
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o
 OBJ_C = main.o lexer.o parser.o

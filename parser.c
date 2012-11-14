@@ -522,7 +522,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     op = &operators[sy->ops[sy->ops_count-1].etype - 1];
     ctx = sy->ops[sy->ops_count-1].ctx;
 
-    DEBUGSHUNTDO(printf("apply %s\n", op->op));
+    DEBUGSHUNTDO(con_out("apply %s\n", op->op));
 
     if (sy->out_count < op->operands) {
         parseerror(parser, "internal error: not enough operands: %i (operator %s (%i))", sy->out_count,
@@ -826,7 +826,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 return false;
             }
             if (opts_standard == COMPILER_GMQCC)
-                printf("TODO: early out logic\n");
+                con_out("TODO: early out logic\n");
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
                     (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
@@ -956,7 +956,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         return false;
     }
 
-    DEBUGSHUNTDO(printf("applied %s\n", op->op));
+    DEBUGSHUNTDO(con_out("applied %s\n", op->op));
     sy->out[sy->out_count++] = syexp(ctx, out);
     return true;
 }
@@ -1183,7 +1183,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "out of memory");
                 goto onerr;
             }
-            DEBUGSHUNTDO(printf("push %s\n", parser_tokval(parser)));
+            DEBUGSHUNTDO(con_out("push %s\n", parser_tokval(parser)));
         }
         else if (parser->tok == TOKEN_FLOATCONST) {
             ast_value *val;
@@ -1199,7 +1199,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "out of memory");
                 goto onerr;
             }
-            DEBUGSHUNTDO(printf("push %g\n", parser_token(parser)->constval.f));
+            DEBUGSHUNTDO(con_out("push %g\n", parser_token(parser)->constval.f));
         }
         else if (parser->tok == TOKEN_INTCONST) {
             ast_value *val;
@@ -1215,7 +1215,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "out of memory");
                 goto onerr;
             }
-            DEBUGSHUNTDO(printf("push %i\n", parser_token(parser)->constval.i));
+            DEBUGSHUNTDO(con_out("push %i\n", parser_token(parser)->constval.i));
         }
         else if (parser->tok == TOKEN_STRINGCONST) {
             ast_value *val;
@@ -1231,7 +1231,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "out of memory");
                 goto onerr;
             }
-            DEBUGSHUNTDO(printf("push string\n"));
+            DEBUGSHUNTDO(con_out("push string\n"));
         }
         else if (parser->tok == TOKEN_VECTORCONST) {
             ast_value *val;
@@ -1247,7 +1247,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "out of memory");
                 goto onerr;
             }
-            DEBUGSHUNTDO(printf("push '%g %g %g'\n",
+            DEBUGSHUNTDO(con_out("push '%g %g %g'\n",
                                 parser_token(parser)->constval.v.x,
                                 parser_token(parser)->constval.v.y,
                                 parser_token(parser)->constval.v.z));
@@ -1258,7 +1258,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         }
         else if (parser->tok == ')') {
             if (wantop) {
-                DEBUGSHUNTDO(printf("do[op] )\n"));
+                DEBUGSHUNTDO(con_out("do[op] )\n"));
                 --parens;
                 if (parens < 0)
                     break;
@@ -1267,7 +1267,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 if (!parser_close_paren(parser, &sy, false))
                     goto onerr;
             } else {
-                DEBUGSHUNTDO(printf("do[nop] )\n"));
+                DEBUGSHUNTDO(con_out("do[nop] )\n"));
                 --parens;
                 if (parens < 0)
                     break;
@@ -1348,7 +1348,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 
             if (op->id == opid1('(')) {
                 if (wantop) {
-                    DEBUGSHUNTDO(printf("push [op] (\n"));
+                    DEBUGSHUNTDO(con_out("push [op] (\n"));
                     ++parens;
                     /* we expected an operator, this is the function-call operator */
                     if (!shunt_ops_add(&sy, syparen(parser_ctx(parser), 'f', sy.out_count-1))) {
@@ -1361,11 +1361,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                         parseerror(parser, "out of memory");
                         goto onerr;
                     }
-                    DEBUGSHUNTDO(printf("push [nop] (\n"));
+                    DEBUGSHUNTDO(con_out("push [nop] (\n"));
                 }
                 wantop = false;
             } else {
-                DEBUGSHUNTDO(printf("push operator %s\n", op->op));
+                DEBUGSHUNTDO(con_out("push operator %s\n", op->op));
                 if (!shunt_ops_add(&sy, syop(parser_ctx(parser), op)))
                     goto onerr;
                 wantop = false;
@@ -1392,7 +1392,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         expr = sy.out[0].out;
     MEM_VECTOR_CLEAR(&sy, out);
     MEM_VECTOR_CLEAR(&sy, ops);
-    DEBUGSHUNTDO(printf("shunt done\n"));
+    DEBUGSHUNTDO(con_out("shunt done\n"));
     return expr;
 
 onerr:
@@ -2891,7 +2891,7 @@ bool parser_compile_file(const char *filename)
 {
     parser->lex = lex_open(filename);
     if (!parser->lex) {
-        printf("failed to open file \"%s\"\n", filename);
+        con_out("failed to open file \"%s\"\n", filename);
         return false;
     }
     return parser_compile();
@@ -2901,7 +2901,7 @@ bool parser_compile_string(const char *name, const char *str)
 {
     parser->lex = lex_open_string(str, strlen(str), name);
     if (!parser->lex) {
-        printf("failed to create lexer for string \"%s\"\n", name);
+        con_out("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
     return parser_compile();
@@ -3023,7 +3023,7 @@ bool parser_finish(const char *output)
     {
         ir = ir_builder_new("gmqcc_out");
         if (!ir) {
-            printf("failed to allocate builder\n");
+            con_out("failed to allocate builder\n");
             return false;
         }
 
@@ -3036,7 +3036,7 @@ bool parser_finish(const char *output)
             isconst = field->isconst;
             field->isconst = false;
             if (!ast_global_codegen((ast_value*)field, ir)) {
-                printf("failed to generate field %s\n", field->name);
+                con_out("failed to generate field %s\n", field->name);
                 ir_builder_delete(ir);
                 return false;
             }
@@ -3067,40 +3067,40 @@ bool parser_finish(const char *output)
                 }
             }
             if (!ast_global_codegen(asvalue, ir)) {
-                printf("failed to generate global %s\n", parser->globals[i].name);
+                con_out("failed to generate global %s\n", parser->globals[i].name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->imm_float_count; ++i) {
             if (!ast_global_codegen(parser->imm_float[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_float[i]->name);
+                con_out("failed to generate global %s\n", parser->imm_float[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->imm_string_count; ++i) {
             if (!ast_global_codegen(parser->imm_string[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_string[i]->name);
+                con_out("failed to generate global %s\n", parser->imm_string[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->imm_vector_count; ++i) {
             if (!ast_global_codegen(parser->imm_vector[i], ir)) {
-                printf("failed to generate global %s\n", parser->imm_vector[i]->name);
+                con_out("failed to generate global %s\n", parser->imm_vector[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
         }
         for (i = 0; i < parser->functions_count; ++i) {
             if (!ast_function_codegen(parser->functions[i], ir)) {
-                printf("failed to generate function %s\n", parser->functions[i]->name);
+                con_out("failed to generate function %s\n", parser->functions[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
             if (!ir_function_finalize(parser->functions[i]->ir_func)) {
-                printf("failed to finalize function %s\n", parser->functions[i]->name);
+                con_out("failed to finalize function %s\n", parser->functions[i]->name);
                 ir_builder_delete(ir);
                 return false;
             }
@@ -3108,12 +3108,12 @@ bool parser_finish(const char *output)
 
         if (retval) {
             if (opts_dump)
-                ir_builder_dump(ir, printf);
+                ir_builder_dump(ir, con_out);
 
             generate_checksum(parser);
 
             if (!ir_builder_generate(ir, output)) {
-                printf("*** failed to generate output file\n");
+                con_out("*** failed to generate output file\n");
                 ir_builder_delete(ir);
                 return false;
             }
@@ -3123,6 +3123,6 @@ bool parser_finish(const char *output)
         return retval;
     }
 
-    printf("*** there were compile errors\n");
+    con_out("*** there were compile errors\n");
     return false;
 }
