@@ -468,10 +468,10 @@ int main(int argc, char **argv) {
                      (items_data[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
 
-        if (!parser_compile_file(items_data[itr].filename))
-        {
-                retval = 1;
-                goto cleanup;
+            if (!parser_compile_file(items_data[itr].filename))
+            {
+                    retval = 1;
+                    goto cleanup;
             }
         }
 
