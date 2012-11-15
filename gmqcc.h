@@ -215,9 +215,9 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
 #ifdef NOTRACK
-#    define mem_a(x)    malloc(x)
-#    define mem_d(x)    free  (x)
-#    define mem_r(x, n) free  (x, n)
+#    define mem_a(x)    malloc (x)
+#    define mem_d(x)    free   (x)
+#    define mem_r(x, n) realloc(x, n)
 #else
 #    define mem_a(x)    util_memory_a((x), __LINE__, __FILE__)
 #    define mem_d(x)    util_memory_d((x), __LINE__, __FILE__)
