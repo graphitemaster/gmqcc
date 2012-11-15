@@ -8,7 +8,7 @@ typedef struct token_s token;
 struct token_s {
 	int ttype;
 
-	MEM_VECTOR_MAKE(char, value);
+	char *value;
 
 	union {
 		vector v;
@@ -122,11 +122,9 @@ typedef struct {
 	} flags;
 
     int framevalue;
-	MEM_VECTOR_MAKE(frame_macro, frames);
+	frame_macro *frames;
 	char *modelname;
 } lex_file;
-
-MEM_VECTOR_PROTO(lex_file, char, token);
 
 lex_file* lex_open (const char *file);
 lex_file* lex_open_string(const char *str, size_t len, const char *name);
