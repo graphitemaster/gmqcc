@@ -239,6 +239,7 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #define _vec_needsgrow(A,N) ((!(A)) || (_vec_end(A) + (N) >= _vec_beg(A)))
 #define _vec_mightgrow(A,N) (_vec_needsgrow((A), (N)) ? _vec_forcegrow((A),(N)) : 0)
 #define _vec_forcegrow(A,N) _util_vec_grow((void**)&(A), (N), sizeof(*(A)))
+#define _vec_remove(A,S,I,N) (memmove((char*)(A)+(I)*(S),(char*)(A)+((I)+(N))*(S),(S)*(vec_size(A)-(I)-(N))), _vec_end(A)-=(N))
 void _util_vec_grow(void **a, size_t i, size_t s);
 /* exposed interface */
 #define vec_free(A)          ((A) ? (mem_d(_vec_raw(A)), (A) = NULL) : 0)
@@ -247,7 +248,6 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_add(A,N)         (_vec_mightgrow((A),(N)), _vec_end(A)+=(N), &(A)[_vec_end(A)-(N)])
 #define vec_last(A)          ((A)[_vec_end(A)-1])
 #define vec_append(A,N,S)    memcpy(vec_add((A), (N)), (S), N * sizeof(*(S)))
-#define _vec_remove(A,S,I,N) (memmove((char*)(A)+(I)*(S),(char*)(A)+((I)+(N))*(S),(S)*(vec_size(A)-(I)-(N))), _vec_end(A)-=(N))
 #define vec_remove(A,I,N)    _vec_remove((A), sizeof(*(A)), (I), (N))
 #define vec_pop(A)           vec_remove((A), _vec_end(A)-1, 1)
 /* these are supposed to NOT reallocate */
