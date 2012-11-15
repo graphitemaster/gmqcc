@@ -809,10 +809,10 @@ void ast_block_delete(ast_block *self)
     vec_free(self->exprs);
     for (i = 0; i < vec_size(self->locals); ++i)
         ast_delete(self->locals[i]);
-    vec_free(self->exprs);
+    vec_free(self->locals);
     for (i = 0; i < vec_size(self->collect); ++i)
         ast_delete(self->collect[i]);
-    vec_free(self->exprs);
+    vec_free(self->collect);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
