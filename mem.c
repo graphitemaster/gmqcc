@@ -211,7 +211,7 @@ static int mem_createblock(const size_t size) {
         GMQCC_MEM_WRITEHEAP  (right, mem_addr, size);
         GMQCC_MEM_MARKFREE   (right);
         GMQCC_MEM_SETADDROFPS(right, left);
-        GMQCC_MEM_SETADDROFPS(right, 0);
+        GMQCC_MEM_SETADDROFFS(right, 0);
     }
     mem_dump();
     return 0;
