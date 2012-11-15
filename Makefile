@@ -1,5 +1,5 @@
 CC     ?= clang
-CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector
+CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector -fno-common
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
 	CFLAGS +=                  \

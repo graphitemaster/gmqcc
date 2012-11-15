@@ -181,7 +181,10 @@ static void options_set(uint32_t *flags, size_t idx, bool on)
 static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
-    char buffer[1024];
+    char  buffer[1024];
+    char *redirout = (char*)stdout;
+    char *redirerr = (char*)stderr;
+    
     while (!argend && argc > 1) {
         char *argarg;
         argitem item;
@@ -215,6 +218,13 @@ static bool options_parse(int argc, char **argv) {
                 opts_forced_crc = strtol(argarg, NULL, 0);
                 continue;
             }
+            if (options_long_gcc("redirout", &argc, &argv, &redirout)) {
+                continue;
+            }
+            if (options_long_gcc("redirerr", &argc, &argv, &redirerr)) {
+                continue;
+            }
+            
             if (!strcmp(argv[0]+1, "debug")) {
                 opts_debug = true;
                 continue;
@@ -371,6 +381,7 @@ static bool options_parse(int argc, char **argv) {
             items_add(item);
         }
     }
+    con_change(redirout, redirerr);
     return true;
 }
 
@@ -529,7 +540,7 @@ srcdone:
 
 cleanup:
     util_debug("COM", "cleaning ...\n");
-
+    con_close();
     mem_d(items_data);
 
     parser_cleanup();

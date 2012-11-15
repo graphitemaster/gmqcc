@@ -118,7 +118,7 @@ static void win_fputs(char *str, FILE *f) {
     
     CONSOLE_SCREEN_BUFFER_INFO cinfo;
     GetConsoleScreenBufferInfo(
-        (h == stdout) ?
+        (GMQCC_IS_STDOUT(h)) ?
             GetStdHandle(STD_OUTPUT_HANDLE) :
             GetStdHandle(STD_ERROR_HANDLE), &cinfo
     );
@@ -172,7 +172,7 @@ static void win_fputs(char *str, FILE *f) {
     }
     /* restore */
     SetConsoleTextAttribute(
-        (h == stdout) ?
+        (GMQCC_IS_STDOUT(h)) ?
         GetStdHandle(STD_OUTPUT_HANDLE) :
         GetStdHandle(STD_ERROR_HANDLE),
         icolor
@@ -311,7 +311,6 @@ int con_out(const char *fmt, ...) {
     va_end  (va);
     return   ln;
 }
-
 
 /*
  * Utility console message writes for lexer contexts.  These will allow
