@@ -326,21 +326,14 @@ void con_vprintmsg(int level, const char *name, size_t line, const char *msgtype
         CON_RED
     };
     
-    int   err   = !!(level == LVL_ERROR);
-    int   color = (err) ? console.color_err : console.color_out;
+    int  err                        = !!(level == LVL_ERROR);
+    int  color                      = (err) ? console.color_err : console.color_out;
+    int (*print)(const char *, ...) = (err) ? &con_err          : &con_out;
     
-    /* this might confuse you :P */
-    ((err) ? &con_err : &con_out)(
-        (color) ? 
-            "\033[0;%dm%s:%d: \033[0;%dm%s: \033[0m" : 
-            "%s:%d: %s: ",
-            
-        CON_CYAN,
-        name,
-        (int)line,
-        sel[level],
-        msgtype
-    );
+    if (color)
+        print("\033[0;%dm%s:%d: \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, sel[level], msgtype);
+    else
+        print("%s:%d: %s: ", name, (int)line, msgtype);
         
     con_verr(msg, ap);
     fprintf (stderr, "\n");

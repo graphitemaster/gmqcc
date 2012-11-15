@@ -227,6 +227,10 @@ static bool options_parse(int argc, char **argv) {
                 opts_memchk = true;
                 continue;
             }
+            if (!strcmp(argv[0]+1, "nocolor")) {
+                con_color(0);
+                continue;
+            }
 
             switch (argv[0][1]) {
                 /* -h, show usage but exit with 0 */
@@ -371,8 +375,7 @@ static bool options_parse(int argc, char **argv) {
 }
 
 /* returns the line number, or -1 on error */
-static bool progs_nextline(char **out, size_t *alen,FILE *src)
-{
+static bool progs_nextline(char **out, size_t *alen,FILE *src) {
     int    len;
     char  *line;
     char  *start;
