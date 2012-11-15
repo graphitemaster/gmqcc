@@ -177,7 +177,7 @@ static void irerror(lex_ctx ctx, const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
-    cvprintmsg(ctx, LVL_ERROR, "internal error", msg, ap);
+    con_cvprintmsg((void*)&ctx, LVL_ERROR, "internal error", msg, ap);
     va_end(ap);
 }
 
@@ -193,7 +193,7 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
 	    lvl = LVL_ERROR;
 
 	va_start(ap, fmt);
-    vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
+    con_vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
 	va_end(ap);
 
 	return opts_werror;
@@ -2295,7 +2295,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                      * since this function is run multiple times.
                      */
                     /* For now: debug info: */
-                    /* fprintf(stderr, "Value only written %s\n", value->name); */
+                    /* con_err( "Value only written %s\n", value->name); */
                     tempbool = ir_value_life_merge(value, instr->eid);
                     *changed = *changed || tempbool;
                     /*
@@ -2310,7 +2310,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                     tempbool = ir_value_life_merge(value, instr->eid);
                     /*
                     if (tempbool)
-                        fprintf(stderr, "value added id %s %i\n", value->name, (int)instr->eid);
+                        con_err( "value added id %s %i\n", value->name, (int)instr->eid);
                     */
                     *changed = *changed || tempbool;
                     /* Then remove */
@@ -2321,7 +2321,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         }
         /* (A) */
         tempbool = ir_block_living_add_instr(self, instr->eid);
-        /*fprintf(stderr, "living added values\n");*/
+        /*con_err( "living added values\n");*/
         *changed = *changed || tempbool;
 
     }

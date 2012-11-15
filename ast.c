@@ -40,14 +40,14 @@ static void asterror(lex_ctx ctx, const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
-    cvprintmsg(ctx, LVL_ERROR, "error", msg, ap);
+    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", msg, ap);
     va_end(ap);
 }
 
 /* It must not be possible to get here. */
 static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
-    fprintf(stderr, "ast node missing destroy()\n");
+    con_err("ast node missing destroy()\n");
     abort();
 }
 

@@ -24,7 +24,6 @@ OBJ     = \
           code.o      \
           ast.o       \
           ir.o        \
-          error.o     \
           con.o
 OBJ_A = test/ast-test.o
 OBJ_I = test/ir-test.o

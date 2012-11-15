@@ -535,6 +535,30 @@ qcint    code_alloc_field (size_t qcsize);
 /*===================================================================*/
 /*============================ con.c ================================*/
 /*===================================================================*/
+enum {
+    CON_BLACK   = 30,
+    CON_RED,
+    CON_GREEN,
+    CON_BROWN,
+    CON_BLUE,
+    CON_MAGENTA,
+    CON_CYAN ,
+    CON_WHITE
+};
+
+/* message level */
+enum {
+    LVL_MSG,
+    LVL_WARNING,
+    LVL_ERROR
+};
+
+
+void con_vprintmsg (int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
+void con_printmsg  (int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
+void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
+void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...);
+
 void con_close();
 void con_color(int state);
 void con_init ();
@@ -923,32 +947,6 @@ prog_section_def* prog_getdef    (qc_program *prog, qcint off);
 qcany*            prog_getedict  (qc_program *prog, qcint e);
 qcint             prog_tempstring(qc_program *prog, const char *_str);
 
-/*===================================================================*/
-/*===================== error.c message printer =====================*/
-/*===================================================================*/
-
-#ifndef WIN32
-enum {
-    CON_BLACK   = 30,
-    CON_RED,
-    CON_GREEN,
-    CON_BROWN,
-    CON_BLUE,
-    CON_MAGENTA,
-    CON_CYAN ,
-    CON_WHITE
-};
-#endif
-enum {
-    LVL_MSG,
-    LVL_WARNING,
-    LVL_ERROR
-};
-
-void vprintmsg (int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
-void printmsg  (int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
-void cvprintmsg(lex_ctx ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
-void cprintmsg (lex_ctx ctx, int lvl, const char *msgtype, const char *msg, ...);
 
 /*===================================================================*/
 /*===================== parser.c commandline ========================*/

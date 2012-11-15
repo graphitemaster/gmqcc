@@ -291,6 +291,10 @@ int con_vout(const char *fmt, va_list va) {
     return con_write(console.handle_out, fmt, va);
 }
 
+/*
+ * Standard stdout/stderr printf functions used generally where they need
+ * to be used.
+ */
 int con_err(const char *fmt, ...) {
     va_list  va;
     int      ln = 0;
@@ -306,4 +310,56 @@ int con_out(const char *fmt, ...) {
     con_vout(fmt, va);
     va_end  (va);
     return   ln;
+}
+
+
+/*
+ * Utility console message writes for lexer contexts.  These will allow
+ * for reporting of file:line based on lexer context, These are used
+ * heavily in the parser/ir/ast.
+ */
+void con_vprintmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap) {
+    /* color selection table */
+    static int sel[] = {
+        CON_WHITE,
+        CON_CYAN,
+        CON_RED
+    };
+    
+    int   err   = !!(level == LVL_ERROR);
+    int   color = (err) ? console.color_err : console.color_out;
+    
+    /* this might confuse you :P */
+    ((err) ? &con_err : &con_out)(
+        (color) ? 
+            "\033[0;%dm%s:%d: \033[0;%dm%s: \033[0m" : 
+            "%s:%d: %s: ",
+            
+        CON_CYAN,
+        name,
+        (int)line,
+        sel[level],
+        msgtype
+    );
+        
+    con_verr(msg, ap);
+    fprintf (stderr, "\n");
+}
+
+void con_printmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, ...) {
+    va_list   va;
+    va_start(va, msg);
+    con_vprintmsg(level, name, line, msgtype, msg, va);
+    va_end  (va);
+}
+
+void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap) {
+    con_vprintmsg(lvl, ((lex_ctx*)ctx)->file, ((lex_ctx*)ctx)->line, msgtype, msg, ap);
+}
+
+void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...) {
+    va_list   va;
+    va_start(va, msg);
+    con_cvprintmsg(ctx, lvl, msgtype, msg, va);
+    va_end  (va);
 }

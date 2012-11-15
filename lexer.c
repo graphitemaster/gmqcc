@@ -16,7 +16,7 @@ void lexerror(lex_file *lex, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-    vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
+    con_vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
 	va_end(ap);
 }
 
@@ -32,7 +32,7 @@ bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 	    lvl = LVL_ERROR;
 
 	va_start(ap, fmt);
-    vprintmsg(lvl, lex->name, lex->sline, "warning", fmt, ap);
+    con_vprintmsg(lvl, lex->name, lex->sline, "warning", fmt, ap);
 	va_end(ap);
 
 	return opts_werror;
