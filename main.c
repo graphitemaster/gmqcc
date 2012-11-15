@@ -184,7 +184,7 @@ static bool options_parse(int argc, char **argv) {
     char  buffer[1024];
     char *redirout = (char*)stdout;
     char *redirerr = (char*)stderr;
-    
+
     while (!argend && argc > 1) {
         char *argarg;
         argitem item;
@@ -224,7 +224,7 @@ static bool options_parse(int argc, char **argv) {
             if (options_long_gcc("redirerr", &argc, &argv, &redirerr)) {
                 continue;
             }
-            
+
             if (!strcmp(argv[0]+1, "debug")) {
                 opts_debug = true;
                 continue;
