@@ -1,7 +1,7 @@
 .\" Process with groff -man -Tascii file.3
 .TH GMQCC 1 2012-07-12 "" "gmqcc Manual"
 .SH NAME
-gmqcc \- A Quake C compiler which tries to reduce suckiness.
+gmqcc \- A Quake C compiler built from the NIH realm of sarcastic wit
 .SH SYNOPSIS
 .B gmqcc
 [\fIOPTIONS\fR] [\fIfiles...\fR]
@@ -23,7 +23,17 @@ Specify the output filename. Defaults to progs.dat. This will overwrite
 the output file listed in a \fIprogs.src\fR file in case such a file is used.
 .TP
 .BI "-O" n
-Specify the optimization level, similar to gcc.
+Specify the optimization level
+.RS
+.IP 3
+Highest optimization level
+.IP 2
+Default optimization level
+.IP 1
+Minimal optimization level
+.IP 0
+Disable optimization entierly
+.RE
 .TP
 .BI "-a" filename
 Append the specified files to the list of files to assemble using the QC-Assembler.
@@ -47,3 +57,12 @@ Patch the output file to work around a string-table bug in certain darkplaces ve
 .B -fomit-nullbytes
 Changes the output format to be more efficient. Requires a patched engine. See the
 proposal for a better file structure in the gmqcc source tree.
+.TP
+.B -nocolor
+Disables colored output
+.TP
+.BI "-redirout=" file
+Redirects standard output to a \fIfile\fR
+.TP
+.BI "-rediterr=" file
+Redirects standard error to a \fIfile\fR
