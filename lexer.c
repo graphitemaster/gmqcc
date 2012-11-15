@@ -9,7 +9,7 @@
 MEM_VEC_FUNCTIONS(token, char, value)
 MEM_VEC_FUNCTIONS(lex_file, frame_macro, frames)
 
-VECTOR_MAKE(char*, lex_filenames);
+char* *lex_filenames;
 
 void lexerror(lex_file *lex, const char *fmt, ...)
 {
@@ -157,8 +157,7 @@ lex_file* lex_open(const char *file)
     lex->peekpos = 0;
     lex->eof = false;
 
-    lex_filenames_add(lex->name);
-
+    vec_push(lex_filenames, lex->name);
     return lex;
 }
 
@@ -185,7 +184,7 @@ lex_file* lex_open_string(const char *str, size_t len, const char *name)
     lex->peekpos = 0;
     lex->eof = false;
 
-    lex_filenames_add(lex->name);
+    vec_push(lex_filenames, lex->name);
 
     return lex;
 }
@@ -193,9 +192,9 @@ lex_file* lex_open_string(const char *str, size_t len, const char *name)
 void lex_cleanup(void)
 {
     size_t i;
-    for (i = 0; i < lex_filenames_elements; ++i)
-        mem_d(lex_filenames_data[i]);
-    mem_d(lex_filenames_data);
+    for (i = 0; i < vec_size(lex_filenames); ++i)
+        mem_d(lex_filenames[i]);
+    vec_free(lex_filenames);
 }
 
 void lex_close(lex_file *lex)

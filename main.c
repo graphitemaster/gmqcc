@@ -46,7 +46,7 @@ const oper_info *operators      = NULL;
 size_t           operator_count = 0;
 
 typedef struct { char *filename; int type; } argitem;
-VECTOR_MAKE(argitem, items);
+static argitem *items = NULL;
 
 #define TYPE_QC  0
 #define TYPE_ASM 1
@@ -341,7 +341,7 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     item.filename = argarg;
-                    items_add(item);
+                    vec_push(items, item);
                     break;
 
                 case '-':
@@ -378,7 +378,7 @@ static bool options_parse(int argc, char **argv) {
             argitem item;
             item.filename = argv[0];
             item.type     = TYPE_QC;
-            items_add(item);
+            vec_push(items, item);
         }
     }
     con_change(redirout, redirerr);
@@ -471,18 +471,18 @@ int main(int argc, char **argv) {
 
     util_debug("COM", "starting ...\n");
 
-    if (items_elements) {
+    if (vec_size(items)) {
         con_out("Mode: manual\n");
-        con_out("There are %lu items to compile:\n", (unsigned long)items_elements);
-        for (itr = 0; itr < items_elements; ++itr) {
+        con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
+        for (itr = 0; itr < vec_size(items); ++itr) {
             con_out("  item: %s (%s)\n",
-                   items_data[itr].filename,
-                   ( (items_data[itr].type == TYPE_QC ? "qc" :
-                     (items_data[itr].type == TYPE_ASM ? "asm" :
-                     (items_data[itr].type == TYPE_SRC ? "progs.src" :
+                   items[itr].filename,
+                   ( (items[itr].type == TYPE_QC ? "qc" :
+                     (items[itr].type == TYPE_ASM ? "asm" :
+                     (items[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
 
-            if (!parser_compile_file(items_data[itr].filename))
+            if (!parser_compile_file(items[itr].filename))
             {
                     retval = 1;
                     goto cleanup;
@@ -541,7 +541,7 @@ srcdone:
 cleanup:
     util_debug("COM", "cleaning ...\n");
     con_close();
-    mem_d(items_data);
+    vec_free(items);
 
     parser_cleanup();
     if (opts_output_free)

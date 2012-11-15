@@ -120,7 +120,7 @@ typedef struct
     ast_expression         *next;
     /* arrays get a member-count */
     size_t                  count;
-    MEM_VECTOR_MAKE(ast_value*, params);
+    ast_value*             *params;
     bool                    variadic;
     /* The codegen functions should store their output values
      * so we can call it multiple times without re-evaluating.
@@ -130,7 +130,6 @@ typedef struct
     ir_value               *outl;
     ir_value               *outr;
 } ast_expression_common;
-MEM_VECTOR_PROTO(ast_expression_common, ast_value*, params);
 
 /* Value
  *
@@ -183,7 +182,7 @@ bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
 bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield);
 
-bool GMQCC_WARN ast_value_params_add(ast_value*, ast_value*);
+void ast_value_params_add(ast_value*, ast_value*);
 
 bool ast_compare_type(ast_expression *a, ast_expression *b);
 ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
@@ -460,15 +459,13 @@ struct ast_call_s
 {
     ast_expression_common expression;
     ast_expression *func;
-    MEM_VECTOR_MAKE(ast_expression*, params);
+    ast_expression* *params;
 };
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr);
 void ast_call_delete(ast_call*);
 bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
 bool ast_call_check_types(ast_call*);
-
-MEM_VECTOR_PROTO(ast_call, ast_expression*, params);
 
 /* Blocks
  *
@@ -477,20 +474,16 @@ struct ast_block_s
 {
     ast_expression_common expression;
 
-    MEM_VECTOR_MAKE(ast_value*,      locals);
-    MEM_VECTOR_MAKE(ast_expression*, exprs);
-    MEM_VECTOR_MAKE(ast_expression*, collect);
+    ast_value*      *locals;
+    ast_expression* *exprs;
+    ast_expression* *collect;
 };
 ast_block* ast_block_new(lex_ctx ctx);
 void ast_block_delete(ast_block*);
 bool ast_block_set_type(ast_block*, ast_expression *from);
 
-MEM_VECTOR_PROTO(ast_block, ast_value*, locals);
-MEM_VECTOR_PROTO(ast_block, ast_expression*, exprs);
-MEM_VECTOR_PROTO(ast_block, ast_expression*, collect);
-
 bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
-bool ast_block_collect(ast_block*, ast_expression*);
+void ast_block_collect(ast_block*, ast_expression*);
 
 /* Function
  *
@@ -523,7 +516,7 @@ struct ast_function_s
      */
     char         labelbuf[64];
 
-    MEM_VECTOR_MAKE(ast_block*, blocks);
+    ast_block* *blocks;
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */
@@ -532,8 +525,6 @@ void ast_function_delete(ast_function*);
  * or whatever...
  */
 const char* ast_function_label(ast_function*, const char *prefix);
-
-MEM_VECTOR_PROTO(ast_function, ast_block*, blocks);
 
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
 

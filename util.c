@@ -32,14 +32,14 @@ uint64_t mem_dt = 0;
 struct memblock_t {
     const char  *file;
     unsigned int line;
-    unsigned int byte;
+    size_t       byte;
     struct memblock_t *next;
     struct memblock_t *prev;
 };
 
 static struct memblock_t *mem_start = NULL;
 
-void *util_memory_a(unsigned int byte, unsigned int line, const char *file) {
+void *util_memory_a(size_t byte, unsigned int line, const char *file) {
     struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
     void              *data = (void*)(info+1);
     if (!info) return NULL;
@@ -79,7 +79,7 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     free(info);
 }
 
-void *util_memory_r(void *ptrn, unsigned int byte, unsigned int line, const char *file) {
+void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file) {
     struct memblock_t *oldinfo = NULL;
 
     struct memblock_t *newinfo;
@@ -106,6 +106,10 @@ void *util_memory_r(void *ptrn, unsigned int byte, unsigned int line, const char
     newinfo->file = file;
     newinfo->next = oldinfo->next;
     newinfo->prev = oldinfo->prev;
+    if (newinfo->next)
+        newinfo->next->prev = newinfo;
+    if (newinfo->prev)
+        newinfo->prev->next = newinfo;
     if (mem_start == oldinfo)
         mem_start = newinfo;
 
@@ -511,3 +515,11 @@ FILE *util_fopen(const char *filename, const char *mode)
 #endif
 }
 
+void _util_vec_grow(void **a, size_t i, size_t s) {
+    size_t m = *a ? 2*_vec_beg(*a)+i : i+1;
+    void  *p = mem_r((*a ? _vec_raw(*a) : NULL), s * m + sizeof(size_t)*2);
+    if (!*a)
+        ((size_t*)p)[1] = 0;
+    *a = (void*)((size_t*)p + 2);
+    _vec_beg(*a) = m;
+}

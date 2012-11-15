@@ -191,8 +191,9 @@ typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 /*===================================================================*/
 FILE *util_fopen(const char *filename, const char *mode);
 
-void *util_memory_a      (unsigned int, unsigned int, const char *);
+void *util_memory_a      (size_t,       unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
+void *util_memory_r      (void       *, size_t,       unsigned int, const char *);
 void  util_meminfo       ();
 
 bool  util_strupper      (const char *);
@@ -214,11 +215,13 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
 #ifdef NOTRACK
-#    define mem_a(x) malloc(x)
-#    define mem_d(x) free  (x)
+#    define mem_a(x)    malloc(x)
+#    define mem_d(x)    free  (x)
+#    define mem_r(x, n) free  (x, n)
 #else
-#    define mem_a(x) util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x) util_memory_d((x), __LINE__, __FILE__)
+#    define mem_a(x)    util_memory_a((x), __LINE__, __FILE__)
+#    define mem_d(x)    util_memory_d((x), __LINE__, __FILE__)
+#    define mem_r(x, n) util_memory_r((x), (n), __LINE__, __FILE__)
 #endif
 
 /*
@@ -229,50 +232,27 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #define FLT2INT(Y) *((int32_t*)&(Y))
 #define INT2FLT(Y) *((float  *)&(Y))
 
-/* Builds vector type (usefull for inside structures) */
-#define VECTOR_SNAP(X,Y) X ## Y
-#define VECTOR_FILL(X,Y) VECTOR_SNAP(X,Y)
-#define VECTOR_TYPE(T,N)                                        \
-    T*     N##_data      = NULL;                                \
-    long   N##_elements  = 0;                                   \
-    long   N##_allocated = 0
-/* Builds vector add */
-#define VECTOR_CORE(T,N)                                        \
-    int    N##_add(T element) {                                 \
-        void *temp = NULL;                                      \
-        if (N##_elements == N##_allocated) {                    \
-            if (N##_allocated == 0) {                           \
-                N##_allocated = 12;                             \
-            } else {                                            \
-                N##_allocated *= 2;                             \
-            }                                                   \
-            if  (!(temp = mem_a(N##_allocated * sizeof(T)))) {  \
-                mem_d(temp);                                    \
-                return -1;                                      \
-            }                                                   \
-            memcpy(temp, N##_data, (N##_elements * sizeof(T))); \
-            mem_d(N##_data);                                    \
-            N##_data = (T*)temp;                                \
-        }                                                       \
-        N##_data[N##_elements] = element;                       \
-        return   N##_elements++;                                \
-    }                                                           \
-    int N##_put(T* elements, size_t len) {                      \
-        len     --;                                             \
-        elements--;                                             \
-        while (N##_add(*++elements) != -1 && len--);            \
-        return N##_elements;                                    \
-    }                                                           \
-    typedef char VECTOR_FILL(extra_semicolon_##N,__COUNTER__)
-#define VECTOR_PROT(T,N)                                        \
-    extern T*     N##_data     ;                                \
-    extern long   N##_elements ;                                \
-    extern long   N##_allocated;                                \
-    int           N##_add(T);                                   \
-    int           N##_put(T *, size_t)
-#define VECTOR_MAKE(T,N) \
-    VECTOR_TYPE(T,N);    \
-    VECTOR_CORE(T,N)
+/* New flexible vector implementation from Dale */
+#define _vec_raw(A) (((size_t*)(A)) - 2)
+#define _vec_beg(A) (_vec_raw(A)[0])
+#define _vec_end(A) (_vec_raw(A)[1])
+#define _vec_needsgrow(A,N) ((!(A)) || (_vec_end(A) + (N) >= _vec_beg(A)))
+#define _vec_mightgrow(A,N) (_vec_needsgrow((A), (N)) ? _vec_forcegrow((A),(N)) : 0)
+#define _vec_forcegrow(A,N) _util_vec_grow((void**)&(A), (N), sizeof(*(A)))
+void _util_vec_grow(void **a, size_t i, size_t s);
+/* exposed interface */
+#define vec_free(A)          ((A) ? (mem_d(_vec_raw(A)), (A) = NULL) : 0)
+#define vec_push(A,V)        (_vec_mightgrow((A),1), (A)[_vec_end(A)++] = (V))
+#define vec_size(A)          ((A) ? _vec_end(A) : 0)
+#define vec_add(A,N)         (_vec_mightgrow((A),(N)), _vec_end(A)+=(N), &(A)[_vec_end(A)-(N)])
+#define vec_last(A)          ((A)[_vec_end(A)-1])
+#define vec_append(A,N,S)    memcpy(vec_add((A), (N)), (S), N * sizeof(*(S)))
+#define _vec_remove(A,S,I,N) (memmove((char*)(A)+(I)*(S),(char*)(A)+((I)+(N))*(S),(S)*(vec_size(A)-(I)-(N))), _vec_end(A)-=(N))
+#define vec_remove(A,I,N)    _vec_remove((A), sizeof(*(A)), (I), (N))
+#define vec_pop(A)           vec_remove((A), _vec_end(A)-1, 1)
+/* these are supposed to NOT reallocate */
+#define vec_shrinkto(A,N)    (_vec_end(A) = (N))
+#define vec_shrinkby(A,N)    (_vec_end(A) -= (N))
 
 /*===================================================================*/
 /*=========================== code.c ================================*/
@@ -499,24 +479,12 @@ enum {
     VINSTR_COND
 };
 
-/*
- * The symbols below are created by the following
- * expanded macros:
- *
- * VECTOR_MAKE(prog_section_statement, code_statements);
- * VECTOR_MAKE(prog_section_def,       code_defs      );
- * VECTOR_MAKE(prog_section_field,     code_fields    );
- * VECTOR_MAKE(prog_section_function,  code_functions );
- * VECTOR_MAKE(int,                    code_globals   );
- * VECTOR_MAKE(char,                   code_chars     );
- */
-VECTOR_PROT(prog_section_statement, code_statements);
-VECTOR_PROT(prog_section_statement, code_statements);
-VECTOR_PROT(prog_section_def,       code_defs      );
-VECTOR_PROT(prog_section_field,     code_fields    );
-VECTOR_PROT(prog_section_function,  code_functions );
-VECTOR_PROT(int,                    code_globals   );
-VECTOR_PROT(char,                   code_chars     );
+extern prog_section_statement *code_statements;
+extern prog_section_def       *code_defs;
+extern prog_section_field     *code_fields;
+extern prog_section_function  *code_functions;
+extern int                    *code_globals;
+extern char                   *code_chars;
 extern uint16_t code_crc;
 
 typedef float   qcfloat;
@@ -900,16 +868,16 @@ typedef struct {
 typedef struct qc_program_s {
     char           *filename;
 
-    MEM_VECTOR_MAKE(prog_section_statement, code);
-    MEM_VECTOR_MAKE(prog_section_def,       defs);
-    MEM_VECTOR_MAKE(prog_section_def,       fields);
-    MEM_VECTOR_MAKE(prog_section_function,  functions);
-    MEM_VECTOR_MAKE(char,                   strings);
-    MEM_VECTOR_MAKE(qcint,                  globals);
-    MEM_VECTOR_MAKE(qcint,                  entitydata);
-    MEM_VECTOR_MAKE(bool,                   entitypool);
+    prog_section_statement *code;
+    prog_section_def       *defs;
+    prog_section_def       *fields;
+    prog_section_function  *functions;
+    char                   *strings;
+    qcint                  *globals;
+    qcint                  *entitydata;
+    bool                   *entitypool;
 
-    MEM_VECTOR_MAKE(const char*,            function_stack);
+    const char*            *function_stack;
 
     uint16_t crc16;
 
@@ -918,17 +886,18 @@ typedef struct qc_program_s {
 
     qcint  vmerror;
 
-    MEM_VECTOR_MAKE(size_t, profile);
+    size_t *profile;
 
-    MEM_VECTOR_MAKE(prog_builtin, builtins);
+    prog_builtin *builtins;
+    size_t        builtins_count;
 
     /* size_t ip; */
     qcint  entities;
     size_t entityfields;
     bool   allowworldwrites;
 
-    MEM_VECTOR_MAKE(qcint,         localstack);
-    MEM_VECTOR_MAKE(qc_exec_stack, stack);
+    qcint         *localstack;
+    qc_exec_stack *stack;
     size_t statement;
 
     size_t xflags;

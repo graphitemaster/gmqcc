@@ -43,8 +43,8 @@ typedef struct ir_value_s {
     /* and the output type of a function */
     int       outtype;
 
-    MEM_VECTOR_MAKE(struct ir_instr_s*, reads);
-    MEM_VECTOR_MAKE(struct ir_instr_s*, writes);
+    struct ir_instr_s **reads;
+    struct ir_instr_s **writes;
 
     /* constantvalues */
     bool isconst;
@@ -72,7 +72,7 @@ typedef struct ir_value_s {
     struct ir_value_s *memberof;
 
     /* For the temp allocator */
-    MEM_VECTOR_MAKE(ir_life_entry_t, life);
+    ir_life_entry_t *life;
 } ir_value;
 
 int32_t ir_value_code_addr(const ir_value*);
@@ -87,8 +87,7 @@ void      ir_value_delete(ir_value*);
 bool      ir_value_set_name(ir_value*, const char *name);
 ir_value* ir_value_vector_member(ir_value*, unsigned int member);
 
-MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, reads);
-MEM_VECTOR_PROTO_ALL(ir_value, struct ir_instr_s*, writes);
+bool GMQCC_WARN vec_ir_value_find(ir_value **vec, ir_value *what, size_t *idx);
 
 bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
 bool GMQCC_WARN ir_value_set_func(ir_value*, int f);
@@ -101,7 +100,6 @@ bool GMQCC_WARN ir_value_set_field(ir_value*, ir_value *fld);
 /*bool   ir_value_set_pointer_v(ir_value*, ir_value* p); */
 /*bool   ir_value_set_pointer_i(ir_value*, int i);       */
 
-MEM_VECTOR_PROTO(ir_value, ir_life_entry_t, life);
 /* merge an instruction into the life-range */
 /* returns false if the lifepoint was already known */
 bool ir_value_life_merge(ir_value*, size_t);
@@ -113,12 +111,6 @@ bool ir_values_overlap(const ir_value*, const ir_value*);
 
 void ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 void ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...));
-
-/* A vector of IR values */
-typedef struct {
-    MEM_VECTOR_MAKE(ir_value*, v);
-} ir_value_vector;
-MEM_VECTOR_PROTO(ir_value_vector, ir_value*, v);
 
 /* PHI data */
 typedef struct ir_phi_entry_s
@@ -135,8 +127,8 @@ typedef struct ir_instr_s
     ir_value* (_ops[3]);
     struct ir_block_s* (bops[2]);
 
-    MEM_VECTOR_MAKE(ir_phi_entry_t, phi);
-    MEM_VECTOR_MAKE(ir_value*, params);
+    ir_phi_entry_t *phi;
+    ir_value      **params;
 
     /* For the temp-allocation */
     size_t eid;
@@ -147,10 +139,9 @@ typedef struct ir_instr_s
 ir_instr* ir_instr_new(struct ir_block_s *owner, int opcode);
 void      ir_instr_delete(ir_instr*);
 
-MEM_VECTOR_PROTO(ir_value, ir_phi_entry_t, phi);
-bool GMQCC_WARN ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
+bool GMQCC_WARN vec_ir_instr_find(ir_instr **vec, ir_instr *what, size_t *idx);
 
-MEM_VECTOR_PROTO(ir_value, ir_value*, params);
+bool GMQCC_WARN ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 
@@ -161,10 +152,10 @@ typedef struct ir_block_s
     lex_ctx    context;
     bool       final; /* once a jump is added we're done */
 
-    MEM_VECTOR_MAKE(ir_instr*, instr);
-    MEM_VECTOR_MAKE(struct ir_block_s*, entries);
-    MEM_VECTOR_MAKE(struct ir_block_s*, exits);
-    MEM_VECTOR_MAKE(ir_value*, living);
+    ir_instr          **instr;
+    struct ir_block_s **entries;
+    struct ir_block_s **exits;
+    ir_value          **living;
 
     /* For the temp-allocation */
     size_t eid;
@@ -181,10 +172,6 @@ ir_block* ir_block_new(struct ir_function_s *owner, const char *label);
 void      ir_block_delete(ir_block*);
 
 bool      ir_block_set_label(ir_block*, const char *label);
-
-MEM_VECTOR_PROTO(ir_block, ir_instr*, instr);
-MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, exits);
-MEM_VECTOR_PROTO_ALL(ir_block, ir_block*, entries);
 
 ir_value* ir_block_create_binop(ir_block*, const char *label, int op,
                                 ir_value *left, ir_value *right);
@@ -211,10 +198,10 @@ ir_value* ir_block_create_mul(ir_block*, const char *label, ir_value *l, ir_valu
 ir_value* ir_block_create_div(ir_block*, const char *label, ir_value *l, ir_value *r);
 ir_instr* ir_block_create_phi(ir_block*, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
-bool GMQCC_WARN ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
+void ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
 ir_instr* ir_block_create_call(ir_block*, const char *label, ir_value *func);
 ir_value* ir_call_value(ir_instr*);
-bool GMQCC_WARN ir_call_param(ir_instr*, ir_value*);
+void ir_call_param(ir_instr*, ir_value*);
 
 bool GMQCC_WARN ir_block_create_return(ir_block*, ir_value *opt_value);
 
@@ -229,18 +216,16 @@ bool GMQCC_WARN ir_block_create_if(ir_block*, ir_value *cond,
 bool GMQCC_WARN ir_block_create_jump(ir_block*, ir_block *to);
 bool GMQCC_WARN ir_block_create_goto(ir_block*, ir_block *to);
 
-MEM_VECTOR_PROTO_ALL(ir_block, ir_value*, living);
-
 void ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
 /* function */
 
 typedef struct ir_function_s
 {
-    char *name;
-    int   outtype;
-    MEM_VECTOR_MAKE(int, params);
-    MEM_VECTOR_MAKE(ir_block*, blocks);
+    char      *name;
+    int        outtype;
+    int       *params;
+    ir_block **blocks;
 
     int builtin;
 
@@ -250,10 +235,10 @@ typedef struct ir_function_s
      * which might get optimized away, so anything
      * in there needs to be deleted in the dtor.
      */
-    MEM_VECTOR_MAKE(ir_value*, values);
+    ir_value **values;
 
     /* locally defined variables */
-    MEM_VECTOR_MAKE(ir_value*, locals);
+    ir_value **locals;
 
     size_t allocated_locals;
 
@@ -279,11 +264,9 @@ typedef struct ir_function_s
 ir_function* ir_function_new(struct ir_builder_s *owner, int returntype);
 void         ir_function_delete(ir_function*);
 
-bool GMQCC_WARN ir_function_collect_value(ir_function*, ir_value *value);
+void ir_function_collect_value(ir_function*, ir_value *value);
 
 bool ir_function_set_name(ir_function*, const char *name);
-MEM_VECTOR_PROTO(ir_function, int, params);
-MEM_VECTOR_PROTO(ir_function, ir_block*, blocks);
 
 ir_value* ir_function_get_local(ir_function *self, const char *name);
 ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param);
@@ -303,12 +286,12 @@ void ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 typedef struct ir_builder_s
 {
     char *name;
-    MEM_VECTOR_MAKE(ir_function*, functions);
-    MEM_VECTOR_MAKE(ir_value*, globals);
-    MEM_VECTOR_MAKE(ir_value*, fields);
+    ir_function **functions;
+    ir_value    **globals;
+    ir_value    **fields;
 
-    MEM_VECTOR_MAKE(const char*, filenames);
-    MEM_VECTOR_MAKE(qcint,       filestrings);
+    const char **filenames;
+    qcint       *filestrings;
     /* we cache the #IMMEDIATE string here */
     qcint str_immediate;
 } ir_builder;
@@ -317,12 +300,6 @@ ir_builder* ir_builder_new(const char *modulename);
 void        ir_builder_delete(ir_builder*);
 
 bool ir_builder_set_name(ir_builder *self, const char *name);
-
-MEM_VECTOR_PROTO(ir_builder, ir_function*, functions);
-MEM_VECTOR_PROTO(ir_builder, ir_value*,    globals);
-MEM_VECTOR_PROTO(ir_builder, ir_value*,    fields);
-MEM_VECTOR_PROTO(ir_builder, const char*,  filenames);
-MEM_VECTOR_PROTO(ir_builder, qcint,        filestrings);
 
 ir_function* ir_builder_get_function(ir_builder*, const char *fun);
 ir_function* ir_builder_create_function(ir_builder*, const char *name, int outtype);
