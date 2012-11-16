@@ -359,6 +359,11 @@ on_error:
     return false;
 }
 
+static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
+{
+    return true;
+}
+
 static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
 {
     size_t     o;
@@ -394,9 +399,8 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
         goto cleanup;
     }
 
-
-    ftepp_out(ftepp, "Parsed macro parameters", false);
-    goto cleanup;
+    if (!ftepp_macro_expand(ftepp, macro, params))
+        retval = false;
 
 cleanup:
     for (o = 0; o < vec_size(params); ++o)
@@ -719,6 +723,12 @@ static bool ftepp_hash(ftepp_t *ftepp)
         case TOKEN_EOF:
             ftepp_error(ftepp, "missing newline at end of file", ftepp_tokval(ftepp));
             return false;
+
+        /* Builtins! Don't forget the builtins! */
+        case TOKEN_INTCONST:
+        case TOKEN_FLOATCONST:
+            ftepp_out(ftepp, "#", false);
+            return true;
     }
     if (!ftepp_skipspace(ftepp))
         return false;
@@ -739,9 +749,13 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     {
         if (ftepp->token >= TOKEN_EOF)
             break;
-
+#if 0
         ftepp->newline = newline;
         newline = false;
+#else
+        /* For the sake of FTE compatibility... FU, really */
+        ftepp->newline = newline = true;
+#endif
 
         switch (ftepp->token) {
             case TOKEN_KEYWORD:
