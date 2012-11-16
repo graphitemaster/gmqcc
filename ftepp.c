@@ -32,6 +32,13 @@ typedef struct {
 typedef struct {
 	int   token;
 	char *value;
+	/* a copy from the lexer */
+	union {
+		vector v;
+		int    i;
+		double f;
+		int    t; /* type */
+	} constval;
 } pptoken;
 
 typedef struct {
@@ -42,7 +49,7 @@ typedef struct {
 	/* yes we need an extra flag since `#define FOO x` is not the same as `#define FOO() x` */
 	bool    has_params;
 
-	pptoken *output;
+	pptoken **output;
 } ppmacro;
 
 typedef struct {
@@ -134,45 +141,16 @@ static bool ftepp_skipspace(ftepp_t *ftepp)
 	if (ftepp->token != TOKEN_WHITE)
 		return true;
 	while (ftepp_next(ftepp) == TOKEN_WHITE) {}
-	return (ftepp->token < TOKEN_EOF);
-}
-
-/* if/ifdef/define handlers */
-
-static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
-{
-	ftepp_error(ftepp, "TODO: #if");
-	return false;
-}
-
-static bool ftepp_ifdef(ftepp_t *ftepp, ppcondition *cond)
-{
-	ppmacro *macro;
-	(void)ftepp_next(ftepp);
-	if (!ftepp_skipspace(ftepp))
-		return false;
-
-	switch (ftepp->token) {
-		case TOKEN_IDENT:
-		case TOKEN_KEYWORD:
-			macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
-			break;
-		default:
-			ftepp_error(ftepp, "expected macro name");
-			return false;
-	}
-
-	(void)ftepp_next(ftepp);
-	if (!ftepp_skipspace(ftepp))
-		return false;
-	if (ftepp->token != TOKEN_EOL) {
-		ftepp_error(ftepp, "stray tokens after #ifdef");
+	if (ftepp->token >= TOKEN_EOF) {
+		ftepp_error(ftepp, "unexpected end of preprocessor directive");
 		return false;
 	}
-	cond->on = !!macro;
 	return true;
 }
 
+/**
+ * The huge macro parsing code...
+ */
 static bool ftepp_define(ftepp_t *ftepp)
 {
 	ppmacro *macro;
@@ -182,6 +160,7 @@ static bool ftepp_define(ftepp_t *ftepp)
 
 	switch (ftepp->token) {
 		case TOKEN_IDENT:
+		case TOKEN_TYPENAME:
 		case TOKEN_KEYWORD:
 			macro = ppmacro_new(ftepp_ctx(ftepp), ftepp_tokval(ftepp));
 			break;
@@ -198,6 +177,120 @@ static bool ftepp_define(ftepp_t *ftepp)
 		return false;
 	}
 	vec_push(ftepp->macros, macro);
+	return true;
+}
+
+/**
+ * #if - the FTEQCC way:
+ *    defined(FOO) => true if FOO was #defined regardless of parameters or contents
+ *    <numbers>    => True if the number is not 0
+ *    !<factor>    => True if the factor yields false
+ *    <macro>      => becomes the macro's FIRST token regardless of parameters
+ *    <e> && <e>   => True if both expressions are true
+ *    <e> || <e>   => True if either expression is true
+ *    <string>     => False
+ *    <ident>      => False (remember for macros the <macro> rule applies instead)
+ * Unary + and - are skipped
+ * parenthesis in expressions are allowed
+ * parameter lists on macros are errors
+ * No mathematical calculations are executed
+ */
+static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
+{
+	ppmacro *macro;
+	while (ftepp->token != TOKEN_EOL) {
+		switch (ftepp->token) {
+			case TOKEN_IDENT:
+			case TOKEN_TYPENAME:
+			case TOKEN_KEYWORD:
+				macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+				if (!macro || !vec_size(macro->output)) {
+					*out = false;
+				} else {
+					/* This does not expand recursively! */
+					switch (macro->output[0]->token) {
+						case TOKEN_INTCONST:
+							*out = !!(macro->output[0]->constval.f);
+							break;
+						case TOKEN_FLOATCONST:
+							*out = !!(macro->output[0]->constval.f);
+							break;
+						default:
+							*out = false;
+							break;
+					}
+				}
+				break;
+			case TOKEN_STRINGCONST:
+				*out = false;
+				break;
+			case TOKEN_INTCONST:
+				*out = !!(ftepp->lex->tok.constval.i);
+				break;
+			case TOKEN_FLOATCONST:
+				*out = !!(ftepp->lex->tok.constval.f);
+				break;
+
+			default:
+				ftepp_error(ftepp, "junk in #if");
+				return false;
+		}
+	}
+	(void)ftepp_next(ftepp);
+	return true;
+}
+
+static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
+{
+	bool result = false;
+
+	memset(cond, 0, sizeof(*cond));
+	(void)ftepp_next(ftepp);
+
+	if (!ftepp_skipspace(ftepp))
+		return false;
+	if (ftepp->token == TOKEN_EOL) {
+		ftepp_error(ftepp, "expected expression for #if-directive");
+		return false;
+	}
+
+	if (!ftepp_if_expr(ftepp, &result))
+		return false;
+
+	cond->on = result;
+	return true;
+}
+
+/**
+ * ifdef is rather simple
+ */
+static bool ftepp_ifdef(ftepp_t *ftepp, ppcondition *cond)
+{
+	ppmacro *macro;
+	memset(cond, 0, sizeof(*cond));
+	(void)ftepp_next(ftepp);
+	if (!ftepp_skipspace(ftepp))
+		return false;
+
+	switch (ftepp->token) {
+		case TOKEN_IDENT:
+		case TOKEN_TYPENAME:
+		case TOKEN_KEYWORD:
+			macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+			break;
+		default:
+			ftepp_error(ftepp, "expected macro name");
+			return false;
+	}
+
+	(void)ftepp_next(ftepp);
+	if (!ftepp_skipspace(ftepp))
+		return false;
+	if (ftepp->token != TOKEN_EOL) {
+		ftepp_error(ftepp, "stray tokens after #ifdef");
+		return false;
+	}
+	cond->on = !!macro;
 	return true;
 }
 
@@ -228,6 +321,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
 	switch (ftepp->token) {
 		case TOKEN_KEYWORD:
 		case TOKEN_IDENT:
+		case TOKEN_TYPENAME:
 			if (!strcmp(ftepp_tokval(ftepp), "define")) {
 				return ftepp_define(ftepp);
 			}
