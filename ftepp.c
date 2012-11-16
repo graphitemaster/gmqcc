@@ -315,6 +315,15 @@ static bool ftepp_hash(ftepp_t *ftepp)
 	return true;
 }
 
+static void ftepp_out(ftepp_t *ftepp, const char *str)
+{
+	if (!vec_size(ftepp->conditions) ||
+		vec_last(ftepp->conditions).on)
+	{
+		printf("%s", str);
+	}
+}
+
 static bool ftepp_preprocess(ftepp_t *ftepp)
 {
 	bool newline = true;
@@ -333,7 +342,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 		switch (ftepp->token) {
 			case '#':
 				if (!ftepp->newline) {
-					printf("%s", ftepp_tokval(ftepp));
+					ftepp_out(ftepp, ftepp_tokval(ftepp));
 					ftepp_next(ftepp);
 					break;
 				}
@@ -347,11 +356,11 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 				break;
 			case TOKEN_EOL:
 				newline = true;
-				printf("\n");
+				ftepp_out(ftepp, "\n");
 				ftepp_next(ftepp);
 				break;
 			default:
-				printf("%s", ftepp_tokval(ftepp));
+				ftepp_out(ftepp, ftepp_tokval(ftepp));
 				ftepp_next(ftepp);
 				break;
 		}
