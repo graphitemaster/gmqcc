@@ -325,6 +325,7 @@ static void macroparam_clean(macroparam *self)
     vec_free(self->tokens);
 }
 
+/* need to leave the last token up */
 static bool ftepp_macro_call_params(ftepp_t *ftepp, macroparam **out_params)
 {
     macroparam *params = NULL;
@@ -367,10 +368,12 @@ static bool ftepp_macro_call_params(ftepp_t *ftepp, macroparam **out_params)
             goto on_error;
         }
     }
+    /* need to leave that up
     if (ftepp_next(ftepp) >= TOKEN_EOF) {
         ftepp_error(ftepp, "unexpected EOF in macro call");
         goto on_error;
     }
+    */
     *out_params = params;
     return true;
 
@@ -395,13 +398,16 @@ static bool macro_params_find(ppmacro *macro, const char *name, size_t *idx)
     return false;
 }
 
+static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
 {
-    char *old_string = ftepp->output;
-    bool old_string_flag = ftepp->output_string;
+    char     *old_string = ftepp->output;
+    bool      old_string_flag = ftepp->output_string;
+    lex_file *old_lexer = ftepp->lex;
     bool retval = true;
 
-    size_t o, pi, pv;
+    size_t    o, pi, pv;
+    lex_file *inlex;
 
     /* really ... */
     if (!vec_size(macro->output))
@@ -437,11 +443,24 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         }
     }
     vec_push(ftepp->output, 0);
-    printf("_________________\n%s\n=================\n", ftepp->output);
-    goto cleanup;
+    /* Now run the preprocessor recursively on this string buffer */
+    inlex = lex_open_string(ftepp->output, vec_size(ftepp->output)-1, ftepp->lex->name);
+    if (!inlex) {
+        ftepp_error(ftepp, "internal error: failed to instantiate lexer");
+        retval = false;
+        goto cleanup;
+    }
+    ftepp->output        = old_string;
+    ftepp->output_string = old_string_flag;
+    ftepp->lex = inlex;
+    if (!ftepp_preprocess(ftepp)) {
+        retval = false;
+        goto cleanup;
+    }
 
 cleanup:
-    ftepp->output = old_string;
+    ftepp->lex           = old_lexer;
+    ftepp->output        = old_string;
     ftepp->output_string = old_string_flag;
     return retval;
 }
@@ -483,6 +502,7 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
 
     if (!ftepp_macro_expand(ftepp, macro, params))
         retval = false;
+    ftepp_next(ftepp);
 
 cleanup:
     for (o = 0; o < vec_size(params); ++o)
