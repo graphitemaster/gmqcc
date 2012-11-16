@@ -91,7 +91,10 @@ pptoken *pptoken_make(ftepp_t *ftepp)
 {
     pptoken *token = (pptoken*)mem_a(sizeof(pptoken));
     token->token = ftepp->token;
-    token->value = util_strdup(ftepp_tokval(ftepp));
+    if (token->token == TOKEN_WHITE)
+        token->value = util_strdup(" ");
+    else
+        token->value = util_strdup(ftepp_tokval(ftepp));
     memcpy(&token->constval, &ftepp->lex->tok.constval, sizeof(token->constval));
     return token;
 }
@@ -204,6 +207,24 @@ static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
     return true;
 }
 
+static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
+{
+    pptoken *ptok;
+    while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
+        ptok = pptoken_make(ftepp);
+        vec_push(macro->output, ptok);
+
+        ftepp_next(ftepp);
+        if (!ftepp_skipspace(ftepp))
+            return false;
+    }
+    if (ftepp->token != TOKEN_EOL) {
+        ftepp_error(ftepp, "unexpected junk after macro or unexpected end of file");
+        return false;
+    }
+    return true;
+}
+
 static bool ftepp_define(ftepp_t *ftepp)
 {
     ppmacro *macro;
@@ -233,10 +254,9 @@ static bool ftepp_define(ftepp_t *ftepp)
     if (!ftepp_skipspace(ftepp))
         return false;
 
-    if (ftepp->token != TOKEN_EOL) {
-        ftepp_error(ftepp, "stray tokens after macro");
+    if (!ftepp_define_body(ftepp, macro))
         return false;
-    }
+
     vec_push(ftepp->macros, macro);
     return true;
 }
