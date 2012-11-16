@@ -185,12 +185,13 @@ static bool ftepp_define(ftepp_t *ftepp)
  *    defined(FOO) => true if FOO was #defined regardless of parameters or contents
  *    <numbers>    => True if the number is not 0
  *    !<factor>    => True if the factor yields false
+ *    !!<factor>   => ERROR on 2 or more unary nots
  *    <macro>      => becomes the macro's FIRST token regardless of parameters
  *    <e> && <e>   => True if both expressions are true
  *    <e> || <e>   => True if either expression is true
  *    <string>     => False
  *    <ident>      => False (remember for macros the <macro> rule applies instead)
- * Unary + and - are skipped
+ * Unary + and - are weird and wrong in fteqcc so we don't allow them
  * parenthesis in expressions are allowed
  * parameter lists on macros are errors
  * No mathematical calculations are executed
