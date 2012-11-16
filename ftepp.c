@@ -198,53 +198,119 @@ static bool ftepp_define(ftepp_t *ftepp)
 static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
 {
     ppmacro *macro;
-    while (ftepp->token != TOKEN_EOL) {
-        switch (ftepp->token) {
-            case TOKEN_IDENT:
-            case TOKEN_TYPENAME:
-            case TOKEN_KEYWORD:
+
+    if (!ftepp_skipspace(ftepp))
+        return false;
+
+    switch (ftepp->token) {
+        case TOKEN_IDENT:
+        case TOKEN_TYPENAME:
+        case TOKEN_KEYWORD:
+            if (!strcmp(ftepp_tokval(ftepp), "defined")) {
+                ftepp->lex->flags.noops = true;
+                ftepp_next(ftepp);
+                if (!ftepp_skipspace(ftepp))
+                    return false;
+                if (ftepp->token != '(') {
+                    ftepp_error(ftepp, "`defined` keyword in #if requires a macro name in parenthesis");
+                    return false;
+                }
+                ftepp->lex->flags.noops = false;
+                ftepp_next(ftepp);
+                if (!ftepp_skipspace(ftepp))
+                    return false;
+                if (ftepp->token != TOKEN_IDENT &&
+                    ftepp->token != TOKEN_TYPENAME &&
+                    ftepp->token != TOKEN_KEYWORD)
+                {
+                    ftepp_error(ftepp, "defined() used on an unexpected token type");
+                    return false;
+                }
                 macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
-                if (!macro || !vec_size(macro->output)) {
-                    *out = false;
-                } else {
-                    /* This does not expand recursively! */
-                    switch (macro->output[0]->token) {
-                        case TOKEN_INTCONST:
-                            *out = !!(macro->output[0]->constval.f);
-                            break;
-                        case TOKEN_FLOATCONST:
-                            *out = !!(macro->output[0]->constval.f);
-                            break;
-                        default:
-                            *out = false;
-                            break;
-                    }
+                *out = !!macro;
+                ftepp_next(ftepp);
+                if (!ftepp_skipspace(ftepp))
+                    return false;
+                if (ftepp->token != ')') {
+                    ftepp_error(ftepp, "expected closing paren");
+                    return false;
                 }
                 break;
-            case TOKEN_STRINGCONST:
-                *out = false;
-                break;
-            case TOKEN_INTCONST:
-                *out = !!(ftepp->lex->tok.constval.i);
-                break;
-            case TOKEN_FLOATCONST:
-                *out = !!(ftepp->lex->tok.constval.f);
-                break;
+            }
 
-            default:
-                ftepp_error(ftepp, "junk in #if");
+            macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+            if (!macro || !vec_size(macro->output)) {
+                *out = false;
+            } else {
+                /* This does not expand recursively! */
+                switch (macro->output[0]->token) {
+                    case TOKEN_INTCONST:
+                        *out = !!(macro->output[0]->constval.f);
+                        break;
+                    case TOKEN_FLOATCONST:
+                        *out = !!(macro->output[0]->constval.f);
+                        break;
+                    default:
+                        *out = false;
+                        break;
+                }
+            }
+            break;
+        case TOKEN_STRINGCONST:
+            *out = false;
+            break;
+        case TOKEN_INTCONST:
+            *out = !!(ftepp->lex->tok.constval.i);
+            break;
+        case TOKEN_FLOATCONST:
+            *out = !!(ftepp->lex->tok.constval.f);
+            break;
+
+        case '(':
+            ftepp_next(ftepp);
+            if (!ftepp_if_expr(ftepp, out))
                 return false;
-        }
+            if (ftepp->token != ')') {
+                ftepp_error(ftepp, "expected closing paren in #if expression");
+                return false;
+            }
+            break;
+
+        default:
+            ftepp_error(ftepp, "junk in #if");
+            return false;
+    }
+
+    ftepp_next(ftepp);
+    if (!ftepp_skipspace(ftepp))
+        return false;
+
+    if (ftepp->token == ')')
+        return true;
+
+    if (ftepp->token != TOKEN_OPERATOR)
+        return true;
+
+    if (!strcmp(ftepp_tokval(ftepp), "&&") ||
+        !strcmp(ftepp_tokval(ftepp), "||"))
+    {
+        bool next = false;
+        char opc  = ftepp_tokval(ftepp)[0];
 
         ftepp_next(ftepp);
-        if (!ftepp_skipspace(ftepp))
+        if (!ftepp_if_expr(ftepp, &next))
             return false;
 
-        switch (ftepp->token) {
-        }
+        if (opc == '&')
+            *out = *out && next;
+        else
+            *out = *out || next;
+        return true;
     }
-    (void)ftepp_next(ftepp);
-    return true;
+    else {
+        ftepp_error(ftepp, "junk after #if");
+        return false;
+    }
 }
 
 static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
@@ -338,15 +404,17 @@ static bool ftepp_hash(ftepp_t *ftepp)
             else if (!strcmp(ftepp_tokval(ftepp), "ifdef")) {
                 if (!ftepp_ifdef(ftepp, &cond))
                     return false;
+                cond.was_on = cond.on;
                 vec_push(ftepp->conditions, cond);
-                return true;
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "ifndef")) {
                 if (!ftepp_ifdef(ftepp, &cond))
                     return false;
                 cond.on = !cond.on;
+                cond.was_on = cond.on;
                 vec_push(ftepp->conditions, cond);
-                return true;
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elifdef")) {
                 if (!ftepp_else_allowed(ftepp))
@@ -356,7 +424,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on     = !pc->was_on && cond.on;
                 pc->was_on = pc->was_on || pc->on;
-                return true;
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elifndef")) {
                 if (!ftepp_else_allowed(ftepp))
@@ -367,7 +435,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on     = !pc->was_on && cond.on;
                 pc->was_on = pc->was_on || pc->on;
-                return true;
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elif")) {
                 if (!ftepp_else_allowed(ftepp))
@@ -377,13 +445,14 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on     = !pc->was_on && cond.on;
                 pc->was_on = pc->was_on  || pc->on;
-                return true;
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "if")) {
                 if (!ftepp_if(ftepp, &cond))
                     return false;
+                cond.was_on = cond.on;
                 vec_push(ftepp->conditions, cond);
-                return true;
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "else")) {
                 if (!ftepp_else_allowed(ftepp))
@@ -391,7 +460,8 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on = !pc->was_on;
                 pc->had_else = true;
-                return true;
+                ftepp_next(ftepp);
+                break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "endif")) {
                 if (!vec_size(ftepp->conditions)) {
@@ -399,6 +469,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                     return false;
                 }
                 vec_pop(ftepp->conditions);
+                ftepp_next(ftepp);
                 break;
             }
             else {
@@ -416,12 +487,15 @@ static bool ftepp_hash(ftepp_t *ftepp)
             ftepp_error(ftepp, "missing newline at end of file", ftepp_tokval(ftepp));
             return false;
     }
+    if (!ftepp_skipspace(ftepp))
+        return false;
     return true;
 }
 
-static void ftepp_out(ftepp_t *ftepp, const char *str)
+static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
 {
-    if (!vec_size(ftepp->conditions) ||
+    if (ignore_cond ||
+        !vec_size(ftepp->conditions) ||
         vec_last(ftepp->conditions).on)
     {
         printf("%s", str);
@@ -446,7 +520,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
         switch (ftepp->token) {
             case '#':
                 if (!ftepp->newline) {
-                    ftepp_out(ftepp, ftepp_tokval(ftepp));
+                    ftepp_out(ftepp, ftepp_tokval(ftepp), false);
                     ftepp_next(ftepp);
                     break;
                 }
@@ -460,11 +534,11 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
                 break;
             case TOKEN_EOL:
                 newline = true;
-                ftepp_out(ftepp, "\n");
+                ftepp_out(ftepp, "\n", true);
                 ftepp_next(ftepp);
                 break;
             default:
-                ftepp_out(ftepp, ftepp_tokval(ftepp));
+                ftepp_out(ftepp, ftepp_tokval(ftepp), false);
                 ftepp_next(ftepp);
                 break;
         }
