@@ -87,6 +87,21 @@ static void ftepp_error(ftepp_t *ftepp, const char *fmt, ...)
     va_end(ap);
 }
 
+pptoken *pptoken_make(ftepp_t *ftepp)
+{
+    pptoken *token = (pptoken*)mem_a(sizeof(pptoken));
+    token->token = ftepp->token;
+    token->value = util_strdup(ftepp_tokval(ftepp));
+    memcpy(&token->constval, &ftepp->lex->tok.constval, sizeof(token->constval));
+    return token;
+}
+
+void pptoken_delete(pptoken *self)
+{
+    mem_d(self->value);
+    mem_d(self);
+}
+
 ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
 {
     ppmacro *macro = (ppmacro*)mem_a(sizeof(ppmacro));
@@ -97,7 +112,12 @@ ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
 
 void ppmacro_delete(ppmacro *self)
 {
+    size_t i;
+    for (i = 0; i < vec_size(self->params); ++i)
+        mem_d(self->params[i]);
     vec_free(self->params);
+    for (i = 0; i < vec_size(self->output); ++i)
+        pptoken_delete(self->output[i]);
     vec_free(self->output);
     mem_d(self->name);
     mem_d(self);
@@ -115,8 +135,12 @@ ftepp_t* ftepp_init()
 
 void ftepp_delete(ftepp_t *self)
 {
+    size_t i;
+    for (i = 0; i < vec_size(self->macros); ++i)
+        ppmacro_delete(self->macros[i]);
     vec_free(self->macros);
     vec_free(self->conditions);
+    lex_close(self->lex);
     mem_d(self);
 }
 
@@ -151,6 +175,35 @@ static bool ftepp_skipspace(ftepp_t *ftepp)
 /**
  * The huge macro parsing code...
  */
+static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
+{
+    do {
+        ftepp_next(ftepp);
+        if (!ftepp_skipspace(ftepp))
+            return false;
+        switch (ftepp->token) {
+            case TOKEN_IDENT:
+            case TOKEN_TYPENAME:
+            case TOKEN_KEYWORD:
+                break;
+            default:
+                ftepp_error(ftepp, "unexpected token in parameter list");
+                return false;
+        }
+        vec_push(macro->params, util_strdup(ftepp_tokval(ftepp)));
+        ftepp_next(ftepp);
+        if (!ftepp_skipspace(ftepp))
+            return false;
+    } while (ftepp->token == ',');
+    if (ftepp->token != ')') {
+        ftepp_error(ftepp, "expected closing paren after macro parameter list");
+        return false;
+    }
+    ftepp_next(ftepp);
+    /* skipspace happens in ftepp_define */
+    return true;
+}
+
 static bool ftepp_define(ftepp_t *ftepp)
 {
     ppmacro *macro;
@@ -170,8 +223,16 @@ static bool ftepp_define(ftepp_t *ftepp)
     }
 
     (void)ftepp_next(ftepp);
+
+    if (ftepp->token == '(') {
+        macro->has_params = true;
+        if (!ftepp_define_params(ftepp, macro))
+            return false;
+    }
+
     if (!ftepp_skipspace(ftepp))
         return false;
+
     if (ftepp->token != TOKEN_EOL) {
         ftepp_error(ftepp, "stray tokens after macro");
         return false;
@@ -553,8 +614,9 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
         }
     } while (!ftepp->errors && ftepp->token < TOKEN_EOF);
 
+    newline = ftepp->token == TOKEN_EOF;
     ftepp_delete(ftepp);
-    return (ftepp->token == TOKEN_EOF);
+    return newline;
 }
 
 bool ftepp_preprocess_file(const char *filename)
