@@ -24,7 +24,8 @@ OBJ     = \
           code.o      \
           ast.o       \
           ir.o        \
-          con.o
+          con.o       \
+          ftepp.o
 OBJ_C = main.o lexer.o parser.o
 OBJ_X = exec-standalone.o util.o con.o
 

@@ -57,28 +57,28 @@ static const char *app_name;
 static int usage() {
     con_out("usage: %s [options] [files...]", app_name);
     con_out("options:\n"
-           "  -h, --help             show this help message\n"
-           "  -debug                 turns on compiler debug messages\n"
-           "  -memchk                turns on compiler memory leak check\n");
+            "  -h, --help             show this help message\n"
+            "  -debug                 turns on compiler debug messages\n"
+            "  -memchk                turns on compiler memory leak check\n");
     con_out("  -o, --output=file      output file, defaults to progs.dat\n"
-           "  -a filename            add an asm file to be assembled\n"
-           "  -s filename            add a progs.src file to be used\n");
+            "  -a filename            add an asm file to be assembled\n"
+            "  -s filename            add a progs.src file to be used\n");
     con_out("  -E                     stop after preprocessing\n");
     con_out("  -f<flag>               enable a flag\n"
-           "  -fno-<flag>            disable a flag\n"
-           "  -std standard          select one of the following standards\n"
-           "       -std=qcc          original QuakeC\n"
-           "       -std=fteqcc       fteqcc QuakeC\n"
-           "       -std=gmqcc        this compiler (default)\n");
+            "  -fno-<flag>            disable a flag\n"
+            "  -std standard          select one of the following standards\n"
+            "       -std=qcc          original QuakeC\n"
+            "       -std=fteqcc       fteqcc QuakeC\n"
+            "       -std=gmqcc        this compiler (default)\n");
     con_out("  -W<warning>            enable a warning\n"
-           "  -Wno-<warning>         disable a warning\n"
-           "  -Wall                  enable all warnings\n"
-           "  -Werror                treat warnings as errors\n");
+            "  -Wno-<warning>         disable a warning\n"
+            "  -Wall                  enable all warnings\n"
+            "  -Werror                treat warnings as errors\n");
     con_out("  -force-crc=num         force a specific checksum into the header\n");
     con_out("\n");
     con_out("flags:\n"
-           "  -fadjust-vector-fields\n"
-           "            when assigning a vector field, its _y and _z fields also get assigned\n"
+            "  -fadjust-vector-fields\n"
+            "            when assigning a vector field, its _y and _z fields also get assigned\n"
            );
     return -1;
 }
@@ -482,10 +482,15 @@ int main(int argc, char **argv) {
                      (items[itr].type == TYPE_SRC ? "progs.src" :
                      ("unknown"))))));
 
-            if (!parser_compile_file(items[itr].filename))
-            {
+            if (opts_pp_only) {
+                if (!ftepp_preprocess_file(items[itr].filename)) {
                     retval = 1;
                     goto cleanup;
+                }
+            }
+            else if (!parser_compile_file(items[itr].filename)) {
+                retval = 1;
+                goto cleanup;
             }
         }
 
