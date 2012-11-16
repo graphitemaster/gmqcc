@@ -207,7 +207,6 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
         case TOKEN_TYPENAME:
         case TOKEN_KEYWORD:
             if (!strcmp(ftepp_tokval(ftepp), "defined")) {
-                ftepp->lex->flags.noops = true;
                 ftepp_next(ftepp);
                 if (!ftepp_skipspace(ftepp))
                     return false;
@@ -215,7 +214,6 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
                     ftepp_error(ftepp, "`defined` keyword in #if requires a macro name in parenthesis");
                     return false;
                 }
-                ftepp->lex->flags.noops = false;
                 ftepp_next(ftepp);
                 if (!ftepp_skipspace(ftepp))
                     return false;
@@ -281,9 +279,11 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
             return false;
     }
 
+    ftepp->lex->flags.noops = false;
     ftepp_next(ftepp);
     if (!ftepp_skipspace(ftepp))
         return false;
+    ftepp->lex->flags.noops = true;
 
     if (ftepp->token == ')')
         return true;
@@ -317,8 +317,6 @@ static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
 {
     bool result = false;
 
-    ftepp->lex->flags.noops = false;
-
     memset(cond, 0, sizeof(*cond));
     (void)ftepp_next(ftepp);
 
@@ -331,7 +329,6 @@ static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
 
     if (!ftepp_if_expr(ftepp, &result))
         return false;
-    ftepp->lex->flags.noops = true;
 
     cond->on = result;
     return true;
@@ -507,6 +504,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     bool newline = true;
 
     ftepp->lex->flags.preprocessing = true;
+    ftepp->lex->flags.noops = true;
 
     ftepp_next(ftepp);
     do
