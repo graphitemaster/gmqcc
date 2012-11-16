@@ -333,8 +333,12 @@ static bool ftepp_macro_call_params(ftepp_t *ftepp, macroparam **out_params)
     size_t      parens = 0;
     size_t      i;
 
+    if (!ftepp_skipallwhite(ftepp))
+        return false;
     while (ftepp->token != ')') {
         mp.tokens = NULL;
+        if (!ftepp_skipallwhite(ftepp))
+            return false;
         while (parens || ftepp->token != ',') {
             if (ftepp->token == '(')
                 ++parens;
@@ -379,9 +383,67 @@ on_error:
     return false;
 }
 
+static bool macro_params_find(ppmacro *macro, const char *name, size_t *idx)
+{
+    size_t i;
+    for (i = 0; i < vec_size(macro->params); ++i) {
+        if (!strcmp(macro->params[i], name)) {
+            *idx = i;
+            return true;
+        }
+    }
+    return false;
+}
+
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
 {
-    return true;
+    char *old_string = ftepp->output;
+    bool old_string_flag = ftepp->output_string;
+    bool retval = true;
+
+    size_t o, pi, pv;
+
+    /* really ... */
+    if (!vec_size(macro->output))
+        return true;
+
+    ftepp->output = NULL;
+    ftepp->output_string = true;
+    for (o = 0; o < vec_size(macro->output); ++o) {
+        pptoken *out = macro->output[o];
+        switch (out->token) {
+            case TOKEN_IDENT:
+            case TOKEN_TYPENAME:
+            case TOKEN_KEYWORD:
+                if (!macro_params_find(macro, out->value, &pi)) {
+                    ftepp_out(ftepp, out->value, false);
+                    break;
+                } else {
+                    for (pv = 0; pv < vec_size(params[pi].tokens); ++pv) {
+                        out = params[pi].tokens[pv];
+                        if (out->token == TOKEN_EOL)
+                            ftepp_out(ftepp, "\n", false);
+                        else
+                            ftepp_out(ftepp, out->value, false);
+                    }
+                }
+                break;
+            case TOKEN_EOL:
+                ftepp_out(ftepp, "\n", false);
+                break;
+            default:
+                ftepp_out(ftepp, out->value, false);
+                break;
+        }
+    }
+    vec_push(ftepp->output, 0);
+    printf("_________________\n%s\n=================\n", ftepp->output);
+    goto cleanup;
+
+cleanup:
+    ftepp->output = old_string;
+    ftepp->output_string = old_string_flag;
+    return retval;
 }
 
 static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)

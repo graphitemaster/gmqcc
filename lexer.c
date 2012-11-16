@@ -861,6 +861,7 @@ int lex_do(lex_file *lex)
                 return (lex->tok.ttype = TOKEN_OPERATOR);
         case ')':
         case ';':
+        case ':':
         case '{':
         case '}':
         case ']':
