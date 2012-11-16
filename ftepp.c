@@ -87,7 +87,7 @@ static void ftepp_error(ftepp_t *ftepp, const char *fmt, ...)
     va_end(ap);
 }
 
-pptoken *pptoken_make(ftepp_t *ftepp)
+static pptoken *pptoken_make(ftepp_t *ftepp)
 {
     pptoken *token = (pptoken*)mem_a(sizeof(pptoken));
     token->token = ftepp->token;
@@ -99,13 +99,13 @@ pptoken *pptoken_make(ftepp_t *ftepp)
     return token;
 }
 
-void pptoken_delete(pptoken *self)
+static void pptoken_delete(pptoken *self)
 {
     mem_d(self->value);
     mem_d(self);
 }
 
-ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
+static ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
 {
     ppmacro *macro = (ppmacro*)mem_a(sizeof(ppmacro));
     memset(macro, 0, sizeof(*macro));
@@ -113,7 +113,7 @@ ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
     return macro;
 }
 
-void ppmacro_delete(ppmacro *self)
+static void ppmacro_delete(ppmacro *self)
 {
     size_t i;
     for (i = 0; i < vec_size(self->params); ++i)
@@ -126,7 +126,7 @@ void ppmacro_delete(ppmacro *self)
     mem_d(self);
 }
 
-ftepp_t* ftepp_init()
+static ftepp_t* ftepp_init()
 {
     ftepp_t *ftepp;
 
@@ -136,7 +136,7 @@ ftepp_t* ftepp_init()
     return ftepp;
 }
 
-void ftepp_delete(ftepp_t *self)
+static void ftepp_delete(ftepp_t *self)
 {
     size_t i;
     for (i = 0; i < vec_size(self->macros); ++i)
@@ -285,9 +285,86 @@ static bool ftepp_define(ftepp_t *ftepp)
     return true;
 }
 
+/**
+ * When a macro is used we have to handle parameters as well
+ * as special-concatenation via ## or stringification via #
+ *
+ * Note: parenthesis can nest, so FOO((a),b) is valid, but only
+ * this kind of parens. Curly braces or [] don't count towards the
+ * paren-level.
+ */
+typedef struct {
+    pptoken **tokens;
+} macroparam;
+
+static void macroparam_clean(macroparam *self)
+{
+    size_t i;
+    for (i = 0; i < vec_size(self->tokens); ++i)
+        pptoken_delete(self->tokens[i]);
+    vec_free(self->tokens);
+}
+
+static bool ftepp_macro_call_params(ftepp_t *ftepp, macroparam **out_params)
+{
+    macroparam *params = NULL;
+    pptoken    *ptok;
+    macroparam  mp;
+    size_t      parens = 0;
+    size_t      i;
+
+    while (true) {
+        mp.tokens = NULL;
+        while (parens || ftepp->token != ',') {
+            if (ftepp->token == '(')
+                ++parens;
+            else if (ftepp->token == ')') {
+                if (!parens)
+                    break;
+                --parens;
+            }
+            ptok = pptoken_make(ftepp);
+            vec_push(mp.tokens, ptok);
+            if (ftepp_next(ftepp) >= TOKEN_EOF) {
+                ftepp_error(ftepp, "unexpected EOF in macro call");
+                goto on_error;
+            }
+        }
+        vec_push(params, mp);
+        mp.tokens = NULL;
+        if (ftepp->token == ')')
+            break;
+        if (ftepp->token != ',') {
+            ftepp_error(ftepp, "expected closing paren or comma in macro call");
+            goto on_error;
+        }
+        if (ftepp_next(ftepp) >= TOKEN_EOF) {
+            ftepp_error(ftepp, "unexpected EOF in macro call");
+            goto on_error;
+        }
+    }
+    if (ftepp_next(ftepp) >= TOKEN_EOF) {
+        ftepp_error(ftepp, "unexpected EOF in macro call");
+        goto on_error;
+    }
+    *out_params = params;
+    return true;
+
+on_error:
+    if (mp.tokens)
+        macroparam_clean(&mp);
+    for (i = 0; i < vec_size(params); ++i)
+        macroparam_clean(&params[i]);
+    vec_free(params);
+    return false;
+}
+
 static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
 {
-    size_t o;
+    size_t     o;
+    macroparam *params = NULL;
+    bool        retval = true;
+
     ftepp_next(ftepp);
 
     if (!macro->has_params) {
@@ -299,13 +376,25 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
 
     if (!ftepp_skipallwhite(ftepp))
         return false;
-    return true;
-}
 
-/**
- * When a macro is used we have to handle parameters as well
- * as special-concatenation via ## or stringification via #
- */
+    if (ftepp->token != '(') {
+        ftepp_error(ftepp, "expected macro parameters in parenthesis");
+        return false;
+    }
+
+    ftepp_next(ftepp);
+    if (!ftepp_macro_call_params(ftepp, &params))
+        return false;
+
+    ftepp_out(ftepp, "Parsed macro parameters", false);
+    goto cleanup;
+
+cleanup:
+    for (o = 0; o < vec_size(params); ++o)
+        macroparam_clean(&params[o]);
+    vec_free(params);
+    return retval;
+}
 
 /**
  * #if - the FTEQCC way:
