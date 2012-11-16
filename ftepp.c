@@ -147,6 +147,16 @@ void ftepp_delete(ftepp_t *self)
     mem_d(self);
 }
 
+static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
+{
+    if (ignore_cond ||
+        !vec_size(ftepp->conditions) ||
+        vec_last(ftepp->conditions).on)
+    {
+        printf("%s", str);
+    }
+}
+
 ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
     size_t i;
@@ -280,7 +290,16 @@ static bool ftepp_define(ftepp_t *ftepp)
 
 static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
 {
+    size_t o;
     ftepp_next(ftepp);
+
+    if (!macro->has_params) {
+        for (o = 0; o < vec_size(macro->output); ++o) {
+            ftepp_out(ftepp, macro->output[o]->value, false);
+        }
+        return true;
+    }
+
     if (!ftepp_skipallwhite(ftepp))
         return false;
     return true;
@@ -609,16 +628,6 @@ static bool ftepp_hash(ftepp_t *ftepp)
     if (!ftepp_skipspace(ftepp))
         return false;
     return true;
-}
-
-static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
-{
-    if (ignore_cond ||
-        !vec_size(ftepp->conditions) ||
-        vec_last(ftepp->conditions).on)
-    {
-        printf("%s", str);
-    }
 }
 
 static bool ftepp_preprocess(ftepp_t *ftepp)
