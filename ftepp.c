@@ -61,6 +61,9 @@ typedef struct {
     bool         output_on;
     ppcondition *conditions;
     ppmacro    **macros;
+
+    bool         output_string;
+    char        *output;
 } ftepp_t;
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
@@ -154,7 +157,15 @@ static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
 {
     if (ignore_cond || ftepp->output_on)
     {
-        printf("%s", str);
+        size_t len;
+        char  *data;
+        if (!ftepp->output_string) {
+            printf("%s", str);
+            return;
+        }
+        len = strlen(str);
+        data = vec_add(ftepp->output, len);
+        memcpy(data, str, len);
     }
 }
 
