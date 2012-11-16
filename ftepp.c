@@ -114,10 +114,13 @@ static pptoken *pptoken_make(ftepp_t *ftepp)
 {
     pptoken *token = (pptoken*)mem_a(sizeof(pptoken));
     token->token = ftepp->token;
+#if 0
     if (token->token == TOKEN_WHITE)
         token->value = util_strdup(" ");
     else
+#else
         token->value = util_strdup(ftepp_tokval(ftepp));
+#endif
     memcpy(&token->constval, &ftepp->lex->tok.constval, sizeof(token->constval));
     return token;
 }
@@ -312,7 +315,7 @@ static bool ftepp_define(ftepp_t *ftepp)
         case TOKEN_TYPENAME:
         case TOKEN_KEYWORD:
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
-            if (macro) {
+            if (macro && ftepp->output_on) {
                 if (ftepp_warn(ftepp, WARN_PREPROCESSOR, "redefining `%s`", ftepp_tokval(ftepp)))
                     return false;
                 ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
@@ -338,7 +341,11 @@ static bool ftepp_define(ftepp_t *ftepp)
     if (!ftepp_define_body(ftepp, macro))
         return false;
 
-    vec_push(ftepp->macros, macro);
+    if (ftepp->output_on)
+        vec_push(ftepp->macros, macro);
+    else {
+        ppmacro_delete(macro);
+    }
     return true;
 }
 
@@ -767,15 +774,17 @@ static bool ftepp_undef(ftepp_t *ftepp)
     if (!ftepp_skipspace(ftepp))
         return false;
 
-    switch (ftepp->token) {
-        case TOKEN_IDENT:
-        case TOKEN_TYPENAME:
-        case TOKEN_KEYWORD:
-            ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
-            break;
-        default:
-            ftepp_error(ftepp, "expected macro name");
-            return false;
+    if (ftepp->output_on) {
+        switch (ftepp->token) {
+            case TOKEN_IDENT:
+            case TOKEN_TYPENAME:
+            case TOKEN_KEYWORD:
+                ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
+                break;
+            default:
+                ftepp_error(ftepp, "expected macro name");
+                return false;
+        }
     }
 
     (void)ftepp_next(ftepp);

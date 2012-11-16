@@ -412,13 +412,17 @@ static int lex_skipwhite(lex_file *lex)
 
                 if (lex->flags.preprocessing) {
                     haswhite = true;
+                    /*
                     lex_tokench(lex, '/');
                     lex_tokench(lex, '/');
+                    */
+                    lex_tokench(lex, ' ');
+                    lex_tokench(lex, ' ');
                 }
 
                 while (ch != EOF && ch != '\n') {
                     if (lex->flags.preprocessing)
-                        lex_tokench(lex, ch);
+                        lex_tokench(lex, ' '); /* ch); */
                     ch = lex_getch(lex);
                 }
                 if (lex->flags.preprocessing) {
@@ -433,8 +437,12 @@ static int lex_skipwhite(lex_file *lex)
                 /* multiline comment */
                 if (lex->flags.preprocessing) {
                     haswhite = true;
+                    /*
                     lex_tokench(lex, '/');
                     lex_tokench(lex, '*');
+                    */
+                    lex_tokench(lex, ' ');
+                    lex_tokench(lex, ' ');
                 }
 
                 while (ch != EOF)
@@ -444,14 +452,18 @@ static int lex_skipwhite(lex_file *lex)
                         ch = lex_getch(lex);
                         if (ch == '/') {
                             if (lex->flags.preprocessing) {
+                                /*
                                 lex_tokench(lex, '*');
                                 lex_tokench(lex, '/');
+                                */
+                                lex_tokench(lex, ' ');
+                                lex_tokench(lex, ' ');
                             }
                             break;
                         }
                     }
                     if (lex->flags.preprocessing) {
-                        lex_tokench(lex, ch);
+                        lex_tokench(lex, ' '); /* ch); */
                     }
                 }
                 ch = ' '; /* cause TRUE in the isspace check */
@@ -686,6 +698,7 @@ int lex_do(lex_file *lex)
             break;
         }
         /* we reached a linemerge */
+        lex_tokench(lex, '\n');
         continue;
     }
 
