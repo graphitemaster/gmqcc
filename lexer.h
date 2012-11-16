@@ -119,6 +119,7 @@ typedef struct {
 	    bool noops;
 	    bool nodigraphs; /* used when lexing string constants */
 	    bool preprocessing; /* whitespace and EOLs become actual tokens */
+	    bool mergelines; /* backslash at the end of a line escapes the newline */
 	} flags;
 
     int framevalue;

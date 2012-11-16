@@ -576,7 +576,8 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     bool newline = true;
 
     ftepp->lex->flags.preprocessing = true;
-    ftepp->lex->flags.noops = true;
+    ftepp->lex->flags.mergelines    = true;
+    ftepp->lex->flags.noops         = true;
 
     ftepp_next(ftepp);
     do

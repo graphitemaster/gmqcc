@@ -675,7 +675,20 @@ int lex_do(lex_file *lex)
         return TOKEN_FATAL;
 #endif
 
-    ch = lex_skipwhite(lex);
+    while (true) {
+        ch = lex_skipwhite(lex);
+        if (!lex->flags.mergelines || ch != '\\')
+            break;
+        ch = lex_getch(lex);
+        if (ch != '\n') {
+            lex_ungetch(lex, ch);
+            ch = '\\';
+            break;
+        }
+        /* we reached a linemerge */
+        continue;
+    }
+
     lex->sline = lex->line;
     lex->tok.ctx.line = lex->sline;
     lex->tok.ctx.file = lex->name;
