@@ -240,10 +240,7 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
     while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
         ptok = pptoken_make(ftepp);
         vec_push(macro->output, ptok);
-
         ftepp_next(ftepp);
-        if (!ftepp_skipspace(ftepp))
-            return false;
     }
     if (ftepp->token != TOKEN_EOL) {
         ftepp_error(ftepp, "unexpected junk after macro or unexpected end of file");
