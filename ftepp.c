@@ -198,9 +198,17 @@ static bool ftepp_define(ftepp_t *ftepp)
 static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
 {
     ppmacro *macro;
+    bool     wasnot = false;
 
     if (!ftepp_skipspace(ftepp))
         return false;
+
+    while (ftepp->token == '!') {
+        wasnot = true;
+        ftepp_next(ftepp);
+        if (!ftepp_skipspace(ftepp))
+            return false;
+    }
 
     switch (ftepp->token) {
         case TOKEN_IDENT:
@@ -278,6 +286,8 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
             ftepp_error(ftepp, "junk in #if");
             return false;
     }
+    if (wasnot)
+        *out = !*out;
 
     ftepp->lex->flags.noops = false;
     ftepp_next(ftepp);
