@@ -30,12 +30,29 @@ typedef struct {
 } ppcondition;
 
 typedef struct {
+	int   token;
+	char *value;
+} pptoken;
+
+typedef struct {
+	lex_ctx ctx;
+
+	char   *name;
+	char  **params;
+	/* yes we need an extra flag since `#define FOO x` is not the same as `#define FOO() x` */
+	bool    has_params;
+
+	pptoken *output;
+} ppmacro;
+
+typedef struct {
 	lex_file    *lex;
 	int          token;
 	bool         newline;
 	unsigned int errors;
 
 	ppcondition *conditions;
+	ppmacro    **macros;
 } ftepp_t;
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
@@ -63,6 +80,22 @@ static void ftepp_error(ftepp_t *ftepp, const char *fmt, ...)
 	va_end(ap);
 }
 
+ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
+{
+	ppmacro *macro = (ppmacro*)mem_a(sizeof(ppmacro));
+	memset(macro, 0, sizeof(*macro));
+	macro->name = util_strdup(name);
+	return macro;
+}
+
+void ppmacro_delete(ppmacro *self)
+{
+	vec_free(self->params);
+	vec_free(self->output);
+	mem_d(self->name);
+	mem_d(self);
+}
+
 ftepp_t* ftepp_init()
 {
 	ftepp_t *ftepp;
@@ -73,6 +106,23 @@ ftepp_t* ftepp_init()
 	return ftepp;
 }
 
+void ftepp_delete(ftepp_t *self)
+{
+	vec_free(self->macros);
+	vec_free(self->conditions);
+	mem_d(self);
+}
+
+ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
+{
+	size_t i;
+	for (i = 0; i < vec_size(ftepp->macros); ++i) {
+		if (!strcmp(name, ftepp->macros[i]->name))
+			return ftepp->macros[i];
+	}
+	return NULL;
+}
+
 static inline int ftepp_next(ftepp_t *ftepp)
 {
 	return (ftepp->token = lex_do(ftepp->lex));
@@ -81,9 +131,13 @@ static inline int ftepp_next(ftepp_t *ftepp)
 /* Important: this does not skip newlines! */
 static bool ftepp_skipspace(ftepp_t *ftepp)
 {
+	if (ftepp->token != TOKEN_WHITE)
+		return true;
 	while (ftepp_next(ftepp) == TOKEN_WHITE) {}
 	return (ftepp->token < TOKEN_EOF);
 }
+
+/* if/ifdef/define handlers */
 
 static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
 {
@@ -93,16 +147,61 @@ static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
 
 static bool ftepp_ifdef(ftepp_t *ftepp, ppcondition *cond)
 {
-	ftepp_error(ftepp, "TODO: #ifdef");
-	return false;
+	ppmacro *macro;
+	(void)ftepp_next(ftepp);
+	if (!ftepp_skipspace(ftepp))
+		return false;
+
+	switch (ftepp->token) {
+		case TOKEN_IDENT:
+		case TOKEN_KEYWORD:
+			macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+			break;
+		default:
+			ftepp_error(ftepp, "expected macro name");
+			return false;
+	}
+
+	(void)ftepp_next(ftepp);
+	if (!ftepp_skipspace(ftepp))
+		return false;
+	if (ftepp->token != TOKEN_EOL) {
+		ftepp_error(ftepp, "stray tokens after #ifdef");
+		return false;
+	}
+	cond->on = !!macro;
+	return true;
 }
 
 static bool ftepp_define(ftepp_t *ftepp)
 {
-	ftepp_error(ftepp, "TODO: #define");
-	return false;
+	ppmacro *macro;
+	(void)ftepp_next(ftepp);
+	if (!ftepp_skipspace(ftepp))
+		return false;
+
+	switch (ftepp->token) {
+		case TOKEN_IDENT:
+		case TOKEN_KEYWORD:
+			macro = ppmacro_new(ftepp_ctx(ftepp), ftepp_tokval(ftepp));
+			break;
+		default:
+			ftepp_error(ftepp, "expected macro name");
+			return false;
+	}
+
+	(void)ftepp_next(ftepp);
+	if (!ftepp_skipspace(ftepp))
+		return false;
+	if (ftepp->token != TOKEN_EOL) {
+		ftepp_error(ftepp, "stray tokens after macro");
+		return false;
+	}
+	vec_push(ftepp->macros, macro);
+	return true;
 }
 
+/* Basic structure handlers */
 static bool ftepp_else_allowed(ftepp_t *ftepp)
 {
 	if (!vec_size(ftepp->conditions)) {
@@ -127,6 +226,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
 		return false;
 
 	switch (ftepp->token) {
+		case TOKEN_KEYWORD:
 		case TOKEN_IDENT:
 			if (!strcmp(ftepp_tokval(ftepp), "define")) {
 				return ftepp_define(ftepp);
@@ -202,14 +302,6 @@ static bool ftepp_hash(ftepp_t *ftepp)
 				return false;
 			}
 			break;
-		case TOKEN_KEYWORD:
-			if (!strcmp(ftepp_tokval(ftepp), "if")) {
-				if (!ftepp_if(ftepp, &cond))
-					return false;
-				vec_push(ftepp->conditions, cond);
-				return true;
-			}
-		/* fall through */
 		default:
 			ftepp_error(ftepp, "unexpected preprocessor token: `%s`", ftepp_tokval(ftepp));
 			return false;
@@ -229,10 +321,9 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 
 	ftepp->lex->flags.preprocessing = true;
 
+	ftepp_next(ftepp);
 	do
 	{
-		ftepp_next(ftepp);
-
 		if (ftepp->token >= TOKEN_EOF)
 			break;
 
@@ -243,21 +334,30 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 			case '#':
 				if (!ftepp->newline) {
 					printf("%s", ftepp_tokval(ftepp));
+					ftepp_next(ftepp);
+					break;
+				}
+				if (ftepp_next(ftepp) >= TOKEN_EOF) {
+					ftepp_error(ftepp, "error in preprocessor directive");
+					ftepp->token = TOKEN_ERROR;
 					break;
 				}
 				if (!ftepp_hash(ftepp))
-					return false;
+					ftepp->token = TOKEN_ERROR;
 				break;
 			case TOKEN_EOL:
 				newline = true;
 				printf("\n");
+				ftepp_next(ftepp);
 				break;
 			default:
 				printf("%s", ftepp_tokval(ftepp));
+				ftepp_next(ftepp);
 				break;
 		}
 	} while (!ftepp->errors && ftepp->token < TOKEN_EOF);
 
+	ftepp_delete(ftepp);
 	return (ftepp->token == TOKEN_EOF);
 }
 
