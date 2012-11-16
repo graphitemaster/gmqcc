@@ -827,7 +827,6 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     } while (!ftepp->errors && ftepp->token < TOKEN_EOF);
 
     newline = ftepp->token == TOKEN_EOF;
-    ftepp_delete(ftepp);
     return newline;
 }
 
@@ -839,7 +838,12 @@ bool ftepp_preprocess_file(const char *filename)
         con_out("failed to open file \"%s\"\n", filename);
         return false;
     }
-    return ftepp_preprocess(ftepp);
+    if (!ftepp_preprocess(ftepp)) {
+        ftepp_delete(ftepp);
+        return false;
+    }
+    ftepp_delete(ftepp);
+    return true;
 }
 
 bool ftepp_preprocess_string(const char *name, const char *str)
@@ -850,5 +854,10 @@ bool ftepp_preprocess_string(const char *name, const char *str)
         con_out("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
-    return ftepp_preprocess(ftepp);
+    if (!ftepp_preprocess(ftepp)) {
+        ftepp_delete(ftepp);
+        return false;
+    }
+    ftepp_delete(ftepp);
+    return true;
 }
