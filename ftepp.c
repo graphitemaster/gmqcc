@@ -58,6 +58,7 @@ typedef struct {
     bool         newline;
     unsigned int errors;
 
+    bool         output_on;
     ppcondition *conditions;
     ppmacro    **macros;
 } ftepp_t;
@@ -133,6 +134,8 @@ static ftepp_t* ftepp_init()
     ftepp = (ftepp_t*)mem_a(sizeof(*ftepp));
     memset(ftepp, 0, sizeof(*ftepp));
 
+    ftepp->output_on = true;
+
     return ftepp;
 }
 
@@ -149,15 +152,21 @@ static void ftepp_delete(ftepp_t *self)
 
 static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
 {
-    if (ignore_cond ||
-        !vec_size(ftepp->conditions) ||
-        vec_last(ftepp->conditions).on)
+    if (ignore_cond || ftepp->output_on)
     {
         printf("%s", str);
     }
 }
 
-ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
+static void ftepp_update_output_condition(ftepp_t *ftepp)
+{
+    size_t i;
+    ftepp->output_on = true;
+    for (i = 0; i < vec_size(ftepp->conditions); ++i)
+        ftepp->output_on = ftepp->output_on && ftepp->conditions[i].on;
+}
+
+static ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
     size_t i;
     for (i = 0; i < vec_size(ftepp->macros); ++i) {
@@ -643,6 +652,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                     return false;
                 cond.was_on = cond.on;
                 vec_push(ftepp->conditions, cond);
+                ftepp->output_on = ftepp->output_on && cond.on;
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "ifndef")) {
@@ -651,6 +661,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 cond.on = !cond.on;
                 cond.was_on = cond.on;
                 vec_push(ftepp->conditions, cond);
+                ftepp->output_on = ftepp->output_on && cond.on;
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elifdef")) {
@@ -661,6 +672,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on     = !pc->was_on && cond.on;
                 pc->was_on = pc->was_on || pc->on;
+                ftepp_update_output_condition(ftepp);
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elifndef")) {
@@ -672,6 +684,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on     = !pc->was_on && cond.on;
                 pc->was_on = pc->was_on || pc->on;
+                ftepp_update_output_condition(ftepp);
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elif")) {
@@ -682,6 +695,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc = &vec_last(ftepp->conditions);
                 pc->on     = !pc->was_on && cond.on;
                 pc->was_on = pc->was_on  || pc->on;
+                ftepp_update_output_condition(ftepp);
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "if")) {
@@ -689,6 +703,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                     return false;
                 cond.was_on = cond.on;
                 vec_push(ftepp->conditions, cond);
+                ftepp->output_on = ftepp->output_on && cond.on;
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "else")) {
@@ -698,6 +713,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 pc->on = !pc->was_on;
                 pc->had_else = true;
                 ftepp_next(ftepp);
+                ftepp_update_output_condition(ftepp);
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "endif")) {
@@ -707,6 +723,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 }
                 vec_pop(ftepp->conditions);
                 ftepp_next(ftepp);
+                ftepp_update_output_condition(ftepp);
                 break;
             }
             else {
