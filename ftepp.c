@@ -576,7 +576,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     bool newline = true;
 
     ftepp->lex->flags.preprocessing = true;
-    ftepp->lex->flags.mergelines    = true;
+    ftepp->lex->flags.mergelines    = false;
     ftepp->lex->flags.noops         = true;
 
     ftepp_next(ftepp);
@@ -595,6 +595,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
                     ftepp_next(ftepp);
                     break;
                 }
+                ftepp->lex->flags.mergelines = true;
                 if (ftepp_next(ftepp) >= TOKEN_EOF) {
                     ftepp_error(ftepp, "error in preprocessor directive");
                     ftepp->token = TOKEN_ERROR;
@@ -602,6 +603,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
                 }
                 if (!ftepp_hash(ftepp))
                     ftepp->token = TOKEN_ERROR;
+                ftepp->lex->flags.mergelines = false;
                 break;
             case TOKEN_EOL:
                 newline = true;
