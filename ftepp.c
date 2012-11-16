@@ -184,6 +184,8 @@ static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
         ftepp_next(ftepp);
         if (!ftepp_skipspace(ftepp))
             return false;
+        if (ftepp->token == ')')
+            break;
         switch (ftepp->token) {
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
