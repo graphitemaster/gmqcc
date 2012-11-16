@@ -444,6 +444,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     }
     vec_push(ftepp->output, 0);
     /* Now run the preprocessor recursively on this string buffer */
+    printf("__________\n%s\n=========\n", ftepp->output);
     inlex = lex_open_string(ftepp->output, vec_size(ftepp->output)-1, ftepp->lex->name);
     if (!inlex) {
         ftepp_error(ftepp, "internal error: failed to instantiate lexer");
@@ -471,14 +472,13 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
     macroparam *params = NULL;
     bool        retval = true;
 
-    ftepp_next(ftepp);
-
     if (!macro->has_params) {
-        for (o = 0; o < vec_size(macro->output); ++o) {
-            ftepp_out(ftepp, macro->output[o]->value, false);
-        }
+        if (!ftepp_macro_expand(ftepp, macro, NULL))
+            return false;
+        ftepp_next(ftepp);
         return true;
     }
+    ftepp_next(ftepp);
 
     if (!ftepp_skipallwhite(ftepp))
         return false;
