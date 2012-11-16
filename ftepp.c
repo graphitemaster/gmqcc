@@ -313,7 +313,7 @@ static bool ftepp_macro_call_params(ftepp_t *ftepp, macroparam **out_params)
     size_t      parens = 0;
     size_t      i;
 
-    while (true) {
+    while (ftepp->token != ')') {
         mp.tokens = NULL;
         while (parens || ftepp->token != ',') {
             if (ftepp->token == '(')
@@ -385,6 +385,15 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
     ftepp_next(ftepp);
     if (!ftepp_macro_call_params(ftepp, &params))
         return false;
+
+    if (vec_size(params) != vec_size(macro->params)) {
+        ftepp_error(ftepp, "macro %s expects %u paramteters, %u provided", macro->name,
+                    (unsigned int)vec_size(macro->params),
+                    (unsigned int)vec_size(params));
+        retval = false;
+        goto cleanup;
+    }
+
 
     ftepp_out(ftepp, "Parsed macro parameters", false);
     goto cleanup;
