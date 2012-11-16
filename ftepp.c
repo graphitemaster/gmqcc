@@ -175,6 +175,21 @@ static bool ftepp_skipspace(ftepp_t *ftepp)
     return true;
 }
 
+/* this one skips EOLs as well */
+static bool ftepp_skipallwhite(ftepp_t *ftepp)
+{
+    if (ftepp->token != TOKEN_WHITE && ftepp->token != TOKEN_EOL)
+        return true;
+    do {
+        ftepp_next(ftepp);
+    } while (ftepp->token == TOKEN_WHITE || ftepp->token == TOKEN_EOL);
+    if (ftepp->token >= TOKEN_EOF) {
+        ftepp_error(ftepp, "unexpected end of preprocessor directive");
+        return false;
+    }
+    return true;
+}
+
 /**
  * The huge macro parsing code...
  */
@@ -262,6 +277,19 @@ static bool ftepp_define(ftepp_t *ftepp)
     vec_push(ftepp->macros, macro);
     return true;
 }
+
+static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
+{
+    ftepp_next(ftepp);
+    if (!ftepp_skipallwhite(ftepp))
+        return false;
+    return true;
+}
+
+/**
+ * When a macro is used we have to handle parameters as well
+ * as special-concatenation via ## or stringification via #
+ */
 
 /**
  * #if - the FTEQCC way:
@@ -595,7 +623,8 @@ static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
 
 static bool ftepp_preprocess(ftepp_t *ftepp)
 {
-    bool newline = true;
+    ppmacro *macro;
+    bool     newline = true;
 
     ftepp->lex->flags.preprocessing = true;
     ftepp->lex->flags.mergelines    = false;
@@ -611,6 +640,18 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
         newline = false;
 
         switch (ftepp->token) {
+            case TOKEN_KEYWORD:
+            case TOKEN_IDENT:
+            case TOKEN_TYPENAME:
+                macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+                if (!macro) {
+                    ftepp_out(ftepp, ftepp_tokval(ftepp), false);
+                    ftepp_next(ftepp);
+                    break;
+                }
+                if (!ftepp_macro_call(ftepp, macro))
+                    ftepp->token = TOKEN_ERROR;
+                break;
             case '#':
                 if (!ftepp->newline) {
                     ftepp_out(ftepp, ftepp_tokval(ftepp), false);
