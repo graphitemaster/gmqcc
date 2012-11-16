@@ -435,6 +435,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_EFFECTLESS_STATEMENT, true);
     options_set(opts_warn, WARN_END_SYS_FIELDS, true);
     options_set(opts_warn, WARN_ASSIGN_FUNCTION_TYPES, true);
+    options_set(opts_warn, WARN_PREPROCESSOR, true);
 
     options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
 
