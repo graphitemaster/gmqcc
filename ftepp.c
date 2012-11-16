@@ -262,7 +262,8 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
         vec_push(macro->output, ptok);
         ftepp_next(ftepp);
     }
-    if (ftepp->token != TOKEN_EOL) {
+    /* recursive expansion can cause EOFs here */
+    if (ftepp->token != TOKEN_EOL && ftepp->token != TOKEN_EOF) {
         ftepp_error(ftepp, "unexpected junk after macro or unexpected end of file");
         return false;
     }
@@ -444,7 +445,9 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     }
     vec_push(ftepp->output, 0);
     /* Now run the preprocessor recursively on this string buffer */
+    /*
     printf("__________\n%s\n=========\n", ftepp->output);
+    */
     inlex = lex_open_string(ftepp->output, vec_size(ftepp->output)-1, ftepp->lex->name);
     if (!inlex) {
         ftepp_error(ftepp, "internal error: failed to instantiate lexer");
