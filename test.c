@@ -507,15 +507,12 @@ bool task_propogate(const char *curdir) {
 void task_cleanup(const char *curdir) {
     DIR             *dir;
     struct dirent   *files;
-    struct stat      directory;
     char             buffer[4096];
 
     dir = opendir(curdir);
     
     while ((files = readdir(dir))) {
         memset(buffer, 0, sizeof(buffer));
-        stat(files->d_name, &directory);
-    
         if (strstr(files->d_name, "TMP")) {
             snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
             if (remove(buffer))
