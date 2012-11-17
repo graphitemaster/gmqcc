@@ -13,7 +13,10 @@ void lexerror(lex_file *lex, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-    con_vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
+	if (lex)
+        con_vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
+    else
+        con_vprintmsg(LVL_ERROR, "", 0, "parse error", fmt, ap);
 	va_end(ap);
 }
 

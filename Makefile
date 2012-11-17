@@ -56,4 +56,8 @@ all: gmqcc qcvm test
 clean:
 	rm -f *.o gmqcc qcvm test *.dat
 	
-
+$(OBJ) $(OBJ_C) $(OBJ_X): gmqcc.h
+main.o: lexer.h
+parser.o: ast.h lexer.h
+ast.o: ast.h ir.h
+ir.o: ir.h
