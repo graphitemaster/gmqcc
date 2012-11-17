@@ -118,6 +118,7 @@ typedef struct {
     char *comparematch;
     char *proceduretype;
     char *sourcefile;
+    char *tempfilename;
 } task_template_t;
 
 /*
@@ -289,6 +290,7 @@ void task_template_nullify(task_template_t *template) {
     template->executeflags   = NULL;
     template->comparematch   = NULL;
     template->sourcefile     = NULL;
+    template->tempfilename   = NULL;
 }
 
 task_template_t *task_template_compile(const char *file, const char *dir) {
@@ -448,6 +450,12 @@ bool task_propogate(const char *curdir) {
                 success = false;
                 continue;
             }
+            /*
+             * Generate a temportary file name for the output binary
+             * so we don't trample over an existing one.
+             */
+            template->tempfilename = tempnam(curdir, "TMPDAT");
+            
             
             /*
              * Generate the command required to open a pipe to a process
@@ -456,11 +464,12 @@ bool task_propogate(const char *curdir) {
              */
             char     buf[4096]; /* one page should be enough */
             memset  (buf,0,sizeof(buf));
-            snprintf(buf,  sizeof(buf), "%s %s/%s %s",
+            snprintf(buf,  sizeof(buf), "%s %s/%s %s -o %s",
                 task_bins[TASK_COMPILE],
                 curdir,
                 template->sourcefile,
-                template->compileflags
+                template->compileflags,
+                template->tempfilename
             );
             
             /*
@@ -479,14 +488,54 @@ bool task_propogate(const char *curdir) {
             vec_push(task_tasks, task);
         }
     }
+    
+    closedir(dir);
     return success;
 }
 
-void task_destroy() {
+/*
+ * Removes all temporary 'progs.dat' files created during compilation
+ * of all tests'
+ */
+void task_cleanup(const char *curdir) {
+    DIR             *dir;
+    struct dirent   *files;
+    struct stat      directory;
+    char             buffer[4096];
+
+    dir = opendir(curdir);
+    
+    while ((files = readdir(dir))) {
+        memset(buffer, 0, sizeof(buffer));
+        stat(files->d_name, &directory);
+    
+        if (strstr(files->d_name, "TMP")) {
+            snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
+            if (remove(buffer))
+                con_err("error removing temporary file: %s\n", buffer);
+            else
+                con_out("removed temporary file: %s\n", buffer);
+        }
+    }
+    
+    closedir(dir);
+}
+
+void task_destroy(const char *curdir) {
+    /*
+     * Free all the data in the task list and finally the list itself
+     * then proceed to cleanup anything else outside the program like
+     * temporary files.
+     */
     size_t i;
     for (i = 0; i < vec_size(task_tasks); i++)
         task_template_destroy(&task_tasks[i].template);
     vec_free(task_tasks);
+    
+    /*
+     * Cleanup outside stuff like temporary files.
+     */
+    task_cleanup(curdir);
 }
 
 /*
@@ -505,15 +554,15 @@ bool task_execute(task_template_t *template) {
      * actually specified.
      */
     if (!strcmp(template->executeflags, "$null")) {
+        snprintf(buffer,  sizeof(buffer), "%s %s",
+            task_bins[TASK_EXECUTE],
+            template->tempfilename
+        );
+    } else {
         snprintf(buffer,  sizeof(buffer), "%s %s %s",
             task_bins[TASK_EXECUTE],
             template->executeflags,
-            "progs.dat"
-        );
-    } else {
-        snprintf(buffer,  sizeof(buffer), "%s %s",
-            task_bins[TASK_EXECUTE],
-            "progs.dat"
+            template->tempfilename
         );
     }
     
@@ -545,6 +594,13 @@ bool task_execute(task_template_t *template) {
             return false;
         }
         
+        /* 
+         * Trim newlines from data since they will just break our
+         * ability to properly validate matches.
+         */
+        if  (strrchr(data, '\n'))
+            *strrchr(data, '\n') = '\0';
+        
         /* null list */
         if (!strcmp(template->comparematch, "$null"))
             success = true;
@@ -566,7 +622,7 @@ bool task_execute(task_template_t *template) {
  * execution this takes more work since a task needs to be generated
  * from thin air and executed INLINE.
  */
-void task_schedualize() {
+void task_schedualize(const char *curdir) {
     bool   execute = false;
     char  *back    = NULL;
     char  *data    = NULL;
@@ -626,12 +682,6 @@ void task_schedualize() {
             (task_tasks[i].template->successmessage) ?
             task_tasks[i].template->successmessage  : "unknown"
         );
-        
-        /*
-         * We need to unlink the progs.dat file that is sitting around
-         * collecting dust.
-         */
-        unlink("progs.dat");
     }
     if (back)
         mem_d(back);
@@ -641,7 +691,7 @@ int main(int argc, char **argv) {
     con_init();
     if (!task_propogate("tests")) {
         con_err("error: failed to propogate tasks\n");
-        task_destroy();
+        task_destroy("tests");
         return -1;
     }
     /*
@@ -651,9 +701,9 @@ int main(int argc, char **argv) {
      * it's designed to prevent lock contention, and possible syncronization
      * issues.
      */
-    task_schedualize();
+    task_schedualize("tests");
+    task_destroy("tests");
     
-    task_destroy();
     util_meminfo();
     return 0;
 }
