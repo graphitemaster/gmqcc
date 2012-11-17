@@ -19,7 +19,7 @@ ifeq ($(track), no)
     CFLAGS += -DNOTRACK
 endif
 
-OBJ     = \
+OBJ     =             \
           util.o      \
           code.o      \
           ast.o       \
@@ -30,7 +30,7 @@ OBJ_T = test.o util.o con.o
 OBJ_C = main.o lexer.o parser.o
 OBJ_X = exec-standalone.o util.o con.o
 
-#default is compiler only
+
 default: gmqcc
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
@@ -50,7 +50,6 @@ test: $(OBJ_T)
 runtests:
 	./test
 
-#all target is test and all
 all: gmqcc qcvm test
 
 clean:
