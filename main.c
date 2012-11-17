@@ -224,6 +224,8 @@ static bool options_parse(int argc, char **argv) {
             if (options_long_gcc("redirerr", &argc, &argv, &redirerr)) {
                 continue;
             }
+            
+            con_change(redirout, redirerr);
 
             if (!strcmp(argv[0]+1, "debug")) {
                 opts_debug = true;
@@ -381,7 +383,6 @@ static bool options_parse(int argc, char **argv) {
             vec_push(items, item);
         }
     }
-    con_change(redirout, redirerr);
     return true;
 }
 

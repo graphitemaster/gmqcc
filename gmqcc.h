@@ -196,6 +196,7 @@ void  util_memory_d      (void       *, unsigned int, const char *);
 void *util_memory_r      (void       *, size_t,       unsigned int, const char *);
 void  util_meminfo       ();
 
+bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
 bool  util_strncmpexact  (const char *, const char *, size_t);

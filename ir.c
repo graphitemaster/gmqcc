@@ -2972,7 +2972,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     stmt.o3.u1 = 0;
     vec_push(code_statements, stmt);
 
-    printf("writing '%s'...\n", filename);
+    con_out("writing '%s'...\n", filename);
     return code_write(filename);
 }
 

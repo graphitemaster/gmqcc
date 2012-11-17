@@ -521,6 +521,15 @@ FILE *util_fopen(const char *filename, const char *mode)
 #endif
 }
 
+bool util_filexists(const char *file) {
+    FILE *fp = fopen(file, "rb");
+    if  (!fp) return false;
+    
+    /* it exists */
+    fclose(fp);
+    return true;
+}
+
 void _util_vec_grow(void **a, size_t i, size_t s) {
     size_t m = *a ? 2*_vec_beg(*a)+i : i+1;
     void  *p = mem_r((*a ? _vec_raw(*a) : NULL), s * m + sizeof(size_t)*2);

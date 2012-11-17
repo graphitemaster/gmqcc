@@ -272,7 +272,7 @@ int con_change(const char *out, const char *err) {
     con_close();
     
     if (GMQCC_IS_DEFINE((FILE*)out)) {
-        console.handle_out = (((FILE*)err) == stdout) ? stdout : stderr;
+        console.handle_out = (((FILE*)out) == stdout) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_out = fopen(out, "w"))) return 0;
     
@@ -280,6 +280,10 @@ int con_change(const char *out, const char *err) {
         console.handle_err = (((FILE*)err) == stdout) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_err = fopen(err, "w"))) return 0;
+    
+    // no buffering
+    setvbuf(console.handle_out, NULL, _IONBF, 0);
+    setvbuf(console.handle_err, NULL, _IONBF, 0);
     
     return 1;
 }

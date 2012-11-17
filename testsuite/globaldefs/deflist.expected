@@ -1,5 +1,0 @@
-Global:     void                  at 0
-Global:    float globf            at 28
-Global:   vector globv            at 29
-Global:   string globs            at 32
-Global: function globfunc         at 33
