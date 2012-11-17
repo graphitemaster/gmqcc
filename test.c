@@ -433,8 +433,8 @@ bool task_propogate(const char *curdir) {
     dir = opendir(curdir);
     
     while ((files = readdir(dir))) {
-        memset  (buffer, 0, sizeof(buffer));
-        snprintf(buffer, 0, "%s/%s", curdir, files->d_name);
+        memset  (buffer, 0,sizeof(buffer));
+        snprintf(buffer,   sizeof(buffer), "%s/%s", curdir, files->d_name);
         
         if (stat(buffer, &directory) == -1) {
             con_err("internal error: stat failed, aborting\n");
