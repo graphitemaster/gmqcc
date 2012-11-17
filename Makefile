@@ -1,3 +1,7 @@
+DESTDIR :=
+PREFIX := /usr/local
+BINDIR := $(PREFIX)/bin
+
 CC     ?= clang
 CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector -fno-common
 #turn on tons of warnings if clang is present
@@ -47,9 +51,17 @@ all: gmqcc qcvm
 
 clean:
 	rm -f *.o gmqcc qcvm
-	
+
 $(OBJ) $(OBJ_C) $(OBJ_X): gmqcc.h
 main.o: lexer.h
 parser.o: ast.h lexer.h
 ast.o: ast.h ir.h
 ir.o: ir.h
+
+install: install-gmqcc install-qcvm
+install-gmqcc: gmqcc
+	install -d -m755          $(DESTDIR)$(BINDIR)
+	install    -m755  gmqcc   $(DESTDIR)$(BINDIR)/gmqcc
+install-qcvm: qcvm
+	install -d -m755          $(DESTDIR)$(BINDIR)
+	install    -m755  qcvm    $(DESTDIR)$(BINDIR)/qcvm
