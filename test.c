@@ -428,11 +428,18 @@ bool task_propogate(const char *curdir) {
     DIR             *dir;
     struct dirent   *files;
     struct stat      directory;
+    char             buffer[4096];
     
     dir = opendir(curdir);
     
     while ((files = readdir(dir))) {
-        stat(files->d_name, &directory);
+        memset  (buffer, 0, sizeof(buffer));
+        snprintf(buffer, 0, "%s/%s", curdir, files->d_name);
+        
+        if (stat(buffer, &directory) == -1) {
+            con_err("internal error: stat failed, aborting\n");
+            abort();
+        }
         
         /* skip directories */
         if (S_ISDIR(directory.st_mode))
