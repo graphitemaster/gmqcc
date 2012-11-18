@@ -62,8 +62,9 @@ typedef struct {
     ppcondition *conditions;
     ppmacro    **macros;
 
-    bool         output_string;
+    bool         to_string;
     char        *output;
+    FILE        *output_file;
 } ftepp_t;
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
@@ -171,7 +172,10 @@ static void ftepp_delete(ftepp_t *self)
         ppmacro_delete(self->macros[i]);
     vec_free(self->macros);
     vec_free(self->conditions);
-    lex_close(self->lex);
+    if (self->lex)
+        lex_close(self->lex);
+    if (self->output_file)
+        fclose(self->output_file);
     mem_d(self);
 }
 
@@ -181,8 +185,8 @@ static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
     {
         size_t len;
         char  *data;
-        if (!ftepp->output_string) {
-            printf("%s", str);
+        if (!ftepp->to_string) {
+            fprintf((ftepp->output_file ? ftepp->output_file : stdout), "%s", str);
             return;
         }
         len = strlen(str);
@@ -446,7 +450,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
 {
     char     *old_string = ftepp->output;
-    bool      old_string_flag = ftepp->output_string;
+    bool      old_string_flag = ftepp->to_string;
     lex_file *old_lexer = ftepp->lex;
     bool retval = true;
 
@@ -457,8 +461,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     if (!vec_size(macro->output))
         return true;
 
-    ftepp->output = NULL;
-    ftepp->output_string = true;
+    ftepp->output    = NULL;
+    ftepp->to_string = true;
     for (o = 0; o < vec_size(macro->output); ++o) {
         pptoken *out = macro->output[o];
         switch (out->token) {
@@ -505,8 +509,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         retval = false;
         goto cleanup;
     }
-    ftepp->output        = old_string;
-    ftepp->output_string = old_string_flag;
+    ftepp->output    = old_string;
+    ftepp->to_string = old_string_flag;
     ftepp->lex = inlex;
     if (!ftepp_preprocess(ftepp)) {
         lex_close(ftepp->lex);
@@ -515,9 +519,9 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     }
 
 cleanup:
-    ftepp->lex           = old_lexer;
-    ftepp->output        = old_string;
-    ftepp->output_string = old_string_flag;
+    ftepp->lex       = old_lexer;
+    ftepp->output    = old_string;
+    ftepp->to_string = old_string_flag;
     return retval;
 }
 
@@ -1052,13 +1056,17 @@ bool ftepp_preprocess_string(const char *name, const char *str)
     return ftepp_preprocess_done();
 }
 
-bool ftepp_init()
+bool ftepp_init(FILE *out)
 {
     ftepp = ftepp_new();
+    ftepp->output_file = out;
     return !!ftepp;
 }
 
 void ftepp_finish()
 {
+    if (!ftepp)
+        return;
     ftepp_delete(ftepp);
+    ftepp = NULL;
 }

@@ -415,6 +415,7 @@ int main(int argc, char **argv) {
     size_t itr;
     int retval = 0;
     bool opts_output_free = false;
+    bool progs_src = false;
 
     app_name = argv[0];
     con_init();
@@ -473,7 +474,16 @@ int main(int argc, char **argv) {
         }
     }
     if (opts_pp_only || opts_standard == COMPILER_FTEQCC) {
-        if (!ftepp_init()) {
+        FILE *out = NULL;
+        if (opts_output_wasset) {
+            out = util_fopen(opts_output, "wb");
+            if (!out) {
+                con_err("failed to open `%s` for writing\n", opts_output);
+                retval = 1;
+                goto cleanup;
+            }
+        }
+        if (!ftepp_init(out)) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
@@ -482,9 +492,52 @@ int main(int argc, char **argv) {
 
     util_debug("COM", "starting ...\n");
 
+    if (!vec_size(items)) {
+        FILE *src;
+        char *line;
+        size_t linelen = 0;
+
+        progs_src = true;
+
+        src = util_fopen("progs.src", "rb");
+        if (!src) {
+            con_err("failed to open `progs.src` for reading\n");
+            retval = 1;
+            goto cleanup;
+        }
+
+        line = NULL;
+        if (!progs_nextline(&line, &linelen, src) || !line[0]) {
+            con_err("illformatted progs.src file: expected output filename in first line\n");
+            retval = 1;
+            goto srcdone;
+        }
+
+        if (!opts_output_wasset) {
+            opts_output = util_strdup(line);
+            opts_output_free = true;
+        }
+
+        while (progs_nextline(&line, &linelen, src)) {
+            argitem item;
+            if (!line[0] || (line[0] == '/' && line[1] == '/'))
+                continue;
+            item.filename = util_strdup(line);
+            item.type     = TYPE_QC;
+            vec_push(items, item);
+        }
+
+srcdone:
+        fclose(src);
+        mem_d(line);
+    }
+
+    if (retval)
+        goto cleanup;
+
     if (vec_size(items)) {
         if (!opts_pp_only) {
-            con_out("Mode: manual\n");
+            con_out("Mode: %s\n", (progs_src ? "progs.src" : "manual"));
             con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
         }
         for (itr = 0; itr < vec_size(items); ++itr) {
@@ -507,61 +560,27 @@ int main(int argc, char **argv) {
                 retval = 1;
                 goto cleanup;
             }
-        }
 
-        if (!parser_finish(opts_output)) {
-            retval = 1;
-            goto cleanup;
-        }
-
-    } else {
-        FILE *src;
-        char *line;
-        size_t linelen = 0;
-
-        if (!opts_pp_only)
-            con_out("Mode: progs.src\n");
-        src = util_fopen("progs.src", "rb");
-        if (!src) {
-            con_err("failed to open `progs.src` for reading\n");
-            retval = 1;
-            goto cleanup;
-        }
-
-        line = NULL;
-        if (!progs_nextline(&line, &linelen, src) || !line[0]) {
-            con_err("illformatted progs.src file: expected output filename in first line\n");
-            retval = 1;
-            goto srcdone;
-        }
-
-        if (!opts_output_wasset) {
-            opts_output = util_strdup(line);
-            opts_output_free = true;
-        }
-
-        while (progs_nextline(&line, &linelen, src)) {
-            if (!line[0] || (line[0] == '/' && line[1] == '/'))
-                continue;
-            if (!opts_pp_only)
-                con_out("  src: %s\n", line);
-            if (!parser_compile_file(line)) {
-                retval = 1;
-                goto srcdone;
+            if (progs_src) {
+                mem_d(items[itr].filename);
+                items[itr].filename = NULL;
             }
         }
 
-        parser_finish(opts_output);
-
-srcdone:
-        fclose(src);
-        mem_d(line);
+        ftepp_finish();
+        if (!opts_pp_only) {
+            if (!parser_finish(opts_output)) {
+                retval = 1;
+                goto cleanup;
+            }
+        }
     }
 
     /* stuff */
 
 cleanup:
     util_debug("COM", "cleaning ...\n");
+    ftepp_finish();
     con_close();
     vec_free(items);
 

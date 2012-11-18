@@ -755,7 +755,7 @@ void parser_cleanup       ();
 /*===================================================================*/
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
-bool ftepp_init             ();
+bool ftepp_init             (FILE *out);
 bool ftepp_preprocess_file  (const char *filename);
 bool ftepp_preprocess_string(const char *name, const char *str);
 void ftepp_finish           ();
