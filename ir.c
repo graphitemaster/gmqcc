@@ -2391,6 +2391,7 @@ static bool gen_global_pointer(ir_value *global)
     return true;
 }
 
+static void ir_gen_extparam(ir_builder *ir);
 static bool gen_blocks_recursive(ir_function *func, ir_block *block)
 {
     prog_section_statement stmt;
@@ -2507,10 +2508,13 @@ tailcall:
              *      generation already. This would even include later
              *      reuse.... probably... :)
              */
-            size_t p;
+            size_t p, first;
             ir_value *retvalue;
 
-            for (p = 0; p < vec_size(instr->params); ++p)
+            first = vec_size(instr->params);
+            if (first > 8)
+                first = 8;
+            for (p = 0; p < first; ++p)
             {
                 ir_value *param = instr->params[p];
 
@@ -2525,6 +2529,31 @@ tailcall:
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
                 vec_push(code_statements, stmt);
             }
+            /* No whandle extparams */
+            first = vec_size(instr->params);
+            for (; p < first; ++p)
+            {
+                ir_builder *ir = func->owner;
+                ir_value *param = instr->params[p];
+                ir_value *target;
+
+                if (p-8 >= vec_size(ir->extparams))
+                    ir_gen_extparam(ir);
+
+                target = ir->extparams[p-8];
+
+                stmt.opcode = INSTR_STORE_F;
+                stmt.o3.u1 = 0;
+
+                if (param->vtype == TYPE_FIELD)
+                    stmt.opcode = field_store_instr[param->fieldtype];
+                else
+                    stmt.opcode = type_store_instr[param->vtype];
+                stmt.o1.u1 = ir_value_code_addr(param);
+                stmt.o2.u1 = ir_value_code_addr(target);
+                vec_push(code_statements, stmt);
+            }
+
             stmt.opcode = INSTR_CALL0 + vec_size(instr->params);
             if (stmt.opcode > INSTR_CALL8)
                 stmt.opcode = INSTR_CALL8;
@@ -2711,7 +2740,7 @@ static void ir_gen_extparam(ir_builder *ir)
     ir_value        *global;
     char             name[128];
 
-    snprintf(name, sizeof(name), "#EXTPARM%i", (int)(vec_size(ir->extparams)+8));
+    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparams)+8));
     global = ir_value_var(name, store_global, TYPE_VECTOR);
 
     def.name = code_genstring(name);
