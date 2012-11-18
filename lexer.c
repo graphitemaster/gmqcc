@@ -353,9 +353,12 @@ static bool lex_try_pragma(lex_file *lex)
     char *pragma  = NULL;
     char *command = NULL;
     char *param   = NULL;
+    size_t line;
 
     if (lex->flags.preprocessing)
         return false;
+
+    line = lex->line;
 
     ch = lex_getch(lex);
     if (ch != '#') {
@@ -393,7 +396,7 @@ static bool lex_try_pragma(lex_file *lex)
     if (!strcmp(command, "push")) {
         if (!strcmp(param, "line")) {
             lex->push_line++;
-            lex->line--;
+            --line;
         }
         else
             goto unroll;
@@ -402,7 +405,6 @@ static bool lex_try_pragma(lex_file *lex)
         if (!strcmp(param, "line")) {
             if (lex->push_line)
                 lex->push_line--;
-            lex->line--;
         }
         else
             goto unroll;
@@ -412,6 +414,7 @@ static bool lex_try_pragma(lex_file *lex)
 
     while (ch != '\n')
         ch = lex_getch(lex);
+    lex->line = line;
     return true;
 
 unroll:
@@ -440,6 +443,8 @@ unroll:
         vec_free(pragma);
     }
     lex_ungetch(lex, '#');
+
+    lex->line = line;
     return false;
 }
 
