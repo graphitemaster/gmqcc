@@ -259,6 +259,7 @@ ir_builder* ir_builder_new(const char *modulename)
     self->functions   = NULL;
     self->globals     = NULL;
     self->fields      = NULL;
+    self->extparams   = NULL;
     self->filenames   = NULL;
     self->filestrings = NULL;
 
@@ -280,6 +281,10 @@ void ir_builder_delete(ir_builder* self)
         ir_function_delete_quick(self->functions[i]);
     }
     vec_free(self->functions);
+    for (i = 0; i != vec_size(self->extparams); ++i) {
+        ir_value_delete(self->extparams[i]);
+    }
+    vec_free(self->extparams);
     for (i = 0; i != vec_size(self->globals); ++i) {
         ir_value_delete(self->globals[i]);
     }
@@ -426,6 +431,8 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self->blocks = NULL;
     self->values = NULL;
     self->locals = NULL;
+
+    self->max_parameters = 0;
 
     self->code_function_def = -1;
     self->allocated_locals = 0;
@@ -2698,6 +2705,62 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     return true;
 }
 
+static void ir_gen_extparam(ir_builder *ir)
+{
+    prog_section_def def;
+    ir_value        *global;
+    char             name[128];
+
+    snprintf(name, sizeof(name), "EXTPARM%i", (int)(vec_size(ir->extparams)+8));
+    global = ir_value_var(name, store_global, TYPE_VECTOR);
+
+    def.name = code_genstring(name);
+    def.type = TYPE_VECTOR;
+    def.offset = vec_size(code_globals);
+
+    vec_push(code_defs, def);
+    ir_value_code_setaddr(global, def.offset);
+    vec_push(code_globals, 0);
+    vec_push(code_globals, 0);
+    vec_push(code_globals, 0);
+
+    vec_push(ir->extparams, global);
+}
+
+static bool gen_function_extparam_copy(ir_function *self)
+{
+    size_t i, ext;
+
+    ir_builder *ir = self->owner;
+    ir_value   *ep;
+    prog_section_statement stmt;
+
+    if (!self->max_parameters)
+        return true;
+
+    stmt.opcode = INSTR_STORE_F;
+    stmt.o3.s1 = 0;
+    for (i = 8; i < self->max_parameters; ++i) {
+        ext = i - 8;
+        if (ext >= vec_size(ir->extparams))
+            ir_gen_extparam(ir);
+
+        ep = ir->extparams[ext];
+
+        stmt.opcode = type_store_instr[self->locals[i]->vtype];
+        if (self->locals[i]->vtype == TYPE_FIELD &&
+            self->locals[i]->fieldtype == TYPE_VECTOR)
+        {
+            stmt.opcode = INSTR_STORE_V;
+        }
+        stmt.o1.u1 = ir_value_code_addr(ep);
+        stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
+        vec_push(code_statements, stmt);
+    }
+
+    return true;
+}
+
 static bool gen_global_function_code(ir_builder *ir, ir_value *global)
 {
     prog_section_function *fundef;
@@ -2721,6 +2784,10 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     fundef = &code_functions[irfun->code_function_def];
 
     fundef->entry = vec_size(code_statements);
+    if (!gen_function_extparam_copy(irfun)) {
+        irerror(irfun->context, "Failed to generate extparam-copy code for function %s", irfun->name);
+        return false;
+    }
     if (!gen_function_code(irfun)) {
         irerror(irfun->context, "Failed to generate code for function %s", irfun->name);
         return false;
