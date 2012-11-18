@@ -573,7 +573,17 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
         if (ch == quote)
             return TOKEN_STRINGCONST;
 
-        if (!lex->flags.preprocessing && ch == '\\') {
+        if (lex->flags.preprocessing && ch == '\\') {
+            lex_tokench(lex, ch);
+            ch = lex_getch(lex);
+            if (ch == EOF) {
+                lexerror(lex, "unexpected end of file");
+                lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
+                return (lex->tok.ttype = TOKEN_ERROR);
+            }
+            lex_tokench(lex, ch);
+        }
+        else if (ch == '\\') {
             ch = lex_getch(lex);
             if (ch == EOF) {
                 lexerror(lex, "unexpected end of file");
@@ -583,6 +593,8 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 
             switch (ch) {
             case '\\': break;
+            case '\'': break;
+            case '"':  break;
             case 'a':  ch = '\a'; break;
             case 'b':  ch = '\b'; break;
             case 'r':  ch = '\r'; break;

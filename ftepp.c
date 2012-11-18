@@ -438,6 +438,47 @@ static bool macro_params_find(ppmacro *macro, const char *name, size_t *idx)
     return false;
 }
 
+static void ftepp_stringify_token(ftepp_t *ftepp, pptoken *token)
+{
+    char        chs[2];
+    const char *ch;
+    chs[1] = 0;
+    switch (token->token) {
+        case TOKEN_STRINGCONST:
+            ch = token->value;
+            while (*ch) {
+                switch (*ch) {
+                    case '\\': ftepp_out(ftepp, "\\\\", false); break;
+                    case '"':  ftepp_out(ftepp, "\\\"", false); break;
+                    default:
+                        chs[0] = *ch;
+                        ftepp_out(ftepp, chs, false);
+                        break;
+                }
+                ++ch;
+            }
+            break;
+        case TOKEN_WHITE:
+            ftepp_out(ftepp, " ", false);
+            break;
+        case TOKEN_EOL:
+            ftepp_out(ftepp, "\\n", false);
+            break;
+        default:
+            ftepp_out(ftepp, token->value, false);
+            break;
+    }
+}
+
+static void ftepp_stringify(ftepp_t *ftepp, macroparam *param)
+{
+    size_t i;
+    ftepp_out(ftepp, "\"", false);
+    for (i = 0; i < vec_size(param->tokens); ++i)
+        ftepp_stringify_token(ftepp, param->tokens[i]);
+    ftepp_out(ftepp, "\"", false);
+}
+
 static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
 {
@@ -447,6 +488,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
 
     size_t    o, pi, pv;
     lex_file *inlex;
+
+    int nextok;
 
     /* really ... */
     if (!vec_size(macro->output))
@@ -473,10 +516,22 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 }
                 break;
             case '#':
-                if (o + 1 < vec_size(macro->output) && macro->output[o+1]->token == '#') {
-                    /* raw concatenation */
-                    ++o;
-                    break;
+                if (o + 1 < vec_size(macro->output)) {
+                    nextok = macro->output[o+1]->token;
+                    if (nextok == '#') {
+                        /* raw concatenation */
+                        ++o;
+                        break;
+                    }
+                    if ( (nextok == TOKEN_IDENT    ||
+                          nextok == TOKEN_KEYWORD  ||
+                          nextok == TOKEN_TYPENAME) &&
+                        macro_params_find(macro, macro->output[o+1]->value, &pi))
+                    {
+                        ++o;
+                        ftepp_stringify(ftepp, &params[pi]);
+                        break;
+                    }
                 }
                 ftepp_out(ftepp, "#", false);
                 break;
