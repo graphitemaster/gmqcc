@@ -483,6 +483,16 @@ static void ftepp_stringify(ftepp_t *ftepp, macroparam *param)
     ftepp_out(ftepp, "\"", false);
 }
 
+static void ftepp_recursion_header(ftepp_t *ftepp)
+{
+    ftepp_out(ftepp, "\n#pragma push(line)\n", false);
+}
+
+static void ftepp_recursion_footer(ftepp_t *ftepp)
+{
+    ftepp_out(ftepp, "\n#pragma pop(line)\n", false);
+}
+
 static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
 {
@@ -560,11 +570,14 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     }
     ftepp->output_string = old_string;
     ftepp->lex = inlex;
+    ftepp_recursion_header(ftepp);
     if (!ftepp_preprocess(ftepp)) {
         lex_close(ftepp->lex);
         retval = false;
         goto cleanup;
     }
+    ftepp_recursion_footer(ftepp);
+    old_string = ftepp->output_string;
 
 cleanup:
     ftepp->lex           = old_lexer;
