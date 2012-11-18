@@ -473,15 +473,19 @@ int main(int argc, char **argv) {
     util_debug("COM", "starting ...\n");
 
     if (vec_size(items)) {
-        con_out("Mode: manual\n");
-        con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
+        if (!opts_pp_only) {
+            con_out("Mode: manual\n");
+            con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
+        }
         for (itr = 0; itr < vec_size(items); ++itr) {
-            con_out("  item: %s (%s)\n",
-                   items[itr].filename,
-                   ( (items[itr].type == TYPE_QC ? "qc" :
-                     (items[itr].type == TYPE_ASM ? "asm" :
-                     (items[itr].type == TYPE_SRC ? "progs.src" :
-                     ("unknown"))))));
+            if (!opts_pp_only) {
+                con_out("  item: %s (%s)\n",
+                       items[itr].filename,
+                       ( (items[itr].type == TYPE_QC ? "qc" :
+                         (items[itr].type == TYPE_ASM ? "asm" :
+                         (items[itr].type == TYPE_SRC ? "progs.src" :
+                         ("unknown"))))));
+            }
 
             if (opts_pp_only) {
                 if (!ftepp_preprocess_file(items[itr].filename)) {
@@ -505,17 +509,18 @@ int main(int argc, char **argv) {
         char *line;
         size_t linelen = 0;
 
-        con_out("Mode: progs.src\n");
+        if (!opts_pp_only)
+            con_out("Mode: progs.src\n");
         src = util_fopen("progs.src", "rb");
         if (!src) {
-            con_out("failed to open `progs.src` for reading\n");
+            con_err("failed to open `progs.src` for reading\n");
             retval = 1;
             goto cleanup;
         }
 
         line = NULL;
         if (!progs_nextline(&line, &linelen, src) || !line[0]) {
-            con_out("illformatted progs.src file: expected output filename in first line\n");
+            con_err("illformatted progs.src file: expected output filename in first line\n");
             retval = 1;
             goto srcdone;
         }
@@ -528,7 +533,8 @@ int main(int argc, char **argv) {
         while (progs_nextline(&line, &linelen, src)) {
             if (!line[0] || (line[0] == '/' && line[1] == '/'))
                 continue;
-            con_out("  src: %s\n", line);
+            if (!opts_pp_only)
+                con_out("  src: %s\n", line);
             if (!parser_compile_file(line)) {
                 retval = 1;
                 goto srcdone;

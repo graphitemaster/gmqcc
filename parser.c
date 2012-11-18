@@ -3431,7 +3431,7 @@ bool parser_compile_file(const char *filename)
 {
     parser->lex = lex_open(filename);
     if (!parser->lex) {
-        con_out("failed to open file \"%s\"\n", filename);
+        con_err("failed to open file \"%s\"\n", filename);
         return false;
     }
     return parser_compile();
@@ -3441,7 +3441,7 @@ bool parser_compile_string(const char *name, const char *str)
 {
     parser->lex = lex_open_string(str, strlen(str), name);
     if (!parser->lex) {
-        con_out("failed to create lexer for string \"%s\"\n", name);
+        con_err("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
     return parser_compile();
