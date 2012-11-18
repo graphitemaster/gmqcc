@@ -2396,6 +2396,7 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
 {
     ast_function   *func = NULL;
     ast_value      *fval = NULL;
+    ast_block      *body = NULL;
 
     fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
     if (!fval) {
@@ -2410,6 +2411,15 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
         return false;
     }
 
+    body = ast_block_new(ast_ctx(array));
+    if (!body) {
+        parseerror(parser, "failed to create block for array accessor");
+        ast_delete(fval);
+        ast_delete(func);
+        return false;
+    }
+
+    vec_push(func->blocks, body);
     *out = fval;
 
     return true;
@@ -2418,7 +2428,6 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
 static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_block      *body = NULL;
     ast_value      *index = NULL;
     ast_value      *value = NULL;
     ast_function   *func;
@@ -2433,12 +2442,6 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
         return false;
     func = fval->constval.vfunc;
     fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
-
-    body = ast_block_new(ast_ctx(array));
-    if (!body) {
-        parseerror(parser, "failed to create block for array accessor");
-        goto cleanup;
-    }
 
     index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
     value = ast_value_copy((ast_value*)array->expression.next);
@@ -2457,12 +2460,10 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    vec_push(body->exprs, root);
-    vec_push(func->blocks, body);
+    vec_push(func->blocks[0]->exprs, root);
     array->setter = fval;
     return true;
 cleanup:
-    if (body)  ast_delete(body);
     if (index) ast_delete(index);
     if (value) ast_delete(value);
     if (root)  ast_delete(root);
@@ -2474,7 +2475,6 @@ cleanup:
 static bool parser_create_array_field_setter(parser_t *parser, ast_value *array, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_block      *body = NULL;
     ast_value      *entity = NULL;
     ast_value      *index = NULL;
     ast_value      *value = NULL;
@@ -2490,12 +2490,6 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         return false;
     func = fval->constval.vfunc;
     fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
-
-    body = ast_block_new(ast_ctx(array));
-    if (!body) {
-        parseerror(parser, "failed to create block for array accessor");
-        goto cleanup;
-    }
 
     entity = ast_value_new(ast_ctx(array), "entity", TYPE_ENTITY);
     index  = ast_value_new(ast_ctx(array), "index",  TYPE_FLOAT);
@@ -2515,12 +2509,10 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         goto cleanup;
     }
 
-    vec_push(body->exprs, root);
-    vec_push(func->blocks, body);
+    vec_push(func->blocks[0]->exprs, root);
     array->setter = fval;
     return true;
 cleanup:
-    if (body)   ast_delete(body);
     if (entity) ast_delete(entity);
     if (index)  ast_delete(index);
     if (value)  ast_delete(value);
@@ -2533,7 +2525,6 @@ cleanup:
 static bool parser_create_array_getter(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_block      *body = NULL;
     ast_value      *index = NULL;
     ast_value      *fval;
     ast_function   *func;
@@ -2551,12 +2542,6 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     func = fval->constval.vfunc;
     fval->expression.next = ast_type_copy(ast_ctx(array), elemtype);
 
-    body = ast_block_new(ast_ctx(array));
-    if (!body) {
-        parseerror(parser, "failed to create block for array accessor");
-        goto cleanup;
-    }
-
     index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
 
     if (!index) {
@@ -2571,12 +2556,10 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    vec_push(body->exprs, root);
-    vec_push(func->blocks, body);
+    vec_push(func->blocks[0]->exprs, root);
     array->getter = fval;
     return true;
 cleanup:
-    if (body)  ast_delete(body);
     if (index) ast_delete(index);
     if (root)  ast_delete(root);
     ast_delete(func);
