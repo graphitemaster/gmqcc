@@ -2391,7 +2391,6 @@ static bool gen_global_pointer(ir_value *global)
     return true;
 }
 
-static void ir_gen_extparam(ir_builder *ir);
 static bool gen_blocks_recursive(ir_function *func, ir_block *block)
 {
     prog_section_statement stmt;
@@ -2537,8 +2536,10 @@ tailcall:
                 ir_value *param = instr->params[p];
                 ir_value *target;
 
-                if (p-8 >= vec_size(ir->extparams))
-                    ir_gen_extparam(ir);
+                if (p-8 >= vec_size(ir->extparams)) {
+                    irerror(instr->context, "Not enough extparam-globals have been created");
+                    return false;
+                }
 
                 target = ir->extparams[p-8];
 
@@ -2688,6 +2689,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     fun.file    = ir_builder_filestring(ir, global->context.file);
     fun.profile = 0; /* always 0 */
     fun.nargs   = vec_size(irfun->params);
+    if (fun.nargs > 8)
+        fun.nargs = 8;
 
     for (i = 0;i < 8; ++i) {
         if (i >= fun.nargs)
