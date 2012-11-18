@@ -977,6 +977,10 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 ftepp_update_output_condition(ftepp);
                 break;
             }
+            else if (!strcmp(ftepp_tokval(ftepp), "pragma")) {
+                ftepp_out(ftepp, "#", false);
+                break;
+            }
             else {
                 ftepp_error(ftepp, "unrecognized preprocessor directive: `%s`", ftepp_tokval(ftepp));
                 return false;
