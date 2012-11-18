@@ -125,6 +125,8 @@ typedef struct {
     int framevalue;
 	frame_macro *frames;
 	char *modelname;
+
+	size_t push_line;
 } lex_file;
 
 lex_file* lex_open (const char *file);

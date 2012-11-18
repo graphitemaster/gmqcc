@@ -289,13 +289,13 @@ static int lex_getch(lex_file *lex)
 
     if (lex->peekpos) {
         lex->peekpos--;
-        if (lex->peek[lex->peekpos] == '\n')
+        if (!lex->push_line && lex->peek[lex->peekpos] == '\n')
             lex->line++;
         return lex->peek[lex->peekpos];
     }
 
     ch = lex_fgetc(lex);
-    if (ch == '\n')
+    if (!lex->push_line && ch == '\n')
         lex->line++;
     else if (ch == '?')
         return lex_try_trigraph(lex, ch);
@@ -307,7 +307,7 @@ static int lex_getch(lex_file *lex)
 static void lex_ungetch(lex_file *lex, int ch)
 {
     lex->peek[lex->peekpos++] = ch;
-    if (ch == '\n')
+    if (!lex->push_line && ch == '\n')
         lex->line--;
 }
 
@@ -345,6 +345,102 @@ static void lex_endtoken(lex_file *lex)
 {
     vec_push(lex->tok.value, 0);
     vec_shrinkby(lex->tok.value, 1);
+}
+
+static bool lex_try_pragma(lex_file *lex)
+{
+    int ch;
+    char *pragma  = NULL;
+    char *command = NULL;
+    char *param   = NULL;
+
+    if (lex->flags.preprocessing)
+        return false;
+
+    ch = lex_getch(lex);
+    if (ch != '#') {
+        lex_ungetch(lex, ch);
+        return false;
+    }
+
+    for (ch = lex_getch(lex); vec_size(pragma) < 8 && ch >= 'a' && ch <= 'z'; ch = lex_getch(lex))
+        vec_push(pragma, ch);
+    vec_push(pragma, 0);
+
+    if (ch != ' ' || strcmp(pragma, "pragma")) {
+        lex_ungetch(lex, ch);
+        goto unroll;
+    }
+
+    for (ch = lex_getch(lex); vec_size(command) < 32 && ch >= 'a' && ch <= 'z'; ch = lex_getch(lex))
+        vec_push(command, ch);
+    vec_push(command, 0);
+
+    if (ch != '(') {
+        lex_ungetch(lex, ch);
+        goto unroll;
+    }
+
+    for (ch = lex_getch(lex); vec_size(param) < 32 && ch != ')' && ch != '\n'; ch = lex_getch(lex))
+        vec_push(param, ch);
+    vec_push(param, 0);
+
+    if (ch != ')') {
+        lex_ungetch(lex, ch);
+        goto unroll;
+    }
+
+    if (!strcmp(command, "push")) {
+        if (!strcmp(param, "line")) {
+            lex->push_line++;
+            lex->line--;
+        }
+        else
+            goto unroll;
+    }
+    else if (!strcmp(command, "pop")) {
+        if (!strcmp(param, "line")) {
+            if (lex->push_line)
+                lex->push_line--;
+            lex->line--;
+        }
+        else
+            goto unroll;
+    }
+    else
+        goto unroll;
+
+    while (ch != '\n')
+        ch = lex_getch(lex);
+    return true;
+
+unroll:
+    if (command) {
+        vec_pop(command);
+        while (vec_size(command)) {
+            lex_ungetch(lex, vec_last(command));
+            vec_pop(command);
+        }
+        vec_free(command);
+    }
+    if (command) {
+        vec_pop(command);
+        while (vec_size(command)) {
+            lex_ungetch(lex, vec_last(command));
+            vec_pop(command);
+        }
+        vec_free(command);
+    }
+    if (pragma) {
+        vec_pop(pragma);
+        while (vec_size(pragma)) {
+            lex_ungetch(lex, vec_last(pragma));
+            vec_pop(pragma);
+        }
+        vec_free(pragma);
+    }
+    lex_ungetch(lex, '#');
+    return false;
 }
 
 /* Skip whitespace and comments and return the first
@@ -388,6 +484,12 @@ static int lex_skipwhite(lex_file *lex)
     {
         ch = lex_getch(lex);
         while (ch != EOF && isspace(ch)) {
+            if (ch == '\n') {
+                if (lex_try_pragma(lex)) {
+                    ch = lex_getch(lex);
+                    continue;
+                }
+            }
             if (lex->flags.preprocessing) {
                 if (ch == '\n') {
                     /* end-of-line */
