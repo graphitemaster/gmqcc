@@ -414,6 +414,9 @@ static bool lex_try_pragma(lex_file *lex)
         lex->name = util_strdup(param);
         vec_push(lex_filenames, lex->name);
     }
+    else if (!strcmp(command, "line")) {
+        line = strtol(param, NULL, 0)-1;
+    }
     else
         goto unroll;
 
