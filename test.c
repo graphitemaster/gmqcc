@@ -32,6 +32,132 @@ char *task_bins[] = {
     "./qcvm"
 };
 
+/*
+ * TODO: Windows version
+ * this implements a unique bi-directional popen-like function that
+ * allows reading data from both stdout and stderr. And writing to
+ * stdin :)
+ * 
+ * Example of use:
+ * FILE *handles[3] = task_popen("ls", "-l", "r");
+ * if (!handles) { perror("failed to open stdin/stdout/stderr to ls");
+ * // handles[0] = stdin
+ * // handles[1] = stdout
+ * // handles[2] = stderr
+ * 
+ * task_pclose(handles); // to close
+ */
+#ifndef _WIN32
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <unistd.h>
+typedef struct {
+    FILE *handles[3];
+    int   pipes  [3];
+    
+    int stderr_fd;
+    int stdout_fd;
+    int pid;
+} popen_t;
+
+FILE ** task_popen(const char *command, const char *mode) {
+    int     inhandle  [2];
+    int     outhandle [2];
+    int     errhandle [2];
+    int     trypipe;
+    
+    popen_t *data = mem_a(sizeof(popen_t));
+    
+    /*
+     * Parse the command now into a list for execv, this is a pain
+     * in the ass.
+     */
+    char  *line = (char*)command;
+    char **argv = NULL;
+    {
+        
+        while (*line != '\0') {
+            while (*line == ' ' || *line == '\t' || *line == '\n')
+                *line++ = '\0';
+            vec_push(argv, line);
+            
+            while (*line != '\0' && *line != ' ' &&
+                   *line != '\t' && *line != '\n') line++;
+        }
+        vec_push(argv, '\0');
+    }
+    
+    
+    if ((trypipe = pipe(inhandle))  < 0) goto task_popen_error_0;
+    if ((trypipe = pipe(outhandle)) < 0) goto task_popen_error_1;
+    if ((trypipe = pipe(errhandle)) < 0) goto task_popen_error_2;
+    
+    if ((data->pid = fork()) > 0) {
+        /* parent */
+        close(inhandle  [0]);
+        close(outhandle [1]);
+        close(errhandle [1]);
+        
+        data->pipes  [0] = inhandle [1];
+        data->pipes  [1] = outhandle[0];
+        data->pipes  [2] = errhandle[0];
+        data->handles[0] = fdopen(inhandle [1], "w");
+        data->handles[1] = fdopen(outhandle[0], mode);
+        data->handles[2] = fdopen(errhandle[0], mode);
+        
+        /* sigh */
+        if (argv)
+            vec_free(argv);
+        return data->handles;
+    } else if (data->pid == 0) {
+        /* child */
+        close(inhandle [1]);
+        close(outhandle[0]);
+        close(errhandle[0]);
+        
+        /* see piping documentation for this sillyness :P */
+        close(0), dup(inhandle [0]);
+        close(1), dup(outhandle[1]);
+        close(2), dup(errhandle[1]);
+        
+        execvp(*argv, argv);
+        exit(1);
+    } else {
+        /* fork failed */
+        goto task_popen_error_3;
+    }
+    
+    if (argv)
+        vec_free(argv);
+    return data->handles;
+        
+task_popen_error_3: close(errhandle[0]), close(errhandle[1]);
+task_popen_error_2: close(outhandle[0]), close(outhandle[1]);
+task_popen_error_1: close(inhandle [0]), close(inhandle [1]);
+task_popen_error_0:
+
+    if (argv)
+        vec_free(argv);
+    return NULL;
+}
+
+int task_pclose(FILE **handles) {
+    popen_t *data   = (popen_t*)handles;
+    int      status = 0;
+    
+    close(data->pipes[0]); /* stdin  */
+    close(data->pipes[1]); /* stdout */
+    close(data->pipes[2]); /* stderr */
+    
+    waitpid(data->pid, &status, 0);
+    
+    mem_d(data);
+    
+    return status;
+}
+#endif
+
 #define TASK_COMPILE 0
 #define TASK_EXECUTE 1
 
@@ -93,7 +219,8 @@ char *task_bins[] = {
  * 
  *      I:
  *          Used to specify the INPUT source file to operate on, this must be
- *          provided, this tag is NOT optional.
+ *          provided, this tag is NOT optional
+ *
  * 
  *  Notes:
  *      These tags have one-time use, using them more than once will result
@@ -414,7 +541,9 @@ void task_template_destroy(task_template_t **template) {
  */
 typedef struct {
     task_template_t *template;
-    FILE            *handle;
+    FILE           **runhandles;
+    FILE            *stderrlog;
+    FILE            *stdoutlog;
 } task_t;
 
 task_t *task_tasks = NULL;
@@ -463,7 +592,6 @@ bool task_propogate(const char *curdir) {
              */
             template->tempfilename = tempnam(curdir, "TMPDAT");
             
-            
             /*
              * Generate the command required to open a pipe to a process
              * which will be refered to with a handle in the task for
@@ -485,11 +613,24 @@ bool task_propogate(const char *curdir) {
              */
             task_t task;
             task.template = template;
-            if (!(task.handle = popen(buf, "r"))) {
+            if (!(task.runhandles = task_popen(buf, "r"))) {
                 con_err("error opening pipe to process for test: %s\n", template->description);
                 success = false;
                 continue;
             }
+            
+            /*
+             * Open up some file desciptors for logging the stdout/stderr
+             * to our own.
+             */
+            memset  (buf,0,sizeof(buf));
+            snprintf(buf,  sizeof(buf), "%s/%s.stdout", curdir, template->sourcefile);
+            task.stderrlog = fopen(buf, "w");
+            
+            memset  (buf,0,sizeof(buf));
+            snprintf(buf,  sizeof(buf), "%s/%s.stderr", curdir, template->sourcefile);
+            task.stdoutlog = fopen(buf, "w");
+            
             con_out("executing test: `%s` [%s]\n", template->description, buf);
             
             vec_push(task_tasks, task);
@@ -532,8 +673,17 @@ void task_destroy(const char *curdir) {
      * temporary files.
      */
     size_t i;
-    for (i = 0; i < vec_size(task_tasks); i++)
+    for (i = 0; i < vec_size(task_tasks); i++) {
+        /*
+         * Close any open handles to files or processes here.  It's mighty
+         * annoying to have to do all this cleanup work.
+         */
+        if (task_tasks[i].runhandles) task_pclose(task_tasks[i].runhandles);
+        if (task_tasks[i].stdoutlog)  fclose     (task_tasks[i].stdoutlog);
+        if (task_tasks[i].stderrlog)  fclose     (task_tasks[i].stderrlog);
+        
         task_template_destroy(&task_tasks[i].template);
+    }
     vec_free(task_tasks);
     
     /*
@@ -627,10 +777,11 @@ bool task_execute(task_template_t *template) {
  * from thin air and executed INLINE.
  */
 void task_schedualize(const char *curdir) {
-    bool   execute = false;
-    char  *back    = NULL;
-    char  *data    = NULL;
-    size_t size    = 0;
+    bool   execute  = false;
+    bool   compiled = true;
+    char  *back     = NULL;
+    char  *data     = NULL;
+    size_t size     = 0;
     size_t i;
     
     for (i = 0; i < vec_size(task_tasks); i++) {
@@ -640,24 +791,33 @@ void task_schedualize(const char *curdir) {
         */
         if (!strcmp(task_tasks[i].template->proceduretype, "-execute"))
             execute = true;
-            
-        while (util_getline(&data, &size, task_tasks[i].handle) != EOF) {
+        
+        /*
+         * Read data from stdout first and pipe that stuff into a log file
+         * then we do the same for stderr.
+         */    
+        while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
             back = data;
-            /* chances are we want to print errors */
-            if (strstr(data, "error")) {
-                con_out("compile failed: %s\n",
-                    /* strip the newline from the end */
-                    (*strrchr(data, '\n')='\0')
-                );
-                
-                /*
-                 * The compilation failed which means it cannot be executed
-                 * as the file simply will not exist.
-                 */
-                execute = false;
-                break;
-            }
+            fwrite(data, 1, size, task_tasks[i].stdoutlog);
         }
+        while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
+            back = data;
+            
+            /*
+             * If a string contains an error we just dissalow execution
+             * of it in the vm.
+             * 
+             * TODO: make this more percise, e.g if we print a warning
+             * that refers to a variable named error, or something like
+             * that .. then this will blowup :P
+             */
+            if (strstr(data, "error")) {
+                compiled = false;
+                execute  = false;
+            }
+            fwrite(data, 1, size, task_tasks[i].stderrlog);
+        }
+        
         if (back)
             mem_d(back);
         
