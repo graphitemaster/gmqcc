@@ -2637,8 +2637,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
     }
 
     /* sanity check */
-    if (vec_size(params) > 8)
-        parseerror(parser, "more than 8 parameters are currently not supported");
+    if (vec_size(params) > 8 && opts_standard == COMPILER_QCC)
+        parsewarning(parser, WARN_EXTENSIONS, "more than 8 parameters are not supported by this standard");
 
     /* parse-out */
     if (!parser_next(parser)) {
