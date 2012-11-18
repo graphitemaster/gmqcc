@@ -432,8 +432,6 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self->values = NULL;
     self->locals = NULL;
 
-    self->max_parameters = 0;
-
     self->code_function_def = -1;
     self->allocated_locals = 0;
 
@@ -2761,18 +2759,19 @@ static void ir_gen_extparam(ir_builder *ir)
 
 static bool gen_function_extparam_copy(ir_function *self)
 {
-    size_t i, ext;
+    size_t i, ext, numparams;
 
     ir_builder *ir = self->owner;
     ir_value   *ep;
     prog_section_statement stmt;
 
-    if (!self->max_parameters)
+    numparams = vec_size(self->params);
+    if (!numparams)
         return true;
 
     stmt.opcode = INSTR_STORE_F;
     stmt.o3.s1 = 0;
-    for (i = 8; i < self->max_parameters; ++i) {
+    for (i = 8; i < numparams; ++i) {
         ext = i - 8;
         if (ext >= vec_size(ir->extparams))
             ir_gen_extparam(ir);

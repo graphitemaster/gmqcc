@@ -240,9 +240,6 @@ typedef struct ir_function_s
     /* locally defined variables */
     ir_value **locals;
 
-    /* how many of the locals are parameters */
-    size_t max_parameters;
-
     size_t allocated_locals;
 
     ir_block*     first;

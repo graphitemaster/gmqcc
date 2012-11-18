@@ -1247,7 +1247,6 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     /* fill the parameter list */
     ec = &self->vtype->expression;
-    irf->max_parameters = vec_size(ec->params);
     for (i = 0; i < vec_size(ec->params); ++i)
     {
         vec_push(irf->params, ec->params[i]->expression.vtype);
