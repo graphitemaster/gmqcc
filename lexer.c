@@ -498,10 +498,8 @@ static int lex_skipwhite(lex_file *lex)
         ch = lex_getch(lex);
         while (ch != EOF && isspace(ch)) {
             if (ch == '\n') {
-                if (lex_try_pragma(lex)) {
-                    ch = lex_getch(lex);
+                if (lex_try_pragma(lex))
                     continue;
-                }
             }
             if (lex->flags.preprocessing) {
                 if (ch == '\n') {
