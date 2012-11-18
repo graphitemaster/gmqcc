@@ -10,32 +10,32 @@ char* *lex_filenames;
 
 void lexerror(lex_file *lex, const char *fmt, ...)
 {
-	va_list ap;
+    va_list ap;
 
-	va_start(ap, fmt);
-	if (lex)
+    va_start(ap, fmt);
+    if (lex)
         con_vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
     else
         con_vprintmsg(LVL_ERROR, "", 0, "parse error", fmt, ap);
-	va_end(ap);
+    va_end(ap);
 }
 
 bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
-	va_list ap;
-	int lvl = LVL_WARNING;
+    va_list ap;
+    int lvl = LVL_WARNING;
 
     if (!OPTS_WARN(warntype))
         return false;
 
     if (opts_werror)
-	    lvl = LVL_ERROR;
+        lvl = LVL_ERROR;
 
-	va_start(ap, fmt);
+    va_start(ap, fmt);
     con_vprintmsg(lvl, lex->name, lex->sline, "warning", fmt, ap);
-	va_end(ap);
+    va_end(ap);
 
-	return opts_werror;
+    return opts_werror;
 }
 
 
