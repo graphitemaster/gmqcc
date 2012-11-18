@@ -20,6 +20,9 @@ typedef struct {
     ast_value    **imm_string;
     ast_value    **imm_vector;
 
+    /* must be deleted first, they reference immediates and values */
+    ast_value    **accessors;
+
     ast_value *imm_float_zero;
     ast_value *imm_vector_zero;
 
@@ -2422,6 +2425,8 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
     vec_push(func->blocks, body);
     *out = fval;
 
+    vec_push(parser->accessors, fval);
+
     return true;
 }
 
@@ -3433,6 +3438,11 @@ bool parser_compile_string(const char *name, const char *str)
 void parser_cleanup()
 {
     size_t i;
+    for (i = 0; i < vec_size(parser->accessors); ++i) {
+        ast_delete(parser->accessors[i]->constval.vfunc);
+        parser->accessors[i]->constval.vfunc = NULL;
+        ast_delete(parser->accessors[i]);
+    }
     for (i = 0; i < vec_size(parser->functions); ++i) {
         ast_delete(parser->functions[i]);
     }
@@ -3453,6 +3463,7 @@ void parser_cleanup()
         ast_delete(parser->globals[i].var);
         mem_d(parser->globals[i].name);
     }
+    vec_free(parser->accessors);
     vec_free(parser->functions);
     vec_free(parser->imm_vector);
     vec_free(parser->imm_string);
