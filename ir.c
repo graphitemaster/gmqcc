@@ -2711,7 +2711,7 @@ static void ir_gen_extparam(ir_builder *ir)
     ir_value        *global;
     char             name[128];
 
-    snprintf(name, sizeof(name), "EXTPARM%i", (int)(vec_size(ir->extparams)+8));
+    snprintf(name, sizeof(name), "#EXTPARM%i", (int)(vec_size(ir->extparams)+8));
     global = ir_value_var(name, store_global, TYPE_VECTOR);
 
     def.name = code_genstring(name);
