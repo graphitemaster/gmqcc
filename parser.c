@@ -3425,6 +3425,16 @@ bool parser_compile_file(const char *filename)
     return parser_compile();
 }
 
+bool parser_compile_string_len(const char *name, const char *str, size_t len)
+{
+    parser->lex = lex_open_string(str, len, name);
+    if (!parser->lex) {
+        con_err("failed to create lexer for string \"%s\"\n", name);
+        return false;
+    }
+    return parser_compile();
+}
+
 bool parser_compile_string(const char *name, const char *str)
 {
     parser->lex = lex_open_string(str, strlen(str), name);

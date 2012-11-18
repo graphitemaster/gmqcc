@@ -202,6 +202,7 @@ static bool options_parse(int argc, char **argv) {
                     options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     opts_standard = COMPILER_QCC;
                 } else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc")) {
+                    options_set(opts_flags, FTEPP,                true);
                     options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     opts_standard = COMPILER_FTEQCC;
                 } else if (!strcmp(argarg, "qccx")) {
@@ -416,6 +417,7 @@ int main(int argc, char **argv) {
     int retval = 0;
     bool opts_output_free = false;
     bool progs_src = false;
+    FILE *outfile = NULL;
 
     app_name = argv[0];
     con_init();
@@ -440,6 +442,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_MULTIFILE_IF, true);
 
     options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
+    options_set(opts_flags, FTEPP, false);
 
     if (!options_parse(argc, argv)) {
         return usage();
@@ -466,6 +469,19 @@ int main(int argc, char **argv) {
         con_out("standard = %i\n", opts_standard);
     }
 
+    if (opts_pp_only) {
+        if (opts_output_wasset) {
+            outfile = util_fopen(opts_output, "wb");
+            if (!outfile) {
+                con_err("failed to open `%s` for writing\n", opts_output);
+                retval = 1;
+                goto cleanup;
+            }
+        }
+        else
+            outfile = stdout;
+    }
+
     if (!opts_pp_only) {
         if (!parser_init()) {
             con_err("failed to initialize parser\n");
@@ -473,17 +489,8 @@ int main(int argc, char **argv) {
             goto cleanup;
         }
     }
-    if (opts_pp_only || opts_standard == COMPILER_FTEQCC) {
-        FILE *out = NULL;
-        if (opts_output_wasset) {
-            out = util_fopen(opts_output, "wb");
-            if (!out) {
-                con_err("failed to open `%s` for writing\n", opts_output);
-                retval = 1;
-                goto cleanup;
-            }
-        }
-        if (!ftepp_init(out)) {
+    if (opts_pp_only || OPTS_FLAG(FTEPP)) {
+        if (!ftepp_init()) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
@@ -555,10 +562,29 @@ srcdone:
                     retval = 1;
                     goto cleanup;
                 }
+                fprintf(outfile, "%s", ftepp_get());
+                ftepp_flush();
             }
-            else if (!parser_compile_file(items[itr].filename)) {
-                retval = 1;
-                goto cleanup;
+            else {
+                if (OPTS_FLAG(FTEPP)) {
+                    const char *data;
+                    if (!ftepp_preprocess_file(items[itr].filename)) {
+                        retval = 1;
+                        goto cleanup;
+                    }
+                    data = ftepp_get();
+                    if (!parser_compile_string_len(items[itr].filename, data, vec_size(data)-1)) {
+                        retval = 1;
+                        goto cleanup;
+                    }
+                    ftepp_flush();
+                }
+                else {
+                    if (!parser_compile_file(items[itr].filename)) {
+                        retval = 1;
+                        goto cleanup;
+                    }
+                }
             }
 
             if (progs_src) {
