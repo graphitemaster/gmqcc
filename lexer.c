@@ -421,7 +421,7 @@ static bool lex_try_pragma(lex_file *lex)
         goto unroll;
 
     lex->line = line;
-    while (ch != '\n')
+    while (ch != '\n' && ch != EOF)
         ch = lex_getch(lex);
     return true;
 

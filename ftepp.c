@@ -63,6 +63,8 @@ typedef struct {
     ppmacro    **macros;
 
     char        *output_string;
+
+    char        *itemname;
 } ftepp_t;
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
@@ -166,6 +168,8 @@ static ftepp_t* ftepp_new()
 static void ftepp_delete(ftepp_t *self)
 {
     size_t i;
+    if (self->itemname)
+        mem_d(self->itemname);
     for (i = 0; i < vec_size(self->macros); ++i)
         ppmacro_delete(self->macros[i]);
     vec_free(self->macros);
@@ -864,6 +868,129 @@ static bool ftepp_undef(ftepp_t *ftepp)
     return true;
 }
 
+/* Special unescape-string function which skips a leading quote
+ * and stops at a quote, not just at \0
+ */
+static void unescape(const char *str, char *out) {
+    ++str;
+    while (*str && *str != '"') {
+        if (*str == '\\') {
+            ++str;
+            switch (*str) {
+                case '\\': *out++ = *str; break;
+                case '"':  *out++ = *str; break;
+                case 'a':  *out++ = '\a'; break;
+                case 'b':  *out++ = '\b'; break;
+                case 'r':  *out++ = '\r'; break;
+                case 'n':  *out++ = '\n'; break;
+                case 't':  *out++ = '\t'; break;
+                case 'f':  *out++ = '\f'; break;
+                case 'v':  *out++ = '\v'; break;
+                default:
+                    *out++ = '\\';
+                    *out++ = *str;
+                    break;
+            }
+            ++str;
+            continue;
+        }
+
+        *out++ = *str++;
+    }
+    *out = 0;
+}
+
+static char *ftepp_include_find(ftepp_t *ftepp, const char *file)
+{
+    char *filename = NULL;
+    size_t len;
+
+    if (ftepp->itemname) {
+        const char *last_slash;
+        last_slash = strrchr(ftepp->itemname, '/');
+        if (last_slash) {
+            len = last_slash - ftepp->itemname;
+            memcpy(vec_add(filename, len), ftepp->itemname, len);
+            vec_push(filename, '/');
+        }
+        else {
+            len = strlen(ftepp->itemname);
+            memcpy(vec_add(filename, len), ftepp->itemname, len);
+            if (vec_last(filename) != '/')
+                vec_push(filename, '/');
+        }
+    }
+    len = strlen(file);
+    memcpy(vec_add(filename, len), file, len);
+    vec_push(filename, 0);
+    return filename;
+}
+
+/**
+ * Include a file.
+ * FIXME: do we need/want a -I option?
+ * FIXME: what about when dealing with files in subdirectories coming from a progs.src?
+ */
+static bool ftepp_include(ftepp_t *ftepp)
+{
+    lex_file *old_lexer = ftepp->lex;
+    lex_file *inlex;
+    lex_ctx  ctx;
+    char     lineno[128];
+    char     *filename;
+
+    (void)ftepp_next(ftepp);
+    if (!ftepp_skipspace(ftepp))
+        return false;
+
+    if (ftepp->token != TOKEN_STRINGCONST) {
+        ftepp_error(ftepp, "expected filename to include");
+        return false;
+    }
+
+    ctx = ftepp_ctx(ftepp);
+
+    unescape(ftepp_tokval(ftepp), ftepp_tokval(ftepp));
+
+    ftepp_out(ftepp, "\n#pragma file(", false);
+    ftepp_out(ftepp, ftepp_tokval(ftepp), false);
+    ftepp_out(ftepp, ")\n#pragma line(1)\n", false);
+
+    filename = ftepp_include_find(ftepp, ftepp_tokval(ftepp));
+    inlex = lex_open(filename);
+    if (!inlex) {
+        ftepp_error(ftepp, "failed to open include file `%s`", filename);
+        vec_free(filename);
+        return false;
+    }
+    vec_free(filename);
+    ftepp->lex = inlex;
+    if (!ftepp_preprocess(ftepp)) {
+        lex_close(ftepp->lex);
+        ftepp->lex = old_lexer;
+        return false;
+    }
+    lex_close(ftepp->lex);
+    ftepp->lex = old_lexer;
+
+    ftepp_out(ftepp, "\n#pragma file(", false);
+    ftepp_out(ftepp, ctx.file, false);
+    snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
+    ftepp_out(ftepp, lineno, false);
+
+    /* skip the line */
+    (void)ftepp_next(ftepp);
+    if (!ftepp_skipspace(ftepp))
+        return false;
+    if (ftepp->token != TOKEN_EOL) {
+        ftepp_error(ftepp, "stray tokens after #include");
+        return false;
+    }
+    (void)ftepp_next(ftepp);
+
+    return true;
+}
+
 /* Basic structure handlers */
 static bool ftepp_else_allowed(ftepp_t *ftepp)
 {
@@ -977,6 +1104,9 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 ftepp_update_output_condition(ftepp);
                 break;
             }
+            else if (!strcmp(ftepp_tokval(ftepp), "include")) {
+                return ftepp_include(ftepp);
+            }
             else if (!strcmp(ftepp_tokval(ftepp), "pragma")) {
                 ftepp_out(ftepp, "#", false);
                 break;
@@ -1088,12 +1218,17 @@ static bool ftepp_preprocess_done()
         if (ftepp_warn(ftepp, WARN_MULTIFILE_IF, "#if spanning multiple files, is this intended?"))
             retval = false;
     }
+    if (ftepp->itemname) {
+        mem_d(ftepp->itemname);
+        ftepp->itemname = NULL;
+    }
     return retval;
 }
 
 bool ftepp_preprocess_file(const char *filename)
 {
     ftepp->lex = lex_open(filename);
+    ftepp->itemname = util_strdup(filename);
     if (!ftepp->lex) {
         con_out("failed to open file \"%s\"\n", filename);
         return false;
@@ -1107,8 +1242,8 @@ bool ftepp_preprocess_file(const char *filename)
 
 bool ftepp_preprocess_string(const char *name, const char *str)
 {
-    ftepp_t *ftepp = ftepp_new();
     ftepp->lex = lex_open_string(str, strlen(str), name);
+    ftepp->itemname = util_strdup(name);
     if (!ftepp->lex) {
         con_out("failed to create lexer for string \"%s\"\n", name);
         return false;
