@@ -436,6 +436,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_END_SYS_FIELDS, true);
     options_set(opts_warn, WARN_ASSIGN_FUNCTION_TYPES, true);
     options_set(opts_warn, WARN_PREPROCESSOR, true);
+    options_set(opts_warn, WARN_MULTIFILE_IF, true);
 
     options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
 
@@ -464,10 +465,19 @@ int main(int argc, char **argv) {
         con_out("standard = %i\n", opts_standard);
     }
 
-    if (!parser_init()) {
-        con_out("failed to initialize parser\n");
-        retval = 1;
-        goto cleanup;
+    if (!opts_pp_only) {
+        if (!parser_init()) {
+            con_err("failed to initialize parser\n");
+            retval = 1;
+            goto cleanup;
+        }
+    }
+    if (opts_pp_only || opts_standard == COMPILER_FTEQCC) {
+        if (!ftepp_init()) {
+            con_err("failed to initialize parser\n");
+            retval = 1;
+            goto cleanup;
+        }
     }
 
     util_debug("COM", "starting ...\n");

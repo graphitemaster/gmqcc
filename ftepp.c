@@ -152,7 +152,7 @@ static void ppmacro_delete(ppmacro *self)
     mem_d(self);
 }
 
-static ftepp_t* ftepp_init()
+static ftepp_t* ftepp_new()
 {
     ftepp_t *ftepp;
 
@@ -509,6 +509,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     ftepp->output_string = old_string_flag;
     ftepp->lex = inlex;
     if (!ftepp_preprocess(ftepp)) {
+        lex_close(ftepp->lex);
         retval = false;
         goto cleanup;
     }
@@ -1005,9 +1006,25 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     return newline;
 }
 
+/* Like in parser.c - files keep the previous state so we have one global
+ * preprocessor. Except here we will want to warn about dangling #ifs.
+ */
+static ftepp_t *ftepp;
+
+static bool ftepp_preprocess_done()
+{
+    bool retval = true;
+    lex_close(ftepp->lex);
+    ftepp->lex = NULL;
+    if (vec_size(ftepp->conditions)) {
+        if (ftepp_warn(ftepp, WARN_MULTIFILE_IF, "#if spanning multiple files, is this intended?"))
+            retval = false;
+    }
+    return retval;
+}
+
 bool ftepp_preprocess_file(const char *filename)
 {
-    ftepp_t *ftepp = ftepp_init();
     ftepp->lex = lex_open(filename);
     if (!ftepp->lex) {
         con_out("failed to open file \"%s\"\n", filename);
@@ -1017,13 +1034,12 @@ bool ftepp_preprocess_file(const char *filename)
         ftepp_delete(ftepp);
         return false;
     }
-    ftepp_delete(ftepp);
-    return true;
+    return ftepp_preprocess_done();
 }
 
 bool ftepp_preprocess_string(const char *name, const char *str)
 {
-    ftepp_t *ftepp = ftepp_init();
+    ftepp_t *ftepp = ftepp_new();
     ftepp->lex = lex_open_string(str, strlen(str), name);
     if (!ftepp->lex) {
         con_out("failed to create lexer for string \"%s\"\n", name);
@@ -1033,6 +1049,16 @@ bool ftepp_preprocess_string(const char *name, const char *str)
         ftepp_delete(ftepp);
         return false;
     }
+    return ftepp_preprocess_done();
+}
+
+bool ftepp_init()
+{
+    ftepp = ftepp_new();
+    return !!ftepp;
+}
+
+void ftepp_finish()
+{
     ftepp_delete(ftepp);
-    return true;
 }
