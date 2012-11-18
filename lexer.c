@@ -405,16 +405,21 @@ static bool lex_try_pragma(lex_file *lex)
         if (!strcmp(param, "line")) {
             if (lex->push_line)
                 lex->push_line--;
+            --line;
         }
         else
             goto unroll;
     }
+    else if (!strcmp(command, "file")) {
+        lex->name = util_strdup(param);
+        vec_push(lex_filenames, lex->name);
+    }
     else
         goto unroll;
 
+    lex->line = line;
     while (ch != '\n')
         ch = lex_getch(lex);
-    lex->line = line;
     return true;
 
 unroll:
