@@ -447,6 +447,10 @@ static void ftepp_stringify_token(ftepp_t *ftepp, pptoken *token)
         case TOKEN_STRINGCONST:
             ch = token->value;
             while (*ch) {
+                /* in preprocessor mode strings already are string,
+                 * so we don't get actual newline bytes here.
+                 * Still need to escape backslashes and quotes.
+                 */
                 switch (*ch) {
                     case '\\': ftepp_out(ftepp, "\\\\", false); break;
                     case '"':  ftepp_out(ftepp, "\\\"", false); break;
