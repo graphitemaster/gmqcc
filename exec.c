@@ -334,16 +334,15 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
     def = prog_getdef(prog, glob);
     value = (qcany*)(&prog->globals[glob]);
 
+    len = printf("[@%u] ", glob);
     if (def) {
         const char *name = prog_getstring(prog, def->name);
         if (name[0] == '#')
-            len = printf("$");
+            len += printf("$");
         else
-            len = printf("%s ", name);
+            len += printf("%s ", name);
         vtype = def->type & DEF_TYPEMASK;
     }
-    else
-        len = printf("[@%u] ", glob);
 
     switch (vtype) {
         case TYPE_VOID:
