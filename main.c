@@ -610,7 +610,8 @@ cleanup:
     con_close();
     vec_free(items);
 
-    parser_cleanup();
+    if (!opts_pp_only)
+        parser_cleanup();
     if (opts_output_free)
         mem_d((char*)opts_output);
 
