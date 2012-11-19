@@ -1720,9 +1720,6 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
 static bool parse_break_continue(parser_t *parser, ast_block *block, ast_expression **out, bool is_continue)
 {
-    ast_expression *exp = NULL;
-    ast_return     *ret = NULL;
-
     lex_ctx ctx = parser_ctx(parser);
 
     if (!parser_next(parser) || parser->tok != ';') {
@@ -1733,7 +1730,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     if (!parser_next(parser))
         parseerror(parser, "parse error");
 
-    *out = ast_breakcont_new(ctx, is_continue);
+    *out = (ast_expression*)ast_breakcont_new(ctx, is_continue);
     return true;
 }
 
