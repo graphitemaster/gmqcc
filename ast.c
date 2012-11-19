@@ -716,6 +716,33 @@ void ast_breakcont_delete(ast_breakcont *self)
     mem_d(self);
 }
 
+ast_switch* ast_switch_new(lex_ctx ctx, ast_expression *op)
+{
+    ast_instantiate(ast_switch, ctx, ast_switch_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_switch_codegen);
+
+    self->operand = op;
+    self->cases   = NULL;
+
+    return self;
+}
+
+void ast_switch_delete(ast_switch *self)
+{
+    size_t i;
+    ast_unref(self->operand);
+
+    for (i = 0; i < vec_size(self->cases); ++i) {
+        if (self->cases[i].value)
+            ast_unref(self->cases[i].value);
+        ast_unref(self->cases[i].code);
+    }
+    vec_free(self->cases);
+
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr)
 {
@@ -2226,6 +2253,150 @@ bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue,
 
     if (!ir_block_create_jump(func->curblock, target))
         return false;
+    return true;
+}
+
+bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+
+    ast_switch_case *def_case  = NULL;
+    ir_block        *def_bfall = NULL;
+
+    ir_value *dummy     = NULL;
+    ir_value *irop      = NULL;
+    ir_block *old_break = NULL;
+    ir_block *bout      = NULL;
+    ir_block *bfall     = NULL;
+    size_t    bout_id;
+    size_t    c;
+
+    char      typestr[1024];
+    uint16_t  cmpinstr;
+
+    if (lvalue) {
+        asterror(ast_ctx(self), "switch expression is not an l-value");
+        return false;
+    }
+
+    if (self->expression.outr) {
+        asterror(ast_ctx(self), "internal error: ast_switch cannot be reused!");
+        return false;
+    }
+    self->expression.outr = (ir_value*)1;
+
+    (void)lvalue;
+    (void)out;
+
+    cgen = self->operand->expression.codegen;
+    if (!(*cgen)((ast_expression*)(self->operand), func, false, &irop))
+        return false;
+
+    if (!vec_size(self->cases))
+        return true;
+
+    cmpinstr = type_eq_instr[irop->vtype];
+    if (cmpinstr >= AINSTR_END) {
+        ast_type_to_string(self->operand, typestr, sizeof(typestr));
+        asterror(ast_ctx(self), "invalid type to perform a switch on: %s", typestr);
+        return false;
+    }
+
+    bout_id = vec_size(func->ir_func->blocks);
+    bout = ir_function_create_block(func->ir_func, ast_function_label(func, "after_switch"));
+    if (!bout)
+        return false;
+
+    /* setup the break block */
+    old_break        = func->breakblock;
+    func->breakblock = bout;
+
+    /* Now create all cases */
+    for (c = 0; c < vec_size(self->cases); ++c) {
+        ir_value *cond, *val;
+        ir_block *bcase, *bnot;
+        size_t bnot_id;
+
+        ast_switch_case *swcase = &self->cases[c];
+
+        if (swcase->value) {
+            /* A regular case */
+            /* generate the condition operand */
+            cgen = swcase->value->expression.codegen;
+            if (!(*cgen)((ast_expression*)(swcase->value), func, false, &val))
+                return false;
+            /* generate the condition */
+            cond = ir_block_create_binop(func->curblock, ast_function_label(func, "switch_eq"), cmpinstr, irop, val);
+            if (!cond)
+                return false;
+
+            bcase = ir_function_create_block(func->ir_func, ast_function_label(func, "case"));
+            bnot = ir_function_create_block(func->ir_func, ast_function_label(func, "not_case"));
+            bnot_id = vec_size(func->ir_func->blocks);
+            if (!bcase || !bnot)
+                return false;
+            if (!ir_block_create_if(func->curblock, cond, bcase, bnot))
+                return false;
+
+            /* Make the previous case-end fall through */
+            if (bfall && !bfall->final) {
+                if (!ir_block_create_jump(bfall, bcase))
+                    return false;
+            }
+
+            /* enter the case */
+            func->curblock = bcase;
+            cgen = swcase->code->expression.codegen;
+            if (!(*cgen)((ast_expression*)swcase->code, func, false, &dummy))
+                return false;
+
+            /* remember this block to fall through from */
+            bfall = func->curblock;
+
+            /* enter the else and move it down */
+            func->curblock = bnot;
+            vec_remove(func->ir_func->blocks, bnot_id, 1);
+            vec_push(func->ir_func->blocks, bnot);
+        } else {
+            /* The default case */
+            /* Remember where to fall through from: */
+            def_bfall = bfall;
+            bfall     = NULL;
+            /* remember which case it was */
+            def_case  = swcase;
+        }
+    }
+
+    /* If there was a default case, put it down here */
+    if (def_case) {
+        ir_block *bcase;
+
+        /* No need to create an extra block */
+        bcase = func->curblock;
+
+        /* Insert the fallthrough jump */
+        if (def_bfall && !def_bfall->final) {
+            if (!ir_block_create_jump(def_bfall, bcase))
+                return false;
+        }
+
+        /* Now generate the default code */
+        cgen = def_case->code->expression.codegen;
+        if (!(*cgen)((ast_expression*)def_case->code, func, false, &dummy))
+            return false;
+    }
+
+    /* Jump from the last bnot to bout */
+    if (!func->curblock->final && !ir_block_create_jump(func->curblock, bout))
+        return false;
+
+    /* restore the break block */
+    func->breakblock = old_break;
+
+    /* Move 'bout' to the end, it's nicer */
+    vec_remove(func->ir_func->blocks, bout_id, 1);
+    vec_push(func->ir_func->blocks, bout);
+
     return true;
 }
 
