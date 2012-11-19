@@ -2389,6 +2389,8 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     /* Jump from the last bnot to bout */
     if (!func->curblock->final && !ir_block_create_jump(func->curblock, bout))
         return false;
+    /* enter the outgoing block */
+    func->curblock = bout;
 
     /* restore the break block */
     func->breakblock = old_break;
