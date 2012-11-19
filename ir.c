@@ -1133,7 +1133,12 @@ bool ir_values_overlap(const ir_value *a, const ir_value *b)
 
 bool ir_block_create_store_op(ir_block *self, int op, ir_value *target, ir_value *what)
 {
-    ir_instr *in = ir_instr_new(self, op);
+    ir_instr *in;
+    if (self->final) {
+        irerror(self->context, "unreachable statement (%s)", self->label);
+        return false;
+    }
+    in = ir_instr_new(self, op);
     if (!in)
         return false;
 
@@ -1206,7 +1211,7 @@ bool ir_block_create_return(ir_block *self, ir_value *v)
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)", self->label);
+        irerror(self->context, "unreachable statement (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1227,7 +1232,7 @@ bool ir_block_create_if(ir_block *self, ir_value *v,
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)", self->label);
+        irerror(self->context, "unreachable statement (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1257,7 +1262,7 @@ bool ir_block_create_jump(ir_block *self, ir_block *to)
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)", self->label);
+        irerror(self->context, "unreachable statement (%s)", self->label);
         return false;
     }
     self->final = true;
@@ -1277,7 +1282,7 @@ bool ir_block_create_goto(ir_block *self, ir_block *to)
 {
     ir_instr *in;
     if (self->final) {
-        irerror(self->context, "block already ended (%s)", self->label);
+        irerror(self->context, "unreachable statement (%s)", self->label);
         return false;
     }
     self->final = true;

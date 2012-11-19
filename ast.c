@@ -700,6 +700,22 @@ void ast_loop_delete(ast_loop *self)
     mem_d(self);
 }
 
+ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont)
+{
+    ast_instantiate(ast_breakcont, ctx, ast_breakcont_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_breakcont_codegen);
+
+    self->is_continue = iscont;
+
+    return self;
+}
+
+void ast_breakcont_delete(ast_breakcont *self)
+{
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr)
 {
@@ -2181,6 +2197,31 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     vec_remove(func->ir_func->blocks, bout_id, 1);
     vec_push(func->ir_func->blocks, bout);
 
+    return true;
+}
+
+bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ir_block *target;
+
+    if (lvalue) {
+        asterror(ast_ctx(self), "break/continue expression is not an l-value");
+        return false;
+    }
+
+    if (self->expression.outr) {
+        asterror(ast_ctx(self), "internal error: ast_breakcont cannot be reused!");
+        return false;
+    }
+    self->expression.outr = (ir_value*)1;
+
+    if (self->is_continue)
+        target = func->continueblock;
+    else
+        target = func->breakblock;
+
+    if (!ir_block_create_jump(func->curblock, target))
+        return false;
     return true;
 }
 

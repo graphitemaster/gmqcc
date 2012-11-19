@@ -1718,6 +1718,25 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     return true;
 }
 
+static bool parse_break_continue(parser_t *parser, ast_block *block, ast_expression **out, bool is_continue)
+{
+    ast_expression *exp = NULL;
+    ast_return     *ret = NULL;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    if (!parser_next(parser) || parser->tok != ';') {
+        parseerror(parser, "expected semicolon");
+        return false;
+    }
+
+    if (!parser_next(parser))
+        parseerror(parser, "parse error");
+
+    *out = ast_breakcont_new(ctx, is_continue);
+    return true;
+}
+
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
 {
     if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
@@ -1776,6 +1795,14 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
                     return false;
             }
             return parse_for(parser, block, out);
+        }
+        else if (!strcmp(parser_tokval(parser), "break"))
+        {
+            return parse_break_continue(parser, block, out, false);
+        }
+        else if (!strcmp(parser_tokval(parser), "continue"))
+        {
+            return parse_break_continue(parser, block, out, true);
         }
         parseerror(parser, "Unexpected keyword");
         return false;

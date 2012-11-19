@@ -46,6 +46,7 @@ typedef struct ast_unary_s       ast_unary;
 typedef struct ast_return_s      ast_return;
 typedef struct ast_member_s      ast_member;
 typedef struct ast_array_index_s ast_array_index;
+typedef struct ast_breakcont_s   ast_breakcont;
 
 enum {
     TYPE_ast_node,
@@ -64,7 +65,8 @@ enum {
     TYPE_ast_unary,
     TYPE_ast_return,
     TYPE_ast_member,
-    TYPE_ast_array_index
+    TYPE_ast_array_index,
+    TYPE_ast_breakcont
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
@@ -444,6 +446,18 @@ ast_loop* ast_loop_new(lex_ctx ctx,
 void ast_loop_delete(ast_loop*);
 
 bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
+
+/* Break/Continue
+ */
+struct ast_breakcont_s
+{
+    ast_expression_common expression;
+    bool is_continue;
+};
+ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont);
+void ast_breakcont_delete(ast_breakcont*);
+
+bool ast_breakcont_codegen(ast_breakcont*, ast_function*, bool lvalue, ir_value**);
 
 /* CALL node
  *
