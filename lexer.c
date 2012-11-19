@@ -6,6 +6,33 @@
 #include "gmqcc.h"
 #include "lexer.h"
 
+/*
+ * List of Keywords
+ */
+
+/* original */
+static const char *keywords_qc[] = {
+    "for", "do", "while",
+    "if", "else",
+    "local",
+    "return",
+    "const"
+};
+static size_t num_keywords_qc = sizeof(keywords_qc) / sizeof(keywords_qc[0]);
+
+/* For fte/gmgqcc */
+static const char *keywords_fg[] = {
+    "var",
+    "switch",
+    "struct", "union",
+    "break", "continue"
+};
+static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
+
+/*
+ * Lexer code
+ */
+
 char* *lex_filenames;
 
 void lexerror(lex_file *lex, const char *fmt, ...)
@@ -1147,29 +1174,17 @@ int lex_do(lex_file *lex)
         } else if (!strcmp(v, "vector")) {
             lex->tok.ttype = TOKEN_TYPENAME;
             lex->tok.constval.t = TYPE_VECTOR;
-        } else if (!strcmp(v, "for")  ||
-                 !strcmp(v, "while")  ||
-                 !strcmp(v, "do")     ||
-                 !strcmp(v, "if")     ||
-                 !strcmp(v, "else")   ||
-                 !strcmp(v, "local")  ||
-                 !strcmp(v, "return") ||
-                 !strcmp(v, "not")    ||
-                 !strcmp(v, "const"))
-        {
-            lex->tok.ttype = TOKEN_KEYWORD;
-        }
-        else if (opts_standard != COMPILER_QCC)
-        {
-            /* other standards reserve these keywords */
-            if (!strcmp(v, "switch") ||
-                !strcmp(v, "struct") ||
-                !strcmp(v, "union")  ||
-                !strcmp(v, "break")  ||
-                !strcmp(v, "continue") ||
-                !strcmp(v, "var"))
-            {
-                lex->tok.ttype = TOKEN_KEYWORD;
+        } else {
+            size_t kw;
+            for (kw = 0; kw < num_keywords_qc; ++kw) {
+                if (!strcmp(v, keywords_qc[kw]))
+                    return (lex->tok.ttype = TOKEN_KEYWORD);
+            }
+            if (opts_standard != COMPILER_QCC) {
+                for (kw = 0; kw < num_keywords_fg; ++kw) {
+                    if (!strcmp(v, keywords_fg[kw]))
+                        return (lex->tok.ttype = TOKEN_KEYWORD);
+                }
             }
         }
 
