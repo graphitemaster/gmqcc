@@ -10,32 +10,32 @@ char* *lex_filenames;
 
 void lexerror(lex_file *lex, const char *fmt, ...)
 {
-	va_list ap;
+    va_list ap;
 
-	va_start(ap, fmt);
-	if (lex)
+    va_start(ap, fmt);
+    if (lex)
         con_vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
     else
         con_vprintmsg(LVL_ERROR, "", 0, "parse error", fmt, ap);
-	va_end(ap);
+    va_end(ap);
 }
 
 bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
-	va_list ap;
-	int lvl = LVL_WARNING;
+    va_list ap;
+    int lvl = LVL_WARNING;
 
     if (!OPTS_WARN(warntype))
         return false;
 
     if (opts_werror)
-	    lvl = LVL_ERROR;
+        lvl = LVL_ERROR;
 
-	va_start(ap, fmt);
+    va_start(ap, fmt);
     con_vprintmsg(lvl, lex->name, lex->sline, "warning", fmt, ap);
-	va_end(ap);
+    va_end(ap);
 
-	return opts_werror;
+    return opts_werror;
 }
 
 
@@ -289,13 +289,13 @@ static int lex_getch(lex_file *lex)
 
     if (lex->peekpos) {
         lex->peekpos--;
-        if (lex->peek[lex->peekpos] == '\n')
+        if (!lex->push_line && lex->peek[lex->peekpos] == '\n')
             lex->line++;
         return lex->peek[lex->peekpos];
     }
 
     ch = lex_fgetc(lex);
-    if (ch == '\n')
+    if (!lex->push_line && ch == '\n')
         lex->line++;
     else if (ch == '?')
         return lex_try_trigraph(lex, ch);
@@ -307,7 +307,7 @@ static int lex_getch(lex_file *lex)
 static void lex_ungetch(lex_file *lex, int ch)
 {
     lex->peek[lex->peekpos++] = ch;
-    if (ch == '\n')
+    if (!lex->push_line && ch == '\n')
         lex->line--;
 }
 
@@ -345,6 +345,115 @@ static void lex_endtoken(lex_file *lex)
 {
     vec_push(lex->tok.value, 0);
     vec_shrinkby(lex->tok.value, 1);
+}
+
+static bool lex_try_pragma(lex_file *lex)
+{
+    int ch;
+    char *pragma  = NULL;
+    char *command = NULL;
+    char *param   = NULL;
+    size_t line;
+
+    if (lex->flags.preprocessing)
+        return false;
+
+    line = lex->line;
+
+    ch = lex_getch(lex);
+    if (ch != '#') {
+        lex_ungetch(lex, ch);
+        return false;
+    }
+
+    for (ch = lex_getch(lex); vec_size(pragma) < 8 && ch >= 'a' && ch <= 'z'; ch = lex_getch(lex))
+        vec_push(pragma, ch);
+    vec_push(pragma, 0);
+
+    if (ch != ' ' || strcmp(pragma, "pragma")) {
+        lex_ungetch(lex, ch);
+        goto unroll;
+    }
+
+    for (ch = lex_getch(lex); vec_size(command) < 32 && ch >= 'a' && ch <= 'z'; ch = lex_getch(lex))
+        vec_push(command, ch);
+    vec_push(command, 0);
+
+    if (ch != '(') {
+        lex_ungetch(lex, ch);
+        goto unroll;
+    }
+
+    for (ch = lex_getch(lex); vec_size(param) < 32 && ch != ')' && ch != '\n'; ch = lex_getch(lex))
+        vec_push(param, ch);
+    vec_push(param, 0);
+
+    if (ch != ')') {
+        lex_ungetch(lex, ch);
+        goto unroll;
+    }
+
+    if (!strcmp(command, "push")) {
+        if (!strcmp(param, "line")) {
+            lex->push_line++;
+            --line;
+        }
+        else
+            goto unroll;
+    }
+    else if (!strcmp(command, "pop")) {
+        if (!strcmp(param, "line")) {
+            if (lex->push_line)
+                lex->push_line--;
+            --line;
+        }
+        else
+            goto unroll;
+    }
+    else if (!strcmp(command, "file")) {
+        lex->name = util_strdup(param);
+        vec_push(lex_filenames, lex->name);
+    }
+    else if (!strcmp(command, "line")) {
+        line = strtol(param, NULL, 0)-1;
+    }
+    else
+        goto unroll;
+
+    lex->line = line;
+    while (ch != '\n' && ch != EOF)
+        ch = lex_getch(lex);
+    return true;
+
+unroll:
+    if (command) {
+        vec_pop(command);
+        while (vec_size(command)) {
+            lex_ungetch(lex, vec_last(command));
+            vec_pop(command);
+        }
+        vec_free(command);
+    }
+    if (command) {
+        vec_pop(command);
+        while (vec_size(command)) {
+            lex_ungetch(lex, vec_last(command));
+            vec_pop(command);
+        }
+        vec_free(command);
+    }
+    if (pragma) {
+        vec_pop(pragma);
+        while (vec_size(pragma)) {
+            lex_ungetch(lex, vec_last(pragma));
+            vec_pop(pragma);
+        }
+        vec_free(pragma);
+    }
+    lex_ungetch(lex, '#');
+
+    lex->line = line;
+    return false;
 }
 
 /* Skip whitespace and comments and return the first
@@ -388,6 +497,10 @@ static int lex_skipwhite(lex_file *lex)
     {
         ch = lex_getch(lex);
         while (ch != EOF && isspace(ch)) {
+            if (ch == '\n') {
+                if (lex_try_pragma(lex))
+                    continue;
+            }
             if (lex->flags.preprocessing) {
                 if (ch == '\n') {
                     /* end-of-line */
@@ -415,13 +528,17 @@ static int lex_skipwhite(lex_file *lex)
 
                 if (lex->flags.preprocessing) {
                     haswhite = true;
+                    /*
                     lex_tokench(lex, '/');
                     lex_tokench(lex, '/');
+                    */
+                    lex_tokench(lex, ' ');
+                    lex_tokench(lex, ' ');
                 }
 
                 while (ch != EOF && ch != '\n') {
                     if (lex->flags.preprocessing)
-                        lex_tokench(lex, ch);
+                        lex_tokench(lex, ' '); /* ch); */
                     ch = lex_getch(lex);
                 }
                 if (lex->flags.preprocessing) {
@@ -436,8 +553,12 @@ static int lex_skipwhite(lex_file *lex)
                 /* multiline comment */
                 if (lex->flags.preprocessing) {
                     haswhite = true;
+                    /*
                     lex_tokench(lex, '/');
                     lex_tokench(lex, '*');
+                    */
+                    lex_tokench(lex, ' ');
+                    lex_tokench(lex, ' ');
                 }
 
                 while (ch != EOF)
@@ -447,14 +568,18 @@ static int lex_skipwhite(lex_file *lex)
                         ch = lex_getch(lex);
                         if (ch == '/') {
                             if (lex->flags.preprocessing) {
+                                /*
                                 lex_tokench(lex, '*');
                                 lex_tokench(lex, '/');
+                                */
+                                lex_tokench(lex, ' ');
+                                lex_tokench(lex, ' ');
                             }
                             break;
                         }
                     }
                     if (lex->flags.preprocessing) {
-                        lex_tokench(lex, ch);
+                        lex_tokench(lex, ' '); /* ch); */
                     }
                 }
                 ch = ' '; /* cause TRUE in the isspace check */
@@ -561,7 +686,17 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
         if (ch == quote)
             return TOKEN_STRINGCONST;
 
-        if (!lex->flags.preprocessing && ch == '\\') {
+        if (lex->flags.preprocessing && ch == '\\') {
+            lex_tokench(lex, ch);
+            ch = lex_getch(lex);
+            if (ch == EOF) {
+                lexerror(lex, "unexpected end of file");
+                lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
+                return (lex->tok.ttype = TOKEN_ERROR);
+            }
+            lex_tokench(lex, ch);
+        }
+        else if (ch == '\\') {
             ch = lex_getch(lex);
             if (ch == EOF) {
                 lexerror(lex, "unexpected end of file");
@@ -571,6 +706,8 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 
             switch (ch) {
             case '\\': break;
+            case '\'': break;
+            case '"':  break;
             case 'a':  ch = '\a'; break;
             case 'b':  ch = '\b'; break;
             case 'r':  ch = '\r'; break;
@@ -678,7 +815,21 @@ int lex_do(lex_file *lex)
         return TOKEN_FATAL;
 #endif
 
-    ch = lex_skipwhite(lex);
+    while (true) {
+        ch = lex_skipwhite(lex);
+        if (!lex->flags.mergelines || ch != '\\')
+            break;
+        ch = lex_getch(lex);
+        if (ch != '\n') {
+            lex_ungetch(lex, ch);
+            ch = '\\';
+            break;
+        }
+        /* we reached a linemerge */
+        lex_tokench(lex, '\n');
+        continue;
+    }
+
     lex->sline = lex->line;
     lex->tok.ctx.line = lex->sline;
     lex->tok.ctx.file = lex->name;
@@ -851,6 +1002,7 @@ int lex_do(lex_file *lex)
                 return (lex->tok.ttype = TOKEN_OPERATOR);
         case ')':
         case ';':
+        case ':':
         case '{':
         case '}':
         case ']':

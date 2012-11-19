@@ -20,6 +20,9 @@ typedef struct {
     ast_value    **imm_string;
     ast_value    **imm_vector;
 
+    /* must be deleted first, they reference immediates and values */
+    ast_value    **accessors;
+
     ast_value *imm_float_zero;
     ast_value *imm_vector_zero;
 
@@ -2396,6 +2399,7 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
 {
     ast_function   *func = NULL;
     ast_value      *fval = NULL;
+    ast_block      *body = NULL;
 
     fval = ast_value_new(ast_ctx(array), funcname, TYPE_FUNCTION);
     if (!fval) {
@@ -2410,7 +2414,18 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
         return false;
     }
 
+    body = ast_block_new(ast_ctx(array));
+    if (!body) {
+        parseerror(parser, "failed to create block for array accessor");
+        ast_delete(fval);
+        ast_delete(func);
+        return false;
+    }
+
+    vec_push(func->blocks, body);
     *out = fval;
+
+    vec_push(parser->accessors, fval);
 
     return true;
 }
@@ -2418,7 +2433,6 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
 static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_block      *body = NULL;
     ast_value      *index = NULL;
     ast_value      *value = NULL;
     ast_function   *func;
@@ -2433,12 +2447,6 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
         return false;
     func = fval->constval.vfunc;
     fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
-
-    body = ast_block_new(ast_ctx(array));
-    if (!body) {
-        parseerror(parser, "failed to create block for array accessor");
-        goto cleanup;
-    }
 
     index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
     value = ast_value_copy((ast_value*)array->expression.next);
@@ -2457,12 +2465,10 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    vec_push(body->exprs, root);
-    vec_push(func->blocks, body);
+    vec_push(func->blocks[0]->exprs, root);
     array->setter = fval;
     return true;
 cleanup:
-    if (body)  ast_delete(body);
     if (index) ast_delete(index);
     if (value) ast_delete(value);
     if (root)  ast_delete(root);
@@ -2474,7 +2480,6 @@ cleanup:
 static bool parser_create_array_field_setter(parser_t *parser, ast_value *array, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_block      *body = NULL;
     ast_value      *entity = NULL;
     ast_value      *index = NULL;
     ast_value      *value = NULL;
@@ -2490,12 +2495,6 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         return false;
     func = fval->constval.vfunc;
     fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
-
-    body = ast_block_new(ast_ctx(array));
-    if (!body) {
-        parseerror(parser, "failed to create block for array accessor");
-        goto cleanup;
-    }
 
     entity = ast_value_new(ast_ctx(array), "entity", TYPE_ENTITY);
     index  = ast_value_new(ast_ctx(array), "index",  TYPE_FLOAT);
@@ -2515,12 +2514,10 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         goto cleanup;
     }
 
-    vec_push(body->exprs, root);
-    vec_push(func->blocks, body);
+    vec_push(func->blocks[0]->exprs, root);
     array->setter = fval;
     return true;
 cleanup:
-    if (body)   ast_delete(body);
     if (entity) ast_delete(entity);
     if (index)  ast_delete(index);
     if (value)  ast_delete(value);
@@ -2533,7 +2530,6 @@ cleanup:
 static bool parser_create_array_getter(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname)
 {
     ast_expression *root = NULL;
-    ast_block      *body = NULL;
     ast_value      *index = NULL;
     ast_value      *fval;
     ast_function   *func;
@@ -2551,12 +2547,6 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     func = fval->constval.vfunc;
     fval->expression.next = ast_type_copy(ast_ctx(array), elemtype);
 
-    body = ast_block_new(ast_ctx(array));
-    if (!body) {
-        parseerror(parser, "failed to create block for array accessor");
-        goto cleanup;
-    }
-
     index = ast_value_new(ast_ctx(array), "index", TYPE_FLOAT);
 
     if (!index) {
@@ -2571,12 +2561,10 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    vec_push(body->exprs, root);
-    vec_push(func->blocks, body);
+    vec_push(func->blocks[0]->exprs, root);
     array->getter = fval;
     return true;
 cleanup:
-    if (body)  ast_delete(body);
     if (index) ast_delete(index);
     if (root)  ast_delete(root);
     ast_delete(func);
@@ -2649,8 +2637,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
     }
 
     /* sanity check */
-    if (vec_size(params) > 8)
-        parseerror(parser, "more than 8 parameters are currently not supported");
+    if (vec_size(params) > 8 && opts_standard == COMPILER_QCC)
+        (void)!parsewarning(parser, WARN_EXTENSIONS, "more than 8 parameters are not supported by this standard");
 
     /* parse-out */
     if (!parser_next(parser)) {
@@ -3431,7 +3419,17 @@ bool parser_compile_file(const char *filename)
 {
     parser->lex = lex_open(filename);
     if (!parser->lex) {
-        con_out("failed to open file \"%s\"\n", filename);
+        con_err("failed to open file \"%s\"\n", filename);
+        return false;
+    }
+    return parser_compile();
+}
+
+bool parser_compile_string_len(const char *name, const char *str, size_t len)
+{
+    parser->lex = lex_open_string(str, len, name);
+    if (!parser->lex) {
+        con_err("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
     return parser_compile();
@@ -3441,7 +3439,7 @@ bool parser_compile_string(const char *name, const char *str)
 {
     parser->lex = lex_open_string(str, strlen(str), name);
     if (!parser->lex) {
-        con_out("failed to create lexer for string \"%s\"\n", name);
+        con_err("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
     return parser_compile();
@@ -3450,6 +3448,11 @@ bool parser_compile_string(const char *name, const char *str)
 void parser_cleanup()
 {
     size_t i;
+    for (i = 0; i < vec_size(parser->accessors); ++i) {
+        ast_delete(parser->accessors[i]->constval.vfunc);
+        parser->accessors[i]->constval.vfunc = NULL;
+        ast_delete(parser->accessors[i]);
+    }
     for (i = 0; i < vec_size(parser->functions); ++i) {
         ast_delete(parser->functions[i]);
     }
@@ -3470,6 +3473,7 @@ void parser_cleanup()
         ast_delete(parser->globals[i].var);
         mem_d(parser->globals[i].name);
     }
+    vec_free(parser->accessors);
     vec_free(parser->functions);
     vec_free(parser->imm_vector);
     vec_free(parser->imm_string);

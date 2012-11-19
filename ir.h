@@ -290,6 +290,8 @@ typedef struct ir_builder_s
     ir_value    **globals;
     ir_value    **fields;
 
+    ir_value    **extparams;
+
     const char **filenames;
     qcint       *filestrings;
     /* we cache the #IMMEDIATE string here */

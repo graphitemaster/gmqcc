@@ -1,0 +1,39 @@
+                           Installing gmqcc
+
+1. Prerequisites
+    - A C-Compiler such as gcc or clang
+    - GNU Make. This document will assume GNU-Make to be executed via
+      `make'. On BSD systems you probably have to use `gmake' instead.
+
+2. Compilation
+    Run the GNU make program `make' or `gmake'.
+
+        make
+
+    If no error appears, the following binary files will have been
+    created:
+        - gmqcc
+        - qcvm
+
+3. Installation
+    The `install' target will install the 2 binaries to /usr/local/bin
+    by default.
+    The Makefile honors the following variables:
+
+        - DESTDIR: The installation directory root.
+        - PREFIX:  The installation prefix, default: /usr/local
+        - BINDIR:  Directory for binary executables,
+                   deafult: $PREFIX/bin
+
+    To install to /usr/local run:
+
+        make install
+
+    To install to /usr run:
+
+        make PREFIX=/usr install
+
+    To install to a package-staging directory such as $pkgdir when
+    writing an ArchLinux PKGBUILD file:
+
+        make DESTDIR=$pkgdir install

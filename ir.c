@@ -259,6 +259,7 @@ ir_builder* ir_builder_new(const char *modulename)
     self->functions   = NULL;
     self->globals     = NULL;
     self->fields      = NULL;
+    self->extparams   = NULL;
     self->filenames   = NULL;
     self->filestrings = NULL;
 
@@ -280,6 +281,10 @@ void ir_builder_delete(ir_builder* self)
         ir_function_delete_quick(self->functions[i]);
     }
     vec_free(self->functions);
+    for (i = 0; i != vec_size(self->extparams); ++i) {
+        ir_value_delete(self->extparams[i]);
+    }
+    vec_free(self->extparams);
     for (i = 0; i != vec_size(self->globals); ++i) {
         ir_value_delete(self->globals[i]);
     }
@@ -2500,10 +2505,13 @@ tailcall:
              *      generation already. This would even include later
              *      reuse.... probably... :)
              */
-            size_t p;
+            size_t p, first;
             ir_value *retvalue;
 
-            for (p = 0; p < vec_size(instr->params); ++p)
+            first = vec_size(instr->params);
+            if (first > 8)
+                first = 8;
+            for (p = 0; p < first; ++p)
             {
                 ir_value *param = instr->params[p];
 
@@ -2518,6 +2526,33 @@ tailcall:
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
                 vec_push(code_statements, stmt);
             }
+            /* No whandle extparams */
+            first = vec_size(instr->params);
+            for (; p < first; ++p)
+            {
+                ir_builder *ir = func->owner;
+                ir_value *param = instr->params[p];
+                ir_value *target;
+
+                if (p-8 >= vec_size(ir->extparams)) {
+                    irerror(instr->context, "Not enough extparam-globals have been created");
+                    return false;
+                }
+
+                target = ir->extparams[p-8];
+
+                stmt.opcode = INSTR_STORE_F;
+                stmt.o3.u1 = 0;
+
+                if (param->vtype == TYPE_FIELD)
+                    stmt.opcode = field_store_instr[param->fieldtype];
+                else
+                    stmt.opcode = type_store_instr[param->vtype];
+                stmt.o1.u1 = ir_value_code_addr(param);
+                stmt.o2.u1 = ir_value_code_addr(target);
+                vec_push(code_statements, stmt);
+            }
+
             stmt.opcode = INSTR_CALL0 + vec_size(instr->params);
             if (stmt.opcode > INSTR_CALL8)
                 stmt.opcode = INSTR_CALL8;
@@ -2652,6 +2687,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     fun.file    = ir_builder_filestring(ir, global->context.file);
     fun.profile = 0; /* always 0 */
     fun.nargs   = vec_size(irfun->params);
+    if (fun.nargs > 8)
+        fun.nargs = 8;
 
     for (i = 0;i < 8; ++i) {
         if (i >= fun.nargs)
@@ -2698,6 +2735,63 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     return true;
 }
 
+static void ir_gen_extparam(ir_builder *ir)
+{
+    prog_section_def def;
+    ir_value        *global;
+    char             name[128];
+
+    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparams)+8));
+    global = ir_value_var(name, store_global, TYPE_VECTOR);
+
+    def.name = code_genstring(name);
+    def.type = TYPE_VECTOR;
+    def.offset = vec_size(code_globals);
+
+    vec_push(code_defs, def);
+    ir_value_code_setaddr(global, def.offset);
+    vec_push(code_globals, 0);
+    vec_push(code_globals, 0);
+    vec_push(code_globals, 0);
+
+    vec_push(ir->extparams, global);
+}
+
+static bool gen_function_extparam_copy(ir_function *self)
+{
+    size_t i, ext, numparams;
+
+    ir_builder *ir = self->owner;
+    ir_value   *ep;
+    prog_section_statement stmt;
+
+    numparams = vec_size(self->params);
+    if (!numparams)
+        return true;
+
+    stmt.opcode = INSTR_STORE_F;
+    stmt.o3.s1 = 0;
+    for (i = 8; i < numparams; ++i) {
+        ext = i - 8;
+        if (ext >= vec_size(ir->extparams))
+            ir_gen_extparam(ir);
+
+        ep = ir->extparams[ext];
+
+        stmt.opcode = type_store_instr[self->locals[i]->vtype];
+        if (self->locals[i]->vtype == TYPE_FIELD &&
+            self->locals[i]->fieldtype == TYPE_VECTOR)
+        {
+            stmt.opcode = INSTR_STORE_V;
+        }
+        stmt.o1.u1 = ir_value_code_addr(ep);
+        stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
+        vec_push(code_statements, stmt);
+    }
+
+    return true;
+}
+
 static bool gen_global_function_code(ir_builder *ir, ir_value *global)
 {
     prog_section_function *fundef;
@@ -2721,6 +2815,10 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     fundef = &code_functions[irfun->code_function_def];
 
     fundef->entry = vec_size(code_statements);
+    if (!gen_function_extparam_copy(irfun)) {
+        irerror(irfun->context, "Failed to generate extparam-copy code for function %s", irfun->name);
+        return false;
+    }
     if (!gen_function_code(irfun)) {
         irerror(irfun->context, "Failed to generate code for function %s", irfun->name);
         return false;
@@ -2972,7 +3070,8 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     stmt.o3.u1 = 0;
     vec_push(code_statements, stmt);
 
-    con_out("writing '%s'...\n", filename);
+    if (!opts_pp_only)
+        con_out("writing '%s'...\n", filename);
     return code_write(filename);
 }
 

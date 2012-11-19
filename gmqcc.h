@@ -752,6 +752,18 @@ bool parser_compile_file  (const char *filename);
 bool parser_compile_string(const char *name, const char *str);
 bool parser_finish        (const char *output);
 void parser_cleanup       ();
+/* There's really no need to strlen() preprocessed files */
+bool parser_compile_string_len(const char *name, const char *str, size_t len);
+
+/*===================================================================*/
+/*====================== ftepp.c commandline ========================*/
+/*===================================================================*/
+bool ftepp_init             ();
+bool ftepp_preprocess_file  (const char *filename);
+bool ftepp_preprocess_string(const char *name, const char *str);
+void ftepp_finish           ();
+const char *ftepp_get       ();
+void ftepp_flush            ();
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
