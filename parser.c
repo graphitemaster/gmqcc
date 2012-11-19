@@ -1678,6 +1678,46 @@ onerr:
     return false;
 }
 
+static bool parse_return(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    ast_expression *exp = NULL;
+    ast_return     *ret = NULL;
+    ast_value      *expected = parser->function->vtype;
+
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected return expression");
+        return false;
+    }
+
+    if (parser->tok != ';') {
+        exp = parse_expression(parser, false);
+        if (!exp)
+            return false;
+
+        if (exp->expression.vtype != expected->expression.next->expression.vtype) {
+            parseerror(parser, "return with invalid expression");
+        }
+
+        ret = ast_return_new(exp->expression.node.context, exp);
+        if (!ret) {
+            ast_delete(exp);
+            return false;
+        }
+    } else {
+        if (!parser_next(parser))
+            parseerror(parser, "parse error");
+        if (expected->expression.next->expression.vtype != TYPE_VOID) {
+            if (opts_standard != COMPILER_GMQCC)
+                (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
+            else
+                parseerror(parser, "return without value");
+        }
+        ret = ast_return_new(parser_ctx(parser), NULL);
+    }
+    *out = (ast_expression*)ret;
+    return true;
+}
+
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
 {
     if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
@@ -1715,42 +1755,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         }
         else if (!strcmp(parser_tokval(parser), "return"))
         {
-            ast_expression *exp = NULL;
-            ast_return     *ret = NULL;
-            ast_value      *expected = parser->function->vtype;
-
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected return expression");
-                return false;
-            }
-
-            if (parser->tok != ';') {
-                exp = parse_expression(parser, false);
-                if (!exp)
-                    return false;
-
-                if (exp->expression.vtype != expected->expression.next->expression.vtype) {
-                    parseerror(parser, "return with invalid expression");
-                }
-
-                ret = ast_return_new(exp->expression.node.context, exp);
-                if (!ret) {
-                    ast_delete(exp);
-                    return false;
-                }
-            } else {
-                if (!parser_next(parser))
-                    parseerror(parser, "parse error");
-                if (expected->expression.next->expression.vtype != TYPE_VOID) {
-                    if (opts_standard != COMPILER_GMQCC)
-                        (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
-                    else
-                        parseerror(parser, "return without value");
-                }
-                ret = ast_return_new(parser_ctx(parser), NULL);
-            }
-            *out = (ast_expression*)ret;
-            return true;
+            return parse_return(parser, block, out);
         }
         else if (!strcmp(parser_tokval(parser), "if"))
         {
