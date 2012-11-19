@@ -2331,8 +2331,8 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
                 return false;
 
             bcase = ir_function_create_block(func->ir_func, ast_function_label(func, "case"));
-            bnot = ir_function_create_block(func->ir_func, ast_function_label(func, "not_case"));
             bnot_id = vec_size(func->ir_func->blocks);
+            bnot = ir_function_create_block(func->ir_func, ast_function_label(func, "not_case"));
             if (!bcase || !bnot)
                 return false;
             if (!ir_block_create_if(func->curblock, cond, bcase, bnot))
