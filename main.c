@@ -221,13 +221,13 @@ static bool options_parse(int argc, char **argv) {
                 continue;
             }
             if (options_long_gcc("redirout", &argc, &argv, &redirout)) {
+                con_change(redirout, redirerr);
                 continue;
             }
             if (options_long_gcc("redirerr", &argc, &argv, &redirerr)) {
+                con_change(redirout, redirerr);
                 continue;
             }
-            
-            con_change(redirout, redirerr);
 
             if (!strcmp(argv[0]+1, "debug")) {
                 opts_debug = true;
