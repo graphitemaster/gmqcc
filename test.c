@@ -544,6 +544,9 @@ typedef struct {
     FILE           **runhandles;
     FILE            *stderrlog;
     FILE            *stdoutlog;
+    char            *stdoutlogfile;
+    char            *stderrlogfile;
+    bool             compiled;
 } task_t;
 
 task_t *task_tasks = NULL;
@@ -619,19 +622,21 @@ bool task_propogate(const char *curdir) {
                 continue;
             }
             
+            con_out("executing test: `%s` [%s]\n", template->description, buf);
+            
             /*
              * Open up some file desciptors for logging the stdout/stderr
              * to our own.
              */
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s/%s.stdout", curdir, template->sourcefile);
-            task.stderrlog = fopen(buf, "w");
+            task.stdoutlogfile = util_strdup(buf);
+            task.stdoutlog     = fopen(buf, "w");
             
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s/%s.stderr", curdir, template->sourcefile);
-            task.stdoutlog = fopen(buf, "w");
-            
-            con_out("executing test: `%s` [%s]\n", template->description, buf);
+            task.stderrlogfile = util_strdup(buf);
+            task.stderrlog     = fopen(buf, "w");
             
             vec_push(task_tasks, task);
         }
@@ -666,6 +671,34 @@ void task_cleanup(const char *curdir) {
     closedir(dir);
 }
 
+/*
+ * Task precleanup removes any existing temporary files or log files
+ * left behind from a previous invoke of the test-suite.
+ */
+void task_precleanup(const char *curdir) {
+    DIR             *dir;
+    struct dirent   *files;
+    char             buffer[4096];
+
+    dir = opendir(curdir);
+    
+    while ((files = readdir(dir))) {
+        memset(buffer, 0, sizeof(buffer));
+        if (strstr(files->d_name, "TMP")     ||
+            strstr(files->d_name, ".stdout") ||
+            strstr(files->d_name, ".stderr"))
+        {
+            snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
+            if (remove(buffer))
+                con_err("error removing temporary file: %s\n", buffer);
+            else
+                con_out("removed temporary file: %s\n", buffer);
+        }
+    }
+    
+    closedir(dir);
+}
+
 void task_destroy(const char *curdir) {
     /*
      * Free all the data in the task list and finally the list itself
@@ -681,6 +714,26 @@ void task_destroy(const char *curdir) {
         if (task_tasks[i].runhandles) task_pclose(task_tasks[i].runhandles);
         if (task_tasks[i].stdoutlog)  fclose     (task_tasks[i].stdoutlog);
         if (task_tasks[i].stderrlog)  fclose     (task_tasks[i].stderrlog);
+        
+        /*
+         * Only remove the log files if the test actually compiled otherwise
+         * forget about it.
+         */
+        if (task_tasks[i].compiled) {
+            if (remove(task_tasks[i].stdoutlogfile))
+                con_err("error removing stdout log file: %s\n", task_tasks[i].stdoutlogfile);
+            else
+                con_out("removed stdout log file: %s\n", task_tasks[i].stdoutlogfile);
+            
+            if (remove(task_tasks[i].stderrlogfile))
+                con_err("error removing stderr log file: %s\n", task_tasks[i].stderrlogfile);
+            else
+                con_out("removed stderr log file: %s\n", task_tasks[i].stderrlogfile);
+        }
+        
+        /* free util_strdup data for log files */
+        mem_d(task_tasks[i].stdoutlogfile);
+        mem_d(task_tasks[i].stderrlogfile);
         
         task_template_destroy(&task_tasks[i].template);
     }
@@ -778,7 +831,6 @@ bool task_execute(task_template_t *template) {
  */
 void task_schedualize(const char *curdir) {
     bool   execute  = false;
-    bool   compiled = true;
     char  *back     = NULL;
     char  *data     = NULL;
     size_t size     = 0;
@@ -791,6 +843,12 @@ void task_schedualize(const char *curdir) {
         */
         if (!strcmp(task_tasks[i].template->proceduretype, "-execute"))
             execute = true;
+            
+        /*
+         * We assume it compiled before we actually compiled :).  On error
+         * we change the value
+         */
+        task_tasks[i].compiled = true;
         
         /*
          * Read data from stdout first and pipe that stuff into a log file
@@ -798,11 +856,11 @@ void task_schedualize(const char *curdir) {
          */    
         while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
             back = data;
-            fwrite(data, 1, size, task_tasks[i].stdoutlog);
+            fputs(data, task_tasks[i].stdoutlog);
+            fflush(task_tasks[i].stdoutlog);
         }
         while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
             back = data;
-            
             /*
              * If a string contains an error we just dissalow execution
              * of it in the vm.
@@ -812,10 +870,12 @@ void task_schedualize(const char *curdir) {
              * that .. then this will blowup :P
              */
             if (strstr(data, "error")) {
-                compiled = false;
-                execute  = false;
+                execute                = false;
+                task_tasks[i].compiled = false;
             }
-            fwrite(data, 1, size, task_tasks[i].stderrlog);
+            
+            fputs(data, task_tasks[i].stderrlog);
+            fflush(task_tasks[i].stdoutlog);
         }
         
         if (back)
@@ -851,12 +911,26 @@ void task_schedualize(const char *curdir) {
         mem_d(back);
 }
 
-int main(int argc, char **argv) {
-    con_init();
-    if (!task_propogate("tests")) {
+/*
+ * This is the heart of the whole test-suite process.  This cleans up
+ * any existing temporary files left behind as well as log files left
+ * behind.  Then it propogates a list of tests from `curdir` by scaning
+ * it for template files and compiling them into tasks, in which it
+ * schedualizes them (executes them) and actually reports errors and
+ * what not.  It then proceeds to destroy the tasks and return memory
+ * it's the engine :)
+ * 
+ * It returns true of tests could be propogated, otherwise it returns
+ * false.
+ * 
+ * It expects con_init() was called before hand.
+ */
+bool test_perform(const char *curdir) {
+    task_precleanup(curdir);
+    if (!task_propogate(curdir)) {
         con_err("error: failed to propogate tasks\n");
-        task_destroy("tests");
-        return -1;
+        task_destroy(curdir);
+        return false;
     }
     /*
      * If we made it here all tasks where propogated from their resultant
@@ -865,9 +939,15 @@ int main(int argc, char **argv) {
      * it's designed to prevent lock contention, and possible syncronization
      * issues.
      */
-    task_schedualize("tests");
-    task_destroy("tests");
+    task_schedualize(curdir);
+    task_destroy(curdir);
     
+    return true;
+}
+
+int main(int argc, char **argv) {
+    con_init();
+    test_perform("tests");
     util_meminfo();
     return 0;
 }
