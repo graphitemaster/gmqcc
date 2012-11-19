@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-bool  opts_memchk = true;
+bool  opts_memchk = false;
 bool  opts_debug  = false;
 char *task_bins[] = {
     "./gmqcc",
@@ -156,6 +156,8 @@ int task_pclose(FILE **handles) {
     
     return status;
 }
+#else
+
 #endif
 
 #define TASK_COMPILE 0
@@ -945,8 +947,75 @@ bool test_perform(const char *curdir) {
     return true;
 }
 
+/*
+ * Fancy GCC-like LONG parsing allows things like --opt=param with
+ * assignment operator.  This is used for redirecting stdout/stderr
+ * console to specific files of your choice.
+ */
+static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out, int ds, bool split) {
+    int  argc   = *argc_;
+    char **argv = *argv_;
+
+    size_t len = strlen(optname);
+
+    if (strncmp(argv[0]+ds, optname, len))
+        return false;
+
+    /* it's --optname, check how the parameter is supplied */
+    if (argv[0][ds+len] == '=') {
+        *out = argv[0]+ds+len+1;
+        return true;
+    }
+
+    if (!split || argc < ds) /* no parameter was provided, or only single-arg form accepted */
+        return false;
+
+    /* using --opt param */
+    *out = argv[1];
+    --*argc_;
+    ++*argv_;
+    return true;
+}
+
 int main(int argc, char **argv) {
+    char *redirout = (char*)stdout;
+    char *redirerr = (char*)stderr;
     con_init();
+    
+    /*
+     * Command line option parsing commences now We only need to support
+     * a few things in the test suite.
+     */
+    while (argc > 1) {
+        ++argv;
+        --argc;
+
+        if (argv[0][0] == '-') {
+            if (parsecmd("redirout", &argc, &argv, &redirout, 1, false))
+                continue;
+            if (parsecmd("redirerr", &argc, &argv, &redirerr, 1, false))
+                continue;
+            
+            con_change(redirout, redirerr);
+
+            if (!strcmp(argv[0]+1, "debug")) {
+                opts_debug = true;
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "memchk")) {
+                opts_memchk = true;
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "nocolor")) {
+                con_color(0);
+                continue;
+            }
+            
+            con_err("invalid argument %s\n", argv[0]+1);
+            return -1;
+        }
+    }
+    con_change(redirout, redirerr);
     test_perform("tests");
     util_meminfo();
     return 0;
