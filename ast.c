@@ -2367,6 +2367,14 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         }
     }
 
+    /* Jump from the last bnot to bout */
+    if (bfall && !bfall->final && !ir_block_create_jump(bfall, bout)) {
+        /*
+        astwarning(ast_ctx(bfall), WARN_???, "missing break after last case");
+        */
+        return false;
+    }
+
     /* If there was a default case, put it down here */
     if (def_case) {
         ir_block *bcase;
