@@ -51,6 +51,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 static ast_block* parse_block(parser_t *parser, bool warnreturn);
 static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
 static ast_expression* parse_statement_or_block(parser_t *parser);
+static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma);
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma);
 
@@ -1331,7 +1332,10 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         if (!parser_next(parser)) {
             goto onerr;
         }
-        if (parser->tok == ';' || (!parens && parser->tok == ']')) {
+        if (parser->tok == ';' ||
+            (!parens && parser->tok == ']') ||
+            parser->tok == ':')
+        {
             break;
         }
     }
@@ -1734,7 +1738,142 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     return true;
 }
 
-static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out)
+static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    ast_expression *operand;
+    ast_switch     *switchnode;
+    ast_switch_case swcase;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    /* parse over the opening paren */
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected switch operand in parenthesis");
+        return false;
+    }
+
+    /* parse into the expression */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected switch operand");
+        return false;
+    }
+    /* parse the operand */
+    operand = parse_expression_leave(parser, false);
+    if (!operand)
+        return false;
+
+    switchnode = ast_switch_new(ctx, operand);
+
+    /* closing paren */
+    if (parser->tok != ')') {
+        ast_delete(switchnode);
+        parseerror(parser, "expected closing paren after 'switch' operand");
+        return false;
+    }
+
+    /* parse over the opening paren */
+    if (!parser_next(parser) || parser->tok != '{') {
+        ast_delete(switchnode);
+        parseerror(parser, "expected list of cases");
+        return false;
+    }
+
+    if (!parser_next(parser)) {
+        ast_delete(switchnode);
+        parseerror(parser, "expected 'case' or 'default'");
+        return false;
+    }
+
+    /* case list! */
+    while (parser->tok != '}') {
+        ast_block *block;
+
+        if (parser->tok != TOKEN_KEYWORD) {
+            ast_delete(switchnode);
+            parseerror(parser, "expected 'case' or 'default'");
+            return false;
+        }
+        if (!strcmp(parser_tokval(parser), "case")) {
+            if (!parser_next(parser)) {
+                ast_delete(switchnode);
+                parseerror(parser, "expected expression for case");
+                return false;
+            }
+            swcase.value = parse_expression_leave(parser, false);
+            if (!swcase.value) {
+                ast_delete(switchnode);
+                parseerror(parser, "expected expression for case");
+                return false;
+            }
+        }
+        else if (!strcmp(parser_tokval(parser), "default")) {
+            swcase.value = NULL;
+            if (!parser_next(parser)) {
+                ast_delete(switchnode);
+                parseerror(parser, "expected colon");
+                return false;
+            }
+        }
+
+        /* Now the colon and body */
+        if (parser->tok != ':') {
+            if (swcase.value) ast_unref(swcase.value);
+            ast_delete(switchnode);
+            parseerror(parser, "expected colon");
+            return false;
+        }
+
+        if (!parser_next(parser)) {
+            if (swcase.value) ast_unref(swcase.value);
+            ast_delete(switchnode);
+            parseerror(parser, "expected statements or case");
+            return false;
+        }
+        block = ast_block_new(parser_ctx(parser));
+        if (!block) {
+            if (swcase.value) ast_unref(swcase.value);
+            ast_delete(switchnode);
+            return false;
+        }
+        swcase.code = (ast_expression*)block;
+        vec_push(switchnode->cases, swcase);
+        while (true) {
+            ast_expression *expr;
+            if (parser->tok == '}')
+                break;
+            if (parser->tok == TOKEN_KEYWORD) {
+                if (!strcmp(parser_tokval(parser), "case") ||
+                    !strcmp(parser_tokval(parser), "default"))
+                {
+                    break;
+                }
+            }
+            if (!parse_statement(parser, block, &expr, true)) {
+                ast_delete(switchnode);
+                return false;
+            }
+            if (!expr)
+                continue;
+            vec_push(block->exprs, expr);
+        }
+    }
+
+    /* closing paren */
+    if (parser->tok != '}') {
+        ast_delete(switchnode);
+        parseerror(parser, "expected closing paren of case list");
+        return false;
+    }
+    if (!parser_next(parser)) {
+        ast_delete(switchnode);
+        parseerror(parser, "parse error after switch");
+        return false;
+    }
+    *out = (ast_expression*)switchnode;
+    return true;
+}
+
+static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
     if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
@@ -1801,6 +1940,19 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         {
             return parse_break_continue(parser, block, out, true);
         }
+        else if (!strcmp(parser_tokval(parser), "switch"))
+        {
+            return parse_switch(parser, block, out);
+        }
+        else if (!strcmp(parser_tokval(parser), "case") ||
+                 !strcmp(parser_tokval(parser), "default"))
+        {
+            if (!allow_cases) {
+                parseerror(parser, "unexpected 'case' label");
+                return false;
+            }
+            return true;
+        }
         parseerror(parser, "Unexpected keyword");
         return false;
     }
@@ -1864,7 +2016,7 @@ static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn
         if (parser->tok == '}')
             break;
 
-        if (!parse_statement(parser, block, &expr)) {
+        if (!parse_statement(parser, block, &expr, false)) {
             /* parseerror(parser, "parse error"); */
             block = NULL;
             goto cleanup;
@@ -1916,7 +2068,7 @@ static ast_expression* parse_statement_or_block(parser_t *parser)
     ast_expression *expr = NULL;
     if (parser->tok == '{')
         return (ast_expression*)parse_block(parser, false);
-    if (!parse_statement(parser, NULL, &expr))
+    if (!parse_statement(parser, NULL, &expr, false))
         return NULL;
     return expr;
 }
