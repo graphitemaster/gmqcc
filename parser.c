@@ -1741,6 +1741,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_expression *operand;
+    ast_value      *opval;
     ast_switch     *switchnode;
     ast_switch_case swcase;
 
@@ -1761,6 +1762,15 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     operand = parse_expression_leave(parser, false);
     if (!operand)
         return false;
+
+    if (!OPTS_FLAG(RELAXED_SWITCH)) {
+        opval = (ast_value*)operand;
+        if (!ast_istype(operand, ast_value) || !opval->isconst) {
+            parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
+            ast_unref(operand);
+            return false;
+        }
+    }
 
     switchnode = ast_switch_new(ctx, operand);
 
@@ -1988,9 +1998,11 @@ static bool GMQCC_WARN parser_pop_local(parser_t *parser)
     varentry_t *ve;
 
     ve = &vec_last(parser->locals);
-    if (ast_istype(ve->var, ast_value) && !(((ast_value*)(ve->var))->uses)) {
-        if (parsewarning(parser, WARN_UNUSED_VARIABLE, "unused variable: `%s`", ve->name))
-            rv = false;
+    if (!parser->errors) {
+        if (ast_istype(ve->var, ast_value) && !(((ast_value*)(ve->var))->uses)) {
+            if (parsewarning(parser, WARN_UNUSED_VARIABLE, "unused variable: `%s`", ve->name))
+                rv = false;
+        }
     }
     mem_d(ve->name);
     vec_pop(parser->locals);
