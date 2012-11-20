@@ -239,15 +239,15 @@ int task_pclose(FILE **handles) {
  *      this will result in the task failing.
  */
 typedef struct {
-    char *description;
-    char *failuremessage;
-    char *successmessage;
-    char *compileflags;
-    char *executeflags;
-    char *comparematch;
-    char *proceduretype;
-    char *sourcefile;
-    char *tempfilename;
+    char  *description;
+    char  *failuremessage;
+    char  *successmessage;
+    char  *compileflags;
+    char  *executeflags;
+    char  *proceduretype;
+    char  *sourcefile;
+    char  *tempfilename;
+    char **comparematch;
 } task_template_t;
 
 /*
@@ -267,7 +267,6 @@ bool task_template_generate(task_template_t *template, char tag, const char *fil
         case 'T': destval = &template->proceduretype;  break;
         case 'C': destval = &template->compileflags;   break;
         case 'E': destval = &template->executeflags;   break;
-        case 'M': destval = &template->comparematch;   break;
         case 'I': destval = &template->sourcefile;     break;
         default:
             con_printmsg(LVL_ERROR, __FILE__, __LINE__, "internal error",
@@ -363,7 +362,6 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
             case 'T':
             case 'C':
             case 'E':
-            case 'M':
             case 'I':
                 if (data[1] != ':') {
                     con_printmsg(LVL_ERROR, file, line, "template parse error",
@@ -379,6 +377,35 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
                     goto failure;
                 }
                 break;
+            
+            /*
+             * Match requires it's own system since we allow multiple M's
+             * for multi-line matching.
+             */
+            case 'M':
+            {
+                char *value = &data[3];
+                if (data[1] != ':') {
+                    con_printmsg(LVL_ERROR, file, line, "template parse error",
+                        "expected `:` after `%c`",
+                        *data
+                    );
+                    goto failure;
+                }
+                
+                if (value && *value && (*value == ' ' || *value == '\t'))
+                    value++;
+    
+                /*
+                 * Value will contain a newline character at the end, we need to strip
+                 * this otherwise kaboom, seriously, kaboom :P
+                 */
+                *strrchr(value, '\n')='\0';
+                
+                vec_push(template->comparematch, util_strdup(value));
+                
+                break;
+            }
             
             default:
                 con_printmsg(LVL_ERROR, file, line, "template parse error",
@@ -525,8 +552,19 @@ void task_template_destroy(task_template_t **template) {
     if ((*template)->proceduretype)  mem_d((*template)->proceduretype);
     if ((*template)->compileflags)   mem_d((*template)->compileflags);
     if ((*template)->executeflags)   mem_d((*template)->executeflags);
-    if ((*template)->comparematch)   mem_d((*template)->comparematch);
     if ((*template)->sourcefile)     mem_d((*template)->sourcefile);
+    
+    /*
+     * Delete all allocated string for task template then destroy the
+     * main vector.
+     */
+    {
+        size_t i = 0;
+        for (; i < vec_size((*template)->comparematch); i++)
+            mem_d((*template)->comparematch[i]);
+            
+        vec_free((*template)->comparematch);
+    }
     
     /*
      * Nullify all the template members otherwise NULL comparision
@@ -631,14 +669,20 @@ bool task_propogate(const char *curdir) {
              * to our own.
              */
             memset  (buf,0,sizeof(buf));
-            snprintf(buf,  sizeof(buf), "%s/%s.stdout", curdir, template->sourcefile);
+            snprintf(buf,  sizeof(buf), "%s.stdout", template->tempfilename);
             task.stdoutlogfile = util_strdup(buf);
-            task.stdoutlog     = fopen(buf, "w");
+            if (!(task.stdoutlog     = fopen(buf, "w"))) {
+                con_err("error opening %s for stdout\n", buf);
+                continue;
+            }
             
             memset  (buf,0,sizeof(buf));
-            snprintf(buf,  sizeof(buf), "%s/%s.stderr", curdir, template->sourcefile);
+            snprintf(buf,  sizeof(buf), "%s.stderr", template->tempfilename);
             task.stderrlogfile = util_strdup(buf);
-            task.stderrlog     = fopen(buf, "w");
+            if (!(task.stderrlog     = fopen(buf, "w"))) {
+                con_err("error opening %s for stderr\n", buf);
+                continue;
+            }
             
             vec_push(task_tasks, task);
         }
@@ -789,37 +833,34 @@ bool task_execute(task_template_t *template) {
      * and handle accordingly.
      */
     {
-        char  *data  = NULL;
-        size_t size  = 0;
-        while (util_getline(&data, &size, execute) != EOF) {}
-        
-        if (!strcmp(data, "No main function found\n")) {
-            con_err("test failure: `%s` [%s] (No main function found)\n",
-                template->description,
-                (template->failuremessage) ?
-                template->failuremessage : "unknown"
-            );
-            pclose(execute);
-            return false;
+        char  *data    = NULL;
+        size_t size    = 0;
+        size_t compare = 0;
+        while (util_getline(&data, &size, execute) != EOF) {
+            if (!strcmp(data, "No main function found\n")) {
+                con_err("test failure: `%s` [%s] (No main function found)\n",
+                    template->description,
+                    (template->failuremessage) ?
+                    template->failuremessage : "unknown"
+                );
+                pclose(execute);
+                return false;
+            }
+            
+            /* 
+             * Trim newlines from data since they will just break our
+             * ability to properly validate matches.
+             */
+            if  (strrchr(data, '\n'))
+                *strrchr(data, '\n') = '\0';
+            
+            
+            /*
+             * We only care about the last line from the output for now
+             * implementing multi-line match is TODO.
+             */
+            success = !!!(strcmp(data, template->comparematch[compare++]));
         }
-        
-        /* 
-         * Trim newlines from data since they will just break our
-         * ability to properly validate matches.
-         */
-        if  (strrchr(data, '\n'))
-            *strrchr(data, '\n') = '\0';
-        
-        /* null list */
-        if (!strcmp(template->comparematch, "$null"))
-            success = true;
-        
-        /*
-         * We only care about the last line from the output for now
-         * implementing multi-line match is TODO.
-         */
-        if (!strcmp(data, template->comparematch))
-            success = true;
     }
     pclose(execute);
     return success;
