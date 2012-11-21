@@ -1021,6 +1021,7 @@ int lex_do(lex_file *lex)
     {
         case '[':
         case '(':
+        case ':':
             lex_tokench(lex, ch);
             lex_endtoken(lex);
             if (lex->flags.noops)
@@ -1029,7 +1030,6 @@ int lex_do(lex_file *lex)
                 return (lex->tok.ttype = TOKEN_OPERATOR);
         case ')':
         case ';':
-        case ':':
         case '{':
         case '}':
         case ']':

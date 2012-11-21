@@ -1080,6 +1080,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
      * end of a condition is an unmatched closing paren
      */
     int parens = 0;
+    int ternaries = 0;
 
     sy.out = NULL;
     sy.ops = NULL;
@@ -1267,6 +1268,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 break;
             }
 
+            /* a colon without a pervious question mark cannot be a ternary */
+            if (op->id == opid2(':','?')) {
+                parser->tok = ':';
+                break;
+            }
+
             if (vec_size(sy.ops) && !vec_last(sy.ops).paren)
                 olast = &operators[vec_last(sy.ops).etype-1];
 
@@ -1323,6 +1330,15 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0));
                 wantop = false;
+            } else if (op->id == opid2('?',':')) {
+                wantop = false;
+                vec_push(sy.ops, syop(parser_ctx(parser), op));
+                wantop = false;
+                --ternaries;
+            } else if (op->id == opid2(':','?')) {
+                /* we don't push this operator */
+                wantop = false;
+                ++ternaries;
             } else {
                 DEBUGSHUNTDO(con_out("push operator %s\n", op->op));
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
@@ -1333,8 +1349,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             goto onerr;
         }
         if (parser->tok == ';' ||
-            (!parens && parser->tok == ']') ||
-            parser->tok == ':')
+            (!parens && parser->tok == ']'))
         {
             break;
         }
