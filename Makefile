@@ -51,11 +51,11 @@ gmqcc: $(OBJ_C) $(OBJ)
 
 test: $(OBJ_T)
 	$(CC) -o $@ $^ $(CFLAGS)
-	
-runtests:
-	./test
 
 all: gmqcc qcvm test
+
+runtests: all
+	./test
 
 clean:
 	rm -f *.o gmqcc qcvm test *.dat
