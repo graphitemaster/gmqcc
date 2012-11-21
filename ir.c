@@ -542,7 +542,6 @@ bool ir_function_finalize(ir_function *self)
 
     if (!ir_function_calculate_liferanges(self))
         return false;
-
     if (!ir_function_allocate_locals(self))
         return false;
     return true;
