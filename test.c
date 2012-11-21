@@ -621,8 +621,8 @@ bool task_propogate(const char *curdir) {
          * We made it here, which concludes the file/directory is not
          * actually a directory, so it must be a file :)
          */
-        if (strstr(files->d_name, ".tmpl")) {
-            con_out("compiling task template: %s/%s\n", curdir, files->d_name);
+        if (strstr(files->d_name, ".tmpl") == &files->d_name[strlen(files->d_name) - (sizeof(".tmpl") - 1)]) {
+            util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
             task_template_t *template = task_template_compile(files->d_name, curdir);
             if (!template) {
                 con_err("error compiling task template: %s\n", files->d_name);
@@ -662,7 +662,7 @@ bool task_propogate(const char *curdir) {
                 continue;
             }
             
-            con_out("executing test: `%s` [%s]\n", template->description, buf);
+            util_debug("TEST", "executing test: `%s` [%s]\n", template->description, buf);
             
             /*
              * Open up some file desciptors for logging the stdout/stderr
@@ -710,7 +710,7 @@ void task_cleanup(const char *curdir) {
             if (remove(buffer))
                 con_err("error removing temporary file: %s\n", buffer);
             else
-                con_out("removed temporary file: %s\n", buffer);
+                util_debug("TEST", "removed temporary file: %s\n", buffer);
         }
     }
     
@@ -738,7 +738,7 @@ void task_precleanup(const char *curdir) {
             if (remove(buffer))
                 con_err("error removing temporary file: %s\n", buffer);
             else
-                con_out("removed temporary file: %s\n", buffer);
+                util_debug("TEST", "removed temporary file: %s\n", buffer);
         }
     }
     
@@ -769,12 +769,12 @@ void task_destroy(const char *curdir) {
             if (remove(task_tasks[i].stdoutlogfile))
                 con_err("error removing stdout log file: %s\n", task_tasks[i].stdoutlogfile);
             else
-                con_out("removed stdout log file: %s\n", task_tasks[i].stdoutlogfile);
+                util_debug("TEST", "removed stdout log file: %s\n", task_tasks[i].stdoutlogfile);
             
             if (remove(task_tasks[i].stderrlogfile))
                 con_err("error removing stderr log file: %s\n", task_tasks[i].stderrlogfile);
             else
-                con_out("removed stderr log file: %s\n", task_tasks[i].stderrlogfile);
+                util_debug("TEST", "removed stderr log file: %s\n", task_tasks[i].stderrlogfile);
         }
         
         /* free util_strdup data for log files */
@@ -819,7 +819,7 @@ bool task_execute(task_template_t *template) {
         );
     }
     
-    con_out("executing qcvm: `%s` [%s]\n",
+    util_debug("TEST", "executing qcvm: `%s` [%s]\n",
         template->description,
         buffer
     );
