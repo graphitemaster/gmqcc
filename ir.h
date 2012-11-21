@@ -133,6 +133,9 @@ typedef struct ir_instr_s
     /* For the temp-allocation */
     size_t eid;
 
+    /* For IFs */
+    bool   likely;
+
     struct ir_block_s *owner;
 } ir_instr;
 

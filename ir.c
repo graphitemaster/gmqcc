@@ -654,6 +654,8 @@ ir_instr* ir_instr_new(ir_block* owner, int op)
     self->params = NULL;
 
     self->eid = 0;
+
+    self->likely = true;
     return self;
 }
 
@@ -2501,6 +2503,13 @@ tailcall:
             }
             /* neither ontrue nor onfalse exist */
             stmt.opcode = INSTR_IFNOT;
+            if (!instr->likely) {
+                /* Honor the likelyhood hint */
+                ir_block *tmp = onfalse;
+                stmt.opcode = INSTR_IF;
+                onfalse = ontrue;
+                ontrue = tmp;
+            }
             stidx = vec_size(code_statements);
             vec_push(code_statements, stmt);
             /* on false we jump, so add ontrue-path */
@@ -2512,6 +2521,7 @@ tailcall:
             if (onfalse->generated) {
                 /* fixup the jump address */
                 code_statements[stidx].o2.s1 = (onfalse->code_start) - (stidx);
+                stmt.opcode = vec_last(code_statements).opcode;
                 /* may have been generated in the previous recursive call */
                 stmt.opcode = INSTR_GOTO;
                 stmt.o1.s1 = (onfalse->code_start) - vec_size(code_statements);
