@@ -1532,7 +1532,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
          * but we translate this to (!(!a ? !a : !b))
          */
 
-        merge_id = vec_size(func->blocks);
+        merge_id = vec_size(func->ir_func->blocks);
         merge = ir_function_create_block(func->ir_func, ast_function_label(func, "sce_merge"));
 
         cgen = self->left->expression.codegen;
@@ -1601,6 +1601,8 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
                                          notop,
                                          *out);
         }
+        if (!*out)
+            return false;
         self->expression.outr = *out;
         return true;
     }
