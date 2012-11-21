@@ -398,9 +398,6 @@ struct ast_ternary_s
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
     ast_expression *on_false;
-    /* After a ternary expression we find ourselves in a new IR block
-     * and start with a PHI node */
-    ir_value       *phi_out;
 };
 ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
 void ast_ternary_delete(ast_ternary*);

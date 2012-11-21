@@ -651,7 +651,6 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
     self->cond     = cond;
     self->on_true  = ontrue;
     self->on_false = onfalse;
-    self->phi_out  = NULL;
 
     return self;
 }
@@ -2012,8 +2011,8 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
      * may still happen, thus we remember a created ir_value and simply return one
      * if it already exists.
      */
-    if (self->phi_out) {
-        *out = self->phi_out;
+    if (self->expression.outr) {
+        *out = self->expression.outr;
         return true;
     }
 
@@ -2087,8 +2086,8 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     ir_phi_add(phi, ontrue,  trueval);
     ir_phi_add(phi, onfalse, falseval);
 
-    self->phi_out = ir_phi_value(phi);
-    *out = self->phi_out;
+    self->expression.outr = ir_phi_value(phi);
+    *out = self->expression.outr;
 
     return true;
 }
