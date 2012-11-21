@@ -753,11 +753,8 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 parseerror(parser, "TODO: logical ops for arbitrary types using INSTR_NOT");
-                parseerror(parser, "TODO: optional early out");
                 return false;
             }
-            if (opts_standard == COMPILER_GMQCC)
-                con_out("TODO: early out logic\n");
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
                     (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
