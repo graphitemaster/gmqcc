@@ -1805,6 +1805,31 @@ static bool ir_block_naive_phi(ir_block *self)
         for (p = 0; p < vec_size(instr->phi); ++p)
         {
             ir_value *v = instr->phi[p].value;
+            ir_block *b = instr->phi[p].from;
+
+            if (v->store == store_value &&
+                vec_size(v->reads) == 1 &&
+                vec_size(v->writes) == 1)
+            {
+                /* replace the value */
+                ir_instr_op(v->writes[0], 0, instr->_ops[0], true);
+            }
+            else
+            {
+                /* force a move instruction */
+                ir_instr *prevjump = vec_last(b->instr);
+                vec_pop(b->instr);
+                b->final = false;
+                instr->_ops[0]->store = store_global;
+                if (!ir_block_create_store(b, instr->_ops[0], v))
+                    return false;
+                instr->_ops[0]->store = store_value;
+                vec_push(b->instr, prevjump);
+                b->final = true;
+            }
+
+#if 0
+            ir_value *v = instr->phi[p].value;
             for (w = 0; w < vec_size(v->writes); ++w) {
                 ir_value *old;
 
@@ -1853,6 +1878,7 @@ static bool ir_block_naive_phi(ir_block *self)
                     }
                 }
             }
+#endif
         }
         ir_instr_delete(instr);
     }
