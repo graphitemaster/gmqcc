@@ -783,8 +783,12 @@ bool ast_call_check_types(ast_call *self)
 
     for (i = 0; i < count; ++i) {
         if (!ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i]))) {
-            asterror(ast_ctx(self), "invalid type for parameter %u in function call",
-                     (unsigned int)(i+1));
+            char texp[1024];
+            char tgot[1024];
+            ast_type_to_string(self->params[i], tgot, sizeof(tgot));
+            ast_type_to_string((ast_expression*)func->expression.params[i], texp, sizeof(texp));
+            asterror(ast_ctx(self), "invalid type for parameter %u in function call: expected %s, got %s",
+                     (unsigned int)(i+1), texp, tgot);
             /* we don't immediately return */
             retval = false;
         }
