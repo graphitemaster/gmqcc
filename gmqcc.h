@@ -830,6 +830,7 @@ extern const char *opts_output; /* -o file */
 extern int         opts_standard;
 extern bool        opts_debug;
 extern bool        opts_memchk;
+extern bool        opts_dumpfin;
 extern bool        opts_dump;
 extern bool        opts_werror;
 extern bool        opts_forcecrc;

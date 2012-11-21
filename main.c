@@ -32,6 +32,7 @@ const char *opts_output   = "progs.dat";
 int         opts_standard = COMPILER_GMQCC;
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
+bool        opts_dumpfin  = false;
 bool        opts_dump     = false;
 bool        opts_werror   = false;
 bool        opts_forcecrc = false;
@@ -235,6 +236,10 @@ static bool options_parse(int argc, char **argv) {
             }
             if (!strcmp(argv[0]+1, "dump")) {
                 opts_dump = true;
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "dumpfin")) {
+                opts_dumpfin = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "memchk")) {
