@@ -1513,13 +1513,58 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         return true;
     }
 
+    if (OPTS_FLAG(SHORT_LOGIC) &&
+        (self->op == INSTR_AND || self->op == INSTR_OR))
+    {
+        /* short circuit evaluation */
+        ir_block *other, *merge;
+        ir_block *from_left, *from_right;
+        ir_instr *phi;
+        size_t    merge_id;
+
+        merge_id = vec_size(func->blocks);
+        merge = ir_function_create_block(func->ir_func, ast_function_label(func, "sce_merge"));
+
+        cgen = self->left->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
+            return false;
+
+        from_left = func->curblock;
+        other = ir_function_create_block(func->ir_func, ast_function_label(func, "sce_other"));
+        if (self->op == INSTR_AND) {
+            if (!ir_block_create_if(func->curblock, left, other, merge))
+                return false;
+        } else {
+            if (!ir_block_create_if(func->curblock, left, merge, other))
+                return false;
+        }
+
+        func->curblock = other;
+        cgen = self->right->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
+            return false;
+        from_right = func->curblock;
+
+        if (!ir_block_create_jump(func->curblock, merge))
+            return false;
+
+        vec_remove(func->ir_func->blocks, merge_id, 1);
+        vec_push(func->ir_func->blocks, merge);
+
+        func->curblock = merge;
+        phi = ir_block_create_phi(func->curblock, ast_function_label(func, "sce_value"), TYPE_FLOAT);
+        ir_phi_add(phi, from_left, left);
+        ir_phi_add(phi, from_right, right);
+        *out = ir_phi_value(phi);
+        self->expression.outr = *out;
+        return true;
+    }
+
     cgen = self->left->expression.codegen;
-    /* lvalue! */
     if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
         return false;
 
     cgen = self->right->expression.codegen;
-    /* rvalue! */
     if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
         return false;
 
