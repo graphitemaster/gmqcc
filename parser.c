@@ -1278,7 +1278,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             }
 
             /* a colon without a pervious question mark cannot be a ternary */
-            if (op->id == opid2(':','?')) {
+            if (!ternaries && op->id == opid2(':','?')) {
                 parser->tok = ':';
                 break;
             }
