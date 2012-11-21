@@ -423,13 +423,13 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
         return false;
     }
 
-    if (sy->ops[vec_size(sy->ops)-1].paren) {
+    if (vec_last(sy->ops).paren) {
         parseerror(parser, "unmatched parenthesis");
         return false;
     }
 
-    op = &operators[sy->ops[vec_size(sy->ops)-1].etype - 1];
-    ctx = sy->ops[vec_size(sy->ops)-1].ctx;
+    op = &operators[vec_last(sy->ops).etype - 1];
+    ctx = vec_last(sy->ops).ctx;
 
     DEBUGSHUNTDO(con_out("apply %s\n", op->op));
 
