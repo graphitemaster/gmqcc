@@ -552,6 +552,15 @@ struct ast_function_s
     ir_block    *breakblock;
     ir_block    *continueblock;
 
+#if 0
+    /* In order for early-out logic not to go over
+     * excessive jumps, we remember their target
+     * blocks...
+     */
+    ir_block    *iftrue;
+    ir_block    *iffalse;
+#endif
+
     size_t       labelcount;
     /* in order for thread safety - for the optional
      * channel abesed multithreading... keeping a buffer
