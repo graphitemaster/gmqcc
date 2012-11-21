@@ -292,6 +292,7 @@ extern uint16_t type_storep_instr[TYPE_COUNT];
 /* other useful lists */
 extern uint16_t type_eq_instr[TYPE_COUNT];
 extern uint16_t type_ne_instr[TYPE_COUNT];
+extern uint16_t type_not_instr[TYPE_COUNT];
 
 typedef struct {
     uint32_t offset;      /* Offset in file of where data begins  */

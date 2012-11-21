@@ -171,6 +171,28 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
     AINSTR_END, /* array  */
 };
 
+uint16_t type_not_instr[TYPE_COUNT] = {
+    INSTR_NOT_F, /* should use I when having integer support */
+    INSTR_NOT_S,
+    INSTR_NOT_F,
+    INSTR_NOT_V,
+    INSTR_NOT_ENT,
+    INSTR_NOT_ENT,
+    INSTR_NOT_FNC,
+    INSTR_NOT_ENT, /* should use I */
+#if 0
+    INSTR_NOT_I, /* integer type */
+#else
+    INSTR_NOT_F,
+#endif
+
+    INSTR_NOT_V, /* variant, should never be accessed */
+
+    AINSTR_END, /* struct */
+    AINSTR_END, /* union  */
+    AINSTR_END, /* array  */
+};
+
 static void irerror(lex_ctx ctx, const char *msg, ...)
 {
     va_list ap;
