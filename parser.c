@@ -460,6 +460,8 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
              (ast_istype((A), ast_value) && ((ast_value*)(A))->isconst)
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
+#define CanConstFold3(A, B, C) \
+             (CanConstFold1(A) && CanConstFold1(B) && CanConstFold1(C))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
 #define ConstF(i) (asvalue[(i)]->constval.vfloat)
 #define ConstS(i) (asvalue[(i)]->constval.vstring)
@@ -753,13 +755,23 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            type_name[exprs[0]->expression.vtype],
                            type_name[exprs[1]->expression.vtype]);
                 parseerror(parser, "TODO: logical ops for arbitrary types using INSTR_NOT");
+                parseerror(parser, "TODO: optional early out");
                 return false;
             }
+            if (opts_standard == COMPILER_GMQCC)
+                con_out("TODO: early out logic\n");
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
                     (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
             else
                 out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+            break;
+
+        case opid2('?',':'):
+            if (CanConstFold1(exprs[0]))
+                out = (ConstF(0) ? exprs[1] : exprs[2]);
+            else
+                out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
             break;
 
         case opid1('>'):
