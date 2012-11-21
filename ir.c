@@ -2522,6 +2522,15 @@ tailcall:
                 /* fixup the jump address */
                 code_statements[stidx].o2.s1 = (onfalse->code_start) - (stidx);
                 stmt.opcode = vec_last(code_statements).opcode;
+                if (stmt.opcode == INSTR_GOTO ||
+                    stmt.opcode == INSTR_IF ||
+                    stmt.opcode == INSTR_IFNOT ||
+                    stmt.opcode == INSTR_RETURN ||
+                    stmt.opcode == INSTR_DONE)
+                {
+                    /* no use jumping from here */
+                    return true;
+                }
                 /* may have been generated in the previous recursive call */
                 stmt.opcode = INSTR_GOTO;
                 stmt.o1.s1 = (onfalse->code_start) - vec_size(code_statements);
