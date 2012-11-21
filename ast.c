@@ -1538,8 +1538,8 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
             if (!ir_block_create_if(func->curblock, left, merge, other))
                 return false;
         }
-        /* use the unlikely flag */
-        vec_last(func->curblock->instr)->likely = false;
+        /* use the likely flag */
+        vec_last(func->curblock->instr)->likely = true;
 
         func->curblock = other;
         cgen = self->right->expression.codegen;
