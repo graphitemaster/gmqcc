@@ -1768,6 +1768,7 @@ bool ir_function_naive_phi(ir_function *self)
     return true;
 }
 
+#if 0
 static bool ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, ir_value *what)
 {
     ir_instr *instr;
@@ -1785,10 +1786,11 @@ static bool ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, 
 
     return true;
 }
+#endif
 
 static bool ir_block_naive_phi(ir_block *self)
 {
-    size_t i, p, w;
+    size_t i, p; /*, w;*/
     /* FIXME: optionally, create_phi can add the phis
      * to a list so we don't need to loop through blocks
      * - anyway: "don't optimize YET"
@@ -1812,7 +1814,8 @@ static bool ir_block_naive_phi(ir_block *self)
                 vec_size(v->writes) == 1)
             {
                 /* replace the value */
-                ir_instr_op(v->writes[0], 0, instr->_ops[0], true);
+                if (!ir_instr_op(v->writes[0], 0, instr->_ops[0], true))
+                    return false;
             }
             else
             {
