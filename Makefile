@@ -49,16 +49,16 @@ qcvm: $(OBJ_X)
 gmqcc: $(OBJ_C) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-test: $(OBJ_T)
+testsuite: $(OBJ_T)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-all: gmqcc qcvm test
+all: gmqcc qcvm testsuite
 
-runtests: all
-	./test
+check: all
+	./testsuite
 
 clean:
-	rm -f *.o gmqcc qcvm test *.dat
+	rm -f *.o gmqcc qcvm testsuite *.dat
 
 
 $(OBJ) $(OBJ_C) $(OBJ_X): gmqcc.h

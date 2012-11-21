@@ -936,10 +936,12 @@ void task_schedualize(const char *curdir) {
          * in the virtual machine.
          */
         if (!task_execute(task_tasks[i].template)) {
-            con_err("test failure: `%s` [%s]\n",
+            con_err("test failure: `%s` [%s] see %s.stdout and %s.stderr\n",
                 task_tasks[i].template->description,
                 (task_tasks[i].template->failuremessage) ?
-                task_tasks[i].template->failuremessage : "unknown"
+                task_tasks[i].template->failuremessage : "unknown",
+                task_tasks[i].template->tempfilename,
+                task_tasks[i].template->tempfilename
             );
             continue;
         }
