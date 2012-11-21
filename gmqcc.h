@@ -41,7 +41,7 @@
 #endif
 
 #define GMQCC_VERSION_MAJOR 0
-#define GMQCC_VERSION_MINOR 1
+#define GMQCC_VERSION_MINOR 2
 #define GMQCC_VERSION_PATCH 0
 #define GMQCC_VERSION_BUILD(J,N,P) (((J)<<16)|((N)<<8)|(P))
 #define GMQCC_VERSION \
