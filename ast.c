@@ -652,6 +652,11 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
     self->on_true  = ontrue;
     self->on_false = onfalse;
 
+    if (!ast_type_adopt(self, ontrue)) {
+        ast_ternary_delete(self);
+        return NULL;
+    }
+
     return self;
 }
 
