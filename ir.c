@@ -2170,6 +2170,9 @@ static bool ir_block_living_add_instr(ir_block *self, size_t eid)
 static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *changed)
 {
     size_t i;
+
+    (void)changed;
+
     /* values which have been read in a previous iteration are now
      * in the "living" array even if the previous block doesn't use them.
      * So we have to remove whatever does not exist in the previous block.
@@ -2871,6 +2874,8 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     prog_section_function *fundef;
     ir_function           *irfun;
 
+    (void)ir;
+
     irfun = global->constval.vfunc;
     if (!irfun) {
         irwarning(global->context, WARN_IMPLICIT_FUNCTION_POINTER,
@@ -3044,6 +3049,8 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 {
     prog_section_def def;
     prog_section_field fld;
+
+    (void)self;
 
     def.type   = (uint16_t)field->vtype;
     def.offset = (uint16_t)vec_size(code_globals);
@@ -3263,8 +3270,7 @@ void ir_block_dump(ir_block* b, char *ind,
     ind[strlen(ind)-1] = 0;
 }
 
-void dump_phi(ir_instr *in, char *ind,
-              int (*oprintf)(const char*, ...))
+void dump_phi(ir_instr *in, int (*oprintf)(const char*, ...))
 {
     size_t i;
     oprintf("%s <- phi ", in->_ops[0]->name);
@@ -3285,7 +3291,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
     oprintf("%s (%i) ", ind, (int)in->eid);
 
     if (in->opcode == VINSTR_PHI) {
-        dump_phi(in, ind, oprintf);
+        dump_phi(in, oprintf);
         return;
     }
 
