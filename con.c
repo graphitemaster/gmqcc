@@ -30,8 +30,8 @@
 #include <unistd.h>
 #endif
 
-#define GMQCC_IS_STDOUT(X) ((X) == stdout)
-#define GMQCC_IS_STDERR(X) ((X) == stderr)
+#define GMQCC_IS_STDOUT(X) ((FILE*)((void*)X) == stdout)
+#define GMQCC_IS_STDERR(X) ((FILE*)((void*)X) == stderr)
 #define GMQCC_IS_DEFINE(X) (GMQCC_IS_STDERR(X) || GMQCC_IS_STDOUT(X))
 
 typedef struct {
@@ -271,13 +271,13 @@ void con_reset() {
 int con_change(const char *out, const char *err) {
     con_close();
     
-    if (GMQCC_IS_DEFINE((FILE*)out)) {
-        console.handle_out = (((FILE*)out) == stdout) ? stdout : stderr;
+    if (GMQCC_IS_DEFINE(out)) {
+        console.handle_out = GMQCC_IS_STDOUT(out) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_out = fopen(out, "w"))) return 0;
     
-    if (GMQCC_IS_DEFINE((FILE*)err)) {
-        console.handle_err = (((FILE*)err) == stdout) ? stdout : stderr;
+    if (GMQCC_IS_DEFINE(err)) {
+        console.handle_err = GMQCC_IS_STDOUT(err) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_err = fopen(err, "w"))) return 0;
     
