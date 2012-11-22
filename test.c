@@ -516,7 +516,6 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
         if (!template->executeflags) {
             /* default to $null */
             template->executeflags = util_strdup("$null");
-            goto failure;
         }
         if (!template->comparematch) {
             con_err("template compile error: %s missing `M:` tag (use `$null` for exclude)\n", file);
