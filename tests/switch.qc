@@ -1,7 +1,7 @@
 void print(...) = #1;
 string ftos(float) = #2;
 
-void main(float param, float p2) {
+void test(float param, float p2) {
     float i;
     float c80 = 80;
     switch(param) {
@@ -24,4 +24,15 @@ void main(float param, float p2) {
                 print(ftos(i), " ");
             print(ftos(i), "\n");
     }
+}
+
+void main() {
+    test(1,  0);
+    test(2,  0);
+    test(3,  0);
+    test(4,  0);
+    test(5,  0);
+    test(80, 0);
+    test(99, 0);
+    test(99, 6);
 }
