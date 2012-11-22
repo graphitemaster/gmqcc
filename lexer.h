@@ -69,30 +69,6 @@ enum {
     TOKEN_FATAL /* internal error, eg out of memory */
 };
 
-static const char *_tokennames[] = {
-    "TOKEN_START",
-    "TOKEN_IDENT",
-    "TOKEN_TYPENAME",
-    "TOKEN_OPERATOR",
-    "TOKEN_KEYWORD",
-    "TOKEN_DOTS",
-    "TOKEN_STRINGCONST",
-    "TOKEN_CHARCONST",
-    "TOKEN_VECTORCONST",
-    "TOKEN_INTCONST",
-    "TOKEN_FLOATCONST",
-    "TOKEN_WHITE",
-    "TOKEN_EOL",
-    "TOKEN_EOF",
-    "TOKEN_ERROR",
-    "TOKEN_FATAL",
-};
-typedef int
-_all_tokennames_added_[
-	((TOKEN_FATAL - TOKEN_START + 1) ==
-	 (sizeof(_tokennames)/sizeof(_tokennames[0])))
-	? 1 : -1];
-
 typedef struct {
     char *name;
     int   value;
