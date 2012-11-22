@@ -47,6 +47,7 @@ static void asterror(lex_ctx ctx, const char *msg, ...)
 /* It must not be possible to get here. */
 static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
+    (void)self;
     con_err("ast node missing destroy()\n");
     abort();
 }
@@ -966,6 +967,8 @@ const char* ast_function_label(ast_function *self, const char *prefix)
 
 bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out)
 {
+    (void)func;
+    (void)lvalue;
     /* NOTE: This is the codegen for a variable used in an expression.
      * It is not the codegen to generate the value. For this purpose,
      * ast_local_codegen and ast_global_codegen are to be used before this
@@ -1289,6 +1292,8 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     ir_value    *dummy;
     ast_expression_common *ec;
     size_t    i;
+
+    (void)ir;
 
     irf = self->ir_func;
     if (!irf) {
@@ -1721,6 +1726,8 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
 {
     ast_expression_codegen *cgen;
     ir_value *operand;
+
+    *out = NULL;
 
     /* In the context of a return operation, we don't actually return
      * anything...
@@ -2335,6 +2342,8 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
 bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue, ir_value **out)
 {
     ir_block *target;
+
+    *out = NULL;
 
     if (lvalue) {
         asterror(ast_ctx(self), "break/continue expression is not an l-value");
