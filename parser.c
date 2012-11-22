@@ -1411,6 +1411,8 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
 
     lex_ctx ctx = parser_ctx(parser);
 
+    (void)block; /* not touching */
+
     /* skip the 'if', parse an optional 'not' and check for an opening paren */
     if (!parser_next(parser)) {
         parseerror(parser, "expected condition or 'not'");
@@ -1485,6 +1487,8 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
 
     lex_ctx ctx = parser_ctx(parser);
 
+    (void)block; /* not touching */
+
     /* skip the 'while' and check for opening paren */
     if (!parser_next(parser) || parser->tok != '(') {
         parseerror(parser, "expected 'while' condition in parenthesis");
@@ -1528,6 +1532,8 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
     ast_expression *cond, *ontrue;
 
     lex_ctx ctx = parser_ctx(parser);
+
+    (void)block; /* not touching */
 
     /* skip the 'do' and get the body */
     if (!parser_next(parser)) {
@@ -1716,6 +1722,8 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     ast_return     *ret = NULL;
     ast_value      *expected = parser->function->vtype;
 
+    (void)block; /* not touching */
+
     if (!parser_next(parser)) {
         parseerror(parser, "expected return expression");
         return false;
@@ -1754,6 +1762,8 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 {
     lex_ctx ctx = parser_ctx(parser);
 
+    (void)block; /* not touching */
+
     if (!parser_next(parser) || parser->tok != ';') {
         parseerror(parser, "expected semicolon");
         return false;
@@ -1774,6 +1784,8 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     ast_switch_case swcase;
 
     lex_ctx ctx = parser_ctx(parser);
+
+    (void)block; /* not touching */
 
     /* parse over the opening paren */
     if (!parser_next(parser) || parser->tok != '(') {
@@ -2114,7 +2126,7 @@ static ast_expression* parse_statement_or_block(parser_t *parser)
 }
 
 /* loop method */
-static bool create_vector_members(parser_t *parser, ast_value *var, varentry_t *ve)
+static bool create_vector_members(ast_value *var, varentry_t *ve)
 {
     size_t i;
     size_t len = strlen(var->name);
@@ -2376,7 +2388,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             continue;
         }
 
-        if (!create_vector_members(parser, param, ve)) {
+        if (!create_vector_members(param, ve)) {
             ast_block_delete(block);
             return false;
         }
@@ -3278,7 +3290,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 isvector = true;
 
             if (isvector) {
-                if (!create_vector_members(parser, var, ve)) {
+                if (!create_vector_members(var, ve)) {
                     retval = false;
                     goto cleanup;
                 }
@@ -3587,6 +3599,7 @@ static uint16_t progdefs_crc_sum(uint16_t old, const char *str)
 static void progdefs_crc_file(const char *str)
 {
     /* write to progdefs.h here */
+    (void)str;
 }
 
 static uint16_t progdefs_crc_both(uint16_t old, const char *str)
