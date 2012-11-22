@@ -3045,8 +3045,8 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     prog_section_def def;
     prog_section_field fld;
 
-    def.type   = field->vtype;
-    def.offset = vec_size(code_globals);
+    def.type   = (uint16_t)field->vtype;
+    def.offset = (uint16_t)vec_size(code_globals);
 
     /* create a global named the same as the field */
     if (opts_standard == COMPILER_GMQCC) {
@@ -3132,6 +3132,11 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
                 return false;
             }
         }
+    }
+
+    if (vec_size(code_globals) >= 65536) {
+        irerror(vec_last(self->globals)->context, "This progs file would require more globals than the metadata can handle. Bailing out.");
+        return false;
     }
 
     /* DP errors if the last instruction is not an INSTR_DONE
