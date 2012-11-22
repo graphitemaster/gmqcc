@@ -460,8 +460,6 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
              (ast_istype((A), ast_value) && ((ast_value*)(A))->isconst)
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
-#define CanConstFold3(A, B, C) \
-             (CanConstFold1(A) && CanConstFold1(B) && CanConstFold1(C))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
 #define ConstF(i) (asvalue[(i)]->constval.vfloat)
 #define ConstS(i) (asvalue[(i)]->constval.vstring)
