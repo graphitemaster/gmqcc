@@ -256,7 +256,7 @@ static bool options_parse(int argc, char **argv) {
                 case 'h':
                     usage();
                     exit(0);
-                    break;
+                    /* break; never reached because of exit(0) */
 
                 case 'E':
                     opts_pp_only = true;

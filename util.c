@@ -270,8 +270,8 @@ void util_endianswap(void *m, int s, int l) {
     if(*((char *)&s))
         return;
 
-    for(; w < l; w++) {
-        for(;  i < s << 1; i++) {
+    for(; w < (size_t)l; w++) {
+        for(;  i < (size_t)(s << 1); i++) {
             unsigned char *p = (unsigned char *)m+w*s;
             unsigned char  t = p[i];
             p[i]             = p[s-i-1];

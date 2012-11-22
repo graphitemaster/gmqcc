@@ -1115,7 +1115,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 ftepp_error(ftepp, "unrecognized preprocessor directive: `%s`", ftepp_tokval(ftepp));
                 return false;
             }
-            break;
+            /* break; never reached */
         default:
             ftepp_error(ftepp, "unexpected preprocessor token: `%s`", ftepp_tokval(ftepp));
             return false;

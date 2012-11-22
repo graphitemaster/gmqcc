@@ -10,8 +10,6 @@ ifeq ($(CC), clang)
 		-Weverything                  \
 		-Wno-missing-prototypes       \
 		-Wno-unused-parameter         \
-		-Wno-sign-compare             \
-		-Wno-implicit-fallthrough     \
 		-Wno-sign-conversion          \
 		-Wno-conversion               \
 		-Wno-disabled-macro-expansion \

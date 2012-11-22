@@ -3167,7 +3167,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 const char *qc_opname(int op)
 {
     if (op < 0) return "<INVALID>";
-    if (op < ( sizeof(asm_instr) / sizeof(asm_instr[0]) ))
+    if (op < (int)( sizeof(asm_instr) / sizeof(asm_instr[0]) ))
         return asm_instr[op].m;
     switch (op) {
         case VINSTR_PHI:  return "PHI";
