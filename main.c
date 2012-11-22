@@ -384,7 +384,6 @@ static bool options_parse(int argc, char **argv) {
         else
         {
             /* it's a QC filename */
-            argitem item;
             item.filename = argv[0];
             item.type     = TYPE_QC;
             vec_push(items, item);
