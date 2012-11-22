@@ -1926,10 +1926,11 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     self->expression.outr = (ir_value*)1;
 
     /* generate the condition */
-    func->curblock = cond;
     cgen = self->cond->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
         return false;
+    /* update the block which will get the jump - because short-logic or ternaries may have changed this */
+    cond = func->curblock;
 
     /* on-true path */
 
@@ -1976,7 +1977,6 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     merge = ir_function_create_block(func->ir_func, ast_function_label(func, "endif"));
     if (!merge)
         return false;
-
     /* add jumps ot the merge block */
     if (ontrue && !ontrue_endblock->final && !ir_block_create_jump(ontrue_endblock, merge))
         return false;
