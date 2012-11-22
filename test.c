@@ -514,7 +514,8 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
         goto success;
     } else if (!strcmp(template->proceduretype, "-execute")) {
         if (!template->executeflags) {
-            con_err("template compile error: %s missing `E:` tag (use `$null` for exclude)\n", file);
+            /* default to $null */
+            template->executeflags = util_strdup("$null");
             goto failure;
         }
         if (!template->comparematch) {
