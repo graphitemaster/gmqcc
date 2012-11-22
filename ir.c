@@ -2600,20 +2600,20 @@ tailcall:
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
                 vec_push(code_statements, stmt);
             }
-            /* No whandle extparams */
+            /* Now handle extparams */
             first = vec_size(instr->params);
             for (; p < first; ++p)
             {
                 ir_builder *ir = func->owner;
                 ir_value *param = instr->params[p];
-                ir_value *target;
+                ir_value *targetparam;
 
                 if (p-8 >= vec_size(ir->extparams)) {
                     irerror(instr->context, "Not enough extparam-globals have been created");
                     return false;
                 }
 
-                target = ir->extparams[p-8];
+                targetparam = ir->extparams[p-8];
 
                 stmt.opcode = INSTR_STORE_F;
                 stmt.o3.u1 = 0;
@@ -2623,7 +2623,7 @@ tailcall:
                 else
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
-                stmt.o2.u1 = ir_value_code_addr(target);
+                stmt.o2.u1 = ir_value_code_addr(targetparam);
                 vec_push(code_statements, stmt);
             }
 
