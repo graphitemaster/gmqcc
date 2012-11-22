@@ -1412,10 +1412,11 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
 bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_value **out)
 {
     ast_expression_codegen *cgen;
-    ir_value *left, *right;
+    ir_value *left  = NULL;
+    ir_value *right = NULL;
 
     ast_value       *arr;
-    ast_value       *idx;
+    ast_value       *idx = 0;
     ast_array_index *ai = NULL;
 
     if (lvalue && self->expression.outl) {
