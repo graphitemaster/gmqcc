@@ -234,16 +234,16 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #define INT2FLT(Y) *((float  *)&(Y))
 
 /* New flexible vector implementation from Dale */
-#define _vec_raw(A) (((size_t*)(A)) - 2)
+#define _vec_raw(A) (((size_t*)(void*)(A)) - 2)
 #define _vec_beg(A) (_vec_raw(A)[0])
 #define _vec_end(A) (_vec_raw(A)[1])
 #define _vec_needsgrow(A,N) ((!(A)) || (_vec_end(A) + (N) >= _vec_beg(A)))
-#define _vec_mightgrow(A,N) (_vec_needsgrow((A), (N)) ? _vec_forcegrow((A),(N)) : 0)
-#define _vec_forcegrow(A,N) _util_vec_grow((void**)&(A), (N), sizeof(*(A)))
+#define _vec_mightgrow(A,N) (_vec_needsgrow((A), (N)) ? (void)_vec_forcegrow((A),(N)) : (void)0)
+#define _vec_forcegrow(A,N) _util_vec_grow(((void**)&(A)), (N), sizeof(*(A)))
 #define _vec_remove(A,S,I,N) (memmove((char*)(A)+(I)*(S),(char*)(A)+((I)+(N))*(S),(S)*(vec_size(A)-(I)-(N))), _vec_end(A)-=(N))
 void _util_vec_grow(void **a, size_t i, size_t s);
 /* exposed interface */
-#define vec_free(A)          ((A) ? (mem_d(_vec_raw(A)), (A) = NULL) : 0)
+#define vec_free(A)          ((A) ? (mem_d((void*)_vec_raw(A)), (A) = NULL) : 0)
 #define vec_push(A,V)        (_vec_mightgrow((A),1), (A)[_vec_end(A)++] = (V))
 #define vec_size(A)          ((A) ? _vec_end(A) : 0)
 #define vec_add(A,N)         (_vec_mightgrow((A),(N)), _vec_end(A)+=(N), &(A)[_vec_end(A)-(N)])
