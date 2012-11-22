@@ -450,8 +450,9 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
         int c = getc(stream);
 
         if (chr < 2) {
+            *n += (*n > 16) ? *n : 64;
             chr = *n + *lineptr - pos;
-            if (!(*lineptr = (char*)mem_r(*lineptr,(*n+=(*n>16)?*n:64))))
+            if (!(*lineptr = (char*)mem_r(*lineptr,*n)))
                 return -1;
             pos = *n - chr + *lineptr;
         }
