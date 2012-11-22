@@ -1643,6 +1643,11 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
     ast_expression_codegen *cgen;
     ir_value *leftl, *leftr, *right, *bin;
 
+    ast_value       *arr;
+    ast_value       *idx = 0;
+    ast_array_index *ai = NULL;
+    ir_value        *iridx = NULL;
+
     if (lvalue && self->expression.outl) {
         *out = self->expression.outl;
         return true;
@@ -1653,8 +1658,23 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
         return true;
     }
 
+    if (ast_istype(self->dest, ast_array_index))
+    {
+
+        ai = (ast_array_index*)self->dest;
+        idx = (ast_value*)ai->index;
+
+        if (ast_istype(ai->index, ast_value) && idx->isconst)
+            ai = NULL;
+    }
+
     /* for a binstore we need both an lvalue and an rvalue for the left side */
     /* rvalue of destination! */
+    if (ai) {
+        cgen = idx->expression.codegen;
+        if (!(*cgen)((ast_expression*)(idx), func, false, &iridx))
+            return false;
+    }
     cgen = self->dest->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->dest), func, false, &leftr))
         return false;
@@ -1669,16 +1689,45 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
                                 self->opbin, leftr, right);
     self->expression.outr = bin;
 
-    /* now store them */
-    cgen = self->dest->expression.codegen;
-    /* lvalue of destination */
-    if (!(*cgen)((ast_expression*)(self->dest), func, true, &leftl))
-        return false;
-    self->expression.outl = leftl;
 
-    if (!ir_block_create_store_op(func->curblock, self->opstore, leftl, bin))
-        return false;
-    self->expression.outr = bin;
+    if (ai) {
+        /* we need to call the setter */
+        ir_value  *funval;
+        ir_instr  *call;
+
+        if (lvalue) {
+            asterror(ast_ctx(self), "array-subscript assignment cannot produce lvalues");
+            return false;
+        }
+
+        arr = (ast_value*)ai->array;
+        if (!ast_istype(ai->array, ast_value) || !arr->setter) {
+            asterror(ast_ctx(self), "value has no setter (%s)", arr->name);
+            return false;
+        }
+
+        cgen = arr->setter->expression.codegen;
+        if (!(*cgen)((ast_expression*)(arr->setter), func, true, &funval))
+            return false;
+
+        call = ir_block_create_call(func->curblock, ast_function_label(func, "store"), funval);
+        if (!call)
+            return false;
+        ir_call_param(call, iridx);
+        ir_call_param(call, bin);
+        self->expression.outr = bin;
+    } else {
+        /* now store them */
+        cgen = self->dest->expression.codegen;
+        /* lvalue of destination */
+        if (!(*cgen)((ast_expression*)(self->dest), func, true, &leftl))
+            return false;
+        self->expression.outl = leftl;
+
+        if (!ir_block_create_store_op(func->curblock, self->opstore, leftl, bin))
+            return false;
+        self->expression.outr = bin;
+    }
 
     /* Theoretically, an assinment returns its left side as an
      * lvalue, if we don't need an lvalue though, we return
