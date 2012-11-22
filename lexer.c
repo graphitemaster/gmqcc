@@ -980,9 +980,9 @@ int lex_do(lex_file *lex)
 
         if (!strcmp(v, "flush"))
         {
-            size_t frame;
-            for (frame = 0; frame < vec_size(lex->frames); ++frame)
-                mem_d(lex->frames[frame].name);
+            size_t fi;
+            for (fi = 0; fi < vec_size(lex->frames); ++fi)
+                mem_d(lex->frames[fi].name);
             vec_free(lex->frames);
             /* skip line (fteqcc does it too) */
             ch = lex_getch(lex);
