@@ -3,7 +3,7 @@ PREFIX := /usr/local
 BINDIR := $(PREFIX)/bin
 
 CC     ?= clang
-CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector -fno-common
+CFLAGS += -Wall -I. -Os
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
 	CFLAGS +=                         \

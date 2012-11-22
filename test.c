@@ -571,8 +571,8 @@ void task_template_destroy(task_template_t **template) {
      * checks will fail if template pointer is reused.
      */
     mem_d(*template);
-    task_template_nullify(*template);
-    *template = NULL;
+    //task_template_nullify(*template);
+    //*template = NULL;
 }
 
 /*
@@ -861,6 +861,8 @@ bool task_execute(task_template_t *template) {
              */
             success = !!!(strcmp(data, template->comparematch[compare++]));
         }
+        mem_d(data);
+        data = NULL;
     }
     pclose(execute);
     return success;
@@ -874,7 +876,6 @@ bool task_execute(task_template_t *template) {
  */
 void task_schedualize(const char *curdir) {
     bool   execute  = false;
-    char  *back     = NULL;
     char  *data     = NULL;
     size_t size     = 0;
     size_t i;
@@ -898,12 +899,10 @@ void task_schedualize(const char *curdir) {
          * then we do the same for stderr.
          */    
         while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
-            back = data;
             fputs(data, task_tasks[i].stdoutlog);
             fflush(task_tasks[i].stdoutlog);
         }
         while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
-            back = data;
             /*
              * If a string contains an error we just dissalow execution
              * of it in the vm.
@@ -920,9 +919,8 @@ void task_schedualize(const char *curdir) {
             fputs(data, task_tasks[i].stderrlog);
             fflush(task_tasks[i].stdoutlog);
         }
+        //mem_d(data);
         
-        if (back)
-            mem_d(back);
         
         /*
          * If we can execute we do so after all data has been read and
@@ -952,8 +950,7 @@ void task_schedualize(const char *curdir) {
             task_tasks[i].template->successmessage  : "unknown"
         );
     }
-    if (back)
-        mem_d(back);
+    mem_d(data);
 }
 
 /*
