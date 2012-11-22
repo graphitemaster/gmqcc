@@ -542,7 +542,6 @@ bool ir_function_finalize(ir_function *self)
 
     if (!ir_function_calculate_liferanges(self))
         return false;
-
     if (!ir_function_allocate_locals(self))
         return false;
     return true;
@@ -3330,6 +3329,26 @@ void ir_instr_dump(ir_instr *in, char *ind,
     ind[strlen(ind)-1] = 0;
 }
 
+void ir_value_dump_string(const char *str, int (*oprintf)(const char*, ...))
+{
+    oprintf("\"");
+    for (; *str; ++str) {
+        switch (*str) {
+            case '\n': oprintf("\\n"); break;
+            case '\r': oprintf("\\r"); break;
+            case '\t': oprintf("\\t"); break;
+            case '\v': oprintf("\\v"); break;
+            case '\f': oprintf("\\f"); break;
+            case '\b': oprintf("\\b"); break;
+            case '\a': oprintf("\\a"); break;
+            case '\\': oprintf("\\\\"); break;
+            case '"': oprintf("\\\""); break;
+            default: oprintf("%c", *str); break;
+        }
+    }
+    oprintf("\"");
+}
+
 void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
 {
     if (v->isconst) {
@@ -3354,7 +3373,7 @@ void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
                 oprintf("(entity)");
                 break;
             case TYPE_STRING:
-                oprintf("\"%s\"", v->constval.vstring);
+                ir_value_dump_string(v->constval.vstring, oprintf);
                 break;
 #if 0
             case TYPE_INTEGER:

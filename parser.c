@@ -3921,6 +3921,10 @@ bool parser_finish(const char *output)
                 ir_builder_delete(ir);
                 return false;
             }
+        }
+        if (opts_dump)
+            ir_builder_dump(ir, con_out);
+        for (i = 0; i < vec_size(parser->functions); ++i) {
             if (!ir_function_finalize(parser->functions[i]->ir_func)) {
                 con_out("failed to finalize function %s\n", parser->functions[i]->name);
                 ir_builder_delete(ir);
@@ -3929,7 +3933,7 @@ bool parser_finish(const char *output)
         }
 
         if (retval) {
-            if (opts_dump)
+            if (opts_dumpfin)
                 ir_builder_dump(ir, con_out);
 
             generate_checksum(parser);
