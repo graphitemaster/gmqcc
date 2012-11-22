@@ -6,15 +6,13 @@ CC     ?= clang
 CFLAGS += -Wall -I. -fomit-frame-pointer -fno-stack-protector -fno-common
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
-	CFLAGS +=                  \
+	CFLAGS +=                         \
 		-Weverything                  \
 		-Wno-missing-prototypes       \
-		-Wno-unused-parameter         \
-		-Wno-sign-conversion          \
-		-Wno-conversion               \
-		-Wno-disabled-macro-expansion \
 		-Wno-padded                   \
-		-Wno-format-nonliteral
+		-Wno-format-nonliteral        \
+		-Wno-disabled-macro-expansion \
+		-Wno-conversion
 
 endif
 ifeq ($(track), no)
