@@ -1236,6 +1236,10 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
         }
     } while (!ftepp->errors && ftepp->token < TOKEN_EOF);
 
+    /* force a 0 at the end but don't count it as added to the output */
+    vec_push(ftepp->output_string, 0);
+    vec_shrinkby(ftepp->output_string, 1);
+
     newline = ftepp->token == TOKEN_EOF;
     return newline;
 }
