@@ -1,6 +1,7 @@
-void   print(...)   = #1;
-string ftos (float) = #2;
-entity() spawn = #3;
+void   print(...)    = #1;
+string ftos (float)  = #2;
+string vtos (vector) = #5;
+entity spawn()       = #3;
 
 .float mem;
 
@@ -39,4 +40,15 @@ void main() {
 	// postfix on members
 	print(ftos(e.mem--), " = ");
 	print(ftos(e.mem+1), "\n");
+
+	// compounds in general
+	a = 3;
+	print(ftos(a *= 2), " = 6\n");
+	print(ftos(a /= 2), " = 3\n");
+
+    // compounds on vectors
+	vector v;
+	v = '3 4 5';
+	print(vtos(v *= 2), " = '6 8 10'\n");
+	print(vtos(v /= 2), " = '3 4 5'\n");
 }
