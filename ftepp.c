@@ -65,6 +65,7 @@ typedef struct {
     char        *output_string;
 
     char        *itemname;
+    char        *includename;
 } ftepp_t;
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
@@ -172,6 +173,8 @@ static void ftepp_delete(ftepp_t *self)
     size_t i;
     if (self->itemname)
         mem_d(self->itemname);
+    if (self->includename)
+        vec_free(self->includename);
     for (i = 0; i < vec_size(self->macros); ++i)
         ppmacro_delete(self->macros[i]);
     vec_free(self->macros);
@@ -902,29 +905,50 @@ static void unescape(const char *str, char *out) {
     *out = 0;
 }
 
+static char *ftepp_include_find_path(const char *file, const char *pathfile)
+{
+    FILE       *fp;
+    char       *filename = NULL;
+    const char *last_slash;
+    size_t      len;
+
+    if (!pathfile)
+        return NULL;
+
+    last_slash = strrchr(pathfile, '/');
+
+    if (last_slash) {
+        len = last_slash - pathfile;
+        memcpy(vec_add(filename, len), pathfile, len);
+        vec_push(filename, '/');
+    }
+    else {
+        len = strlen(pathfile);
+        memcpy(vec_add(filename, len), pathfile, len);
+        if (vec_last(filename) != '/')
+            vec_push(filename, '/');
+    }
+
+    len = strlen(file);
+    memcpy(vec_add(filename, len+1), file, len);
+    vec_last(filename) = 0;
+
+    fp = util_fopen(filename, "rb");
+    if (fp) {
+        fclose(fp);
+        return filename;
+    }
+    vec_free(filename);
+    return NULL;
+}
+
 static char *ftepp_include_find(ftepp_t *ftepp, const char *file)
 {
     char *filename = NULL;
-    size_t len;
 
-    if (ftepp->itemname) {
-        const char *last_slash;
-        last_slash = strrchr(ftepp->itemname, '/');
-        if (last_slash) {
-            len = last_slash - ftepp->itemname;
-            memcpy(vec_add(filename, len), ftepp->itemname, len);
-            vec_push(filename, '/');
-        }
-        else {
-            len = strlen(ftepp->itemname);
-            memcpy(vec_add(filename, len), ftepp->itemname, len);
-            if (vec_last(filename) != '/')
-                vec_push(filename, '/');
-        }
-    }
-    len = strlen(file);
-    memcpy(vec_add(filename, len), file, len);
-    vec_push(filename, 0);
+    filename = ftepp_include_find_path(file, ftepp->includename);
+    if (!filename)
+        filename = ftepp_include_find_path(file, ftepp->itemname);
     return filename;
 }
 
@@ -940,6 +964,7 @@ static bool ftepp_include(ftepp_t *ftepp)
     lex_ctx  ctx;
     char     lineno[128];
     char     *filename;
+    char     *old_includename;
 
     (void)ftepp_next(ftepp);
     if (!ftepp_skipspace(ftepp))
@@ -959,19 +984,28 @@ static bool ftepp_include(ftepp_t *ftepp)
     ftepp_out(ftepp, ")\n#pragma line(1)\n", false);
 
     filename = ftepp_include_find(ftepp, ftepp_tokval(ftepp));
+    if (!filename) {
+        ftepp_error(ftepp, "failed to open include file `%s`", ftepp_tokval(ftepp));
+        return false;
+    }
     inlex = lex_open(filename);
     if (!inlex) {
         ftepp_error(ftepp, "failed to open include file `%s`", filename);
         vec_free(filename);
         return false;
     }
-    vec_free(filename);
     ftepp->lex = inlex;
+    old_includename = ftepp->includename;
+    ftepp->includename = filename;
     if (!ftepp_preprocess(ftepp)) {
+        vec_free(ftepp->includename);
+        ftepp->includename = old_includename;
         lex_close(ftepp->lex);
         ftepp->lex = old_lexer;
         return false;
     }
+    vec_free(ftepp->includename);
+    ftepp->includename = old_includename;
     lex_close(ftepp->lex);
     ftepp->lex = old_lexer;
 
