@@ -607,7 +607,10 @@ static int lex_skipwhite(lex_file *lex)
                         lex_ungetch(lex, ch);
                     }
                     if (lex->flags.preprocessing) {
-                        lex_tokench(lex, ' '); /* ch); */
+                        if (ch == '\n')
+                            lex_tokench(lex, '\n');
+                        else
+                            lex_tokench(lex, ' '); /* ch); */
                     }
                 }
                 ch = ' '; /* cause TRUE in the isspace check */
