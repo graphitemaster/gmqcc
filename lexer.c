@@ -604,6 +604,7 @@ static int lex_skipwhite(lex_file *lex)
                             }
                             break;
                         }
+                        lex_ungetch(lex, ch);
                     }
                     if (lex->flags.preprocessing) {
                         lex_tokench(lex, ' '); /* ch); */
