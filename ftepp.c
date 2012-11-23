@@ -1248,12 +1248,12 @@ static ftepp_t *ftepp;
 static bool ftepp_preprocess_done()
 {
     bool retval = true;
-    lex_close(ftepp->lex);
-    ftepp->lex = NULL;
     if (vec_size(ftepp->conditions)) {
         if (ftepp_warn(ftepp, WARN_MULTIFILE_IF, "#if spanning multiple files, is this intended?"))
             retval = false;
     }
+    lex_close(ftepp->lex);
+    ftepp->lex = NULL;
     if (ftepp->itemname) {
         mem_d(ftepp->itemname);
         ftepp->itemname = NULL;
