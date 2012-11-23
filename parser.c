@@ -3380,10 +3380,20 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 {
                     /* other globals */
                     if (old) {
-                        parseerror(parser, "global `%s` already declared here: %s:%i",
-                                   var->name, ast_ctx(old).file, ast_ctx(old).line);
-                        retval = false;
-                        goto cleanup;
+                        if (opts_standard == COMPILER_GMQCC) {
+                            parseerror(parser, "global `%s` already declared here: %s:%i",
+                                       var->name, ast_ctx(old).file, ast_ctx(old).line);
+                            retval = false;
+                            goto cleanup;
+                        } else {
+                            if (parsewarning(parser, WARN_DOUBLE_DECLARATION,
+                                             "global `%s` already declared here: %s:%i",
+                                             var->name, ast_ctx(old).file, ast_ctx(old).line))
+                            {
+                                retval = false;
+                                goto cleanup;
+                            }
+                        }
                     }
                     if (opts_standard == COMPILER_QCC &&
                         (old = parser_find_field(parser, var->name)))
