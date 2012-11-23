@@ -255,6 +255,38 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_shrinkto(A,N)    (_vec_end(A) = (N))
 #define vec_shrinkby(A,N)    (_vec_end(A) -= (N))
 
+typedef struct hash_table_t {
+    size_t                size;
+    struct hash_node_t **table;
+} hash_table_t, *ht;
+
+/*
+ * hashtable implementation:
+ * 
+ * util_htnew(size)                             -- to make a new hashtable
+ * util_htset(table, key, value, sizeof(value)) -- to set something in the table
+ * util_htget(table, key)                       -- to get something from the table
+ * util_htdel(table)                            -- to delete the table
+ * 
+ * example of use:
+ * 
+ * ht    foo  = util_htnew(1024);
+ * int   data = 100;
+ * char *test = "hello world\n";
+ * util_htset(foo, "foo", (void*)&data, sizeof(int));
+ * util_gtset(foo, "bar", (void*)test,  strlen(test));
+ * 
+ * printf("foo: %d, bar %s",
+ *     *((int *)util_htget(foo, "foo")),
+ *      ((char*)util_htget(foo, "bar"))
+ * );
+ * 
+ * util_htdel(foo);
+ */
+hash_table_t *util_htnew(size_t size);
+void          util_htset(hash_table_t *ht, const char *key, void *value, size_t size);
+void         *util_htget(hash_table_t *ht, const char *key);
+void          util_htdel(hash_table_t *ht);
 /*===================================================================*/
 /*=========================== code.c ================================*/
 /*===================================================================*/

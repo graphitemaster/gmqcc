@@ -535,3 +535,149 @@ void _util_vec_grow(void **a, size_t i, size_t s) {
     *a = (void*)((size_t*)p + 2);
     _vec_beg(*a) = m;
 }
+
+/*
+ * Hash table for generic data, based on dynamic memory allocations
+ * all around.  This is the internal interface, please look for
+ * EXPOSED INTERFACE comment below
+ */
+typedef struct hash_node_t {
+    char               *key;  /* the key for this node in table */
+    void               *value; /* allocated memory storing data  */
+    size_t              size; /* size of data                   */
+    struct hash_node_t *next; /* next node (linked list)        */
+} hash_node_t;
+
+
+size_t _util_hthash(hash_table_t *ht, const char *key) {
+    uint64_t val;
+    size_t   len = strlen(key);
+    size_t   itr = 0;
+    
+    
+    while (val < ((uint64_t)~1) /* MAX SIZE OF UINT64 */ && itr < len) {
+        val  = val << 8;
+        val += key[itr];
+        
+        itr++;
+    }
+    
+    return val % ht->size;
+}
+
+hash_node_t *_util_htnewpair(const char *key, void *value, size_t size) {
+    hash_node_t *node;
+    if (!(node = mem_a(sizeof(hash_node_t))))
+        return NULL;
+        
+    if (!(node->key = util_strdup(key))) {
+        mem_d(node);
+        return NULL;
+    }
+    
+    if (!(node->value = mem_a(size))) {
+        mem_d(node->key);
+        mem_d(node);
+        return NULL;
+    }
+    
+    memcpy(node->value, value, size);
+    node->size = size;
+    node->next = NULL;
+    
+    return node;
+}
+
+/*
+ * EXPOSED INTERFACE for the hashtable implementation
+ * util_htnew(size)                             -- to make a new hashtable
+ * util_htset(table, key, value, sizeof(value)) -- to set something in the table
+ * util_htget(table, key)                       -- to get something from the table
+ * util_htdel(table)                            -- to delete the table
+ */
+hash_table_t *util_htnew(size_t size) {
+    hash_table_t *hashtable = NULL;
+    if (size < 1)
+        return NULL;
+        
+    if (!(hashtable = mem_a(sizeof(hash_table_t))))
+        return NULL;
+        
+    if (!(hashtable->table = mem_a(sizeof(hash_node_t*) * size))) {
+        mem_d(hashtable);
+        return NULL;
+    }
+    
+    hashtable->size = size;
+    memset(hashtable->table, 0, sizeof(hash_node_t*) * size);
+    
+    return hashtable;
+}
+
+void util_htset(hash_table_t *ht, const char *key, void *value, size_t size) {
+    size_t bin = 0;
+    hash_node_t *newnode = NULL;
+    hash_node_t *next    = NULL;
+    hash_node_t *last    = NULL;
+    
+    bin  = _util_hthash(ht, key);
+    next = ht->table[bin];
+    
+    while (next && next->key && strcmp(key, next->key))
+        last = next, next = next->next;
+    
+    /* already in table, do a replace */
+    if (next && next->key && !strcmp(key, next->key)) {
+        mem_d(next->value);
+        next->value = mem_a(size);
+        next->size  = size;
+        memcpy(next->value, value, size);
+    } else {
+        /* not found, grow a pair man :P */
+        newnode = _util_htnewpair(key, value, size);
+        if (next == ht->table[bin]) {
+            newnode->next  = next;
+            ht->table[bin] = newnode;
+        } else if (!next) {
+            last->next = newnode;
+        } else {
+            newnode->next = next;
+            last->next = newnode;
+        }
+    }
+}
+
+void *util_htget(hash_table_t *ht, const char *key) {
+    size_t       bin  = _util_hthash(ht, key);
+    hash_node_t *pair = ht->table[bin];
+    
+    while (pair && pair->key && strcmp(key, pair->key) > 0)
+        pair = pair->next;
+        
+    if (!pair || !pair->key || strcmp(key, pair->key) != 0)
+        return NULL;
+        
+    return pair->value;
+}
+
+/*
+ * Free all allocated data in a hashtable, this is quite the amount
+ * of work.
+ */
+void util_htdel(hash_table_t *ht) {
+    size_t i = 0;
+    for (; i < ht->size; i++) {
+        hash_node_t *n = ht->table[i];
+        
+        /* free in list */
+        while (n) {
+            if (n->key)   mem_d(n->key);
+            if (n->value) mem_d(n->value);
+            n = n->next;
+        }
+        
+    }
+    /* free table */
+    mem_d(ht->table);
+    mem_d(ht);
+}
