@@ -477,43 +477,20 @@ int util_getline(char **lineptr, size_t *n, FILE *stream) {
 
 size_t util_strtocmd(const char *in, char *out, size_t outsz) {
     size_t sz = 1;
-    for (; *in && sz < outsz; ++in, ++out, ++sz) {
-        if (*in == '-')
-            *out = '_';
-        else if (isalpha(*in) && !isupper(*in))
-            *out = *in + 'A' - 'a';
-        else
-            *out = *in;
-    }
+    for (; *in && sz < outsz; ++in, ++out, ++sz)
+        *out = (*in == '-') ? '_' : (isalpha(*in) && !isupper(*in)) ? *in + 'A' - 'a': *in;
     *out = 0;
     return sz-1;
 }
 
 size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
     size_t sz = 1;
-    for (; *in && sz < outsz; ++in, ++out, ++sz) {
-        if (*in == '_')
-            *out = '-';
-        else if (isalpha(*in) && isupper(*in))
-            *out = *in + 'a' - 'A';
-        else
-            *out = *in;
-            
-        *out = (isalpha(*in) && isupper(*in)) ? *in + 'a' - 'A' : *in;
-    }
+    for (; *in && sz < outsz; ++in, ++out, ++sz)
+        *out = (*in == '_') ? '-' : (isalpha(*in) && isupper(*in)) ? *in + 'a' - 'A' : *in;
     *out = 0;
     return sz-1;
 }
 
-
-bool util_filexists(const char *file) {
-    FILE *fp = fopen(file, "rb");
-    if  (!fp) return false;
-    
-    /* it exists */
-    fclose(fp);
-    return true;
-}
 
 FILE *util_fopen(const char *filename, const char *mode)
 {
