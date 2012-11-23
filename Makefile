@@ -11,7 +11,8 @@ ifeq ($(CC), clang)
 		-Wno-padded                   \
 		-Wno-format-nonliteral        \
 		-Wno-disabled-macro-expansion \
-		-Wno-conversion
+		-Wno-conversion               \
+		-Wno-missing-prototypes
 
 endif
 ifeq ($(track), no)

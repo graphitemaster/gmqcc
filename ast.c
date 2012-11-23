@@ -1641,7 +1641,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
 bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, ir_value **out)
 {
     ast_expression_codegen *cgen;
-    ir_value *leftl, *leftr, *right, *bin;
+    ir_value *leftl = NULL, *leftr, *right, *bin;
 
     ast_value       *arr;
     ast_value       *idx = 0;

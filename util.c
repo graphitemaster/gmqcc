@@ -527,7 +527,7 @@ typedef struct hash_node_t {
 
 
 size_t _util_hthash(hash_table_t *ht, const char *key) {
-    uint64_t val;
+    uint64_t val = 0;
     size_t   len = strlen(key);
     size_t   itr = 0;
     
