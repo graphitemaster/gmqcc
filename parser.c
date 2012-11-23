@@ -24,6 +24,7 @@ typedef struct {
     ast_value    **accessors;
 
     ast_value *imm_float_zero;
+    ast_value *imm_float_one;
     ast_value *imm_vector_zero;
 
     size_t crc_globals;
@@ -183,6 +184,13 @@ static ast_value* parser_const_float_0(parser_t *parser)
     if (!parser->imm_float_zero)
         parser->imm_float_zero = parser_const_float(parser, 0);
     return parser->imm_float_zero;
+}
+
+static ast_value* parser_const_float_1(parser_t *parser)
+{
+    if (!parser->imm_float_one)
+        parser->imm_float_one = parser_const_float(parser, 1);
+    return parser->imm_float_one;
 }
 
 static char *parser_strdup(const char *str)
@@ -413,7 +421,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ast_expression *exprs[3];
     ast_block      *blocks[3];
     ast_value      *asvalue[3];
-    size_t i, assignop, addop;
+    size_t i, assignop, addop, subop;
     qcint  generated_op = 0;
 
     char ty1[1024];
@@ -893,11 +901,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
                                                         exprs[0],
-                                                        (ast_expression*)parser_const_float(parser, 1));
+                                                        (ast_expression*)parser_const_float_1(parser));
             } else {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STORE_F, addop,
                                                         exprs[0],
-                                                        (ast_expression*)parser_const_float(parser, 1));
+                                                        (ast_expression*)parser_const_float_1(parser));
             }
             break;
         case opid3('S','+','+'):
@@ -908,19 +916,27 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 parseerror(parser, "invalid type for prefix increment: %s", ty1);
                 return false;
             }
-            if (op->id == opid3('+','+','P'))
+            if (op->id == opid3('S','+','+')) {
                 addop = INSTR_ADD_F;
-            else
+                subop = INSTR_SUB_F;
+            } else {
                 addop = INSTR_SUB_F;
+                subop = INSTR_ADD_F;
+            }
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
                                                         exprs[0],
-                                                        (ast_expression*)parser_const_float(parser, 1));
+                                                        (ast_expression*)parser_const_float_1(parser));
             } else {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STORE_F, addop,
                                                         exprs[0],
-                                                        (ast_expression*)parser_const_float(parser, 1));
+                                                        (ast_expression*)parser_const_float_1(parser));
             }
+            if (!out)
+                return false;
+            out = (ast_expression*)ast_binary_new(ctx, subop,
+                                                  out,
+                                                  (ast_expression*)parser_const_float_1(parser));
             break;
         case opid2('+','='):
         case opid2('-','='):
