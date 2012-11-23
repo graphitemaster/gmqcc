@@ -3587,14 +3587,23 @@ skipvar:
                 break;
             }
 
-            func = ast_function_new(ast_ctx(var), var->name, var);
-            if (!func) {
-                parseerror(parser, "failed to allocate function for `%s`", var->name);
-                break;
+            if (var->isconst) {
+                (void)!parsewarning(parser, WARN_DOUBLE_DECLARATION,
+                                    "builtin `%s` has already been defined\n"
+                                    " -> previous declaration here: %s:%i",
+                                    var->name, ast_ctx(var).file, (int)ast_ctx(var).line);
             }
-            vec_push(parser->functions, func);
+            else
+            {
+                func = ast_function_new(ast_ctx(var), var->name, var);
+                if (!func) {
+                    parseerror(parser, "failed to allocate function for `%s`", var->name);
+                    break;
+                }
+                vec_push(parser->functions, func);
 
-            func->builtin = -parser_token(parser)->constval.i;
+                func->builtin = -parser_token(parser)->constval.i;
+            }
 
             if (!parser_next(parser)) {
                 parseerror(parser, "expected comma or semicolon");
