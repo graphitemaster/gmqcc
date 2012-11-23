@@ -3712,9 +3712,8 @@ static bool parser_global_statement(parser_t *parser)
     {
         return parse_variable(parser, NULL, false, false);
     }
-    else if (parser->tok == TOKEN_KEYWORD)
+    else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var"))
     {
-        /* handle 'var' and 'const' */
         if (!strcmp(parser_tokval(parser), "var")) {
             if (!parser_next(parser)) {
                 parseerror(parser, "expected variable declaration after 'var'");
@@ -3722,7 +3721,10 @@ static bool parser_global_statement(parser_t *parser)
             }
             return parse_variable(parser, NULL, true, false);
         }
-        else if (!strcmp(parser_tokval(parser), "const")) {
+    }
+    else if (parser->tok == TOKEN_KEYWORD)
+    {
+        if (!strcmp(parser_tokval(parser), "const")) {
             if (!parser_next(parser)) {
                 parseerror(parser, "expected variable declaration after 'const'");
                 return false;

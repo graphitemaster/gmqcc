@@ -22,7 +22,6 @@ static size_t num_keywords_qc = sizeof(keywords_qc) / sizeof(keywords_qc[0]);
 
 /* For fte/gmgqcc */
 static const char *keywords_fg[] = {
-    "var",
     "switch", "case", "default",
     "struct", "union",
     "break", "continue"
