@@ -883,9 +883,10 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
                 (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
             {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                 parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                           ty1, ty2);
                 return false;
             }
             if (ast_istype(exprs[0], ast_entfield))
