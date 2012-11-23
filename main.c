@@ -458,6 +458,9 @@ int main(int argc, char **argv) {
     if (opts_standard == COMPILER_GMQCC) {
         operators = c_operators;
         operator_count = c_operator_count;
+    } else if (opts_standard == COMPILER_FTEQCC) {
+        operators = fte_operators;
+        operator_count = fte_operator_count;
     } else {
         operators = qcc_operators;
         operator_count = qcc_operator_count;

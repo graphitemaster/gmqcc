@@ -201,6 +201,53 @@ static const oper_info c_operators[] = {
 };
 static const size_t c_operator_count = (sizeof(c_operators) / sizeof(c_operators[0]));
 
+static const oper_info fte_operators[] = {
+    { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
+
+    { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
+    { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
+    { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0 }, /* array subscript */
+
+    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
+    { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
+    { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX },
+    { "--",  1, opid3('-','-','P'), ASSOC_RIGHT, 14, OP_PREFIX },
+
+    { "*",   2, opid1('*'),         ASSOC_LEFT,  13, 0 },
+    { "/",   2, opid1('/'),         ASSOC_LEFT,  13, 0 },
+    { "&",   2, opid1('&'),         ASSOC_LEFT,  13, 0 },
+    { "|",   2, opid1('|'),         ASSOC_LEFT,  13, 0 },
+
+    { "+",   2, opid1('+'),         ASSOC_LEFT,  12, 0 },
+    { "-",   2, opid1('-'),         ASSOC_LEFT,  12, 0 },
+
+    { "<",   2, opid1('<'),         ASSOC_LEFT,  10, 0 },
+    { ">",   2, opid1('>'),         ASSOC_LEFT,  10, 0 },
+    { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0 },
+    { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0 },
+    { "==",  2, opid2('=','='),     ASSOC_LEFT,  10,  0 },
+    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  10,  0 },
+
+    { "=",   2, opid1('='),         ASSOC_RIGHT, 8,  0 },
+    { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 8,  0 },
+    { "-=",  2, opid2('-','='),     ASSOC_RIGHT, 8,  0 },
+    { "*=",  2, opid2('*','='),     ASSOC_RIGHT, 8,  0 },
+    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 8,  0 },
+    { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 8,  0 },
+    { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 8,  0 },
+    { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 8,  0 },
+
+    { "&&",  2, opid2('&','&'),     ASSOC_LEFT,  5,  0 },
+    { "||",  2, opid2('|','|'),     ASSOC_LEFT,  5,  0 },
+
+    { ",",   2, opid1(','),         ASSOC_LEFT,  2,  0 },
+
+    { "?",   3, opid2('?',':'),     ASSOC_RIGHT, 1,  0 },
+    { ":",   3, opid2(':','?'),     ASSOC_RIGHT, 1,  0 }
+};
+static const size_t fte_operator_count = (sizeof(fte_operators) / sizeof(fte_operators[0]));
+
 static const oper_info qcc_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
 
