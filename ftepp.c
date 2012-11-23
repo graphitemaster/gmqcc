@@ -1256,7 +1256,19 @@ bool ftepp_preprocess_string(const char *name, const char *str)
 bool ftepp_init()
 {
     ftepp = ftepp_new();
-    return !!ftepp;
+    if (!ftepp)
+        return false;
+    ftepp_add_define(NULL, "GMQCC");
+    return true;
+}
+
+void ftepp_add_define(const char *source, const char *name)
+{
+    ppmacro *macro;
+    lex_ctx ctx = { "__builtin__", 0 };
+    ctx.file = source;
+    macro = ppmacro_new(ctx, name);
+    vec_push(ftepp->macros, macro);
 }
 
 const char *ftepp_get()

@@ -804,6 +804,7 @@ bool ftepp_preprocess_string(const char *name, const char *str);
 void ftepp_finish           ();
 const char *ftepp_get       ();
 void ftepp_flush            ();
+void ftepp_add_define       (const char *source, const char *name);
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
