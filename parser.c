@@ -3719,6 +3719,7 @@ static bool parser_global_statement(parser_t *parser)
             }
             return parse_variable(parser, NULL, true);
         }
+        parseerror(parser, "unrecognized keyword `%s`", parser_tokval(parser));
         return false;
     }
     else if (parser->tok == '$')
