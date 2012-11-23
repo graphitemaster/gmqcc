@@ -1015,6 +1015,23 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                     return false;
             };
             break;
+        case opid2('&','='):
+        case opid2('|','='):
+            if (NotSameType(TYPE_FLOAT)) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                parseerror(parser, "invalid types used in expression: %s and %s",
+                           ty1, ty2);
+                return false;
+            }
+            if (ast_istype(exprs[0], ast_entfield))
+                assignop = type_storep_instr[exprs[0]->expression.vtype];
+            else
+                assignop = type_store_instr[exprs[0]->expression.vtype];
+            out = (ast_expression*)ast_binstore_new(ctx, assignop,
+                                                    (op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
+                                                    exprs[0], exprs[1]);
+            break;
     }
 #undef NotSameType
 

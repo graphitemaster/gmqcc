@@ -51,4 +51,9 @@ void main() {
 	v = '3 4 5';
 	print(vtos(v *= 2), " = '6 8 10'\n");
 	print(vtos(v /= 2), " = '3 4 5'\n");
+
+	// bit compounds
+	a = 1;
+	print(ftos(a |= 2), " = 3\n");
+	print(ftos(a &= 6), " = 2\n");
 }
