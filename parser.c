@@ -167,7 +167,8 @@ static ast_value* parser_const_float(parser_t *parser, double d)
     size_t i;
     ast_value *out;
     for (i = 0; i < vec_size(parser->imm_float); ++i) {
-        if ((double)(parser->imm_float[i]->constval.vfloat) == d)
+        const double compare = parser->imm_float[i]->constval.vfloat;
+        if (memcmp((const void*)&compare, (const void *)&d, sizeof(double)) == 0)
             return parser->imm_float[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_FLOAT);
