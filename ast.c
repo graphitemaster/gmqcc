@@ -892,6 +892,10 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
         vtype->isconst ||
         vtype->expression.vtype != TYPE_FUNCTION)
     {
+        asterror(ast_ctx(self), "internal error: ast_function_new condition %i %i type=%i",
+                 (int)!vtype,
+                 (int)vtype->isconst,
+                 vtype->expression.vtype);
         mem_d(self);
         return NULL;
     }
