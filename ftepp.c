@@ -655,7 +655,17 @@ cleanup:
  * parameter lists on macros are errors
  * No mathematical calculations are executed
  */
-static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
+static bool ftepp_if_expr(ftepp_t *ftepp, bool *out, double *value_out);
+static bool ftepp_if_op(ftepp_t *ftepp)
+{
+    ftepp->lex->flags.noops = false;
+    ftepp_next(ftepp);
+    if (!ftepp_skipspace(ftepp))
+        return false;
+    ftepp->lex->flags.noops = true;
+    return true;
+}
+static bool ftepp_if_value(ftepp_t *ftepp, bool *out, double *value_out)
 {
     ppmacro *macro;
     bool     wasnot = false;
@@ -707,13 +717,16 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
             if (!macro || !vec_size(macro->output)) {
                 *out = false;
+                *value_out = 0;
             } else {
                 /* This does not expand recursively! */
                 switch (macro->output[0]->token) {
                     case TOKEN_INTCONST:
-                        *out = !!(macro->output[0]->constval.f);
+                        *value_out = macro->output[0]->constval.i;
+                        *out = !!(macro->output[0]->constval.i);
                         break;
                     case TOKEN_FLOATCONST:
+                        *value_out = macro->output[0]->constval.f;
                         *out = !!(macro->output[0]->constval.f);
                         break;
                     default:
@@ -726,15 +739,17 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
             *out = false;
             break;
         case TOKEN_INTCONST:
+            *value_out = ftepp->lex->tok.constval.i;
             *out = !!(ftepp->lex->tok.constval.i);
             break;
         case TOKEN_FLOATCONST:
+            *value_out = ftepp->lex->tok.constval.f;
             *out = !!(ftepp->lex->tok.constval.f);
             break;
 
         case '(':
             ftepp_next(ftepp);
-            if (!ftepp_if_expr(ftepp, out))
+            if (!ftepp_if_expr(ftepp, out, value_out))
                 return false;
             if (ftepp->token != ')') {
                 ftepp_error(ftepp, "expected closing paren in #if expression");
@@ -743,38 +758,89 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
             break;
 
         default:
-            ftepp_error(ftepp, "junk in #if");
+            ftepp_error(ftepp, "junk in #if: `%s` ...", ftepp_tokval(ftepp));
             return false;
     }
-    if (wasnot)
+    if (wasnot) {
         *out = !*out;
+        *value_out = (*out ? 1 : 0);
+    }
+    return true;
+}
 
-    ftepp->lex->flags.noops = false;
-    ftepp_next(ftepp);
-    if (!ftepp_skipspace(ftepp))
+/*
+static bool ftepp_if_nextvalue(ftepp_t *ftepp, bool *out, double *value_out)
+{
+    if (!ftepp_next(ftepp))
         return false;
-    ftepp->lex->flags.noops = true;
+    return ftepp_if_value(ftepp, out, value_out);
+}
+*/
 
-    if (ftepp->token == ')')
+static bool ftepp_if_expr(ftepp_t *ftepp, bool *out, double *value_out)
+{
+    if (!ftepp_if_value(ftepp, out, value_out))
+        return false;
+
+    if (!ftepp_if_op(ftepp))
+        return false;
+
+    if (ftepp->token == ')' || ftepp->token != TOKEN_OPERATOR)
         return true;
 
-    if (ftepp->token != TOKEN_OPERATOR)
-        return true;
-
+    /* FTEQCC is all right-associative and no precedence here */
     if (!strcmp(ftepp_tokval(ftepp), "&&") ||
         !strcmp(ftepp_tokval(ftepp), "||"))
     {
         bool next = false;
         char opc  = ftepp_tokval(ftepp)[0];
+        double nextvalue;
 
-        ftepp_next(ftepp);
-        if (!ftepp_if_expr(ftepp, &next))
+        (void)nextvalue;
+        if (!ftepp_next(ftepp))
+            return false;
+        if (!ftepp_if_expr(ftepp, &next, &nextvalue))
             return false;
 
         if (opc == '&')
             *out = *out && next;
         else
             *out = *out || next;
+
+        *value_out = (*out ? 1 : 0);
+        return true;
+    }
+    else if (!strcmp(ftepp_tokval(ftepp), "==") ||
+             !strcmp(ftepp_tokval(ftepp), "!=") ||
+             !strcmp(ftepp_tokval(ftepp), ">=") ||
+             !strcmp(ftepp_tokval(ftepp), "<=") ||
+             !strcmp(ftepp_tokval(ftepp), ">") ||
+             !strcmp(ftepp_tokval(ftepp), "<"))
+    {
+        bool next = false;
+        const char opc0 = ftepp_tokval(ftepp)[0];
+        const char opc1 = ftepp_tokval(ftepp)[1];
+        double other;
+
+        if (!ftepp_next(ftepp))
+            return false;
+        if (!ftepp_if_expr(ftepp, &next, &other))
+            return false;
+
+        if (opc0 == '=')
+            *out = (*value_out == other);
+        else if (opc0 == '!')
+            *out = (*value_out != other);
+        else if (opc0 == '>') {
+            if (opc1 == '=') *out = (*value_out >= other);
+            else             *out = (*value_out > other);
+        }
+        else if (opc0 == '<') {
+            if (opc1 == '=') *out = (*value_out <= other);
+            else             *out = (*value_out < other);
+        }
+        *value_out = (*out ? 1 : 0);
+
         return true;
     }
     else {
@@ -786,6 +852,7 @@ static bool ftepp_if_expr(ftepp_t *ftepp, bool *out)
 static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
 {
     bool result = false;
+    double dummy = 0;
 
     memset(cond, 0, sizeof(*cond));
     (void)ftepp_next(ftepp);
@@ -797,7 +864,7 @@ static bool ftepp_if(ftepp_t *ftepp, ppcondition *cond)
         return false;
     }
 
-    if (!ftepp_if_expr(ftepp, &result))
+    if (!ftepp_if_expr(ftepp, &result, &dummy))
         return false;
 
     cond->on = result;
