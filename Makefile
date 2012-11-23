@@ -3,7 +3,7 @@ PREFIX := /usr/local
 BINDIR := $(PREFIX)/bin
 
 CC     ?= clang
-CFLAGS += -Wall -I. -Wall -pedantic
+CFLAGS += -Wall -I. -pedantic-errors
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
 	CFLAGS +=                         \
