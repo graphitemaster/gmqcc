@@ -446,6 +446,7 @@ int main(int argc, char **argv) {
     options_set(opts_warn, WARN_ASSIGN_FUNCTION_TYPES, true);
     options_set(opts_warn, WARN_PREPROCESSOR, true);
     options_set(opts_warn, WARN_MULTIFILE_IF, true);
+    options_set(opts_warn, WARN_DOUBLE_DECLARATION, true);
 
     options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
     options_set(opts_flags, FTEPP, false);
