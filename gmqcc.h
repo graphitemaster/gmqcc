@@ -280,8 +280,8 @@ typedef struct hash_table_t {
  * ht    foo  = util_htnew(1024);
  * int   data = 100;
  * char *test = "hello world\n";
- * util_htset(foo, "foo", (void*)&data, sizeof(int));
- * util_gtset(foo, "bar", (void*)test,  strlen(test));
+ * util_htset(foo, "foo", (void*)&data);
+ * util_gtset(foo, "bar", (void*)test);
  * 
  * printf("foo: %d, bar %s",
  *     *((int *)util_htget(foo, "foo")),
@@ -291,7 +291,7 @@ typedef struct hash_table_t {
  * util_htdel(foo);
  */
 hash_table_t *util_htnew(size_t size);
-void          util_htset(hash_table_t *ht, const char *key, void *value, size_t size);
+void          util_htset(hash_table_t *ht, const char *key, void *value);
 void         *util_htget(hash_table_t *ht, const char *key);
 void          util_htdel(hash_table_t *ht);
 /*===================================================================*/
