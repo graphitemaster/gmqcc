@@ -571,8 +571,6 @@ void task_template_destroy(task_template_t **template) {
      * checks will fail if template pointer is reused.
      */
     mem_d(*template);
-    //task_template_nullify(*template);
-    //*template = NULL;
 }
 
 /*
@@ -622,8 +620,11 @@ bool task_propogate(const char *curdir) {
          * actually a directory, so it must be a file :)
          */
         if (strstr(files->d_name, ".tmpl") == &files->d_name[strlen(files->d_name) - (sizeof(".tmpl") - 1)]) {
-            util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
             task_template_t *template = task_template_compile(files->d_name, curdir);
+            char             buf[4096]; /* one page should be enough */
+            task_t           task;
+            
+            util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
             if (!template) {
                 con_err("error compiling task template: %s\n", files->d_name);
                 success = false;
@@ -640,7 +641,6 @@ bool task_propogate(const char *curdir) {
              * which will be refered to with a handle in the task for
              * reading the data from the pipe.
              */
-            char     buf[4096]; /* one page should be enough */
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s %s/%s %s -o %s",
                 task_bins[TASK_COMPILE],
@@ -654,7 +654,6 @@ bool task_propogate(const char *curdir) {
              * The task template was compiled, now lets create a task from
              * the template data which has now been propogated.
              */
-            task_t task;
             task.template = template;
             if (!(task.runhandles = task_popen(buf, "r"))) {
                 con_err("error opening pipe to process for test: %s\n", template->description);
@@ -882,9 +881,9 @@ void task_schedualize(const char *curdir) {
     
     for (i = 0; i < vec_size(task_tasks); i++) {
         /*
-        * Generate a task from thin air if it requires execution in
-        * the QCVM.
-        */
+         * Generate a task from thin air if it requires execution in
+         * the QCVM.
+         */
         if (!strcmp(task_tasks[i].template->proceduretype, "-execute"))
             execute = true;
             
@@ -919,8 +918,6 @@ void task_schedualize(const char *curdir) {
             fputs(data, task_tasks[i].stderrlog);
             fflush(task_tasks[i].stdoutlog);
         }
-        //mem_d(data);
-        
         
         /*
          * If we can execute we do so after all data has been read and

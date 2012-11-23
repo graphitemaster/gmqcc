@@ -77,7 +77,7 @@ static void ftepp_errorat(ftepp_t *ftepp, lex_ctx ctx, const char *fmt, ...)
     ftepp->errors++;
 
     va_start(ap, fmt);
-    con_vprintmsg(LVL_ERROR, ctx.file, ctx.line, "error", fmt, ap);
+    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", fmt, ap);
     va_end(ap);
 }
 
@@ -88,7 +88,7 @@ static void ftepp_error(ftepp_t *ftepp, const char *fmt, ...)
     ftepp->errors++;
 
     va_start(ap, fmt);
-    con_vprintmsg(LVL_ERROR, ftepp->lex->tok.ctx.file, ftepp->lex->tok.ctx.line, "error", fmt, ap);
+    con_cvprintmsg((void*)&ftepp->lex->tok.ctx, LVL_ERROR, "error", fmt, ap);
     va_end(ap);
 }
 
@@ -106,7 +106,7 @@ static bool GMQCC_WARN ftepp_warn(ftepp_t *ftepp, int warntype, const char *fmt,
     }
 
     va_start(ap, fmt);
-    con_vprintmsg(lvl, ftepp->lex->tok.ctx.file, ftepp->lex->tok.ctx.line, "error", fmt, ap);
+    con_cvprintmsg((void*)&ftepp->lex->tok.ctx, lvl, "error", fmt, ap);
     va_end(ap);
     return opts_werror;
 }
