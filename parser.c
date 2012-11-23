@@ -900,6 +900,28 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                                                         (ast_expression*)parser_const_float(parser, 1));
             }
             break;
+        case opid3('S','+','+'):
+        case opid3('S','-','-'):
+            /* prefix ++ */
+            if (exprs[0]->expression.vtype != TYPE_FLOAT) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                parseerror(parser, "invalid type for prefix increment: %s", ty1);
+                return false;
+            }
+            if (op->id == opid3('+','+','P'))
+                addop = INSTR_ADD_F;
+            else
+                addop = INSTR_SUB_F;
+            if (ast_istype(exprs[0], ast_entfield)) {
+                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
+                                                        exprs[0],
+                                                        (ast_expression*)parser_const_float(parser, 1));
+            } else {
+                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STORE_F, addop,
+                                                        exprs[0],
+                                                        (ast_expression*)parser_const_float(parser, 1));
+            }
+            break;
         case opid2('+','='):
         case opid2('-','='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
@@ -1279,13 +1301,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         else
         {
             /* classify the operator */
-            /* TODO: suffix operators */
             const oper_info *op;
             const oper_info *olast = NULL;
             size_t o;
             for (o = 0; o < operator_count; ++o) {
                 if ((!(operators[o].flags & OP_PREFIX) == wantop) &&
-                    !(operators[o].flags & OP_SUFFIX) && /* remove this */
+                    /* !(operators[o].flags & OP_SUFFIX) && / * remove this */
                     !strcmp(parser_tokval(parser), operators[o].op))
                 {
                     break;
@@ -1379,7 +1400,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             } else {
                 DEBUGSHUNTDO(con_out("push operator %s\n", op->op));
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
-                wantop = false;
+                wantop = !!(op->flags & OP_SUFFIX);
             }
         }
         if (!parser_next(parser)) {
