@@ -184,7 +184,7 @@ void prog_delete(qc_program *prog)
 
 char* prog_getstring(qc_program *prog, qcint str)
 {
-    if (str < 0 || str >= vec_size(prog->strings))
+    if (str < 0 || str >= (qcint)vec_size(prog->strings))
         return "<<<invalid string>>>";
     return prog->strings + str;
 }
@@ -211,7 +211,7 @@ prog_section_def* prog_getdef(qc_program *prog, qcint off)
 
 qcany* prog_getedict(qc_program *prog, qcint e)
 {
-    if (e >= vec_size(prog->entitypool)) {
+    if (e >= (qcint)vec_size(prog->entitypool)) {
         prog->vmerror++;
         printf("Accessing out of bounds edict %i\n", (int)e);
         e = 0;
@@ -244,7 +244,7 @@ void prog_free_entity(qc_program *prog, qcint e)
         printf("Trying to free world entity\n");
         return;
     }
-    if (e >= vec_size(prog->entitypool)) {
+    if (e >= (qcint)vec_size(prog->entitypool)) {
         prog->vmerror++;
         printf("Trying to free out of bounds entity\n");
         return;
@@ -285,9 +285,9 @@ qcint prog_tempstring(qc_program *prog, const char *_str)
     return at;
 }
 
-static int print_escaped_string(const char *str, size_t maxlen)
+static size_t print_escaped_string(const char *str, size_t maxlen)
 {
-    int len = 2;
+    size_t len = 2;
     putchar('"');
     --maxlen; /* because we're lazy and have escape sequences */
     while (*str) {
@@ -368,7 +368,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
             break;
     }
 done:
-    if (len < sizeof(spaces)-1) {
+    if (len < (int)sizeof(spaces)-1) {
         spaces[sizeof(spaces)-1-len] = 0;
         printf(spaces);
         spaces[sizeof(spaces)-1-len] = ' ';
@@ -658,7 +658,7 @@ static int qc_print(qc_program *prog)
 {
     size_t i;
     const char *laststr = NULL;
-    for (i = 0; i < prog->argc; ++i) {
+    for (i = 0; i < (size_t)prog->argc; ++i) {
         qcany *str = (qcany*)(prog->globals + OFS_PARM0 + 3*i);
         printf("%s", (laststr = prog_getstring(prog, str->string)));
     }
@@ -1128,7 +1128,7 @@ while (1) {
                 qcvmerror(prog, "progs `%s` attempted to read an out of bounds entity", prog->filename);
                 goto cleanup;
             }
-            if (OPB->_int < 0 || OPB->_int + 3 > prog->entityfields)
+            if (OPB->_int < 0 || OPB->_int + 3 > (qcint)prog->entityfields)
             {
                 qcvmerror(prog, "prog `%s` attempted to read an invalid field from entity (%i)",
                           prog->filename,
@@ -1176,11 +1176,11 @@ while (1) {
         case INSTR_STOREP_ENT:
         case INSTR_STOREP_FLD:
         case INSTR_STOREP_FNC:
-            if (OPB->_int < 0 || OPB->_int >= vec_size(prog->entitydata)) {
+            if (OPB->_int < 0 || OPB->_int >= (qcint)vec_size(prog->entitydata)) {
                 qcvmerror(prog, "`%s` attempted to write to an out of bounds edict (%i)", prog->filename, OPB->_int);
                 goto cleanup;
             }
-            if (OPB->_int < prog->entityfields && !prog->allowworldwrites)
+            if (OPB->_int < (qcint)prog->entityfields && !prog->allowworldwrites)
                 qcvmerror(prog, "`%s` tried to assign to world.%s (field %i)\n",
                           prog->filename,
                           prog_getstring(prog, prog_entfield(prog, OPB->_int)->name),
@@ -1189,11 +1189,11 @@ while (1) {
             ptr->_int = OPA->_int;
             break;
         case INSTR_STOREP_V:
-            if (OPB->_int < 0 || OPB->_int + 2 >= vec_size(prog->entitydata)) {
+            if (OPB->_int < 0 || OPB->_int + 2 >= (qcint)vec_size(prog->entitydata)) {
                 qcvmerror(prog, "`%s` attempted to write to an out of bounds edict (%i)", prog->filename, OPB->_int);
                 goto cleanup;
             }
-            if (OPB->_int < prog->entityfields && !prog->allowworldwrites)
+            if (OPB->_int < (qcint)prog->entityfields && !prog->allowworldwrites)
                 qcvmerror(prog, "`%s` tried to assign to world.%s (field %i)\n",
                           prog->filename,
                           prog_getstring(prog, prog_entfield(prog, OPB->_int)->name),
@@ -1254,7 +1254,7 @@ while (1) {
             if (!OPA->function)
                 qcvmerror(prog, "NULL function in `%s`", prog->filename);
 
-            if(!OPA->function || OPA->function >= (unsigned int)vec_size(prog->functions))
+            if(!OPA->function || OPA->function >= (qcint)vec_size(prog->functions))
             {
                 qcvmerror(prog, "CALL outside the program in `%s`", prog->filename);
                 goto cleanup;
@@ -1268,8 +1268,8 @@ while (1) {
             if (newf->entry < 0)
             {
                 /* negative statements are built in functions */
-                int builtinnumber = -newf->entry;
-                if (builtinnumber < prog->builtins_count && prog->builtins[builtinnumber])
+                qcint builtinnumber = -newf->entry;
+                if (builtinnumber < (qcint)prog->builtins_count && prog->builtins[builtinnumber])
                     prog->builtins[builtinnumber](prog);
                 else
                     qcvmerror(prog, "No such builtin #%i in %s! Try updating your gmqcc sources",

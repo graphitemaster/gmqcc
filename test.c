@@ -873,7 +873,7 @@ bool task_execute(task_template_t *template) {
  * execution this takes more work since a task needs to be generated
  * from thin air and executed INLINE.
  */
-void task_schedualize(const char *curdir) {
+void task_schedualize() {
     bool   execute  = false;
     char  *data     = NULL;
     size_t size     = 0;
@@ -978,7 +978,7 @@ bool test_perform(const char *curdir) {
      * it's designed to prevent lock contention, and possible syncronization
      * issues.
      */
-    task_schedualize(curdir);
+    task_schedualize();
     task_destroy(curdir);
     
     return true;
