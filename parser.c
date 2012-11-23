@@ -413,7 +413,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ast_expression *exprs[3];
     ast_block      *blocks[3];
     ast_value      *asvalue[3];
-    size_t i, assignop;
+    size_t i, assignop, addop;
     qcint  generated_op = 0;
 
     char ty1[1024];
@@ -877,6 +877,28 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 }
             }
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
+            break;
+        case opid3('+','+','P'):
+        case opid3('-','-','P'):
+            /* prefix ++ */
+            if (exprs[0]->expression.vtype != TYPE_FLOAT) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                parseerror(parser, "invalid type for prefix increment: %s", ty1);
+                return false;
+            }
+            if (op->id == opid3('+','+','P'))
+                addop = INSTR_ADD_F;
+            else
+                addop = INSTR_SUB_F;
+            if (ast_istype(exprs[0], ast_entfield)) {
+                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
+                                                        exprs[0],
+                                                        (ast_expression*)parser_const_float(parser, 1));
+            } else {
+                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STORE_F, addop,
+                                                        exprs[0],
+                                                        (ast_expression*)parser_const_float(parser, 1));
+            }
             break;
         case opid2('+','='):
         case opid2('-','='):
