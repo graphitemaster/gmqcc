@@ -834,7 +834,7 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
 
 int lex_do(lex_file *lex)
 {
-    int ch, nextch;
+    int ch, nextch, thirdch;
 
     lex_token_new(lex);
 #if 0
@@ -1114,6 +1114,16 @@ int lex_do(lex_file *lex)
             lex_tokench(lex, nextch);
         } else if (ch == '-' && nextch == '>') {
             lex_tokench(lex, nextch);
+        } else if (ch == '&' && nextch == '~') {
+            thirdch = lex_getch(lex);
+            if (thirdch != '=') {
+                lex_ungetch(lex, thirdch);
+                lex_ungetch(lex, nextch);
+            }
+            else {
+                lex_tokench(lex, nextch);
+                lex_tokench(lex, thirdch);
+            }
         } else
             lex_ungetch(lex, nextch);
 

@@ -238,6 +238,7 @@ static const oper_info fte_operators[] = {
     { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 8,  0 },
     { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 8,  0 },
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 8,  0 },
+    { "&~=", 2, opid3('&','~','='), ASSOC_RIGHT, 8,  0 },
 
     { "&&",  2, opid2('&','&'),     ASSOC_LEFT,  5,  0 },
     { "||",  2, opid2('|','|'),     ASSOC_LEFT,  5,  0 },

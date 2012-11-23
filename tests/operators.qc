@@ -56,4 +56,7 @@ void main() {
 	a = 1;
 	print(ftos(a |= 2), " = 3\n");
 	print(ftos(a &= 6), " = 2\n");
+	a = 7;
+
+	print(ftos(a &~= 3), " = 4\n");
 }
