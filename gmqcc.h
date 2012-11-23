@@ -110,6 +110,13 @@
 #    else
 #       define GMQCC_INLINE inline
 #    endif
+/*
+ * Visual studio has __forcinline we can use.  So lets use that
+ * I suspect it also has just __inline of some sort, but our use
+ * of inline is correct (not guessed), WE WANT IT TO BE INLINE
+ */
+#elseif defined(_MSC_VER)
+#    define GMQCC_INLINE __forceinline
 #else
 #    define GMQCC_INLINE
 #endif /* !__STDC_VERSION__ */
@@ -153,14 +160,14 @@
 
 
 #if defined(__GNUC__) || defined (__CLANG__)
-	typedef int          int64_t  __attribute__((__mode__(__DI__)));
-	typedef unsigned int uint64_t __attribute__((__mode__(__DI__)));
+	typedef int              int64_t  __attribute__((__mode__(__DI__)));
+	typedef unsigned int     uint64_t __attribute__((__mode__(__DI__)));
 #elif defined(_MSC_VER)
 	typedef __int64          int64_t;
 	typedef unsigned __int64 uint64_t;
 #else
     /*
-    * Incoorectly size the types so static assertions below will
+    * Incorrectly size the types so static assertions below will
     * fail.  There is no valid way to get a 64bit type at this point
     * without making assumptions of too many things.
     */
