@@ -48,7 +48,7 @@ typedef struct {
 
 
 static bool GMQCC_WARN parser_pop_local(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const);
 static ast_block* parse_block(parser_t *parser, bool warnreturn);
 static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
 static ast_expression* parse_statement_or_block(parser_t *parser);
@@ -1776,7 +1776,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
 
         parseerror(parser, "TODO: assignment of new variables to be non-const");
         goto onerr;
-        if (!parse_variable(parser, block, true))
+        if (!parse_variable(parser, block, true, false))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2079,7 +2079,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, false))
+        if (!parse_variable(parser, block, false, false))
             return false;
         *out = NULL;
         return true;
@@ -2096,7 +2096,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
                 parseerror(parser, "expected variable declaration");
                 return false;
             }
-            if (!parse_variable(parser, block, true))
+            if (!parse_variable(parser, block, true, false))
                 return false;
             *out = NULL;
             return true;
@@ -3227,7 +3227,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     return var;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const)
 {
     ast_value *var;
     ast_value *proto;
@@ -3423,6 +3423,9 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
             }
         }
+
+        if (is_const)
+            var->isconst = true;
 
         /* Part 2:
          * Create the global/local, and deal with vector types.
@@ -3707,7 +3710,7 @@ static bool parser_global_statement(parser_t *parser)
 {
     if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, false);
+        return parse_variable(parser, NULL, false, false);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -3717,7 +3720,14 @@ static bool parser_global_statement(parser_t *parser)
                 parseerror(parser, "expected variable declaration after 'var'");
                 return false;
             }
-            return parse_variable(parser, NULL, true);
+            return parse_variable(parser, NULL, true, false);
+        }
+        else if (!strcmp(parser_tokval(parser), "const")) {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected variable declaration after 'const'");
+                return false;
+            }
+            return parse_variable(parser, NULL, true, true);
         }
         parseerror(parser, "unrecognized keyword `%s`", parser_tokval(parser));
         return false;
