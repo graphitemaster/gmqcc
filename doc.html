@@ -1,0 +1,316 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="chrome=1">
+        <title>GMQCC by graphitemaster</title>
+
+        <link rel="stylesheet" href="stylesheets/styles.css">
+        <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+        <script src="javascripts/scale.fix.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <!--[if lt IE 9]>
+        <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <a href="https://github.com/graphitemaster/gmqcc"><div class="fork"></div></a>
+        <div class="wrapper">
+            <header>
+                <h1 class="header">GMQCC</h1>
+                <p class="header">An Improved Quake C Compiler</p>
+
+                <ul>
+                    <li class="download"><a href="https://github.com/graphitemaster/gmqcc/zipball/master">Download ZIP</a></li>
+                    <li class="download"><a href="https://github.com/graphitemaster/gmqcc/tarball/master">Download TAR</a></li>
+                    <li class="buttons"><a href="https://github.com/graphitemaster/gmqcc/issues">Issues</a></li>
+                    <li class="buttons"><a href="doc.html">Documentation</a></li>
+                    <li class="buttons"><a href="https://github.com/graphitemaster/gmqcc">View On GitHub</a></li>
+                </ul>
+            </header>
+            <section>
+                <h2>Defaults Flag</h2>
+                <p>
+                    The <i>-show-defaults</i> flag instructs the compiler to print out the defaults used related to
+                    the standard, optimization, and code generation.  When this flag is specified, the compiler
+                    will just print the defaults and quit.  No compilation is performed.
+                </p>
+                <pre>$ gmqcc -show-defautls</pre>
+                
+                <h2>Compiling for an alternitive standard</h2>
+                To compile with a different dialect of the QuakeC programming language the <i>-std</i>
+                flag can be instructed to select one of the following options:
+                <table border="0">
+                    <tr>
+                        <td>gmqcc</td>
+                        <td>default standard</td>
+                    </tr>
+                    <tr>
+                        <td>fteqcc</td>
+                        <td>fteqcc standard</td>
+                    </tr>
+                    <tr>
+                        <td>qcc</td>
+                        <td>vanila QuakeC standard</td>
+                    </tr>
+                </table>
+                
+                <h2>Common compiler options</h2>
+                <table border="0">
+                    <tr>
+                        <td>Options</td>
+                        <td>What it does</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-l&lt;path&gt;</td>
+                        <td>Adds &lt;path&gt; to the directories searched by the preprocessor for include file resolution.</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-o &lt;file&gt;</td>
+                        <td>Generates the named executable (progs.src) file (when not specified default is progs.src).</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-O&lt;level&gt;</td>
+                        <td>Specified the optimize level: highest being 3, lowest being 0 (not optimization).</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-E</td>
+                        <td>Instructs the compiler to only preprocess the input, writing the preprocessed source to stdout</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wall</td>
+                        <td>Enables all compiled warnings for the selcted standard</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Werror</td>
+                        <td>Instruct the compiler to treat all warnings as errors</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-std=&lt;standard&gt;</td>
+                        <td>Selects the standard dialect</td>
+                    </tr>
+                </table>
+                
+                <h2>Predefined Macros</h2>
+                <table border="0">
+                    <tr>
+                        <td>Macro</td>
+                        <td>What it represents</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>__STD_GMQCC__</td>
+                        <td>Specifies the current selected standard is gmqcc.</td>
+                    </tr>
+                    <tr>
+                        <td>__STD_FTEQCC__</td>
+                        <td>Specifies the current selected standard is fteqcc.</td>
+                    </tr>
+                    <tr>
+                        <td>__STD_QCC__</td>
+                        <td>Specifies the current selected standard is qcc.</td>
+                    </tr>
+                </table>
+                
+                <h2>Unsupported compatability options</h2>
+                <p>
+                    GMQCC strives hard for compatability with standard dialects, but not all
+                    features of those standards might be implemented. The unsupported features
+                    are presented below:
+                    
+                    <table border="0">
+                        <tr>
+                            <td>Feature</td>
+                            <td>Standard</td>
+                        </tr>
+                        
+                        <tr>
+                            <td>Inline Assembly</td>
+                            <td>FTEQCC</td>
+                        </tr>
+                        <tr>
+                            <td>Macro expansion in strings</td>
+                            <td>FTEQCC</td>
+                        </tr>
+                    </table>
+                </p>
+                
+                <h1>Less common compiler options</h1>
+                <h2>Code generation options</h2>
+                <table border="0">
+                    <tr>
+                        <td>Option</td>
+                        <td>What it does</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-foverlap-locals</td>
+                        <td>Reduces codesize by overlapping locals where possible</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-fdarkplaces-string-table-bug</td>
+                        <td>Works around a bug in older Darkplaces engine builds where the stringtable size is computed wrong</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-fadjust-vector-fields</td>
+                        <td>corrects assignment of vector field pointers (STORE_V instead of STORE_FLD)</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-fftepp</td>
+                        <td>Enables FTEQ preprocessor</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-frelaxted-switch</td>
+                        <td>Relaxes switch statement semantics</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-fshort-logic</td>
+                        <td>Enables short circut evaluation/logic</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-fperl-logic</td>
+                        <td>Enabled perl evalutaion/logic</td>
+                    </tr>
+                </table>
+                <h2>Warning options</h2>
+                <table border="0">
+                    <tr>
+                        <td>Option</td>
+                        <td>What it does</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wunused-uninitialized</td>
+                        <td>Enables warnings about unused or uninitialized variables</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wunknwon-control-sequence</td>
+                        <td>Enables warnings about unknown control sequence</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wextension</td>
+                        <td>Enables warnings about the use of (an) extension(s)</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wfield-redeclared</td>
+                        <td>Enables warnings about redeclared fields</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wmissing-return-values</td>
+                        <td>Enables warnings about missing return values</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wtoo-few-paramaters</td>
+                        <td>Enables warnings about missing paramaters for function calls</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wlocal-shadows</td>
+                        <td>Enables warnings about locals shadowing paramaters or other locals</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wlocal-constants</td>
+                        <td>Enables warnings about constants specified as locals</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wvoid-variables</td>
+                        <td>Enables warnings about variables declared as type void</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wimplicit-function-pointer</td>
+                        <td>Enables warnings about implicitly declared function pointers</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wvariadic-function</td>
+                        <td>Enables warnings for use of varadics for non-builtin functions</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wframe-macros</td>
+                        <td>Enables warnings about duplicated frame macros</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Weffectless-statement</td>
+                        <td>Enables warnings about effectiveless statements</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wend-sys-field</td>
+                        <td>Enables warnings of end_sys_fields being declared a field</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wassign-function-types</td>
+                        <td>Enables warnings for incompatible function pointer signatures used in assignment</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wpreprocessor</td>
+                        <td>Enables warnings about redefined macros</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-Wmultifile-if</td>
+                        <td>Enables warnings about multifile if statements</td>
+                    </tr>
+                </table>
+                <p>
+                    Individual warnings may be disabled with &nbsp;-Wno&lt;warning&gt;
+                    <pre>$ gmqcc -Wno-frame-macros # disables frame duplication warning</pre>
+                </p>
+                <h2>Miscellaneous options</h2>
+                <table border="0">
+                    <tr>
+                        <td>Option</td>
+                        <td>What it does</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-force-crc=&lt;num&gt;</td>
+                        <td>Forces a specific checsum into the header</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-debug</td>
+                        <td>Turns on compiler debug messages</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>-memchk</td>
+                        <td>Turns on compiler memory leak checker</td>
+                    </tr>
+                </table>
+                
+                <h3>Support or Contact</h3>
+                <p>Having trouble with GMQCC? Join our IRC channel at #kf-engine on irc.freenode.net or contact <a href="mailto:cube2killfild@gmail.com">Us</a> 
+            </section>
+            <footer>
+                <script type="text/javascript" src="http://www.ohloh.net/p/602517/widgets/project_partner_badge.js"></script>
+            </footer>
+        </div>
+        <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    </body>
+</html>
