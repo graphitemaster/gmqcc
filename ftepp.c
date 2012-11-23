@@ -1235,10 +1235,8 @@ bool ftepp_preprocess_file(const char *filename)
         con_out("failed to open file \"%s\"\n", filename);
         return false;
     }
-    if (!ftepp_preprocess(ftepp)) {
-        ftepp_delete(ftepp);
+    if (!ftepp_preprocess(ftepp))
         return false;
-    }
     return ftepp_preprocess_done();
 }
 
@@ -1250,10 +1248,8 @@ bool ftepp_preprocess_string(const char *name, const char *str)
         con_out("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
-    if (!ftepp_preprocess(ftepp)) {
-        ftepp_delete(ftepp);
+    if (!ftepp_preprocess(ftepp))
         return false;
-    }
     return ftepp_preprocess_done();
 }
 
