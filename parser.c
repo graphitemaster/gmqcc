@@ -2485,10 +2485,11 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
     lex_ctx ctx = ast_ctx(array);
 
     if (from+1 == afterend) {
-        // set this value
+        /* set this value */
         ast_block       *block;
         ast_return      *ret;
         ast_array_index *subscript;
+        ast_store       *st;
         int assignop = type_store_instr[value->expression.vtype];
 
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
@@ -2498,7 +2499,7 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
         if (!subscript)
             return NULL;
 
-        ast_store *st = ast_store_new(ctx, assignop, (ast_expression*)subscript, (ast_expression*)value);
+        st = ast_store_new(ctx, assignop, (ast_expression*)subscript, (ast_expression*)value);
         if (!st) {
             ast_delete(subscript);
             return NULL;
@@ -2543,11 +2544,12 @@ static ast_expression *array_field_setter_node(
     lex_ctx ctx = ast_ctx(array);
 
     if (from+1 == afterend) {
-        // set this value
+        /* set this value */
         ast_block       *block;
         ast_return      *ret;
         ast_entfield    *entfield;
         ast_array_index *subscript;
+        ast_store       *st;
         int assignop = type_storep_instr[value->expression.vtype];
 
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
@@ -2566,7 +2568,7 @@ static ast_expression *array_field_setter_node(
             return NULL;
         }
 
-        ast_store *st = ast_store_new(ctx, assignop, (ast_expression*)entfield, (ast_expression*)value);
+        st = ast_store_new(ctx, assignop, (ast_expression*)entfield, (ast_expression*)value);
         if (!st) {
             ast_delete(entfield);
             return NULL;

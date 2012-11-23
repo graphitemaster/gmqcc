@@ -498,9 +498,21 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
             *out = *in + 'a' - 'A';
         else
             *out = *in;
+            
+        *out = (isalpha(*in) && isupper(*in)) ? *in + 'a' - 'A' : *in;
     }
     *out = 0;
     return sz-1;
+}
+
+
+bool util_filexists(const char *file) {
+    FILE *fp = fopen(file, "rb");
+    if  (!fp) return false;
+    
+    /* it exists */
+    fclose(fp);
+    return true;
 }
 
 FILE *util_fopen(const char *filename, const char *mode)
@@ -513,15 +525,6 @@ FILE *util_fopen(const char *filename, const char *mode)
 #else
     return fopen(filename, mode);
 #endif
-}
-
-bool util_filexists(const char *file) {
-    FILE *fp = fopen(file, "rb");
-    if  (!fp) return false;
-    
-    /* it exists */
-    fclose(fp);
-    return true;
 }
 
 void _util_vec_grow(void **a, size_t i, size_t s) {

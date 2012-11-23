@@ -281,7 +281,7 @@ int con_change(const char *out, const char *err) {
         con_enablecolor();
     } else if (!(console.handle_err = fopen(err, "w"))) return 0;
     
-    // no buffering
+    /* no buffering */
     setvbuf(console.handle_out, NULL, _IONBF, 0);
     setvbuf(console.handle_err, NULL, _IONBF, 0);
     

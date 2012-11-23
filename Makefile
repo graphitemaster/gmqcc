@@ -3,12 +3,11 @@ PREFIX := /usr/local
 BINDIR := $(PREFIX)/bin
 
 CC     ?= clang
-CFLAGS += -Wall -I.
+CFLAGS += -Wall -I. -Wall -pedantic
 #turn on tons of warnings if clang is present
 ifeq ($(CC), clang)
 	CFLAGS +=                         \
 		-Weverything                  \
-		-Wno-missing-prototypes       \
 		-Wno-padded                   \
 		-Wno-format-nonliteral        \
 		-Wno-disabled-macro-expansion \
