@@ -913,7 +913,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             /* prefix ++ */
             if (exprs[0]->expression.vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                parseerror(parser, "invalid type for prefix increment: %s", ty1);
+                parseerror(parser, "invalid type for suffix increment: %s", ty1);
                 return false;
             }
             if (op->id == opid3('S','+','+')) {
