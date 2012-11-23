@@ -567,11 +567,14 @@ srcdone:
             }
 
             if (opts_pp_only) {
+                const char *out;
                 if (!ftepp_preprocess_file(items[itr].filename)) {
                     retval = 1;
                     goto cleanup;
                 }
-                fprintf(outfile, "%s", ftepp_get());
+                out = ftepp_get();
+                if (out)
+                    fprintf(outfile, "%s", out);
                 ftepp_flush();
             }
             else {
