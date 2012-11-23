@@ -35,4 +35,8 @@ void main() {
 	// check if minus translates
 	print(ftos(a--), "\n");
 	print(ftos(--a), "\n");
+
+	// postfix on members
+	print(ftos(e.mem--), " = ");
+	print(ftos(e.mem+1), "\n");
 }

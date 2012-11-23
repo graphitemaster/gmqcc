@@ -139,9 +139,8 @@ typedef struct {
 static const oper_info c_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
 
-    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
-    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  16, OP_SUFFIX},
-
+    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  15, OP_SUFFIX},
+    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  15, OP_SUFFIX},
     { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
     { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
     { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0 }, /* array subscript */
@@ -204,9 +203,8 @@ static const size_t c_operator_count = (sizeof(c_operators) / sizeof(c_operators
 static const oper_info fte_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
 
-    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  16, OP_SUFFIX},
-    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  16, OP_SUFFIX},
-
+    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  15, OP_SUFFIX},
+    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  15, OP_SUFFIX},
     { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
     { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
     { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0 }, /* array subscript */
