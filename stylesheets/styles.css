@@ -31,6 +31,7 @@ body {
     margin: 0;
     line-height: 1.8em;
     -webkit-font-smoothing: antialiased;
+    background: #CDC9C9;
 }
 
 textarea {
