@@ -357,12 +357,144 @@ $ cd gmqcc
                 </p>
                 
                 <h1><a name="tdoc">Testsuite Documentation</a></h1>
+                <h2>Running The Testsuite</h2>
                 <p>
-                    GMQCC comes with a complete testsuite system for verifying semantics
-                    and syntatics, TODO explain more and how to use it, write your own
-                    tests etc....
+                    To run the testsuite you can either use
+                    <pre>$ make check</pre>
+                    Or if you're on windows or have already compiled the
+                    testsuite from source:
+                    <pre>$ ./testsuite </pre>
+                    
+                    Optionally you may provide the testsuite with additional
+                    arguments:
+                    
+                    <table border="0">
+                        <tr>
+                            <td>Argument</td>
+                            <td>What it does</td>
+                        </tr>
+                        <tr>
+                            <td>-redirout=&lt;file&gt;</td>
+                            <td>Redirect stdout to any file.</td>
+                        </tr>
+                        <tr>
+                            <td>-redirerr=&lt;file&gt;</td>
+                            <td>Redirect stderr to any file.</td>
+                        </tr>
+                        <tr>
+                            <td>-debug</td>
+                            <td>Turn on testsuite debug messages.</td>
+                        </tr>
+                        <tr>
+                            <td>-memchk</td>
+                            <td>Turn on testsuite memleak checker.</td>
+                        </tr>
+                        <tr>
+                            <td>-nocolor</td>
+                            <td>Turn off colored stdout/stderr.</td>
+                        </tr>
+                    </table>
                 </p>
-                
+                <h2>Writing Tests</h2>
+                <p>
+                    GMQCC comes with a complete testsuite for verifying semantics
+                    and syntatics.  The testsuite executes files from the test/
+                    directory, by reading task template files.
+                </p>
+                <p>
+                   templates are rules for a specific test, used to create a "task" that
+                   is executed with those set of rules (arguments, and what not). Tests
+                   that don't have a template with them cannot become tasks, since without
+                   the information for that test there is no way to properly "test" them.
+                   Rules for these templates are described in a template file, using a
+                   task template language.
+                </p>
+                <p>
+                   The languge is composed entierly of "tags" which describe a string of
+                   text for a task.  Think of it much like a configuration file.  Except
+                   it's been designed to allow flexibility and future support for prodecual
+                   semantics.
+                <p>
+                <p>
+                   The following "tags" are suported by the language:
+                </p>
+                <table border="0">
+                    <tr>
+                        <td>Tag</td>
+                        <td>Description of what the tag does</td>
+                    </tr>
+                    <tr>
+                       <td>D:</td>
+                         <td>Used to set a description of the current test, this must be
+                           provided, this tag is NOT optional.</td>
+                    </tr>
+                    <tr>
+                        <td>F:</td>
+                         <td>Used to set a failure message, this message will be displayed
+                           if the test fails, this tag is optional.</td>
+                    </tr>
+                    <tr>
+                        <td>S:</td>
+                            <td>Used to set a success message, this message will be displayed
+                           if the test succeeds, this tag is optional.
+                           </td>
+                    </tr>
+                    <tr>
+                       <td>T:</td>
+                            <td>Used to set the procedure for the given task, there are two
+                           options for this:
+                           <ul>
+                               <li>-compile&nbsp;
+                                   This simply performs compilation only</li>
+                               <li>-execute&nbsp;
+                                   This will perform compilation and execution</li>
+                            </ul>
+                  
+                           This tag must be provided, this tag is NOT optional.
+                           </td>
+                    </tr>
+                    <tr>
+                       <td>C:</td>
+                        <td>Used to set the compilation flags for the given task, this
+                           must be provided, this tag is NOT optional.</td>
+                    </tr>
+                    <tr>
+                       <td>E:</td>
+                        <td>Used to set the execution flags for the given task. This tag
+                           must be provided if T == -execute, otherwise it's erroneous
+                           as compilation only takes place.</td>
+                    </tr>
+                    <tr>
+                       <td>M:</td>
+                        <td>Used to describe a string of text that should be matched from
+                           the output of executing the task.  If this doesn't match the
+                           task fails.  This tag must be provided at least once if
+                           T == -execute, otherwise it's erroneous as compilation only
+                           takes place. Multiple M tags are required for multi-line comparision
+                        </td>
+                    </tr>
+                    <tr>
+                       <td>I:</td>
+                       <td>Used to specify the INPUT source file to operate on, this must be
+                       provided, this tag is NOT optional</td>
+                    </tr>
+                 </table>
+                <h3>Notes</h3>
+                <p>
+                   These tags (with exception to M) have one-time use, using them more
+                   than once will result in template compilation errors,
+                </p>
+                <p>
+                   Lines beginning with # or // in the template file are comments and
+                   are ignored by the template parser.
+                   Whitespace is optional, with exception to the colon ':' between the
+                   tag and it's assignment value.
+                </p>
+                   The template compiler will detect erronrous tags (optional tags
+                   that need not be set), as well as missing tags, and error accordingly
+                   which will result in that task failing.
+                </p>
+                                
                 <h3>Support or Contact</h3>
                 <p>Having trouble with GMQCC? Join our IRC channel at #kf-engine on irc.freenode.net or contact <a href="mailto:cube2killfild@gmail.com">Us</a> 
             </section>
