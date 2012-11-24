@@ -33,6 +33,7 @@
                     <li class="wiki"><a class="wiki" href="#cdoc">Compiler Documentation</a></li>
                     <li class="wiki"><a class="wiki" href="#bdoc">Building Documentation</a></li>
                     <li class="wiki"><a class="wiki" href="#tdoc">Testsuite Documentation</a></li>
+                    <li class="wiki"><a class="wiki" href="#vdoc">Virtual Machine Documentation</a></li>
                 </ul>
                 <h1><a name="cdoc">Compiler Documentation</a></h1>
                 <h3>Defaults Flag</h3>
@@ -495,7 +496,100 @@ $ cd gmqcc
                    that need not be set), as well as missing tags, and error accordingly
                    which will result in that task failing.
                 </p>
-                                
+                <h1><a name="vdoc">Quake C Virtual Machine Documentation</a></h1>
+                <p>
+                    Included with GMQCC is a minimal implementation of the QCVM used in many game
+                    engines.  It's primarly used for the testsuite, but you may also use it as a
+                    standalone runtime, or even embed it with existing appliciations.
+                </p>
+                <h2>Running The Standalone VM</h2>
+                <p>
+                    To run the standalone application you need to have a compiled progs.dat, with an
+                    entry function named &nbsp;main&nbsp;  The main function can have any amount of arguments
+                    as the standalone executor allows main to be invoked with your choice of arguments.
+                    An example of invoking the VM:
+                    <pre>$ ./qcvm progs.dat -float 200 #execute passing in 200 as a float to main</pre>
+                    If &nbsp;main&nbsp; doesn't require arguments:
+                    <pre>$ ./qcvm progs.dat #call main with no arguments</pre>
+                    
+                    The standalone executor supports the following arguments for passing arguments to &nbsp;main&nbsp
+                    
+                    <table border="0">
+                        <tr>
+                            <td>Argument</td>
+                            <td>What it does</td>
+                        </tr>
+                        <tr>
+                            <td>-string</td>
+                            <td>Passes in a string to main</td>
+                        </tr>
+                        <tr>
+                            <td>-float</td>
+                            <td>Passes in a float to main</td>
+                        </tr>
+                        <tr>
+                            <td>-vector</td>
+                            <td>Passes in a vector to main</td>
+                        </tr>
+                    </table>
+                    
+                    The order in which the arguments are expected for main, must be preserved, for
+                    example if &nbsp;main&nbsp;'s signature is the following:
+                    <pre>void main(float a, vector b)</pre>
+                    
+                    Then to pass the arguments you'd use the same order:
+                    <pre>$ ./qcvm -float 200 -vector '1 2 3'</pre>
+                    
+                    <h3>Additional Arguments</h3>
+                    The standalone virtual machine has the following optional command line arguments:
+                    <table border="0">
+                        <tr>
+                            <td>Argument</td>
+                            <td>What it does</td>
+                        </tr>
+                        <tr>
+                            <td>-trace</td>
+                            <td>Trace the execution call hierarchy.</td>
+                        </tr>
+                        <tr>
+                            <td>-profile</td>
+                            <td>Profile the bytecode to find hotspots.</td>
+                        </tr>
+                        <tr>
+                            <td>-info</td>
+                            <td>Get info of the running bytecode.</td>
+                        </tr>
+                        <tr>
+                            <td>-disasm</td>
+                            <td>Dissasemble the bytecode into assembly.</td>
+                        </tr>
+                        <tr>
+                            <td>-printdefs</td>
+                            <td>Prints all definitions for the bytecode running.</td>
+                        </tr>
+                        <tr>
+                            <td>-printfields</td>
+                            <td>Prints all fields for the bytecode running.</td>
+                        </tr>
+                    </table>
+                    
+                    <h3>Builtins</h3>
+                    The standalone virtual machine includes the following builtins.
+                    <table border="0">
+                        <tr>
+                            <td>Builtin</td>
+                            <td>Number</td>
+                        </tr>
+                            <tr><td>print</td><td>1</td></tr>
+                            <tr><td>ftos</td><td>2</td></tr>
+                            <tr><td>spawn</td><td>3</td></tr>
+                            <tr><td>kill</td><td>4</td></tr>
+                            <tr><td>vtos</td><td>5</td></tr>
+                            <tr><td>error</td><td>6</td></tr>
+                            <tr><td>vlen</td><td>7</td></tr>
+                            <tr><td>etos</td><td>8</td></tr>
+                    </table>
+                </p>
                 <h3>Support or Contact</h3>
                 <p>Having trouble with GMQCC? Join our IRC channel at #kf-engine on irc.freenode.net or contact <a href="mailto:cube2killfild@gmail.com">Us</a> 
             </section>
