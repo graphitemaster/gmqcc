@@ -169,7 +169,7 @@ bool code_write(const char *filename) {
     }
 
     /* ensure all data is in LE format */
-    util_endianswap(&code_header,          1,                       sizeof(prog_header));
+    util_endianswap(&code_header,    1,                         sizeof(prog_header));
     util_endianswap(code_statements, vec_size(code_statements), sizeof(prog_section_statement));
     util_endianswap(code_defs,       vec_size(code_defs),       sizeof(prog_section_def));
     util_endianswap(code_fields,     vec_size(code_fields),     sizeof(prog_section_field));
@@ -180,13 +180,13 @@ bool code_write(const char *filename) {
     if (!fp)
         return false;
 
-    if (1 != fwrite(&code_header,         sizeof(prog_header), 1, fp) ||
+    if (1                         != fwrite(&code_header,    sizeof(prog_header)           , 1                        , fp) ||
         vec_size(code_statements) != fwrite(code_statements, sizeof(prog_section_statement), vec_size(code_statements), fp) ||
         vec_size(code_defs)       != fwrite(code_defs,       sizeof(prog_section_def)      , vec_size(code_defs)      , fp) ||
         vec_size(code_fields)     != fwrite(code_fields,     sizeof(prog_section_field)    , vec_size(code_fields)    , fp) ||
         vec_size(code_functions)  != fwrite(code_functions,  sizeof(prog_section_function) , vec_size(code_functions) , fp) ||
         vec_size(code_globals)    != fwrite(code_globals,    sizeof(int32_t)               , vec_size(code_globals)   , fp) ||
-        vec_size(code_chars)     != fwrite(code_chars,      1                             , vec_size(code_chars)     , fp))
+        vec_size(code_chars)      != fwrite(code_chars,      1                             , vec_size(code_chars)     , fp))
     {
         fclose(fp);
         return false;
