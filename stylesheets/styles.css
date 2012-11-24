@@ -53,16 +53,20 @@ p, ul, ol, table, dl {
   margin:0 0 22px;
 }
 
+h2.id {
+    color: red;
+};
+
 h1, h2, h3 {
-	font-family: Arvo, Monaco, serif;
-  line-height:1.3;
-	font-weight: normal;
+    font-family: Arvo, Monaco, serif;
+    line-height:1.3;
+    font-weight: normal;
 }
 
 h1,h2, h3 {
-	display: block;
-	border-bottom: 1px solid #ccc;
-	padding-bottom: 5px;
+    display: block;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
 }
 
 h1 {
@@ -422,4 +426,30 @@ footer {
     font-size:12pt;
     color:#444;
   }
+}
+
+/* used for wiki stuff (mainly docs so far) */
+ul.wiki {
+    list-style-type: none;
+    list-style: none;
+    margin: 0;
+    padding-top: 30px;
+}
+li.wiki {
+  margin: 1;
+  padding-top: 0px;
+  padding-left: 0px;
+  padding-bottom: 20px;
+  border: 0;
+  font: inherit;
+  list-style: none;
+  vertical-align: baseline;
+  background-color: #DDDDDD;
+}
+a.wiki {
+    display: block;
+    width: 100% - 25px;
+    padding-left: 25px;
+    padding-top: 25px;
+    background-color: #DDDDDD;
 }

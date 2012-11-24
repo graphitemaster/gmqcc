@@ -28,14 +28,20 @@
                 </ul>
             </header>
             <section>
-                <h2>Defaults Flag</h2>
+                <ul class="wiki">
+                    <li class="wiki"><a class="wiki" href="#cdoc">Compiler Documentation</a></li>
+                    <li class="wiki"><a class="wiki" href="#bdoc">Building Documentation</a></li>
+                    <li class="wiki"><a class="wiki" href="#tdoc">Testsuite Documentation</a></li>
+                </ul>
+                <h1><a name="cdoc">Compiler Documentation</a></h1>
+                <h3>Defaults Flag</h3>
                 <p>
                     The <i>-show-defaults</i> flag instructs the compiler to print out the defaults used related to
                     the standard, optimization, and code generation.  When this flag is specified, the compiler
                     will just print the defaults and quit.  No compilation is performed.
                 </p>
                 <pre>$ gmqcc -show-defaults</pre>
-                <h2>Compiling for an alternitive standard</h2>
+                <h3>Compiling for an alternitive standard</h3>
                 To compile with a different dialect of the QuakeC programming language the <i>-std</i>
                 flag can be instructed to select one of the following options:
                 <table border="0">
@@ -88,7 +94,7 @@
                         <td>Selects the standard dialect</td>
                     </tr>
                 </table>
-                <h2>Predefined Macros</h2>
+                <h3>Predefined Macros</h3>
                 <table border="0">
                     <tr>
                         <td>Macro</td>
@@ -116,7 +122,7 @@
                         <td>Specifies the current selected stanadards major version number.</td>
                     </tr>
                 </table>
-                <h2>Unsupported compatability options</h2>
+                <h3>Unsupported compatability options</h3>
                 <p>
                     GMQCC strives hard for compatability with standard dialects, but not all
                     features of those standards might be implemented. The unsupported features
@@ -136,8 +142,8 @@
                         </tr>
                     </table>
                 </p>
-                <h1>Less common compiler options</h1>
-                <h2>Code generation options</h2>
+                <h2>Less common compiler options</h2>
+                <h3>Code generation options</h3>
                 <table border="0">
                     <tr>
                         <td>Option</td>
@@ -172,7 +178,7 @@
                         <td>Enables perl evalutaion/logic</td>
                     </tr>
                 </table>
-                <h2>Warning options</h2>
+                <h3>Warning options</h3>
                 <table border="0">
                     <tr>
                         <td>Option</td>
@@ -251,7 +257,7 @@
                     Individual warnings may be disabled with &nbsp;-Wno&lt;warning&gt;
                     <pre>$ gmqcc -Wno-frame-macros # disables frame duplication warning</pre>
                 </p>
-                <h2>Miscellaneous options</h2>
+                <h3>Miscellaneous options</h3>
                 <table border="0">
                     <tr>
                         <td>Option</td>
@@ -280,6 +286,83 @@
                         <td>Lists all code generation options</td>
                     </tr>
                 </table>
+                
+                <h1><a name="bdoc">Building Documentation</a></h1>
+                <h2>Building on BSD/NIX</h2>
+                <p>
+                    To compile GMQCC on BSD/NIX the following things are
+                    required:
+                    
+                    <ul>
+                        <li>GIT</li>
+                        <li>Make</li>
+                        <li>Any C90+ C compiler</li>
+                    </ul>
+                    
+                    Once obtained you may checkout the development repository
+                    with the following shell commands
+                    
+<pre>$ git clone git://github.com/graphitemaster/gmqcc.git
+$ cd gmqcc
+</pre>
+
+                    The Makefile contains a few rules, depending on what you
+                    want to compile, the following rules are:
+                    
+                    <table border="0">
+                        <tr>
+                            <td>Rule</td>
+                            <td>What it does</td>
+                        </tr>
+                        <tr>
+                            <td>gmqcc</td>
+                            <td>Builds the gmqcc compiler</td>
+                        </tr>
+                        <tr>
+                            <td>qcvm</td>
+                            <td>Builds a standable QuakeC VM</td>
+                        </tr>
+                        <tr>
+                            <td>testsuite</td>
+                            <td>Builds the testsuite for GMQCC</td>
+                        </tr>
+                        <tr>
+                            <td>all</td>
+                            <td>Builds gmqcc, qcvm, and testsuite</td>
+                        </tr>
+                        <tr>
+                            <td>install</td>
+                            <td>Installs gmqcc to /usr/local/</td>
+                        </tr>
+                        <tr>
+                            <td>check</td>
+                            <td>Runs the testsuite to verify correctness</td>
+                        </tr>
+                    </table>
+                </p>
+                <h2>Building on Windows</h2>
+                <p>
+                    To compile GMQCC on windows the following things are
+                    required:
+                    
+                    <ul>
+                        <li><a href="http://msysgit.googlecode.com/files/Git-1.8.0-preview20121022.exe">msysGit</a></li>
+                        <li><a href="http://www.microsoft.com/visualstudio/eng/downloads">Visual Studio</a></li>
+                    </ul>
+                    
+                    Once obtained you may checkout the development repository
+                    with the following msysGit commands from a msysGit shell.
+                    <pre>$ git clone git://github.com/graphitemaster/gmqcc.git</pre>
+                    Included is a VS project file.
+                </p>
+                
+                <h1><a name="tdoc">Testsuite Documentation</a></h1>
+                <p>
+                    GMQCC comes with a complete testsuite system for verifying semantics
+                    and syntatics, TODO explain more and how to use it, write your own
+                    tests etc....
+                </p>
+                
                 <h3>Support or Contact</h3>
                 <p>Having trouble with GMQCC? Join our IRC channel at #kf-engine on irc.freenode.net or contact <a href="mailto:cube2killfild@gmail.com">Us</a> 
             </section>
