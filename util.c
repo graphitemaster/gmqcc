@@ -593,11 +593,11 @@ void util_htset(hash_table_t *ht, const char *key, void *value) {
     bin  = _util_hthash(ht, key);
     next = ht->table[bin];
     
-    while (next && next->key && strcmp(key, next->key))
+    while (next && next->key && strcmp(key, next->key) > 0)
         last = next, next = next->next;
     
     /* already in table, do a replace */
-    if (next && next->key && !strcmp(key, next->key)) {
+    if (next && next->key && !strcmp(key, next->key) == 0) {
         next->value = value;
     } else {
         /* not found, grow a pair man :P */
