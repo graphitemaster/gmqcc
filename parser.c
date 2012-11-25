@@ -2297,7 +2297,13 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             !strcmp(parser_tokval(parser), "const") ||
             !strcmp(parser_tokval(parser), "var"))
         {
-            int cvq = parser_tokval(parser)[0] == 'c' ? CV_CONST : CV_VAR;
+            int cvq;
+            if (parser_tokval(parser)[0] == 'c')
+                cvq = CV_CONST;
+            else if (parser_tokval(parser)[0] == 'v')
+                cvq = CV_VAR;
+            else
+                cvq = CV_NONE;
 
             if (!block) {
                 parseerror(parser, "cannot declare a local variable here");
