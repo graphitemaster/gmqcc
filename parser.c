@@ -2382,6 +2382,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     }
     else if (parser->tok == ':')
     {
+        size_t i;
         ast_label *label;
         if (!parser_next(parser)) {
             parseerror(parser, "expected label name");
@@ -2399,6 +2400,13 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         if (!parser_next(parser)) {
             parseerror(parser, "parse error after label");
             return false;
+        }
+        for (i = 0; i < vec_size(parser->gotos); ++i) {
+            if (!strcmp(parser->gotos[i]->name, label->name)) {
+                ast_goto_set_label(parser->gotos[i], label);
+                vec_remove(parser->gotos, i, 1);
+                --i;
+            }
         }
         return true;
     }
@@ -3913,6 +3921,7 @@ skipvar:
         }
         else if (parser->tok == '{' || parser->tok == '[')
         {
+            size_t i;
             if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");
                 break;
@@ -3921,6 +3930,8 @@ skipvar:
             if (!parse_function_body(parser, var))
                 break;
             ast_delete(basetype);
+            for (i = 0; i < vec_size(parser->gotos); ++i)
+                parseerror(parser, "undefined label: `%s`", parser->gotos[i]->name);
             vec_free(parser->gotos);
             vec_free(parser->labels);
             return true;
