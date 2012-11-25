@@ -44,6 +44,7 @@ typedef struct {
     ast_value    **imm_float;
     ast_value    **imm_string;
     ast_value    **imm_vector;
+    size_t         translated;
 
     /* must be deleted first, they reference immediates and values */
     ast_value    **accessors;
@@ -241,7 +242,7 @@ static char *parser_strdup(const char *str)
     return util_strdup(str);
 }
 
-static ast_value* parser_const_string(parser_t *parser, const char *str)
+static ast_value* parser_const_string(parser_t *parser, const char *str, bool dotranslate)
 {
     size_t i;
     ast_value *out;
@@ -249,7 +250,12 @@ static ast_value* parser_const_string(parser_t *parser, const char *str)
         if (!strcmp(parser->imm_string[i]->constval.vstring, str))
             return parser->imm_string[i];
     }
-    out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
+    if (dotranslate) {
+        char name[32];
+        snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(parser->translated++));
+        out = ast_value_new(parser_ctx(parser), name, TYPE_STRING);
+    } else
+        out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
     out->isconst = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
@@ -1373,7 +1379,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 goto onerr;
             }
             wantop = true;
-            val = parser_const_string(parser, parser_tokval(parser));
+            val = parser_const_string(parser, parser_tokval(parser), false);
             if (!val)
                 return false;
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
