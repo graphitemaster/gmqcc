@@ -1516,7 +1516,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     for (i = 0; i < vec_size(self->exprs); ++i)
     {
         ast_expression_codegen *gen = self->exprs[i]->expression.codegen;
-        if (func->curblock->final) {
+        if (func->curblock->final && !ast_istype(self->exprs[i], ast_label)) {
             asterror(ast_ctx(self->exprs[i]), "unreachable statement");
             return false;
         }
