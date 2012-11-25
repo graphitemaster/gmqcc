@@ -2294,7 +2294,8 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     else if (parser->tok == TOKEN_KEYWORD)
     {
         if (!strcmp(parser_tokval(parser), "local") ||
-            !strcmp(parser_tokval(parser), "const"))
+            !strcmp(parser_tokval(parser), "const") ||
+            !strcmp(parser_tokval(parser), "var"))
         {
             int cvq = parser_tokval(parser)[0] == 'c' ? CV_CONST : CV_VAR;
 
