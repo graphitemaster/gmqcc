@@ -3682,7 +3682,7 @@ skipvar:
 
         if (parser->tok != '{') {
             if (parser->tok != '=') {
-                parseerror(parser, "missing semicolon or initializer");
+                parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
                 break;
             }
 
