@@ -619,7 +619,7 @@ bool task_propogate(const char *curdir) {
          * We made it here, which concludes the file/directory is not
          * actually a directory, so it must be a file :)
          */
-        if (strstr(files->d_name, ".tmpl") == &files->d_name[strlen(files->d_name) - (sizeof(".tmpl") - 1)]) {
+        if (strcmp(files->d_name + strlen(files->d_name) - 5, ".tmpl") == 0) {
             task_template_t *template = task_template_compile(files->d_name, curdir);
             char             buf[4096]; /* one page should be enough */
             task_t           task;
