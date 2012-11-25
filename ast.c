@@ -2401,6 +2401,8 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         old_bcontinue       = func->continueblock;
         func->breakblock    = bbreak;
         func->continueblock = bcontinue;
+        if (!func->continueblock)
+            func->continueblock = bbody;
 
         /* generate */
         cgen = self->body->expression.codegen;
