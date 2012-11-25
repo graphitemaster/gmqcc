@@ -1437,7 +1437,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return false;
     }
 
-    self->curblock = ir_function_create_block(irf, "entry");
+    self->curblock = ir_function_create_block(ast_ctx(self), irf, "entry");
     if (!self->curblock) {
         asterror(ast_ctx(self), "failed to allocate entry block for `%s`", self->name);
         return false;
@@ -1662,7 +1662,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
          */
 
         merge_id = vec_size(func->ir_func->blocks);
-        merge = ir_function_create_block(func->ir_func, ast_function_label(func, "sce_merge"));
+        merge = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_merge"));
 
         cgen = self->left->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
@@ -1680,7 +1680,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         }
         from_left = func->curblock;
 
-        other = ir_function_create_block(func->ir_func, ast_function_label(func, "sce_other"));
+        other = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_other"));
         if ( !(self->op == INSTR_OR) != !OPTS_FLAG(PERL_LOGIC) ) {
             if (!ir_block_create_if(func->curblock, left, other, merge))
                 return false;
@@ -2108,7 +2108,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
 
     if (self->on_true) {
         /* create on-true block */
-        ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "ontrue"));
+        ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "ontrue"));
         if (!ontrue)
             return false;
 
@@ -2128,7 +2128,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     /* on-false path */
     if (self->on_false) {
         /* create on-false block */
-        onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "onfalse"));
+        onfalse = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "onfalse"));
         if (!onfalse)
             return false;
 
@@ -2146,7 +2146,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         onfalse = NULL;
 
     /* Merge block were they all merge in to */
-    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "endif"));
+    merge = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "endif"));
     if (!merge)
         return false;
     /* add jumps ot the merge block */
@@ -2179,8 +2179,8 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     ir_instr *phi;
 
     ir_block *cond = func->curblock;
-    ir_block *ontrue;
-    ir_block *onfalse;
+    ir_block *ontrue, *ontrue_out = NULL;
+    ir_block *onfalse, *onfalse_out = NULL;
     ir_block *merge;
 
     /* Ternary can never create an lvalue... */
@@ -2206,7 +2206,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         return false;
 
     /* create on-true block */
-    ontrue = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_T"));
+    ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "tern_T"));
     if (!ontrue)
         return false;
     else
@@ -2218,10 +2218,12 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         cgen = self->on_true->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->on_true), func, false, &trueval))
             return false;
+
+        ontrue_out = func->curblock;
     }
 
     /* create on-false block */
-    onfalse = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_F"));
+    onfalse = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "tern_F"));
     if (!onfalse)
         return false;
     else
@@ -2233,16 +2235,18 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         cgen = self->on_false->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->on_false), func, false, &falseval))
             return false;
+
+        onfalse_out = func->curblock;
     }
 
     /* create merge block */
-    merge = ir_function_create_block(func->ir_func, ast_function_label(func, "tern_out"));
+    merge = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "tern_out"));
     if (!merge)
         return false;
     /* jump to merge block */
-    if (!ir_block_create_jump(ontrue, merge))
+    if (!ir_block_create_jump(ontrue_out, merge))
         return false;
-    if (!ir_block_create_jump(onfalse, merge))
+    if (!ir_block_create_jump(onfalse_out, merge))
         return false;
 
     /* create if instruction */
@@ -2264,8 +2268,8 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     phi = ir_block_create_phi(merge, ast_function_label(func, "phi"), trueval->vtype);
     if (!phi)
         return false;
-    ir_phi_add(phi, ontrue,  trueval);
-    ir_phi_add(phi, onfalse, falseval);
+    ir_phi_add(phi, ontrue_out,  trueval);
+    ir_phi_add(phi, onfalse_out, falseval);
 
     self->expression.outr = ir_phi_value(phi);
     *out = self->expression.outr;
@@ -2336,7 +2340,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
      */
     if (self->precond)
     {
-        bprecond = ir_function_create_block(func->ir_func, ast_function_label(func, "pre_loop_cond"));
+        bprecond = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "pre_loop_cond"));
         if (!bprecond)
             return false;
 
@@ -2360,7 +2364,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
      * generate them this early for 'break' and 'continue'.
      */
     if (self->increment) {
-        bincrement = ir_function_create_block(func->ir_func, ast_function_label(func, "loop_increment"));
+        bincrement = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "loop_increment"));
         if (!bincrement)
             return false;
         bcontinue = bincrement; /* increment comes before the pre-loop-condition */
@@ -2369,7 +2373,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     }
 
     if (self->postcond) {
-        bpostcond = ir_function_create_block(func->ir_func, ast_function_label(func, "post_loop_cond"));
+        bpostcond = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "post_loop_cond"));
         if (!bpostcond)
             return false;
         bcontinue = bpostcond; /* postcond comes before the increment */
@@ -2378,7 +2382,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     }
 
     bout_id = vec_size(func->ir_func->blocks);
-    bout = ir_function_create_block(func->ir_func, ast_function_label(func, "after_loop"));
+    bout = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "after_loop"));
     if (!bout)
         return false;
     bbreak = bout;
@@ -2386,7 +2390,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     /* The loop body... */
     if (self->body)
     {
-        bbody = ir_function_create_block(func->ir_func, ast_function_label(func, "loop_body"));
+        bbody = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "loop_body"));
         if (!bbody)
             return false;
 
@@ -2577,7 +2581,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     }
 
     bout_id = vec_size(func->ir_func->blocks);
-    bout = ir_function_create_block(func->ir_func, ast_function_label(func, "after_switch"));
+    bout = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "after_switch"));
     if (!bout)
         return false;
 
@@ -2604,9 +2608,9 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
             if (!cond)
                 return false;
 
-            bcase = ir_function_create_block(func->ir_func, ast_function_label(func, "case"));
+            bcase = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "case"));
             bnot_id = vec_size(func->ir_func->blocks);
-            bnot = ir_function_create_block(func->ir_func, ast_function_label(func, "not_case"));
+            bnot = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "not_case"));
             if (!bcase || !bnot)
                 return false;
             if (!ir_block_create_if(func->curblock, cond, bcase, bnot))
@@ -2696,7 +2700,7 @@ bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_valu
     }
 
     /* simply create a new block and jump to it */
-    self->irblock = ir_function_create_block(func->ir_func, self->name);
+    self->irblock = ir_function_create_block(ast_ctx(self), func->ir_func, self->name);
     if (!self->irblock) {
         asterror(ast_ctx(self), "failed to allocate label block `%s`", self->name);
         return false;

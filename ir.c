@@ -516,10 +516,10 @@ void ir_function_collect_value(ir_function *self, ir_value *v)
     vec_push(self->values, v);
 }
 
-ir_block* ir_function_create_block(ir_function *self, const char *label)
+ir_block* ir_function_create_block(lex_ctx ctx, ir_function *self, const char *label)
 {
     ir_block* bn = ir_block_new(self, label);
-    memcpy(&bn->context, &self->context, sizeof(self->context));
+    bn->context = ctx;
     vec_push(self->blocks, bn);
     return bn;
 }

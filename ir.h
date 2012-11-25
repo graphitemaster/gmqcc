@@ -280,7 +280,7 @@ bool ir_function_enumerate(ir_function*);
 bool ir_function_calculate_liferanges(ir_function*);
 */
 
-ir_block* ir_function_create_block(ir_function*, const char *label);
+ir_block* ir_function_create_block(lex_ctx ctx, ir_function*, const char *label);
 
 void ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 
