@@ -800,7 +800,10 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
     int  ch = lastch;
 
     /* parse a number... */
-    lex->tok.ttype = TOKEN_INTCONST;
+    if (ch == '.')
+        lex->tok.ttype = TOKEN_FLOATCONST;
+    else
+        lex->tok.ttype = TOKEN_INTCONST;
 
     lex_tokench(lex, ch);
 
@@ -833,7 +836,7 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
         }
     }
     /* NOT else, '.' can come from above as well */
-    if (ch == '.' && !ishex)
+    if (lex->tok.ttype != TOKEN_FLOATCONST && ch == '.' && !ishex)
     {
         /* Allow floating comma in non-hex mode */
         lex->tok.ttype = TOKEN_FLOATCONST;
@@ -1076,6 +1079,18 @@ int lex_do(lex_file *lex)
             return (lex->tok.ttype = ch);
         default:
             break;
+    }
+
+    if (ch == '.') {
+        nextch = lex_getch(lex);
+        /* digits starting with a dot */
+        if (isdigit(nextch)) {
+            lex_ungetch(lex, nextch);
+            lex->tok.ttype = lex_finish_digit(lex, ch);
+            lex_endtoken(lex);
+            return lex->tok.ttype;
+        }
+        lex_ungetch(lex, nextch);
     }
 
     if (lex->flags.noops)
