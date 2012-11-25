@@ -883,13 +883,13 @@ int lex_do(lex_file *lex)
         continue;
     }
 
-    lex->sline = lex->line;
-    lex->tok.ctx.line = lex->sline;
-    lex->tok.ctx.file = lex->name;
-
     if (lex->flags.preprocessing && (ch == TOKEN_WHITE || ch == TOKEN_EOL || ch == TOKEN_FATAL)) {
         return (lex->tok.ttype = ch);
     }
+
+    lex->sline = lex->line;
+    lex->tok.ctx.line = lex->sline;
+    lex->tok.ctx.file = lex->name;
 
     if (lex->eof)
         return (lex->tok.ttype = TOKEN_FATAL);
