@@ -3609,9 +3609,9 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
             }
 
-            me[0] = me[1] = me[2] = NULL;
-            cleanvar = false;
         }
+        me[0] = me[1] = me[2] = NULL;
+        cleanvar = false;
         /* Part 2.2
          * deal with arrays
          */
