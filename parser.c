@@ -2269,6 +2269,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
 
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
+    int cvq;
     ast_value *typevar = NULL;
     *out = NULL;
 
@@ -2291,13 +2292,17 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         *out = NULL;
         return true;
     }
+    else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var"))
+    {
+        goto ident_var;
+    }
     else if (parser->tok == TOKEN_KEYWORD)
     {
         if (!strcmp(parser_tokval(parser), "local") ||
             !strcmp(parser_tokval(parser), "const") ||
             !strcmp(parser_tokval(parser), "var"))
         {
-            int cvq;
+ident_var:
             if (parser_tokval(parser)[0] == 'c')
                 cvq = CV_CONST;
             else if (parser_tokval(parser)[0] == 'v')
