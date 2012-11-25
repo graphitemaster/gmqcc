@@ -2531,6 +2531,11 @@ bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue,
     else
         target = func->breakblock;
 
+    if (!target) {
+        asterror(ast_ctx(self), "%s is lacking a target block", (self->is_continue ? "continue" : "break"));
+        return false;
+    }
+
     if (!ir_block_create_jump(func->curblock, target))
         return false;
     return true;
