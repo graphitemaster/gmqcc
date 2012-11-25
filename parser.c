@@ -84,6 +84,7 @@ typedef struct {
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
+static bool parse_typedef(parser_t *parser);
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const, ast_value *cached_typedef);
 static ast_block* parse_block(parser_t *parser, bool warnreturn);
 static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
@@ -336,13 +337,13 @@ static ast_expression* parser_find_var(parser_t *parser, const char *name)
     return v;
 }
 
-static ast_value* parser_find_typedef(parser_t *parser, const char *name)
+static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t upto)
 {
     size_t     i, hash;
     ast_value *e;
     hash = util_hthash(parser->typedefs[0], name);
 
-    for (i = vec_size(parser->typedefs); i > 0;) {
+    for (i = vec_size(parser->typedefs); i > upto;) {
         --i;
         if ( (e = (ast_value*)util_htgeth(parser->typedefs[i], name, hash)) )
             return e;
@@ -1866,7 +1867,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
 
     typevar = NULL;
     if (parser->tok == TOKEN_IDENT)
-        typevar = parser_find_typedef(parser, parser_tokval(parser));
+        typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (typevar || parser->tok == TOKEN_TYPENAME) {
         if (opts_standard != COMPILER_GMQCC) {
@@ -2168,7 +2169,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
 {
     ast_value *typevar = NULL;
     if (parser->tok == TOKEN_IDENT)
-        typevar = parser_find_typedef(parser, parser_tokval(parser));
+        typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (typevar || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
@@ -2247,6 +2248,14 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
                 return false;
             }
             return true;
+        }
+        else if (!strcmp(parser_tokval(parser), "typedef"))
+        {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected type definition after 'typedef'");
+                return false;
+            }
+            return parse_typedef(parser);
         }
         parseerror(parser, "Unexpected keyword");
         return false;
@@ -3201,7 +3210,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
             return NULL;
         }
         if (parser->tok == TOKEN_IDENT)
-            cached_typedef = parser_find_typedef(parser, parser_tokval(parser));
+            cached_typedef = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
             parseerror(parser, "expected typename");
             return NULL;
@@ -3321,7 +3330,7 @@ static bool parse_typedef(parser_t *parser)
         return false;
     }
 
-    if ( (oldtype = parser_find_typedef(parser, typevar->name)) ) {
+    if ( (oldtype = parser_find_typedef(parser, typevar->name, vec_last(parser->_blocktypedefs))) ) {
         parseerror(parser, "type `%s` has already been declared here: %s:%i",
                    typevar->name, ast_ctx(oldtype).file, ast_ctx(oldtype).line);
         ast_delete(typevar);
@@ -3839,7 +3848,7 @@ static bool parser_global_statement(parser_t *parser)
 {
     ast_value *istype = NULL;
     if (parser->tok == TOKEN_IDENT)
-        istype = parser_find_typedef(parser, parser_tokval(parser));
+        istype = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
@@ -3992,6 +4001,7 @@ bool parser_init()
     vec_push(parser->variables, parser->htfields  = util_htnew(PARSER_HT_SIZE));
     vec_push(parser->variables, parser->htglobals = util_htnew(PARSER_HT_SIZE));
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
+    vec_push(parser->_blocktypedefs, 0);
     return true;
 }
 
