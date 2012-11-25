@@ -905,7 +905,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 if (!ast_compare_type(field->expression.next, exprs[1])) {
                     ast_type_to_string(field->expression.next, ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                    if (opts_standard == COMPILER_QCC &&
+                    if (OPTS_FLAG(ASSIGN_FUNCTION_TYPES) &&
                         field->expression.next->expression.vtype == TYPE_FUNCTION &&
                         exprs[1]->expression.vtype == TYPE_FUNCTION)
                     {
