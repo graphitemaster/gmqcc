@@ -46,7 +46,8 @@ static size_t num_keywords_qc = sizeof(keywords_qc) / sizeof(keywords_qc[0]);
 static const char *keywords_fg[] = {
     "switch", "case", "default",
     "struct", "union",
-    "break", "continue"
+    "break", "continue",
+    "typedef"
 };
 static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
 
