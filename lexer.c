@@ -1277,6 +1277,7 @@ int lex_do(lex_file *lex)
             lex_tokench(lex, ch);
         lex_endtoken(lex);
 
+        lex->tok.ttype = TOKEN_CHARCONST;
          /* It's a vector if we can successfully scan 3 floats */
 #ifdef WIN32
         if (sscanf_s(lex->tok.value, " %f %f %f ",
