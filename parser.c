@@ -1701,7 +1701,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         parseerror(parser, "expected condition or 'not'");
         return false;
     }
-    if (parser->tok == TOKEN_KEYWORD && !strcmp(parser_tokval(parser), "not")) {
+    if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "not")) {
         ifnot = true;
         if (!parser_next(parser)) {
             parseerror(parser, "expected condition in parenthesis");
