@@ -284,6 +284,9 @@ ir_builder* ir_builder_new(const char *modulename)
     self->extparams   = NULL;
     self->filenames   = NULL;
     self->filestrings = NULL;
+    self->htglobals   = util_htnew(IR_HT_SIZE);
+    self->htfields    = util_htnew(IR_HT_SIZE);
+    self->htfunctions = util_htnew(IR_HT_SIZE);
 
     self->str_immediate = 0;
     self->name = NULL;
@@ -298,6 +301,9 @@ ir_builder* ir_builder_new(const char *modulename)
 void ir_builder_delete(ir_builder* self)
 {
     size_t i;
+    util_htdel(self->htglobals);
+    util_htdel(self->htfields);
+    util_htdel(self->htfunctions);
     mem_d((void*)self->name);
     for (i = 0; i != vec_size(self->functions); ++i) {
         ir_function_delete_quick(self->functions[i]);
@@ -330,12 +336,7 @@ bool ir_builder_set_name(ir_builder *self, const char *name)
 
 ir_function* ir_builder_get_function(ir_builder *self, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(self->functions); ++i) {
-        if (!strcmp(name, self->functions[i]->name))
-            return self->functions[i];
-    }
-    return NULL;
+    return (ir_function*)util_htget(self->htfunctions, name);
 }
 
 ir_function* ir_builder_create_function(ir_builder *self, const char *name, int outtype)
@@ -352,6 +353,7 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
         return NULL;
     }
     vec_push(self->functions, fn);
+    util_htset(self->htfunctions, name, fn);
 
     fn->value = ir_builder_create_global(self, fn->name, TYPE_FUNCTION);
     if (!fn->value) {
@@ -369,12 +371,7 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
 
 ir_value* ir_builder_get_global(ir_builder *self, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(self->globals); ++i) {
-        if (!strcmp(self->globals[i]->name, name))
-            return self->globals[i];
-    }
-    return NULL;
+    return (ir_value*)util_htget(self->htglobals, name);
 }
 
 ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype)
@@ -391,17 +388,13 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
 
     ve = ir_value_var(name, store_global, vtype);
     vec_push(self->globals, ve);
+    util_htset(self->htglobals, name, ve);
     return ve;
 }
 
 ir_value* ir_builder_get_field(ir_builder *self, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(self->fields); ++i) {
-        if (!strcmp(self->fields[i]->name, name))
-            return self->fields[i];
-    }
-    return NULL;
+    return (ir_value*)util_htget(self->htfields, name);
 }
 
 
@@ -415,6 +408,7 @@ ir_value* ir_builder_create_field(ir_builder *self, const char *name, int vtype)
     ve = ir_value_var(name, store_global, TYPE_FIELD);
     ve->fieldtype = vtype;
     vec_push(self->fields, ve);
+    util_htset(self->htfields, name, ve);
     return ve;
 }
 

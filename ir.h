@@ -285,12 +285,17 @@ ir_block* ir_function_create_block(ir_function*, const char *label);
 void ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 
 /* builder */
+#define IR_HT_SIZE 1024
 typedef struct ir_builder_s
 {
     char *name;
     ir_function **functions;
     ir_value    **globals;
     ir_value    **fields;
+
+    ht            htfunctions;
+    ht            htglobals;
+    ht            htfields;
 
     ir_value    **extparams;
 
