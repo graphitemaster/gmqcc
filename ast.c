@@ -800,6 +800,24 @@ void ast_switch_delete(ast_switch *self)
     mem_d(self);
 }
 
+ast_label* ast_label_new(lex_ctx ctx, const char *name)
+{
+    ast_instantiate(ast_label, ctx, ast_label_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_label_codegen);
+
+    self->name    = util_strdup(name);
+    self->irblock = NULL;
+
+    return self;
+}
+
+void ast_label_delete(ast_label *self)
+{
+    mem_d((void*)self->name);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr)
 {
@@ -2632,6 +2650,30 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     vec_remove(func->ir_func->blocks, bout_id, 1);
     vec_push(func->ir_func->blocks, bout);
 
+    return true;
+}
+
+bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    *out = NULL;
+    if (lvalue) {
+        asterror(ast_ctx(self), "internal error: ast_label cannot be an lvalue");
+        return false;
+    }
+
+    /* simply create a new block and jump to it */
+    self->irblock = ir_function_create_block(func->ir_func, self->name);
+    if (!self->irblock) {
+        asterror(ast_ctx(self), "failed to allocate label block `%s`", self->name);
+        return false;
+    }
+    if (!func->curblock->final) {
+        if (!ir_block_create_jump(func->curblock, self->irblock))
+            return false;
+    }
+
+    /* enter the new block */
+    func->curblock = self->irblock;
     return true;
 }
 

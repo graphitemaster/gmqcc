@@ -2336,6 +2336,27 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         *out = (ast_expression*)inner;
         return true;
     }
+    else if (parser->tok == ':')
+    {
+        ast_label *label;
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected label name");
+            return false;
+        }
+        if (parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "label must be an identifier");
+            return false;
+        }
+        label = ast_label_new(parser_ctx(parser), parser_tokval(parser));
+        if (!label)
+            return false;
+        *out = (ast_expression*)label;
+        if (!parser_next(parser)) {
+            parseerror(parser, "parse error after label");
+            return false;
+        }
+        return true;
+    }
     else if (parser->tok == ';')
     {
         if (!parser_next(parser)) {

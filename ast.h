@@ -48,6 +48,7 @@ typedef struct ast_member_s      ast_member;
 typedef struct ast_array_index_s ast_array_index;
 typedef struct ast_breakcont_s   ast_breakcont;
 typedef struct ast_switch_s      ast_switch;
+typedef struct ast_label_s       ast_label;
 
 enum {
     TYPE_ast_node,
@@ -68,7 +69,8 @@ enum {
     TYPE_ast_member,
     TYPE_ast_array_index,
     TYPE_ast_breakcont,
-    TYPE_ast_switch
+    TYPE_ast_switch,
+    TYPE_ast_label
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
@@ -488,6 +490,22 @@ ast_switch* ast_switch_new(lex_ctx ctx, ast_expression *op);
 void ast_switch_delete(ast_switch*);
 
 bool ast_switch_codegen(ast_switch*, ast_function*, bool lvalue, ir_value**);
+
+/* Label nodes
+ *
+ * Introduce a label which can be used together with 'goto'
+ */
+struct ast_label_s
+{
+    ast_expression_common expression;
+    const char *name;
+    ir_block   *irblock;
+};
+
+ast_label* ast_label_new(lex_ctx ctx, const char *name);
+void ast_label_delete(ast_label*);
+
+bool ast_label_codegen(ast_label*, ast_function*, bool lvalue, ir_value**);
 
 /* CALL node
  *
