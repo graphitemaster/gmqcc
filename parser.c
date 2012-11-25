@@ -2326,6 +2326,39 @@ ident_var:
             *out = NULL;
             return true;
         }
+        else if (!strcmp(parser_tokval(parser), "__builtin_debug_printtype"))
+        {
+            char ty[1024];
+            ast_value *tdef;
+
+            if (!parser_next(parser)) {
+                parseerror(parser, "parse error after __builtin_debug_printtype");
+                return false;
+            }
+
+            if (parser->tok == TOKEN_IDENT && (tdef = parser_find_typedef(parser, parser_tokval(parser), 0)))
+            {
+                ast_type_to_string((ast_expression*)tdef, ty, sizeof(ty));
+                con_out("__builtin_debug_printtype: `%s`=`%s`\n", tdef->name, ty);
+                if (!parser_next(parser)) {
+                    parseerror(parser, "parse error after __builtin_debug_printtype typename argument");
+                    return false;
+                }
+            }
+            else
+            {
+                if (!parse_statement(parser, block, out, allow_cases))
+                    return false;
+                if (!*out)
+                    con_out("__builtin_debug_printtype: got no output node\n");
+                else
+                {
+                    ast_type_to_string(*out, ty, sizeof(ty));
+                    con_out("__builtin_debug_printtype: `%s`\n", ty);
+                }
+            }
+            return true;
+        }
         else if (!strcmp(parser_tokval(parser), "return"))
         {
             return parse_return(parser, block, out);
@@ -3390,13 +3423,12 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
                 return NULL;
             }
         }
-
-        if (parser->tok == TOKEN_IDENT)
-            cached_typedef = parser_find_typedef(parser, parser_tokval(parser), 0);
-        if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
-            parseerror(parser, "expected typename");
-            return NULL;
-        }
+    }
+    if (parser->tok == TOKEN_IDENT)
+        cached_typedef = parser_find_typedef(parser, parser_tokval(parser), 0);
+    if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
+        parseerror(parser, "expected typename");
+        return NULL;
     }
 
     /* generate the basic type value */

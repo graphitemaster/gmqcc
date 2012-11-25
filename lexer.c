@@ -48,7 +48,9 @@ static const char *keywords_fg[] = {
     "struct", "union",
     "break", "continue",
     "typedef",
-    "goto"
+    "goto",
+
+    "__builtin_debug_printtype"
 };
 static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
 
