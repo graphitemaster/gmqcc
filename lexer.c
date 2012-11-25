@@ -1290,6 +1290,14 @@ int lex_do(lex_file *lex)
         {
              lex->tok.ttype = TOKEN_VECTORCONST;
         }
+        else
+        {
+            if (!lex->flags.preprocessing && strlen(lex->tok.value) > 1) {
+                if (lexwarn(lex, WARN_MULTIBYTE_CHARACTER, "multibyte character: `%s`", lex->tok.value))
+                    return (lex->tok.ttype = TOKEN_ERROR);
+            }
+            lex->tok.constval.i = lex->tok.value[0];
+        }
 
         return lex->tok.ttype;
     }

@@ -1428,7 +1428,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
             DEBUGSHUNTDO(con_out("push %g\n", parser_token(parser)->constval.f));
         }
-        else if (parser->tok == TOKEN_INTCONST) {
+        else if (parser->tok == TOKEN_INTCONST || parser->tok == TOKEN_CHARCONST) {
             ast_value *val;
             if (wantop) {
                 parseerror(parser, "expected operator or end of statement, got constant");
