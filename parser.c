@@ -3879,7 +3879,10 @@ skipvar:
                     ast_unref(cval);
                 }
             } else {
+                bool cvq;
                 shunt sy = { NULL, NULL };
+                cvq = var->constant;
+                var->constant = false;
                 vec_push(sy.out, syexp(ast_ctx(var), (ast_expression*)var));
                 vec_push(sy.out, syexp(ast_ctx(cexp), (ast_expression*)cexp));
                 vec_push(sy.ops, syop(ast_ctx(var), parser->assign_op));
@@ -3892,6 +3895,7 @@ skipvar:
                 }
                 vec_free(sy.out);
                 vec_free(sy.ops);
+                var->constant = cvq;
             }
         }
 
