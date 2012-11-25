@@ -2287,7 +2287,7 @@ static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn
 cleanup:
     if (!parser_leaveblock(parser))
         retval = false;
-    return !!block;
+    return retval && !!block;
 }
 
 static ast_block* parse_block(parser_t *parser, bool warnreturn)
@@ -3604,7 +3604,7 @@ skipvar:
         }
 
         if (parser->tok == '#') {
-            ast_function *func;
+            ast_function *func = NULL;
 
             if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
@@ -3647,7 +3647,8 @@ skipvar:
 
             if (!parser_next(parser)) {
                 parseerror(parser, "expected comma or semicolon");
-                ast_function_delete(func);
+                if (func)
+                    ast_function_delete(func);
                 var->constval.vfunc = NULL;
                 break;
             }
