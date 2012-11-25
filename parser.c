@@ -2230,6 +2230,8 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
     ast_value *typevar = NULL;
+    *out = NULL;
+
     if (parser->tok == TOKEN_IDENT)
         typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
