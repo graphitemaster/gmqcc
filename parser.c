@@ -1313,10 +1313,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 goto onerr;
             }
 
+            parser->lex->flags.noops = true;
             if (!parser_next(parser) || parser->tok != '(') {
                 parseerror(parser, "use _(\"string\") to create a translatable string constant");
                 goto onerr;
             }
+            parser->lex->flags.noops = false;
             if (!parser_next(parser) || parser->tok != TOKEN_STRINGCONST) {
                 parseerror(parser, "expected a constant string in translatable-string extension");
                 goto onerr;
