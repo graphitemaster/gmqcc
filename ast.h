@@ -155,6 +155,7 @@ struct ast_value_s
     ast_value  *next;
     */
 
+    bool constant;
     bool hasvalue;
     union {
         double        vfloat;

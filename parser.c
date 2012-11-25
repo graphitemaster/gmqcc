@@ -211,6 +211,7 @@ static ast_value* parser_const_float(parser_t *parser, double d)
             return parser->imm_float[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_FLOAT);
+    out->constant = true;
     out->hasvalue = true;
     out->constval.vfloat = d;
     vec_push(parser->imm_float, out);
@@ -256,6 +257,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
         out = ast_value_new(parser_ctx(parser), name, TYPE_STRING);
     } else
         out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
+    out->constant = true;
     out->hasvalue = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
@@ -271,6 +273,7 @@ static ast_value* parser_const_vector(parser_t *parser, vector v)
             return parser->imm_vector[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_VECTOR);
+    out->constant = true;
     out->hasvalue = true;
     out->constval.vvec = v;
     vec_push(parser->imm_vector, out);
@@ -517,7 +520,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
              (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
               exprs[0]->expression.vtype != T)
 #define CanConstFold1(A) \
-             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue)
+             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue && ((ast_value*)(A))->constant)
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
@@ -2085,7 +2088,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
 
     if (!OPTS_FLAG(RELAXED_SWITCH)) {
         opval = (ast_value*)operand;
-        if (!ast_istype(operand, ast_value) || !opval->hasvalue) {
+        if (!ast_istype(operand, ast_value) || !opval->constant) {
             parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
             ast_unref(operand);
             return false;
@@ -3470,6 +3473,9 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
 
+        if (is_const)
+            var->constant = true;
+
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
          * Also: if there was a prototype, `var` will be deleted and set to `proto` which
@@ -3822,6 +3828,8 @@ skipvar:
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
+                    if (opts_standard != COMPILER_GMQCC && !OPTS_FLAG(INITIALIZED_NONCONSTANTS))
+                        var->constant = true;
                     var->hasvalue = true;
                     if (cval->expression.vtype == TYPE_STRING)
                         var->constval.vstring = parser_strdup(cval->constval.vstring);
