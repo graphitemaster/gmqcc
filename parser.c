@@ -4105,6 +4105,7 @@ void parser_cleanup()
         util_htdel(parser->variables[i]);
     vec_free(parser->variables);
     vec_free(parser->_blocklocals);
+    vec_free(parser->_locals);
 
     for (i = 0; i < vec_size(parser->_typedefs); ++i)
         ast_delete(parser->_typedefs[i]);
