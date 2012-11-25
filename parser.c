@@ -808,6 +808,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             generated_op += 1; /* INSTR_OR */
         case opid2('&','&'):
             generated_op += INSTR_AND;
+#if 0
             if (NotSameType(TYPE_FLOAT)) {
                 parseerror(parser, "invalid types used in expression: cannot perform logical operations between types %s and %s",
                            type_name[exprs[0]->expression.vtype],
@@ -816,6 +817,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 parseerror(parser, "TODO: optional early out");
                 return false;
             }
+#endif
             if (opts_standard == COMPILER_GMQCC)
                 con_out("TODO: early out logic\n");
             if (CanConstFold(exprs[0], exprs[1]))
