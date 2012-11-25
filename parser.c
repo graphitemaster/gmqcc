@@ -211,7 +211,7 @@ static ast_value* parser_const_float(parser_t *parser, double d)
             return parser->imm_float[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_FLOAT);
-    out->isconst = true;
+    out->hasvalue = true;
     out->constval.vfloat = d;
     vec_push(parser->imm_float, out);
     return out;
@@ -256,7 +256,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
         out = ast_value_new(parser_ctx(parser), name, TYPE_STRING);
     } else
         out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
-    out->isconst = true;
+    out->hasvalue = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
     return out;
@@ -271,7 +271,7 @@ static ast_value* parser_const_vector(parser_t *parser, vector v)
             return parser->imm_vector[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_VECTOR);
-    out->isconst = true;
+    out->hasvalue = true;
     out->constval.vvec = v;
     vec_push(parser->imm_vector, out);
     return out;
@@ -517,7 +517,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
              (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
               exprs[0]->expression.vtype != T)
 #define CanConstFold1(A) \
-             (ast_istype((A), ast_value) && ((ast_value*)(A))->isconst)
+             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue)
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
@@ -2085,7 +2085,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
 
     if (!OPTS_FLAG(RELAXED_SWITCH)) {
         opval = (ast_value*)operand;
-        if (!ast_istype(operand, ast_value) || !opval->isconst) {
+        if (!ast_istype(operand, ast_value) || !opval->hasvalue) {
             parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
             ast_unref(operand);
             return false;
@@ -2478,7 +2478,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             parseerror(parser, "expected a framenumber constant in[frame,think] notation");
             return false;
         }
-        if (!ast_istype(framenum, ast_value) || !( (ast_value*)framenum )->isconst) {
+        if (!ast_istype(framenum, ast_value) || !( (ast_value*)framenum )->hasvalue) {
             ast_unref(framenum);
             parseerror(parser, "framenumber in [frame,think] notation must be a constant");
             return false;
@@ -3611,9 +3611,6 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
 
-        if (is_const)
-            var->isconst = true;
-
         /* Part 2:
          * Create the global/local, and deal with vector types.
          */
@@ -3774,7 +3771,7 @@ skipvar:
                 break;
             }
 
-            if (var->isconst) {
+            if (var->hasvalue) {
                 (void)!parsewarning(parser, WARN_DOUBLE_DECLARATION,
                                     "builtin `%s` has already been defined\n"
                                     " -> previous declaration here: %s:%i",
@@ -3821,11 +3818,11 @@ skipvar:
 
             if (!localblock) {
                 cval = (ast_value*)cexp;
-                if (!ast_istype(cval, ast_value) || !cval->isconst)
+                if (!ast_istype(cval, ast_value) || !cval->hasvalue)
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
-                    var->isconst = true;
+                    var->hasvalue = true;
                     if (cval->expression.vtype == TYPE_STRING)
                         var->constval.vstring = parser_strdup(cval->constval.vstring);
                     else
@@ -4196,21 +4193,21 @@ bool parser_finish(const char *output)
 
         for (i = 0; i < vec_size(parser->fields); ++i) {
             ast_value *field;
-            bool isconst;
+            bool hasvalue;
             if (!ast_istype(parser->fields[i], ast_value))
                 continue;
             field = (ast_value*)parser->fields[i];
-            isconst = field->isconst;
-            field->isconst = false;
+            hasvalue = field->hasvalue;
+            field->hasvalue = false;
             if (!ast_global_codegen((ast_value*)field, ir, true)) {
                 con_out("failed to generate field %s\n", field->name);
                 ir_builder_delete(ir);
                 return false;
             }
-            if (isconst) {
+            if (hasvalue) {
                 ir_value *ifld;
                 ast_expression *subtype;
-                field->isconst = true;
+                field->hasvalue = true;
                 subtype = field->expression.next;
                 ifld = ir_builder_create_field(ir, field->name, subtype->expression.vtype);
                 if (subtype->expression.vtype == TYPE_FIELD)
@@ -4225,7 +4222,7 @@ bool parser_finish(const char *output)
             if (!ast_istype(parser->globals[i], ast_value))
                 continue;
             asvalue = (ast_value*)(parser->globals[i]);
-            if (!asvalue->uses && !asvalue->isconst && asvalue->expression.vtype != TYPE_FUNCTION) {
+            if (!asvalue->uses && !asvalue->hasvalue && asvalue->expression.vtype != TYPE_FUNCTION) {
                 if (strcmp(asvalue->name, "end_sys_globals") &&
                     strcmp(asvalue->name, "end_sys_fields"))
                 {

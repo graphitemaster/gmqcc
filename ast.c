@@ -331,7 +331,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->name = name ? util_strdup(name) : NULL;
     self->expression.vtype = t;
     self->expression.next  = NULL;
-    self->isconst = false;
+    self->hasvalue = false;
     self->uses    = 0;
     memset(&self->constval, 0, sizeof(self->constval));
 
@@ -349,7 +349,7 @@ void ast_value_delete(ast_value* self)
 {
     if (self->name)
         mem_d((void*)self->name);
-    if (self->isconst) {
+    if (self->hasvalue) {
         switch (self->expression.vtype)
         {
         case TYPE_STRING:
@@ -950,12 +950,12 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     ast_instantiate(ast_function, ctx, ast_function_delete);
 
     if (!vtype ||
-        vtype->isconst ||
+        vtype->hasvalue ||
         vtype->expression.vtype != TYPE_FUNCTION)
     {
         asterror(ast_ctx(self), "internal error: ast_function_new condition %i %i type=%i",
                  (int)!vtype,
-                 (int)vtype->isconst,
+                 (int)vtype->hasvalue,
                  vtype->expression.vtype);
         mem_d(self);
         return NULL;
@@ -974,7 +974,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->breakblock    = NULL;
     self->continueblock = NULL;
 
-    vtype->isconst = true;
+    vtype->hasvalue = true;
     vtype->constval.vfunc = self;
 
     return self;
@@ -987,7 +987,7 @@ void ast_function_delete(ast_function *self)
         mem_d((void*)self->name);
     if (self->vtype) {
         /* ast_value_delete(self->vtype); */
-        self->vtype->isconst = false;
+        self->vtype->hasvalue = false;
         self->vtype->constval.vfunc = NULL;
         /* We use unref - if it was stored in a global table it is supposed
          * to be deleted from *there*
@@ -1055,7 +1055,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
 
-    if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
+    if (self->hasvalue && self->expression.vtype == TYPE_FUNCTION)
     {
         ir_function *func = ir_builder_create_function(ir, self->name, self->expression.next->expression.vtype);
         if (!func)
@@ -1072,7 +1072,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     if (isfield && self->expression.vtype == TYPE_FIELD) {
         ast_expression *fieldtype = self->expression.next;
 
-        if (self->isconst) {
+        if (self->hasvalue) {
             asterror(ast_ctx(self), "TODO: constant field pointers with value");
             goto error;
         }
@@ -1195,7 +1195,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         v->context = ast_ctx(self);
     }
 
-    if (self->isconst) {
+    if (self->hasvalue) {
         switch (self->expression.vtype)
         {
             case TYPE_FLOAT:
@@ -1237,7 +1237,7 @@ error: /* clean up */
 bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
-    if (self->isconst && self->expression.vtype == TYPE_FUNCTION)
+    if (self->hasvalue && self->expression.vtype == TYPE_FUNCTION)
     {
         /* Do we allow local functions? I think not...
          * this is NOT a function pointer atm.
@@ -1308,7 +1308,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
     /* A constant local... hmmm...
      * I suppose the IR will have to deal with this
      */
-    if (self->isconst) {
+    if (self->hasvalue) {
         switch (self->expression.vtype)
         {
             case TYPE_FLOAT:
@@ -1505,7 +1505,7 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
         ai = (ast_array_index*)self->dest;
         idx = (ast_value*)ai->index;
 
-        if (ast_istype(ai->index, ast_value) && idx->isconst)
+        if (ast_istype(ai->index, ast_value) && idx->hasvalue)
             ai = NULL;
     }
 
@@ -1729,7 +1729,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
         ai = (ast_array_index*)self->dest;
         idx = (ast_value*)ai->index;
 
-        if (ast_istype(ai->index, ast_value) && idx->isconst)
+        if (ast_istype(ai->index, ast_value) && idx->hasvalue)
             ai = NULL;
     }
 
@@ -1978,7 +1978,7 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
     arr = (ast_value*)self->array;
     idx = (ast_value*)self->index;
 
-    if (!ast_istype(self->index, ast_value) || !idx->isconst) {
+    if (!ast_istype(self->index, ast_value) || !idx->hasvalue) {
         /* Time to use accessor functions */
         ast_expression_codegen *cgen;
         ir_value               *iridx, *funval;
