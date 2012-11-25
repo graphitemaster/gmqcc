@@ -242,7 +242,7 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #define INT2FLT(Y) *((float  *)&(Y))
 
 /* New flexible vector implementation from Dale */
-#define _vec_raw(A) (*((size_t**)((void*)(&(A))))-2)
+#define _vec_raw(A) (((size_t*)(void*)(A)) - 2)
 #define _vec_beg(A) (_vec_raw(A)[0])
 #define _vec_end(A) (_vec_raw(A)[1])
 #define _vec_needsgrow(A,N) ((!(A)) || (_vec_end(A) + (N) >= _vec_beg(A)))
