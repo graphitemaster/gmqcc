@@ -2299,7 +2299,7 @@ static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn
 
     while (parser->tok != TOKEN_EOF && parser->tok < TOKEN_ERROR)
     {
-        ast_expression *expr;
+        ast_expression *expr = NULL;
         if (parser->tok == '}')
             break;
 
