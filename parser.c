@@ -1944,7 +1944,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
         }
-        if (!parse_variable(parser, block, CV_VAR, false, typevar))
+        if (!parse_variable(parser, block, true, CV_VAR, typevar))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2244,7 +2244,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, CV_NONE, false, typevar))
+        if (!parse_variable(parser, block, false, CV_NONE, typevar))
             return false;
         *out = NULL;
         return true;
@@ -2261,7 +2261,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
                 parseerror(parser, "expected variable declaration");
                 return false;
             }
-            if (!parse_variable(parser, block, CV_VAR, false, NULL))
+            if (!parse_variable(parser, block, true, CV_VAR, NULL))
                 return false;
             *out = NULL;
             return true;
@@ -3860,7 +3860,8 @@ skipvar:
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
-                    if (opts_standard != COMPILER_GMQCC && !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
+                    if (opts_standard != COMPILER_GMQCC &&
+                        !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
                         is_const_var != CV_VAR)
                     {
                         var->constant = true;
@@ -3947,7 +3948,7 @@ static bool parser_global_statement(parser_t *parser)
 
     if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, CV_NONE, false, istype);
+        return parse_variable(parser, NULL, false, CV_NONE, istype);
     }
     else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var"))
     {
@@ -3956,7 +3957,7 @@ static bool parser_global_statement(parser_t *parser)
                 parseerror(parser, "expected variable declaration after 'var'");
                 return false;
             }
-            return parse_variable(parser, NULL, CV_VAR, false, NULL);
+            return parse_variable(parser, NULL, true, CV_VAR, NULL);
         }
     }
     else if (parser->tok == TOKEN_KEYWORD)
@@ -3973,7 +3974,7 @@ static bool parser_global_statement(parser_t *parser)
                     return false;
                 }
             }
-            return parse_variable(parser, NULL, CV_CONST, true, NULL);
+            return parse_variable(parser, NULL, true, CV_CONST, NULL);
         }
         else if (!strcmp(parser_tokval(parser), "typedef")) {
             if (!parser_next(parser)) {
