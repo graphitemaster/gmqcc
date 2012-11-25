@@ -1164,7 +1164,7 @@ int lex_do(lex_file *lex)
         lex_tokench(lex, ch);
 
         nextch = lex_getch(lex);
-        if (nextch == ch || nextch == '=') {
+        if (nextch == '=' || (nextch == ch && ch != '!')) {
             lex_tokench(lex, nextch);
         } else if (ch == '-' && nextch == '>') {
             lex_tokench(lex, nextch);
