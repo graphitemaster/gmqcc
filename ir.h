@@ -271,7 +271,6 @@ void ir_function_collect_value(ir_function*, ir_value *value);
 
 bool ir_function_set_name(ir_function*, const char *name);
 
-ir_value* ir_function_get_local(ir_function *self, const char *name);
 ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param);
 
 bool GMQCC_WARN ir_function_finalize(ir_function*);

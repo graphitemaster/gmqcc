@@ -547,24 +547,9 @@ bool ir_function_finalize(ir_function *self)
     return true;
 }
 
-ir_value* ir_function_get_local(ir_function *self, const char *name)
-{
-    size_t i;
-    for (i = 0; i < vec_size(self->locals); ++i) {
-        if (!strcmp(self->locals[i]->name, name))
-            return self->locals[i];
-    }
-    return NULL;
-}
-
 ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param)
 {
     ir_value *ve;
-
-    /*
-    if (ir_function_get_local(self, name))
-        return NULL;
-    */
 
     if (param &&
         vec_size(self->locals) &&
