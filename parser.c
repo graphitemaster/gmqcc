@@ -3739,6 +3739,15 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                                 retval = false;
                                 goto cleanup;
                             }
+                            proto = (ast_value*)old;
+                            if (!ast_istype(old, ast_value)) {
+                                parseerror(parser, "internal error: not an ast_value");
+                                retval = false;
+                                proto = NULL;
+                                goto cleanup;
+                            }
+                            ast_delete(var);
+                            var = proto;
                         }
                     }
                     if (opts_standard == COMPILER_QCC &&
