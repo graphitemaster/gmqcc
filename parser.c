@@ -2330,6 +2330,14 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         *out = (ast_expression*)inner;
         return true;
     }
+    else if (parser->tok == ';')
+    {
+        if (!parser_next(parser)) {
+            parseerror(parser, "parse error after empty statement");
+            return false;
+        }
+        return true;
+    }
     else
     {
         ast_expression *exp = parse_expression(parser, false);
