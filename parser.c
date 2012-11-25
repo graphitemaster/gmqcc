@@ -3871,6 +3871,13 @@ static bool parser_global_statement(parser_t *parser)
                 parseerror(parser, "expected variable declaration after 'const'");
                 return false;
             }
+            if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var")) {
+                (void)!parsewarning(parser, WARN_CONST_VAR, "ignoring `var` after const qualifier");
+                if (!parser_next(parser)) {
+                    parseerror(parser, "expected variable declaration after 'const var'");
+                    return false;
+                }
+            }
             return parse_variable(parser, NULL, true, true, NULL);
         }
         else if (!strcmp(parser_tokval(parser), "typedef")) {
