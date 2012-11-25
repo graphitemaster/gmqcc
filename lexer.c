@@ -770,6 +770,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             case 't':  ch = '\t'; break;
             case 'f':  ch = '\f'; break;
             case 'v':  ch = '\v'; break;
+            case '\n':  ch = '\n'; break;
             default:
                 lexwarn(lex, WARN_UNKNOWN_CONTROL_SEQUENCE, "unrecognized control sequence: \\%c", ch);
                 /* so we just add the character plus backslash no matter what it actually is */
