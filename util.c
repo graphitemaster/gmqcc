@@ -526,7 +526,7 @@ typedef struct hash_node_t {
 } hash_node_t;
 
 
-size_t _util_hthash(hash_table_t *ht, const char *key) {
+size_t util_hthash(hash_table_t *ht, const char *key) {
     uint64_t val = 0;
     size_t   len = strlen(key);
     size_t   itr = 0;
@@ -584,20 +584,18 @@ hash_table_t *util_htnew(size_t size) {
     return hashtable;
 }
 
-void util_htset(hash_table_t *ht, const char *key, void *value) {
-    size_t bin = 0;
+void util_htseth(hash_table_t *ht, const char *key, size_t bin, void *value) {
     hash_node_t *newnode = NULL;
     hash_node_t *next    = NULL;
     hash_node_t *last    = NULL;
     
-    bin  = _util_hthash(ht, key);
     next = ht->table[bin];
     
     while (next && next->key && strcmp(key, next->key) > 0)
         last = next, next = next->next;
     
     /* already in table, do a replace */
-    if (next && next->key && !strcmp(key, next->key) == 0) {
+    if (next && next->key && strcmp(key, next->key) == 0) {
         next->value = value;
     } else {
         /* not found, grow a pair man :P */
@@ -614,8 +612,11 @@ void util_htset(hash_table_t *ht, const char *key, void *value) {
     }
 }
 
-void *util_htget(hash_table_t *ht, const char *key) {
-    size_t       bin  = _util_hthash(ht, key);
+void util_htset(hash_table_t *ht, const char *key, void *value) {
+    util_htseth(ht, key, util_hthash(ht, key), value);
+}
+
+void *util_htgeth(hash_table_t *ht, const char *key, size_t bin) {
     hash_node_t *pair = ht->table[bin];
     
     while (pair && pair->key && strcmp(key, pair->key) > 0)
@@ -625,6 +626,10 @@ void *util_htget(hash_table_t *ht, const char *key) {
         return NULL;
         
     return pair->value;
+}
+
+void *util_htget(hash_table_t *ht, const char *key) {
+    return util_htgeth(ht, key, util_hthash(ht, key));
 }
 
 /*

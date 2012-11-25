@@ -523,7 +523,7 @@ void ast_entfield_delete(ast_entfield *self)
     mem_d(self);
 }
 
-ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field)
+ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field, const char *name)
 {
     ast_instantiate(ast_member, ctx, ast_member_delete);
     if (field >= 3) {
@@ -551,6 +551,10 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 
     self->owner = owner;
     self->field = field;
+    if (name)
+        self->name = util_strdup(name);
+    else
+        self->name = NULL;
 
     return self;
 }
