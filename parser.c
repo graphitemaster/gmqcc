@@ -600,6 +600,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             vec_push(sy->out, syblock(ctx, blocks[0]));
             return true;
 
+        case opid2('+','P'):
+            out = exprs[0];
+            break;
         case opid2('-','P'):
             switch (exprs[0]->expression.vtype) {
                 case TYPE_FLOAT:
