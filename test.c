@@ -593,7 +593,7 @@ task_t *task_tasks = NULL;
  * Read a directory and searches for all template files in it
  * which is later used to run all tests.
  */
-bool task_propogate(const char *curdir) {
+bool task_propagate(const char *curdir) {
     bool             success = true;
     DIR             *dir;
     struct dirent   *files;
@@ -652,7 +652,7 @@ bool task_propogate(const char *curdir) {
             
             /*
              * The task template was compiled, now lets create a task from
-             * the template data which has now been propogated.
+             * the template data which has now been propagated.
              */
             task.template = template;
             if (!(task.runhandles = task_popen(buf, "r"))) {
@@ -953,26 +953,26 @@ void task_schedualize() {
 /*
  * This is the heart of the whole test-suite process.  This cleans up
  * any existing temporary files left behind as well as log files left
- * behind.  Then it propogates a list of tests from `curdir` by scaning
+ * behind.  Then it propagates a list of tests from `curdir` by scaning
  * it for template files and compiling them into tasks, in which it
  * schedualizes them (executes them) and actually reports errors and
  * what not.  It then proceeds to destroy the tasks and return memory
  * it's the engine :)
  * 
- * It returns true of tests could be propogated, otherwise it returns
+ * It returns true of tests could be propagated, otherwise it returns
  * false.
  * 
  * It expects con_init() was called before hand.
  */
 bool test_perform(const char *curdir) {
     task_precleanup(curdir);
-    if (!task_propogate(curdir)) {
-        con_err("error: failed to propogate tasks\n");
+    if (!task_propagate(curdir)) {
+        con_err("error: failed to propagate tasks\n");
         task_destroy(curdir);
         return false;
     }
     /*
-     * If we made it here all tasks where propogated from their resultant
+     * If we made it here all tasks where propagated from their resultant
      * template file.  So we can start the FILO scheduler, this has been
      * designed in the most thread-safe way possible for future threading
      * it's designed to prevent lock contention, and possible syncronization
