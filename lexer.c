@@ -445,7 +445,8 @@ static bool lex_try_pragma(lex_file *lex)
     if (!strcmp(command, "push")) {
         if (!strcmp(param, "line")) {
             lex->push_line++;
-            --line;
+            if (lex->push_line == 1)
+                --line;
         }
         else
             goto unroll;
@@ -454,7 +455,8 @@ static bool lex_try_pragma(lex_file *lex)
         if (!strcmp(param, "line")) {
             if (lex->push_line)
                 lex->push_line--;
-            --line;
+            if (lex->push_line == 0)
+                --line;
         }
         else
             goto unroll;
