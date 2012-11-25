@@ -3151,6 +3151,9 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         }
     }
 
+    if (vec_size(params) == 1 && params[0]->expression.vtype == TYPE_VOID)
+        vec_free(params);
+
     /* sanity check */
     if (vec_size(params) > 8 && opts_standard == COMPILER_QCC)
         (void)!parsewarning(parser, WARN_EXTENSIONS, "more than 8 parameters are not supported by this standard");
