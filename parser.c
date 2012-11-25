@@ -2107,15 +2107,6 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     if (!operand)
         return false;
 
-    if (!OPTS_FLAG(RELAXED_SWITCH)) {
-        opval = (ast_value*)operand;
-        if (!ast_istype(operand, ast_value) || !opval->constant) {
-            parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
-            ast_unref(operand);
-            return false;
-        }
-    }
-
     switchnode = ast_switch_new(ctx, operand);
 
     /* closing paren */
@@ -2158,6 +2149,14 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
                 ast_delete(switchnode);
                 parseerror(parser, "expected expression for case");
                 return false;
+            }
+            if (!OPTS_FLAG(RELAXED_SWITCH)) {
+                opval = (ast_value*)swcase.value;
+                if (!ast_istype(swcase.value, ast_value) || !opval->constant) {
+                    parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
+                    ast_unref(operand);
+                    return false;
+                }
             }
         }
         else if (!strcmp(parser_tokval(parser), "default")) {
