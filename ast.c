@@ -435,6 +435,8 @@ ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
     self->dest    = left;
     self->source  = right;
 
+    self->keep_dest = false;
+
     self->expression.vtype = left->expression.vtype;
     if (left->expression.next) {
         self->expression.next = ast_type_copy(ctx, left);
@@ -451,7 +453,8 @@ ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
 
 void ast_binstore_delete(ast_binstore *self)
 {
-    ast_unref(self->dest);
+    if (!self->keep_dest)
+        ast_unref(self->dest);
     ast_unref(self->source);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);

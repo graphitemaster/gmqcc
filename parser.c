@@ -485,6 +485,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
     ast_expression *exprs[3];
     ast_block      *blocks[3];
     ast_value      *asvalue[3];
+    ast_binstore   *asbinstore;
     size_t i, assignop, addop, subop;
     qcint  generated_op = 0;
 
@@ -1141,7 +1142,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
-            out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
+            asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
+            asbinstore->keep_dest = true;
+            out = (ast_expression*)asbinstore;
             break;
     }
 #undef NotSameType

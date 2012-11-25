@@ -234,6 +234,8 @@ struct ast_binstore_s
     int             opbin;
     ast_expression *dest;
     ast_expression *source;
+    /* for &~= which uses the destination in a binary in source we can use this */
+    bool            keep_dest;
 };
 ast_binstore* ast_binstore_new(lex_ctx    ctx,
                                int        storeop,
