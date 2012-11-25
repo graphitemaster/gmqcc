@@ -1304,7 +1304,36 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         else
             parser->memberof = 0;
 
-        if (parser->tok == TOKEN_IDENT)
+        if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "_")) {
+            /* a translatable string */
+            ast_value *val;
+
+            if (wantop) {
+                parseerror(parser, "expected operator or end of statement, got constant");
+                goto onerr;
+            }
+
+            if (!parser_next(parser) || parser->tok != '(') {
+                parseerror(parser, "use _(\"string\") to create a translatable string constant");
+                goto onerr;
+            }
+            if (!parser_next(parser) || parser->tok != TOKEN_STRINGCONST) {
+                parseerror(parser, "expected a constant string in translatable-string extension");
+                goto onerr;
+            }
+            val = parser_const_string(parser, parser_tokval(parser), true);
+            wantop = true;
+            if (!val)
+                return false;
+            vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
+            DEBUGSHUNTDO(con_out("push string\n"));
+
+            if (!parser_next(parser) || parser->tok != ')') {
+                parseerror(parser, "expected closing paren after translatable string");
+                goto onerr;
+            }
+        }
+        else if (parser->tok == TOKEN_IDENT)
         {
             ast_expression *var;
             if (wantop) {
