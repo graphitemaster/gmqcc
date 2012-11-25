@@ -640,12 +640,15 @@ void util_htdel(hash_table_t *ht) {
     size_t i = 0;
     for (; i < ht->size; i++) {
         hash_node_t *n = ht->table[i];
+        hash_node_t *p;
         
         /* free in list */
         while (n) {
             if (n->key)
                 mem_d(n->key);
+            p = n;
             n = n->next;
+            mem_d(p);
         }
         
     }
