@@ -2045,7 +2045,7 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
         }
 
         cgen = self->index->expression.codegen;
-        if (!(*cgen)((ast_expression*)(self->index), func, true, &iridx))
+        if (!(*cgen)((ast_expression*)(self->index), func, false, &iridx))
             return false;
 
         cgen = arr->getter->expression.codegen;
