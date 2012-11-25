@@ -3210,21 +3210,22 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
             parseerror(parser, "expected typename for field definition");
             return NULL;
         }
+
+        /* Further dots are handled seperately because they won't be part of the
+         * basetype
+         */
+        while (parser->tok == '.') {
+            ++morefields;
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected typename for field definition");
+                return NULL;
+            }
+        }
+
         if (parser->tok == TOKEN_IDENT)
             cached_typedef = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
             parseerror(parser, "expected typename");
-            return NULL;
-        }
-    }
-
-    /* Further dots are handled seperately because they won't be part of the
-     * basetype
-     */
-    while (parser->tok == '.') {
-        ++morefields;
-        if (!parser_next(parser)) {
-            parseerror(parser, "expected typename for field definition");
             return NULL;
         }
     }
