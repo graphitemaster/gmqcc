@@ -73,6 +73,7 @@ enum {
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
 #define ast_ctx(node) (((ast_node_common*)(node))->context)
+#define ast_side_effects(node) (((ast_node_common*)(node))->side_effects)
 
 /* Node interface with common components
  */
@@ -87,6 +88,7 @@ typedef struct
      * prevents its dtor from destroying this node as well.
      */
     bool             keep;
+    bool             side_effects;
 } ast_node_common;
 
 #define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
@@ -525,6 +527,8 @@ bool ast_block_set_type(ast_block*, ast_expression *from);
 
 bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
 void ast_block_collect(ast_block*, ast_expression*);
+
+void ast_block_add_expr(ast_block*, ast_expression*);
 
 /* Function
  *

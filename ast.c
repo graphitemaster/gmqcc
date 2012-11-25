@@ -35,6 +35,7 @@
     ast_node_init((ast_node*)self, ctx, TYPE_##T);                  \
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
+
 /* error handling */
 static void asterror(lex_ctx ctx, const char *msg, ...)
 {
@@ -59,7 +60,16 @@ static void ast_node_init(ast_node *self, lex_ctx ctx, int nodetype)
     self->node.destroy = &_ast_node_destroy;
     self->node.keep    = false;
     self->node.nodetype = nodetype;
+    self->node.side_effects = false;
 }
+
+/* weight and side effects */
+static void _ast_propagate_effects(ast_node *self, ast_node *other)
+{
+    if (ast_side_effects(other))
+        ast_side_effects(self) = true;
+}
+#define ast_propagate_effects(s,o) _ast_propagate_effects(((ast_node*)(s)), ((ast_node*)(o)))
 
 /* General expression initialization */
 static void ast_expression_init(ast_expression *self,
@@ -385,6 +395,9 @@ ast_binary* ast_binary_new(lex_ctx ctx, int op,
     self->left = left;
     self->right = right;
 
+    ast_propagate_effects(self, left);
+    ast_propagate_effects(self, right);
+
     if (op >= INSTR_EQ_F && op <= INSTR_GT)
         self->expression.vtype = TYPE_FLOAT;
     else if (op == INSTR_AND || op == INSTR_OR ||
@@ -413,6 +426,8 @@ ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
 {
     ast_instantiate(ast_binstore, ctx, ast_binstore_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binstore_codegen);
+
+    ast_side_effects(self) = true;
 
     self->opstore = storop;
     self->opbin   = op;
@@ -450,6 +465,8 @@ ast_unary* ast_unary_new(lex_ctx ctx, int op,
     self->op = op;
     self->operand = expr;
 
+    ast_propagate_effects(self, expr);
+
     if (op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) {
         self->expression.vtype = TYPE_FLOAT;
     } else
@@ -471,6 +488,9 @@ ast_return* ast_return_new(lex_ctx ctx, ast_expression *expr)
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);
 
     self->operand = expr;
+
+    if (expr)
+        ast_propagate_effects(self, expr);
 
     return self;
 }
@@ -506,6 +526,8 @@ ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_ex
 
     self->entity = entity;
     self->field  = field;
+    ast_propagate_effects(self, entity);
+    ast_propagate_effects(self, field);
 
     if (!ast_type_adopt(self, outtype)) {
         ast_entfield_delete(self);
@@ -550,6 +572,8 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
     }
 
     self->owner = owner;
+    ast_propagate_effects(self, owner);
+
     self->field = field;
     if (name)
         self->name = util_strdup(name);
@@ -589,6 +613,8 @@ ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_exp
 
     self->array = array;
     self->index = index;
+    ast_propagate_effects(self, array);
+    ast_propagate_effects(self, index);
 
     if (!ast_type_adopt(self, outtype)) {
         ast_array_index_delete(self);
@@ -628,6 +654,11 @@ ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *on
     self->cond     = cond;
     self->on_true  = ontrue;
     self->on_false = onfalse;
+    ast_propagate_effects(self, cond);
+    if (ontrue)
+        ast_propagate_effects(self, ontrue);
+    if (onfalse)
+        ast_propagate_effects(self, onfalse);
 
     return self;
 }
@@ -656,6 +687,9 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
     self->cond     = cond;
     self->on_true  = ontrue;
     self->on_false = onfalse;
+    ast_propagate_effects(self, cond);
+    ast_propagate_effects(self, ontrue);
+    ast_propagate_effects(self, onfalse);
 
     if (!ast_type_adopt(self, ontrue)) {
         ast_ternary_delete(self);
@@ -689,6 +723,17 @@ ast_loop* ast_loop_new(lex_ctx ctx,
     self->postcond  = postcond;
     self->increment = increment;
     self->body      = body;
+
+    if (initexpr)
+        ast_propagate_effects(self, initexpr);
+    if (precond)
+        ast_propagate_effects(self, precond);
+    if (postcond)
+        ast_propagate_effects(self, postcond);
+    if (increment)
+        ast_propagate_effects(self, increment);
+    if (body)
+        ast_propagate_effects(self, body);
 
     return self;
 }
@@ -733,6 +778,8 @@ ast_switch* ast_switch_new(lex_ctx ctx, ast_expression *op)
     self->operand = op;
     self->cases   = NULL;
 
+    ast_propagate_effects(self, op);
+
     return self;
 }
 
@@ -757,6 +804,8 @@ ast_call* ast_call_new(lex_ctx ctx,
 {
     ast_instantiate(ast_call, ctx, ast_call_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_call_codegen);
+
+    ast_side_effects(self) = true;
 
     self->params = NULL;
     self->func   = funcexpr;
@@ -812,6 +861,8 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
     ast_instantiate(ast_store, ctx, ast_store_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_store_codegen);
 
+    ast_side_effects(self) = true;
+
     self->op = op;
     self->dest = dest;
     self->source = source;
@@ -849,6 +900,12 @@ ast_block* ast_block_new(lex_ctx ctx)
     self->collect = NULL;
 
     return self;
+}
+
+void ast_block_add_expr(ast_block *self, ast_expression *e)
+{
+    ast_propagate_effects(self, e);
+    vec_push(self->exprs, e);
 }
 
 void ast_block_collect(ast_block *self, ast_expression *expr)
