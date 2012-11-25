@@ -3198,6 +3198,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     const char *name = NULL;
     bool        isfield  = false;
     bool        wasarray = false;
+    size_t      morefields = 0;
 
     ctx = parser_ctx(parser);
 
@@ -3217,12 +3218,30 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
         }
     }
 
+    /* Further dots are handled seperately because they won't be part of the
+     * basetype
+     */
+    while (parser->tok == '.') {
+        ++morefields;
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected typename for field definition");
+            return NULL;
+        }
+    }
+
     /* generate the basic type value */
     if (cached_typedef) {
         var = ast_value_copy(cached_typedef);
         ast_value_set_name(var, "<type(from_def)>");
     } else
         var = ast_value_new(ctx, "<type>", parser_token(parser)->constval.t);
+
+    for (; morefields; --morefields) {
+        tmp = ast_value_new(ctx, "<.type>", TYPE_FIELD);
+        tmp->expression.next = (ast_expression*)var;
+        var = tmp;
+    }
+
     /* do not yet turn into a field - remember:
      * .void() foo; is a field too
      * .void()() foo; is a function
