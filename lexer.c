@@ -1110,7 +1110,7 @@ int lex_do(lex_file *lex)
             nextch = lex_getch(lex);
             if (nextch != '.') {
                 lex_ungetch(lex, nextch);
-                lex_ungetch(lex, nextch);
+                lex_ungetch(lex, '.');
                 lex_endtoken(lex);
                 return (lex->tok.ttype = ch);
             }
