@@ -844,6 +844,11 @@ void ast_goto_delete(ast_goto *self)
     mem_d(self);
 }
 
+void ast_goto_set_label(ast_goto *self, ast_label *label)
+{
+    self->target = label;
+}
+
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr)
 {

@@ -58,6 +58,12 @@ typedef struct {
 
     ast_function *function;
 
+    /* All the labels the function defined...
+     * Should they be in ast_function instead?
+     */
+    ast_label **labels;
+    ast_goto  **gotos;
+
     /* A list of hashtables for each scope */
     ht *variables;
     ht htfields;
@@ -2227,6 +2233,40 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     return true;
 }
 
+static bool parse_goto(parser_t *parser, ast_expression **out)
+{
+    size_t    i;
+    ast_goto *gt;
+
+    if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+        parseerror(parser, "expected label name after `goto`");
+        return false;
+    }
+
+    gt = ast_goto_new(parser_ctx(parser), parser_tokval(parser));
+
+    for (i = 0; i < vec_size(parser->labels); ++i) {
+        if (!strcmp(parser->labels[i]->name, parser_tokval(parser))) {
+            ast_goto_set_label(gt, parser->labels[i]);
+            break;
+        }
+    }
+    if (i == vec_size(parser->labels))
+        vec_push(parser->gotos, gt);
+
+    if (!parser_next(parser) || parser->tok != ';') {
+        parseerror(parser, "semicolon expected after goto label");
+        return false;
+    }
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error after goto");
+        return false;
+    }
+
+    *out = (ast_expression*)gt;
+    return true;
+}
+
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
     ast_value *typevar = NULL;
@@ -2316,6 +2356,10 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             }
             return true;
         }
+        else if (!strcmp(parser_tokval(parser), "goto"))
+        {
+            return parse_goto(parser, out);
+        }
         else if (!strcmp(parser_tokval(parser), "typedef"))
         {
             if (!parser_next(parser)) {
@@ -2350,6 +2394,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         label = ast_label_new(parser_ctx(parser), parser_tokval(parser));
         if (!label)
             return false;
+        vec_push(parser->labels, label);
         *out = (ast_expression*)label;
         if (!parser_next(parser)) {
             parseerror(parser, "parse error after label");
@@ -2494,6 +2539,11 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     has_frame_think = false;
     old = parser->function;
+
+    if (vec_size(parser->gotos) || vec_size(parser->labels)) {
+        parseerror(parser, "gotos/labels leaking");
+        return false;
+    }
 
     if (var->expression.variadic) {
         if (parsewarning(parser, WARN_VARIADIC_FUNCTION,
@@ -3871,6 +3921,8 @@ skipvar:
             if (!parse_function_body(parser, var))
                 break;
             ast_delete(basetype);
+            vec_free(parser->gotos);
+            vec_free(parser->labels);
             return true;
         } else {
             ast_expression *cexp;
@@ -4247,6 +4299,9 @@ void parser_cleanup()
         util_htdel(parser->typedefs[i]);
     vec_free(parser->typedefs);
     vec_free(parser->_blocktypedefs);
+
+    vec_free(parser->labels);
+    vec_free(parser->gotos);
 
     mem_d(parser);
 }

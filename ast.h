@@ -525,7 +525,7 @@ struct ast_goto_s
 
 ast_goto* ast_goto_new(lex_ctx ctx, const char *name);
 void ast_goto_delete(ast_goto*);
-void ast_goto_setlabel(ast_goto*, ast_label*);
+void ast_goto_set_label(ast_goto*, ast_label*);
 
 bool ast_goto_codegen(ast_goto*, ast_function*, bool lvalue, ir_value**);
 
