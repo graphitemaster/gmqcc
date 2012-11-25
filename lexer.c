@@ -318,6 +318,11 @@ static int lex_try_digraph(lex_file *lex, int ch)
 {
     int c2;
     c2 = lex_fgetc(lex);
+    /* we just used fgetc() so count lines
+     * need to offset a \n the ungetch would recognize
+     */
+    if (!lex->push_line && c2 == '\n')
+        lex->line++;
     if      (ch == '<' && c2 == ':')
         return '[';
     else if (ch == ':' && c2 == '>')
