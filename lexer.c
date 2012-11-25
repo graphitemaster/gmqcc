@@ -1076,8 +1076,10 @@ int lex_do(lex_file *lex)
          */
         switch (ch)
         {
+            /*
             case '+':
             case '-':
+            */
             case '*':
             case '/':
             case '<':
