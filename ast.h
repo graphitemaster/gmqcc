@@ -49,6 +49,7 @@ typedef struct ast_array_index_s ast_array_index;
 typedef struct ast_breakcont_s   ast_breakcont;
 typedef struct ast_switch_s      ast_switch;
 typedef struct ast_label_s       ast_label;
+typedef struct ast_goto_s        ast_goto;
 
 enum {
     TYPE_ast_node,
@@ -70,7 +71,8 @@ enum {
     TYPE_ast_array_index,
     TYPE_ast_breakcont,
     TYPE_ast_switch,
-    TYPE_ast_label
+    TYPE_ast_label,
+    TYPE_ast_goto
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
@@ -500,12 +502,32 @@ struct ast_label_s
     ast_expression_common expression;
     const char *name;
     ir_block   *irblock;
+    ast_goto  **gotos;
 };
 
 ast_label* ast_label_new(lex_ctx ctx, const char *name);
 void ast_label_delete(ast_label*);
+void ast_label_register_goto(ast_label*, ast_goto*);
 
 bool ast_label_codegen(ast_label*, ast_function*, bool lvalue, ir_value**);
+
+/* GOTO nodes
+ *
+ * Go to a label, the label node is filled in at a later point!
+ */
+struct ast_goto_s
+{
+    ast_expression_common expression;
+    const char *name;
+    ast_label  *target;
+    ir_block   *irblock_from;
+};
+
+ast_goto* ast_goto_new(lex_ctx ctx, const char *name);
+void ast_goto_delete(ast_goto*);
+void ast_goto_setlabel(ast_goto*, ast_label*);
+
+bool ast_goto_codegen(ast_goto*, ast_function*, bool lvalue, ir_value**);
 
 /* CALL node
  *

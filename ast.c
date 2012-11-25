@@ -807,11 +807,37 @@ ast_label* ast_label_new(lex_ctx ctx, const char *name)
 
     self->name    = util_strdup(name);
     self->irblock = NULL;
+    self->gotos   = NULL;
 
     return self;
 }
 
 void ast_label_delete(ast_label *self)
+{
+    mem_d((void*)self->name);
+    vec_free(self->gotos);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
+void ast_label_register_goto(ast_label *self, ast_goto *g)
+{
+    vec_push(self->gotos, g);
+}
+
+ast_goto* ast_goto_new(lex_ctx ctx, const char *name)
+{
+    ast_instantiate(ast_goto, ctx, ast_goto_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_goto_codegen);
+
+    self->name    = util_strdup(name);
+    self->target  = NULL;
+    self->irblock_from = NULL;
+
+    return self;
+}
+
+void ast_goto_delete(ast_goto *self)
 {
     mem_d((void*)self->name);
     ast_expression_delete((ast_expression*)self);
@@ -2655,6 +2681,9 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 
 bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_value **out)
 {
+    size_t i;
+    ir_value *dummy;
+
     *out = NULL;
     if (lvalue) {
         asterror(ast_ctx(self), "internal error: ast_label cannot be an lvalue");
@@ -2674,6 +2703,51 @@ bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_valu
 
     /* enter the new block */
     func->curblock = self->irblock;
+
+    /* Generate all the leftover gotos */
+    for (i = 0; i < vec_size(self->gotos); ++i) {
+        if (!ast_goto_codegen(self->gotos[i], func, false, &dummy))
+            return false;
+    }
+
+    return true;
+}
+
+bool ast_goto_codegen(ast_goto *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    *out = NULL;
+    if (lvalue) {
+        asterror(ast_ctx(self), "internal error: ast_goto cannot be an lvalue");
+        return false;
+    }
+
+    if (self->target->irblock) {
+        if (self->irblock_from) {
+            /* we already tried once, this is the callback */
+            self->irblock_from->final = false;
+            if (!ir_block_create_jump(self->irblock_from, self->target->irblock)) {
+                asterror(ast_ctx(self), "failed to generate goto to `%s`", self->name);
+                return false;
+            }
+        }
+        else
+        {
+            if (!ir_block_create_jump(func->curblock, self->target->irblock)) {
+                asterror(ast_ctx(self), "failed to generate goto to `%s`", self->name);
+                return false;
+            }
+        }
+    }
+    else
+    {
+        /* the target has not yet been created...
+         * close this block in a sneaky way:
+         */
+        func->curblock->final = true;
+        self->irblock_from = func->curblock;
+        ast_label_register_goto(self->target, self);
+    }
+
     return true;
 }
 
