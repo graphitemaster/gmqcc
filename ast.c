@@ -2179,6 +2179,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     ir_instr *phi;
 
     ir_block *cond = func->curblock;
+    ir_block *cond_out = NULL;
     ir_block *ontrue, *ontrue_out = NULL;
     ir_block *onfalse, *onfalse_out = NULL;
     ir_block *merge;
@@ -2204,6 +2205,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     cgen = self->cond->expression.codegen;
     if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
         return false;
+    cond_out = func->curblock;
 
     /* create on-true block */
     ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "tern_T"));
@@ -2250,7 +2252,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
         return false;
 
     /* create if instruction */
-    if (!ir_block_create_if(cond, condval, ontrue, onfalse))
+    if (!ir_block_create_if(cond_out, condval, ontrue, onfalse))
         return false;
 
     /* Now enter the merge block */
