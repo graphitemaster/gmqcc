@@ -1304,7 +1304,9 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         else
             parser->memberof = 0;
 
-        if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "_")) {
+        if (OPTS_FLAG(TRANSLATABLE_STRINGS) &&
+            parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "_"))
+        {
             /* a translatable string */
             ast_value *val;
 

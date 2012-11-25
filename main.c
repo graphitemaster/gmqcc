@@ -205,6 +205,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_standard = COMPILER_QCC;
                 } else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc")) {
                     options_set(opts_flags, FTEPP,                true);
+                    options_set(opts_flags, TRANSLATABLE_STRINGS, true);
                     options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     opts_standard = COMPILER_FTEQCC;
                 } else if (!strcmp(argarg, "qccx")) {
