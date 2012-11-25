@@ -1363,15 +1363,16 @@ bool ftepp_init()
     ftepp = ftepp_new();
     if (!ftepp)
         return false;
-    
+
     /* set the right macro based on the selected standard */
+    ftepp_add_define(NULL, "GMQCC");
     if (opts_standard == COMPILER_FTEQCC)
-        ftepp_add_define(NULL, "FTEQCC");
+        ftepp_add_define(NULL, "__STD_FTEQCC__");
     else if (opts_standard == COMPILER_GMQCC)
-        ftepp_add_define(NULL, "GMQCC");
+        ftepp_add_define(NULL, "__STD_GMQCC__");
     else if (opts_standard == COMPILER_QCC)
-        ftepp_add_define(NULL, "QCC");
-    
+        ftepp_add_define(NULL, "__STD_QCC__");
+
     return true;
 }
 
