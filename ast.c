@@ -1150,7 +1150,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
             v = ir_builder_create_field(ir, self->name, vtype);
             if (!v) {
-                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                asterror(ast_ctx(self), "ir_builder_create_global failed on `%s`", self->name);
                 return false;
             }
             if (vtype == TYPE_FIELD)
@@ -1169,7 +1169,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 array->ir_values[ai] = ir_builder_create_field(ir, name, vtype);
                 if (!array->ir_values[ai]) {
                     mem_d(name);
-                    asterror(ast_ctx(self), "ir_builder_create_global failed");
+                    asterror(ast_ctx(self), "ir_builder_create_global failed on `%s`", name);
                     return false;
                 }
                 if (vtype == TYPE_FIELD)
@@ -1203,7 +1203,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
         v = ir_builder_create_global(ir, self->name, vtype);
         if (!v) {
-            asterror(ast_ctx(self), "ir_builder_create_global failed");
+            asterror(ast_ctx(self), "ir_builder_create_global failed `%s`", self->name);
             return false;
         }
         if (vtype == TYPE_FIELD)
@@ -1221,7 +1221,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             self->ir_values[ai] = ir_builder_create_global(ir, name, vtype);
             if (!self->ir_values[ai]) {
                 mem_d(name);
-                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                asterror(ast_ctx(self), "ir_builder_create_global failed `%s`", name);
                 return false;
             }
             if (vtype == TYPE_FIELD)
@@ -1237,7 +1237,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
          */
         v = ir_builder_create_global(ir, self->name, self->expression.vtype);
         if (!v) {
-            asterror(ast_ctx(self), "ir_builder_create_global failed");
+            asterror(ast_ctx(self), "ir_builder_create_global failed on `%s`", self->name);
             return false;
         }
         if (self->expression.vtype == TYPE_FIELD)
@@ -1337,7 +1337,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
             self->ir_values[ai] = ir_function_create_local(func, name, vtype, param);
             if (!self->ir_values[ai]) {
-                asterror(ast_ctx(self), "ir_builder_create_global failed");
+                asterror(ast_ctx(self), "ir_builder_create_global failed on `%s`", name);
                 return false;
             }
             if (vtype == TYPE_FIELD)
