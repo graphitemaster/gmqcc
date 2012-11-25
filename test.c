@@ -599,6 +599,7 @@ bool task_propagate(const char *curdir) {
     struct dirent   *files;
     struct stat      directory;
     char             buffer[4096];
+    size_t           found = 0;
     
     dir = opendir(curdir);
     
@@ -625,6 +626,7 @@ bool task_propagate(const char *curdir) {
             task_t           task;
             
             util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
+            found ++;
             if (!template) {
                 con_err("error compiling task template: %s\n", files->d_name);
                 success = false;
@@ -686,6 +688,11 @@ bool task_propagate(const char *curdir) {
             vec_push(task_tasks, task);
         }
     }
+    
+    util_debug("TEST", "compiled %d task template files out of %d\n",
+        vec_size(task_tasks),
+        found
+    );
     
     closedir(dir);
     return success;
@@ -879,7 +886,10 @@ void task_schedualize() {
     size_t size     = 0;
     size_t i;
     
+    util_debug("TEST", "found %d tasks, preparing to execute\n", vec_size(task_tasks));
+    
     for (i = 0; i < vec_size(task_tasks); i++) {
+        util_debug("TEST", "executing task: %d: %s\n", i, task_tasks[i].template->description);
         /*
          * Generate a task from thin air if it requires execution in
          * the QCVM.
@@ -899,6 +909,10 @@ void task_schedualize() {
          */    
         while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
             fputs(data, task_tasks[i].stdoutlog);
+            
+            if (strstr(data, "failed to open file"))
+                execute = false;
+            
             fflush(task_tasks[i].stdoutlog);
         }
         while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
@@ -920,17 +934,10 @@ void task_schedualize() {
         }
         
         /*
-         * If we can execute we do so after all data has been read and
-         * this paticular task has coupled execution in its procedure type
-         */
-        if (!execute)
-            continue;
-        
-        /*
          * If we made it here that concludes the task is to be executed
          * in the virtual machine.
          */
-        if (!task_execute(task_tasks[i].template)) {
+        if (!execute || !task_execute(task_tasks[i].template)) {
             con_err("test failure: `%s` [%s] see %s.stdout and %s.stderr\n",
                 task_tasks[i].template->description,
                 (task_tasks[i].template->failuremessage) ?
@@ -1015,8 +1022,9 @@ static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out,
 }
 
 int main(int argc, char **argv) {
-    char *redirout = (char*)stdout;
-    char *redirerr = (char*)stderr;
+    char         *redirout = (char*)stdout;
+    char         *redirerr = (char*)stderr;
+    
     con_init();
     
     /*
