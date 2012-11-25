@@ -295,7 +295,6 @@ static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
 static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 {
     pptoken *ptok;
-    size_t l = ftepp_ctx(ftepp).line;
     while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
         ptok = pptoken_make(ftepp);
         vec_push(macro->output, ptok);
@@ -306,14 +305,14 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
         ftepp_error(ftepp, "unexpected junk after macro or unexpected end of file");
         return false;
     }
-    for (; l < ftepp_ctx(ftepp).line; ++l)
-        ftepp_out(ftepp, "\n", true);
     return true;
 }
 
 static bool ftepp_define(ftepp_t *ftepp)
 {
     ppmacro *macro;
+    size_t l = ftepp_ctx(ftepp).line;
+
     (void)ftepp_next(ftepp);
     if (!ftepp_skipspace(ftepp))
         return false;
@@ -354,6 +353,9 @@ static bool ftepp_define(ftepp_t *ftepp)
     else {
         ppmacro_delete(macro);
     }
+
+    for (; l < ftepp_ctx(ftepp).line; ++l)
+        ftepp_out(ftepp, "\n", true);
     return true;
 }
 
