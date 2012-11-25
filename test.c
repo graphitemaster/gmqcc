@@ -941,7 +941,7 @@ void task_schedualize() {
             continue;
         }
         
-        con_out("test succeed: `%s` [%s]\n",
+        con_out("test succeeded: `%s` [%s]\n",
             task_tasks[i].template->description,
             (task_tasks[i].template->successmessage) ?
             task_tasks[i].template->successmessage  : "unknown"
