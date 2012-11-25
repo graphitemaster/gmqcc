@@ -32,6 +32,7 @@
 #define PARSER_HT_LOCALS  2
 
 #define PARSER_HT_SIZE    1024
+#define TYPEDEF_HT_SIZE   16
 
 typedef struct {
     lex_file *lex;
@@ -60,10 +61,13 @@ typedef struct {
     ht *variables;
     ht htfields;
     ht htglobals;
+    ht *typedefs;
 
     /* not to be used directly, we use the hash table */
     ast_expression **_locals;
     size_t          *_blocklocals;
+    ast_value      **_typedefs;
+    size_t          *_blocktypedefs;
 
     size_t errors;
 
@@ -80,7 +84,7 @@ typedef struct {
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const, ast_value *cached_typedef);
 static ast_block* parse_block(parser_t *parser, bool warnreturn);
 static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
 static ast_expression* parse_statement_or_block(parser_t *parser);
@@ -330,6 +334,20 @@ static ast_expression* parser_find_var(parser_t *parser, const char *name)
     v         = parser_find_local(parser, name, 0, &dummy);
     if (!v) v = parser_find_global(parser, name);
     return v;
+}
+
+static ast_value* parser_find_typedef(parser_t *parser, const char *name)
+{
+    size_t     i, hash;
+    ast_value *e;
+    hash = util_hthash(parser->typedefs[0], name);
+
+    for (i = vec_size(parser->typedefs); i > 0;) {
+        --i;
+        if ( (e = (ast_value*)util_htgeth(parser->typedefs[i], name, hash)) )
+            return e;
+    }
+    return NULL;
 }
 
 typedef struct
@@ -1576,12 +1594,14 @@ static void parser_enterblock(parser_t *parser)
 {
     vec_push(parser->variables, util_htnew(PARSER_HT_SIZE));
     vec_push(parser->_blocklocals, vec_size(parser->_locals));
+    vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
+    vec_push(parser->_blocktypedefs, vec_size(parser->_typedefs));
 }
 
 static bool parser_leaveblock(parser_t *parser)
 {
     bool   rv = true;
-    size_t locals;
+    size_t locals, typedefs;
 
     if (vec_size(parser->variables) <= PARSER_HT_LOCALS) {
         parseerror(parser, "internal error: parser_leaveblock with no block");
@@ -1606,6 +1626,14 @@ static bool parser_leaveblock(parser_t *parser)
                 rv = false;
         }
     }
+
+    typedefs = vec_last(parser->_blocktypedefs);
+    while (vec_size(parser->_typedefs) != typedefs) {
+        ast_delete(vec_last(parser->_typedefs));
+        vec_pop(parser->_typedefs);
+    }
+    util_htdel(vec_last(parser->typedefs));
+    vec_pop(parser->typedefs);
 
     return rv;
 }
@@ -1811,8 +1839,9 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
 
 static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
 {
-    ast_loop *aloop;
+    ast_loop       *aloop;
     ast_expression *initexpr, *cond, *increment, *ontrue;
+    ast_value      *typevar;
     bool   retval = true;
 
     lex_ctx ctx = parser_ctx(parser);
@@ -1835,7 +1864,11 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
         goto onerr;
     }
 
-    if (parser->tok == TOKEN_TYPENAME) {
+    typevar = NULL;
+    if (parser->tok == TOKEN_IDENT)
+        typevar = parser_find_typedef(parser, parser_tokval(parser));
+
+    if (typevar || parser->tok == TOKEN_TYPENAME) {
         if (opts_standard != COMPILER_GMQCC) {
             if (parsewarning(parser, WARN_EXTENSIONS,
                              "current standard does not allow variable declarations in for-loop initializers"))
@@ -1844,7 +1877,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
 
         parseerror(parser, "TODO: assignment of new variables to be non-const");
         goto onerr;
-        if (!parse_variable(parser, block, true, false))
+        if (!parse_variable(parser, block, true, false, typevar))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2133,7 +2166,11 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
 
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
-    if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
+    ast_value *typevar = NULL;
+    if (parser->tok == TOKEN_IDENT)
+        typevar = parser_find_typedef(parser, parser_tokval(parser));
+
+    if (typevar || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
         /* local variable */
         if (!block) {
@@ -2144,7 +2181,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, false, false))
+        if (!parse_variable(parser, block, false, false, typevar))
             return false;
         *out = NULL;
         return true;
@@ -2161,7 +2198,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
                 parseerror(parser, "expected variable declaration");
                 return false;
             }
-            if (!parse_variable(parser, block, true, false))
+            if (!parse_variable(parser, block, true, false, NULL))
                 return false;
             *out = NULL;
             return true;
@@ -2983,7 +3020,7 @@ cleanup:
     return false;
 }
 
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase);
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 {
     lex_ctx     ctx;
@@ -3034,7 +3071,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         else
         {
             /* for anything else just parse a typename */
-            param = parse_typename(parser, NULL);
+            param = parse_typename(parser, NULL, NULL);
             if (!param)
                 goto on_error;
             vec_push(params, param);
@@ -3144,7 +3181,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
  *     void() foo(), bar
  * then the type-information 'void()' can be stored in 'storebase'
  */
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef)
 {
     ast_value *var, *tmp;
     lex_ctx    ctx;
@@ -3163,14 +3200,20 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
             parseerror(parser, "expected typename for field definition");
             return NULL;
         }
-        if (parser->tok != TOKEN_TYPENAME) {
+        if (parser->tok == TOKEN_IDENT)
+            cached_typedef = parser_find_typedef(parser, parser_tokval(parser));
+        if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
             parseerror(parser, "expected typename");
             return NULL;
         }
     }
 
     /* generate the basic type value */
-    var = ast_value_new(ctx, "<type>", parser_token(parser)->constval.t);
+    if (cached_typedef) {
+        var = ast_value_copy(cached_typedef);
+        ast_value_set_name(var, "<type(from_def)>");
+    } else
+        var = ast_value_new(ctx, "<type>", parser_token(parser)->constval.t);
     /* do not yet turn into a field - remember:
      * .void() foo; is a field too
      * .void()() foo; is a function
@@ -3260,7 +3303,47 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase)
     return var;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const)
+static bool parse_typedef(parser_t *parser)
+{
+    ast_value      *typevar, *oldtype;
+    ast_expression *old;
+
+    typevar = parse_typename(parser, NULL, NULL);
+
+    if (!typevar)
+        return false;
+
+    if ( (old = parser_find_var(parser, typevar->name)) ) {
+        parseerror(parser, "cannot define a type with the same name as a variable: %s\n"
+                   " -> `%s` has been declared here: %s:%i",
+                   typevar->name, ast_ctx(old).file, ast_ctx(old).line);
+        ast_delete(typevar);
+        return false;
+    }
+
+    if ( (oldtype = parser_find_typedef(parser, typevar->name)) ) {
+        parseerror(parser, "type `%s` has already been declared here: %s:%i",
+                   typevar->name, ast_ctx(oldtype).file, ast_ctx(oldtype).line);
+        ast_delete(typevar);
+        return false;
+    }
+
+    vec_push(parser->_typedefs, typevar);
+    util_htset(vec_last(parser->typedefs), typevar->name, typevar);
+
+    if (parser->tok != ';') {
+        parseerror(parser, "expected semicolon after typedef");
+        return false;
+    }
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error after typedef");
+        return false;
+    }
+
+    return true;
+}
+
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, bool is_const, ast_value *cached_typedef)
 {
     ast_value *var;
     ast_value *proto;
@@ -3278,7 +3361,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     ast_member *me[3];
 
     /* get the first complete variable */
-    var = parse_typename(parser, &basetype);
+    var = parse_typename(parser, &basetype, cached_typedef);
     if (!var) {
         if (basetype)
             ast_delete(basetype);
@@ -3754,9 +3837,13 @@ cleanup:
 
 static bool parser_global_statement(parser_t *parser)
 {
-    if (parser->tok == TOKEN_TYPENAME || parser->tok == '.')
+    ast_value *istype = NULL;
+    if (parser->tok == TOKEN_IDENT)
+        istype = parser_find_typedef(parser, parser_tokval(parser));
+
+    if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, false, false);
+        return parse_variable(parser, NULL, false, false, istype);
     }
     else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var"))
     {
@@ -3765,7 +3852,7 @@ static bool parser_global_statement(parser_t *parser)
                 parseerror(parser, "expected variable declaration after 'var'");
                 return false;
             }
-            return parse_variable(parser, NULL, true, false);
+            return parse_variable(parser, NULL, true, false, NULL);
         }
     }
     else if (parser->tok == TOKEN_KEYWORD)
@@ -3775,7 +3862,14 @@ static bool parser_global_statement(parser_t *parser)
                 parseerror(parser, "expected variable declaration after 'const'");
                 return false;
             }
-            return parse_variable(parser, NULL, true, true);
+            return parse_variable(parser, NULL, true, true, NULL);
+        }
+        else if (!strcmp(parser_tokval(parser), "typedef")) {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected type definition after 'typedef'");
+                return false;
+            }
+            return parse_typedef(parser);
         }
         parseerror(parser, "unrecognized keyword `%s`", parser_tokval(parser));
         return false;
@@ -3897,6 +3991,7 @@ bool parser_init()
 
     vec_push(parser->variables, parser->htfields  = util_htnew(PARSER_HT_SIZE));
     vec_push(parser->variables, parser->htglobals = util_htnew(PARSER_HT_SIZE));
+    vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     return true;
 }
 
@@ -3999,6 +4094,15 @@ void parser_cleanup()
     for (i = 0; i < vec_size(parser->variables); ++i)
         util_htdel(parser->variables[i]);
     vec_free(parser->variables);
+    vec_free(parser->_blocklocals);
+
+    for (i = 0; i < vec_size(parser->_typedefs); ++i)
+        ast_delete(parser->_typedefs[i]);
+    vec_free(parser->_typedefs);
+    for (i = 0; i < vec_size(parser->typedefs); ++i)
+        util_htdel(parser->typedefs[i]);
+    vec_free(parser->typedefs);
+    vec_free(parser->_blocktypedefs);
 
     mem_d(parser);
 }
