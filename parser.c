@@ -3505,7 +3505,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
 
-        if (is_const_var > 0)
+        if (is_const_var == CV_CONST)
             var->constant = true;
 
         /* Part 1:
@@ -3856,12 +3856,12 @@ skipvar:
 
             if (!localblock) {
                 cval = (ast_value*)cexp;
-                if (!ast_istype(cval, ast_value) || !cval->hasvalue)
+                if (!ast_istype(cval, ast_value) || !cval->hasvalue || !cval->constant)
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
                     if (opts_standard != COMPILER_GMQCC && !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
-                        is_const_var >= 0)
+                        is_const_var != CV_VAR)
                     {
                         var->constant = true;
                     }
