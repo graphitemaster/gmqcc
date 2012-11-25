@@ -940,6 +940,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                         parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
             }
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+            }
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
         case opid3('+','+','P'):
@@ -954,6 +957,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 addop = INSTR_ADD_F;
             else
                 addop = INSTR_SUB_F;
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+            }
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
                                                         exprs[0],
@@ -978,6 +984,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             } else {
                 addop = INSTR_SUB_F;
                 subop = INSTR_ADD_F;
+            }
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
@@ -1004,6 +1013,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
                            ty1, ty2);
                 return false;
+            }
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
@@ -1038,6 +1050,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 parseerror(parser, "invalid types used in expression: %s and %s",
                            ty1, ty2);
                 return false;
+            }
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
@@ -1080,6 +1095,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            ty1, ty2);
                 return false;
             }
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+            }
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
             else
@@ -1107,6 +1125,9 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
             if (!out)
                 return false;
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+            }
             out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
             break;
     }
