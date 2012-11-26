@@ -360,3 +360,38 @@ void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ..
     con_cvprintmsg(ctx, lvl, msgtype, msg, va);
     va_end  (va);
 }
+
+/* General error interface */
+size_t compile_errors = 0;
+size_t compile_warnings = 0;
+
+void compile_error(lex_ctx ctx, const char *msg, ...)
+{
+    va_list ap;
+    ++compile_errors;
+    va_start(ap, msg);
+    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", msg, ap);
+    va_end(ap);
+}
+
+bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
+{
+	va_list ap;
+	int lvl = LVL_WARNING;
+
+    if (!OPTS_WARN(warntype))
+        return false;
+
+    if (opts_werror) {
+        ++compile_errors;
+	    lvl = LVL_ERROR;
+	}
+	else
+        ++compile_warnings;
+
+	va_start(ap, fmt);
+    con_vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
+	va_end(ap);
+
+	return opts_werror;
+}

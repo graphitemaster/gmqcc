@@ -552,6 +552,16 @@ uint32_t code_genstring   (const char *string);
 uint32_t code_cachedstring(const char *string);
 qcint    code_alloc_field (size_t qcsize);
 
+/*
+ * A shallow copy of a lex_file to remember where which ast node
+ * came from.
+ */
+typedef struct {
+    const char *file;
+    size_t      line;
+} lex_ctx;
+
+
 /*===================================================================*/
 /*============================ con.c ================================*/
 /*===================================================================*/
@@ -588,6 +598,13 @@ int  con_verr  (const char *fmt, va_list va);
 int  con_vout  (const char *fmt, va_list va);
 int  con_err   (const char *fmt, ...);
 int  con_out   (const char *fmt, ...);
+
+/* error/warning interface */
+extern size_t compile_errors;
+extern size_t compile_warnings;
+
+void compile_error(lex_ctx ctx, const char *msg, ...);
+bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/
@@ -686,15 +703,6 @@ vector  vec3_add  (vector, vector);
 vector  vec3_sub  (vector, vector);
 qcfloat vec3_mulvv(vector, vector);
 vector  vec3_mulvf(vector, float);
-
-/*
- * A shallow copy of a lex_file to remember where which ast node
- * came from.
- */
-typedef struct {
-    const char *file;
-    size_t      line;
-} lex_ctx;
 
 /*===================================================================*/
 /*============================= exec.c ==============================*/
