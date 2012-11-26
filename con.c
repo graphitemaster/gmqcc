@@ -37,7 +37,7 @@
 typedef struct {
     FILE *handle_err;
     FILE *handle_out;
-    
+
     int   color_err;
     int   color_out;
 } con_t;
@@ -64,7 +64,7 @@ typedef struct {
  * with yay, another macro :P
  */
 #define isatty _isatty
- 
+
 enum {
     RESET = 0,
     BOLD  = 1,
@@ -107,15 +107,15 @@ static void win_fputs(char *str, FILE *f) {
     int acolor;
     int wcolor;
     int icolor;
-    
+
     int state;
     int place;
-    
+
     /* attributes */
     int intense  =  -1;
     int colors[] = {-1, -1 };
     int colorpos = 1;
-    
+
     CONSOLE_SCREEN_BUFFER_INFO cinfo;
     GetConsoleScreenBufferInfo(
         (GMQCC_IS_STDOUT(h)) ?
@@ -123,7 +123,7 @@ static void win_fputs(char *str, FILE *f) {
             GetStdHandle(STD_ERROR_HANDLE), &cinfo
     );
     icolor = cinfo.wAttributes;
-    
+
     while (*str) {
         if (*str == '\e')
             state = '\e';
@@ -140,7 +140,7 @@ static void win_fputs(char *str, FILE *f) {
                     acolor += (colors[find] - 48) * mult;
                     mult   *= 10;
                 }
-                
+
                 /* convert to windows color */
                 if (acolor == BOLD)
                     intense = WINTENSE;
@@ -155,12 +155,12 @@ static void win_fputs(char *str, FILE *f) {
                     wcolor  = WWHITE;
                     intense = WBLACK;
                 }
-                
+
                 SetConsoleTextattribute(
                     (h == stdout) ?
                     GetStdHandle(STD_OUTPUT_HANDLE) :
                     GetStdHandle(STD_ERROR_HANDLE),
-                    
+
                     wcolor | intense | (icolor & 0xF0)
                 );
                 colorpos =  1;
@@ -190,7 +190,7 @@ static con_t console;
  * Enables color on output if supported.
  * NOTE: The support for checking colors is NULL.  On windows this will
  * always work, on *nix it depends if the term has colors.
- * 
+ *
  * NOTE: This prevents colored output to piped stdout/err via isatty
  * checks.
  */
@@ -270,21 +270,21 @@ void con_reset() {
  */
 int con_change(const char *out, const char *err) {
     con_close();
-    
+
     if (GMQCC_IS_DEFINE(out)) {
         console.handle_out = GMQCC_IS_STDOUT(out) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_out = fopen(out, "w"))) return 0;
-    
+
     if (GMQCC_IS_DEFINE(err)) {
         console.handle_err = GMQCC_IS_STDOUT(err) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_err = fopen(err, "w"))) return 0;
-    
+
     /* no buffering */
     setvbuf(console.handle_out, NULL, _IONBF, 0);
     setvbuf(console.handle_err, NULL, _IONBF, 0);
-    
+
     return 1;
 }
 

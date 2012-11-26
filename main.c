@@ -232,7 +232,7 @@ static bool options_parse(int argc, char **argv) {
                 con_change(redirout, redirerr);
                 continue;
             }
-            
+
             /* show defaults (like pathscale) */
             if (!strcmp(argv[0]+1, "show-defaults")) {
                 size_t itr;
@@ -240,16 +240,16 @@ static bool options_parse(int argc, char **argv) {
                 for (itr = 0; itr < COUNT_FLAGS; ++itr) {
                     if (!OPTS_FLAG(itr))
                         continue;
-                        
+
                     memset(buffer, 0, sizeof(buffer));
                     util_strtononcmd(opts_flag_list[itr].name, buffer, strlen(opts_flag_list[itr].name) + 1);
-    
+
                     con_out("-f%s ", buffer);
                 }
                 for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
                     if (!OPTS_WARN(itr))
                         continue;
-                    
+
                     memset(buffer, 0, sizeof(buffer));
                     util_strtononcmd(opts_warn_list[itr].name, buffer, strlen(opts_warn_list[itr].name) + 1);
                     con_out("-W%s ", buffer);

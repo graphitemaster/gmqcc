@@ -254,7 +254,7 @@ void util_debug(const char *area, const char *ms, ...) {
 
     va_start(va, ms);
     con_out ("[%s] ", area);
-    con_vout(ms, va); 
+    con_vout(ms, va);
     va_end  (va);
 }
 
@@ -528,7 +528,7 @@ typedef struct hash_node_t {
 /*
  * x86 and x86_64 optimized murmur hash functions for the hashtable
  * we have individual implementations for optimal performance.
- * 
+ *
  * Forced inlined as we wrap these up in the actual utility function
  * below.  These should be autovectorized by gcc.
  */
@@ -542,20 +542,20 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, registe
     const uint64_t      *beg   = (const uint64_t*)key;
     const uint64_t      *end   = beg + (size / 8);
     const unsigned char *final = NULL;
-    
+
     while (beg != end) {
         alias = *beg++;
-        
+
         alias *= mix;
         alias ^= alias >> rot;
         alias *= mix;
-        
+
         hash  ^= alias;
         hash  *= mix;
     }
-    
+
     final = (const unsigned char *)beg;
-    
+
     switch (size & 7) {
         case 7: hash ^= (uint64_t)(final[6]) << 48;
         case 6: hash ^= (uint64_t)(final[5]) << 40;
@@ -566,14 +566,14 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, registe
         case 1: hash ^= (uint64_t)(final[0]);
                 hash *= mix;
     }
-    
+
     hash ^= hash >> rot;
     hash *= mix;
     hash ^= hash >> rot;
-    
+
     return (uint32_t)(hash % ht->size);
 }
-    
+
 #else
 GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, register size_t seed) {
     const uint32_t       mix   = 0x5BD1E995;
@@ -582,32 +582,32 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, registe
     uint32_t             hash  = seed ^ size;
     uint32_t             alias = 0;
     const unsigned char *data  = (const unsigned char*)ket;
-    
+
     while (size >= 4) {
         alias = *(uint32_t*)data;
-        
+
         alias *= mix;
         alias ^= alias >> rot;
         alias *= mix;
-        
+
         hash  *= mix;
         hash  ^= alias;
-        
+
         data += 4;
         size -= 4;
     }
-    
+
     switch (size) {
         case 3: hash ^= data[2] << 16;
         case 2: hash ^= data[1] << 8;
         case 1: hash ^= data[0];
                 hash *= mix;
     }
-    
+
     hash ^= hash >> 13;
     hash *= mix;
     hash ^= hash >> 15;
-    
+
     return hash % ht->size;
 }
 #endif
@@ -616,11 +616,11 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, registe
 size_t util_hthash(hash_table_t *ht, const char *key) {
     static   size_t seed = 0;
     register size_t hash = util_hthashfunc(ht, key, util_crc32_table[seed]);
-    
+
     /* reset seed */
     if (seed >= sizeof(util_crc32_table) / sizeof(*util_crc32_table))
         seed  = 0;
-        
+
     return hash;
 }
 
@@ -628,15 +628,15 @@ hash_node_t *_util_htnewpair(const char *key, void *value) {
     hash_node_t *node;
     if (!(node = mem_a(sizeof(hash_node_t))))
         return NULL;
-        
+
     if (!(node->key = util_strdup(key))) {
         mem_d(node);
         return NULL;
     }
-    
+
     node->value = value;
     node->next  = NULL;
-    
+
     return node;
 }
 
@@ -651,18 +651,18 @@ hash_table_t *util_htnew(size_t size) {
     hash_table_t *hashtable = NULL;
     if (size < 1)
         return NULL;
-        
+
     if (!(hashtable = mem_a(sizeof(hash_table_t))))
         return NULL;
-        
+
     if (!(hashtable->table = mem_a(sizeof(hash_node_t*) * size))) {
         mem_d(hashtable);
         return NULL;
     }
-    
+
     hashtable->size = size;
     memset(hashtable->table, 0, sizeof(hash_node_t*) * size);
-    
+
     return hashtable;
 }
 
@@ -670,12 +670,12 @@ void util_htseth(hash_table_t *ht, const char *key, size_t bin, void *value) {
     hash_node_t *newnode = NULL;
     hash_node_t *next    = NULL;
     hash_node_t *last    = NULL;
-    
+
     next = ht->table[bin];
-    
+
     while (next && next->key && strcmp(key, next->key) > 0)
         last = next, next = next->next;
-    
+
     /* already in table, do a replace */
     if (next && next->key && strcmp(key, next->key) == 0) {
         next->value = value;
@@ -700,13 +700,13 @@ void util_htset(hash_table_t *ht, const char *key, void *value) {
 
 void *util_htgeth(hash_table_t *ht, const char *key, size_t bin) {
     hash_node_t *pair = ht->table[bin];
-    
+
     while (pair && pair->key && strcmp(key, pair->key) > 0)
         pair = pair->next;
-        
+
     if (!pair || !pair->key || strcmp(key, pair->key) != 0)
         return NULL;
-        
+
     return pair->value;
 }
 
@@ -723,7 +723,7 @@ void util_htdel(hash_table_t *ht) {
     for (; i < ht->size; i++) {
         hash_node_t *n = ht->table[i];
         hash_node_t *p;
-        
+
         /* free in list */
         while (n) {
             if (n->key)
@@ -732,7 +732,7 @@ void util_htdel(hash_table_t *ht) {
             n = n->next;
             mem_d(p);
         }
-        
+
     }
     /* free table */
     mem_d(ht->table);

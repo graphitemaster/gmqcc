@@ -270,32 +270,32 @@ typedef struct hash_table_t {
 
 /*
  * hashtable implementation:
- * 
+ *
  * Note:
  *      This was designed for pointers:  you manage the life of the object yourself
  *      if you do use this for non-pointers please be warned that the object may not
  *      be valid if the duration of it exceeds (i.e on stack).  So you need to allocate
  *      yourself, or put those in global scope to ensure duration is for the whole
  *      runtime.
- * 
+ *
  * util_htnew(size)                             -- to make a new hashtable
  * util_htset(table, key, value, sizeof(value)) -- to set something in the table
  * util_htget(table, key)                       -- to get something from the table
  * util_htdel(table)                            -- to delete the table
- * 
+ *
  * example of use:
- * 
+ *
  * ht    foo  = util_htnew(1024);
  * int   data = 100;
  * char *test = "hello world\n";
  * util_htset(foo, "foo", (void*)&data);
  * util_gtset(foo, "bar", (void*)test);
- * 
+ *
  * printf("foo: %d, bar %s",
  *     *((int *)util_htget(foo, "foo")),
  *      ((char*)util_htget(foo, "bar"))
  * );
- * 
+ *
  * util_htdel(foo);
  */
 hash_table_t *util_htnew (size_t size);

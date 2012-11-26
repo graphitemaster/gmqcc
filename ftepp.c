@@ -136,7 +136,7 @@ static void pptoken_delete(pptoken *self)
 static ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
 {
     ppmacro *macro = (ppmacro*)mem_a(sizeof(ppmacro));
-    
+
     (void)ctx;
     memset(macro, 0, sizeof(*macro));
     macro->name = util_strdup(name);

@@ -740,7 +740,7 @@ static int qc_vlen(qc_program *prog)
     qcany *vec, len;
     CheckArgs(1);
     vec = GetArg(0);
-    len._float = sqrt(vec->vector[0] * vec->vector[0] + 
+    len._float = sqrt(vec->vector[0] * vec->vector[0] +
                       vec->vector[1] * vec->vector[1] +
                       vec->vector[2] * vec->vector[2]);
     Return(len);

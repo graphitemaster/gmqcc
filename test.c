@@ -37,14 +37,14 @@ char *task_bins[] = {
  * this implements a unique bi-directional popen-like function that
  * allows reading data from both stdout and stderr. And writing to
  * stdin :)
- * 
+ *
  * Example of use:
  * FILE *handles[3] = task_popen("ls", "-l", "r");
  * if (!handles) { perror("failed to open stdin/stdout/stderr to ls");
  * // handles[0] = stdin
  * // handles[1] = stdout
  * // handles[2] = stderr
- * 
+ *
  * task_pclose(handles); // to close
  */
 #ifndef _WIN32
@@ -55,7 +55,7 @@ char *task_bins[] = {
 typedef struct {
     FILE *handles[3];
     int   pipes  [3];
-    
+
     int stderr_fd;
     int stdout_fd;
     int pid;
@@ -66,9 +66,9 @@ FILE ** task_popen(const char *command, const char *mode) {
     int     outhandle [2];
     int     errhandle [2];
     int     trypipe;
-    
+
     popen_t *data = mem_a(sizeof(popen_t));
-    
+
     /*
      * Parse the command now into a list for execv, this is a pain
      * in the ass.
@@ -76,36 +76,36 @@ FILE ** task_popen(const char *command, const char *mode) {
     char  *line = (char*)command;
     char **argv = NULL;
     {
-        
+
         while (*line != '\0') {
             while (*line == ' ' || *line == '\t' || *line == '\n')
                 *line++ = '\0';
             vec_push(argv, line);
-            
+
             while (*line != '\0' && *line != ' ' &&
                    *line != '\t' && *line != '\n') line++;
         }
         vec_push(argv, '\0');
     }
-    
-    
+
+
     if ((trypipe = pipe(inhandle))  < 0) goto task_popen_error_0;
     if ((trypipe = pipe(outhandle)) < 0) goto task_popen_error_1;
     if ((trypipe = pipe(errhandle)) < 0) goto task_popen_error_2;
-    
+
     if ((data->pid = fork()) > 0) {
         /* parent */
         close(inhandle  [0]);
         close(outhandle [1]);
         close(errhandle [1]);
-        
+
         data->pipes  [0] = inhandle [1];
         data->pipes  [1] = outhandle[0];
         data->pipes  [2] = errhandle[0];
         data->handles[0] = fdopen(inhandle [1], "w");
         data->handles[1] = fdopen(outhandle[0], mode);
         data->handles[2] = fdopen(errhandle[0], mode);
-        
+
         /* sigh */
         if (argv)
             vec_free(argv);
@@ -115,23 +115,23 @@ FILE ** task_popen(const char *command, const char *mode) {
         close(inhandle [1]);
         close(outhandle[0]);
         close(errhandle[0]);
-        
+
         /* see piping documentation for this sillyness :P */
         close(0), dup(inhandle [0]);
         close(1), dup(outhandle[1]);
         close(2), dup(errhandle[1]);
-        
+
         execvp(*argv, argv);
         exit(1);
     } else {
         /* fork failed */
         goto task_popen_error_3;
     }
-    
+
     if (argv)
         vec_free(argv);
     return data->handles;
-        
+
 task_popen_error_3: close(errhandle[0]), close(errhandle[1]);
 task_popen_error_2: close(outhandle[0]), close(outhandle[1]);
 task_popen_error_1: close(inhandle [0]), close(inhandle [1]);
@@ -145,15 +145,15 @@ task_popen_error_0:
 int task_pclose(FILE **handles) {
     popen_t *data   = (popen_t*)handles;
     int      status = 0;
-    
+
     close(data->pipes[0]); /* stdin  */
     close(data->pipes[1]); /* stdout */
     close(data->pipes[2]); /* stderr */
-    
+
     waitpid(data->pid, &status, 0);
-    
+
     mem_d(data);
-    
+
     return status;
 }
 #else
@@ -171,29 +171,29 @@ int task_pclose(FILE **handles) {
  *  the information for that test there is no way to properly "test" them.
  *  Rules for these templates are described in a template file, using a
  *  task template language.
- * 
+ *
  *  The language is a basic finite statemachine, top-down single-line
  *  description language.
- * 
+ *
  *  The languge is composed entierly of "tags" which describe a string of
  *  text for a task.  Think of it much like a configuration file.  Except
  *  it's been designed to allow flexibility and future support for prodecual
  *  semantics.
- * 
+ *
  *  The following "tags" are suported by the language
- * 
+ *
  *      D:
  *          Used to set a description of the current test, this must be
  *          provided, this tag is NOT optional.
- * 
+ *
  *      F:
  *          Used to set a failure message, this message will be displayed
  *          if the test fails, this tag is optional
- * 
+ *
  *      S:
  *          Used to set a success message, this message will be displayed
  *          if the test succeeds, this tag is optional.
- * 
+ *
  *      T:
  *          Used to set the procedure for the given task, there are two
  *          options for this:
@@ -201,39 +201,39 @@ int task_pclose(FILE **handles) {
  *                  This simply performs compilation only
  *              -execute
  *                  This will perform compilation and execution
- * 
+ *
  *          This must be provided, this tag is NOT optional.
- * 
+ *
  *      C:
  *          Used to set the compilation flags for the given task, this
  *          must be provided, this tag is NOT optional.
- * 
+ *
  *      E:
  *          Used to set the execution flags for the given task. This tag
  *          must be provided if T == -execute, otherwise it's erroneous
- *          as compilation only takes place. 
- *      
+ *          as compilation only takes place.
+ *
  *      M:
  *          Used to describe a string of text that should be matched from
  *          the output of executing the task.  If this doesn't match the
  *          task fails.  This tag must be provided if T == -execute, otherwise
  *          it's erroneous as compilation only takes place.
- * 
+ *
  *      I:
  *          Used to specify the INPUT source file to operate on, this must be
  *          provided, this tag is NOT optional
  *
- * 
+ *
  *  Notes:
  *      These tags have one-time use, using them more than once will result
  *      in template compilation errors.
- * 
+ *
  *      Lines beginning with # or // in the template file are comments and
  *      are ignored by the template parser.
- * 
+ *
  *      Whitespace is optional, with exception to the colon ':' between the
  *      tag and it's assignment value/
- * 
+ *
  *      The template compiler will detect erronrous tags (optional tags
  *      that need not be set), as well as missing tags, and error accordingly
  *      this will result in the task failing.
@@ -256,10 +256,10 @@ typedef struct {
  */
 bool task_template_generate(task_template_t *template, char tag, const char *file, size_t line, const char *value) {
     char **destval = NULL;
-    
+
     if (!template)
         return false;
-    
+
     switch(tag) {
         case 'D': destval = &template->description;    break;
         case 'F': destval = &template->failuremessage; break;
@@ -275,7 +275,7 @@ bool task_template_generate(task_template_t *template, char tag, const char *fil
             );
             return false;
     }
-    
+
     /*
      * Ensure if for the given tag, there already exists a
      * assigned value.
@@ -287,26 +287,26 @@ bool task_template_generate(task_template_t *template, char tag, const char *fil
         );
         return false;
     }
-    
+
     /*
      * Strip any whitespace that might exist in the value for assignments
      * like "D:      foo"
      */
     if (value && *value && (*value == ' ' || *value == '\t'))
         value++;
-    
+
     /*
      * Value will contain a newline character at the end, we need to strip
      * this otherwise kaboom, seriously, kaboom :P
      */
     *strrchr(value, '\n')='\0';
-    
+
     /*
      * Now allocate and set the actual value for the specific tag. Which
      * was properly selected and can be accessed with *destval.
      */
     *destval = util_strdup(value);
-    
+
     return true;
 }
 
@@ -315,17 +315,17 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
     char  *back = NULL;
     size_t size = 0;
     size_t line = 1;
-    
+
     if (!template)
         return false;
-    
+
     /* top down parsing */
     while (util_getline(&back, &size, fp) != EOF) {
         /* skip whitespace */
         data = back;
         if (*data && (*data == ' ' || *data == '\t'))
             data++;
-            
+
         switch (*data) {
             /*
              * Handle comments inside task template files.  We're strict
@@ -335,13 +335,13 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
                 if (data[1] != '/') {
                     con_printmsg(LVL_ERROR, file, line, "template parse error",
                         "invalid character `/`, perhaps you meant `//` ?");
-                    
+
                     mem_d(back);
                     return false;
                 }
             case '#':
                 break;
-                
+
             /*
              * Empty newlines are acceptable as well, so we handle that here
              * despite being just odd since there should't be that many
@@ -350,8 +350,8 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
             case '\r':
             case '\n':
                 break;
-                
-                
+
+
             /*
              * Now begin the actual "tag" stuff.  This works as you expect
              * it to.
@@ -377,7 +377,7 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
                     goto failure;
                 }
                 break;
-            
+
             /*
              * Match requires it's own system since we allow multiple M's
              * for multi-line matching.
@@ -392,21 +392,21 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
                     );
                     goto failure;
                 }
-                
+
                 if (value && *value && (*value == ' ' || *value == '\t'))
                     value++;
-    
+
                 /*
                  * Value will contain a newline character at the end, we need to strip
                  * this otherwise kaboom, seriously, kaboom :P
                  */
                 *strrchr(value, '\n')='\0';
-                
+
                 vec_push(template->comparematch, util_strdup(value));
-                
+
                 break;
             }
-            
+
             default:
                 con_printmsg(LVL_ERROR, file, line, "template parse error",
                     "invalid tag `%c`", *data
@@ -414,7 +414,7 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
                 goto failure;
             /* no break required */
         }
-        
+
         /* update line and free old sata */
         line++;
         mem_d(back);
@@ -423,7 +423,7 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
     if (back)
         mem_d(back);
     return true;
-    
+
 failure:
     if (back)
         mem_d (back);
@@ -437,7 +437,7 @@ failure:
 void task_template_nullify(task_template_t *template) {
     if (!template)
         return;
-        
+
     template->description    = NULL;
     template->failuremessage = NULL;
     template->successmessage = NULL;
@@ -454,14 +454,14 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
     char             fullfile[4096];
     FILE            *tempfile = NULL;
     task_template_t *template = NULL;
-    
+
     memset  (fullfile, 0, sizeof(fullfile));
     snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
-    
+
     tempfile = fopen(fullfile, "r");
     template = mem_a(sizeof(task_template_t));
     task_template_nullify(template);
-    
+
     /*
      * Esnure the file even exists for the task, this is pretty useless
      * to even do.
@@ -472,12 +472,12 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
         );
         goto failure;
     }
-    
+
     if (!task_template_parse(file, template, tempfile)) {
         con_err("template parse error: error during parsing\n");
         goto failure;
     }
-    
+
     /*
      * Regardless procedure type, the following tags must exist:
      *  D
@@ -501,7 +501,7 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
         con_err("template compile error: %s missing `I:` tag\n", file);
         goto failure;
     }
-    
+
     /*
      * Now lets compile the template, compilation is really just
      * the process of validating the input.
@@ -525,11 +525,11 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
         con_err("template compile error: %s invalid procedure type: %s\n", file, template->proceduretype);
         goto failure;
     }
-    
+
 success:
     fclose(tempfile);
     return template;
-    
+
 failure:
     /*
      * The file might not exist and we jump here when that doesn't happen
@@ -538,14 +538,14 @@ failure:
     if (tempfile)
         fclose(tempfile);
     mem_d (template);
-    
+
     return NULL;
 }
 
 void task_template_destroy(task_template_t **template) {
     if (!template)
         return;
-        
+
     if ((*template)->description)    mem_d((*template)->description);
     if ((*template)->failuremessage) mem_d((*template)->failuremessage);
     if ((*template)->successmessage) mem_d((*template)->successmessage);
@@ -553,7 +553,7 @@ void task_template_destroy(task_template_t **template) {
     if ((*template)->compileflags)   mem_d((*template)->compileflags);
     if ((*template)->executeflags)   mem_d((*template)->executeflags);
     if ((*template)->sourcefile)     mem_d((*template)->sourcefile);
-    
+
     /*
      * Delete all allocated string for task template then destroy the
      * main vector.
@@ -562,10 +562,10 @@ void task_template_destroy(task_template_t **template) {
         size_t i = 0;
         for (; i < vec_size((*template)->comparematch); i++)
             mem_d((*template)->comparematch[i]);
-            
+
         vec_free((*template)->comparematch);
     }
-    
+
     /*
      * Nullify all the template members otherwise NULL comparision
      * checks will fail if template pointer is reused.
@@ -600,22 +600,22 @@ bool task_propagate(const char *curdir) {
     struct stat      directory;
     char             buffer[4096];
     size_t           found = 0;
-    
+
     dir = opendir(curdir);
-    
+
     while ((files = readdir(dir))) {
         memset  (buffer, 0,sizeof(buffer));
         snprintf(buffer,   sizeof(buffer), "%s/%s", curdir, files->d_name);
-        
+
         if (stat(buffer, &directory) == -1) {
             con_err("internal error: stat failed, aborting\n");
             abort();
         }
-        
+
         /* skip directories */
         if (S_ISDIR(directory.st_mode))
             continue;
-            
+
         /*
          * We made it here, which concludes the file/directory is not
          * actually a directory, so it must be a file :)
@@ -624,7 +624,7 @@ bool task_propagate(const char *curdir) {
             task_template_t *template = task_template_compile(files->d_name, curdir);
             char             buf[4096]; /* one page should be enough */
             task_t           task;
-            
+
             util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
             found ++;
             if (!template) {
@@ -637,7 +637,7 @@ bool task_propagate(const char *curdir) {
              * so we don't trample over an existing one.
              */
             template->tempfilename = tempnam(curdir, "TMPDAT");
-            
+
             /*
              * Generate the command required to open a pipe to a process
              * which will be refered to with a handle in the task for
@@ -651,7 +651,7 @@ bool task_propagate(const char *curdir) {
                 template->compileflags,
                 template->tempfilename
             );
-            
+
             /*
              * The task template was compiled, now lets create a task from
              * the template data which has now been propagated.
@@ -662,9 +662,9 @@ bool task_propagate(const char *curdir) {
                 success = false;
                 continue;
             }
-            
+
             util_debug("TEST", "executing test: `%s` [%s]\n", template->description, buf);
-            
+
             /*
              * Open up some file desciptors for logging the stdout/stderr
              * to our own.
@@ -676,7 +676,7 @@ bool task_propagate(const char *curdir) {
                 con_err("error opening %s for stdout\n", buf);
                 continue;
             }
-            
+
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stderr", template->tempfilename);
             task.stderrlogfile = util_strdup(buf);
@@ -684,16 +684,16 @@ bool task_propagate(const char *curdir) {
                 con_err("error opening %s for stderr\n", buf);
                 continue;
             }
-            
+
             vec_push(task_tasks, task);
         }
     }
-    
+
     util_debug("TEST", "compiled %d task template files out of %d\n",
         vec_size(task_tasks),
         found
     );
-    
+
     closedir(dir);
     return success;
 }
@@ -708,7 +708,7 @@ void task_cleanup(const char *curdir) {
     char             buffer[4096];
 
     dir = opendir(curdir);
-    
+
     while ((files = readdir(dir))) {
         memset(buffer, 0, sizeof(buffer));
         if (strstr(files->d_name, "TMP")) {
@@ -719,7 +719,7 @@ void task_cleanup(const char *curdir) {
                 util_debug("TEST", "removed temporary file: %s\n", buffer);
         }
     }
-    
+
     closedir(dir);
 }
 
@@ -733,7 +733,7 @@ void task_precleanup(const char *curdir) {
     char             buffer[4096];
 
     dir = opendir(curdir);
-    
+
     while ((files = readdir(dir))) {
         memset(buffer, 0, sizeof(buffer));
         if (strstr(files->d_name, "TMP")     ||
@@ -747,7 +747,7 @@ void task_precleanup(const char *curdir) {
                 util_debug("TEST", "removed temporary file: %s\n", buffer);
         }
     }
-    
+
     closedir(dir);
 }
 
@@ -766,7 +766,7 @@ void task_destroy(const char *curdir) {
         if (task_tasks[i].runhandles) task_pclose(task_tasks[i].runhandles);
         if (task_tasks[i].stdoutlog)  fclose     (task_tasks[i].stdoutlog);
         if (task_tasks[i].stderrlog)  fclose     (task_tasks[i].stderrlog);
-        
+
         /*
          * Only remove the log files if the test actually compiled otherwise
          * forget about it.
@@ -776,21 +776,21 @@ void task_destroy(const char *curdir) {
                 con_err("error removing stdout log file: %s\n", task_tasks[i].stdoutlogfile);
             else
                 util_debug("TEST", "removed stdout log file: %s\n", task_tasks[i].stdoutlogfile);
-            
+
             if (remove(task_tasks[i].stderrlogfile))
                 con_err("error removing stderr log file: %s\n", task_tasks[i].stderrlogfile);
             else
                 util_debug("TEST", "removed stderr log file: %s\n", task_tasks[i].stderrlogfile);
         }
-        
+
         /* free util_strdup data for log files */
         mem_d(task_tasks[i].stdoutlogfile);
         mem_d(task_tasks[i].stderrlogfile);
-        
+
         task_template_destroy(&task_tasks[i].template);
     }
     vec_free(task_tasks);
-    
+
     /*
      * Cleanup outside stuff like temporary files.
      */
@@ -807,7 +807,7 @@ bool task_execute(task_template_t *template) {
     FILE    *execute;
     char     buffer[4096];
     memset  (buffer,0,sizeof(buffer));
-    
+
     /*
      * Drop the execution flags for the QCVM if none where
      * actually specified.
@@ -824,16 +824,16 @@ bool task_execute(task_template_t *template) {
             template->tempfilename
         );
     }
-    
+
     util_debug("TEST", "executing qcvm: `%s` [%s]\n",
         template->description,
         buffer
     );
-    
+
     execute = popen(buffer, "r");
     if (!execute)
         return false;
-        
+
     /*
      * Now lets read the lines and compare them to the matches we expect
      * and handle accordingly.
@@ -852,15 +852,15 @@ bool task_execute(task_template_t *template) {
                 pclose(execute);
                 return false;
             }
-            
-            /* 
+
+            /*
              * Trim newlines from data since they will just break our
              * ability to properly validate matches.
              */
             if  (strrchr(data, '\n'))
                 *strrchr(data, '\n') = '\0';
-            
-            
+
+
             /*
              * We only care about the last line from the output for now
              * implementing multi-line match is TODO.
@@ -885,9 +885,9 @@ void task_schedualize() {
     char  *data     = NULL;
     size_t size     = 0;
     size_t i;
-    
+
     util_debug("TEST", "found %d tasks, preparing to execute\n", vec_size(task_tasks));
-    
+
     for (i = 0; i < vec_size(task_tasks); i++) {
         util_debug("TEST", "executing task: %d: %s\n", i, task_tasks[i].template->description);
         /*
@@ -896,30 +896,30 @@ void task_schedualize() {
          */
         if (!strcmp(task_tasks[i].template->proceduretype, "-execute"))
             execute = true;
-            
+
         /*
          * We assume it compiled before we actually compiled :).  On error
          * we change the value
          */
         task_tasks[i].compiled = true;
-        
+
         /*
          * Read data from stdout first and pipe that stuff into a log file
          * then we do the same for stderr.
-         */    
+         */
         while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
             fputs(data, task_tasks[i].stdoutlog);
-            
+
             if (strstr(data, "failed to open file"))
                 execute = false;
-            
+
             fflush(task_tasks[i].stdoutlog);
         }
         while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
             /*
              * If a string contains an error we just dissalow execution
              * of it in the vm.
-             * 
+             *
              * TODO: make this more percise, e.g if we print a warning
              * that refers to a variable named error, or something like
              * that .. then this will blowup :P
@@ -928,11 +928,11 @@ void task_schedualize() {
                 execute                = false;
                 task_tasks[i].compiled = false;
             }
-            
+
             fputs(data, task_tasks[i].stderrlog);
             fflush(task_tasks[i].stdoutlog);
         }
-        
+
         /*
          * If we made it here that concludes the task is to be executed
          * in the virtual machine.
@@ -947,7 +947,7 @@ void task_schedualize() {
             );
             continue;
         }
-        
+
         con_out("test succeeded: `%s` [%s]\n",
             task_tasks[i].template->description,
             (task_tasks[i].template->successmessage) ?
@@ -965,10 +965,10 @@ void task_schedualize() {
  * schedualizes them (executes them) and actually reports errors and
  * what not.  It then proceeds to destroy the tasks and return memory
  * it's the engine :)
- * 
+ *
  * It returns true of tests could be propagated, otherwise it returns
  * false.
- * 
+ *
  * It expects con_init() was called before hand.
  */
 bool test_perform(const char *curdir) {
@@ -987,7 +987,7 @@ bool test_perform(const char *curdir) {
      */
     task_schedualize();
     task_destroy(curdir);
-    
+
     return true;
 }
 
@@ -1024,9 +1024,9 @@ static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out,
 int main(int argc, char **argv) {
     char         *redirout = (char*)stdout;
     char         *redirerr = (char*)stderr;
-    
+
     con_init();
-    
+
     /*
      * Command line option parsing commences now We only need to support
      * a few things in the test suite.
@@ -1040,7 +1040,7 @@ int main(int argc, char **argv) {
                 continue;
             if (parsecmd("redirerr", &argc, &argv, &redirerr, 1, false))
                 continue;
-            
+
             con_change(redirout, redirerr);
 
             if (!strcmp(argv[0]+1, "debug")) {
@@ -1055,7 +1055,7 @@ int main(int argc, char **argv) {
                 con_color(0);
                 continue;
             }
-            
+
             con_err("invalid argument %s\n", argv[0]+1);
             return -1;
         }
