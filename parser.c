@@ -2103,6 +2103,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     lex_ctx ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
+    (void)opval;
 
     /* parse over the opening paren */
     if (!parser_next(parser) || parser->tok != '(') {
