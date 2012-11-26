@@ -848,7 +848,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             if (exprs[1]->expression.vtype != exprs[2]->expression.vtype) {
                 ast_type_to_string(exprs[1], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[2], ty2, sizeof(ty2));
-                parseerror(parser, "iperands of ternary expression must have the same type, got %s and %s", ty1, ty2);
+                parseerror(parser, "operands of ternary expression must have the same type, got %s and %s", ty1, ty2);
                 return false;
             }
             if (CanConstFold1(exprs[0]))
