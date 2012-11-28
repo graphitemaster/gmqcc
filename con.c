@@ -22,6 +22,9 @@
  */
 #include "gmqcc.h"
 
+uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
+bool        opts_werror   = false;
+
 /*
  * isatty/STDERR_FILENO/STDOUT_FILNO
  * + some other things likewise.

@@ -633,8 +633,6 @@ const char *type_name[TYPE_COUNT] = {
 
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
-uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
-bool        opts_werror   = false;
 
 typedef struct {
     int         vtype;

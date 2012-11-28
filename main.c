@@ -25,7 +25,6 @@
 #include "lexer.h"
 
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
-uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
 
 uint32_t    opts_O        = 1;
 const char *opts_output   = "progs.dat";
@@ -34,7 +33,6 @@ bool        opts_debug    = false;
 bool        opts_memchk   = false;
 bool        opts_dumpfin  = false;
 bool        opts_dump     = false;
-bool        opts_werror   = false;
 bool        opts_forcecrc = false;
 bool        opts_pp_only  = false;
 size_t      opts_max_array_size = 1024;
