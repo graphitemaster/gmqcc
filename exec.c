@@ -633,6 +633,8 @@ const char *type_name[TYPE_COUNT] = {
 
 bool        opts_debug    = false;
 bool        opts_memchk   = false;
+uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
+bool        opts_werror   = false;
 
 typedef struct {
     int         vtype;
@@ -890,8 +892,9 @@ int main(int argc, char **argv)
     prog->builtins_count = qc_builtins_count;
 
     if (opts_info) {
-        printf("Program's system-checksum = 0x%04x\n", (int)prog->crc16);
-        printf("Entity field space: %i\n", (int)prog->entityfields);
+        printf("Program's system-checksum = 0x%04x\n", (unsigned int)prog->crc16);
+        printf("Entity field space: %u\n", (unsigned int)prog->entityfields);
+        printf("Globals: %u\n", (unsigned int)vec_size(prog->globals));
     }
 
     for (i = 1; i < vec_size(prog->functions); ++i) {
