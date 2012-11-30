@@ -655,9 +655,11 @@ srcdone:
                         goto cleanup;
                     }
                     data = ftepp_get();
-                    if (!parser_compile_string_len(items[itr].filename, data, vec_size(data)-1)) {
-                        retval = 1;
-                        goto cleanup;
+                    if (vec_size(data)) {
+                        if (!parser_compile_string_len(items[itr].filename, data, vec_size(data))) {
+                            retval = 1;
+                            goto cleanup;
+                        }
                     }
                     ftepp_flush();
                 }
