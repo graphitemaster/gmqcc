@@ -1381,6 +1381,12 @@ int lex_do(lex_file *lex)
         return lex->tok.ttype;
     }
 
+    if (lex->flags.preprocessing) {
+        lex_tokench(lex, ch);
+        lex_endtoken(lex);
+        return (lex->tok.ttype = ch);
+    }
+
     lexerror(lex, "unknown token");
     return (lex->tok.ttype = TOKEN_ERROR);
 }
