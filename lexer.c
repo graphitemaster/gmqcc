@@ -742,6 +742,7 @@ static bool lex_finish_frames(lex_file *lex)
 static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 {
     int ch = 0;
+    int nextch;
 
     while (ch != EOF)
     {
@@ -778,7 +779,49 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             case 't':  ch = '\t'; break;
             case 'f':  ch = '\f'; break;
             case 'v':  ch = '\v'; break;
+            case 'x':
+            case 'X':
+                /* same procedure as in fteqcc */
+                ch = 0;
+                nextch = lex_getch(lex);
+                if      (nextch >= '0' && nextch <= '9')
+                    ch += nextch - '0';
+                else if (nextch >= 'a' && nextch <= 'f')
+                    ch += nextch - 'a' + 10;
+                else if (nextch >= 'A' && nextch <= 'F')
+                    ch += nextch - 'A' + 10;
+                else {
+                    lexerror(lex, "bad character code");
+                    lex_ungetch(lex, nextch);
+                    return (lex->tok.ttype = TOKEN_ERROR);
+                }
+
+                ch *= 0x10;
+                nextch = lex_getch(lex);
+                if      (nextch >= '0' && nextch <= '9')
+                    ch += nextch - '0';
+                else if (nextch >= 'a' && nextch <= 'f')
+                    ch += nextch - 'a' + 10;
+                else if (nextch >= 'A' && nextch <= 'F')
+                    ch += nextch - 'A' + 10;
+                else {
+                    lexerror(lex, "bad character code");
+                    lex_ungetch(lex, nextch);
+                    return (lex->tok.ttype = TOKEN_ERROR);
+                }
+                break;
+
+            /* fteqcc support */
+            case '0': case '1': case '2': case '3':
+            case '4': case '5': case '6': case '7':
+            case '8': case '9':
+                ch = 18 + ch - '0';
+                break;
+            case '<':  ch = 29; break;
+            case '-':  ch = 30; break;
+            case '>':  ch = 31; break;
             case '\n':  ch = '\n'; break;
+
             default:
                 lexwarn(lex, WARN_UNKNOWN_CONTROL_SEQUENCE, "unrecognized control sequence: \\%c", ch);
                 /* so we just add the character plus backslash no matter what it actually is */
