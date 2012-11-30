@@ -2420,7 +2420,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     bbreak = bout;
 
     /* The loop body... */
-    if (self->body)
+    /* if (self->body) */
     {
         bbody = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "loop_body"));
         if (!bbody)
@@ -2437,9 +2437,11 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
             func->continueblock = bbody;
 
         /* generate */
-        cgen = self->body->expression.codegen;
-        if (!(*cgen)((ast_expression*)(self->body), func, false, &dummy))
-            return false;
+        if (self->body) {
+            cgen = self->body->expression.codegen;
+            if (!(*cgen)((ast_expression*)(self->body), func, false, &dummy))
+                return false;
+        }
 
         end_bbody = func->curblock;
         func->breakblock    = old_bbreak;
