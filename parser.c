@@ -88,10 +88,6 @@ typedef struct {
     qcint  memberof;
 } parser_t;
 
-#define CV_NONE 0
-#define CV_CONST 1
-#define CV_VAR -1
-
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
@@ -221,7 +217,7 @@ static ast_value* parser_const_float(parser_t *parser, double d)
             return parser->imm_float[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_FLOAT);
-    out->constant = true;
+    out->cvq      = CV_CONST;
     out->hasvalue = true;
     out->constval.vfloat = d;
     vec_push(parser->imm_float, out);
@@ -267,7 +263,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
         out = ast_value_new(parser_ctx(parser), name, TYPE_STRING);
     } else
         out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
-    out->constant = true;
+    out->cvq      = CV_CONST;
     out->hasvalue = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
@@ -283,7 +279,7 @@ static ast_value* parser_const_vector(parser_t *parser, vector v)
             return parser->imm_vector[i];
     }
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_VECTOR);
-    out->constant = true;
+    out->cvq      = CV_CONST;
     out->hasvalue = true;
     out->constval.vvec = v;
     vec_push(parser->imm_vector, out);
@@ -531,7 +527,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
              (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
               exprs[0]->expression.vtype != T)
 #define CanConstFold1(A) \
-             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue && ((ast_value*)(A))->constant)
+             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue && (((ast_value*)(A))->cvq == CV_CONST))
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
@@ -954,7 +950,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                         parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
@@ -971,7 +967,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 addop = INSTR_ADD_F;
             else
                 addop = INSTR_SUB_F;
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield)) {
@@ -999,7 +995,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                 addop = INSTR_SUB_F;
                 subop = INSTR_ADD_F;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield)) {
@@ -1028,7 +1024,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
@@ -1065,7 +1061,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
@@ -1109,7 +1105,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
                            ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
@@ -1139,7 +1135,7 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
             if (!out)
                 return false;
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->constant) {
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
             }
             asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
@@ -2166,7 +2162,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
             }
             if (!OPTS_FLAG(RELAXED_SWITCH)) {
                 opval = (ast_value*)swcase.value;
-                if (!ast_istype(swcase.value, ast_value)) { /* || !opval->constant) { */
+                if (!ast_istype(swcase.value, ast_value)) { /* || opval->cvq != CV_CONST) { */
                     parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
                     ast_unref(operand);
                     return false;
@@ -3630,7 +3626,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
 
         if (is_const_var == CV_CONST)
-            var->constant = true;
+            var->cvq = CV_CONST;
 
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
@@ -3997,7 +3993,7 @@ skipvar:
 
             if (!localblock) {
                 cval = (ast_value*)cexp;
-                if (!ast_istype(cval, ast_value) || !cval->hasvalue || !cval->constant)
+                if (!ast_istype(cval, ast_value) || !cval->hasvalue || cval->cvq != CV_CONST)
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
@@ -4005,7 +4001,7 @@ skipvar:
                         !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
                         is_const_var != CV_VAR)
                     {
-                        var->constant = true;
+                        var->cvq = CV_CONST;
                     }
                     var->hasvalue = true;
                     if (cval->expression.vtype == TYPE_STRING)
@@ -4017,8 +4013,8 @@ skipvar:
             } else {
                 bool cvq;
                 shunt sy = { NULL, NULL };
-                cvq = var->constant;
-                var->constant = false;
+                cvq = var->cvq;
+                var->cvq = CV_NONE;
                 vec_push(sy.out, syexp(ast_ctx(var), (ast_expression*)var));
                 vec_push(sy.out, syexp(ast_ctx(cexp), (ast_expression*)cexp));
                 vec_push(sy.ops, syop(ast_ctx(var), parser->assign_op));
@@ -4031,7 +4027,7 @@ skipvar:
                 }
                 vec_free(sy.out);
                 vec_free(sy.ops);
-                var->constant = cvq;
+                var->cvq = cvq;
             }
         }
 

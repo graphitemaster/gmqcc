@@ -42,12 +42,14 @@ typedef struct ir_value_s {
     int       fieldtype;
     /* and the output type of a function */
     int       outtype;
+    /* 'const' vs 'var' qualifier */
+    int       cvq;
 
     struct ir_instr_s **reads;
     struct ir_instr_s **writes;
 
     /* constantvalues */
-    bool isconst;
+    bool hasvalue;
     union {
         float    vfloat;
         int      vint;

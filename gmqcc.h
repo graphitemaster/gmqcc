@@ -328,6 +328,11 @@ enum {
     TYPE_COUNT
 };
 
+/* const/var qualifiers */
+#define CV_NONE  0
+#define CV_CONST 1
+#define CV_VAR  -1
+
 extern const char *type_name[TYPE_COUNT];
 
 extern size_t type_sizeof[TYPE_COUNT];

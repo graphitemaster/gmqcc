@@ -322,7 +322,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->name = name ? util_strdup(name) : NULL;
     self->expression.vtype = t;
     self->expression.next  = NULL;
-    self->constant = false;
+    self->cvq      = CV_NONE;
     self->hasvalue = false;
     self->uses    = 0;
     memset(&self->constval, 0, sizeof(self->constval));

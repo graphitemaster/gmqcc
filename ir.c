@@ -361,7 +361,7 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
         return NULL;
     }
 
-    fn->value->isconst = true;
+    fn->value->hasvalue = true;
     fn->value->outtype = outtype;
     fn->value->constval.vfunc = fn;
     fn->value->context = fn->context;
@@ -841,7 +841,8 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->reads  = NULL;
     self->writes = NULL;
 
-    self->isconst = false;
+    self->cvq          = CV_NONE;
+    self->hasvalue     = false;
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->name = NULL;
@@ -919,7 +920,7 @@ void ir_value_delete(ir_value* self)
     size_t i;
     if (self->name)
         mem_d((void*)self->name);
-    if (self->isconst)
+    if (self->hasvalue)
     {
         if (self->vtype == TYPE_STRING)
             mem_d((void*)self->constval.vstring);
@@ -947,7 +948,7 @@ bool ir_value_set_float(ir_value *self, float f)
     if (self->vtype != TYPE_FLOAT)
         return false;
     self->constval.vfloat = f;
-    self->isconst = true;
+    self->hasvalue = true;
     return true;
 }
 
@@ -956,7 +957,7 @@ bool ir_value_set_func(ir_value *self, int f)
     if (self->vtype != TYPE_FUNCTION)
         return false;
     self->constval.vint = f;
-    self->isconst = true;
+    self->hasvalue = true;
     return true;
 }
 
@@ -965,7 +966,7 @@ bool ir_value_set_vector(ir_value *self, vector v)
     if (self->vtype != TYPE_VECTOR)
         return false;
     self->constval.vvec = v;
-    self->isconst = true;
+    self->hasvalue = true;
     return true;
 }
 
@@ -974,7 +975,7 @@ bool ir_value_set_field(ir_value *self, ir_value *fld)
     if (self->vtype != TYPE_FIELD)
         return false;
     self->constval.vpointer = fld;
-    self->isconst = true;
+    self->hasvalue = true;
     return true;
 }
 
@@ -994,7 +995,7 @@ bool ir_value_set_string(ir_value *self, const char *str)
     if (self->vtype != TYPE_STRING)
         return false;
     self->constval.vstring = ir_strdup(str);
-    self->isconst = true;
+    self->hasvalue = true;
     return true;
 }
 
@@ -1004,7 +1005,7 @@ bool ir_value_set_int(ir_value *self, int i)
     if (self->vtype != TYPE_INTEGER)
         return false;
     self->constval.vint = i;
-    self->isconst = true;
+    self->hasvalue = true;
     return true;
 }
 #endif
@@ -2440,7 +2441,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
 
 static bool gen_global_field(ir_value *global)
 {
-    if (global->isconst)
+    if (global->hasvalue)
     {
         ir_value *fld = global->constval.vpointer;
         if (!fld) {
@@ -2485,7 +2486,7 @@ static bool gen_global_field(ir_value *global)
 
 static bool gen_global_pointer(ir_value *global)
 {
-    if (global->isconst)
+    if (global->hasvalue)
     {
         ir_value *target = global->constval.vpointer;
         if (!target) {
@@ -2825,7 +2826,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     size_t i;
     size_t local_var_end;
 
-    if (!global->isconst || (!global->constval.vfunc))
+    if (!global->hasvalue || (!global->constval.vfunc))
     {
         irerror(global->context, "Invalid state of function-global: not constant: %s", global->name);
         return false;
@@ -3035,7 +3036,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_FLOAT:
     {
         ir_value_code_setaddr(global, vec_size(code_globals));
-        if (global->isconst) {
+        if (global->hasvalue) {
             iptr = (int32_t*)&global->constval.ivec[0];
             vec_push(code_globals, *iptr);
         } else {
@@ -3050,7 +3051,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_STRING:
     {
         ir_value_code_setaddr(global, vec_size(code_globals));
-        if (global->isconst) {
+        if (global->hasvalue) {
             vec_push(code_globals, code_genstring(global->constval.vstring));
         } else {
             vec_push(code_globals, 0);
@@ -3064,7 +3065,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         size_t d;
         ir_value_code_setaddr(global, vec_size(code_globals));
-        if (global->isconst) {
+        if (global->hasvalue) {
             iptr = (int32_t*)&global->constval.ivec[0];
             vec_push(code_globals, iptr[0]);
             if (global->code.globaladdr < 0)
@@ -3090,7 +3091,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     }
     case TYPE_FUNCTION:
         ir_value_code_setaddr(global, vec_size(code_globals));
-        if (!global->isconst) {
+        if (!global->hasvalue) {
             vec_push(code_globals, 0);
             if (global->code.globaladdr < 0)
                 return false;
@@ -3268,7 +3269,7 @@ void ir_builder_dump(ir_builder *b, int (*oprintf)(const char*, ...))
     for (i = 0; i < vec_size(b->globals); ++i)
     {
         oprintf("global ");
-        if (b->globals[i]->isconst)
+        if (b->globals[i]->hasvalue)
             oprintf("%s = ", b->globals[i]->name);
         ir_value_dump(b->globals[i], oprintf);
         oprintf("\n");
@@ -3435,7 +3436,7 @@ void ir_value_dump_string(const char *str, int (*oprintf)(const char*, ...))
 
 void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
 {
-    if (v->isconst) {
+    if (v->hasvalue) {
         switch (v->vtype) {
             default:
             case TYPE_VOID:
