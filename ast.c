@@ -1458,8 +1458,8 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         {
             /* error("missing return"); */
             if (compile_warning(ast_ctx(self), WARN_MISSING_RETURN_VALUES,
-                                "control reaches end of non-void function (`%s`)",
-                                self->name))
+                                "control reaches end of non-void function (`%s`) via %s",
+                                self->name, self->curblock->label))
             {
                 return false;
             }
@@ -2475,7 +2475,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         if      (bincrement) tmpblock = bincrement;
         else if (bpostcond)  tmpblock = bpostcond;
         else if (bprecond)   tmpblock = bprecond;
-        else                 tmpblock = bout;
+        else                 tmpblock = bbody;
         if (!end_bbody->final && !ir_block_create_jump(end_bbody, tmpblock))
             return false;
     }
