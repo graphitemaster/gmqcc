@@ -159,7 +159,8 @@ struct ast_value_s
     ast_value  *next;
     */
 
-    bool cvq; /* const/var qualifier */
+    bool cvq;     /* const/var qualifier */
+    bool isfield; /* this declares a field */
     bool hasvalue;
     union {
         double        vfloat;

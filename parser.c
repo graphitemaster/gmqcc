@@ -3812,7 +3812,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
             if (!localblock) {
                 /* deal with global variables, fields, functions */
-                if (!nofields && var->expression.vtype == TYPE_FIELD) {
+                if (!nofields && var->expression.vtype == TYPE_FIELD && parser->tok != '=') {
+                    var->isfield = true;
                     vec_push(parser->fields, (ast_expression*)var);
                     util_htset(parser->htfields, var->name, var);
                     if (isvector) {
@@ -3900,7 +3901,10 @@ skipvar:
         if (parser->tok == ',')
             goto another;
 
+        /*
         if (!var || (!localblock && !nofields && basetype->expression.vtype == TYPE_FIELD)) {
+        */
+        if (!var) {
             parseerror(parser, "missing comma or semicolon while parsing variables");
             break;
         }
@@ -4008,7 +4012,7 @@ skipvar:
 
             if (!localblock) {
                 cval = (ast_value*)cexp;
-                if (!ast_istype(cval, ast_value) || !cval->hasvalue || cval->cvq != CV_CONST)
+                if (!ast_istype(cval, ast_value) || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
@@ -4462,11 +4466,14 @@ bool parser_finish(const char *output)
                 return false;
             }
         }
-        for (i = 0; i < vec_size(parser->globals); ++i) {
+        for (i = 0; i < vec_size(parser->fields); ++i) {
             ast_value *asvalue;
-            if (!ast_istype(parser->globals[i], ast_value))
+            asvalue = (ast_value*)(parser->fields[i]->expression.next);
+
+            if (!ast_istype((ast_expression*)asvalue, ast_value))
                 continue;
-            asvalue = (ast_value*)(parser->globals[i]);
+            if (asvalue->expression.vtype != TYPE_ARRAY)
+                continue;
             if (asvalue->setter) {
                 if (!ast_global_codegen(asvalue->setter, ir, false) ||
                     !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
@@ -4488,14 +4495,11 @@ bool parser_finish(const char *output)
                 }
             }
         }
-        for (i = 0; i < vec_size(parser->fields); ++i) {
+        for (i = 0; i < vec_size(parser->globals); ++i) {
             ast_value *asvalue;
-            asvalue = (ast_value*)(parser->fields[i]->expression.next);
-
-            if (!ast_istype((ast_expression*)asvalue, ast_value))
+            if (!ast_istype(parser->globals[i], ast_value))
                 continue;
-            if (asvalue->expression.vtype != TYPE_ARRAY)
-                continue;
+            asvalue = (ast_value*)(parser->globals[i]);
             if (asvalue->setter) {
                 if (!ast_global_codegen(asvalue->setter, ir, false) ||
                     !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
