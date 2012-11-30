@@ -1264,6 +1264,18 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 /* Cannot generate an IR value for a function,
                  * need a pointer pointing to a function rather.
                  */
+            case TYPE_FIELD:
+                if (!self->constval.vfield) {
+                    compile_error(ast_ctx(self), "field constant without vfield set");
+                    goto error;
+                }
+                if (!self->constval.vfield->ir_v) {
+                    compile_error(ast_ctx(self), "field constant generated before its field");
+                    goto error;
+                }
+                if (!ir_value_set_field(v, self->constval.vfield->ir_v))
+                    goto error;
+                break;
             default:
                 compile_error(ast_ctx(self), "TODO: global constant type %i", self->expression.vtype);
                 break;

@@ -4025,6 +4025,8 @@ skipvar:
                     var->hasvalue = true;
                     if (cval->expression.vtype == TYPE_STRING)
                         var->constval.vstring = parser_strdup(cval->constval.vstring);
+                    else if (cval->expression.vtype == TYPE_FIELD)
+                        var->constval.vfield = cval;
                     else
                         memcpy(&var->constval, &cval->constval, sizeof(var->constval));
                     ast_unref(cval);
@@ -4466,14 +4468,11 @@ bool parser_finish(const char *output)
                 return false;
             }
         }
-        for (i = 0; i < vec_size(parser->fields); ++i) {
+        for (i = 0; i < vec_size(parser->globals); ++i) {
             ast_value *asvalue;
-            asvalue = (ast_value*)(parser->fields[i]->expression.next);
-
-            if (!ast_istype((ast_expression*)asvalue, ast_value))
+            if (!ast_istype(parser->globals[i], ast_value))
                 continue;
-            if (asvalue->expression.vtype != TYPE_ARRAY)
-                continue;
+            asvalue = (ast_value*)(parser->globals[i]);
             if (asvalue->setter) {
                 if (!ast_global_codegen(asvalue->setter, ir, false) ||
                     !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
@@ -4495,11 +4494,14 @@ bool parser_finish(const char *output)
                 }
             }
         }
-        for (i = 0; i < vec_size(parser->globals); ++i) {
+        for (i = 0; i < vec_size(parser->fields); ++i) {
             ast_value *asvalue;
-            if (!ast_istype(parser->globals[i], ast_value))
+            asvalue = (ast_value*)(parser->fields[i]->expression.next);
+
+            if (!ast_istype((ast_expression*)asvalue, ast_value))
                 continue;
-            asvalue = (ast_value*)(parser->globals[i]);
+            if (asvalue->expression.vtype != TYPE_ARRAY)
+                continue;
             if (asvalue->setter) {
                 if (!ast_global_codegen(asvalue->setter, ir, false) ||
                     !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||

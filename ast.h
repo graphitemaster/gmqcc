@@ -169,6 +169,7 @@ struct ast_value_s
         const char   *vstring;
         int           ventity;
         ast_function *vfunc;
+        ast_value    *vfield;
     } constval;
 
     /* usecount for the parser */
