@@ -566,7 +566,7 @@ bool ir_function_pass_tailcall(ir_function *self)
             {
                 ++optimization_count[OPTIM_MINOR];
                 call->_ops[0] = store->_ops[0];
-                vec_remove(block, vec_size(block->instr) - 2, 1);
+                vec_remove(block->instr, vec_size(block->instr) - 2, 1);
                 ir_instr_delete(store);
             }
             else
