@@ -52,27 +52,27 @@ typedef struct ast_label_s       ast_label;
 typedef struct ast_goto_s        ast_goto;
 
 enum {
-    TYPE_ast_node,
-    TYPE_ast_expression,
-    TYPE_ast_value,
-    TYPE_ast_function,
-    TYPE_ast_block,
-    TYPE_ast_binary,
-    TYPE_ast_store,
-    TYPE_ast_binstore,
-    TYPE_ast_entfield,
-    TYPE_ast_ifthen,
-    TYPE_ast_ternary,
-    TYPE_ast_loop,
-    TYPE_ast_call,
-    TYPE_ast_unary,
-    TYPE_ast_return,
-    TYPE_ast_member,
-    TYPE_ast_array_index,
-    TYPE_ast_breakcont,
-    TYPE_ast_switch,
-    TYPE_ast_label,
-    TYPE_ast_goto
+    TYPE_ast_node,        /*  0 */
+    TYPE_ast_expression,  /*  1 */
+    TYPE_ast_value,       /*  2 */
+    TYPE_ast_function,    /*  3 */
+    TYPE_ast_block,       /*  4 */
+    TYPE_ast_binary,      /*  5 */
+    TYPE_ast_store,       /*  6 */
+    TYPE_ast_binstore,    /*  7 */
+    TYPE_ast_entfield,    /*  8 */
+    TYPE_ast_ifthen,      /*  9 */
+    TYPE_ast_ternary,     /* 10 */
+    TYPE_ast_loop,        /* 11 */
+    TYPE_ast_call,        /* 12 */
+    TYPE_ast_unary,       /* 13 */
+    TYPE_ast_return,      /* 14 */
+    TYPE_ast_member,      /* 15 */
+    TYPE_ast_array_index, /* 16 */
+    TYPE_ast_breakcont,   /* 17 */
+    TYPE_ast_switch,      /* 18 */
+    TYPE_ast_label,       /* 19 */
+    TYPE_ast_goto         /* 20 */
 };
 
 #define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
