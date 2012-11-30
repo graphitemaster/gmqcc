@@ -2514,17 +2514,6 @@ static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn
     if (parser->tok != '}') {
         block = NULL;
     } else {
-        if (warnreturn && parser->function->vtype->expression.next->expression.vtype != TYPE_VOID)
-        {
-            if (!vec_size(block->exprs) ||
-                !ast_istype(vec_last(block->exprs), ast_return))
-            {
-                if (parsewarning(parser, WARN_MISSING_RETURN_VALUES, "control reaches end of non-void function")) {
-                    block = NULL;
-                    goto cleanup;
-                }
-            }
-        }
         (void)parser_next(parser);
     }
 

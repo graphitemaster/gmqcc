@@ -1446,14 +1446,15 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     /* TODO: check return types */
     if (!self->curblock->is_return)
     {
+        /*
         return ir_block_create_return(self->curblock, NULL);
-        /* From now on the parser has to handle this situation */
+        */
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
         {
             return ir_block_create_return(self->curblock, NULL);
         }
-        else
+        else if (vec_size(self->curblock->entries))
         {
             /* error("missing return"); */
             if (compile_warning(ast_ctx(self), WARN_MISSING_RETURN_VALUES,
