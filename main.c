@@ -378,7 +378,7 @@ static bool options_parse(int argc, char **argv) {
                             con_out("Possible optimizations:\n");
                             for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
                                 util_strtononcmd(opts_opt_list[itr].name, buffer, sizeof(buffer));
-                                con_out(" -O%s\n", buffer);
+                                con_out(" -O%-20s (-O%u)\n", buffer, opts_opt_oflag[itr]);
                             }
                             exit(0);
                         }
