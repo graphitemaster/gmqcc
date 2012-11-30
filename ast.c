@@ -1552,7 +1552,7 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
         ai = (ast_array_index*)self->dest;
         idx = (ast_value*)ai->index;
 
-        if (ast_istype(ai->index, ast_value) && idx->hasvalue)
+        if (ast_istype(ai->index, ast_value) && idx->hasvalue && idx->cvq == CV_CONST)
             ai = NULL;
     }
 
@@ -1776,7 +1776,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
         ai = (ast_array_index*)self->dest;
         idx = (ast_value*)ai->index;
 
-        if (ast_istype(ai->index, ast_value) && idx->hasvalue)
+        if (ast_istype(ai->index, ast_value) && idx->hasvalue && idx->cvq == CV_CONST)
             ai = NULL;
     }
 
