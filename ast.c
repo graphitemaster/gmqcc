@@ -2025,7 +2025,7 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
     arr = (ast_value*)self->array;
     idx = (ast_value*)self->index;
 
-    if (!ast_istype(self->index, ast_value) || !idx->hasvalue) {
+    if (!ast_istype(self->index, ast_value) || !idx->hasvalue || idx->cvq != CV_CONST) {
         /* Time to use accessor functions */
         ast_expression_codegen *cgen;
         ir_value               *iridx, *funval;
