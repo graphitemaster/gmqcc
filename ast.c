@@ -2059,10 +2059,24 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
         return true;
     }
 
-    if (idx->expression.vtype == TYPE_FLOAT)
-        *out = arr->ir_values[(int)idx->constval.vfloat];
-    else if (idx->expression.vtype == TYPE_INTEGER)
-        *out = arr->ir_values[idx->constval.vint];
+    if (idx->expression.vtype == TYPE_FLOAT) {
+        unsigned int arridx = idx->constval.vfloat;
+        if (arridx >= self->array->expression.count)
+        {
+            compile_error(ast_ctx(self), "array index out of bounds: %i", arridx);
+            return false;
+        }
+        *out = arr->ir_values[arridx];
+    }
+    else if (idx->expression.vtype == TYPE_INTEGER) {
+        unsigned int arridx = idx->constval.vint;
+        if (arridx >= self->array->expression.count)
+        {
+            compile_error(ast_ctx(self), "array index out of bounds: %i", arridx);
+            return false;
+        }
+        *out = arr->ir_values[arridx];
+    }
     else {
         compile_error(ast_ctx(self), "array indexing here needs an integer constant");
         return false;
