@@ -97,8 +97,8 @@ static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int is_const_var, ast_value *cached_typedef);
-static ast_block* parse_block(parser_t *parser, bool warnreturn);
-static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn);
+static ast_block* parse_block(parser_t *parser);
+static bool parse_block_into(parser_t *parser, ast_block *block);
 static ast_expression* parse_statement_or_block(parser_t *parser);
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma);
@@ -2426,7 +2426,7 @@ ident_var:
     else if (parser->tok == '{')
     {
         ast_block *inner;
-        inner = parse_block(parser, false);
+        inner = parse_block(parser);
         if (!inner)
             return false;
         *out = (ast_expression*)inner;
@@ -2484,7 +2484,7 @@ ident_var:
     }
 }
 
-static bool parse_block_into(parser_t *parser, ast_block *block, bool warnreturn)
+static bool parse_block_into(parser_t *parser, ast_block *block)
 {
     bool   retval = true;
 
@@ -2523,13 +2523,13 @@ cleanup:
     return retval && !!block;
 }
 
-static ast_block* parse_block(parser_t *parser, bool warnreturn)
+static ast_block* parse_block(parser_t *parser)
 {
     ast_block *block;
     block = ast_block_new(parser_ctx(parser));
     if (!block)
         return NULL;
-    if (!parse_block_into(parser, block, warnreturn)) {
+    if (!parse_block_into(parser, block)) {
         ast_block_delete(block);
         return NULL;
     }
@@ -2540,7 +2540,7 @@ static ast_expression* parse_statement_or_block(parser_t *parser)
 {
     ast_expression *expr = NULL;
     if (parser->tok == '{')
-        return (ast_expression*)parse_block(parser, false);
+        return (ast_expression*)parse_block(parser);
     if (!parse_statement(parser, NULL, &expr, false))
         return NULL;
     return expr;
@@ -2822,7 +2822,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     vec_push(parser->functions, func);
 
     parser->function = func;
-    if (!parse_block_into(parser, block, true)) {
+    if (!parse_block_into(parser, block)) {
         ast_block_delete(block);
         goto enderrfn;
     }
@@ -3975,6 +3975,9 @@ skipvar:
                 parseerror(parser, "cannot declare functions within functions");
                 break;
             }
+
+            if (proto)
+                ast_ctx(proto) = parser_ctx(parser);
 
             if (!parse_function_body(parser, var))
                 break;
