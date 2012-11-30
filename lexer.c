@@ -441,7 +441,7 @@ static bool lex_try_pragma(lex_file *lex)
         goto unroll;
     }
 
-    for (ch = lex_getch(lex); vec_size(param) < 32 && ch != ')' && ch != '\n'; ch = lex_getch(lex))
+    for (ch = lex_getch(lex); vec_size(param) < 1024 && ch != ')' && ch != '\n'; ch = lex_getch(lex))
         vec_push(param, ch);
     vec_push(param, 0);
 
