@@ -513,6 +513,10 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
 
     vec_shrinkby(sy->ops, 1);
 
+    /* op(:?) has no input and no output */
+    if (!op->operands)
+        return true;
+
     vec_shrinkby(sy->out, op->operands);
     for (i = 0; i < op->operands; ++i) {
         exprs[i]  = sy->out[vec_size(sy->out)+i].out;
@@ -1633,9 +1637,9 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 wantop = false;
                 --ternaries;
             } else if (op->id == opid2(':','?')) {
-                /* we don't push this operator */
                 if (!parser_close_paren(parser, &sy, false))
                     goto onerr;
+                vec_push(sy.ops, syop(parser_ctx(parser), op));
                 wantop = false;
                 ++ternaries;
             } else {

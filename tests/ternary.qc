@@ -12,6 +12,7 @@ void test(float cond, float v1, float v2, float a) {
 }
 
 void main() {
+    float a, b;
 	test(0, -99, 1, 1);
 	test(0, -99, 1, 2);
 	test(0, -99, 1, 3);
@@ -24,4 +25,12 @@ void main() {
 	test(1, 0, -99, 1);
 	test(1, 0, -99, 2);
 	test(1, 0, -99, 3);
+
+	b = 5;
+	a = b ? 5 : 6;
+	print(ftos(a), "\n");
+	b ? a = 9 : a = 10;
+	print(ftos(a), "\n");
+	!b ? a = 9 : a = 10;
+	print(ftos(a), "\n");
 }
