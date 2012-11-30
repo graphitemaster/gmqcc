@@ -820,6 +820,8 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             case '<':  ch = 29; break;
             case '-':  ch = 30; break;
             case '>':  ch = 31; break;
+            case '[':  ch = 16; break;
+            case ']':  ch = 17; break;
             case '\n':  ch = '\n'; break;
 
             default:
