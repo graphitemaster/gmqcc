@@ -547,10 +547,10 @@ printf(   "line one\n"
  *    here is to store the line of the first character after skipping
  *    the initial whitespace in lex->sline, this happens in lex_do.
  */
-static int lex_skipwhite(lex_file *lex)
+static int lex_skipwhite(lex_file *lex, bool hadwhite)
 {
     int ch = 0;
-    bool haswhite = false;
+    bool haswhite = hadwhite;
 
     do
     {
@@ -930,6 +930,7 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
 int lex_do(lex_file *lex)
 {
     int ch, nextch, thirdch;
+    bool hadwhite = false;
 
     lex_token_new(lex);
 #if 0
@@ -938,7 +939,8 @@ int lex_do(lex_file *lex)
 #endif
 
     while (true) {
-        ch = lex_skipwhite(lex);
+        ch = lex_skipwhite(lex, hadwhite);
+        hadwhite = true;
         if (!lex->flags.mergelines || ch != '\\')
             break;
         ch = lex_getch(lex);
@@ -1322,7 +1324,7 @@ int lex_do(lex_file *lex)
         while (!lex->flags.preprocessing && lex->tok.ttype == TOKEN_STRINGCONST)
         {
             /* Allow c style "string" "continuation" */
-            ch = lex_skipwhite(lex);
+            ch = lex_skipwhite(lex, false);
             if (ch != '"') {
                 lex_ungetch(lex, ch);
                 break;
