@@ -2143,26 +2143,29 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         onfalse = NULL;
 
     /* Merge block were they all merge in to */
-    merge = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "endif"));
-    if (!merge)
-        return false;
-    /* add jumps ot the merge block */
-    if (ontrue && !ontrue_endblock->final && !ir_block_create_jump(ontrue_endblock, merge))
-        return false;
-    if (onfalse && !onfalse_endblock->final && !ir_block_create_jump(onfalse_endblock, merge))
-        return false;
-
-    /* we create the if here, that way all blocks are ordered :)
-     */
-    if (!ir_block_create_if(cond, condval,
-                            (ontrue  ? ontrue  : merge),
-                            (onfalse ? onfalse : merge)))
+    if (!ontrue || !onfalse || !ontrue_endblock->final || !onfalse_endblock->final)
     {
-        return false;
-    }
+        merge = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "endif"));
+        if (!merge)
+            return false;
+        /* add jumps ot the merge block */
+        if (ontrue && !ontrue_endblock->final && !ir_block_create_jump(ontrue_endblock, merge))
+            return false;
+        if (onfalse && !onfalse_endblock->final && !ir_block_create_jump(onfalse_endblock, merge))
+            return false;
 
-    /* Now enter the merge block */
-    func->curblock = merge;
+        /* we create the if here, that way all blocks are ordered :)
+         */
+        if (!ir_block_create_if(cond, condval,
+                                (ontrue  ? ontrue  : merge),
+                                (onfalse ? onfalse : merge)))
+        {
+            return false;
+        }
+
+        /* Now enter the merge block */
+        func->curblock = merge;
+    }
 
     return true;
 }
