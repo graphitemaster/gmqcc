@@ -2082,7 +2082,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     ir_block *onfalse;
     ir_block *ontrue_endblock = NULL;
     ir_block *onfalse_endblock = NULL;
-    ir_block *merge;
+    ir_block *merge = NULL;
 
     /* We don't output any value, thus also don't care about r/lvalue */
     (void)out;
@@ -2154,17 +2154,17 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         if (onfalse && !onfalse_endblock->final && !ir_block_create_jump(onfalse_endblock, merge))
             return false;
 
-        /* we create the if here, that way all blocks are ordered :)
-         */
-        if (!ir_block_create_if(cond, condval,
-                                (ontrue  ? ontrue  : merge),
-                                (onfalse ? onfalse : merge)))
-        {
-            return false;
-        }
-
         /* Now enter the merge block */
         func->curblock = merge;
+    }
+
+    /* we create the if here, that way all blocks are ordered :)
+     */
+    if (!ir_block_create_if(cond, condval,
+                            (ontrue  ? ontrue  : merge),
+                            (onfalse ? onfalse : merge)))
+    {
+        return false;
     }
 
     return true;
