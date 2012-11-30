@@ -822,6 +822,16 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             case '>':  ch = 31; break;
             case '[':  ch = 16; break;
             case ']':  ch = 17; break;
+            case '{':
+                ch = 0;
+                for (nextch = lex_getch(lex); nextch != '}'; nextch = lex_getch(lex)) {
+                    ch = ch * 10 + nextch - '0';
+                    if (nextch < '0' || nextch > '9' || ch > 255) {
+                        lexerror(lex, "bad character code");
+                        return (lex->tok.ttype = TOKEN_ERROR);
+                    }
+                }
+                break;
             case '\n':  ch = '\n'; break;
 
             default:
