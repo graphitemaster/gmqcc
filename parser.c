@@ -2046,6 +2046,8 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     ast_return     *ret = NULL;
     ast_value      *expected = parser->function->vtype;
 
+    lex_ctx ctx = parser_ctx(parser);
+
     (void)block; /* not touching */
 
     if (!parser_next(parser)) {
@@ -2076,7 +2078,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
             else
                 parseerror(parser, "return without value");
         }
-        ret = ast_return_new(parser_ctx(parser), NULL);
+        ret = ast_return_new(ctx, NULL);
     }
     *out = (ast_expression*)ret;
     return true;
