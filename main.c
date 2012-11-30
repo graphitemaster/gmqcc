@@ -25,6 +25,7 @@
 #include "lexer.h"
 
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
+uint32_t    opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
 
 uint32_t    opts_O        = 1;
 const char *opts_output   = "progs.dat";
@@ -111,6 +112,9 @@ static bool options_setflag(const char *name, bool on) {
 static bool options_setwarn(const char *name, bool on) {
     return options_setflag_all(name, on, opts_warn, opts_warn_list, COUNT_WARNINGS);
 }
+static bool options_setoptim(const char *name, bool on) {
+    return options_setflag_all(name, on, opts_optimization, opts_opt_list, COUNT_OPTIMIZATIONS);
+}
 
 static bool options_witharg(int *argc_, char ***argv_, char **out) {
     int  argc   = *argc_;
@@ -176,6 +180,13 @@ static void options_set(uint32_t *flags, size_t idx, bool on)
     else
         flags[0] &= ~(1<<(lb));
 #endif
+}
+
+static void set_optimizations(unsigned int level)
+{
+    size_t i;
+    for (i = 0; i < COUNT_OPTIMIZATIONS; ++i)
+        options_set(opts_optimization, i, level >= opts_opt_oflag[i]);
 }
 
 static bool options_parse(int argc, char **argv) {
@@ -352,10 +363,37 @@ static bool options_parse(int argc, char **argv) {
 
                 case 'O':
                     if (!options_witharg(&argc, &argv, &argarg)) {
-                        con_out("option -O requires a numerical argument\n");
+                        con_out("option -O requires a numerical argument, or optimization name with an optional 'no-' prefix\n");
                         return false;
                     }
-                    opts_O = atoi(argarg);
+                    if (isdigit(argarg[0])) {
+                        opts_O = atoi(argarg);
+                        set_optimizations(opts_O);
+                    } else {
+                        util_strtocmd(argarg, argarg, strlen(argarg)+1);
+                        if (!strcmp(argarg, "HELP")) {
+                            con_out("Possible optimizations:\n");
+                            for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
+                                util_strtononcmd(opts_opt_list[itr].name, buffer, sizeof(buffer));
+                                con_out(" -O%s\n", buffer);
+                            }
+                            exit(0);
+                        }
+                        else if (!strcmp(argarg, "ALL"))
+                            set_optimizations(opts_O = 9999);
+                        else if (!strncmp(argarg, "NO_", 3)) {
+                            if (!options_setoptim(argarg+3, false)) {
+                                con_out("unknown optimization: %s\n", argarg+3);
+                                return false;
+                            }
+                        }
+                        else {
+                            if (!options_setoptim(argarg, true)) {
+                                con_out("unknown optimization: %s\n", argarg);
+                                return false;
+                            }
+                        }
+                    }
                     break;
 
                 case 'o':

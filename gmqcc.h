@@ -877,6 +877,25 @@ static const opts_flag_def opts_warn_list[] = {
     { NULL, LONGBIT(0) }
 };
 
+enum {
+# define GMQCC_TYPE_OPTIMIZATIONS
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) OPTIM_##NAME,
+#  include "opts.def"
+    COUNT_OPTIMIZATIONS
+};
+static const opts_flag_def opts_opt_list[] = {
+# define GMQCC_TYPE_OPTIMIZATIONS
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
+#  include "opts.def"
+    { NULL, LONGBIT(0) }
+};
+static const unsigned int opts_opt_oflag[] = {
+# define GMQCC_TYPE_OPTIMIZATIONS
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) MIN_O,
+#  include "opts.def"
+    0
+};
+
 /* other options: */
 enum {
     COMPILER_QCC,     /* circa  QuakeC */
@@ -902,5 +921,7 @@ extern size_t      opts_max_array_size;
 extern uint32_t opts_flags[1 + (COUNT_FLAGS / 32)];
 #define OPTS_WARN(i) (!! (opts_warn[(i)/32] & (1<< ((i)%32))))
 extern uint32_t opts_warn[1 + (COUNT_WARNINGS / 32)];
+#define OPTS_OPTIMIZATION(i) (!! (opts_optimization[(i)/32] & (1<< ((i)%32))))
+extern uint32_t opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
 
 #endif
