@@ -1697,8 +1697,7 @@ static bool parser_leaveblock(parser_t *parser)
     util_htdel(vec_last(parser->variables));
     vec_pop(parser->variables);
     if (!vec_size(parser->_blocklocals)) {
-        parser->errors++;
-        compile_error(vec_last(parser->_block_ctx), "internal error: parser_leaveblock with no block (2)");
+        parseerror(parser, "internal error: parser_leaveblock with no block (2)");
         return false;
     }
 
