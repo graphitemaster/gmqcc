@@ -2862,7 +2862,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     fun.locals = vec_size(code_globals) - fun.firstlocal;
 
     if (irfun->builtin)
-        fun.entry = irfun->builtin;
+        fun.entry = irfun->builtin+1;
     else {
         irfun->code_function_def = vec_size(code_functions);
         fun.entry = vec_size(code_statements);

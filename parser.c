@@ -4028,7 +4028,7 @@ skipvar:
                 }
                 vec_push(parser->functions, func);
 
-                func->builtin = -parser_token(parser)->constval.i;
+                func->builtin = -parser_token(parser)->constval.i-1;
             }
 
             if (!parser_next(parser)) {
