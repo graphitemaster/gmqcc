@@ -575,12 +575,15 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
             if (rotate_entfield_array_index_nodes(&out))
             {
+#if 0
+                /* This is not broken in fteqcc anymore */
                 if (opts_standard != COMPILER_GMQCC) {
                     /* this error doesn't need to make us bail out */
                     (void)!parsewarning(parser, WARN_EXTENSIONS,
                                         "accessing array-field members of an entity without parenthesis\n"
                                         " -> this is an extension from -std=gmqcc");
                 }
+#endif
             }
             break;
 
