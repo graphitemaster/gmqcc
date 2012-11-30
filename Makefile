@@ -57,7 +57,7 @@ clean:
 	rm -f *.o gmqcc qcvm testsuite *.dat
 
 
-$(OBJ) $(OBJ_C) $(OBJ_X): gmqcc.h
+$(OBJ) $(OBJ_C) $(OBJ_X): gmqcc.h opts.def
 main.o: lexer.h
 parser.o: ast.h lexer.h
 ast.o: ast.h ir.h
