@@ -385,6 +385,7 @@ typedef struct
 #define SY_PAREN_EXPR '('
 #define SY_PAREN_FUNC 'f'
 #define SY_PAREN_INDEX '['
+#define SY_PAREN_TERNARY '?'
 
 static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     sy_elem e;
@@ -1302,6 +1303,13 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
                 return false;
             return true;
         }
+        if (sy->ops[vec_size(sy->ops)-1].paren == SY_PAREN_TERNARY) {
+            if (functions_only)
+                return false;
+            /* pop off the parenthesis */
+            vec_shrinkby(sy->ops, 1);
+            return true;
+        }
         if (!parser_sy_pop(parser, sy))
             return false;
     }
@@ -1621,10 +1629,13 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             } else if (op->id == opid2('?',':')) {
                 wantop = false;
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
+                vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_TERNARY, 0));
                 wantop = false;
                 --ternaries;
             } else if (op->id == opid2(':','?')) {
                 /* we don't push this operator */
+                if (!parser_close_paren(parser, &sy, false))
+                    goto onerr;
                 wantop = false;
                 ++ternaries;
             } else {
@@ -2103,6 +2114,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
 {
     ast_expression *operand;
     ast_value      *opval;
+    ast_value      *typevar;
     ast_switch     *switchnode;
     ast_switch_case swcase;
 
@@ -2147,6 +2159,55 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
         ast_delete(switchnode);
         parseerror(parser, "expected 'case' or 'default'");
         return false;
+    }
+
+    /* new block; allow some variables to be declared here */
+    parser_enterblock(parser);
+    while (true) {
+        typevar = NULL;
+        if (parser->tok == TOKEN_IDENT)
+            typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
+        if (typevar || parser->tok == TOKEN_TYPENAME) {
+            if (!parse_variable(parser, block, false, CV_NONE, typevar)) {
+                ast_delete(switchnode);
+                return false;
+            }
+            continue;
+        }
+        if (!strcmp(parser_tokval(parser), "var") ||
+            !strcmp(parser_tokval(parser), "local"))
+        {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected variable declaration");
+                ast_delete(switchnode);
+                return false;
+            }
+            if (!parse_variable(parser, block, false, CV_VAR, NULL)) {
+                ast_delete(switchnode);
+                return false;
+            }
+            continue;
+        }
+        if (!strcmp(parser_tokval(parser), "const")) {
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected variable declaration");
+                ast_delete(switchnode);
+                return false;
+            }
+            if (!strcmp(parser_tokval(parser), "var")) {
+                if (!parser_next(parser)) {
+                    parseerror(parser, "expected variable declaration");
+                    ast_delete(switchnode);
+                    return false;
+                }
+            }
+            if (!parse_variable(parser, block, false, CV_CONST, NULL)) {
+                ast_delete(switchnode);
+                return false;
+            }
+            continue;
+        }
+        break;
     }
 
     /* case list! */
@@ -2230,6 +2291,8 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
             ast_block_add_expr(caseblock, expr);
         }
     }
+
+    parser_leaveblock(parser);
 
     /* closing paren */
     if (parser->tok != '}') {
