@@ -27,6 +27,9 @@
 uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
 uint32_t    opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
 
+/* counter increased in ir.c */
+unsigned int optimization_count[COUNT_OPTIMIZATIONS];
+
 uint32_t    opts_O        = 1;
 const char *opts_output   = "progs.dat";
 int         opts_standard = COMPILER_GMQCC;

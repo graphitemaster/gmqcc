@@ -895,6 +895,7 @@ static const unsigned int opts_opt_oflag[] = {
 #  include "opts.def"
     0
 };
+extern unsigned int optimization_count[COUNT_OPTIMIZATIONS];
 
 /* other options: */
 enum {
