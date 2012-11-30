@@ -1270,6 +1270,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     }
 
     /* link us to the ir_value */
+    v->cvq = self->cvq;
     self->ir_v = v;
     return true;
 
@@ -1374,6 +1375,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
     }
 
     /* link us to the ir_value */
+    v->cvq = self->cvq;
     self->ir_v = v;
 
     if (self->setter) {

@@ -92,7 +92,7 @@ static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int is_const_var, ast_value *cached_typedef);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef);
 static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static ast_expression* parse_statement_or_block(parser_t *parser);
@@ -3562,7 +3562,7 @@ static bool parse_typedef(parser_t *parser)
     return true;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int is_const_var, ast_value *cached_typedef)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef)
 {
     ast_value *var;
     ast_value *proto;
@@ -3625,8 +3625,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
 
-        if (is_const_var == CV_CONST)
-            var->cvq = CV_CONST;
+        var->cvq = qualifier;
 
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
@@ -3999,7 +3998,7 @@ skipvar:
                 {
                     if (opts_standard != COMPILER_GMQCC &&
                         !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
-                        is_const_var != CV_VAR)
+                        qualifier != CV_VAR)
                     {
                         var->cvq = CV_CONST;
                     }
