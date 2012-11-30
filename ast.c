@@ -1446,9 +1446,6 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     /* TODO: check return types */
     if (!self->curblock->is_return)
     {
-        /*
-        return ir_block_create_return(self->curblock, NULL);
-        */
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
         {
@@ -1463,6 +1460,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
             {
                 return false;
             }
+            return ir_block_create_return(self->curblock, NULL);
         }
     }
     return true;
