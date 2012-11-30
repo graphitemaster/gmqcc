@@ -67,6 +67,8 @@ typedef struct ir_value_s {
         int32_t local;
         /* added for members */
         int32_t addroffset;
+        /* to generate field-addresses early */
+        int32_t fieldaddr;
     } code;
 
     /* for acessing vectors */

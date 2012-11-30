@@ -2448,25 +2448,12 @@ static bool gen_global_field(ir_value *global)
             return false;
         }
 
-        /* Now, in this case, a relocation would be impossible to code
-         * since it looks like this:
-         * .vector v = origin;     <- parse error, wtf is 'origin'?
-         * .vector origin;
-         *
-         * But we will need a general relocation support later anyway
-         * for functions... might as well support that here.
-         */
-        if (!fld->code.globaladdr) {
-            irerror(global->context, "FIXME: Relocation support");
-            return false;
-        }
-
         /* copy the field's value */
         ir_value_code_setaddr(global, vec_size(code_globals));
-        vec_push(code_globals, code_globals[fld->code.globaladdr]);
+        vec_push(code_globals, fld->code.fieldaddr);
         if (global->fieldtype == TYPE_VECTOR) {
-            vec_push(code_globals, code_globals[fld->code.globaladdr]+1);
-            vec_push(code_globals, code_globals[fld->code.globaladdr]+2);
+            vec_push(code_globals, fld->code.fieldaddr+1);
+            vec_push(code_globals, fld->code.fieldaddr+2);
         }
     }
     else
@@ -3120,6 +3107,11 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     }
 }
 
+static void ir_builder_prepare_field(ir_value *field)
+{
+    field->code.fieldaddr = code_alloc_field(type_sizeof[field->fieldtype]);
+}
+
 static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 {
     prog_section_def def;
@@ -3171,7 +3163,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
         return false;
     }
 
-    fld.offset = code_alloc_field(type_sizeof[field->fieldtype]);
+    fld.offset = field->code.fieldaddr;
 
     vec_push(code_fields, fld);
 
@@ -3192,6 +3184,11 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     char   *lnofile = NULL;
 
     code_init();
+
+    for (i = 0; i < vec_size(self->fields); ++i)
+    {
+        ir_builder_prepare_field(self->fields[i]);
+    }
 
     for (i = 0; i < vec_size(self->globals); ++i)
     {
