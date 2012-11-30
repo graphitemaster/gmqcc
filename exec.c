@@ -477,7 +477,8 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
 static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
 {
     qc_exec_stack st;
-    size_t p, parampos;
+    size_t  parampos;
+    int32_t p;
 
     /* back up locals */
     st.localsp  = vec_size(prog->localstack);
@@ -814,6 +815,7 @@ int main(int argc, char **argv)
     size_t      xflags = VMXF_DEFAULT;
     bool        opts_printfields = false;
     bool        opts_printdefs   = false;
+    bool        opts_printfuns   = false;
     bool        opts_disasm      = false;
     bool        opts_info  = false;
 
@@ -847,6 +849,11 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
             opts_printdefs = true;
+        }
+        else if (!strcmp(argv[1], "-printfuns")) {
+            --argc;
+            ++argv;
+            opts_printfuns = true;
         }
         else if (!strcmp(argv[1], "-printfields")) {
             --argc;
@@ -924,6 +931,18 @@ int main(int argc, char **argv)
                    type_name[prog->fields[i].type],
                    prog_getstring(prog, prog->fields[i].name),
                    (unsigned int)prog->fields[i].offset);
+        }
+    }
+    else if (opts_printfuns) {
+        for (i = 0; i < vec_size(prog->functions); ++i) {
+            int32_t a;
+            printf("Function: %-16s taking %i parameters:",
+                   prog_getstring(prog, prog->functions[i].name),
+                   (unsigned int)prog->functions[i].nargs);
+            for (a = 0; a < prog->functions[i].nargs; ++a) {
+                printf(" %i", prog->functions[i].argsize[a]);
+            }
+            printf("\n");
         }
     }
     else

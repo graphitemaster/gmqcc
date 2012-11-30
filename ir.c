@@ -2841,7 +2841,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         fun.nargs = 8;
 
     for (i = 0;i < 8; ++i) {
-        if (i >= fun.nargs)
+        if ((int32_t)i >= fun.nargs)
             fun.argsize[i] = 0;
         else
             fun.argsize[i] = type_sizeof[irfun->params[i]];

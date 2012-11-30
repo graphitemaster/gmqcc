@@ -443,7 +443,7 @@ typedef struct {
     uint32_t  profile;    /* Always zero (engine uses this)       */
     uint32_t  name;       /* name of function in string table     */
     uint32_t  file;       /* file of the source file              */
-    uint32_t  nargs;      /* number of arguments                  */
+    int32_t   nargs;      /* number of arguments                  */
     uint8_t   argsize[8]; /* size of arguments (keep 8 always?)   */
 } prog_section_function;
 
