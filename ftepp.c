@@ -1265,6 +1265,8 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
             case TOKEN_KEYWORD:
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
+                if (!ftepp->output_on)
+                    break;
                 macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
                 if (!macro) {
                     ftepp_out(ftepp, ftepp_tokval(ftepp), false);
