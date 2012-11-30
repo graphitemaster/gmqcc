@@ -1412,8 +1412,14 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                 goto onerr;
             }
-            if (ast_istype(var, ast_value))
+            if (ast_istype(var, ast_value)) {
                 ((ast_value*)var)->uses++;
+            }
+            else if (ast_istype(var, ast_member)) {
+                ast_member *mem = (ast_member*)var;
+                if (ast_istype(mem->owner, ast_value))
+                    ((ast_value*)(mem->owner))->uses++;
+            }
             vec_push(sy.out, syexp(parser_ctx(parser), var));
             DEBUGSHUNTDO(con_out("push %s\n", parser_tokval(parser)));
         }
