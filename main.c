@@ -686,6 +686,14 @@ srcdone:
 
     /* stuff */
 
+    if (!opts_pp_only) {
+        for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
+            if (optimization_count[itr]) {
+                con_out("%s: %u\n", opts_opt_list[itr].name, (unsigned int)optimization_count[itr]);
+            }
+        }
+    }
+
 cleanup:
     util_debug("COM", "cleaning ...\n");
     ftepp_finish();
