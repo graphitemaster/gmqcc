@@ -24,14 +24,21 @@
 #include "gmqcc.h"
 
 prog_section_statement *code_statements;
+int                    *code_linenums;
 prog_section_def       *code_defs;
 prog_section_field     *code_fields;
 prog_section_function  *code_functions;
 int                    *code_globals;
 char                   *code_chars;
 
-uint16_t                            code_crc;
-uint32_t                            code_entfields;
+uint16_t                code_crc;
+uint32_t                code_entfields;
+
+void code_push_statement(prog_section_statement *stmt, int linenum)
+{
+    vec_push(code_statements, *stmt);
+    vec_push(code_linenums,   linenum);
+}
 
 void code_init() {
     prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
@@ -54,7 +61,7 @@ void code_init() {
 
     vec_push(code_chars, '\0');
     vec_push(code_functions,  empty_function);
-    vec_push(code_statements, empty_statement);
+    code_push_statement(&empty_statement, 0);
     vec_push(code_defs,       empty_def);
     vec_push(code_fields,     empty_def);
 }
@@ -134,7 +141,7 @@ qcint code_alloc_field (size_t qcsize)
     return pos;
 }
 
-bool code_write(const char *filename) {
+bool code_write(const char *filename, const char *lnofile) {
     prog_header  code_header;
     FILE        *fp           = NULL;
     size_t       it           = 2;
@@ -167,6 +174,40 @@ bool code_write(const char *filename) {
         vec_push(code_chars, '\0'); /* > */
         vec_push(code_chars, '\0'); /* = */
         vec_push(code_chars, '\0'); /* P */
+    }
+
+    if (lnofile) {
+        uint32_t lnotype = *(unsigned int*)"LNOF";
+        uint32_t version = 1;
+
+        fp = util_fopen(lnofile, "wb");
+        if (!fp)
+            return false;
+
+        if (fwrite(&lnotype, sizeof(lnotype), 1, fp) != 1 ||
+            fwrite(&version, sizeof(version), 1, fp) != 1 ||
+            fwrite(&code_header.defs.length,        sizeof(code_header.defs.length),        1, fp) != 1 ||
+            fwrite(&code_header.globals.length,     sizeof(code_header.globals.length),     1, fp) != 1 ||
+            fwrite(&code_header.fields.length,      sizeof(code_header.fields.length),      1, fp) != 1 ||
+            fwrite(&code_header.statements.length,  sizeof(code_header.statements.length),  1, fp) != 1 ||
+            fwrite(code_linenums, sizeof(code_linenums[0]), vec_size(code_linenums), fp) != vec_size(code_linenums))
+        {
+            con_err("failed to write lno file\n");
+        }
+            /*
+			h = SafeOpenWrite (destfile, 2*1024*1024);
+			SafeWrite (h, &lnotype, sizeof(int));
+			SafeWrite (h, &version, sizeof(int));
+			SafeWrite (h, &numglobaldefs, sizeof(int));
+			SafeWrite (h, &numpr_globals, sizeof(int));
+			SafeWrite (h, &numfielddefs, sizeof(int));
+			SafeWrite (h, &numstatements, sizeof(int));
+			SafeWrite (h, statement_linenums, numstatements*sizeof(int));
+			SafeClose (h);
+			*/
+
+        fclose(fp);
+        fp = NULL;
     }
 
     /* ensure all data is in LE format */

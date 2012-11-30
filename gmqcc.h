@@ -537,6 +537,7 @@ enum {
 };
 
 extern prog_section_statement *code_statements;
+extern int                    *code_linenums;
 extern prog_section_def       *code_defs;
 extern prog_section_field     *code_fields;
 extern prog_section_function  *code_functions;
@@ -551,11 +552,14 @@ typedef int32_t qcint;
  * code_write -- writes out the compiled file
  * code_init  -- prepares the code file
  */
-bool     code_write       (const char *filename);
+bool     code_write       (const char *filename, const char *lno);
 void     code_init        ();
 uint32_t code_genstring   (const char *string);
 uint32_t code_cachedstring(const char *string);
 qcint    code_alloc_field (size_t qcsize);
+
+/* this function is used to keep statements and linenumbers together */
+void     code_push_statement(prog_section_statement *stmt, int linenum);
 
 /*
  * A shallow copy of a lex_file to remember where which ast node

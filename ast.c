@@ -1451,7 +1451,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
         {
-            return ir_block_create_return(self->curblock, NULL);
+            return ir_block_create_return(self->curblock, ast_ctx(self), NULL);
         }
         else if (vec_size(self->curblock->entries))
         {
@@ -1462,7 +1462,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
             {
                 return false;
             }
-            return ir_block_create_return(self->curblock, NULL);
+            return ir_block_create_return(self->curblock, ast_ctx(self), NULL);
         }
     }
     return true;
@@ -1584,7 +1584,7 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
         if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
             return false;
 
-        call = ir_block_create_call(func->curblock, ast_function_label(func, "store"), funval);
+        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "store"), funval);
         if (!call)
             return false;
         ir_call_param(call, iridx);
@@ -1606,7 +1606,7 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
         if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
             return false;
 
-        if (!ir_block_create_store_op(func->curblock, self->op, left, right))
+        if (!ir_block_create_store_op(func->curblock, ast_ctx(self), self->op, left, right))
             return false;
         self->expression.outr = right;
     }
@@ -1670,7 +1670,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
                 compile_error(ast_ctx(self), "don't know how to cast to bool...");
                 return false;
             }
-            left = ir_block_create_unary(func->curblock,
+            left = ir_block_create_unary(func->curblock, ast_ctx(self),
                                          ast_function_label(func, "sce_not"),
                                          notop,
                                          left);
@@ -1679,10 +1679,10 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
 
         other = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_other"));
         if ( !(self->op == INSTR_OR) != !OPTS_FLAG(PERL_LOGIC) ) {
-            if (!ir_block_create_if(func->curblock, left, other, merge))
+            if (!ir_block_create_if(func->curblock, ast_ctx(self), left, other, merge))
                 return false;
         } else {
-            if (!ir_block_create_if(func->curblock, left, merge, other))
+            if (!ir_block_create_if(func->curblock, ast_ctx(self), left, merge, other))
                 return false;
         }
         /* use the likely flag */
@@ -1698,21 +1698,21 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
                 compile_error(ast_ctx(self), "don't know how to cast to bool...");
                 return false;
             }
-            right = ir_block_create_unary(func->curblock,
+            right = ir_block_create_unary(func->curblock, ast_ctx(self),
                                           ast_function_label(func, "sce_not"),
                                           notop,
                                           right);
         }
         from_right = func->curblock;
 
-        if (!ir_block_create_jump(func->curblock, merge))
+        if (!ir_block_create_jump(func->curblock, ast_ctx(self), merge))
             return false;
 
         vec_remove(func->ir_func->blocks, merge_id, 1);
         vec_push(func->ir_func->blocks, merge);
 
         func->curblock = merge;
-        phi = ir_block_create_phi(func->curblock, ast_function_label(func, "sce_value"), TYPE_FLOAT);
+        phi = ir_block_create_phi(func->curblock, ast_ctx(self), ast_function_label(func, "sce_value"), TYPE_FLOAT);
         ir_phi_add(phi, from_left, left);
         ir_phi_add(phi, from_right, right);
         *out = ir_phi_value(phi);
@@ -1722,7 +1722,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
                 compile_error(ast_ctx(self), "don't know how to cast to bool...");
                 return false;
             }
-            *out = ir_block_create_unary(func->curblock,
+            *out = ir_block_create_unary(func->curblock, ast_ctx(self),
                                          ast_function_label(func, "sce_final_not"),
                                          notop,
                                          *out);
@@ -1741,7 +1741,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
         return false;
 
-    *out = ir_block_create_binop(func->curblock, ast_function_label(func, "bin"),
+    *out = ir_block_create_binop(func->curblock, ast_ctx(self), ast_function_label(func, "bin"),
                                  self->op, left, right);
     if (!*out)
         return false;
@@ -1797,7 +1797,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
         return false;
 
     /* now the binary */
-    bin = ir_block_create_binop(func->curblock, ast_function_label(func, "binst"),
+    bin = ir_block_create_binop(func->curblock, ast_ctx(self), ast_function_label(func, "binst"),
                                 self->opbin, leftr, right);
     self->expression.outr = bin;
 
@@ -1822,7 +1822,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
         if (!(*cgen)((ast_expression*)(arr->setter), func, true, &funval))
             return false;
 
-        call = ir_block_create_call(func->curblock, ast_function_label(func, "store"), funval);
+        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "store"), funval);
         if (!call)
             return false;
         ir_call_param(call, iridx);
@@ -1836,7 +1836,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
             return false;
         self->expression.outl = leftl;
 
-        if (!ir_block_create_store_op(func->curblock, self->opstore, leftl, bin))
+        if (!ir_block_create_store_op(func->curblock, ast_ctx(self), self->opstore, leftl, bin))
             return false;
         self->expression.outr = bin;
     }
@@ -1874,7 +1874,7 @@ bool ast_unary_codegen(ast_unary *self, ast_function *func, bool lvalue, ir_valu
     if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
         return false;
 
-    *out = ir_block_create_unary(func->curblock, ast_function_label(func, "unary"),
+    *out = ir_block_create_unary(func->curblock, ast_ctx(self), ast_function_label(func, "unary"),
                                  self->op, operand);
     if (!*out)
         return false;
@@ -1910,10 +1910,10 @@ bool ast_return_codegen(ast_return *self, ast_function *func, bool lvalue, ir_va
         if (!(*cgen)((ast_expression*)(self->operand), func, false, &operand))
             return false;
 
-        if (!ir_block_create_return(func->curblock, operand))
+        if (!ir_block_create_return(func->curblock, ast_ctx(self), operand))
             return false;
     } else {
-        if (!ir_block_create_return(func->curblock, NULL))
+        if (!ir_block_create_return(func->curblock, ast_ctx(self), NULL))
             return false;
     }
 
@@ -1950,10 +1950,10 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
 
     if (lvalue) {
         /* address! */
-        *out = ir_block_create_fieldaddress(func->curblock, ast_function_label(func, "efa"),
+        *out = ir_block_create_fieldaddress(func->curblock, ast_ctx(self), ast_function_label(func, "efa"),
                                             ent, field);
     } else {
-        *out = ir_block_create_load_from_ent(func->curblock, ast_function_label(func, "efv"),
+        *out = ir_block_create_load_from_ent(func->curblock, ast_ctx(self), ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
     }
     if (!*out) {
@@ -2049,7 +2049,7 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
         if (!(*cgen)((ast_expression*)(arr->getter), func, true, &funval))
             return false;
 
-        call = ir_block_create_call(func->curblock, ast_function_label(func, "fetch"), funval);
+        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "fetch"), funval);
         if (!call)
             return false;
         ir_call_param(call, iridx);
@@ -2163,9 +2163,9 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
         if (!merge)
             return false;
         /* add jumps ot the merge block */
-        if (ontrue && !ontrue_endblock->final && !ir_block_create_jump(ontrue_endblock, merge))
+        if (ontrue && !ontrue_endblock->final && !ir_block_create_jump(ontrue_endblock, ast_ctx(self), merge))
             return false;
-        if (onfalse && !onfalse_endblock->final && !ir_block_create_jump(onfalse_endblock, merge))
+        if (onfalse && !onfalse_endblock->final && !ir_block_create_jump(onfalse_endblock, ast_ctx(self), merge))
             return false;
 
         /* Now enter the merge block */
@@ -2174,7 +2174,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
 
     /* we create the if here, that way all blocks are ordered :)
      */
-    if (!ir_block_create_if(cond, condval,
+    if (!ir_block_create_if(cond, ast_ctx(self), condval,
                             (ontrue  ? ontrue  : merge),
                             (onfalse ? onfalse : merge)))
     {
@@ -2260,13 +2260,13 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     if (!merge)
         return false;
     /* jump to merge block */
-    if (!ir_block_create_jump(ontrue_out, merge))
+    if (!ir_block_create_jump(ontrue_out, ast_ctx(self), merge))
         return false;
-    if (!ir_block_create_jump(onfalse_out, merge))
+    if (!ir_block_create_jump(onfalse_out, ast_ctx(self), merge))
         return false;
 
     /* create if instruction */
-    if (!ir_block_create_if(cond_out, condval, ontrue, onfalse))
+    if (!ir_block_create_if(cond_out, ast_ctx(self), condval, ontrue, onfalse))
         return false;
 
     /* Now enter the merge block */
@@ -2281,7 +2281,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     }
 
     /* create PHI */
-    phi = ir_block_create_phi(merge, ast_function_label(func, "phi"), trueval->vtype);
+    phi = ir_block_create_phi(merge, ast_ctx(self), ast_function_label(func, "phi"), trueval->vtype);
     if (!phi)
         return false;
     ir_phi_add(phi, ontrue_out,  trueval);
@@ -2467,7 +2467,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     else if (bbody)      tmpblock = bbody;
     else if (bpostcond)  tmpblock = bpostcond;
     else                 tmpblock = bout;
-    if (!ir_block_create_jump(bin, tmpblock))
+    if (!ir_block_create_jump(bin, ast_ctx(self), tmpblock))
         return false;
 
     /* From precond */
@@ -2479,7 +2479,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bpostcond)  ontrue = bpostcond;
         else                 ontrue = bprecond;
         onfalse = bout;
-        if (!ir_block_create_if(end_bprecond, precond, ontrue, onfalse))
+        if (!ir_block_create_if(end_bprecond, ast_ctx(self), precond, ontrue, onfalse))
             return false;
     }
 
@@ -2490,7 +2490,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bpostcond)  tmpblock = bpostcond;
         else if (bprecond)   tmpblock = bprecond;
         else                 tmpblock = bbody;
-        if (!end_bbody->final && !ir_block_create_jump(end_bbody, tmpblock))
+        if (!end_bbody->final && !ir_block_create_jump(end_bbody, ast_ctx(self), tmpblock))
             return false;
     }
 
@@ -2501,7 +2501,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bprecond)   tmpblock = bprecond;
         else if (bbody)      tmpblock = bbody;
         else                 tmpblock = bout;
-        if (!ir_block_create_jump(end_bincrement, tmpblock))
+        if (!ir_block_create_jump(end_bincrement, ast_ctx(self), tmpblock))
             return false;
     }
 
@@ -2514,7 +2514,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bincrement) ontrue = bincrement;
         else                 ontrue = bpostcond;
         onfalse = bout;
-        if (!ir_block_create_if(end_bpostcond, postcond, ontrue, onfalse))
+        if (!ir_block_create_if(end_bpostcond, ast_ctx(self), postcond, ontrue, onfalse))
             return false;
     }
 
@@ -2552,7 +2552,7 @@ bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue,
         return false;
     }
 
-    if (!ir_block_create_jump(func->curblock, target))
+    if (!ir_block_create_jump(func->curblock, ast_ctx(self), target))
         return false;
     return true;
 }
@@ -2627,7 +2627,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
             if (!(*cgen)((ast_expression*)(swcase->value), func, false, &val))
                 return false;
             /* generate the condition */
-            cond = ir_block_create_binop(func->curblock, ast_function_label(func, "switch_eq"), cmpinstr, irop, val);
+            cond = ir_block_create_binop(func->curblock, ast_ctx(self), ast_function_label(func, "switch_eq"), cmpinstr, irop, val);
             if (!cond)
                 return false;
 
@@ -2636,12 +2636,12 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
             bnot = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "not_case"));
             if (!bcase || !bnot)
                 return false;
-            if (!ir_block_create_if(func->curblock, cond, bcase, bnot))
+            if (!ir_block_create_if(func->curblock, ast_ctx(self), cond, bcase, bnot))
                 return false;
 
             /* Make the previous case-end fall through */
             if (bfall && !bfall->final) {
-                if (!ir_block_create_jump(bfall, bcase))
+                if (!ir_block_create_jump(bfall, ast_ctx(self), bcase))
                     return false;
             }
 
@@ -2669,7 +2669,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     }
 
     /* Jump from the last bnot to bout */
-    if (bfall && !bfall->final && !ir_block_create_jump(bfall, bout)) {
+    if (bfall && !bfall->final && !ir_block_create_jump(bfall, ast_ctx(self), bout)) {
         /*
         astwarning(ast_ctx(bfall), WARN_???, "missing break after last case");
         */
@@ -2685,7 +2685,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 
         /* Insert the fallthrough jump */
         if (def_bfall && !def_bfall->final) {
-            if (!ir_block_create_jump(def_bfall, bcase))
+            if (!ir_block_create_jump(def_bfall, ast_ctx(self), bcase))
                 return false;
         }
 
@@ -2696,7 +2696,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     }
 
     /* Jump from the last bnot to bout */
-    if (!func->curblock->final && !ir_block_create_jump(func->curblock, bout))
+    if (!func->curblock->final && !ir_block_create_jump(func->curblock, ast_ctx(self), bout))
         return false;
     /* enter the outgoing block */
     func->curblock = bout;
@@ -2729,7 +2729,7 @@ bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_valu
         return false;
     }
     if (!func->curblock->final) {
-        if (!ir_block_create_jump(func->curblock, self->irblock))
+        if (!ir_block_create_jump(func->curblock, ast_ctx(self), self->irblock))
             return false;
     }
 
@@ -2757,14 +2757,14 @@ bool ast_goto_codegen(ast_goto *self, ast_function *func, bool lvalue, ir_value 
         if (self->irblock_from) {
             /* we already tried once, this is the callback */
             self->irblock_from->final = false;
-            if (!ir_block_create_jump(self->irblock_from, self->target->irblock)) {
+            if (!ir_block_create_jump(self->irblock_from, ast_ctx(self), self->target->irblock)) {
                 compile_error(ast_ctx(self), "failed to generate goto to `%s`", self->name);
                 return false;
             }
         }
         else
         {
-            if (!ir_block_create_jump(func->curblock, self->target->irblock)) {
+            if (!ir_block_create_jump(func->curblock, ast_ctx(self), self->target->irblock)) {
                 compile_error(ast_ctx(self), "failed to generate goto to `%s`", self->name);
                 return false;
             }
@@ -2825,7 +2825,7 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
         vec_push(params, param);
     }
 
-    callinstr = ir_block_create_call(func->curblock, ast_function_label(func, "call"), funval);
+    callinstr = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "call"), funval);
     if (!callinstr)
         goto error;
 
