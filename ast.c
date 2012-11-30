@@ -1416,7 +1416,10 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     ec = &self->vtype->expression;
     for (i = 0; i < vec_size(ec->params); ++i)
     {
-        vec_push(irf->params, ec->params[i]->expression.vtype);
+        if (ec->params[i]->expression.vtype == TYPE_FIELD)
+            vec_push(irf->params, ec->params[i]->expression.next->expression.vtype);
+        else
+            vec_push(irf->params, ec->params[i]->expression.vtype);
         if (!self->builtin) {
             if (!ast_local_codegen(ec->params[i], self->ir_func, true))
                 return false;
