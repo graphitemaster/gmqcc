@@ -379,22 +379,22 @@ void compile_error(lex_ctx ctx, const char *msg, ...)
 
 bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
 {
-	va_list ap;
-	int lvl = LVL_WARNING;
+    va_list ap;
+    int lvl = LVL_WARNING;
 
     if (!OPTS_WARN(warntype))
         return false;
 
     if (opts_werror) {
         ++compile_errors;
-	    lvl = LVL_ERROR;
-	}
-	else
+        lvl = LVL_ERROR;
+    }
+    else
         ++compile_warnings;
 
-	va_start(ap, fmt);
+    va_start(ap, fmt);
     con_vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
-	va_end(ap);
+    va_end(ap);
 
-	return opts_werror;
+    return opts_werror;
 }
