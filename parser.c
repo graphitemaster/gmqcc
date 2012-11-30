@@ -3952,7 +3952,7 @@ skipvar:
                 parseerror(parser, "builtin number must be an integer constant");
                 break;
             }
-            if (parser_token(parser)->constval.i <= 0) {
+            if (parser_token(parser)->constval.i < 0) {
                 parseerror(parser, "builtin number must be an integer greater than zero");
                 break;
             }
