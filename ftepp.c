@@ -55,7 +55,6 @@ typedef struct {
 typedef struct {
     lex_file    *lex;
     int          token;
-    bool         newline;
     unsigned int errors;
 
     bool         output_on;
@@ -1214,8 +1213,13 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else {
-                ftepp_error(ftepp, "unrecognized preprocessor directive: `%s`", ftepp_tokval(ftepp));
-                return false;
+                if (ftepp->output_on) {
+                    ftepp_error(ftepp, "unrecognized preprocessor directive: `%s`", ftepp_tokval(ftepp));
+                    return false;
+                } else {
+                    ftepp_next(ftepp);
+                    break;
+                }
             }
             /* break; never reached */
         default:
@@ -1254,11 +1258,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
         if (ftepp->token >= TOKEN_EOF)
             break;
 #if 0
-        ftepp->newline = newline;
-        newline = false;
-#else
-        /* For the sake of FTE compatibility... FU, really */
-        ftepp->newline = newline = true;
+        newline = true;
 #endif
 
         switch (ftepp->token) {
@@ -1278,7 +1278,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
                     ftepp->token = TOKEN_ERROR;
                 break;
             case '#':
-                if (!ftepp->newline) {
+                if (!newline) {
                     ftepp_out(ftepp, ftepp_tokval(ftepp), false);
                     ftepp_next(ftepp);
                     break;
@@ -1298,7 +1298,13 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
                 ftepp_out(ftepp, "\n", true);
                 ftepp_next(ftepp);
                 break;
+            case TOKEN_WHITE:
+                /* same as default but don't set newline=false */
+                ftepp_out(ftepp, ftepp_tokval(ftepp), false);
+                ftepp_next(ftepp);
+                break;
             default:
+                newline = false;
                 ftepp_out(ftepp, ftepp_tokval(ftepp), false);
                 ftepp_next(ftepp);
                 break;
@@ -1309,8 +1315,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     vec_push(ftepp->output_string, 0);
     vec_shrinkby(ftepp->output_string, 1);
 
-    newline = ftepp->token == TOKEN_EOF;
-    return newline;
+    return (ftepp->token == TOKEN_EOF);
 }
 
 /* Like in parser.c - files keep the previous state so we have one global
