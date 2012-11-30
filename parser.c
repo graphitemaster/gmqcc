@@ -75,6 +75,7 @@ typedef struct {
     size_t          *_blocklocals;
     ast_value      **_typedefs;
     size_t          *_blocktypedefs;
+    lex_ctx         *_block_ctx;
 
     size_t errors;
 
@@ -1680,6 +1681,7 @@ static void parser_enterblock(parser_t *parser)
     vec_push(parser->_blocklocals, vec_size(parser->_locals));
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, vec_size(parser->_typedefs));
+    vec_push(parser->_block_ctx, parser_ctx(parser));
 }
 
 static bool parser_leaveblock(parser_t *parser)
@@ -1695,7 +1697,8 @@ static bool parser_leaveblock(parser_t *parser)
     util_htdel(vec_last(parser->variables));
     vec_pop(parser->variables);
     if (!vec_size(parser->_blocklocals)) {
-        parseerror(parser, "internal error: parser_leaveblock with no block (2)");
+        parser->errors++;
+        compile_error(vec_last(parser->_block_ctx), "internal error: parser_leaveblock with no block (2)");
         return false;
     }
 
@@ -1706,8 +1709,10 @@ static bool parser_leaveblock(parser_t *parser)
         ast_value      *v = (ast_value*)e;
         vec_pop(parser->_locals);
         if (ast_istype(e, ast_value) && !v->uses) {
-            if (parsewarning(parser, WARN_UNUSED_VARIABLE, "unused variable: `%s`", v->name))
+            if (compile_warning(ast_ctx(v), WARN_UNUSED_VARIABLE, "unused variable: `%s`", v->name)) {
+                parser->errors++;
                 rv = false;
+            }
         }
     }
 
@@ -1719,6 +1724,7 @@ static bool parser_leaveblock(parser_t *parser)
     util_htdel(vec_last(parser->typedefs));
     vec_pop(parser->typedefs);
 
+    vec_pop(parser->_block_ctx);
     return rv;
 }
 
@@ -4363,6 +4369,8 @@ void parser_cleanup()
         util_htdel(parser->typedefs[i]);
     vec_free(parser->typedefs);
     vec_free(parser->_blocktypedefs);
+
+    vec_free(parser->_block_ctx);
 
     vec_free(parser->labels);
     vec_free(parser->gotos);
