@@ -969,7 +969,7 @@ int lex_do(lex_file *lex)
     }
 
     /* modelgen / spiritgen commands */
-    if (ch == '$') {
+    if (ch == '$' && !lex->flags.preprocessing) {
         const char *v;
         size_t frame;
 
