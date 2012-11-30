@@ -39,7 +39,7 @@ bool        opts_dumpfin  = false;
 bool        opts_dump     = false;
 bool        opts_forcecrc = false;
 bool        opts_pp_only  = false;
-size_t      opts_max_array_size = 1024;
+size_t      opts_max_array_size = (1024 << 3);
 
 uint16_t    opts_forced_crc;
 
