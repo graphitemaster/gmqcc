@@ -994,12 +994,6 @@ static char *ftepp_include_find_path(const char *file, const char *pathfile)
         memcpy(vec_add(filename, len), pathfile, len);
         vec_push(filename, '/');
     }
-    else {
-        len = strlen(pathfile);
-        memcpy(vec_add(filename, len), pathfile, len);
-        if (vec_last(filename) != '/')
-            vec_push(filename, '/');
-    }
 
     len = strlen(file);
     memcpy(vec_add(filename, len+1), file, len);
@@ -1062,7 +1056,7 @@ static bool ftepp_include(ftepp_t *ftepp)
     }
     inlex = lex_open(filename);
     if (!inlex) {
-        ftepp_error(ftepp, "failed to open include file `%s`", filename);
+        ftepp_error(ftepp, "open failed on include file `%s`", filename);
         vec_free(filename);
         return false;
     }
