@@ -1718,6 +1718,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     vec_free(sy.out);
     vec_free(sy.ops);
     DEBUGSHUNTDO(con_out("shunt done\n"));
+    if (vec_size(parser->pot)) {
+        parseerror(parser, "internal error: vec_size(parser->pot) = %lu", (unsigned long)vec_size(parser->pot));
+        return NULL;
+    }
+    vec_free(parser->pot);
     return expr;
 
 onerr:
