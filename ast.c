@@ -855,9 +855,12 @@ ast_call* ast_call_new(lex_ctx ctx,
     self->params = NULL;
     self->func   = funcexpr;
 
+/*
     self->expression.vtype = funcexpr->expression.next->expression.vtype;
     if (funcexpr->expression.next->expression.next)
         self->expression.next = ast_type_copy(ctx, funcexpr->expression.next->expression.next);
+*/
+    ast_type_adopt(self, funcexpr->expression.next);
 
     return self;
 }
@@ -1987,6 +1990,10 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
     } else {
         *out = ir_block_create_load_from_ent(func->curblock, ast_ctx(self), ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
+        if ((*out)->vtype == TYPE_FIELD)
+            (*out)->fieldtype = self->expression.next->expression.vtype;
+        if ((*out)->vtype == TYPE_FUNCTION)
+            (*out)->outtype = self->expression.next->expression.vtype;
     }
     if (!*out) {
         compile_error(ast_ctx(self), "failed to create %s instruction (output type %s)",
@@ -2869,6 +2876,11 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
 
     *out = ir_call_value(callinstr);
     self->expression.outr = *out;
+
+    if ((*out)->vtype == TYPE_FIELD)
+        (*out)->fieldtype = self->expression.next->expression.vtype;
+    if ((*out)->vtype == TYPE_FUNCTION)
+        (*out)->outtype = self->expression.next->expression.vtype;
 
     vec_free(params);
     return true;
