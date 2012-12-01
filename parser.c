@@ -87,6 +87,12 @@ typedef struct {
      * anything else: type error
      */
     qcint  memberof;
+
+    /* Keep track of our ternary vs parenthesis nesting state.
+     * If we reach a 'comma' operator in a ternary without a paren,
+     * we shall trigger -Wternary-precedence.
+     */
+    enum { POT_PAREN, POT_TERNARY1, POT_TERNARY2 } *pot;
 } parser_t;
 
 static void parser_enterblock(parser_t *parser);
@@ -850,6 +856,11 @@ static bool parser_sy_pop(parser_t *parser, shunt *sy)
             break;
 
         case opid2('?',':'):
+            if (vec_last(parser->pot) != POT_TERNARY2) {
+                parseerror(parser, "mismatched parenthesis/ternary");
+                return false;
+            }
+            vec_pop(parser->pot);
             if (exprs[1]->expression.vtype != exprs[2]->expression.vtype) {
                 ast_type_to_string(exprs[1], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[2], ty2, sizeof(ty2));
@@ -1310,6 +1321,11 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
         if (sy->ops[vec_size(sy->ops)-1].paren == SY_PAREN_TERNARY) {
             if (functions_only)
                 return false;
+            if (vec_last(parser->pot) != POT_TERNARY1) {
+                parseerror(parser, "mismatched colon in ternary expression (missing closing paren?)");
+                return false;
+            }
+            vec_last(parser->pot) = POT_TERNARY2;
             /* pop off the parenthesis */
             vec_shrinkby(sy->ops, 1);
             return true;
@@ -1512,6 +1528,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 /* closing an opening paren */
                 if (!parser_close_paren(parser, &sy, false))
                     goto onerr;
+                if (vec_last(parser->pot) != POT_PAREN) {
+                    parseerror(parser, "mismatched parentheses (closing paren during ternary expression?)");
+                    goto onerr;
+                }
+                vec_pop(parser->pot);
             } else {
                 DEBUGSHUNTDO(con_out("do[nop] )\n"));
                 --parens;
@@ -1520,6 +1541,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 /* allowed for function calls */
                 if (!parser_close_paren(parser, &sy, true))
                     goto onerr;
+                if (vec_last(parser->pot) != POT_PAREN) {
+                    parseerror(parser, "mismatched parentheses (closing paren during ternary expression?)");
+                    goto onerr;
+                }
+                vec_pop(parser->pot);
             }
             wantop = true;
         }
@@ -1531,6 +1557,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 break;
             if (!parser_close_paren(parser, &sy, false))
                 goto onerr;
+            if (vec_last(parser->pot) != POT_PAREN) {
+                parseerror(parser, "mismatched parentheses (closing paren during ternary expression?)");
+                goto onerr;
+            }
+            vec_pop(parser->pot);
             wantop = true;
         }
         else if (parser->tok != TOKEN_OPERATOR) {
@@ -1574,6 +1605,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 break;
             }
 
+            if (op->id == opid1(',')) {
+                if (vec_size(parser->pot) && vec_last(parser->pot) == POT_TERNARY2) {
+                    (void)!parsewarning(parser, WARN_TERNARY_PRECEDENCE, "suggesting parenthesis around ternary expression");
+                }
+            }
+
             if (vec_size(sy.ops) && !vec_last(sy.ops).paren)
                 olast = &operators[vec_last(sy.ops).etype-1];
 
@@ -1611,11 +1648,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 if (wantop) {
                     size_t sycount = vec_size(sy.out);
                     DEBUGSHUNTDO(con_out("push [op] (\n"));
-                    ++parens;
+                    ++parens; vec_push(parser->pot, POT_PAREN);
                     /* we expected an operator, this is the function-call operator */
                     vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_FUNC, sycount-1));
                 } else {
-                    ++parens;
+                    ++parens; vec_push(parser->pot, POT_PAREN);
                     vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_EXPR, 0));
                     DEBUGSHUNTDO(con_out("push [nop] (\n"));
                 }
@@ -1625,7 +1662,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     parseerror(parser, "unexpected array subscript");
                     goto onerr;
                 }
-                ++parens;
+                ++parens; vec_push(parser->pot, POT_PAREN);
                 /* push both the operator and the paren, this makes life easier */
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0));
@@ -1635,13 +1672,22 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_TERNARY, 0));
                 wantop = false;
-                --ternaries;
+                ++ternaries;
+                vec_push(parser->pot, POT_TERNARY1);
             } else if (op->id == opid2(':','?')) {
+                if (!vec_size(parser->pot)) {
+                    parseerror(parser, "unexpected colon outside ternary expression (missing parenthesis?)");
+                    goto onerr;
+                }
+                if (vec_last(parser->pot) != POT_TERNARY1) {
+                    parseerror(parser, "unexpected colon outside ternary expression (missing parenthesis?)");
+                    goto onerr;
+                }
                 if (!parser_close_paren(parser, &sy, false))
                     goto onerr;
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 wantop = false;
-                ++ternaries;
+                --ternaries;
             } else {
                 DEBUGSHUNTDO(con_out("push operator %s\n", op->op));
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
