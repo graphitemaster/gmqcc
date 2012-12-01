@@ -1150,6 +1150,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
             if (vtype == TYPE_FIELD)
                 v->fieldtype = elemtype->next->expression.vtype;
+            if (vtype == TYPE_FUNCTION)
+                v->outtype = elemtype->next->expression.vtype;
             v->context = ast_ctx(self);
             array->ir_v = self->ir_v = v;
 
@@ -1169,6 +1171,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 }
                 if (vtype == TYPE_FIELD)
                     array->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+                if (vtype == TYPE_FUNCTION)
+                    array->ir_values[ai]->outtype = elemtype->next->expression.vtype;
                 array->ir_values[ai]->context = ast_ctx(self);
             }
             mem_d(name);
@@ -1203,6 +1207,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         }
         if (vtype == TYPE_FIELD)
             v->fieldtype = elemtype->next->expression.vtype;
+        if (vtype == TYPE_FUNCTION)
+            v->outtype = elemtype->next->expression.vtype;
         v->context = ast_ctx(self);
 
         namelen = strlen(self->name);
@@ -1221,6 +1227,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
             if (vtype == TYPE_FIELD)
                 self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+            if (vtype == TYPE_FUNCTION)
+                self->ir_values[ai]->outtype = elemtype->next->expression.vtype;
             self->ir_values[ai]->context = ast_ctx(self);
         }
         mem_d(name);
@@ -1237,6 +1245,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         }
         if (self->expression.vtype == TYPE_FIELD)
             v->fieldtype = self->expression.next->expression.vtype;
+        if (self->expression.vtype == TYPE_FUNCTION)
+            v->outtype = self->expression.next->expression.vtype;
         v->context = ast_ctx(self);
     }
 
@@ -1334,6 +1344,8 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         }
         if (vtype == TYPE_FIELD)
             v->fieldtype = elemtype->next->expression.vtype;
+        if (vtype == TYPE_FUNCTION)
+            v->outtype = elemtype->next->expression.vtype;
         v->context = ast_ctx(self);
 
         namelen = strlen(self->name);
@@ -1350,6 +1362,8 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             }
             if (vtype == TYPE_FIELD)
                 self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
+            if (vtype == TYPE_FUNCTION)
+                self->ir_values[ai]->outtype = elemtype->next->expression.vtype;
             self->ir_values[ai]->context = ast_ctx(self);
         }
     }
@@ -1360,6 +1374,8 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             return false;
         if (self->expression.vtype == TYPE_FIELD)
             v->fieldtype = self->expression.next->expression.vtype;
+        if (self->expression.vtype == TYPE_FUNCTION)
+            v->outtype = self->expression.next->expression.vtype;
         v->context = ast_ctx(self);
     }
 
