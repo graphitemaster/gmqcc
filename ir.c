@@ -2849,7 +2849,10 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     if (vec_size(irfun->locals)) {
         ir_value *last = vec_last(irfun->locals);
         local_var_end = last->code.globaladdr;
-        local_var_end += type_sizeof[last->vtype];
+        if (last->vtype == TYPE_FIELD && last->fieldtype == TYPE_VECTOR)
+            local_var_end += type_sizeof[TYPE_VECTOR];
+        else
+            local_var_end += type_sizeof[last->vtype];
     }
     for (i = 0; i < vec_size(irfun->values); ++i)
     {
