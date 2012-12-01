@@ -48,10 +48,6 @@ void code_init() {
 
     code_entfields = 0;
 
-    /* omit creation of null code */
-    if (OPTS_FLAG(OMIT_NULL_BYTES))
-        return;
-
     /*
      * The way progs.dat is suppose to work is odd, there needs to be
      * some null (empty) statements, functions, and 28 globals
@@ -146,8 +142,6 @@ bool code_write(const char *filename, const char *lnofile) {
     FILE        *fp           = NULL;
     size_t       it           = 2;
 
-    /* see proposal.txt */
-    if (OPTS_FLAG(OMIT_NULL_BYTES)) {}
     code_header.statements.offset = sizeof(prog_header);
     code_header.statements.length = vec_size(code_statements);
     code_header.defs.offset       = code_header.statements.offset + (sizeof(prog_section_statement) * vec_size(code_statements));
