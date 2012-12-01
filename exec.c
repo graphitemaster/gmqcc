@@ -942,7 +942,7 @@ int main(int argc, char **argv)
             for (a = 0; a < prog->functions[i].nargs; ++a) {
                 printf(" %i", prog->functions[i].argsize[a]);
             }
-            printf("\n");
+            printf(" firstlocal: %i\n", prog->functions[i].firstlocal);
         }
     }
     else
