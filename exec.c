@@ -692,6 +692,18 @@ static int qc_ftos(qc_program *prog)
     return 0;
 }
 
+static int qc_stof(qc_program *prog)
+{
+    char buffer[512];
+    qcany *str;
+    qcany num;
+    CheckArgs(1);
+    str = GetArg(0);
+    num._float = strtof(prog_getstring(prog, str->string), NULL);
+    Return(num);
+    return 0;
+}
+
 static int qc_vtos(qc_program *prog)
 {
     char buffer[512];
@@ -757,7 +769,8 @@ static prog_builtin qc_builtins[] = {
     &qc_vtos,  /*   5   */
     &qc_error, /*   6   */
     &qc_vlen,  /*   7   */
-    &qc_etos   /*   8   */
+    &qc_etos,  /*   8   */
+    &qc_stof   /*   9   */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
