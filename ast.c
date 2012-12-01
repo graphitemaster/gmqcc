@@ -1078,6 +1078,17 @@ const char* ast_function_label(ast_function *self, const char *prefix)
  * But I can't imagine a pituation where the output is truly unnecessary.
  */
 
+void _ast_codegen_output_type(ast_expression_common *self, ir_value *out)
+{
+    if (out->vtype == TYPE_FIELD)
+        out->fieldtype = self->next->expression.vtype;
+    if (out->vtype == TYPE_FUNCTION)
+        out->outtype = self->next->expression.vtype;
+}
+
+#define codegen_output_type(a,o) (_ast_codegen_output_type(&((a)->expression),(o)))
+#define codegen_output_type_expr(a,o) (_ast_codegen_output_type(a,(o)))
+
 bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out)
 {
     (void)func;
@@ -1151,10 +1162,6 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 compile_error(ast_ctx(self), "ir_builder_create_global failed on `%s`", self->name);
                 return false;
             }
-            if (vtype == TYPE_FIELD)
-                v->fieldtype = elemtype->next->expression.vtype;
-            if (vtype == TYPE_FUNCTION)
-                v->outtype = elemtype->next->expression.vtype;
             v->context = ast_ctx(self);
             array->ir_v = self->ir_v = v;
 
@@ -1172,10 +1179,6 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                     compile_error(ast_ctx(self), "ir_builder_create_global failed on `%s`", name);
                     return false;
                 }
-                if (vtype == TYPE_FIELD)
-                    array->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
-                if (vtype == TYPE_FUNCTION)
-                    array->ir_values[ai]->outtype = elemtype->next->expression.vtype;
                 array->ir_values[ai]->context = ast_ctx(self);
             }
             mem_d(name);
@@ -1208,10 +1211,6 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             compile_error(ast_ctx(self), "ir_builder_create_global failed `%s`", self->name);
             return false;
         }
-        if (vtype == TYPE_FIELD)
-            v->fieldtype = elemtype->next->expression.vtype;
-        if (vtype == TYPE_FUNCTION)
-            v->outtype = elemtype->next->expression.vtype;
         v->context = ast_ctx(self);
 
         namelen = strlen(self->name);
@@ -1228,10 +1227,6 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 compile_error(ast_ctx(self), "ir_builder_create_global failed `%s`", name);
                 return false;
             }
-            if (vtype == TYPE_FIELD)
-                self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
-            if (vtype == TYPE_FUNCTION)
-                self->ir_values[ai]->outtype = elemtype->next->expression.vtype;
             self->ir_values[ai]->context = ast_ctx(self);
         }
         mem_d(name);
@@ -1246,10 +1241,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             compile_error(ast_ctx(self), "ir_builder_create_global failed on `%s`", self->name);
             return false;
         }
-        if (self->expression.vtype == TYPE_FIELD)
-            v->fieldtype = self->expression.next->expression.vtype;
-        if (self->expression.vtype == TYPE_FUNCTION)
-            v->outtype = self->expression.next->expression.vtype;
+        codegen_output_type(self, v);
         v->context = ast_ctx(self);
     }
 
@@ -1345,10 +1337,6 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             compile_error(ast_ctx(self), "ir_function_create_local failed");
             return false;
         }
-        if (vtype == TYPE_FIELD)
-            v->fieldtype = elemtype->next->expression.vtype;
-        if (vtype == TYPE_FUNCTION)
-            v->outtype = elemtype->next->expression.vtype;
         v->context = ast_ctx(self);
 
         namelen = strlen(self->name);
@@ -1363,10 +1351,6 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
                 compile_error(ast_ctx(self), "ir_builder_create_global failed on `%s`", name);
                 return false;
             }
-            if (vtype == TYPE_FIELD)
-                self->ir_values[ai]->fieldtype = elemtype->next->expression.vtype;
-            if (vtype == TYPE_FUNCTION)
-                self->ir_values[ai]->outtype = elemtype->next->expression.vtype;
             self->ir_values[ai]->context = ast_ctx(self);
         }
     }
@@ -1375,10 +1359,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         v = ir_function_create_local(func, self->name, self->expression.vtype, param);
         if (!v)
             return false;
-        if (self->expression.vtype == TYPE_FIELD)
-            v->fieldtype = self->expression.next->expression.vtype;
-        if (self->expression.vtype == TYPE_FUNCTION)
-            v->outtype = self->expression.next->expression.vtype;
+        codegen_output_type(self, v);
         v->context = ast_ctx(self);
     }
 
@@ -1990,10 +1971,7 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
     } else {
         *out = ir_block_create_load_from_ent(func->curblock, ast_ctx(self), ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
-        if ((*out)->vtype == TYPE_FIELD)
-            (*out)->fieldtype = self->expression.next->expression.vtype;
-        if ((*out)->vtype == TYPE_FUNCTION)
-            (*out)->outtype = self->expression.next->expression.vtype;
+        codegen_output_type(self, *out);
     }
     if (!*out) {
         compile_error(ast_ctx(self), "failed to create %s instruction (output type %s)",
@@ -2877,10 +2855,7 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
     *out = ir_call_value(callinstr);
     self->expression.outr = *out;
 
-    if ((*out)->vtype == TYPE_FIELD)
-        (*out)->fieldtype = self->expression.next->expression.vtype;
-    if ((*out)->vtype == TYPE_FUNCTION)
-        (*out)->outtype = self->expression.next->expression.vtype;
+    codegen_output_type(self, *out);
 
     vec_free(params);
     return true;
