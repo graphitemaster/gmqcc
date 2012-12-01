@@ -221,6 +221,8 @@ static bool options_parse(int argc, char **argv) {
                     options_set(opts_flags, TRANSLATABLE_STRINGS, true);
                     options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
                     options_set(opts_flags, ASSIGN_FUNCTION_TYPES, true);
+                    options_set(opts_warn, WARN_TERNARY_PRECEDENCE, true);
+                    options_set(opts_flags, CORRECT_TERNARY, false);
                     opts_standard = COMPILER_FTEQCC;
                 } else if (!strcmp(argarg, "qccx")) {
                     options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
@@ -489,6 +491,7 @@ int main(int argc, char **argv) {
     size_t itr;
     int retval = 0;
     bool opts_output_free = false;
+    bool operators_free = false;
     bool progs_src = false;
     FILE *outfile = NULL;
 
@@ -519,6 +522,7 @@ int main(int argc, char **argv) {
 
     options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
     options_set(opts_flags, FTEPP, false);
+    options_set(opts_flags, CORRECT_TERNARY, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
@@ -534,6 +538,26 @@ int main(int argc, char **argv) {
     } else {
         operators = qcc_operators;
         operator_count = qcc_operator_count;
+    }
+
+    if (operators == fte_operators) {
+        /* fix ternary? */
+        if (OPTS_FLAG(CORRECT_TERNARY)) {
+            oper_info *newops;
+            if (operators[operator_count-2].id != opid1(',') ||
+                operators[operator_count-1].id != opid2(':','?'))
+            {
+                con_err("internal error: operator precedence table wasn't updated correctly!\n");
+                exit(1);
+            }
+            operators_free = true;
+            newops = mem_a(sizeof(operators[0]) * operator_count);
+            memcpy(newops, operators, sizeof(operators[0]) * operator_count);
+            memcpy(&newops[operator_count-2], &operators[operator_count-1], sizeof(newops[0]));
+            memcpy(&newops[operator_count-1], &operators[operator_count-2], sizeof(newops[0]));
+            newops[operator_count-2].prec = newops[operator_count-1].prec+1;
+            operators = newops;
+        }
     }
 
     if (opts_dump) {
@@ -706,6 +730,8 @@ cleanup:
         parser_cleanup();
     if (opts_output_free)
         mem_d((char*)opts_output);
+    if (operators_free)
+        mem_d((void*)operators);
 
     lex_cleanup();
     util_meminfo();

@@ -150,7 +150,7 @@ typedef struct {
     unsigned int operands;
     unsigned int id;
     unsigned int assoc;
-    unsigned int prec;
+    signed int   prec;
     unsigned int flags;
 } oper_info;
 
@@ -204,7 +204,6 @@ static const oper_info c_operators[] = {
     { "||",  2, opid2('|','|'),     ASSOC_LEFT,  4,  0 },
 
     { "?",   3, opid2('?',':'),     ASSOC_RIGHT, 3,  0 },
-    { ":",   3, opid2(':','?'),     ASSOC_RIGHT, 3,  0 },
 
     { "=",   2, opid1('='),         ASSOC_RIGHT, 2,  0 },
     { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 2,  0 },
@@ -218,7 +217,9 @@ static const oper_info c_operators[] = {
     { "^=",  2, opid2('^','='),     ASSOC_RIGHT, 2,  0 },
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 2,  0 },
 
-    { ",",   2, opid1(','),         ASSOC_LEFT,  1,  0 }
+    { ":",   3, opid2(':','?'),     ASSOC_RIGHT, 1,  0 },
+
+    { ",",   2, opid1(','),         ASSOC_LEFT,  0,  0 }
 };
 static const size_t c_operator_count = (sizeof(c_operators) / sizeof(c_operators[0]));
 
@@ -267,9 +268,9 @@ static const oper_info fte_operators[] = {
     { "&&",  2, opid2('&','&'),     ASSOC_LEFT,  5,  0 },
     { "||",  2, opid2('|','|'),     ASSOC_LEFT,  5,  0 },
 
-    { ":",   0, opid2(':','?'),     ASSOC_RIGHT, 3,  0 },
-
-    { ",",   2, opid1(','),         ASSOC_LEFT,  2,  0 }
+    /* Leave precedence 3 for : with -fcorrect-ternary */
+    { ",",   2, opid1(','),         ASSOC_LEFT,  2,  0 },
+    { ":",   0, opid2(':','?'),     ASSOC_RIGHT, 1,  0 }
 };
 static const size_t fte_operator_count = (sizeof(fte_operators) / sizeof(fte_operators[0]));
 
@@ -312,9 +313,6 @@ static const oper_info qcc_operators[] = {
     { "||",  2, opid2('|','|'),     ASSOC_LEFT,  5,  0 },
 
     { ",",   2, opid1(','),         ASSOC_LEFT,  2,  0 },
-
-    { "?",   3, opid2('?',':'),     ASSOC_RIGHT, 1,  0 },
-    { ":",   3, opid2(':','?'),     ASSOC_RIGHT, 1,  0 }
 };
 static const size_t qcc_operator_count = (sizeof(qcc_operators) / sizeof(qcc_operators[0]));
 
