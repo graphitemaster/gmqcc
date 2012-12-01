@@ -193,6 +193,11 @@ uint16_t type_not_instr[TYPE_COUNT] = {
     AINSTR_END, /* array  */
 };
 
+/* protos */
+static void ir_gen_extparam(ir_builder *ir);
+
+/* error functions */
+
 static void irerror(lex_ctx ctx, const char *msg, ...)
 {
     va_list ap;
@@ -2671,10 +2676,8 @@ tailcall:
                 ir_value *param = instr->params[p];
                 ir_value *targetparam;
 
-                if (p-8 >= vec_size(ir->extparams)) {
-                    irerror(instr->context, "Not enough extparam-globals have been created");
-                    return false;
-                }
+                if (p-8 >= vec_size(ir->extparams))
+                    ir_gen_extparam(ir);
 
                 targetparam = ir->extparams[p-8];
 
