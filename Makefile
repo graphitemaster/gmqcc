@@ -51,7 +51,7 @@ testsuite: $(OBJ_T)
 all: gmqcc qcvm testsuite
 
 check: all
-	./testsuite
+	@ ./testsuite
 
 clean:
 	rm -f *.o gmqcc qcvm testsuite *.dat
