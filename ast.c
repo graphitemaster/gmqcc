@@ -1400,23 +1400,40 @@ error: /* clean up */
     return false;
 }
 
-bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir)
+bool ast_generate_accessors(ast_value *self, ir_builder *ir)
 {
-    if (asvalue->setter) {
-        if (!ast_global_codegen  (asvalue->setter, ir, false) ||
-            !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
-            !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
-        {
-            compile_error(ast_ctx(asvalue), "internal error: failed to generate setter for `%s`", asvalue->name);
+    size_t i;
+    if (!self->setter || !self->getter)
+        return true;
+    for (i = 0; i < self->expression.count; ++i) {
+        if (!self->ir_values) {
+            compile_error(ast_ctx(self), "internal error: no array values generated for `%s`", self->name);
+            return false;
+        }
+        if (!self->ir_values[i]) {
+            compile_error(ast_ctx(self), "internal error: not all array values have been generated for `%s`", self->name);
+            return false;
+        }
+        if (self->ir_values[i]->life) {
+            compile_error(ast_ctx(self), "internal error: function containing `%s` already generated", self->name);
             return false;
         }
     }
-    if (asvalue->getter) {
-        if (!ast_global_codegen  (asvalue->getter, ir, false) ||
-            !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
-            !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
+    if (self->setter) {
+        if (!ast_global_codegen  (self->setter, ir, false) ||
+            !ast_function_codegen(self->setter->constval.vfunc, ir) ||
+            !ir_function_finalize(self->setter->constval.vfunc->ir_func))
         {
-            compile_error(ast_ctx(asvalue), "internal error: failed to generate getter for `%s`", asvalue->name);
+            compile_error(ast_ctx(self), "internal error: failed to generate setter for `%s`", self->name);
+            return false;
+        }
+    }
+    if (self->getter) {
+        if (!ast_global_codegen  (self->getter, ir, false) ||
+            !ast_function_codegen(self->getter->constval.vfunc, ir) ||
+            !ir_function_finalize(self->getter->constval.vfunc->ir_func))
+        {
+            compile_error(ast_ctx(self), "internal error: failed to generate getter for `%s`", self->name);
             return false;
         }
     }
