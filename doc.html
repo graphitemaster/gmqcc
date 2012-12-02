@@ -79,6 +79,10 @@
                         <td>Specfies the optimization level: highest being 3, lowest being 0 (no optimization).</td>
                     </tr>
                     <tr>
+                        <td>-g</td>
+                        <td>Enables generation of debug info for engine backtraces (turns on -flno)</td>
+                    </tr>
+                    <tr>
                         <td>-E</td>
                         <td>Instructs the compiler to only preprocess the input, writing the preprocessed output to stdout</td>
                     </tr>
@@ -195,7 +199,7 @@
                     </tr>
                     <tr>
                         <td>-flno</td>
-                        <td>Enables generation of progs.lno for engine VM backtraces</td>
+                        <td>Enables generation of progs.lno for engine VM backtraces (enabled with -g as well)</td>
                     </tr>
                 </table>
                 <h3>Warning options</h3>
