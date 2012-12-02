@@ -304,6 +304,11 @@ static bool options_parse(int argc, char **argv) {
                     opts_pp_only = true;
                     break;
 
+                /* debug turns on -flno */
+                case 'g':
+                    options_setflag("LNO", true);
+                    break;
+
                 /* handle all -fflags */
                 case 'f':
                     util_strtocmd(argv[0]+2, argv[0]+2, strlen(argv[0]+2)+1);
