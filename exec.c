@@ -694,7 +694,6 @@ static int qc_ftos(qc_program *prog)
 
 static int qc_stof(qc_program *prog)
 {
-    char buffer[512];
     qcany *str;
     qcany num;
     CheckArgs(1);
