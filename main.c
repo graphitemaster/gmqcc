@@ -169,7 +169,7 @@ static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, cha
     return options_long_witharg_all(optname, argc_, argv_, out, 1, false);
 }
 
-static void options_set(uint32_t *flags, size_t idx, bool on)
+void options_set(uint32_t *flags, size_t idx, bool on)
 {
     longbit lb = LONGBIT(idx);
 #if 0
