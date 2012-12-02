@@ -4591,25 +4591,9 @@ bool parser_finish(const char *output)
             if (!ast_istype(parser->globals[i], ast_value))
                 continue;
             asvalue = (ast_value*)(parser->globals[i]);
-            if (asvalue->setter) {
-                if (!ast_global_codegen(asvalue->setter, ir, false) ||
-                    !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
-                    !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
-                {
-                    printf("failed to generate setter for %s\n", asvalue->name);
-                    ir_builder_delete(ir);
-                    return false;
-                }
-            }
-            if (asvalue->getter) {
-                if (!ast_global_codegen(asvalue->getter, ir, false) ||
-                    !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
-                    !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
-                {
-                    printf("failed to generate getter for %s\n", asvalue->name);
-                    ir_builder_delete(ir);
-                    return false;
-                }
+            if (!ast_generate_accessors(asvalue, ir)) {
+                ir_builder_delete(ir);
+                return false;
             }
         }
         for (i = 0; i < vec_size(parser->fields); ++i) {
@@ -4620,25 +4604,9 @@ bool parser_finish(const char *output)
                 continue;
             if (asvalue->expression.vtype != TYPE_ARRAY)
                 continue;
-            if (asvalue->setter) {
-                if (!ast_global_codegen(asvalue->setter, ir, false) ||
-                    !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
-                    !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
-                {
-                    printf("failed to generate setter for %s\n", asvalue->name);
-                    ir_builder_delete(ir);
-                    return false;
-                }
-            }
-            if (asvalue->getter) {
-                if (!ast_global_codegen(asvalue->getter, ir, false) ||
-                    !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
-                    !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
-                {
-                    printf("failed to generate getter for %s\n", asvalue->name);
-                    ir_builder_delete(ir);
-                    return false;
-                }
+            if (!ast_generate_accessors(asvalue, ir)) {
+                ir_builder_delete(ir);
+                return false;
             }
         }
         for (i = 0; i < vec_size(parser->functions); ++i) {

@@ -1391,23 +1391,36 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
     v->cvq = self->cvq;
     self->ir_v = v;
 
-    if (self->setter) {
-        if (!ast_global_codegen(self->setter, func->owner, false) ||
-            !ast_function_codegen(self->setter->constval.vfunc, func->owner) ||
-            !ir_function_finalize(self->setter->constval.vfunc->ir_func))
-            return false;
-    }
-    if (self->getter) {
-        if (!ast_global_codegen(self->getter, func->owner, false) ||
-            !ast_function_codegen(self->getter->constval.vfunc, func->owner) ||
-            !ir_function_finalize(self->getter->constval.vfunc->ir_func))
-            return false;
-    }
+    if (!ast_generate_accessors(self, func->owner))
+        return false;
     return true;
 
 error: /* clean up */
     ir_value_delete(v);
     return false;
+}
+
+bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir)
+{
+    if (asvalue->setter) {
+        if (!ast_global_codegen  (asvalue->setter, ir, false) ||
+            !ast_function_codegen(asvalue->setter->constval.vfunc, ir) ||
+            !ir_function_finalize(asvalue->setter->constval.vfunc->ir_func))
+        {
+            compile_error(ast_ctx(asvalue), "internal error: failed to generate setter for `%s`", asvalue->name);
+            return false;
+        }
+    }
+    if (asvalue->getter) {
+        if (!ast_global_codegen  (asvalue->getter, ir, false) ||
+            !ast_function_codegen(asvalue->getter->constval.vfunc, ir) ||
+            !ir_function_finalize(asvalue->getter->constval.vfunc->ir_func))
+        {
+            compile_error(ast_ctx(asvalue), "internal error: failed to generate getter for `%s`", asvalue->name);
+            return false;
+        }
+    }
+    return true;
 }
 
 bool ast_function_codegen(ast_function *self, ir_builder *ir)
