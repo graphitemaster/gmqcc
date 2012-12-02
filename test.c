@@ -802,7 +802,7 @@ void task_destroy(const char *curdir) {
  * using the template passed into it for call-flags and user defined
  * messages.
  */
-bool task_execute(task_template_t *template) {
+bool task_execute(task_template_t *template, char ***line) {
     bool     success = false;
     FILE    *execute;
     char     buffer[4096];
@@ -866,6 +866,12 @@ bool task_execute(task_template_t *template) {
              * implementing multi-line match is TODO.
              */
             success = !!!(strcmp(data, template->comparematch[compare++]));
+
+            /*
+             * Copy to output vector for diagnostics if execution match
+             * fails.
+             */  
+            vec_push(*line, data);
         }
         mem_d(data);
         data = NULL;
@@ -883,6 +889,7 @@ bool task_execute(task_template_t *template) {
 void task_schedualize() {
     bool   execute  = false;
     char  *data     = NULL;
+    char **match    = NULL;
     size_t size     = 0;
     size_t i;
 
@@ -949,19 +956,38 @@ void task_schedualize() {
          * If we made it here that concludes the task is to be executed
          * in the virtual machine.
          */
-        if (!task_execute(task_tasks[i].template)) {
+        if (!task_execute(task_tasks[i].template, &match)) {
+            size_t d = 0;
+
             con_err("test failure: `%s` [%s] (invalid results from execution)\n",
-                task_tasks[i].template->description,
+                 task_tasks[i].template->description,
                 (task_tasks[i].template->failuremessage) ?
-                task_tasks[i].template->failuremessage : "unknown"
+                 task_tasks[i].template->failuremessage : "unknown"
             );
+
+            /*
+             * Print nicely formatted expected match lists to console error
+             * handler for the all the given matches in the template file and
+             * what was actually returned from executing.
+             */
+            con_err("    Expected From %u Matches:\n", vec_size(task_tasks[i].template->comparematch));
+            for (; d < vec_size(task_tasks[i].template->comparematch); d++) {
+                char  *select = task_tasks[i].template->comparematch[d];
+                size_t length = 40 - strlen(select);
+
+                con_err("        Expected: \"%s\"", select);
+                while (length --)
+                    con_err(" ");
+                con_err("| Got: \"%s\"\n", (d >= vec_size(match)) ? "<<nothing else to compare>>" : match[d]);
+            }
+            vec_free(match);
             continue;
         }
 
         con_out("test succeeded: `%s` [%s]\n",
-            task_tasks[i].template->description,
+             task_tasks[i].template->description,
             (task_tasks[i].template->successmessage) ?
-            task_tasks[i].template->successmessage  : "unknown"
+             task_tasks[i].template->successmessage  : "unknown"
         );
     }
     mem_d(data);
