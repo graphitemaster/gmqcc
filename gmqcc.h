@@ -263,6 +263,15 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_shrinkto(A,N)    (_vec_end(A) = (N))
 #define vec_shrinkby(A,N)    (_vec_end(A) -= (N))
 
+#define vec_upload(X,Y,S)      \
+    do {                       \
+        size_t E = 0;          \
+        while (E < S) {        \
+            vec_push(X, Y[E]); \
+            E ++;              \
+        }                      \
+    } while(0)
+
 typedef struct hash_table_t {
     size_t                size;
     struct hash_node_t **table;
@@ -333,21 +342,21 @@ enum {
 #define CV_CONST 1
 #define CV_VAR  -1
 
-extern const char *type_name[TYPE_COUNT];
+extern const char *type_name        [TYPE_COUNT];
+extern size_t      type_sizeof      [TYPE_COUNT];
+extern uint16_t    type_store_instr [TYPE_COUNT];
+extern uint16_t    field_store_instr[TYPE_COUNT];
 
-extern size_t type_sizeof[TYPE_COUNT];
-extern uint16_t type_store_instr[TYPE_COUNT];
-extern uint16_t field_store_instr[TYPE_COUNT];
-/* could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
+/*
+ * could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
  * but this breaks when TYPE_INTEGER is added, since with the enhanced
  * instruction set, the old ones are left untouched, thus the _I instructions
  * are at a seperate place.
  */
 extern uint16_t type_storep_instr[TYPE_COUNT];
-/* other useful lists */
-extern uint16_t type_eq_instr[TYPE_COUNT];
-extern uint16_t type_ne_instr[TYPE_COUNT];
-extern uint16_t type_not_instr[TYPE_COUNT];
+extern uint16_t type_eq_instr    [TYPE_COUNT];
+extern uint16_t type_ne_instr    [TYPE_COUNT];
+extern uint16_t type_not_instr   [TYPE_COUNT];
 
 typedef struct {
     uint32_t offset;      /* Offset in file of where data begins  */
@@ -356,15 +365,15 @@ typedef struct {
 
 typedef struct {
     uint32_t     version;      /* Program version (6)     */
-    uint16_t     crc16;        /* What is this?           */
-    uint16_t     skip;         /* see propsal.txt         */
+    uint16_t     crc16;
+    uint16_t     skip;
 
     prog_section statements;   /* prog_section_statement  */
     prog_section defs;         /* prog_section_def        */
     prog_section fields;       /* prog_section_field      */
     prog_section functions;    /* prog_section_function   */
-    prog_section strings;      /* What is this?           */
-    prog_section globals;      /* What is this?           */
+    prog_section strings;
+    prog_section globals;
     uint32_t     entfield;     /* Number of entity fields */
 } prog_header;
 
@@ -414,7 +423,8 @@ typedef struct {
 } prog_section_statement;
 
 typedef struct {
-    /* The types:
+    /*
+     * The types:
      * 0 = ev_void
      * 1 = ev_string
      * 2 = ev_float
@@ -429,6 +439,7 @@ typedef struct {
     uint16_t offset;
     uint32_t name;
 } prog_section_both;
+
 typedef prog_section_both prog_section_def;
 typedef prog_section_both prog_section_field;
 
@@ -570,7 +581,6 @@ typedef struct {
     size_t      line;
 } lex_ctx;
 
-
 /*===================================================================*/
 /*============================ con.c ================================*/
 /*===================================================================*/
@@ -592,27 +602,26 @@ enum {
     LVL_ERROR
 };
 
-
 void con_vprintmsg (int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
 void con_printmsg  (int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
 void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
 void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...);
 
-void con_close();
-void con_color(int state);
-void con_init ();
-void con_reset();
-int  con_change(const char *out, const char *err);
-int  con_verr  (const char *fmt, va_list va);
-int  con_vout  (const char *fmt, va_list va);
-int  con_err   (const char *fmt, ...);
-int  con_out   (const char *fmt, ...);
+void con_close ();
+void con_init  ();
+void con_reset ();
+void con_color (int);
+int  con_change(const char *, const char *);
+int  con_verr  (const char *, va_list);
+int  con_vout  (const char *, va_list);
+int  con_err   (const char *, ...);
+int  con_out   (const char *, ...);
 
 /* error/warning interface */
 extern size_t compile_errors;
 extern size_t compile_warnings;
 
-void compile_error(lex_ctx ctx, const char *msg, ...);
+void /********/ compile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
 bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...);
 
 /*===================================================================*/
@@ -717,7 +726,8 @@ vector  vec3_mulvf(vector, float);
 /*============================= exec.c ==============================*/
 /*===================================================================*/
 
-/* darkplaces has (or will have) a 64 bit prog loader
+/*
+ * Darkplaces has (or will have) a 64 bit prog loader
  * where the 32 bit qc program is autoconverted on load.
  * Since we may want to support that as well, let's redefine
  * float and int here.
@@ -855,7 +865,7 @@ typedef uint32_t longbit;
 /* Used to store the list of flags with names */
 typedef struct {
     const char *name;
-    longbit    bit;
+    longbit     bit;
 } opts_flag_def;
 
 /*===================================================================*/
@@ -913,6 +923,7 @@ enum {
     COMPILER_QCCX,    /* qccx   QuakeC */
     COMPILER_GMQCC    /* this   QuakeC */
 };
+
 extern uint32_t    opts_O;      /* -Ox */
 extern const char *opts_output; /* -o file */
 extern int         opts_standard;
@@ -927,11 +938,12 @@ extern bool        opts_pp_only;
 extern size_t      opts_max_array_size;
 
 /*===================================================================*/
-#define OPTS_FLAG(i) (!! (opts_flags[(i)/32] & (1<< ((i)%32))))
-extern uint32_t opts_flags[1 + (COUNT_FLAGS / 32)];
-#define OPTS_WARN(i) (!! (opts_warn[(i)/32] & (1<< ((i)%32))))
-extern uint32_t opts_warn[1 + (COUNT_WARNINGS / 32)];
+#define OPTS_FLAG(i)         (!! (opts_flags       [(i)/32] & (1<< ((i)%32))))
+#define OPTS_WARN(i)         (!! (opts_warn        [(i)/32] & (1<< ((i)%32))))
 #define OPTS_OPTIMIZATION(i) (!! (opts_optimization[(i)/32] & (1<< ((i)%32))))
+
+extern uint32_t opts_flags       [1 + (COUNT_FLAGS         / 32)];
+extern uint32_t opts_warn        [1 + (COUNT_WARNINGS      / 32)];
 extern uint32_t opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
 
 #endif

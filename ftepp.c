@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012
  *     Wolfgang Bumiller
+ *     Dale Weiler 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1367,19 +1368,48 @@ bool ftepp_preprocess_string(const char *name, const char *str)
 
 bool ftepp_init()
 {
+    char minor[32];
+    char major[32];
+    char *verminor = NULL;
+    char *vermajor = NULL;
+
     ftepp = ftepp_new();
     if (!ftepp)
         return false;
 
+    memset(minor, 0, sizeof(minor));
+    memset(major, 0, sizeof(major));
+
     /* set the right macro based on the selected standard */
     ftepp_add_define(NULL, "GMQCC");
-    if (opts_standard == COMPILER_FTEQCC)
+    if (opts_standard == COMPILER_FTEQCC) {
         ftepp_add_define(NULL, "__STD_FTEQCC__");
-    else if (opts_standard == COMPILER_GMQCC)
+        /* 1.00 */
+        major[0] = '1';
+        minor[0] = '0';
+    } else if (opts_standard == COMPILER_GMQCC) {
         ftepp_add_define(NULL, "__STD_GMQCC__");
-    else if (opts_standard == COMPILER_QCC)
+        sprintf(major, "%d", GMQCC_VERSION_MAJOR);
+        sprintf(minor, "%d", GMQCC_VERSION_MINOR);
+    } else if (opts_standard == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
+        /* 1.0 */
+        major[0] = '1';
+        minor[0] = '0';
+    }
 
+    vec_upload(verminor, "#define __STD_VERSION_MINOR__ \"", 31);
+    vec_upload(vermajor, "#define __STD_VERSION_MAJOR__ \"", 31);
+    vec_upload(verminor, minor, strlen(minor));
+    vec_upload(vermajor, major, strlen(major));
+    vec_push  (verminor, '"');
+    vec_push  (vermajor, '"');
+
+    ftepp_preprocess_string("__builtin__", verminor);
+    ftepp_preprocess_string("__builtin__", vermajor);
+
+    vec_free(verminor);
+    vec_free(vermajor);
     return true;
 }
 

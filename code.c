@@ -30,7 +30,6 @@ prog_section_field     *code_fields;
 prog_section_function  *code_functions;
 int                    *code_globals;
 char                   *code_chars;
-
 uint16_t                code_crc;
 uint32_t                code_entfields;
 
@@ -89,47 +88,6 @@ uint32_t code_cachedstring(const char *str)
     return code_genstring(str);
 }
 
-void code_test() {
-    prog_section_def       d1 = { TYPE_VOID,     28, 1 };
-    prog_section_def       d2 = { TYPE_FUNCTION, 29, 8 };
-    prog_section_def       d3 = { TYPE_STRING,   30, 14};
-    prog_section_function  f1 = { 1, 0, 0, 0, 1,            0,0, {0}};
-    prog_section_function  f2 = {-4, 0, 0, 0, 8,            0,0, {0}};
-    prog_section_function  f3 = { 0, 0, 0, 0, 14+13,        0,0, {0}};
-    prog_section_function  f4 = { 0, 0, 0, 0, 14+13+10,     0,0, {0}};
-    prog_section_function  f5 = { 0, 0, 0, 0, 14+13+10+7,   0,0, {0}};
-    prog_section_function  f6 = { 0, 0, 0, 0, 14+13+10+7+9, 0,0, {0}};
-    prog_section_statement s1 = { INSTR_STORE_F, {30}, {OFS_PARM0}, {0}};
-    prog_section_statement s2 = { INSTR_CALL1,   {29}, {0},         {0}};
-    prog_section_statement s3 = { INSTR_RETURN,  {0},  {0},         {0}};
-
-    strcpy(vec_add(code_chars, 0x7), "m_init");
-    strcpy(vec_add(code_chars, 0x6), "print");
-    strcpy(vec_add(code_chars, 0xD), "hello world\n");
-    strcpy(vec_add(code_chars, 0xA), "m_keydown");
-    strcpy(vec_add(code_chars, 0x7), "m_draw");
-    strcpy(vec_add(code_chars, 0x9), "m_toggle");
-    strcpy(vec_add(code_chars, 0xB), "m_shutdown");
-
-    vec_push(code_globals, 1);  /* m_init */
-    vec_push(code_globals, 2);  /* print  */
-    vec_push(code_globals, 14); /* hello world in string table */
-
-    /* now the defs */
-    vec_push(code_defs,       d1); /* m_init    */
-    vec_push(code_defs,       d2); /* print     */
-    vec_push(code_defs,       d3); /*hello_world*/
-    vec_push(code_functions,  f1); /* m_init    */
-    vec_push(code_functions,  f2); /* print     */
-    vec_push(code_functions,  f3); /* m_keydown */
-    vec_push(code_functions,  f4);
-    vec_push(code_functions,  f5);
-    vec_push(code_functions,  f6);
-    vec_push(code_statements, s1);
-    vec_push(code_statements, s2);
-    vec_push(code_statements, s3);
-}
-
 qcint code_alloc_field (size_t qcsize)
 {
     qcint pos = (qcint)code_entfields;
@@ -178,27 +136,16 @@ bool code_write(const char *filename, const char *lnofile) {
         if (!fp)
             return false;
 
-        if (fwrite(&lnotype, sizeof(lnotype), 1, fp) != 1 ||
-            fwrite(&version, sizeof(version), 1, fp) != 1 ||
-            fwrite(&code_header.defs.length,        sizeof(code_header.defs.length),        1, fp) != 1 ||
-            fwrite(&code_header.globals.length,     sizeof(code_header.globals.length),     1, fp) != 1 ||
-            fwrite(&code_header.fields.length,      sizeof(code_header.fields.length),      1, fp) != 1 ||
-            fwrite(&code_header.statements.length,  sizeof(code_header.statements.length),  1, fp) != 1 ||
-            fwrite(code_linenums, sizeof(code_linenums[0]), vec_size(code_linenums), fp) != vec_size(code_linenums))
+        if (fwrite(&lnotype,                        sizeof(lnotype),                        1,                       fp) != 1 ||
+            fwrite(&version,                        sizeof(version),                        1,                       fp) != 1 ||
+            fwrite(&code_header.defs.length,        sizeof(code_header.defs.length),        1,                       fp) != 1 ||
+            fwrite(&code_header.globals.length,     sizeof(code_header.globals.length),     1,                       fp) != 1 ||
+            fwrite(&code_header.fields.length,      sizeof(code_header.fields.length),      1,                       fp) != 1 ||
+            fwrite(&code_header.statements.length,  sizeof(code_header.statements.length),  1,                       fp) != 1 ||
+            fwrite(code_linenums,                   sizeof(code_linenums[0]),               vec_size(code_linenums), fp) != vec_size(code_linenums))
         {
             con_err("failed to write lno file\n");
         }
-            /*
-			h = SafeOpenWrite (destfile, 2*1024*1024);
-			SafeWrite (h, &lnotype, sizeof(int));
-			SafeWrite (h, &version, sizeof(int));
-			SafeWrite (h, &numglobaldefs, sizeof(int));
-			SafeWrite (h, &numpr_globals, sizeof(int));
-			SafeWrite (h, &numfielddefs, sizeof(int));
-			SafeWrite (h, &numstatements, sizeof(int));
-			SafeWrite (h, statement_linenums, numstatements*sizeof(int));
-			SafeClose (h);
-			*/
 
         fclose(fp);
         fp = NULL;
