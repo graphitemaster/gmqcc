@@ -910,8 +910,10 @@ void task_schedualize() {
         while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
             fputs(data, task_tasks[i].stdoutlog);
 
-            if (strstr(data, "failed to open file"))
-                execute = false;
+            if (strstr(data, "failed to open file")) {
+                task_tasks[i].compiled = false;
+                execute                = false;
+            }
 
             fflush(task_tasks[i].stdoutlog);
         }
@@ -933,17 +935,25 @@ void task_schedualize() {
             fflush(task_tasks[i].stdoutlog);
         }
 
-        /*
-         * If we made it here that concludes the task is to be executed
-         * in the virtual machine.
-         */
-        if (!execute || !task_execute(task_tasks[i].template)) {
-            con_err("test failure: `%s` [%s] see %s.stdout and %s.stderr\n",
+        if (!execute) {
+            con_err("test failure: `%s` [%s] (failed to compile) see %s.stdout and %s.stderr\n",
                 task_tasks[i].template->description,
                 (task_tasks[i].template->failuremessage) ?
                 task_tasks[i].template->failuremessage : "unknown",
                 task_tasks[i].template->tempfilename,
                 task_tasks[i].template->tempfilename
+            );
+            continue;
+        }
+        /*
+         * If we made it here that concludes the task is to be executed
+         * in the virtual machine.
+         */
+        if (!task_execute(task_tasks[i].template)) {
+            con_err("test failure: `%s` [%s] (invalid results from execution)\n",
+                task_tasks[i].template->description,
+                (task_tasks[i].template->failuremessage) ?
+                task_tasks[i].template->failuremessage : "unknown"
             );
             continue;
         }
