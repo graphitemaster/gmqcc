@@ -803,7 +803,7 @@ void task_destroy(const char *curdir) {
  * messages.
  */
 bool task_execute(task_template_t *template, char ***line) {
-    bool     success = false;
+    bool     success = true;
     FILE    *execute;
     char     buffer[4096];
     memset  (buffer,0,sizeof(buffer));
@@ -860,18 +860,18 @@ bool task_execute(task_template_t *template, char ***line) {
             if  (strrchr(data, '\n'))
                 *strrchr(data, '\n') = '\0';
 
-
-            /*
-             * We only care about the last line from the output for now
-             * implementing multi-line match is TODO.
-             */
-            success = !!!(strcmp(data, template->comparematch[compare++]));
+            if (strcmp(data, template->comparematch[compare++]))
+                success = false;
 
             /*
              * Copy to output vector for diagnostics if execution match
              * fails.
              */  
             vec_push(*line, data);
+
+            /* reset */
+            data = NULL;
+            size = 0;
         }
         mem_d(data);
         data = NULL;
@@ -892,6 +892,7 @@ void task_schedualize() {
     char **match    = NULL;
     size_t size     = 0;
     size_t i;
+    size_t j;
 
     util_debug("TEST", "found %d tasks, preparing to execute\n", vec_size(task_tasks));
 
@@ -980,9 +981,14 @@ void task_schedualize() {
                     con_err(" ");
                 con_err("| Got: \"%s\"\n", (d >= vec_size(match)) ? "<<nothing else to compare>>" : match[d]);
             }
+            for (j = 0; j < vec_size(match); j++)
+                mem_d(match[j]);
             vec_free(match);
             continue;
         }
+        for (j = 0; j < vec_size(match); j++)
+            mem_d(match[j]);
+        vec_free(match);
 
         con_out("test succeeded: `%s` [%s]\n",
              task_tasks[i].template->description,
