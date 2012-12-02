@@ -626,6 +626,7 @@ void ast_function_delete(ast_function*);
 const char* ast_function_label(ast_function*, const char *prefix);
 
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
+bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir);
 
 /* Expression union
  */

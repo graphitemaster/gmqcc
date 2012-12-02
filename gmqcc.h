@@ -946,4 +946,6 @@ extern uint32_t opts_flags       [1 + (COUNT_FLAGS         / 32)];
 extern uint32_t opts_warn        [1 + (COUNT_WARNINGS      / 32)];
 extern uint32_t opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
 
+void options_set(uint32_t *flags, size_t idx, bool on);
+
 #endif
