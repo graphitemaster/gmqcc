@@ -1404,6 +1404,8 @@ bool ftepp_init()
     vec_upload(vermajor, major, strlen(major));
     vec_push  (verminor, '"');
     vec_push  (vermajor, '"');
+    vec_push  (verminor, 0);
+    vec_push  (vermajor, 0);
 
     ftepp_preprocess_string("__builtin__", verminor);
     ftepp_preprocess_string("__builtin__", vermajor);
