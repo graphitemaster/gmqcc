@@ -492,6 +492,7 @@ unroll:
             vec_pop(command);
         }
         vec_free(command);
+        lex_ungetch(lex, ' ');
     }
     if (command) {
         vec_pop(command);
@@ -500,6 +501,7 @@ unroll:
             vec_pop(command);
         }
         vec_free(command);
+        lex_ungetch(lex, ' ');
     }
     if (pragma) {
         vec_pop(pragma);

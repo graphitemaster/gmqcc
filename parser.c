@@ -93,6 +93,9 @@ typedef struct {
      * we shall trigger -Wternary-precedence.
      */
     enum { POT_PAREN, POT_TERNARY1, POT_TERNARY2 } *pot;
+
+    /* pragma flags */
+    bool noref;
 } parser_t;
 
 static void parser_enterblock(parser_t *parser);
@@ -2398,6 +2401,75 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
     return true;
 }
 
+static bool parse_skipwhite(parser_t *parser)
+{
+    do {
+        if (!parser_next(parser))
+            return false;
+    } while (parser->tok == TOKEN_WHITE && parser->tok < TOKEN_ERROR);
+    return parser->tok < TOKEN_ERROR;
+}
+
+static bool parse_eol(parser_t *parser)
+{
+    if (!parse_skipwhite(parser))
+        return false;
+    return parser->tok == TOKEN_EOL;
+}
+
+static bool parse_pragma_do(parser_t *parser)
+{
+    if (!parser_next(parser) ||
+        parser->tok != TOKEN_IDENT ||
+        strcmp(parser_tokval(parser), "pragma"))
+    {
+        parseerror(parser, "expected `pragma` keyword after `#`, got `%s`", parser_tokval(parser));
+        return false;
+    }
+    if (!parse_skipwhite(parser) || parser->tok != TOKEN_IDENT) {
+        parseerror(parser, "expected pragma, got `%s`", parser_tokval(parser));
+        return false;
+    }
+
+    if (!strcmp(parser_tokval(parser), "noref")) {
+        if (!parse_skipwhite(parser) || parser->tok != TOKEN_INTCONST) {
+            parseerror(parser, "`noref` pragma requires an argument: 0 or 1");
+            return false;
+        }
+        parser->noref = !!parser_token(parser)->constval.i;
+        if (!parse_eol(parser)) {
+            parseerror(parser, "parse error after `noref` pragma");
+            return false;
+        }
+    }
+    else
+    {
+        parseerror(parser, "unrecognized hash-keyword: `%s`", parser_tokval(parser));
+        return false;
+    }
+
+    return true;
+}
+
+static bool parse_pragma(parser_t *parser)
+{
+    bool rv;
+    parser->lex->flags.preprocessing = true;
+    parser->lex->flags.mergelines = true;
+    rv = parse_pragma_do(parser);
+    if (parser->tok != TOKEN_EOL) {
+        parseerror(parser, "junk after pragma");
+        rv = false;
+    }
+    parser->lex->flags.preprocessing = false;
+    parser->lex->flags.mergelines = false;
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error after pragma");
+        rv = false;
+    }
+    return rv;
+}
+
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
     int cvq;
@@ -4265,6 +4337,10 @@ static bool parser_global_statement(parser_t *parser)
         }
         parseerror(parser, "unrecognized keyword `%s`", parser_tokval(parser));
         return false;
+    }
+    else if (parser->tok == '#')
+    {
+        return parse_pragma(parser);
     }
     else if (parser->tok == '$')
     {
