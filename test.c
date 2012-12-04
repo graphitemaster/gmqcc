@@ -902,8 +902,7 @@ void task_schedualize() {
          * Generate a task from thin air if it requires execution in
          * the QCVM.
          */
-        if (!strcmp(task_tasks[i].template->proceduretype, "-execute"))
-            execute = true;
+        execute = !!(!strcmp(task_tasks[i].template->proceduretype, "-execute"));
 
         /*
          * We assume it compiled before we actually compiled :).  On error
@@ -943,7 +942,7 @@ void task_schedualize() {
             fflush(task_tasks[i].stdoutlog);
         }
 
-        if (!execute) {
+        if (!task_tasks[i].compiled) {
             con_err("test failure: `%s` [%s] (failed to compile) see %s.stdout and %s.stderr\n",
                 task_tasks[i].template->description,
                 (task_tasks[i].template->failuremessage) ?
@@ -953,6 +952,16 @@ void task_schedualize() {
             );
             continue;
         }
+
+        if (!execute) {
+            con_out("test succeeded: `%s` [%s]\n",
+                 task_tasks[i].template->description,
+                (task_tasks[i].template->successmessage) ?
+                 task_tasks[i].template->successmessage  : "unknown"
+            );
+            continue;
+        }
+
         /*
          * If we made it here that concludes the task is to be executed
          * in the virtual machine.
