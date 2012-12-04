@@ -84,7 +84,7 @@ bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
         lvl = LVL_ERROR;
 
     va_start(ap, fmt);
-    con_vprintmsg(lvl, lex->name, lex->sline, "warning", fmt, ap);
+    con_vprintmsg(lvl, lex->name, lex->sline, (opts_werror ? "error" : "warning"), fmt, ap);
     va_end(ap);
 
     return opts_werror;

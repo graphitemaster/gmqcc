@@ -393,7 +393,7 @@ bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
         ++compile_warnings;
 
     va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
+    con_vprintmsg(lvl, ctx.file, ctx.line, (opts_werror ? "error" : "warning"), fmt, ap);
     va_end(ap);
 
     return opts_werror;

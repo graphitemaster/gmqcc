@@ -218,7 +218,7 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
 	    lvl = LVL_ERROR;
 
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, "warning", fmt, ap);
+    con_vprintmsg(lvl, ctx.file, ctx.line, (opts_werror ? "error" : "warning"), fmt, ap);
 	va_end(ap);
 
 	return opts_werror;
