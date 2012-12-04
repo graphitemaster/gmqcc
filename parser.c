@@ -484,7 +484,7 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     return true;
 }
 
-static bool parser_sy_pop(parser_t *parser, shunt *sy)
+static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
     lex_ctx ctx;
@@ -1317,7 +1317,7 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
             /* pop off the parenthesis */
             vec_shrinkby(sy->ops, 1);
             /* then apply the index operator */
-            if (!parser_sy_pop(parser, sy))
+            if (!parser_sy_apply_operator(parser, sy))
                 return false;
             return true;
         }
@@ -1333,7 +1333,7 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
             vec_shrinkby(sy->ops, 1);
             return true;
         }
-        if (!parser_sy_pop(parser, sy))
+        if (!parser_sy_apply_operator(parser, sy))
             return false;
     }
     return true;
@@ -1621,7 +1621,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     (op->prec < olast->prec) ||
                     (op->assoc == ASSOC_LEFT && op->prec <= olast->prec) ) )
             {
-                if (!parser_sy_pop(parser, &sy))
+                if (!parser_sy_apply_operator(parser, &sy))
                     goto onerr;
                 if (vec_size(sy.ops) && !vec_last(sy.ops).paren)
                     olast = &operators[vec_last(sy.ops).etype-1];
@@ -1708,7 +1708,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     }
 
     while (vec_size(sy.ops)) {
-        if (!parser_sy_pop(parser, &sy))
+        if (!parser_sy_apply_operator(parser, &sy))
             goto onerr;
     }
 
@@ -4227,7 +4227,7 @@ skipvar:
                 vec_push(sy.out, syexp(ast_ctx(var), (ast_expression*)var));
                 vec_push(sy.out, syexp(ast_ctx(cexp), (ast_expression*)cexp));
                 vec_push(sy.ops, syop(ast_ctx(var), parser->assign_op));
-                if (!parser_sy_pop(parser, &sy))
+                if (!parser_sy_apply_operator(parser, &sy))
                     ast_unref(cexp);
                 else {
                     if (vec_size(sy.out) != 1 && vec_size(sy.ops) != 0)
