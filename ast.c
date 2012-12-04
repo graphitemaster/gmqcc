@@ -2346,6 +2346,8 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     self->expression.outr = ir_phi_value(phi);
     *out = self->expression.outr;
 
+    codegen_output_type(self, *out);
+
     return true;
 }
 
