@@ -102,7 +102,7 @@ static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref);
 static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
@@ -2031,7 +2031,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
         }
-        if (!parse_variable(parser, block, true, CV_VAR, typevar))
+        if (!parse_variable(parser, block, true, CV_VAR, typevar, false))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2168,6 +2168,46 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     return true;
 }
 
+/* returns true when it was a variable qualifier, false otherwise!
+ * on error, cvq is set to CV_WRONG
+ */
+static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref)
+{
+    bool had_const = false;
+    bool had_var   = false;
+    bool had_noref = false;
+
+    for (;;) {
+        if (!strcmp(parser_tokval(parser), "const"))
+            had_const = true;
+        else if (!strcmp(parser_tokval(parser), "var"))
+            had_var = true;
+        else if (with_local && !strcmp(parser_tokval(parser), "local"))
+            had_var = true;
+        else if (!strcmp(parser_tokval(parser), "noref"))
+            had_noref = true;
+        else if (!had_const && !had_var && !had_noref) {
+            return false;
+        }
+        else
+            break;
+        if (!parser_next(parser))
+            goto onerr;
+    }
+    if (had_const)
+        *cvq = CV_CONST;
+    else if (had_var)
+        *cvq = CV_VAR;
+    else
+        *cvq = CV_NONE;
+    *noref = had_noref;
+    return true;
+onerr:
+    parseerror(parser, "parse error after variable qualifier");
+    *cvq = CV_WRONG;
+    return true;
+}
+
 static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_expression *operand;
@@ -2175,6 +2215,9 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     ast_value      *typevar;
     ast_switch     *switchnode;
     ast_switch_case swcase;
+
+    int  cvq;
+    bool noref;
 
     lex_ctx ctx = parser_ctx(parser);
 
@@ -2226,40 +2269,19 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
         if (parser->tok == TOKEN_IDENT)
             typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (typevar || parser->tok == TOKEN_TYPENAME) {
-            if (!parse_variable(parser, block, false, CV_NONE, typevar)) {
+            if (!parse_variable(parser, block, false, CV_NONE, typevar, false)) {
                 ast_delete(switchnode);
                 return false;
             }
             continue;
         }
-        if (!strcmp(parser_tokval(parser), "var") ||
-            !strcmp(parser_tokval(parser), "local"))
+        if (parse_var_qualifiers(parser, true, &cvq, &noref))
         {
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected variable declaration");
+            if (cvq == CV_WRONG) {
                 ast_delete(switchnode);
                 return false;
             }
-            if (!parse_variable(parser, block, false, CV_VAR, NULL)) {
-                ast_delete(switchnode);
-                return false;
-            }
-            continue;
-        }
-        if (!strcmp(parser_tokval(parser), "const")) {
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected variable declaration");
-                ast_delete(switchnode);
-                return false;
-            }
-            if (!strcmp(parser_tokval(parser), "var")) {
-                if (!parser_next(parser)) {
-                    parseerror(parser, "expected variable declaration");
-                    ast_delete(switchnode);
-                    return false;
-                }
-            }
-            if (!parse_variable(parser, block, false, CV_CONST, NULL)) {
+            if (!parse_variable(parser, block, false, cvq, NULL, noref)) {
                 ast_delete(switchnode);
                 return false;
             }
@@ -2472,8 +2494,10 @@ static bool parse_pragma(parser_t *parser)
 
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
-    int cvq;
+    bool       noref;
+    int        cvq = CV_NONE;
     ast_value *typevar = NULL;
+
     *out = NULL;
 
     if (parser->tok == TOKEN_IDENT)
@@ -2490,43 +2514,19 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, false, CV_NONE, typevar))
+        if (!parse_variable(parser, block, false, CV_NONE, typevar, false))
             return false;
-        *out = NULL;
         return true;
     }
-    else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var"))
+    else if (parse_var_qualifiers(parser, !!block, &cvq, &noref))
     {
-        goto ident_var;
+        if (cvq == CV_WRONG)
+            return false;
+        return parse_variable(parser, block, true, cvq, NULL, noref);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
-        if (!strcmp(parser_tokval(parser), "local") ||
-            !strcmp(parser_tokval(parser), "const") ||
-            !strcmp(parser_tokval(parser), "var"))
-        {
-ident_var:
-            if (parser_tokval(parser)[0] == 'c')
-                cvq = CV_CONST;
-            else if (parser_tokval(parser)[0] == 'v')
-                cvq = CV_VAR;
-            else
-                cvq = CV_NONE;
-
-            if (!block) {
-                parseerror(parser, "cannot declare a local variable here");
-                return false;
-            }
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected variable declaration");
-                return false;
-            }
-            if (!parse_variable(parser, block, true, cvq, NULL))
-                return false;
-            *out = NULL;
-            return true;
-        }
-        else if (!strcmp(parser_tokval(parser), "__builtin_debug_printtype"))
+        if (!strcmp(parser_tokval(parser), "__builtin_debug_printtype"))
         {
             char ty[1024];
             ast_value *tdef;
@@ -3761,7 +3761,7 @@ static bool parse_typedef(parser_t *parser)
     return true;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref)
 {
     ast_value *var;
     ast_value *proto;
@@ -3825,6 +3825,9 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
 
         var->cvq = qualifier;
+        /* in a noref section we simply bump the usecount */
+        if (noref || parser->noref)
+            var->uses++;
 
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
@@ -3835,10 +3838,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             /* Deal with end_sys_ vars */
             was_end = false;
             if (!strcmp(var->name, "end_sys_globals")) {
+                var->uses++;
                 parser->crc_globals = vec_size(parser->globals);
                 was_end = true;
             }
             else if (!strcmp(var->name, "end_sys_fields")) {
+                var->uses++;
                 parser->crc_fields = vec_size(parser->fields);
                 was_end = true;
             }
@@ -4287,48 +4292,26 @@ cleanup:
 
 static bool parser_global_statement(parser_t *parser)
 {
+    int        cvq = CV_WRONG;
+    bool       noref = false;
     ast_value *istype = NULL;
+
     if (parser->tok == TOKEN_IDENT)
         istype = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, false, CV_NONE, istype);
+        return parse_variable(parser, NULL, false, CV_NONE, istype, false);
     }
-    else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var"))
+    else if (parse_var_qualifiers(parser, false, &cvq, &noref))
     {
-        if (!strcmp(parser_tokval(parser), "var")) {
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected variable declaration after 'var'");
-                return false;
-            }
-            if (parser->tok == TOKEN_KEYWORD && !strcmp(parser_tokval(parser), "const")) {
-                (void)!parsewarning(parser, WARN_CONST_VAR, "ignoring `const` after 'var' qualifier");
-                if (!parser_next(parser)) {
-                    parseerror(parser, "expected variable declaration after 'const var'");
-                    return false;
-                }
-            }
-            return parse_variable(parser, NULL, true, CV_VAR, NULL);
-        }
+        if (cvq == CV_WRONG)
+            return false;
+        return parse_variable(parser, NULL, true, cvq, NULL, noref);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
-        if (!strcmp(parser_tokval(parser), "const")) {
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected variable declaration after 'const'");
-                return false;
-            }
-            if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "var")) {
-                (void)!parsewarning(parser, WARN_CONST_VAR, "ignoring `var` after const qualifier");
-                if (!parser_next(parser)) {
-                    parseerror(parser, "expected variable declaration after 'const var'");
-                    return false;
-                }
-            }
-            return parse_variable(parser, NULL, true, CV_CONST, NULL);
-        }
-        else if (!strcmp(parser_tokval(parser), "typedef")) {
+        if (!strcmp(parser_tokval(parser), "typedef")) {
             if (!parser_next(parser)) {
                 parseerror(parser, "expected type definition after 'typedef'");
                 return false;
@@ -4628,12 +4611,8 @@ bool parser_finish(const char *output)
                 continue;
             asvalue = (ast_value*)(parser->globals[i]);
             if (!asvalue->uses && !asvalue->hasvalue && asvalue->expression.vtype != TYPE_FUNCTION) {
-                if (strcmp(asvalue->name, "end_sys_globals") &&
-                    strcmp(asvalue->name, "end_sys_fields"))
-                {
-                    retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
-                                                   "unused global: `%s`", asvalue->name);
-                }
+                retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
+                                               "unused global: `%s`", asvalue->name);
             }
             if (!ast_global_codegen(asvalue, ir, false)) {
                 con_out("failed to generate global %s\n", asvalue->name);
