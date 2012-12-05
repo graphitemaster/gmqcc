@@ -429,16 +429,10 @@ ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
 
     self->keep_dest = false;
 
-    self->expression.vtype = left->expression.vtype;
-    if (left->expression.next) {
-        self->expression.next = ast_type_copy(ctx, left);
-        if (!self->expression.next) {
-            ast_delete(self);
-            return NULL;
-        }
+    if (!ast_type_adopt(self, left)) {
+        ast_delete(self);
+        return NULL;
     }
-    else
-        self->expression.next = NULL;
 
     return self;
 }
@@ -855,11 +849,6 @@ ast_call* ast_call_new(lex_ctx ctx,
     self->params = NULL;
     self->func   = funcexpr;
 
-/*
-    self->expression.vtype = funcexpr->expression.next->expression.vtype;
-    if (funcexpr->expression.next->expression.next)
-        self->expression.next = ast_type_copy(ctx, funcexpr->expression.next->expression.next);
-*/
     ast_type_adopt(self, funcexpr->expression.next);
 
     return self;
@@ -915,16 +904,10 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
     self->dest = dest;
     self->source = source;
 
-    self->expression.vtype = dest->expression.vtype;
-    if (dest->expression.next) {
-        self->expression.next = ast_type_copy(ctx, dest);
-        if (!self->expression.next) {
-            ast_delete(self);
-            return NULL;
-        }
+    if (!ast_type_adopt(self, dest)) {
+        ast_delete(self);
+        return NULL;
     }
-    else
-        self->expression.next = NULL;
 
     return self;
 }
@@ -991,14 +974,8 @@ bool ast_block_set_type(ast_block *self, ast_expression *from)
 {
     if (self->expression.next)
         ast_delete(self->expression.next);
-    self->expression.vtype = from->expression.vtype;
-    if (from->expression.next) {
-        self->expression.next = ast_type_copy(self->expression.node.context, from->expression.next);
-        if (!self->expression.next)
-            return false;
-    }
-    else
-        self->expression.next = NULL;
+    if (!ast_type_adopt(self, from))
+        return false;
     return true;
 }
 
