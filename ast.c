@@ -950,10 +950,19 @@ ast_block* ast_block_new(lex_ctx ctx)
     return self;
 }
 
-void ast_block_add_expr(ast_block *self, ast_expression *e)
+bool ast_block_add_expr(ast_block *self, ast_expression *e)
 {
     ast_propagate_effects(self, e);
     vec_push(self->exprs, e);
+    if (self->expression.next) {
+        ast_delete(self->expression.next);
+        self->expression.next = NULL;
+    }
+    if (!ast_type_adopt(self, e)) {
+        compile_error(ast_ctx(self), "internal error: failed to adopt type");
+        return false;
+    }
+    return true;
 }
 
 void ast_block_collect(ast_block *self, ast_expression *expr)

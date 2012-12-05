@@ -573,7 +573,7 @@ bool ast_block_set_type(ast_block*, ast_expression *from);
 bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
 void ast_block_collect(ast_block*, ast_expression*);
 
-void ast_block_add_expr(ast_block*, ast_expression*);
+bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
 
 /* Function
  *

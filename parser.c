@@ -603,11 +603,15 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid1(','):
             if (blocks[0]) {
-                ast_block_add_expr(blocks[0], exprs[1]);
+                if (!ast_block_add_expr(blocks[0], exprs[1]))
+                    return false;
             } else {
                 blocks[0] = ast_block_new(ctx);
-                ast_block_add_expr(blocks[0], exprs[0]);
-                ast_block_add_expr(blocks[0], exprs[1]);
+                if (!ast_block_add_expr(blocks[0], exprs[0]) ||
+                    !ast_block_add_expr(blocks[0], exprs[1]))
+                {
+                    return false;
+                }
             }
             if (!ast_block_set_type(blocks[0], exprs[1]))
                 return false;
@@ -2368,7 +2372,10 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
             }
             if (!expr)
                 continue;
-            ast_block_add_expr(caseblock, expr);
+            if (!ast_block_add_expr(caseblock, expr)) {
+                ast_delete(switchnode);
+                return false;
+            }
         }
     }
 
@@ -2704,7 +2711,11 @@ static bool parse_block_into(parser_t *parser, ast_block *block)
         }
         if (!expr)
             continue;
-        ast_block_add_expr(block, expr);
+        if (!ast_block_add_expr(block, expr)) {
+            ast_delete(block);
+            block = NULL;
+            goto cleanup;
+        }
     }
 
     if (parser->tok != '}') {
@@ -2969,9 +2980,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
                 if (store_think)     ast_delete(store_think);
                 retval = false;
             }
-            ast_block_add_expr(block, (ast_expression*)store_frame);
-            ast_block_add_expr(block, (ast_expression*)store_nextthink);
-            ast_block_add_expr(block, (ast_expression*)store_think);
+            if (!ast_block_add_expr(block, (ast_expression*)store_frame) ||
+                !ast_block_add_expr(block, (ast_expression*)store_nextthink) ||
+                !ast_block_add_expr(block, (ast_expression*)store_think))
+            {
+                retval = false;
+            }
         }
 
         if (!retval) {
@@ -3120,7 +3134,10 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
             return NULL;
         }
 
-        ast_block_add_expr(block, (ast_expression*)st);
+        if (!ast_block_add_expr(block, (ast_expression*)st)) {
+            ast_delete(block);
+            return NULL;
+        }
 
         ret = ast_return_new(ctx, NULL);
         if (!ret) {
@@ -3128,7 +3145,10 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
             return NULL;
         }
 
-        ast_block_add_expr(block, (ast_expression*)ret);
+        if (!ast_block_add_expr(block, (ast_expression*)ret)) {
+            ast_delete(block);
+            return NULL;
+        }
 
         return (ast_expression*)block;
     } else {
@@ -3189,7 +3209,10 @@ static ast_expression *array_field_setter_node(
             return NULL;
         }
 
-        ast_block_add_expr(block, (ast_expression*)st);
+        if (!ast_block_add_expr(block, (ast_expression*)st)) {
+            ast_delete(block);
+            return NULL;
+        }
 
         ret = ast_return_new(ctx, NULL);
         if (!ret) {
@@ -3197,7 +3220,10 @@ static ast_expression *array_field_setter_node(
             return NULL;
         }
 
-        ast_block_add_expr(block, (ast_expression*)ret);
+        if (!ast_block_add_expr(block, (ast_expression*)ret)) {
+            ast_delete(block);
+            return NULL;
+        }
 
         return (ast_expression*)block;
     } else {
@@ -3309,9 +3335,8 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    ast_block_add_expr(func->blocks[0], root);
     array->setter = fval;
-    return true;
+    return ast_block_add_expr(func->blocks[0], root);
 cleanup:
     if (index) ast_delete(index);
     if (value) ast_delete(value);
@@ -3358,9 +3383,8 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         goto cleanup;
     }
 
-    ast_block_add_expr(func->blocks[0], root);
     array->setter = fval;
-    return true;
+    return ast_block_add_expr(func->blocks[0], root);
 cleanup:
     if (entity) ast_delete(entity);
     if (index)  ast_delete(index);
@@ -3405,9 +3429,8 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
         goto cleanup;
     }
 
-    ast_block_add_expr(func->blocks[0], root);
     array->getter = fval;
-    return true;
+    return ast_block_add_expr(func->blocks[0], root);
 cleanup:
     if (index) ast_delete(index);
     if (root)  ast_delete(root);
@@ -4232,7 +4255,8 @@ skipvar:
                 else {
                     if (vec_size(sy.out) != 1 && vec_size(sy.ops) != 0)
                         parseerror(parser, "internal error: leaked operands");
-                    ast_block_add_expr(localblock, (ast_expression*)sy.out[0].out);
+                    if (!ast_block_add_expr(localblock, (ast_expression*)sy.out[0].out))
+                        break;
                 }
                 vec_free(sy.out);
                 vec_free(sy.ops);
