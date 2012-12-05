@@ -529,6 +529,72 @@ ir_block* ir_function_create_block(lex_ctx ctx, ir_function *self, const char *l
     return bn;
 }
 
+static bool instr_is_operation(uint16_t op)
+{
+    return ( (op >= INSTR_MUL_F  && op <= INSTR_GT) ||
+             (op >= INSTR_LOAD_F && op <= INSTR_LOAD_FNC) ||
+             (op == INSTR_ADDRESS) ||
+             (op >= INSTR_NOT_F  && op <= INSTR_NOT_FNC) ||
+             (op >= INSTR_AND    && op <= INSTR_BITOR) );
+}
+
+bool ir_function_pass_minor(ir_function *self)
+{
+    size_t b;
+
+    for (b = 0; b < vec_size(self->blocks); ++b) {
+        size_t    i;
+        ir_block *block = self->blocks[b];
+
+        if (vec_size(block->instr) < 2)
+            continue;
+
+        for (i = 1; i < vec_size(block->instr); ++i) {
+            ir_instr *store;
+            ir_instr *oper;
+            ir_value *value;
+
+            store = block->instr[i];
+            if (store->opcode < INSTR_STORE_F ||
+                store->opcode > INSTR_STORE_FNC)
+            {
+                continue;
+            }
+
+            oper  = block->instr[i-1];
+            if (!instr_is_operation(oper->opcode))
+                continue;
+
+            value = oper->_ops[0];
+
+            /* only do it for SSA values */
+            if (value->store != store_value)
+                continue;
+
+            /* don't optimize out the temp if it's used later again */
+            if (vec_size(value->reads) != 1)
+                continue;
+
+            /* The very next store must use this value */
+            if (value->reads[0] != store)
+                continue;
+
+            /* And of course the store must _read_ from it, so it's in
+             * OP 1 */
+            if (store->_ops[1] != value)
+                continue;
+
+            ++optimization_count[OPTIM_MINOR];
+            oper->_ops[0] = store->_ops[0];
+
+            vec_remove(block->instr, i, 1);
+            ir_instr_delete(store);
+        }
+    }
+
+    return true;
+}
+
 bool ir_function_pass_tailcall(ir_function *self)
 {
     size_t b, p;
@@ -620,6 +686,13 @@ bool ir_function_finalize(ir_function *self)
 {
     if (self->builtin)
         return true;
+
+    if (OPTS_OPTIMIZATION(OPTIM_MINOR)) {
+        if (!ir_function_pass_minor(self)) {
+            irerror(self->context, "generic optimization pass broke something in `%s`", self->name);
+            return false;
+        }
+    }
 
     if (OPTS_OPTIMIZATION(OPTIM_TAIL_RECURSION)) {
         if (!ir_function_pass_tailcall(self)) {
