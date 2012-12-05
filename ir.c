@@ -2832,6 +2832,16 @@ tailcall:
             /* 2-operand instructions with A -> B */
             stmt.o2.u1 = stmt.o3.u1;
             stmt.o3.u1 = 0;
+
+            /* tiny optimization, don't output
+             * STORE a, a
+             */
+            if (stmt.o2.u1 == stmt.o1.u1 &&
+                OPTS_OPTIMIZATION(OPTIM_MINOR))
+            {
+                ++optimization_count[OPTIM_MINOR];
+                continue;
+            }
         }
 
         code_push_statement(&stmt, instr->context.line);
