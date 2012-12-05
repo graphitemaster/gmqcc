@@ -2205,6 +2205,15 @@ bool ir_function_allocate_locals(ir_function *self)
         {
             slot = alloc.locals[a];
 
+            /* never resize parameters
+             * will be required later when overlapping temps + locals
+             */
+            if (a < vec_size(self->params) &&
+                alloc.sizes[a] < type_sizeof[v->vtype])
+            {
+                continue;
+            }
+
             if (ir_values_overlap(v, slot))
                 continue;
 
