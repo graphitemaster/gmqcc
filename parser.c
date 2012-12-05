@@ -1571,6 +1571,10 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             vec_pop(parser->pot);
             wantop = true;
         }
+        else if (parser->tok == TOKEN_TYPENAME) {
+            parseerror(parser, "unexpected typename");
+            goto onerr;
+        }
         else if (parser->tok != TOKEN_OPERATOR) {
             if (wantop) {
                 parseerror(parser, "expected operator or end of statement");
