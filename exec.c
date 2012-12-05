@@ -948,13 +948,15 @@ int main(int argc, char **argv)
     else if (opts_printfuns) {
         for (i = 0; i < vec_size(prog->functions); ++i) {
             int32_t a;
-            printf("Function: %-16s taking %i parameters:",
+            printf("Function: %-16s taking %i parameters:(",
                    prog_getstring(prog, prog->functions[i].name),
                    (unsigned int)prog->functions[i].nargs);
             for (a = 0; a < prog->functions[i].nargs; ++a) {
                 printf(" %i", prog->functions[i].argsize[a]);
             }
-            printf(" firstlocal: %i\n", prog->functions[i].firstlocal);
+            printf(") locals: %i + %i\n",
+                   prog->functions[i].firstlocal,
+                   prog->functions[i].locals);
         }
     }
     else
