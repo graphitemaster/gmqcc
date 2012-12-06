@@ -50,25 +50,25 @@ static int usage() {
             "  -debug                 turns on compiler debug messages\n"
             "  -memchk                turns on compiler memory leak check\n");
     con_out("  -o, --output=file      output file, defaults to progs.dat\n"
-            "  -a filename            add an asm file to be assembled\n"
             "  -s filename            add a progs.src file to be used\n");
     con_out("  -E                     stop after preprocessing\n");
-    con_out("  -f<flag>               enable a flag\n"
-            "  -fno-<flag>            disable a flag\n"
-            "  -std standard          select one of the following standards\n"
+    con_out("  -std=standard          select one of the following standards\n"
             "       -std=qcc          original QuakeC\n"
             "       -std=fteqcc       fteqcc QuakeC\n"
             "       -std=gmqcc        this compiler (default)\n");
+    con_out("  -f<flag>               enable a flag\n"
+            "  -fno-<flag>            disable a flag\n"
+            "  -fhelp                 list possible flags\n");
     con_out("  -W<warning>            enable a warning\n"
             "  -Wno-<warning>         disable a warning\n"
             "  -Wall                  enable all warnings\n"
             "  -Werror                treat warnings as errors\n");
+    con_out("  -Whelp                 list possible warnings\n");
+    con_out("  -O<number>             optimization level\n"
+            "  -O<name>               enable specific optimization\n"
+            "  -Ono-<name>            disable specific optimization\n"
+            "  -Ohelp                 list optimizations\n");
     con_out("  -force-crc=num         force a specific checksum into the header\n");
-    con_out("\n");
-    con_out("flags:\n"
-            "  -fadjust-vector-fields\n"
-            "            when assigning a vector field, its _y and _z fields also get assigned\n"
-           );
     return -1;
 }
 
