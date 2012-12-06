@@ -584,7 +584,7 @@ bool ir_function_pass_minor(ir_function *self)
             if (store->_ops[1] != value)
                 continue;
 
-            ++optimization_count[OPTIM_MINOR];
+            ++optimization_count[OPTIM_PEEPHOLE];
             oper->_ops[0] = store->_ops[0];
 
             vec_remove(block->instr, i, 1);
@@ -635,7 +635,7 @@ bool ir_function_pass_tailcall(ir_function *self)
                 ret->_ops[0]   == store->_ops[0] &&
                 store->_ops[1] == call->_ops[0])
             {
-                ++optimization_count[OPTIM_MINOR];
+                ++optimization_count[OPTIM_PEEPHOLE];
                 call->_ops[0] = store->_ops[0];
                 vec_remove(block->instr, vec_size(block->instr) - 2, 1);
                 ir_instr_delete(store);
@@ -687,7 +687,7 @@ bool ir_function_finalize(ir_function *self)
     if (self->builtin)
         return true;
 
-    if (OPTS_OPTIMIZATION(OPTIM_MINOR)) {
+    if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         if (!ir_function_pass_minor(self)) {
             irerror(self->context, "generic optimization pass broke something in `%s`", self->name);
             return false;
@@ -936,6 +936,8 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->members[1] = NULL;
     self->members[2] = NULL;
     self->memberof = NULL;
+
+    self->unique_life = false;
 
     self->life = NULL;
     return self;
@@ -2145,6 +2147,7 @@ typedef struct {
     ir_value **locals;
     size_t    *sizes;
     size_t    *positions;
+    bool      *unique;
 } function_allocator;
 
 static bool function_allocator_alloc(function_allocator *alloc, const ir_value *var)
@@ -2161,6 +2164,7 @@ static bool function_allocator_alloc(function_allocator *alloc, const ir_value *
 
     vec_push(alloc->locals, slot);
     vec_push(alloc->sizes, vsize);
+    vec_push(alloc->unique, var->unique_life);
 
     return true;
 
@@ -2186,9 +2190,12 @@ bool ir_function_allocate_locals(ir_function *self)
     alloc.locals    = NULL;
     alloc.sizes     = NULL;
     alloc.positions = NULL;
+    alloc.unique    = NULL;
 
     for (i = 0; i < vec_size(self->locals); ++i)
     {
+        if (!OPTS_OPTIMIZATION(OPTIM_LOCALTEMPS))
+            self->locals[i]->unique_life = true;
         if (!function_allocator_alloc(&alloc, self->locals[i]))
             goto error;
     }
@@ -2203,6 +2210,10 @@ bool ir_function_allocate_locals(ir_function *self)
 
         for (a = 0; a < vec_size(alloc.locals); ++a)
         {
+            /* if it's reserved for a unique liferange: skip */
+            if (alloc.unique[a])
+                continue;
+
             slot = alloc.locals[a];
 
             /* never resize parameters
@@ -2253,7 +2264,11 @@ bool ir_function_allocate_locals(ir_function *self)
 
     self->allocated_locals = pos + vec_last(alloc.sizes);
 
-    /* Take over the actual slot positions */
+    /* Locals need to know their new position */
+    for (i = 0; i < vec_size(self->locals); ++i) {
+        self->locals[i]->code.local = alloc.positions[i];
+    }
+    /* Take over the actual slot positions on values */
     for (i = 0; i < vec_size(self->values); ++i) {
         self->values[i]->code.local = alloc.positions[self->values[i]->code.local];
     }
@@ -2338,7 +2353,6 @@ static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *ch
      * So we have to remove whatever does not exist in the previous block.
      * They will be re-added on-read, but the liferange merge won't cause
      * a change.
-     */
     for (i = 0; i < vec_size(self->living); ++i)
     {
         if (!vec_ir_value_find(prev->living, self->living[i], NULL)) {
@@ -2346,6 +2360,7 @@ static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *ch
             --i;
         }
     }
+     */
 
     /* Whatever the previous block still has in its living set
      * must now be added to ours as well.
@@ -2837,9 +2852,9 @@ tailcall:
              * STORE a, a
              */
             if (stmt.o2.u1 == stmt.o1.u1 &&
-                OPTS_OPTIMIZATION(OPTIM_MINOR))
+                OPTS_OPTIMIZATION(OPTIM_PEEPHOLE))
             {
-                ++optimization_count[OPTIM_MINOR];
+                ++optimization_count[OPTIM_PEEPHOLE];
                 continue;
             }
         }
@@ -2905,7 +2920,9 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     ir_function          *irfun;
 
     size_t i;
+#if 0
     size_t local_var_end;
+#endif
 
     if (!global->hasvalue || (!global->constval.vfunc))
     {
@@ -2931,6 +2948,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     fun.firstlocal = vec_size(code_globals);
 
+#if 0
     local_var_end = fun.firstlocal;
     for (i = 0; i < vec_size(irfun->locals); ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
@@ -2958,6 +2976,25 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     }
 
     fun.locals = vec_size(code_globals) - fun.firstlocal;
+#else
+    fun.locals = irfun->allocated_locals;
+    for (i = 0; i < vec_size(irfun->locals); ++i) {
+        if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
+            irerror(irfun->locals[i]->context, "Failed to generate local %s", irfun->locals[i]->name);
+            return false;
+        }
+        ir_value_code_setaddr(irfun->locals[i], fun.firstlocal + irfun->locals[i]->code.local);
+    }
+    for (i = vec_size(code_globals) - fun.firstlocal; i < fun.locals; ++i) {
+        vec_push(code_globals, 0);
+    }
+    for (i = 0; i < vec_size(irfun->values); ++i)
+    {
+        /* generate code.globaladdr for ssa values */
+        ir_value *v = irfun->values[i];
+        ir_value_code_setaddr(v, fun.firstlocal + v->code.local);
+    }
+#endif
 
     if (irfun->builtin)
         fun.entry = irfun->builtin+1;
@@ -3427,7 +3464,7 @@ void ir_function_dump(ir_function *f, char *ind,
     for (i = 0; i < vec_size(f->locals); ++i) {
         size_t l;
         ir_value *v = f->locals[i];
-        oprintf("%s\t%s: unique ", ind, v->name);
+        oprintf("%s\t%s: %s@%i ", ind, v->name, (v->unique_life ? "unique " : ""), (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }

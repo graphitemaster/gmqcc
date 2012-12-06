@@ -75,6 +75,9 @@ typedef struct ir_value_s {
     struct ir_value_s *members[3];
     struct ir_value_s *memberof;
 
+    /* arrays will never overlap with temps */
+    bool unique_life;
+
     /* For the temp allocator */
     ir_life_entry_t *life;
 } ir_value;
