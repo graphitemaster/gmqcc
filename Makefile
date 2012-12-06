@@ -1,6 +1,8 @@
 DESTDIR :=
 PREFIX := /usr/local
 BINDIR := $(PREFIX)/bin
+DATADIR := $(PREFIX)/share
+MANDIR := $(DATADIR)/man
 
 CC     ?= clang
 CFLAGS += -Wall -Wextra -I. -pedantic-errors
@@ -63,10 +65,13 @@ parser.o: ast.h lexer.h
 ast.o: ast.h ir.h
 ir.o: ir.h
 
-install: install-gmqcc install-qcvm
+install: install-gmqcc install-qcvm install-doc
 install-gmqcc: gmqcc
-	install -d -m755          $(DESTDIR)$(BINDIR)
-	install    -m755  gmqcc   $(DESTDIR)$(BINDIR)/gmqcc
+	install -d -m755               $(DESTDIR)$(BINDIR)
+	install    -m755  gmqcc        $(DESTDIR)$(BINDIR)/gmqcc
 install-qcvm: qcvm
-	install -d -m755          $(DESTDIR)$(BINDIR)
-	install    -m755  qcvm    $(DESTDIR)$(BINDIR)/qcvm
+	install -d -m755               $(DESTDIR)$(BINDIR)
+	install    -m755  qcvm         $(DESTDIR)$(BINDIR)/qcvm
+install-doc:
+	install -d -m755               $(DESTDIR)$(MANDIR)/man1
+	install    -m755  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
