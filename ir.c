@@ -538,7 +538,7 @@ static bool instr_is_operation(uint16_t op)
              (op >= INSTR_AND    && op <= INSTR_BITOR) );
 }
 
-bool ir_function_pass_minor(ir_function *self)
+bool ir_function_pass_peephole(ir_function *self)
 {
     size_t b;
 
@@ -688,7 +688,7 @@ bool ir_function_finalize(ir_function *self)
         return true;
 
     if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
-        if (!ir_function_pass_minor(self)) {
+        if (!ir_function_pass_peephole(self)) {
             irerror(self->context, "generic optimization pass broke something in `%s`", self->name);
             return false;
         }
