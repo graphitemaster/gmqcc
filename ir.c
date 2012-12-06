@@ -546,49 +546,100 @@ bool ir_function_pass_peephole(ir_function *self)
         size_t    i;
         ir_block *block = self->blocks[b];
 
-        if (vec_size(block->instr) < 2)
-            continue;
+        for (i = 0; i < vec_size(block->instr); ++i) {
+            ir_instr *inst;
+            inst = block->instr[i];
 
-        for (i = 1; i < vec_size(block->instr); ++i) {
-            ir_instr *store;
-            ir_instr *oper;
-            ir_value *value;
-
-            store = block->instr[i];
-            if (store->opcode < INSTR_STORE_F ||
-                store->opcode > INSTR_STORE_FNC)
+            if (i >= 1 &&
+                (inst->opcode >= INSTR_STORE_F &&
+                 inst->opcode <= INSTR_STORE_FNC))
             {
+                ir_instr *store;
+                ir_instr *oper;
+                ir_value *value;
+
+                store = inst;
+
+                oper  = block->instr[i-1];
+                if (!instr_is_operation(oper->opcode))
+                    continue;
+
+                value = oper->_ops[0];
+
+                /* only do it for SSA values */
+                if (value->store != store_value)
+                    continue;
+
+                /* don't optimize out the temp if it's used later again */
+                if (vec_size(value->reads) != 1)
+                    continue;
+
+                /* The very next store must use this value */
+                if (value->reads[0] != store)
+                    continue;
+
+                /* And of course the store must _read_ from it, so it's in
+                 * OP 1 */
+                if (store->_ops[1] != value)
+                    continue;
+
+                ++optimization_count[OPTIM_PEEPHOLE];
+                (void)!ir_instr_op(oper, 0, store->_ops[0], true);
+
+                vec_remove(block->instr, i, 1);
+                ir_instr_delete(store);
+            }
+            else if (inst->opcode == VINSTR_COND)
+            {
+                /* COND on a value resulting from a NOT could
+                 * remove the NOT and swap its operands
+                 */
+                while (true) {
+                    ir_block *tmp;
+                    size_t    inotid;
+                    ir_instr *inot;
+                    ir_value *value;
+                    value = inst->_ops[0];
+
+                    if (value->store != store_value ||
+                        vec_size(value->reads) != 1 ||
+                        value->reads[0] != inst)
+                    {
+                        break;
+                    }
+
+                    inot = value->writes[0];
+                    if (inot->_ops[0] != value ||
+                        inot->opcode < INSTR_NOT_F ||
+                        inot->opcode > INSTR_NOT_FNC ||
+                        inot->opcode == INSTR_NOT_V) /* can't do this one */
+                    {
+                        break;
+                    }
+
+                    /* count */
+                    ++optimization_count[OPTIM_PEEPHOLE];
+                    /* change operand */
+                    (void)!ir_instr_op(inst, 0, inot->_ops[1], false);
+                    /* remove NOT */
+                    tmp = inot->owner;
+                    for (inotid = 0; inotid < vec_size(tmp->instr); ++inotid) {
+                        if (tmp->instr[inotid] == inot)
+                            break;
+                    }
+                    if (inotid >= vec_size(tmp->instr)) {
+                        compile_error(inst->context, "sanity-check failed: failed to find instruction to optimize out");
+                        return false;
+                    }
+                    vec_remove(tmp->instr, inotid, 1);
+                    ir_instr_delete(inot);
+                    /* swap ontrue/onfalse */
+                    tmp = inst->bops[0];
+                    inst->bops[0] = inst->bops[1];
+                    inst->bops[1] = tmp;
+                }
                 continue;
             }
-
-            oper  = block->instr[i-1];
-            if (!instr_is_operation(oper->opcode))
-                continue;
-
-            value = oper->_ops[0];
-
-            /* only do it for SSA values */
-            if (value->store != store_value)
-                continue;
-
-            /* don't optimize out the temp if it's used later again */
-            if (vec_size(value->reads) != 1)
-                continue;
-
-            /* The very next store must use this value */
-            if (value->reads[0] != store)
-                continue;
-
-            /* And of course the store must _read_ from it, so it's in
-             * OP 1 */
-            if (store->_ops[1] != value)
-                continue;
-
-            ++optimization_count[OPTIM_PEEPHOLE];
-            oper->_ops[0] = store->_ops[0];
-
-            vec_remove(block->instr, i, 1);
-            ir_instr_delete(store);
         }
     }
 
