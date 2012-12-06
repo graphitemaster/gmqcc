@@ -80,14 +80,14 @@ bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (opts_werror)
+    if (opts.werror)
         lvl = LVL_ERROR;
 
     va_start(ap, fmt);
-    con_vprintmsg(lvl, lex->name, lex->sline, (opts_werror ? "error" : "warning"), fmt, ap);
+    con_vprintmsg(lvl, lex->name, lex->sline, (opts.werror ? "error" : "warning"), fmt, ap);
     va_end(ap);
 
-    return opts_werror;
+    return opts.werror;
 }
 
 
@@ -1304,7 +1304,7 @@ int lex_do(lex_file *lex)
                 if (!strcmp(v, keywords_qc[kw]))
                     return (lex->tok.ttype = TOKEN_KEYWORD);
             }
-            if (opts_standard != COMPILER_QCC) {
+            if (opts.standard != COMPILER_QCC) {
                 for (kw = 0; kw < num_keywords_fg; ++kw) {
                     if (!strcmp(v, keywords_fg[kw]))
                         return (lex->tok.ttype = TOKEN_KEYWORD);

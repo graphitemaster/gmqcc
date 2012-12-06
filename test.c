@@ -25,8 +25,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-bool  opts_memchk = false;
-bool  opts_debug  = false;
+cmd_options opts;
+
 char *task_bins[] = {
     "./gmqcc",
     "./qcvm"
@@ -1095,11 +1095,11 @@ int main(int argc, char **argv) {
             con_change(redirout, redirerr);
 
             if (!strcmp(argv[0]+1, "debug")) {
-                opts_debug = true;
+                opts.debug = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "memchk")) {
-                opts_memchk = true;
+                opts.memchk = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "nocolor")) {

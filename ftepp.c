@@ -101,7 +101,7 @@ static bool GMQCC_WARN ftepp_warn(ftepp_t *ftepp, int warntype, const char *fmt,
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (opts_werror) {
+    if (opts.werror) {
 	    lvl = LVL_ERROR;
         ftepp->errors++;
     }
@@ -109,7 +109,7 @@ static bool GMQCC_WARN ftepp_warn(ftepp_t *ftepp, int warntype, const char *fmt,
     va_start(ap, fmt);
     con_cvprintmsg((void*)&ftepp->lex->tok.ctx, lvl, "error", fmt, ap);
     va_end(ap);
-    return opts_werror;
+    return opts.werror;
 }
 
 static pptoken *pptoken_make(ftepp_t *ftepp)
@@ -1382,16 +1382,16 @@ bool ftepp_init()
 
     /* set the right macro based on the selected standard */
     ftepp_add_define(NULL, "GMQCC");
-    if (opts_standard == COMPILER_FTEQCC) {
+    if (opts.standard == COMPILER_FTEQCC) {
         ftepp_add_define(NULL, "__STD_FTEQCC__");
         /* 1.00 */
         major[0] = '1';
         minor[0] = '0';
-    } else if (opts_standard == COMPILER_GMQCC) {
+    } else if (opts.standard == COMPILER_GMQCC) {
         ftepp_add_define(NULL, "__STD_GMQCC__");
         sprintf(major, "%d", GMQCC_VERSION_MAJOR);
         sprintf(minor, "%d", GMQCC_VERSION_MINOR);
-    } else if (opts_standard == COMPILER_QCC) {
+    } else if (opts.standard == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
         /* 1.0 */
         major[0] = '1';

@@ -113,8 +113,8 @@ bool code_write(const char *filename, const char *lnofile) {
     code_header.strings.offset    = code_header.globals.offset    + (sizeof(int32_t)                * vec_size(code_globals));
     code_header.strings.length    = vec_size(code_chars);
     code_header.version           = 6;
-    if (opts_forcecrc)
-        code_header.crc16         = opts_forced_crc;
+    if (opts.forcecrc)
+        code_header.crc16         = opts.forced_crc;
     else
         code_header.crc16         = code_crc;
     code_header.entfield          = code_entfields;

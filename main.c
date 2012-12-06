@@ -24,26 +24,11 @@
 #include "gmqcc.h"
 #include "lexer.h"
 
-uint32_t    opts_flags[1 + (COUNT_FLAGS / 32)];
-uint32_t    opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
-
 /* counter increased in ir.c */
 unsigned int optimization_count[COUNT_OPTIMIZATIONS];
-
-uint32_t    opts_O        = 1;
-const char *opts_output   = "progs.dat";
-int         opts_standard = COMPILER_GMQCC;
-bool        opts_debug    = false;
-bool        opts_memchk   = false;
-bool        opts_dumpfin  = false;
-bool        opts_dump     = false;
-bool        opts_forcecrc = false;
-bool        opts_pp_only  = false;
-size_t      opts_max_array_size = (1024 << 3);
-
-uint16_t    opts_forced_crc;
-
 static bool opts_output_wasset = false;
+
+cmd_options opts;
 
 /* set by the standard */
 const oper_info *operators      = NULL;
@@ -110,13 +95,13 @@ static bool options_setflag_all(const char *name, bool on, uint32_t *flags, cons
     return false;
 }
 static bool options_setflag(const char *name, bool on) {
-    return options_setflag_all(name, on, opts_flags, opts_flag_list, COUNT_FLAGS);
+    return options_setflag_all(name, on, opts.flags, opts_flag_list, COUNT_FLAGS);
 }
 static bool options_setwarn(const char *name, bool on) {
-    return options_setflag_all(name, on, opts_warn, opts_warn_list, COUNT_WARNINGS);
+    return options_setflag_all(name, on, opts.warn, opts_warn_list, COUNT_WARNINGS);
 }
 static bool options_setoptim(const char *name, bool on) {
-    return options_setflag_all(name, on, opts_optimization, opts_opt_list, COUNT_OPTIMIZATIONS);
+    return options_setflag_all(name, on, opts.optimization, opts_opt_list, COUNT_OPTIMIZATIONS);
 }
 
 static bool options_witharg(int *argc_, char ***argv_, char **out) {
@@ -189,7 +174,7 @@ static void set_optimizations(unsigned int level)
 {
     size_t i;
     for (i = 0; i < COUNT_OPTIMIZATIONS; ++i)
-        options_set(opts_optimization, i, level >= opts_opt_oflag[i]);
+        options_set(opts.optimization, i, level >= opts_opt_oflag[i]);
 }
 
 static bool options_parse(int argc, char **argv) {
@@ -210,23 +195,23 @@ static bool options_parse(int argc, char **argv) {
     /* All gcc-type long options */
             if (options_long_gcc("std", &argc, &argv, &argarg)) {
                 if      (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default")) {
-                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
-                    opts_standard = COMPILER_GMQCC;
+                    options_set(opts.flags, ADJUST_VECTOR_FIELDS, true);
+                    opts.standard = COMPILER_GMQCC;
                 } else if (!strcmp(argarg, "qcc")) {
-                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
-                    options_set(opts_flags, ASSIGN_FUNCTION_TYPES, true);
-                    opts_standard = COMPILER_QCC;
+                    options_set(opts.flags, ADJUST_VECTOR_FIELDS, false);
+                    options_set(opts.flags, ASSIGN_FUNCTION_TYPES, true);
+                    opts.standard = COMPILER_QCC;
                 } else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc")) {
-                    options_set(opts_flags, FTEPP,                true);
-                    options_set(opts_flags, TRANSLATABLE_STRINGS, true);
-                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
-                    options_set(opts_flags, ASSIGN_FUNCTION_TYPES, true);
-                    options_set(opts_warn, WARN_TERNARY_PRECEDENCE, true);
-                    options_set(opts_flags, CORRECT_TERNARY, false);
-                    opts_standard = COMPILER_FTEQCC;
+                    options_set(opts.flags, FTEPP,                true);
+                    options_set(opts.flags, TRANSLATABLE_STRINGS, true);
+                    options_set(opts.flags, ADJUST_VECTOR_FIELDS, false);
+                    options_set(opts.flags, ASSIGN_FUNCTION_TYPES, true);
+                    options_set(opts.warn, WARN_TERNARY_PRECEDENCE, true);
+                    options_set(opts.flags, CORRECT_TERNARY, false);
+                    opts.standard = COMPILER_FTEQCC;
                 } else if (!strcmp(argarg, "qccx")) {
-                    options_set(opts_flags, ADJUST_VECTOR_FIELDS, false);
-                    opts_standard = COMPILER_QCCX;
+                    options_set(opts.flags, ADJUST_VECTOR_FIELDS, false);
+                    opts.standard = COMPILER_QCCX;
                 } else {
                     con_out("Unknown standard: %s\n", argarg);
                     return false;
@@ -234,8 +219,8 @@ static bool options_parse(int argc, char **argv) {
                 continue;
             }
             if (options_long_gcc("force-crc", &argc, &argv, &argarg)) {
-                opts_forcecrc = true;
-                opts_forced_crc = strtol(argarg, NULL, 0);
+                opts.forcecrc = true;
+                opts.forced_crc = strtol(argarg, NULL, 0);
                 continue;
             }
             if (options_long_gcc("redirout", &argc, &argv, &redirout)) {
@@ -273,19 +258,19 @@ static bool options_parse(int argc, char **argv) {
             }
 
             if (!strcmp(argv[0]+1, "debug")) {
-                opts_debug = true;
+                opts.debug = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "dump")) {
-                opts_dump = true;
+                opts.dump = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "dumpfin")) {
-                opts_dumpfin = true;
+                opts.dumpfin = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "memchk")) {
-                opts_memchk = true;
+                opts.memchk = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "nocolor")) {
@@ -301,7 +286,7 @@ static bool options_parse(int argc, char **argv) {
                     /* break; never reached because of exit(0) */
 
                 case 'E':
-                    opts_pp_only = true;
+                    opts.pp_only = true;
                     break;
 
                 /* debug turns on -flno */
@@ -342,21 +327,21 @@ static bool options_parse(int argc, char **argv) {
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "NO_ERROR")) {
-                        opts_werror = false;
+                        opts.werror = false;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "ERROR")) {
-                        opts_werror = true;
+                        opts.werror = true;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "NONE")) {
-                        for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
-                            opts_warn[itr] = 0;
+                        for (itr = 0; itr < sizeof(opts.warn)/sizeof(opts.warn[0]); ++itr)
+                            opts.warn[itr] = 0;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "ALL")) {
-                        for (itr = 0; itr < sizeof(opts_warn)/sizeof(opts_warn[0]); ++itr)
-                            opts_warn[itr] = 0xFFFFFFFFL;
+                        for (itr = 0; itr < sizeof(opts.warn)/sizeof(opts.warn[0]); ++itr)
+                            opts.warn[itr] = 0xFFFFFFFFL;
                         break;
                     }
                     if (!strncmp(argv[0]+2, "NO_", 3)) {
@@ -377,8 +362,8 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     if (isdigit(argarg[0])) {
-                        opts_O = atoi(argarg);
-                        set_optimizations(opts_O);
+                        opts.O = atoi(argarg);
+                        set_optimizations(opts.O);
                     } else {
                         util_strtocmd(argarg, argarg, strlen(argarg)+1);
                         if (!strcmp(argarg, "HELP")) {
@@ -390,7 +375,7 @@ static bool options_parse(int argc, char **argv) {
                             exit(0);
                         }
                         else if (!strcmp(argarg, "ALL"))
-                            set_optimizations(opts_O = 9999);
+                            set_optimizations(opts.O = 9999);
                         else if (!strncmp(argarg, "NO_", 3)) {
                             if (!options_setoptim(argarg+3, false)) {
                                 con_out("unknown optimization: %s\n", argarg+3);
@@ -411,7 +396,7 @@ static bool options_parse(int argc, char **argv) {
                         con_out("option -o requires an argument: the output file name\n");
                         return false;
                     }
-                    opts_output = argarg;
+                    opts.output = argarg;
                     opts_output_wasset = true;
                     break;
 
@@ -441,7 +426,7 @@ static bool options_parse(int argc, char **argv) {
                     else {
             /* All long options with arguments */
                         if (options_long_witharg("output", &argc, &argv, &argarg)) {
-                            opts_output = argarg;
+                            opts.output = argarg;
                             opts_output_wasset = true;
                         } else {
                             con_out("Unknown parameter: %s\n", argv[0]);
@@ -500,44 +485,49 @@ int main(int argc, char **argv) {
     bool progs_src = false;
     FILE *outfile = NULL;
 
+    memset(&opts, 0, sizeof(opts));
+    opts.output         = "progs.dat";
+    opts.standard       = COMPILER_GMQCC;
+    opts.max_array_size = (1024<<3);
+
     app_name = argv[0];
     con_init();
 
     /* default options / warn flags */
-    options_set(opts_warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
-    options_set(opts_warn, WARN_EXTENSIONS, true);
-    options_set(opts_warn, WARN_FIELD_REDECLARED, true);
-    options_set(opts_warn, WARN_TOO_FEW_PARAMETERS, true);
-    options_set(opts_warn, WARN_MISSING_RETURN_VALUES, true);
-    options_set(opts_warn, WARN_USED_UNINITIALIZED, true);
-    options_set(opts_warn, WARN_LOCAL_CONSTANTS, true);
-    options_set(opts_warn, WARN_VOID_VARIABLES, true);
-    options_set(opts_warn, WARN_IMPLICIT_FUNCTION_POINTER, true);
-    options_set(opts_warn, WARN_VARIADIC_FUNCTION, true);
-    options_set(opts_warn, WARN_FRAME_MACROS, true);
-    options_set(opts_warn, WARN_UNUSED_VARIABLE, true);
-    options_set(opts_warn, WARN_EFFECTLESS_STATEMENT, true);
-    options_set(opts_warn, WARN_END_SYS_FIELDS, true);
-    options_set(opts_warn, WARN_ASSIGN_FUNCTION_TYPES, true);
-    options_set(opts_warn, WARN_PREPROCESSOR, true);
-    options_set(opts_warn, WARN_MULTIFILE_IF, true);
-    options_set(opts_warn, WARN_DOUBLE_DECLARATION, true);
-    options_set(opts_warn, WARN_CONST_VAR, true);
-    options_set(opts_warn, WARN_MULTIBYTE_CHARACTER, true);
+    options_set(opts.warn, WARN_UNKNOWN_CONTROL_SEQUENCE, true);
+    options_set(opts.warn, WARN_EXTENSIONS, true);
+    options_set(opts.warn, WARN_FIELD_REDECLARED, true);
+    options_set(opts.warn, WARN_TOO_FEW_PARAMETERS, true);
+    options_set(opts.warn, WARN_MISSING_RETURN_VALUES, true);
+    options_set(opts.warn, WARN_USED_UNINITIALIZED, true);
+    options_set(opts.warn, WARN_LOCAL_CONSTANTS, true);
+    options_set(opts.warn, WARN_VOID_VARIABLES, true);
+    options_set(opts.warn, WARN_IMPLICIT_FUNCTION_POINTER, true);
+    options_set(opts.warn, WARN_VARIADIC_FUNCTION, true);
+    options_set(opts.warn, WARN_FRAME_MACROS, true);
+    options_set(opts.warn, WARN_UNUSED_VARIABLE, true);
+    options_set(opts.warn, WARN_EFFECTLESS_STATEMENT, true);
+    options_set(opts.warn, WARN_END_SYS_FIELDS, true);
+    options_set(opts.warn, WARN_ASSIGN_FUNCTION_TYPES, true);
+    options_set(opts.warn, WARN_PREPROCESSOR, true);
+    options_set(opts.warn, WARN_MULTIFILE_IF, true);
+    options_set(opts.warn, WARN_DOUBLE_DECLARATION, true);
+    options_set(opts.warn, WARN_CONST_VAR, true);
+    options_set(opts.warn, WARN_MULTIBYTE_CHARACTER, true);
 
-    options_set(opts_flags, ADJUST_VECTOR_FIELDS, true);
-    options_set(opts_flags, FTEPP, false);
-    options_set(opts_flags, CORRECT_TERNARY, true);
+    options_set(opts.flags, ADJUST_VECTOR_FIELDS, true);
+    options_set(opts.flags, FTEPP, false);
+    options_set(opts.flags, CORRECT_TERNARY, true);
 
     if (!options_parse(argc, argv)) {
         return usage();
     }
 
     /* the standard decides which set of operators to use */
-    if (opts_standard == COMPILER_GMQCC) {
+    if (opts.standard == COMPILER_GMQCC) {
         operators = c_operators;
         operator_count = c_operator_count;
-    } else if (opts_standard == COMPILER_FTEQCC) {
+    } else if (opts.standard == COMPILER_FTEQCC) {
         operators = fte_operators;
         operator_count = fte_operator_count;
     } else {
@@ -565,23 +555,23 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (opts_dump) {
+    if (opts.dump) {
         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
             con_out("Flag %s = %i\n", opts_flag_list[itr].name, OPTS_FLAG(itr));
         }
         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
             con_out("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
         }
-        con_out("output = %s\n", opts_output);
-        con_out("optimization level = %i\n", (int)opts_O);
-        con_out("standard = %i\n", opts_standard);
+        con_out("output = %s\n", opts.output);
+        con_out("optimization level = %i\n", (int)opts.O);
+        con_out("standard = %i\n", opts.standard);
     }
 
-    if (opts_pp_only) {
+    if (opts.pp_only) {
         if (opts_output_wasset) {
-            outfile = util_fopen(opts_output, "wb");
+            outfile = util_fopen(opts.output, "wb");
             if (!outfile) {
-                con_err("failed to open `%s` for writing\n", opts_output);
+                con_err("failed to open `%s` for writing\n", opts.output);
                 retval = 1;
                 goto cleanup;
             }
@@ -590,14 +580,14 @@ int main(int argc, char **argv) {
             outfile = stdout;
     }
 
-    if (!opts_pp_only) {
+    if (!opts.pp_only) {
         if (!parser_init()) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
         }
     }
-    if (opts_pp_only || OPTS_FLAG(FTEPP)) {
+    if (opts.pp_only || OPTS_FLAG(FTEPP)) {
         if (!ftepp_init()) {
             con_err("failed to initialize parser\n");
             retval = 1;
@@ -629,7 +619,7 @@ int main(int argc, char **argv) {
         }
 
         if (!opts_output_wasset) {
-            opts_output = util_strdup(line);
+            opts.output = util_strdup(line);
             opts_output_free = true;
         }
 
@@ -651,12 +641,12 @@ srcdone:
         goto cleanup;
 
     if (vec_size(items)) {
-        if (!opts_pp_only) {
+        if (!opts.pp_only) {
             con_out("Mode: %s\n", (progs_src ? "progs.src" : "manual"));
             con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
         }
         for (itr = 0; itr < vec_size(items); ++itr) {
-            if (!opts_pp_only) {
+            if (!opts.pp_only) {
                 con_out("  item: %s (%s)\n",
                        items[itr].filename,
                        ( (items[itr].type == TYPE_QC ? "qc" :
@@ -665,7 +655,7 @@ srcdone:
                          ("unknown"))))));
             }
 
-            if (opts_pp_only) {
+            if (opts.pp_only) {
                 const char *out;
                 if (!ftepp_preprocess_file(items[itr].filename)) {
                     retval = 1;
@@ -707,8 +697,8 @@ srcdone:
         }
 
         ftepp_finish();
-        if (!opts_pp_only) {
-            if (!parser_finish(opts_output)) {
+        if (!opts.pp_only) {
+            if (!parser_finish(opts.output)) {
                 retval = 1;
                 goto cleanup;
             }
@@ -717,7 +707,7 @@ srcdone:
 
     /* stuff */
 
-    if (!opts_pp_only) {
+    if (!opts.pp_only) {
         for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
             if (optimization_count[itr]) {
                 con_out("%s: %u\n", opts_opt_list[itr].name, (unsigned int)optimization_count[itr]);
@@ -731,10 +721,10 @@ cleanup:
     con_close();
     vec_free(items);
 
-    if (!opts_pp_only)
+    if (!opts.pp_only)
         parser_cleanup();
     if (opts_output_free)
-        mem_d((char*)opts_output);
+        mem_d((char*)opts.output);
     if (operators_free)
         mem_d((void*)operators);
 

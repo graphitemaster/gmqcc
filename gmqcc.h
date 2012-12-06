@@ -926,27 +926,32 @@ enum {
     COMPILER_GMQCC    /* this   QuakeC */
 };
 
-extern uint32_t    opts_O;      /* -Ox */
-extern const char *opts_output; /* -o file */
-extern int         opts_standard;
-extern bool        opts_debug;
-extern bool        opts_memchk;
-extern bool        opts_dumpfin;
-extern bool        opts_dump;
-extern bool        opts_werror;
-extern bool        opts_forcecrc;
-extern uint16_t    opts_forced_crc;
-extern bool        opts_pp_only;
-extern size_t      opts_max_array_size;
+typedef struct {
+    uint32_t    O;              /* -Ox           */
+    const char *output;         /* -o file       */
+    bool        g;              /* -g            */
+    int         standard;       /* -std=         */
+    bool        debug;          /* -debug        */
+    bool        memchk;         /* -memchk       */
+    bool        dumpfin;        /* -dumpfin      */
+    bool        dump;           /* -dump         */
+    bool        werror;         /* -Werror       */
+    bool        forcecrc;       /* --force-crc=  */
+    uint16_t    forced_crc;     /* --force-crc=  */
+    bool        pp_only;        /* -E            */
+    size_t      max_array_size; /* --max-array=  */
+
+    uint32_t flags       [1 + (COUNT_FLAGS         / 32)];
+    uint32_t warn        [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
+} cmd_options;
+
+extern cmd_options opts;
 
 /*===================================================================*/
-#define OPTS_FLAG(i)         (!! (opts_flags       [(i)/32] & (1<< ((i)%32))))
-#define OPTS_WARN(i)         (!! (opts_warn        [(i)/32] & (1<< ((i)%32))))
-#define OPTS_OPTIMIZATION(i) (!! (opts_optimization[(i)/32] & (1<< ((i)%32))))
-
-extern uint32_t opts_flags       [1 + (COUNT_FLAGS         / 32)];
-extern uint32_t opts_warn        [1 + (COUNT_WARNINGS      / 32)];
-extern uint32_t opts_optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
+#define OPTS_FLAG(i)         (!! (opts.flags       [(i)/32] & (1<< ((i)%32))))
+#define OPTS_WARN(i)         (!! (opts.warn        [(i)/32] & (1<< ((i)%32))))
+#define OPTS_OPTIMIZATION(i) (!! (opts.optimization[(i)/32] & (1<< ((i)%32))))
 
 void options_set(uint32_t *flags, size_t idx, bool on);
 

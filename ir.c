@@ -214,14 +214,14 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
     if (warntype && !OPTS_WARN(warntype))
         return false;
 
-    if (opts_werror)
+    if (opts.werror)
 	    lvl = LVL_ERROR;
 
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, (opts_werror ? "error" : "warning"), fmt, ap);
+    con_vprintmsg(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
 	va_end(ap);
 
-	return opts_werror;
+	return opts.werror;
 }
 
 /***********************************************************************
@@ -3258,7 +3258,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     def.offset = (uint16_t)vec_size(code_globals);
 
     /* create a global named the same as the field */
-    if (opts_standard == COMPILER_GMQCC) {
+    if (opts.standard == COMPILER_GMQCC) {
         /* in our standard, the global gets a dot prefix */
         size_t len = strlen(field->name);
         char name[1024];
@@ -3364,7 +3364,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     stmt.o3.u1 = 0;
     code_push_statement(&stmt, vec_last(code_linenums));
 
-    if (opts_pp_only)
+    if (opts.pp_only)
         return true;
 
     if (vec_size(code_statements) != vec_size(code_linenums)) {

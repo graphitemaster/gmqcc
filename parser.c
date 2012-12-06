@@ -130,16 +130,16 @@ static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (opts_werror) {
+    if (opts.werror) {
 	    parser->errors++;
 	    lvl = LVL_ERROR;
 	}
 
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, parser->lex->tok.ctx.file, parser->lex->tok.ctx.line, (opts_werror ? "error" : "warning"), fmt, ap);
+    con_vprintmsg(lvl, parser->lex->tok.ctx.file, parser->lex->tok.ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
 	va_end(ap);
 
-	return opts_werror;
+	return opts.werror;
 }
 
 static bool GMQCC_WARN genwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
@@ -150,14 +150,14 @@ static bool GMQCC_WARN genwarning(lex_ctx ctx, int warntype, const char *fmt, ..
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (opts_werror)
+    if (opts.werror)
 	    lvl = LVL_ERROR;
 
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, (opts_werror ? "error" : "warning"), fmt, ap);
+    con_vprintmsg(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
 	va_end(ap);
 
-	return opts_werror;
+	return opts.werror;
 }
 
 /**********************************************************************
@@ -591,7 +591,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             {
 #if 0
                 /* This is not broken in fteqcc anymore */
-                if (opts_standard != COMPILER_GMQCC) {
+                if (opts.standard != COMPILER_GMQCC) {
                     /* this error doesn't need to make us bail out */
                     (void)!parsewarning(parser, WARN_EXTENSIONS,
                                         "accessing array-field members of an entity without parenthesis\n"
@@ -853,7 +853,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
 #endif
-            if (opts_standard == COMPILER_GMQCC)
+            if (opts.standard == COMPILER_GMQCC)
                 con_out("TODO: early out logic\n");
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
@@ -1258,7 +1258,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
             const char *fewmany = (vec_size(fun->expression.params) > paramcount) ? "few" : "many";
 
             fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
-            if (opts_standard == COMPILER_GMQCC)
+            if (opts.standard == COMPILER_GMQCC)
             {
                 if (fval)
                     parseerror(parser, "too %s parameters for call to %s: expected %i, got %i\n"
@@ -1423,7 +1423,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             }
             wantop = true;
             /* variable */
-            if (opts_standard == COMPILER_GMQCC)
+            if (opts.standard == COMPILER_GMQCC)
             {
                 if (parser->memberof == TYPE_ENTITY) {
                     /* still get vars first since there could be a fieldpointer */
@@ -1637,7 +1637,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     olast = NULL;
             }
 
-            if (op->id == opid1('.') && opts_standard == COMPILER_GMQCC) {
+            if (op->id == opid1('.') && opts.standard == COMPILER_GMQCC) {
                 /* for gmqcc standard: open up the namespace of the previous type */
                 ast_expression *prevex = vec_last(sy.out).out;
                 if (!prevex) {
@@ -2034,7 +2034,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
         typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (typevar || parser->tok == TOKEN_TYPENAME) {
-        if (opts_standard != COMPILER_GMQCC) {
+        if (opts.standard != COMPILER_GMQCC) {
             if (parsewarning(parser, WARN_EXTENSIONS,
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
@@ -2147,7 +2147,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
         if (!parser_next(parser))
             parseerror(parser, "parse error");
         if (expected->expression.next->expression.vtype != TYPE_VOID) {
-            if (opts_standard != COMPILER_GMQCC)
+            if (opts.standard != COMPILER_GMQCC)
                 (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
             else
                 parseerror(parser, "return without value");
@@ -2521,7 +2521,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             parseerror(parser, "cannot declare a variable from here");
             return false;
         }
-        if (opts_standard == COMPILER_QCC) {
+        if (opts.standard == COMPILER_QCC) {
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
@@ -2588,7 +2588,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         }
         else if (!strcmp(parser_tokval(parser), "for"))
         {
-            if (opts_standard == COMPILER_QCC) {
+            if (opts.standard == COMPILER_QCC) {
                 if (parsewarning(parser, WARN_EXTENSIONS, "for loops are not recognized in the original Quake C standard, to enable try an alternate standard --std=?"))
                     return false;
             }
@@ -3052,7 +3052,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     if (parser->tok == ';')
         return parser_next(parser);
-    else if (opts_standard == COMPILER_QCC)
+    else if (opts.standard == COMPILER_QCC)
         parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
     return retval;
 
@@ -3511,7 +3511,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         vec_free(params);
 
     /* sanity check */
-    if (vec_size(params) > 8 && opts_standard == COMPILER_QCC)
+    if (vec_size(params) > 8 && opts.standard == COMPILER_QCC)
         (void)!parsewarning(parser, WARN_EXTENSIONS, "more than 8 parameters are not supported by this standard");
 
     /* parse-out */
@@ -3720,7 +3720,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     }
 
     /* now there may be function parens again */
-    if (parser->tok == '(' && opts_standard == COMPILER_QCC)
+    if (parser->tok == '(' && opts.standard == COMPILER_QCC)
         parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
     if (parser->tok == '(' && wasarray)
         parseerror(parser, "arrays as part of a return type is not supported");
@@ -3819,7 +3819,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
         /* Part 0: finish the type */
         if (parser->tok == '(') {
-            if (opts_standard == COMPILER_QCC)
+            if (opts.standard == COMPILER_QCC)
                 parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
             var = parse_parameter_list(parser, var);
             if (!var) {
@@ -3842,7 +3842,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
         /* for functions returning functions */
         while (parser->tok == '(') {
-            if (opts_standard == COMPILER_QCC)
+            if (opts.standard == COMPILER_QCC)
                 parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
             var = parse_parameter_list(parser, var);
             if (!var) {
@@ -3905,7 +3905,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     goto cleanup;
                     */
                 }
-                if (opts_standard == COMPILER_QCC &&
+                if (opts.standard == COMPILER_QCC &&
                     (old = parser_find_global(parser, var->name)))
                 {
                     parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
@@ -3945,7 +3945,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 {
                     /* other globals */
                     if (old) {
-                        if (opts_standard == COMPILER_GMQCC) {
+                        if (opts.standard == COMPILER_GMQCC) {
                             parseerror(parser, "global `%s` already declared here: %s:%i",
                                        var->name, ast_ctx(old).file, ast_ctx(old).line);
                             retval = false;
@@ -3969,7 +3969,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             var = proto;
                         }
                     }
-                    if (opts_standard == COMPILER_QCC &&
+                    if (opts.standard == COMPILER_QCC &&
                         (old = parser_find_field(parser, var->name)))
                     {
                         parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
@@ -4000,7 +4000,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     retval = false;
                     goto cleanup;
                 }
-                if (opts_standard != COMPILER_GMQCC) {
+                if (opts.standard != COMPILER_GMQCC) {
                     ast_delete(var);
                     var = NULL;
                     goto skipvar;
@@ -4124,7 +4124,7 @@ skipvar:
             break;
         }
 
-        if (localblock && opts_standard == COMPILER_QCC) {
+        if (localblock && opts.standard == COMPILER_QCC) {
             if (parsewarning(parser, WARN_LOCAL_CONSTANTS,
                              "initializing expression turns variable `%s` into a constant in this standard",
                              var->name) )
@@ -4144,7 +4144,7 @@ skipvar:
                 break;
             }
         }
-        else if (opts_standard == COMPILER_QCC) {
+        else if (opts.standard == COMPILER_QCC) {
             parseerror(parser, "expected '=' before function body in this standard");
         }
 
@@ -4231,7 +4231,7 @@ skipvar:
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
                 else
                 {
-                    if (opts_standard != COMPILER_GMQCC &&
+                    if (opts.standard != COMPILER_GMQCC &&
                         !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
                         qualifier != CV_VAR)
                     {
@@ -4699,7 +4699,7 @@ bool parser_finish(const char *output)
                 return false;
             }
         }
-        if (opts_dump)
+        if (opts.dump)
             ir_builder_dump(ir, con_out);
         for (i = 0; i < vec_size(parser->functions); ++i) {
             if (!ir_function_finalize(parser->functions[i]->ir_func)) {
@@ -4710,7 +4710,7 @@ bool parser_finish(const char *output)
         }
 
         if (retval) {
-            if (opts_dumpfin)
+            if (opts.dumpfin)
                 ir_builder_dump(ir, con_out);
 
             generate_checksum(parser);

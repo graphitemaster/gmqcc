@@ -617,6 +617,8 @@ cleanup:
 #if defined(QCVM_EXECUTOR)
 #include <math.h>
 
+cmd_options opts;
+
 const char *type_name[TYPE_COUNT] = {
     "void",
     "string",
@@ -631,9 +633,6 @@ const char *type_name[TYPE_COUNT] = {
 #endif
     "variant"
 };
-
-bool        opts_debug    = false;
-bool        opts_memchk   = false;
 
 typedef struct {
     int         vtype;

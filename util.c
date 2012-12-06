@@ -135,7 +135,7 @@ void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file
 void util_meminfo() {
     struct memblock_t *info;
 
-    if (!opts_memchk)
+    if (!opts.memchk)
         return;
 
     for (info = mem_start; info; info = info->next) {
@@ -246,10 +246,10 @@ bool util_strncmpexact(const char *src, const char *ned, size_t len) {
 
 void util_debug(const char *area, const char *ms, ...) {
     va_list  va;
-    if (!opts_debug)
+    if (!opts.debug)
         return;
 
-    if (!strcmp(area, "MEM") && !opts_memchk)
+    if (!strcmp(area, "MEM") && !opts.memchk)
         return;
 
     va_start(va, ms);

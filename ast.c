@@ -1040,7 +1040,7 @@ const char* ast_function_label(ast_function *self, const char *prefix)
     size_t len;
     char  *from;
 
-    if (!opts_dump && !opts_dumpfin)
+    if (!opts.dump && !opts.dumpfin)
         return NULL;
 
     id  = (self->labelcount++);
@@ -1137,7 +1137,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
 
             /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-            if (!array->expression.count || array->expression.count > opts_max_array_size)
+            if (!array->expression.count || array->expression.count > opts.max_array_size)
                 compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
 
             elemtype = &array->expression.next->expression;
@@ -1191,7 +1191,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         int vtype = elemtype->vtype;
 
         /* same as with field arrays */
-        if (!self->expression.count || self->expression.count > opts_max_array_size)
+        if (!self->expression.count || self->expression.count > opts.max_array_size)
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
 
         v = ir_builder_create_global(ir, self->name, vtype);
@@ -1312,7 +1312,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         }
 
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-        if (!self->expression.count || self->expression.count > opts_max_array_size) {
+        if (!self->expression.count || self->expression.count > opts.max_array_size) {
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
         }
 
@@ -1413,14 +1413,14 @@ bool ast_generate_accessors(ast_value *self, ir_builder *ir)
         }
     }
 
-    options_set(opts_warn, WARN_USED_UNINITIALIZED, false);
+    options_set(opts.warn, WARN_USED_UNINITIALIZED, false);
     if (self->setter) {
         if (!ast_global_codegen  (self->setter, ir, false) ||
             !ast_function_codegen(self->setter->constval.vfunc, ir) ||
             !ir_function_finalize(self->setter->constval.vfunc->ir_func))
         {
             compile_error(ast_ctx(self), "internal error: failed to generate setter for `%s`", self->name);
-            options_set(opts_warn, WARN_USED_UNINITIALIZED, warn);
+            options_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
             return false;
         }
     }
@@ -1430,14 +1430,14 @@ bool ast_generate_accessors(ast_value *self, ir_builder *ir)
             !ir_function_finalize(self->getter->constval.vfunc->ir_func))
         {
             compile_error(ast_ctx(self), "internal error: failed to generate getter for `%s`", self->name);
-            options_set(opts_warn, WARN_USED_UNINITIALIZED, warn);
+            options_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
             return false;
         }
     }
     for (i = 0; i < self->expression.count; ++i) {
         vec_free(self->ir_values[i]->life);
     }
-    options_set(opts_warn, WARN_USED_UNINITIALIZED, warn);
+    options_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
     return true;
 }
 
@@ -1551,7 +1551,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     for (i = 0; i < vec_size(self->locals); ++i)
     {
         if (!ast_local_codegen(self->locals[i], func->ir_func, false)) {
-            if (opts_debug)
+            if (opts.debug)
                 compile_error(ast_ctx(self), "failed to generate local `%s`", self->locals[i]->name);
             return false;
         }
