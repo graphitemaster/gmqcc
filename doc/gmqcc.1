@@ -18,11 +18,17 @@ there are also traditional long-options available.
 .B "-h, --help"
 Show a usage message and exit.
 .TP
+.B "-debug"
+Turn on some compiler debugging mechanisms.
+.TP
+.B "-memchk"
+Turn on compiler mem-check. (Shows allocations and checks for leaks.)
+.TP
 .BI "-o, --output=" filename
 Specify the output filename. Defaults to progs.dat. This will overwrite
 the output file listed in a \fIprogs.src\fR file in case such a file is used.
 .TP
-.BI "-O" n
+.BI "-O" number
 Specify the optimization level
 .RS
 .IP 3
@@ -35,14 +41,18 @@ Minimal optimization level
 Disable optimization entierly
 .RE
 .TP
-.BI "-a" filename
-Append the specified files to the list of files to assemble using the QC-Assembler.
+.BI "-O" name "\fR, " "" -Ono- name
+Enable or disable a specific optimization. Note that these options
+must be used after setting the optimization level, otherwise they'll
+be overwritten.
 .TP
-.BI "-s" filename
-Append the specified file which is to be interpreted as a \fIprogs.src\fR file.
+.B -Ohelp
+List all possible optimizations and the optimization level they're
+activated at.
 .TP
 .BI "-std=" standard
-Use the specified standard for parsing QC code. The following standards are available:
+Use the specified standard for parsing QC code. The following standards
+are available:
 .IR gmqcc , qcc , fteqcc
 .TP
 .BI -W warning "\fR, " "" -Wno- warning
@@ -51,12 +61,15 @@ Enable or disable a warning.
 .B -Wall
 Enable all warnings. Overrides preceding -W parameters.
 .TP
-.B -fdarkplaces-string-table-bug
-Patch the output file to work around a string-table bug in certain darkplaces versions.
+.B -Whelp
+List all possible warn flags.
 .TP
-.B -fomit-nullbytes
-Changes the output format to be more efficient. Requires a patched engine. See the
-proposal for a better file structure in the gmqcc source tree.
+.BI -f flag "\fR, " "" -fno- flag
+Enable or disable a specific compile flag. See the list of flags
+below.
+.TP
+.B -fhelp
+List all possible compile flags.
 .TP
 .B -nocolor
 Disables colored output
@@ -66,3 +79,113 @@ Redirects standard output to a \fIfile\fR
 .TP
 .BI "-rediterr=" file
 Redirects standard error to a \fIfile\fR
+.SH Warnings
+.TP
+.B -Wunused-variable
+Generate a warning about variables which are declared but never used.
+This can be avoided by adding the \fInoref\fR keyword in front of the
+variable declaration. Additionally a complete section of unreferenced
+variables can be opened using \fI#pragma noref 1\fR, and closed via
+\fI#pragma noref 0\fR.
+.TP
+.B -Wused-uninitialized
+Generate a warning if it is possible that a variable can be used
+without prior initialization. Note that this warning is not
+necessarily reliable if the initialization happens only under certain
+conditions. The other way is \fInot\fR possible: that the warning is
+\fInot\fR generated when uninitialized use \fIis possible\fR.
+.TP
+.B -Wunknown-control-sequence
+Generate an error when an unrecognized control sequence in a string is
+used. Meaning: when there's a character after a backslash in a string
+which has no known meaning.
+.TP
+.B -Wextensions
+Warn when using special extensions which are not part of the selected
+standard.
+.TP
+.B -Wfield-redeclared
+Generally QC compilers ignore redeclaration of fields. Here you can
+optionally enable a warning.
+.TP
+.B -Wmissing-return-values
+Functions which aren't of type \fIvoid\fR will warn if it possible to
+reach the end without returning an actual value.
+.TP
+.B -Wtoo-few-parameters
+Warn about a function call with fewer parameters than the function
+expects.
+.TP
+.B -Wlocal-shadows
+Warn when a locally declared variable shadows variable.
+.TP
+.B -Wlocal-constants
+Warn when the initialization of a local variable turns the variable
+into a constant. This is default behaviour unless
+\fI-finitialized-nonconstants\fR is used.
+.TP
+.B -Wvoid-variables
+There are only 2 known global variables of type void: end_sys_globals
+and end_sys_fields. Any other void-variable will warn.
+.TP
+.B -Wimplicit-function-pointer
+A global function which is not declared with the \fIvar\fR keyword is
+expected to have an implementing body, or be a builtin. If neither is
+the case, it implicitly becomes a function pointer, and a warning is
+generated.
+.TP
+.B -Wvariadic-function
+Currently there's no way for an in QC implemented function to access
+variadic parameters. If a function with variadic parameters has an
+implementing body, a warning will be generated.
+.TP
+.B -Wframe-macros
+Generate warnings about \fI$frame\fR commands, for instance about
+duplicate frame definitions.
+.TP
+.B -Weffectless-statement
+Warn about statements which have no effect. Any expression which does
+not call a function or assigns a variable.
+.TP
+.B -Wend-sys-fields
+The \fIend_sys_fields\fR variable is supposed to be a global variable
+of type \fIvoid\fR. It is also recognized as a \fIfield\fR but this
+will generate a warning.
+.TP
+.B -Wassign-function-types
+Warn when assigning to a function pointer with an unmatching
+signature. This usually happens in cases like assigning the null
+function to an entity's .think function pointer.
+.TP
+.B -Wpreprocessor
+Enable warnings coming from the preprocessor. Like duplicate macro
+declarations.
+.TP
+.B -Wmultifile-if
+Warn if there's a preprocessor \fI#if\fR spanning across several
+files.
+.TP
+.B -Wdouble-declaration
+Warn about multiple declarations of globals. This seems pretty common
+in QC code so you probably do not want this unless you want to clean
+up your code.
+.TP
+.B -Wconst-var
+The combination of \fIconst\fR and \fIvar\fR is not illegal, however
+different compilers may handle them differently. We were told, the
+intention is to create a function-pointer which is not assignable.
+This is exactly how we interpret it. However for this interpretation
+the \fIvar\fR keyword is considered superfluous (and philosophically
+wrong), so it is possible to generate a warning about this.
+.TP
+.B -Wmultibyte-character
+Warn about multibyte character constants, they do not work right now.
+.TP
+.B -Wternary-precedence
+Warn if a ternary expression which contains a comma operator is used
+without enclosing parenthesis, since this is most likely not what you
+actually want. We recommend the \fI-fcorrect-ternary\fR option.
+.TP
+.B -Wdebug
+Enable some warnings added in order to help debugging in the compiler.
+You won't need this.
