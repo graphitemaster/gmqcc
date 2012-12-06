@@ -189,3 +189,62 @@ actually want. We recommend the \fI-fcorrect-ternary\fR option.
 .B -Wdebug
 Enable some warnings added in order to help debugging in the compiler.
 You won't need this.
+.SH Compile Flags
+.TP
+.B -foverlap-locals
+Allow local variables to overlap with each other if they don't
+interfer with each other. (Not implemented right now)
+.TP
+.B -fdarkplaces-string-table-bug
+Add some additional characters to the string table in order to
+compensate for a wrong boundcheck in some specific version of the
+darkplaces engine.
+.TP
+.B -fadjust-vector-fields
+When assigning to field pointers of type \fI.vector\fR the common
+behaviour in compilers like \fIfteqcc\fR is to only assign the
+x-component of the pointer. This means that you can use the vector as
+such, but you cannot use its y and z components directly. This flag
+fixes this behaviour. Before using it make sure your code does not
+depend on the buggy behaviour.
+.TP
+.B -fftepp
+Enable a partially fteqcc-compatible preprocessor. It supports all the
+features used in the Xonotic codebase. If you need more, write a
+ticket.
+.TP
+.B -frelaxed-switch
+Allow switch cases to use non constant variables.
+.TP
+.B -fshort-logic
+Perform early out in logical AND and OR expressions. The final result
+will be either a 0 or a 1, see the next flag for more possibilities.
+.TP
+.B -fperl-logic
+In many languages, logical expressions perform early out in a special
+way: If the left operand of an AND yeilds true, or the one of an OR
+yields false, the complete expression evaluates to the right side.
+Thus \fItrue && 5\fI evaluates to 5 rather than 1.
+.TP
+.B -ftranslatable-strings
+Enable the underscore intrinsic: Using \fI_("A string constant")\fR
+will cause the string immediate to get a name with a "dotranslate_"
+prefix. The darkplaces engine recognizes these and translates them in
+a way similar to how gettext works.
+.TP
+.B -finitialized-nonconstants
+Don't implicitly convert initialized variables to constants. With this
+flag, the \fIconst\fR keyword is required to make a constant.
+.TP
+.B -fassign-function-types
+If this flag is not set, (and it is set by default in the qcc and
+fteqcc standards), assigning function pointers of mismatching
+signatures will result in an error rather than a warning.
+.TP
+.B -flno
+Produce a linenumber file along with the output .dat file.
+.TP
+.B -fcorrect-ternary
+Use C's operator precedence for ternary expressions. Unless your code
+depends on fteqcc-compatible behaviour, you'll want to use thi
+soption.
