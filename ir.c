@@ -2920,7 +2920,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     ir_function          *irfun;
 
     size_t i;
-#if 0
+#ifndef NEW_ALLOC_STRAT
     size_t local_var_end;
 #endif
 
@@ -2948,7 +2948,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     fun.firstlocal = vec_size(code_globals);
 
-#if 0
+#ifndef NEW_ALLOC_STRAT
     local_var_end = fun.firstlocal;
     for (i = 0; i < vec_size(irfun->locals); ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
