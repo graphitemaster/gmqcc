@@ -860,8 +860,12 @@ bool task_execute(task_template_t *template, char ***line) {
             if  (strrchr(data, '\n'))
                 *strrchr(data, '\n') = '\0';
 
-            if (strcmp(data, template->comparematch[compare++]))
-                success = false;
+            if (vec_size(template->comparematch) > compare) {
+                if (strcmp(data, template->comparematch[compare++]))
+                    success = false;
+            } else {
+                    success = false;
+            }
 
             /*
              * Copy to output vector for diagnostics if execution match
@@ -980,7 +984,10 @@ void task_schedualize() {
              * handler for the all the given matches in the template file and
              * what was actually returned from executing.
              */
-            con_err("    Expected From %u Matches:\n", vec_size(task_tasks[i].template->comparematch));
+            con_err("    Expected From %u Matches: (got %u Matches)\n",
+                vec_size(task_tasks[i].template->comparematch),
+                vec_size(match)
+            );
             for (; d < vec_size(task_tasks[i].template->comparematch); d++) {
                 char  *select = task_tasks[i].template->comparematch[d];
                 size_t length = 40 - strlen(select);
@@ -990,6 +997,21 @@ void task_schedualize() {
                     con_err(" ");
                 con_err("| Got: \"%s\"\n", (d >= vec_size(match)) ? "<<nothing else to compare>>" : match[d]);
             }
+
+            /*
+             * Print the non-expected out (since we are simply not expecting it)
+             * This will help track down bugs in template files that fail to match
+             * something.
+             */  
+            if (vec_size(match) > vec_size(task_tasks[i].template->comparematch)) {
+                for (d = 0; d < vec_size(match) - vec_size(task_tasks[i].template->comparematch); d++) {
+                    con_err("        Expected: Nothing                                   | Got: \"%s\"\n",
+                        match[d + vec_size(task_tasks[i].template->comparematch)]
+                    );
+                }
+            }
+                    
+
             for (j = 0; j < vec_size(match); j++)
                 mem_d(match[j]);
             vec_free(match);
