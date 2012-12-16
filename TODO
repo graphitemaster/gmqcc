@@ -1,5 +1,5 @@
 GMQCC is quite feature compleat.  But that doesn't address the fact that
-it can be improved.  This is a list of things that we're like to support
+it can be improved.  This is a list of things that we'd like to support
 in the distant future.  When the time comes, we can just select a topic
 from here and open a ticket for it on the issue tracker.  But for the
 meantime, this is sort of a cultivating flat file database.
@@ -51,11 +51,14 @@ Language Features:
         Like C++, but minus the stupidity:
             - No type operator overloads
             - Keep operator overloading for basic operators though.
+            - No inheritence
+            - No virtuals / pure virtuals
+            - Essentially "C structs but with operators" :)
 
     Arrays:
         They're currently implemented, but support in the engine
         plus implicit bounds checks (and ability to turn the bounds
-        checking off) See 
+        checking off)
 
     Exceptions:
         I feel like all languages suck at implementing this.  This would
@@ -63,7 +66,7 @@ Language Features:
         could make it fast using a neat method of "frame pointers".
 
     Overloaded Functions:
-        Ability to make individual functions with the same nume, but take
+        Ability to make individual functions with the same name, but take
         different amount of arguments or type of arguments.
 
     Default Argument Subsitution:
