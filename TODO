@@ -1,0 +1,154 @@
+GMQCC is quite feature compleat.  But that doesn't address the fact that
+it can be improved.  This is a list of things that we're like to support
+in the distant future.  When the time comes, we can just select a topic
+from here and open a ticket for it on the issue tracker.  But for the
+meantime, this is sort of a cultivating flat file database.
+
+Optimizations:
+    The following are optimizations that can be implemented after the
+    transformation into static-single assignment (SSA).
+
+        Global Value Numbering:
+            Eliminate redundancy by constructing a value graph of the source
+            then determinging which values are computed by equivalent expressions.
+            Simaler to Common Subexpression Elimination (CSE), however expressions
+            are determined via underlying equivalnce, opposed to lexically identical
+            expressions (CSE).
+
+        Spare Conditional Constant Propogation:
+            Simultaneously remove dead code and propogates constants. This is
+            not the same as indivial dead code elimination and constant propogation
+            passes.  This is multipass.
+
+    The following are optimizations that can be implemented before the
+    transformation into a binary (code generator).
+
+        Code factoring:
+            The process of finding sequences of code that are identical,
+            or can be parameterized or reordered to be identical.
+            Which can be replaced with calls to a shared subroutine. To
+            reduce duplicated code. (Size optimization)
+
+    The following are optimizations that can be implemented anywhere, ideally
+    these are functional language optimizations.
+
+        Removing Recrusion:
+            Tail recrusive algorithms can be converted to iteration, which
+            does not have to have call overhead.
+
+
+Language Features:
+    The following are language features that we'd like to see implemented in the
+    future.
+
+    Enumerations:
+        Like C
+
+    AST Macros:
+        Macros with sanity.  Not textual subsitution.
+
+    Classes:
+        Like C++, but minus the stupidity:
+            - No type operator overloads
+            - Keep operator overloading for basic operators though.
+
+    Arrays:
+        They're currently implemented, but support in the engine
+        plus implicit bounds checks (and ability to turn the bounds
+        checking off) See 
+
+    Exceptions:
+        I feel like all languages suck at implementing this.  This would
+        require support from the engine, but it would help catch bugs. We
+        could make it fast using a neat method of "frame pointers".
+
+    Overloaded Functions:
+        Ability to make individual functions with the same nume, but take
+        different amount of arguments or type of arguments.
+
+    Default Argument Subsitution:
+        Ability to specify default values for arguments in functions.
+        void foo(string bar, string baz="default");
+        Supplying just one argument will expand the second argument to
+        become "default", otherwise if two arguments are specified then
+        the "default" string is overrode with what ever the user passes.
+
+    Character Type:
+        A char type would be nice to have.  Essentially implemented as a
+        string, we can both "get" and "set" indices inside strings with
+        the help of builtin functions.
+
+        {
+            string foo = "test";
+            foo[0] = 'r';
+
+            print("it's time to ", foo);
+        }
+
+    Array Accessor With C-Semantics:
+        Also the abilit to use them as array accessors:
+
+        {
+            float hugearray['Z'];
+
+            hugearray['a'] = 100.0f;
+        }
+
+        Keep existing "pointer-like" semantics as well.  In C arrays
+        simple work as pointers, a[1] -> *(a+1), or 1[a] -> *(1+a)
+        so we should allow both forms of syntax.  As well as operand
+        reversal.
+
+        {
+            float h['Z'];
+            *(h+'a') = 100;
+            *('a'+h) = 'a'[h];
+        }
+
+    FTEQCC Inline Assembly:
+        This is still up for debate, mainly because a) it's syntax is
+        just utter crap. b) If we do an assembler, it should be nice.
+        we could provide a -std=fteqcc for the assembler itself :P
+        just like the compiler; although I think that's just insane.
+
+        Please see Assembler below.
+
+    Namespaces:
+        There is already a ticket open on this. They'd work just like C++
+        identically even.
+
+Standalone QCVM:
+    The following are QCVM additions:
+
+        Proper ASM dissasembly:
+            Proper dissasembly of compiled .dat files. Annotated if possible
+            when -g (is used during compilation)
+
+        Debugging:
+            A step-through debuger -d (with seperate compilation as well)
+            Called -> qcdb  Optionally alias to qcvm -d :)
+
+            We should beable to see the assembly and source it matches to
+            and the state of OFS_* and calls.
+
+Testsuite:
+    The followiung are things we'd like to see added to the testsuite
+    in the distant future:
+
+    Multithreading:
+        Chances are when we start adding more and more tests, executing
+        them individually will be midly slow (even if that's a whole minute)
+        It would be nice to add a -j paramater to allow multiple threads to
+        be used and so we can execute many tests in parallel.
+
+    Interface:
+        Ability to select individual tests, or set paramaters manually
+        opposed to using the static task-template files. (A method to
+        override them rather).
+
+
+Assembler:
+    Possibly support for a future assembler for QCASM.  But we're not
+    entierly sure if it makes sense.
+
+
