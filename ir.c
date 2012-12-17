@@ -208,20 +208,12 @@ static void irerror(lex_ctx ctx, const char *msg, ...)
 
 static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
 {
+    bool    r;
 	va_list ap;
-	int lvl = LVL_WARNING;
-
-    if (warntype && !OPTS_WARN(warntype))
-        return false;
-
-    if (opts.werror)
-	    lvl = LVL_ERROR;
-
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
+	r = vcompile_warning(ctx, warntype, fmt, ap);
 	va_end(ap);
-
-	return opts.werror;
+	return r;
 }
 
 /***********************************************************************
