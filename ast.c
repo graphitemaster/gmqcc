@@ -2621,8 +2621,10 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 {
     ast_expression_codegen *cgen;
 
-    ast_switch_case *def_case  = NULL;
-    ir_block        *def_bfall = NULL;
+    ast_switch_case *def_case     = NULL;
+    ir_block        *def_bfall    = NULL;
+    ir_block        *def_bfall_to = NULL;
+    bool set_def_bfall_to = false;
 
     ir_value *dummy     = NULL;
     ir_value *irop      = NULL;
@@ -2696,6 +2698,10 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
             bnot = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "not_case"));
             if (!bcase || !bnot)
                 return false;
+            if (set_def_bfall_to) {
+                set_def_bfall_to = false;
+                def_bfall_to = bcase;
+            }
             if (!ir_block_create_if(func->curblock, ast_ctx(self), cond, bcase, bnot))
                 return false;
 
@@ -2725,6 +2731,8 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
             bfall     = NULL;
             /* remember which case it was */
             def_case  = swcase;
+            /* And the next case will be remembered */
+            set_def_bfall_to = true;
         }
     }
 
@@ -2753,6 +2761,13 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         cgen = def_case->code->expression.codegen;
         if (!(*cgen)((ast_expression*)def_case->code, func, false, &dummy))
             return false;
+
+        /* see if we need to fall through */
+        if (def_bfall_to && !func->curblock->final)
+        {
+            if (!ir_block_create_jump(func->curblock, ast_ctx(self), def_bfall_to))
+                return false;
+        }
     }
 
     /* Jump from the last bnot to bout */
