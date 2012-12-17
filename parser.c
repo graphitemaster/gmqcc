@@ -926,7 +926,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 }
                 else
                     assignop = type_storep_instr[exprs[0]->expression.vtype];
-                if (!ast_compare_type(field->expression.next, exprs[1])) {
+                if (assignop == AINSTR_END ||
+                    !ast_compare_type(field->expression.next, exprs[1]))
+                {
                     ast_type_to_string(field->expression.next, ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (OPTS_FLAG(ASSIGN_FUNCTION_TYPES) &&
