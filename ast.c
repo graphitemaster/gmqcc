@@ -2002,7 +2002,9 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
     } else {
         *out = ir_block_create_load_from_ent(func->curblock, ast_ctx(self), ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
+        /* Done AFTER error checking: 
         codegen_output_type(self, *out);
+        */
     }
     if (!*out) {
         compile_error(ast_ctx(self), "failed to create %s instruction (output type %s)",
@@ -2010,6 +2012,8 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
                  type_name[self->expression.vtype]);
         return false;
     }
+    if (!lvalue)
+        codegen_output_type(self, *out);
 
     if (lvalue)
         self->expression.outl = *out;
