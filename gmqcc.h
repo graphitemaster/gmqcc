@@ -845,6 +845,7 @@ void ftepp_finish           ();
 const char *ftepp_get       ();
 void ftepp_flush            ();
 void ftepp_add_define       (const char *source, const char *name);
+void ftepp_add_macro        (const char *name,   const char *value);
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/

@@ -1366,12 +1366,23 @@ bool ftepp_preprocess_string(const char *name, const char *str)
     return ftepp_preprocess_done();
 }
 
+
+void ftepp_add_macro(const char *name, const char *value) {
+    char *create = NULL;
+    vec_upload(create, "#define ", 8);
+    vec_upload(create, name,  strlen(name));
+    vec_push  (create, ' ');
+    vec_upload(create, value, strlen(value));
+    vec_push  (create, 0);
+
+    ftepp_preprocess_string("__builtin__", create);
+    vec_free  (create);
+}
+
 bool ftepp_init()
 {
     char minor[32];
     char major[32];
-    char *verminor = NULL;
-    char *vermajor = NULL;
 
     ftepp = ftepp_new();
     if (!ftepp)
@@ -1385,33 +1396,32 @@ bool ftepp_init()
     if (opts.standard == COMPILER_FTEQCC) {
         ftepp_add_define(NULL, "__STD_FTEQCC__");
         /* 1.00 */
-        major[0] = '1';
-        minor[0] = '0';
+        major[0] = '"';
+        major[1] = '1';
+        major[2] = '"';
+
+        minor[0] = '"';
+        minor[1] = '0';
+        minor[2] = '"';
     } else if (opts.standard == COMPILER_GMQCC) {
         ftepp_add_define(NULL, "__STD_GMQCC__");
-        sprintf(major, "%d", GMQCC_VERSION_MAJOR);
-        sprintf(minor, "%d", GMQCC_VERSION_MINOR);
+        sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
+        sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (opts.standard == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
         /* 1.0 */
-        major[0] = '1';
-        minor[0] = '0';
+        major[0] = '"';
+        major[1] = '1';
+        major[2] = '"';
+
+        minor[0] = '"';
+        minor[1] = '0';
+        minor[2] = '"';
     }
 
-    vec_upload(verminor, "#define __STD_VERSION_MINOR__ \"", 31);
-    vec_upload(vermajor, "#define __STD_VERSION_MAJOR__ \"", 31);
-    vec_upload(verminor, minor, strlen(minor));
-    vec_upload(vermajor, major, strlen(major));
-    vec_push  (verminor, '"');
-    vec_push  (vermajor, '"');
-    vec_push  (verminor, 0);
-    vec_push  (vermajor, 0);
+    ftepp_add_macro("__STD_VERSION_MINOR__", minor);
+    ftepp_add_macro("__STD_VERSION_MAJOR__", major);
 
-    ftepp_preprocess_string("__builtin__", verminor);
-    ftepp_preprocess_string("__builtin__", vermajor);
-
-    vec_free(verminor);
-    vec_free(vermajor);
     return true;
 }
 

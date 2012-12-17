@@ -34,8 +34,10 @@ cmd_options opts;
 const oper_info *operators      = NULL;
 size_t           operator_count = 0;
 
-typedef struct { char *filename; int type; } argitem;
+typedef struct { char *filename; int   type;  } argitem;
+typedef struct { char *name;     char *value; } ppitem;
 static argitem *items = NULL;
+static ppitem  *ppems = NULL;
 
 #define TYPE_QC  0
 #define TYPE_ASM 1
@@ -187,6 +189,7 @@ static bool options_parse(int argc, char **argv) {
     while (!argend && argc > 1) {
         char *argarg;
         argitem item;
+        ppitem  macro;
 
         ++argv;
         --argc;
@@ -292,6 +295,17 @@ static bool options_parse(int argc, char **argv) {
                 /* debug turns on -flno */
                 case 'g':
                     options_setflag("LNO", true);
+                    break;
+
+                case 'D':
+                    if (!(argarg = strchr(argv[0] + 2, '='))) {
+                        con_out("missing = in -D\n");
+                        exit(0);
+                    }
+                    *argarg='\0'; /* terminate for name */
+                    macro.name  = util_strdup(argarg);
+                    macro.value = util_strdup(argv[0]+2);
+                    vec_push(ppems, macro);
                     break;
 
                 /* handle all -fflags */
@@ -587,11 +601,19 @@ int main(int argc, char **argv) {
             goto cleanup;
         }
     }
+
     if (opts.pp_only || OPTS_FLAG(FTEPP)) {
         if (!ftepp_init()) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
+        } else {
+            size_t i;
+            for (i = 0; i < vec_size(ppems); ++i) {
+                ftepp_add_macro(ppems[i].name, ppems[i].value);
+                mem_d(ppems[i].name);
+                mem_d(ppems[i].value);
+            }
         }
     }
 
@@ -720,6 +742,7 @@ cleanup:
     ftepp_finish();
     con_close();
     vec_free(items);
+    vec_free(ppems);
 
     if (!opts.pp_only)
         parser_cleanup();
