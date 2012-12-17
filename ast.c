@@ -109,6 +109,7 @@ ast_value* ast_value_copy(const ast_value *self)
     fromex   = &self->expression;
     selfex = &cp->expression;
     selfex->variadic = fromex->variadic;
+    selfex->count    = fromex->count;
     for (i = 0; i < vec_size(fromex->params); ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
         if (!v) {
@@ -134,6 +135,7 @@ bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     fromex   = &other->expression;
     selfex = &self->expression;
     selfex->variadic = fromex->variadic;
+    selfex->count    = fromex->count;
     for (i = 0; i < vec_size(fromex->params); ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
         if (!v)
@@ -185,6 +187,7 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
             selfex->next = NULL;
 
         selfex->variadic = fromex->variadic;
+        selfex->count    = fromex->count;
         for (i = 0; i < vec_size(fromex->params); ++i) {
             ast_value *v = ast_value_copy(fromex->params[i]);
             if (!v) {
