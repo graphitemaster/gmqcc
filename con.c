@@ -321,7 +321,7 @@ int con_out(const char *fmt, ...) {
  * for reporting of file:line based on lexer context, These are used
  * heavily in the parser/ir/ast.
  */
-void con_vprintmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap) {
+void con_vprintmsg_c(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap, const char *condname) {
     /* color selection table */
     static int sel[] = {
         CON_WHITE,
@@ -340,7 +340,14 @@ void con_vprintmsg(int level, const char *name, size_t line, const char *msgtype
         print("%s:%d: %s: ", name, (int)line, msgtype);
 
     vprint(msg, ap);
-    print("\n");
+    if (condname)
+        print(" [%s]\n", condname);
+    else
+        print("\n");
+}
+
+void con_vprintmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap) {
+    con_vprintmsg_c(level, name, line, msgtype, msg, ap, NULL);
 }
 
 void con_printmsg(int level, const char *name, size_t line, const char *msgtype, const char *msg, ...) {
@@ -382,9 +389,14 @@ void compile_error(lex_ctx ctx, const char *msg, ...)
 bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap)
 {
     int lvl = LVL_WARNING;
+    char warn_name[1024];
 
     if (!OPTS_WARN(warntype))
         return false;
+
+    warn_name[0] = '-';
+    warn_name[1] = 'W';
+    (void)util_strtononcmd(opts_warn_list[warntype].name, warn_name+2, sizeof(warn_name)-2);
 
     if (opts.werror) {
         ++compile_errors;
@@ -393,7 +405,7 @@ bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_
     else
         ++compile_warnings;
 
-    con_vprintmsg(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
+    con_vprintmsg_c(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap, warn_name);
 
     return opts.werror;
 }
