@@ -235,6 +235,19 @@ static bool options_parse(int argc, char **argv) {
                 continue;
             }
 
+            if (!strcmp(argv[0]+1, "which") ||
+                !strcmp(argv[0]+1, "version")) {
+                con_out("GMQCC %d.%d.%d Built %s %s\n",
+                    GMQCC_VERSION_MINOR,
+                    GMQCC_VERSION_MAJOR,
+                    GMQCC_VERSION_PATCH,
+                    __DATE__,
+                    __TIME__
+                );
+                exit(0);
+            }
+    
+
             /* show defaults (like pathscale) */
             if (!strcmp(argv[0]+1, "show-defaults")) {
                 size_t itr;
