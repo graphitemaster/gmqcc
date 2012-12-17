@@ -45,6 +45,16 @@ static ppitem  *ppems = NULL;
 
 static const char *app_name;
 
+static void version() {
+    con_out("GMQCC %d.%d.%d Built %s %s\n",
+        GMQCC_VERSION_MINOR,
+        GMQCC_VERSION_MAJOR,
+        GMQCC_VERSION_PATCH,
+        __DATE__,
+        __TIME__
+    );
+}
+
 static int usage() {
     con_out("usage: %s [options] [files...]", app_name);
     con_out("options:\n"
@@ -289,13 +299,7 @@ static bool options_parse(int argc, char **argv) {
                     /* break; never reached because of exit(0) */
 
                 case 'v':
-                     con_out("GMQCC %d.%d.%d Built %s %s\n",
-                        GMQCC_VERSION_MINOR,
-                        GMQCC_VERSION_MAJOR,
-                        GMQCC_VERSION_PATCH,
-                        __DATE__,
-                        __TIME__
-                    );
+                    version();
                     exit(0);
 
                 case 'E':
@@ -445,6 +449,10 @@ static bool options_parse(int argc, char **argv) {
             /* All long options without arguments */
                     else if (!strcmp(argv[0]+2, "help")) {
                         usage();
+                        exit(0);
+                    }
+                    else if (!strcmp(argv[0]+2, "version")) {
+                        version();
                         exit(0);
                     }
                     else {
