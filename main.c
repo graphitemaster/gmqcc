@@ -552,6 +552,7 @@ int main(int argc, char **argv) {
     options_set(opts.warn, WARN_DOUBLE_DECLARATION, true);
     options_set(opts.warn, WARN_CONST_VAR, true);
     options_set(opts.warn, WARN_MULTIBYTE_CHARACTER, true);
+    options_set(opts.warn, WARN_UNKNOWN_PRAGMAS, true);
 
     options_set(opts.flags, ADJUST_VECTOR_FIELDS, true);
     options_set(opts.flags, FTEPP, false);

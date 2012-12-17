@@ -2479,7 +2479,7 @@ static bool parse_pragma_do(parser_t *parser)
     }
     else
     {
-        parseerror(parser, "unrecognized hash-keyword: `%s`", parser_tokval(parser));
+        (void)!parsewarning(parser, WARN_UNKNOWN_PRAGMAS, "ignoring #pragma %s", parser_tokval(parser));
         return false;
     }
 
