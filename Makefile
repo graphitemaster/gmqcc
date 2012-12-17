@@ -4,10 +4,6 @@ BINDIR := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
 MANDIR := $(DATADIR)/man
 
-GMQCC_MAJOR=0
-GMQCC_MINOR=2
-GMQCC_PATCH=0
-
 CC     ?= clang
 CFLAGS += -Wall -Wextra -I. -pedantic-errors
 #turn on tons of warnings if clang is present
@@ -37,9 +33,6 @@ OBJ_T = test.o util.o con.o
 OBJ_C = main.o lexer.o parser.o
 OBJ_X = exec-standalone.o util.o con.o
 
-CFLAGS += -DGMQCC_VERSION_MAJOR=$(GMQCC_MAJOR)
-CFLAGS += -DGMQCC_VERSION_MINOR=$(GMQCC_MINOR)
-CFLAGS += -DGMQCC_VERSION_PATCH=$(GMQCC_PATCH)
 
 default: gmqcc
 %.o: %.c
