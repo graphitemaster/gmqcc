@@ -22,9 +22,6 @@
  */
 #include "gmqcc.h"
 
-uint32_t    opts_warn [1 + (COUNT_WARNINGS / 32)];
-bool        opts_werror   = false;
-
 /*
  * isatty/STDERR_FILENO/STDOUT_FILNO
  * + some other things likewise.
@@ -368,33 +365,45 @@ void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ..
 size_t compile_errors = 0;
 size_t compile_warnings = 0;
 
+void vcompile_error(lex_ctx ctx, const char *msg, va_list ap)
+{
+    ++compile_errors;
+    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", msg, ap);
+}
+
 void compile_error(lex_ctx ctx, const char *msg, ...)
 {
     va_list ap;
-    ++compile_errors;
     va_start(ap, msg);
-    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", msg, ap);
+    vcompile_error(ctx, msg, ap);
     va_end(ap);
 }
 
-bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
+bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap)
 {
-    va_list ap;
     int lvl = LVL_WARNING;
 
     if (!OPTS_WARN(warntype))
         return false;
 
-    if (opts_werror) {
+    if (opts.werror) {
         ++compile_errors;
         lvl = LVL_ERROR;
     }
     else
         ++compile_warnings;
 
-    va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, (opts_werror ? "error" : "warning"), fmt, ap);
-    va_end(ap);
+    con_vprintmsg(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
 
-    return opts_werror;
+    return opts.werror;
+}
+
+bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
+{
+    bool r;
+    va_list ap;
+    va_start(ap, fmt);
+    r = vcompile_warning(ctx, warntype, fmt, ap);
+    va_end(ap);
+    return r;
 }

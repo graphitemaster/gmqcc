@@ -623,8 +623,10 @@ int  con_out   (const char *, ...);
 extern size_t compile_errors;
 extern size_t compile_warnings;
 
-void /********/ compile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
-bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...);
+void /********/  compile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
+bool GMQCC_WARN  compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...);
+void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list);
+bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/

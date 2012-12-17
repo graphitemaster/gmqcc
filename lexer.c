@@ -74,20 +74,17 @@ void lexerror(lex_file *lex, const char *fmt, ...)
 
 bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
+    bool    r;
+    lex_ctx ctx;
     va_list ap;
-    int lvl = LVL_WARNING;
 
-    if (!OPTS_WARN(warntype))
-        return false;
-
-    if (opts.werror)
-        lvl = LVL_ERROR;
+    ctx.file = lex->name;
+    ctx.line = lex->sline;
 
     va_start(ap, fmt);
-    con_vprintmsg(lvl, lex->name, lex->sline, (opts.werror ? "error" : "warning"), fmt, ap);
+    r = vcompile_warning(ctx, warntype, fmt, ap);
     va_end(ap);
-
-    return opts.werror;
+    return r;
 }
 
 
