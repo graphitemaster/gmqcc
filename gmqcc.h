@@ -41,9 +41,12 @@
 #	pragma warning(disable : 4700 ) /* uninitialized local variable used                       */
 #endif
 
-#define GMQCC_VERSION_MAJOR 0
-#define GMQCC_VERSION_MINOR 2
-#define GMQCC_VERSION_PATCH 0
+#if !defined(GMQCC_VERSION_MAJOR) \
+ || !defined(GMQCC_VERSION_MINOR) \
+ || !defined(GMQCC_VERSION_PATCH)
+#   error GMQCC_VERSION_ macros missing
+#endif
+
 #define GMQCC_VERSION_BUILD(J,N,P) (((J)<<16)|((N)<<8)|(P))
 #define GMQCC_VERSION \
     GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
