@@ -1369,6 +1369,13 @@ bool ftepp_preprocess_string(const char *name, const char *str)
 
 void ftepp_add_macro(const char *name, const char *value) {
     char *create = NULL;
+
+    /* use saner path for empty macros */
+    if (!value) {
+        ftepp_add_define("__builtin__", name);
+        return;
+    }
+
     vec_upload(create, "#define ", 8);
     vec_upload(create, name,  strlen(name));
     vec_push  (create, ' ');

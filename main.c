@@ -312,13 +312,19 @@ static bool options_parse(int argc, char **argv) {
                     break;
 
                 case 'D':
-                    if (!(argarg = strchr(argv[0] + 2, '='))) {
-                        con_out("missing = in -D\n");
+                    if (!strlen(argv[0]+2)) {
+                        con_err("expected name after -D\n");
                         exit(0);
                     }
-                    *argarg='\0'; /* terminate for name */
-                    macro.name  = util_strdup(argarg);
-                    macro.value = util_strdup(argv[0]+2);
+
+                    if (!(argarg = strchr(argv[0] + 2, '='))) {
+                        macro.name  = util_strdup(argv[0]+2);
+                        macro.value = NULL;
+                    } else {
+                        *argarg='\0'; /* terminate for name */
+                        macro.name  = util_strdup(argv[0]+2);
+                        macro.value = util_strdup(argarg+1);
+                    }
                     vec_push(ppems, macro);
                     break;
 
@@ -625,17 +631,20 @@ int main(int argc, char **argv) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
-        } else {
-            size_t i;
-            for (i = 0; i < vec_size(ppems); ++i) {
-                ftepp_add_macro(ppems[i].name, ppems[i].value);
-                mem_d(ppems[i].name);
-                mem_d(ppems[i].value);
-            }
         }
     }
 
     util_debug("COM", "starting ...\n");
+
+    /* add macros */
+    for (itr = 0; itr < vec_size(ppems); itr++) {
+        ftepp_add_macro(ppems[itr].name, ppems[itr].value);
+        mem_d(ppems[itr].name);
+
+        /* can be null */
+        if (ppems[itr].value)
+            mem_d(ppems[itr].value);
+    }
 
     if (!vec_size(items)) {
         FILE *src;
