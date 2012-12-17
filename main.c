@@ -637,13 +637,15 @@ int main(int argc, char **argv) {
     util_debug("COM", "starting ...\n");
 
     /* add macros */
-    for (itr = 0; itr < vec_size(ppems); itr++) {
-        ftepp_add_macro(ppems[itr].name, ppems[itr].value);
-        mem_d(ppems[itr].name);
+    if (opts.pp_only || OPTS_FLAG(FTEPP)) {
+        for (itr = 0; itr < vec_size(ppems); itr++) {
+            ftepp_add_macro(ppems[itr].name, ppems[itr].value);
+            mem_d(ppems[itr].name);
 
-        /* can be null */
-        if (ppems[itr].value)
-            mem_d(ppems[itr].value);
+            /* can be null */
+            if (ppems[itr].value)
+                mem_d(ppems[itr].value);
+        }
     }
 
     if (!vec_size(items)) {
