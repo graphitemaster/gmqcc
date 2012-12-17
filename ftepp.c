@@ -95,21 +95,13 @@ static void ftepp_error(ftepp_t *ftepp, const char *fmt, ...)
 
 static bool GMQCC_WARN ftepp_warn(ftepp_t *ftepp, int warntype, const char *fmt, ...)
 {
+    bool    r;
     va_list ap;
-    int lvl = LVL_WARNING;
-
-    if (!OPTS_WARN(warntype))
-        return false;
-
-    if (opts.werror) {
-	    lvl = LVL_ERROR;
-        ftepp->errors++;
-    }
 
     va_start(ap, fmt);
-    con_cvprintmsg((void*)&ftepp->lex->tok.ctx, lvl, "error", fmt, ap);
+    r = vcompile_warning(ftepp->lex->tok.ctx, warntype, fmt, ap);
     va_end(ap);
-    return opts.werror;
+    return r;
 }
 
 static pptoken *pptoken_make(ftepp_t *ftepp)
