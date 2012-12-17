@@ -124,40 +124,22 @@ static void parseerror(parser_t *parser, const char *fmt, ...)
 /* returns true if it counts as an error */
 static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
 {
+    bool    r;
 	va_list ap;
-	int lvl = LVL_WARNING;
-
-    if (!OPTS_WARN(warntype))
-        return false;
-
-    if (opts.werror) {
-	    parser->errors++;
-	    lvl = LVL_ERROR;
-	}
-
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, parser->lex->tok.ctx.file, parser->lex->tok.ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
+	r = vcompile_warning(parser->lex->tok.ctx, warntype, fmt, ap);
 	va_end(ap);
-
-	return opts.werror;
+	return r;
 }
 
 static bool GMQCC_WARN genwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
 {
+    bool    r;
 	va_list ap;
-	int lvl = LVL_WARNING;
-
-    if (!OPTS_WARN(warntype))
-        return false;
-
-    if (opts.werror)
-	    lvl = LVL_ERROR;
-
 	va_start(ap, fmt);
-    con_vprintmsg(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap);
+	r = vcompile_warning(ctx, warntype, fmt, ap);
 	va_end(ap);
-
-	return opts.werror;
+	return r;
 }
 
 /**********************************************************************
