@@ -2691,7 +2691,8 @@ tailcall:
             stmt.o1.s1 = (target->code_start) - vec_size(code_statements);
             stmt.o2.s1 = 0;
             stmt.o3.s1 = 0;
-            code_push_statement(&stmt, instr->context.line);
+            if (stmt.o1.s1 != 1)
+                code_push_statement(&stmt, instr->context.line);
 
             /* no further instructions can be in this block */
             return true;
@@ -2765,7 +2766,8 @@ tailcall:
                 stmt.o1.s1 = (onfalse->code_start) - vec_size(code_statements);
                 stmt.o2.s1 = 0;
                 stmt.o3.s1 = 0;
-                code_push_statement(&stmt, instr->context.line);
+                if (stmt.o1.s1 != 1)
+                    code_push_statement(&stmt, instr->context.line);
                 return true;
             }
             /* if not, generate now */
