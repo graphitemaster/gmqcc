@@ -1061,7 +1061,6 @@ int lex_do(lex_file *lex)
             if (rc < 0)
                 return (lex->tok.ttype = TOKEN_FATAL);
 
-            v = lex->tok.value;
             if (lex->modelname) {
                 frame_macro m;
                 m.value = lex->framevalue;

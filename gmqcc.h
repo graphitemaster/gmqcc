@@ -116,7 +116,7 @@
  * I suspect it also has just __inline of some sort, but our use
  * of inline is correct (not guessed), WE WANT IT TO BE INLINE
  */
-#elseif defined(_MSC_VER)
+#elif defined(_MSC_VER)
 #    define GMQCC_INLINE __forceinline
 #else
 #    define GMQCC_INLINE

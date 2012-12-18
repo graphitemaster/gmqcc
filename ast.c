@@ -2152,7 +2152,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     ir_value *condval;
     ir_value *dummy;
 
-    ir_block *cond = func->curblock;
+    ir_block *cond;
     ir_block *ontrue;
     ir_block *onfalse;
     ir_block *ontrue_endblock = NULL;

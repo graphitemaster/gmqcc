@@ -1275,9 +1275,9 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                                fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
                 else
                     parseerror(parser, "too %s parameters for function call: expected %i, got %i\n"
-                               " -> `%s` has been declared here: %s:%i",
-                               fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
-                               fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
+                               " -> it has been declared here: %s:%i",
+                               fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
+                               ast_ctx(fun).file, (int)ast_ctx(fun).line);
                 return false;
             }
             else
@@ -1291,9 +1291,9 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                 else
                     return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
                                          "too %s parameters for function call: expected %i, got %i\n"
-                                         " -> `%s` has been declared here: %s:%i",
-                                         fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
-                                         fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
+                                         " -> it has been declared here: %s:%i",
+                                         fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
+                                         ast_ctx(fun).file, (int)ast_ctx(fun).line);
             }
         }
     }
@@ -1698,7 +1698,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0));
                 wantop = false;
             } else if (op->id == opid2('?',':')) {
-                wantop = false;
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_TERNARY, 0));
                 wantop = false;
@@ -2339,8 +2338,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
                 return false;
             }
             if (!OPTS_FLAG(RELAXED_SWITCH)) {
-                opval = (ast_value*)swcase.value;
-                if (!ast_istype(swcase.value, ast_value)) { /* || opval->cvq != CV_CONST) { */
+                if (!ast_istype(swcase.value, ast_value)) { /* || ((ast_value*)swcase.value)->cvq != CV_CONST) { */
                     parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
                     ast_unref(operand);
                     return false;

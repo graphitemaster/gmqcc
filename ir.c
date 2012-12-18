@@ -1357,9 +1357,6 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *tar
         irerror(self->context, "unreachable statement (%s)", self->label);
         return false;
     }
-    in = ir_instr_new(ctx, self, op);
-    if (!in)
-        return false;
 
     if (target->store == store_value &&
         (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC))
@@ -1370,9 +1367,14 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *tar
         return false;
     }
 
+    in = ir_instr_new(ctx, self, op);
+    if (!in)
+        return false;
+
     if (!ir_instr_op(in, 0, target, true) ||
         !ir_instr_op(in, 1, what, false))
     {
+        ir_instr_delete(in);
         return false;
     }
     vec_push(self->instr, in);
@@ -1439,8 +1441,10 @@ bool ir_block_create_return(ir_block *self, lex_ctx ctx, ir_value *v)
     if (!in)
         return false;
 
-    if (v && !ir_instr_op(in, 0, v, false))
+    if (v && !ir_instr_op(in, 0, v, false)) {
+        ir_instr_delete(in);
         return false;
+    }
 
     vec_push(self->instr, in);
     return true;
