@@ -774,7 +774,17 @@ static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
 static const char *arg0 = NULL;
 
-void usage()
+static void version() {
+    printf("GMQCC-QCVM %d.%d.%d Built %s %s\n",
+           GMQCC_VERSION_MAJOR,
+           GMQCC_VERSION_MINOR,
+           GMQCC_VERSION_PATCH,
+           __DATE__,
+           __TIME__
+    );
+}
+
+static void usage()
 {
     printf("usage: %s [options] [parameters] file\n", arg0);
     printf("options:\n");
@@ -842,6 +852,7 @@ int main(int argc, char **argv)
     bool        opts_disasm      = false;
     bool        opts_info        = false;
     bool        noexec           = false;
+    const char *progsfile        = NULL;
 
     arg0 = argv[0];
 
@@ -850,12 +861,19 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    while (argc > 2) {
+    while (argc > 1) {
         if (!strcmp(argv[1], "-h") ||
             !strcmp(argv[1], "-help") ||
             !strcmp(argv[1], "--help"))
         {
             usage();
+            exit(0);
+        }
+        else if (!strcmp(argv[1], "-v") ||
+                 !strcmp(argv[1], "-version") ||
+                 !strcmp(argv[1], "--version"))
+        {
+            version();
             exit(0);
         }
         else if (!strcmp(argv[1], "-trace")) {
@@ -922,6 +940,21 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
         }
+        else if (!strcmp(argv[1], "--")) {
+            --argc;
+            ++argv;
+            break;
+        }
+        else if (argv[1][0] != '-') {
+            if (progsfile) {
+                printf("only 1 program file may be specified\n");
+                usage();
+                exit(1);
+            }
+            progsfile = argv[1];
+            --argc;
+            ++argv;
+        }
         else
         {
             usage();
@@ -929,10 +962,29 @@ int main(int argc, char **argv)
         }
     }
 
+    if (argc > 2) {
+        usage();
+        exit(1);
+    }
+    if (argc > 1) {
+        if (progsfile) {
+            printf("only 1 program file may be specified\n");
+            usage();
+            exit(1);
+        }
+        progsfile = argv[1];
+        --argc;
+        ++argv;
+    }
 
-    prog = prog_load(argv[1]);
+    if (!progsfile) {
+        usage();
+        exit(1);
+    }
+
+    prog = prog_load(progsfile);
     if (!prog) {
-        printf("failed to load program '%s'\n", argv[1]);
+        printf("failed to load program '%s'\n", progsfile);
         exit(1);
     }
 
