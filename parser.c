@@ -98,6 +98,8 @@ typedef struct {
     bool noref;
 } parser_t;
 
+static const ast_expression *intrinsic_debug_typestring = (ast_expression*)0x10;
+
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
@@ -1190,9 +1192,25 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 
     fun = sy->out[fid].out;
 
+    if (fun == intrinsic_debug_typestring) {
+        char ty[1024];
+        if (fid+2 != vec_size(sy->out) ||
+            vec_last(sy->out).block)
+        {
+            parseerror(parser, "intrinsic __builtin_debug_typestring requires exactly 1 parameter");
+            return false;
+        }
+        ast_type_to_string(vec_last(sy->out).out, ty, sizeof(ty));
+        ast_unref(vec_last(sy->out).out);
+        sy->out[fid] = syexp(ast_ctx(vec_last(sy->out).out),
+                             (ast_expression*)parser_const_string(parser, ty, false));
+        vec_shrinkby(sy->out, 1);
+        return true;
+    }
+
     call = ast_call_new(sy->ops[vec_size(sy->ops)].ctx, fun);
     if (!call) {
-        parseerror(parser, "out of memory");
+        parseerror(parser, "internal error: failed to create ast_call node");
         return false;
     }
 
@@ -1430,16 +1448,27 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     var = parser_find_field(parser, parser_tokval(parser));
             }
             if (!var) {
-                parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
-                goto onerr;
+                /* intrinsics */
+                if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
+                    var = (ast_expression*)intrinsic_debug_typestring;
+
+                }
+                else
+                {
+                    parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                    goto onerr;
+                }
             }
-            if (ast_istype(var, ast_value)) {
-                ((ast_value*)var)->uses++;
-            }
-            else if (ast_istype(var, ast_member)) {
-                ast_member *mem = (ast_member*)var;
-                if (ast_istype(mem->owner, ast_value))
-                    ((ast_value*)(mem->owner))->uses++;
+            else
+            {
+                if (ast_istype(var, ast_value)) {
+                    ((ast_value*)var)->uses++;
+                }
+                else if (ast_istype(var, ast_member)) {
+                    ast_member *mem = (ast_member*)var;
+                    if (ast_istype(mem->owner, ast_value))
+                        ((ast_value*)(mem->owner))->uses++;
+                }
             }
             vec_push(sy.out, syexp(parser_ctx(parser), var));
             DEBUGSHUNTDO(con_out("push %s\n", parser_tokval(parser)));
