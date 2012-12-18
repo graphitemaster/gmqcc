@@ -50,11 +50,6 @@ be overwritten.
 List all possible optimizations and the optimization level they're
 activated at.
 .TP
-.BI "-std=" standard
-Use the specified standard for parsing QC code. The following standards
-are available:
-.IR gmqcc , qcc , fteqcc
-.TP
 .BI -W warning "\fR, " "" -Wno- warning
 Enable or disable a warning.
 .TP
@@ -77,8 +72,40 @@ Disables colored output
 .BI "-redirout=" file
 Redirects standard output to a \fIfile\fR
 .TP
-.BI "-rediterr=" file
+.BI "-redirerr=" file
 Redirects standard error to a \fIfile\fR
+.TP
+.BI "-std=" standard
+Use the specified standard for parsing QC code. The following standards
+are available:
+.IR gmqcc , qcc , fteqcc
+Selecting a standard also implies some -f options and behaves as if
+those options have been written right after the -std option, meaning
+if you changed them before the -std option, you're now overwriting
+them.
+.sp
+.BR -std=gmqcc " includes:"
+.in +4
+-fadjust-vector-fields
+.in
+.BR -std=qcc " includes:"
+.in +4
+.nf
+-fassign-function-types
+-f\fIno-\fRadjust-vector-fields
+.fi
+.in
+.BR -std=fteqcc " includes:"
+.in +4
+.nf
+-fftepp
+-ftranslatable-strings
+-fassign-function-types
+-Wternary-precedence
+-f\fIno-\fRadjust-vector-fields
+-f\fIno-\fRcorrect-ternary
+.fi
+.in
 .SH Warnings
 .TP
 .B -Wunused-variable
