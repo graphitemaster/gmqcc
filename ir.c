@@ -3209,9 +3209,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             vec_push(code_globals, *iptr);
         } else {
             vec_push(code_globals, 0);
-            if (!islocal)
-                def.type |= DEF_SAVEGLOBAL;
         }
+        if (!islocal && global->cvq != CV_CONST)
+            def.type |= DEF_SAVEGLOBAL;
         vec_push(code_defs, def);
 
         return global->code.globaladdr >= 0;
@@ -3223,9 +3223,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             vec_push(code_globals, code_genstring(global->constval.vstring));
         } else {
             vec_push(code_globals, 0);
-            if (!islocal)
-                def.type |= DEF_SAVEGLOBAL;
         }
+        if (!islocal && global->cvq != CV_CONST)
+            def.type |= DEF_SAVEGLOBAL;
         vec_push(code_defs, def);
         return global->code.globaladdr >= 0;
     }
@@ -3238,21 +3238,19 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             vec_push(code_globals, iptr[0]);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof[global->vtype]; ++d)
-            {
+            for (d = 1; d < type_sizeof[global->vtype]; ++d) {
                 vec_push(code_globals, iptr[d]);
             }
         } else {
             vec_push(code_globals, 0);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof[global->vtype]; ++d)
-            {
+            for (d = 1; d < type_sizeof[global->vtype]; ++d) {
                 vec_push(code_globals, 0);
             }
-            if (!islocal)
-                def.type |= DEF_SAVEGLOBAL;
         }
+        if (!islocal && global->cvq != CV_CONST)
+            def.type |= DEF_SAVEGLOBAL;
 
         vec_push(code_defs, def);
         return global->code.globaladdr >= 0;
@@ -3267,9 +3265,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             vec_push(code_globals, vec_size(code_functions));
             if (!gen_global_function(self, global))
                 return false;
-            if (!islocal)
-                def.type |= DEF_SAVEGLOBAL;
         }
+        if (!islocal && global->cvq != CV_CONST)
+            def.type |= DEF_SAVEGLOBAL;
         vec_push(code_defs, def);
         return true;
     case TYPE_VARIANT:
