@@ -251,3 +251,8 @@ Produce a linenumber file along with the output .dat file.
 Use C's operator precedence for ternary expressions. Unless your code
 depends on fteqcc-compatible behaviour, you'll want to use thi
 soption.
+.TP
+.B -fsingle-vector-defs
+Normally vectors generate 4 defs, once for the vector, and once for
+its components with _x, _y, _z suffixes. This option
+prevents components from being listed.
