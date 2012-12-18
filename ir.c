@@ -3147,6 +3147,58 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     return true;
 }
 
+static void gen_vector_defs(prog_section_def def, const char *name)
+{
+    char  *component;
+    size_t len, i;
+
+    if (!name)
+        return;
+
+    len = strlen(name);
+
+    component = (char*)mem_a(len+3);
+    memcpy(component, name, len);
+    len += 2;
+    component[len-0] = 0;
+    component[len-2] = '_';
+
+    component[len-1] = 'x';
+
+    for (i = 0; i < 3; ++i) {
+        def.name = code_genstring(component);
+        vec_push(code_defs, def);
+        def.offset++;
+        component[len-1]++;
+    }
+}
+
+static void gen_vector_fields(prog_section_field fld, const char *name)
+{
+    char  *component;
+    size_t len, i;
+
+    if (!name)
+        return;
+
+    len = strlen(name);
+
+    component = (char*)mem_a(len+3);
+    memcpy(component, name, len);
+    len += 2;
+    component[len-0] = 0;
+    component[len-2] = '_';
+
+    component[len-1] = 'x';
+
+    for (i = 0; i < 3; ++i) {
+        fld.name = code_genstring(component);
+        vec_push(code_fields, fld);
+        fld.offset++;
+        component[len-1]++;
+    }
+}
+
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
 {
     size_t           i;
@@ -3198,6 +3250,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         return gen_global_pointer(global);
     case TYPE_FIELD:
         vec_push(code_defs, def);
+        gen_vector_defs(def, global->name);
         return gen_global_field(global);
     case TYPE_ENTITY:
         /* fall through */
@@ -3253,6 +3306,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             def.type |= DEF_SAVEGLOBAL;
 
         vec_push(code_defs, def);
+        def.type &= ~DEF_SAVEGLOBAL;
+        gen_vector_defs(def, global->name);
         return global->code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
@@ -3350,6 +3405,11 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     if (fld.type == TYPE_VECTOR) {
         vec_push(code_globals, fld.offset+1);
         vec_push(code_globals, fld.offset+2);
+    }
+
+    if (field->fieldtype == TYPE_VECTOR) {
+        gen_vector_defs(def, field->name);
+        gen_vector_fields(fld, field->name);
     }
 
     return field->code.globaladdr >= 0;
