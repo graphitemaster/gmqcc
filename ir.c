@@ -2929,8 +2929,8 @@ static bool gen_function_code(ir_function *self)
         return false;
     }
 
-    /* otherwise code_write crashes since it debug-prints functions until AINSTR_END */
-    stmt.opcode = AINSTR_END;
+    /* code_write and qcvm -disasm need to know that the function ends here */
+    stmt.opcode = INSTR_DONE;
     stmt.o1.u1 = 0;
     stmt.o2.u1 = 0;
     stmt.o3.u1 = 0;
@@ -3397,15 +3397,15 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         return false;
     }
 
-    /* DP errors if the last instruction is not an INSTR_DONE
-     * and for debugging purposes we add an additional AINSTR_END
-     * to the end of functions, so here it goes:
-     */
-    stmt.opcode = INSTR_DONE;
-    stmt.o1.u1 = 0;
-    stmt.o2.u1 = 0;
-    stmt.o3.u1 = 0;
-    code_push_statement(&stmt, vec_last(code_linenums));
+    /* DP errors if the last instruction is not an INSTR_DONE. */
+    if (vec_last(code_statements).opcode != INSTR_DONE)
+    {
+        stmt.opcode = INSTR_DONE;
+        stmt.o1.u1 = 0;
+        stmt.o2.u1 = 0;
+        stmt.o3.u1 = 0;
+        code_push_statement(&stmt, vec_last(code_linenums));
+    }
 
     if (opts.pp_only)
         return true;

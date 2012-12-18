@@ -986,7 +986,7 @@ void prog_disasm_function(qc_program *prog, size_t id)
         printf("FUNCTION \"%s\"\n", prog_getstring(prog, fdef->name));
 
     st = prog->code + fdef->entry;
-    while (st->opcode != AINSTR_END) {
+    while (st->opcode != INSTR_DONE) {
         prog_print_statement(prog, st);
         ++st;
     }

@@ -213,7 +213,7 @@ bool code_write(const char *filename, const char *lnofile) {
         if (code_functions[it].entry >= 0) {
             util_debug("GEN", "    CODE:\n");
             for (;;) {
-                if (code_statements[j].opcode != AINSTR_END)
+                if (code_statements[j].opcode != INSTR_DONE)
                     util_debug("GEN", "        %-12s {% 5i,% 5i,% 5i}\n",
                         asm_instr[code_statements[j].opcode].m,
                         code_statements[j].o1.s1,
