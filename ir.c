@@ -3186,7 +3186,7 @@ static void gen_vector_fields(prog_section_field fld, const char *name)
     if (!name || OPTS_FLAG(SINGLE_VECTOR_DEFS))
         return;
 
-    def.type = TYPE_FLOAT;
+    fld.type = TYPE_FLOAT;
 
     len = strlen(name);
 
