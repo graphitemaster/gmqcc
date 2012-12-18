@@ -930,18 +930,20 @@ int main(int argc, char **argv)
     }
     if (opts_printdefs) {
         for (i = 0; i < vec_size(prog->defs); ++i) {
-            printf("Global: %8s %-16s at %u\n",
+            printf("Global: %8s %-16s at %u%s\n",
                    type_name[prog->defs[i].type & DEF_TYPEMASK],
                    prog_getstring(prog, prog->defs[i].name),
-                   (unsigned int)prog->defs[i].offset);
+                   (unsigned int)prog->defs[i].offset,
+                   ((prog->defs[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
         }
     }
     else if (opts_printfields) {
         for (i = 0; i < vec_size(prog->fields); ++i) {
-            printf("Field: %8s %-16s at %u\n",
+            printf("Field: %8s %-16s at %u%s\n",
                    type_name[prog->fields[i].type],
                    prog_getstring(prog, prog->fields[i].name),
-                   (unsigned int)prog->fields[i].offset);
+                   (unsigned int)prog->fields[i].offset,
+                   ((prog->fields[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
         }
     }
     else if (opts_printfuns) {
