@@ -2712,12 +2712,14 @@ tailcall:
             if (ontrue->generated) {
                 stmt.opcode = INSTR_IF;
                 stmt.o2.s1 = (ontrue->code_start) - vec_size(code_statements);
-                code_push_statement(&stmt, instr->context.line);
+                if (stmt.o2.s1 != 1)
+                    code_push_statement(&stmt, instr->context.line);
             }
             if (onfalse->generated) {
                 stmt.opcode = INSTR_IFNOT;
                 stmt.o2.s1 = (onfalse->code_start) - vec_size(code_statements);
-                code_push_statement(&stmt, instr->context.line);
+                if (stmt.o2.s1 != 1)
+                    code_push_statement(&stmt, instr->context.line);
             }
             if (!ontrue->generated) {
                 if (onfalse->generated) {
@@ -2741,7 +2743,8 @@ tailcall:
                 ontrue = tmp;
             }
             stidx = vec_size(code_statements);
-            code_push_statement(&stmt, instr->context.line);
+            if (stmt.o2.s1 != 1)
+                code_push_statement(&stmt, instr->context.line);
             /* on false we jump, so add ontrue-path */
             if (!gen_blocks_recursive(func, ontrue))
                 return false;
