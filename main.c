@@ -44,8 +44,8 @@ static const char *app_name;
 
 static void version() {
     con_out("GMQCC %d.%d.%d Built %s %s\n",
-        GMQCC_VERSION_MINOR,
         GMQCC_VERSION_MAJOR,
+        GMQCC_VERSION_MINOR,
         GMQCC_VERSION_PATCH,
         __DATE__,
         __TIME__
