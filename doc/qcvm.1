@@ -1,0 +1,92 @@
+.\" Process with groff -man -Tascii file.3
+.TH QCVM 1 2012-18-12 "" "gmqcc Manual"
+.SH NAME
+qcvm \- A standalone QuakeC VM binary executor.
+.SH SYNOPSIS
+.B qcvm
+[\fIOPTIONS\fR] [\fIPARAMS\fR] [\fIfile\fR]
+.SH DESCRIPTION
+qcvm is an executor for QuakeC VM binary files created using a QC
+compiler such as gmqcc(1) or fteqcc. It provides a small set of
+builtin functions, and by default executes the \fImain\fR function if
+there is one. Some options useful for debugging are available as well.
+.SH OPTIONS
+There are 2 types of options. Options for the executor, and parameter
+options used to add parameters which are passed to the main function
+on execution.
+.TP
+.B "-h, --help"
+Show a usage message and exit.
+.TP
+.B "-trace"
+Trace the execution. Each instruction will be printed to stdout before
+executing it.
+.TP
+.B "-profile"
+Perform some profiling. This is currently not really implemented, the
+option is available nonetheless.
+.TP
+.B "-info"
+Print information from the program's header instead of executing.
+.TP
+.B "-disasm"
+Disassemble the program by function instead of executing.
+.TP
+.B "-printdefs"
+List all entries from the program's defs-section. Effectively
+listing all the global variables of the program.
+This option disables execution.
+.TP
+.B "-printfields"
+List all entries from the program's fields-section. Listing all
+entity-fields declared in the program.
+This option disables execution.
+.TP
+.B "-printfuns"
+List functions and some information about their parameters.
+This option disables execution.
+.TP
+.BI "-vector """ "x y z" """"
+Append a vector parameter to be passed to \fImain\fR.
+.TP
+.BI "-float " number
+Append a float parameter to be passed to \fImain\fR.
+.TP
+.BI "-string """ "text" """"
+Append a string parameter to be passed to \fImain\fR.
+.SH BUILTINS
+The following builtin functions are available:
+.TP
+.RI "1) " void " print(" string... ") = " "#1" ;
+Print the passed strings to stdout. At most 8 strings are allowed.
+.TP
+.RI "2) " string " ftos(" float ") = " "#2" ;
+Convert a float to a string.
+.TP
+.RI "3) " entity " spawn() = " "#3" ;
+Spawn an entity.
+.TP
+.RI "4) " void " remove(" entity ") = " "#4" ;
+Remove an entity.
+.TP
+.RI "5) " string " vtos(" vector ") = " "#5" ;
+Convert a vector to a string.
+.TP
+.RI "6) " void " error(" string... ") = " "#6" ;
+Print at most 8 strings to stdout and then exit with an error.
+.TP
+.RI "7) " float " vlen(" vector ") = " "#7" ;
+Get the length of a vector.
+.TP
+.RI "8) " string " etos(" entity ") = " "#8" ;
+Get the entity ID as string.
+.TP
+.RI "9) " float " stof(" string ") = " "#9" ;
+Convert a string to a float.
+.SH BUGS
+Please report bugs on <http://github.com/graphitemaster/gmqcc/issues>,
+or see <http://graphitemaster.github.com/gmqcc> on how to contact us.
+.SH SEE ALSO
+.IR gmqcc (1)
+.SH AUTHOR
+See <http://graphitemaster.github.com/gmqcc>.
