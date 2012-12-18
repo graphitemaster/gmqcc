@@ -581,7 +581,7 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, registe
     size_t               size  = strlen(key);
     uint32_t             hash  = seed ^ size;
     uint32_t             alias = 0;
-    const unsigned char *data  = (const unsigned char*)ket;
+    const unsigned char *data  = (const unsigned char*)key;
 
     while (size >= 4) {
         alias = *(uint32_t*)data;
