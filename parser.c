@@ -841,7 +841,15 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (ast_expression*)parser_const_float(parser,
                     (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
             else
+            {
+                if (OPTS_FLAG(PERL_LOGIC) && !ast_compare_type(exprs[0], exprs[1])) {
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    parseerror(parser, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
+                    return false;
+                }
                 out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+            }
             break;
 
         case opid2('?',':'):
