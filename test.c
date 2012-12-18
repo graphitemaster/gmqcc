@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-cmd_options opts;
+opts_cmd_t opts;
 
 char *task_bins[] = {
     "./gmqcc",
