@@ -2743,8 +2743,7 @@ tailcall:
                 ontrue = tmp;
             }
             stidx = vec_size(code_statements);
-            if (stmt.o2.s1 != 1)
-                code_push_statement(&stmt, instr->context.line);
+            code_push_statement(&stmt, instr->context.line);
             /* on false we jump, so add ontrue-path */
             if (!gen_blocks_recursive(func, ontrue))
                 return false;
@@ -2754,6 +2753,12 @@ tailcall:
             if (onfalse->generated) {
                 /* fixup the jump address */
                 code_statements[stidx].o2.s1 = (onfalse->code_start) - (stidx);
+                if (code_statements[stidx].o2.s1 == 1) {
+                    code_statements[stidx] = code_statements[stidx+1];
+                    if (code_statements[stidx].o1.s1 < 0)
+                        code_statements[stidx].o1.s1++;
+                    code_pop_statement();
+                }
                 stmt.opcode = vec_last(code_statements).opcode;
                 if (stmt.opcode == INSTR_GOTO ||
                     stmt.opcode == INSTR_IF ||
@@ -2772,6 +2777,12 @@ tailcall:
                 if (stmt.o1.s1 != 1)
                     code_push_statement(&stmt, instr->context.line);
                 return true;
+            }
+            else if (code_statements[stidx].o2.s1 == 1) {
+                code_statements[stidx] = code_statements[stidx+1];
+                if (code_statements[stidx].o1.s1 < 0)
+                    code_statements[stidx].o1.s1++;
+                code_pop_statement();
             }
             /* if not, generate now */
             block = onfalse;

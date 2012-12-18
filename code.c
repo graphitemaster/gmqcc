@@ -39,6 +39,12 @@ void code_push_statement(prog_section_statement *stmt, int linenum)
     vec_push(code_linenums,   linenum);
 }
 
+void code_pop_statement()
+{
+    vec_pop(code_statements);
+    vec_pop(code_linenums);
+}
+
 void code_init() {
     prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
     prog_section_statement empty_statement = {0,{0},{0},{0}};

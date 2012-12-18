@@ -573,6 +573,7 @@ qcint    code_alloc_field (size_t qcsize);
 
 /* this function is used to keep statements and linenumbers together */
 void     code_push_statement(prog_section_statement *stmt, int linenum);
+void     code_pop_statement();
 
 /*
  * A shallow copy of a lex_file to remember where which ast node
