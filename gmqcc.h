@@ -882,6 +882,7 @@ bool opts_setoptim(const char *, bool);
 void opts_init         (const char *, int, size_t);
 void opts_set          (uint32_t   *, size_t, bool);
 void opts_setoptimlevel(unsigned int);
+void opts_ini_init     (const char *);
 
 enum {
 # define GMQCC_TYPE_FLAGS

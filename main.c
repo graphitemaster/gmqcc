@@ -138,6 +138,7 @@ static bool options_parse(int argc, char **argv) {
     char  buffer[1024];
     char *redirout = (char*)stdout;
     char *redirerr = (char*)stderr;
+    char *config   = NULL;
 
     while (!argend && argc > 1) {
         char *argarg;
@@ -193,6 +194,10 @@ static bool options_parse(int argc, char **argv) {
             }
             if (options_long_gcc("redirerr", &argc, &argv, &redirerr)) {
                 con_change(redirout, redirerr);
+                continue;
+            }
+            if (options_long_gcc("config", &argc, &argv, &argarg)) {
+                config = argarg;
                 continue;
             }
 
@@ -437,6 +442,7 @@ static bool options_parse(int argc, char **argv) {
             vec_push(items, item);
         }
     }
+    opts_ini_init(config);
     return true;
 }
 

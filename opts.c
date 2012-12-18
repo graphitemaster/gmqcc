@@ -25,7 +25,6 @@
 unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 opts_cmd_t   opts; /* command lien options */
 
-static void opts_ini_init();
 static void opts_setdefault() {
     memset(&opts, 0, sizeof(opts_cmd_t));
     
@@ -63,8 +62,6 @@ void opts_init(const char *output, int standard, size_t arraysize) {
     opts.output         = output;
     opts.standard       = standard;
     opts.max_array_size = arraysize;
-
-    opts_ini_init();
 }
 
 static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def *list, size_t listsize) {
@@ -299,23 +296,25 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
  * Actual loading subsystem, this finds the ini or cfg file, and properly
  * loads it and executes it to set compiler options.
  */
-static void opts_ini_init() {
+void opts_ini_init(const char *file) {
     /*
      * Possible matches are:
      *  gmqcc.ini
      *  gmqcc.cfg
      */
+    char       *error;
+    size_t     line;
+    FILE       *ini;
 
-    char  *file;
-    char  *error;
-    size_t line;
-    FILE  *ini;
-
-    /* try ini */
-    if (!(ini = fopen((file = "gmqcc.ini"), "r")))
-        /* try cfg */
-        if (!(ini = fopen((file = "gmqcc.cfg"), "r")))
-            return;
+    
+    if (!file) {
+        /* try ini */
+        if (!(ini = fopen((file = "gmqcc.ini"), "r")))
+            /* try cfg */
+            if (!(ini = fopen((file = "gmqcc.cfg"), "r")))
+                return;
+    } else if (!(ini = fopen(file, "r")))
+        return;
 
     con_out("found ini file `%s`\n", file);
 
