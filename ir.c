@@ -3158,6 +3158,8 @@ static void gen_vector_defs(prog_section_def def, const char *name)
     if (!name || OPTS_FLAG(SINGLE_VECTOR_DEFS))
         return;
 
+    def.type = TYPE_FLOAT;
+
     len = strlen(name);
 
     component = (char*)mem_a(len+3);
@@ -3183,6 +3185,8 @@ static void gen_vector_fields(prog_section_field fld, const char *name)
 
     if (!name || OPTS_FLAG(SINGLE_VECTOR_DEFS))
         return;
+
+    def.type = TYPE_FLOAT;
 
     len = strlen(name);
 
