@@ -35,7 +35,7 @@ OBJ_C = main.o lexer.o parser.o
 OBJ_X = exec-standalone.o util.o con.o
 
 
-default: gmqcc
+default: all
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
