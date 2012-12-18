@@ -76,3 +76,4 @@ install-qcvm: qcvm
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m755  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
+	install    -m755  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
