@@ -776,8 +776,20 @@ static const char *arg0 = NULL;
 
 void usage()
 {
-    printf("usage: [-debug] %s file\n", arg0);
-    exit(1);
+    printf("usage: %s [options] [parameters] file\n", arg0);
+    printf("options:\n");
+    printf("  -h, --help    print this message\n"
+           "  -trace        trace the execution\n"
+           "  -profile      perform profiling during execution\n"
+           "  -info         print information from the prog's header\n"
+           "  -disasm       disassemble and exit\n"
+           "  -printdefs    list the defs section\n"
+           "  -printfields  list the field section\n"
+           "  -printfuns    list functions information\n");
+    printf("parameters:\n");
+    printf("  -vector <V>   pass a vector parameter to main()\n"
+           "  -float  <f>   pass a float parameter to main()\n"
+           "  -string <s>   pass a string parameter to main() \n");
 }
 
 static void prog_main_setparams(qc_program *prog)
@@ -828,15 +840,25 @@ int main(int argc, char **argv)
     bool        opts_printdefs   = false;
     bool        opts_printfuns   = false;
     bool        opts_disasm      = false;
-    bool        opts_info  = false;
+    bool        opts_info        = false;
+    bool        noexec           = false;
 
     arg0 = argv[0];
 
-    if (argc < 2)
+    if (argc < 2) {
         usage();
+        exit(1);
+    }
 
     while (argc > 2) {
-        if (!strcmp(argv[1], "-trace")) {
+        if (!strcmp(argv[1], "-h") ||
+            !strcmp(argv[1], "-help") ||
+            !strcmp(argv[1], "--help"))
+        {
+            usage();
+            exit(0);
+        }
+        else if (!strcmp(argv[1], "-trace")) {
             --argc;
             ++argv;
             xflags |= VMXF_TRACE;
@@ -850,26 +872,31 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
             opts_info = true;
+            noexec = true;
         }
         else if (!strcmp(argv[1], "-disasm")) {
             --argc;
             ++argv;
             opts_disasm = true;
+            noexec = true;
         }
         else if (!strcmp(argv[1], "-printdefs")) {
             --argc;
             ++argv;
             opts_printdefs = true;
+            noexec = true;
         }
         else if (!strcmp(argv[1], "-printfuns")) {
             --argc;
             ++argv;
             opts_printfuns = true;
+            noexec = true;
         }
         else if (!strcmp(argv[1], "-printfields")) {
             --argc;
             ++argv;
             opts_printfields = true;
+            noexec = true;
         }
         else if (!strcmp(argv[1], "-vector") ||
                  !strcmp(argv[1], "-string") ||
@@ -885,8 +912,10 @@ int main(int argc, char **argv)
 
             --argc;
             ++argv;
-            if (argc < 3)
+            if (argc < 3) {
                 usage();
+                exit(1);
+            }
             p.value = argv[1];
 
             vec_push(main_params, p);
@@ -894,7 +923,10 @@ int main(int argc, char **argv)
             ++argv;
         }
         else
+        {
             usage();
+            exit(1);
+        }
     }
 
 
@@ -913,12 +945,6 @@ int main(int argc, char **argv)
         printf("Globals: %u\n", (unsigned int)vec_size(prog->globals));
     }
 
-    for (i = 1; i < vec_size(prog->functions); ++i) {
-        const char *name = prog_getstring(prog, prog->functions[i].name);
-        /* printf("Found function: %s\n", name); */
-        if (!strcmp(name, "main"))
-            fnmain = (qcint)i;
-    }
     if (opts_info) {
         prog_delete(prog);
         return 0;
@@ -937,7 +963,7 @@ int main(int argc, char **argv)
                    ((prog->defs[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
         }
     }
-    else if (opts_printfields) {
+    if (opts_printfields) {
         for (i = 0; i < vec_size(prog->fields); ++i) {
             printf("Field: %8s %-16s at %u%s\n",
                    type_name[prog->fields[i].type],
@@ -946,7 +972,7 @@ int main(int argc, char **argv)
                    ((prog->fields[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
         }
     }
-    else if (opts_printfuns) {
+    if (opts_printfuns) {
         for (i = 0; i < vec_size(prog->functions); ++i) {
             int32_t a;
             printf("Function: %-16s taking %i parameters:(",
@@ -960,8 +986,12 @@ int main(int argc, char **argv)
                    prog->functions[i].locals);
         }
     }
-    else
-    {
+    if (!noexec) {
+        for (i = 1; i < vec_size(prog->functions); ++i) {
+            const char *name = prog_getstring(prog, prog->functions[i].name);
+            if (!strcmp(name, "main"))
+                fnmain = (qcint)i;
+        }
         if (fnmain > 0)
         {
             prog_main_setparams(prog);
