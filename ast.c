@@ -1417,14 +1417,14 @@ bool ast_generate_accessors(ast_value *self, ir_builder *ir)
         }
     }
 
-    options_set(opts.warn, WARN_USED_UNINITIALIZED, false);
+    opts_set(opts.warn, WARN_USED_UNINITIALIZED, false);
     if (self->setter) {
         if (!ast_global_codegen  (self->setter, ir, false) ||
             !ast_function_codegen(self->setter->constval.vfunc, ir) ||
             !ir_function_finalize(self->setter->constval.vfunc->ir_func))
         {
             compile_error(ast_ctx(self), "internal error: failed to generate setter for `%s`", self->name);
-            options_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
+            opts_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
             return false;
         }
     }
@@ -1434,14 +1434,14 @@ bool ast_generate_accessors(ast_value *self, ir_builder *ir)
             !ir_function_finalize(self->getter->constval.vfunc->ir_func))
         {
             compile_error(ast_ctx(self), "internal error: failed to generate getter for `%s`", self->name);
-            options_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
+            opts_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
             return false;
         }
     }
     for (i = 0; i < self->expression.count; ++i) {
         vec_free(self->ir_values[i]->life);
     }
-    options_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
+    opts_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
     return true;
 }
 

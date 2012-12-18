@@ -209,11 +209,11 @@ static void irerror(lex_ctx ctx, const char *msg, ...)
 static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
 {
     bool    r;
-	va_list ap;
-	va_start(ap, fmt);
-	r = vcompile_warning(ctx, warntype, fmt, ap);
-	va_end(ap);
-	return r;
+    va_list ap;
+    va_start(ap, fmt);
+    r = vcompile_warning(ctx, warntype, fmt, ap);
+    va_end(ap);
+    return r;
 }
 
 /***********************************************************************
@@ -575,7 +575,7 @@ bool ir_function_pass_peephole(ir_function *self)
                 if (store->_ops[1] != value)
                     continue;
 
-                ++optimization_count[OPTIM_PEEPHOLE];
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 (void)!ir_instr_op(oper, 0, store->_ops[0], true);
 
                 vec_remove(block->instr, i, 1);
@@ -610,7 +610,7 @@ bool ir_function_pass_peephole(ir_function *self)
                     }
 
                     /* count */
-                    ++optimization_count[OPTIM_PEEPHOLE];
+                    ++opts_optimizationcount[OPTIM_PEEPHOLE];
                     /* change operand */
                     (void)!ir_instr_op(inst, 0, inot->_ops[1], false);
                     /* remove NOT */
@@ -678,7 +678,7 @@ bool ir_function_pass_tailcall(ir_function *self)
                 ret->_ops[0]   == store->_ops[0] &&
                 store->_ops[1] == call->_ops[0])
             {
-                ++optimization_count[OPTIM_PEEPHOLE];
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 call->_ops[0] = store->_ops[0];
                 vec_remove(block->instr, vec_size(block->instr) - 2, 1);
                 ir_instr_delete(store);
@@ -700,7 +700,7 @@ bool ir_function_pass_tailcall(ir_function *self)
         if (ret->_ops[0] && call->_ops[0] != ret->_ops[0])
             continue;
 
-        ++optimization_count[OPTIM_TAIL_RECURSION];
+        ++opts_optimizationcount[OPTIM_TAIL_RECURSION];
         vec_shrinkby(block->instr, 2);
 
         block->final = false; /* open it back up */
@@ -2897,7 +2897,7 @@ tailcall:
             if (stmt.o2.u1 == stmt.o1.u1 &&
                 OPTS_OPTIMIZATION(OPTIM_PEEPHOLE))
             {
-                ++optimization_count[OPTIM_PEEPHOLE];
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 continue;
             }
         }

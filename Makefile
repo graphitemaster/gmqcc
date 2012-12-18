@@ -27,7 +27,8 @@ OBJ     =             \
           ast.o       \
           ir.o        \
           con.o       \
-          ftepp.o
+          ftepp.o     \
+          opts.o
 
 OBJ_T = test.o util.o con.o
 OBJ_C = main.o lexer.o parser.o

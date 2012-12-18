@@ -623,10 +623,10 @@ int  con_out   (const char *, ...);
 extern size_t compile_errors;
 extern size_t compile_warnings;
 
-void /********/  compile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
-bool GMQCC_WARN  compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...);
-void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list);
-bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list);
+void /********/ compile_error   (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
+void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
+bool GMQCC_WARN compile_warning (lex_ctx ctx, int warntype, const char *fmt, ...);
+bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/
@@ -867,14 +867,22 @@ typedef uint32_t longbit;
 #define LONGBIT(bit) (bit)
 #endif
 
-/* Used to store the list of flags with names */
+/*===================================================================*/
+/*============================= opts.c ==============================*/
+/*===================================================================*/
 typedef struct {
     const char *name;
     longbit     bit;
 } opts_flag_def;
 
-/*===================================================================*/
-/* list of -f flags, like -fdarkplaces-string-table-bug */
+bool opts_setflag (const char *, bool);
+bool opts_setwarn (const char *, bool);
+bool opts_setoptim(const char *, bool);
+
+void opts_init         (const char *, int, size_t);
+void opts_set          (uint32_t   *, size_t, bool);
+void opts_setoptimlevel(unsigned int);
+
 enum {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) X,
@@ -919,21 +927,21 @@ static const unsigned int opts_opt_oflag[] = {
 #  include "opts.def"
     0
 };
-extern unsigned int optimization_count[COUNT_OPTIMIZATIONS];
+extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
 /* other options: */
-enum {
+typedef enum {
     COMPILER_QCC,     /* circa  QuakeC */
     COMPILER_FTEQCC,  /* fteqcc QuakeC */
     COMPILER_QCCX,    /* qccx   QuakeC */
     COMPILER_GMQCC    /* this   QuakeC */
-};
+} opts_std_t;
 
 typedef struct {
     uint32_t    O;              /* -Ox           */
     const char *output;         /* -o file       */
     bool        g;              /* -g            */
-    int         standard;       /* -std=         */
+    opts_std_t  standard;       /* -std=         */
     bool        debug;          /* -debug        */
     bool        memchk;         /* -memchk       */
     bool        dumpfin;        /* -dumpfin      */
@@ -947,15 +955,13 @@ typedef struct {
     uint32_t flags       [1 + (COUNT_FLAGS         / 32)];
     uint32_t warn        [1 + (COUNT_WARNINGS      / 32)];
     uint32_t optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
-} cmd_options;
+} opts_cmd_t;
 
-extern cmd_options opts;
+extern opts_cmd_t opts;
 
 /*===================================================================*/
 #define OPTS_FLAG(i)         (!! (opts.flags       [(i)/32] & (1<< ((i)%32))))
 #define OPTS_WARN(i)         (!! (opts.warn        [(i)/32] & (1<< ((i)%32))))
 #define OPTS_OPTIMIZATION(i) (!! (opts.optimization[(i)/32] & (1<< ((i)%32))))
-
-void options_set(uint32_t *flags, size_t idx, bool on);
 
 #endif
