@@ -69,6 +69,10 @@ List all possible compile flags.
 .B -nocolor
 Disables colored output
 .TP
+.BI "-config " file
+Use an ini file to read all the -O, -W and -f flag from. See the
+CONFIG section about the file format.
+.TP
 .BI "-redirout=" file
 Redirects standard output to a \fIfile\fR
 .TP
@@ -283,3 +287,34 @@ soption.
 Normally vectors generate 4 defs, once for the vector, and once for
 its components with _x, _y, _z suffixes. This option
 prevents components from being listed.
+.SH CONFIG
+The configuration file is similar to regular .ini files. Comments
+start with hashtags or semicolons, sections are written in square
+brackets and in each section there can be arbitrary many key-value
+pairs.
+.sp
+There are 3 sections currently:
+.IR flags ", " warnings ", and " optimizations .
+They contain a list of boolean values of the form `VARNAME = true` or
+`VARNAME = false`. The variable names are the same as for the
+corresponding -W, -f or -O flag written with only capital letters and
+dashes replaced by underscores.
+.sp
+Here's an example:
+.in +4
+.nf
+# a GMQCC configuration file
+[flags]
+    FTEPP = true
+    ADJUST_VECTOR_FIELDS = false
+    LNO = true
+
+[warnings]
+    UNUSED_VARIABLE = false
+    USED_UNINITIALIZED = true
+
+[optimizations]
+    PEEPHOLE = true
+    TAIL_RECURSION = true
+.fi
+.in

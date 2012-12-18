@@ -61,6 +61,7 @@ static int usage() {
     con_out("  -o, --output=file      output file, defaults to progs.dat\n"
             "  -s filename            add a progs.src file to be used\n");
     con_out("  -E                     stop after preprocessing\n");
+    con_out("  -config file           use the specified ini file\n");
     con_out("  -std=standard          select one of the following standards\n"
             "       -std=qcc          original QuakeC\n"
             "       -std=fteqcc       fteqcc QuakeC\n"
