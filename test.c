@@ -157,7 +157,7 @@ int task_pclose(FILE **handles) {
     return status;
 }
 #else
-
+#error "There is no support for windows yet ... this is not a FTBFS bug"
 #endif
 
 #define TASK_COMPILE 0
@@ -201,6 +201,9 @@ int task_pclose(FILE **handles) {
  *                  This simply performs compilation only
  *              -execute
  *                  This will perform compilation and execution
+ *              -fail
+ *                  This will perform compileration, but requires
+ *                  the compilation to fail .. inorder to succeed.   
  *
  *          This must be provided, this tag is NOT optional.
  *
@@ -521,6 +524,12 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
             con_err("template compile error: %s missing `M:` tag (use `$null` for exclude)\n", file);
             goto failure;
         }
+    } else if (!strcmp(template->proceduretype, "-fail")) {
+        if (template->executeflags)
+            con_err("template compile warning: %s erroneous tag `E:` when only failing\n", file);
+        if (template->comparematch)
+            con_err("template compile warning: %s erroneous tag `M:` when only failing\n", file);
+        goto success;
     } else {
         con_err("template compile error: %s invalid procedure type: %s\n", file, template->proceduretype);
         goto failure;
@@ -769,9 +778,10 @@ void task_destroy(const char *curdir) {
 
         /*
          * Only remove the log files if the test actually compiled otherwise
-         * forget about it.
+         * forget about it (or if it didn't compile, and the procedure type
+         * was set to -fail (meaning it shouldn't compile) .. stil remove) 
          */
-        if (task_tasks[i].compiled) {
+        if (task_tasks[i].compiled || !strcmp(task_tasks[i].template->proceduretype, "-fail")) {
             if (remove(task_tasks[i].stdoutlogfile))
                 con_err("error removing stdout log file: %s\n", task_tasks[i].stdoutlogfile);
             else
@@ -946,7 +956,7 @@ void task_schedualize() {
             fflush(task_tasks[i].stdoutlog);
         }
 
-        if (!task_tasks[i].compiled) {
+        if (!task_tasks[i].compiled && strcmp(task_tasks[i].template->proceduretype, "-fail")) {
             con_err("test failure: `%s` [%s] (failed to compile) see %s.stdout and %s.stderr\n",
                 task_tasks[i].template->description,
                 (task_tasks[i].template->failuremessage) ?
