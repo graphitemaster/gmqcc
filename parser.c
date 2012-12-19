@@ -98,6 +98,8 @@ typedef struct {
     bool noref;
 } parser_t;
 
+static const ast_expression *intrinsic_debug_typestring = (ast_expression*)0x10;
+
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
@@ -835,13 +837,19 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
 #endif
-            if (opts.standard == COMPILER_GMQCC)
-                con_out("TODO: early out logic\n");
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
                     (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
             else
+            {
+                if (OPTS_FLAG(PERL_LOGIC) && !ast_compare_type(exprs[0], exprs[1])) {
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    parseerror(parser, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
+                    return false;
+                }
                 out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+            }
             break;
 
         case opid2('?',':'):
@@ -1192,9 +1200,25 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 
     fun = sy->out[fid].out;
 
+    if (fun == intrinsic_debug_typestring) {
+        char ty[1024];
+        if (fid+2 != vec_size(sy->out) ||
+            vec_last(sy->out).block)
+        {
+            parseerror(parser, "intrinsic __builtin_debug_typestring requires exactly 1 parameter");
+            return false;
+        }
+        ast_type_to_string(vec_last(sy->out).out, ty, sizeof(ty));
+        ast_unref(vec_last(sy->out).out);
+        sy->out[fid] = syexp(ast_ctx(vec_last(sy->out).out),
+                             (ast_expression*)parser_const_string(parser, ty, false));
+        vec_shrinkby(sy->out, 1);
+        return true;
+    }
+
     call = ast_call_new(sy->ops[vec_size(sy->ops)].ctx, fun);
     if (!call) {
-        parseerror(parser, "out of memory");
+        parseerror(parser, "internal error: failed to create ast_call node");
         return false;
     }
 
@@ -1251,9 +1275,9 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                                fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
                 else
                     parseerror(parser, "too %s parameters for function call: expected %i, got %i\n"
-                               " -> `%s` has been declared here: %s:%i",
-                               fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
-                               fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
+                               " -> it has been declared here: %s:%i",
+                               fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
+                               ast_ctx(fun).file, (int)ast_ctx(fun).line);
                 return false;
             }
             else
@@ -1267,9 +1291,9 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                 else
                     return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
                                          "too %s parameters for function call: expected %i, got %i\n"
-                                         " -> `%s` has been declared here: %s:%i",
-                                         fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
-                                         fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
+                                         " -> it has been declared here: %s:%i",
+                                         fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
+                                         ast_ctx(fun).file, (int)ast_ctx(fun).line);
             }
         }
     }
@@ -1432,16 +1456,27 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     var = parser_find_field(parser, parser_tokval(parser));
             }
             if (!var) {
-                parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
-                goto onerr;
+                /* intrinsics */
+                if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
+                    var = (ast_expression*)intrinsic_debug_typestring;
+
+                }
+                else
+                {
+                    parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                    goto onerr;
+                }
             }
-            if (ast_istype(var, ast_value)) {
-                ((ast_value*)var)->uses++;
-            }
-            else if (ast_istype(var, ast_member)) {
-                ast_member *mem = (ast_member*)var;
-                if (ast_istype(mem->owner, ast_value))
-                    ((ast_value*)(mem->owner))->uses++;
+            else
+            {
+                if (ast_istype(var, ast_value)) {
+                    ((ast_value*)var)->uses++;
+                }
+                else if (ast_istype(var, ast_member)) {
+                    ast_member *mem = (ast_member*)var;
+                    if (ast_istype(mem->owner, ast_value))
+                        ((ast_value*)(mem->owner))->uses++;
+                }
             }
             vec_push(sy.out, syexp(parser_ctx(parser), var));
             DEBUGSHUNTDO(con_out("push %s\n", parser_tokval(parser)));
@@ -1663,7 +1698,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0));
                 wantop = false;
             } else if (op->id == opid2('?',':')) {
-                wantop = false;
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_TERNARY, 0));
                 wantop = false;
@@ -2308,8 +2342,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
                 return false;
             }
             if (!OPTS_FLAG(RELAXED_SWITCH)) {
-                opval = (ast_value*)swcase.value;
-                if (!ast_istype(swcase.value, ast_value)) { /* || opval->cvq != CV_CONST) { */
+                if (!ast_istype(swcase.value, ast_value)) { /* || ((ast_value*)swcase.value)->cvq != CV_CONST) { */
                     parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
                     ast_unref(operand);
                     return false;
