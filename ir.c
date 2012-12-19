@@ -3542,7 +3542,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
 #define IND_BUFSZ 1024
 
-#ifdef WIN32
+#ifdef _MSC_VER
 # define strncat(dst, src, sz) strncat_s(dst, sz, src, _TRUNCATE)
 #endif
 

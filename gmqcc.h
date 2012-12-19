@@ -175,13 +175,6 @@
     typedef struct { char _fail : 0; } int64_t;
     typedef struct { char _fail : 0; } uint64_t;
 #endif
-#ifdef _LP64 /* long pointer == 64 */
-    typedef unsigned long  uintptr_t;
-    typedef long           intptr_t;
-#else
-    typedef unsigned int   uintptr_t;
-    typedef int            intptr_t;
-#endif
 /* Ensure type sizes are correct: */
 typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
 typedef char uint16_size_is_correct [sizeof(uint16_t) == 2?1:-1];
@@ -190,9 +183,6 @@ typedef char uint64_size_is_correct [sizeof(uint64_t) == 8?1:-1];
 typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
 typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
 typedef char int64_size_is_correct  [sizeof(int64_t)  >= 8?1:-1];
-/* intptr_t / uintptr_t correct size check */
-typedef char uintptr_size_is_correct[sizeof(intptr_t) == sizeof(int*)?1:-1];
-typedef char intptr_size_is_correct [sizeof(uintptr_t)== sizeof(int*)?1:-1];
 
 /*===================================================================*/
 /*=========================== util.c ================================*/
