@@ -202,8 +202,8 @@ int task_pclose(FILE **handles) {
  *              -execute
  *                  This will perform compilation and execution
  *              -fail
- *                  This will perform compileration, but requires
- *                  the compilation to fail .. inorder to succeed.   
+ *                  This will perform compilation, but requires
+ *                  the compilation to fail in order to succeed.   
  *
  *          This must be provided, this tag is NOT optional.
  *
