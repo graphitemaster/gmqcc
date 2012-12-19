@@ -1525,6 +1525,10 @@ ir_instr* ir_block_create_phi(ir_block *self, lex_ctx ctx, const char *label, in
 {
     ir_value *out;
     ir_instr *in;
+    if (self->final) {
+        irerror(self->context, "unreachable statement (%s)", self->label);
+        return false;
+    }
     in = ir_instr_new(ctx, self, VINSTR_PHI);
     if (!in)
         return NULL;
@@ -1570,6 +1574,10 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, i
 {
     ir_value *out;
     ir_instr *in;
+    if (self->final) {
+        irerror(self->context, "unreachable statement (%s)", self->label);
+        return false;
+    }
     in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
         return NULL;
