@@ -131,7 +131,7 @@ typedef struct
     /* arrays get a member-count */
     size_t                  count;
     ast_value*             *params;
-    bool                    variadic;
+    uint32_t                flags;
     /* The codegen functions should store their output values
      * so we can call it multiple times without re-evaluating.
      * Store lvalue and rvalue seperately though. So that
@@ -140,6 +140,8 @@ typedef struct
     ir_value               *outl;
     ir_value               *outr;
 } ast_expression_common;
+#define AST_FLAG_VARIADIC     (1<<0)
+#define AST_FLAG_NORETURN     (1<<1)
 
 /* Value
  *

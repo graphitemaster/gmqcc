@@ -71,9 +71,9 @@ static void ast_expression_init(ast_expression *self,
     self->expression.next     = NULL;
     self->expression.outl     = NULL;
     self->expression.outr     = NULL;
-    self->expression.variadic = false;
     self->expression.params   = NULL;
     self->expression.count    = 0;
+    self->expression.flags    = 0;
 }
 
 static void ast_expression_delete(ast_expression *self)
@@ -108,8 +108,8 @@ ast_value* ast_value_copy(const ast_value *self)
     }
     fromex   = &self->expression;
     selfex = &cp->expression;
-    selfex->variadic = fromex->variadic;
     selfex->count    = fromex->count;
+    selfex->flags    = fromex->flags;
     for (i = 0; i < vec_size(fromex->params); ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
         if (!v) {
@@ -134,8 +134,8 @@ bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     }
     fromex   = &other->expression;
     selfex = &self->expression;
-    selfex->variadic = fromex->variadic;
     selfex->count    = fromex->count;
+    selfex->flags    = fromex->flags;
     for (i = 0; i < vec_size(fromex->params); ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
         if (!v)
@@ -186,8 +186,8 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
         else
             selfex->next = NULL;
 
-        selfex->variadic = fromex->variadic;
         selfex->count    = fromex->count;
+        selfex->flags    = fromex->flags;
         for (i = 0; i < vec_size(fromex->params); ++i) {
             ast_value *v = ast_value_copy(fromex->params[i]);
             if (!v) {
@@ -209,7 +209,7 @@ bool ast_compare_type(ast_expression *a, ast_expression *b)
         return false;
     if (vec_size(a->expression.params) != vec_size(b->expression.params))
         return false;
-    if (a->expression.variadic != b->expression.variadic)
+    if (a->expression.flags != b->expression.flags)
         return false;
     if (vec_size(a->expression.params)) {
         size_t i;

@@ -1259,7 +1259,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     } else {
         if (vec_size(fun->expression.params) != paramcount &&
-            !(fun->expression.variadic &&
+            !((fun->expression.flags & AST_FLAG_VARIADIC) &&
               vec_size(fun->expression.params) < paramcount))
         {
             ast_value *fval;
@@ -2821,7 +2821,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         return false;
     }
 
-    if (var->expression.variadic) {
+    if (var->expression.flags & AST_FLAG_VARIADIC) {
         if (parsewarning(parser, WARN_VARIADIC_FUNCTION,
                          "variadic function with implementation will not be able to access additional parameters"))
         {
@@ -3540,7 +3540,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
     /* now turn 'var' into a function type */
     fval = ast_value_new(ctx, "<type()>", TYPE_FUNCTION);
     fval->expression.next     = (ast_expression*)var;
-    fval->expression.variadic = variadic;
+    if (variadic)
+        fval->expression.flags |= AST_FLAG_VARIADIC;
     var = fval;
 
     var->expression.params = params;
