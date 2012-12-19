@@ -2905,7 +2905,9 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
         vec_push(params, param);
     }
 
-    callinstr = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "call"), funval, false);
+    callinstr = ir_block_create_call(func->curblock, ast_ctx(self),
+                                     ast_function_label(func, "call"),
+                                     funval, !!(self->func->expression.flags & AST_FLAG_NORETURN));
     if (!callinstr)
         goto error;
 
