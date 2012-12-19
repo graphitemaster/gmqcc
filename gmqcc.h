@@ -546,7 +546,12 @@ enum {
      */
     VINSTR_PHI,
     VINSTR_JUMP,
-    VINSTR_COND
+    VINSTR_COND,
+    /* A never returning CALL.
+     * Creating this causes IR blocks to be marked as 'final'.
+     * No-Return-Call
+     */
+    VINSTR_NRCALL
 };
 
 extern prog_section_statement *code_statements;

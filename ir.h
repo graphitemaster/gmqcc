@@ -209,7 +209,7 @@ ir_value* ir_block_create_div(ir_block*, lex_ctx, const char *label, ir_value *l
 ir_instr* ir_block_create_phi(ir_block*, lex_ctx, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
 void ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
-ir_instr* ir_block_create_call(ir_block*, lex_ctx, const char *label, ir_value *func);
+ir_instr* ir_block_create_call(ir_block*, lex_ctx, const char *label, ir_value *func, bool noreturn);
 ir_value* ir_call_value(ir_instr*);
 void ir_call_param(ir_instr*, ir_value*);
 

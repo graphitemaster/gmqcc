@@ -1640,7 +1640,7 @@ bool ast_store_codegen(ast_store *self, ast_function *func, bool lvalue, ir_valu
         if (!(*cgen)((ast_expression*)(self->source), func, false, &right))
             return false;
 
-        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "store"), funval);
+        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "store"), funval, false);
         if (!call)
             return false;
         ir_call_param(call, iridx);
@@ -1878,7 +1878,7 @@ bool ast_binstore_codegen(ast_binstore *self, ast_function *func, bool lvalue, i
         if (!(*cgen)((ast_expression*)(arr->setter), func, true, &funval))
             return false;
 
-        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "store"), funval);
+        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "store"), funval, false);
         if (!call)
             return false;
         ir_call_param(call, iridx);
@@ -2110,7 +2110,7 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
         if (!(*cgen)((ast_expression*)(arr->getter), func, true, &funval))
             return false;
 
-        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "fetch"), funval);
+        call = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "fetch"), funval, false);
         if (!call)
             return false;
         ir_call_param(call, iridx);
@@ -2905,7 +2905,7 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
         vec_push(params, param);
     }
 
-    callinstr = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "call"), funval);
+    callinstr = ir_block_create_call(func->curblock, ast_ctx(self), ast_function_label(func, "call"), funval, false);
     if (!callinstr)
         goto error;
 

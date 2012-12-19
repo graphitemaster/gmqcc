@@ -1566,11 +1566,11 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 }
 
 /* call related code */
-ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, ir_value *func)
+ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, ir_value *func, bool noreturn)
 {
     ir_value *out;
     ir_instr *in;
-    in = ir_instr_new(ctx, self, INSTR_CALL0);
+    in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
         return NULL;
     out = ir_value_out(self->owner, label, (func->outtype == TYPE_VOID) ? store_return : store_value, func->outtype);
@@ -2793,7 +2793,9 @@ tailcall:
             goto tailcall;
         }
 
-        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+        if ( (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8)
+           || instr->opcode == VINSTR_NRCALL)
+        {
             /* Trivial call translation:
              * copy all params to OFS_PARM*
              * if the output's storetype is not store_return,
@@ -3663,7 +3665,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
         if (in->_ops[1] || in->_ops[2])
             oprintf(" <- ");
     }
-    if (in->opcode == INSTR_CALL0) {
+    if (in->opcode == INSTR_CALL0 || in->opcode == VINSTR_NRCALL) {
         oprintf("CALL%i\t", vec_size(in->params));
     } else
         oprintf("%s\t", qc_opname(in->opcode));
