@@ -495,7 +495,7 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
 
 FILE *util_fopen(const char *filename, const char *mode)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     FILE *out;
     if (fopen_s(&out, filename, mode) != 0)
         return NULL;
