@@ -29,18 +29,19 @@ static void opts_setdefault() {
     memset(&opts, 0, sizeof(opts_cmd_t));
     
     /* warnings */
+    opts_set(opts.warn,  WARN_UNUSED_VARIABLE,           true);
+    opts_set(opts.warn,  WARN_USED_UNINITIALIZED,        true);
     opts_set(opts.warn,  WARN_UNKNOWN_CONTROL_SEQUENCE,  true);
     opts_set(opts.warn,  WARN_EXTENSIONS,                true);
     opts_set(opts.warn,  WARN_FIELD_REDECLARED,          true);
-    opts_set(opts.warn,  WARN_TOO_FEW_PARAMETERS,        true);
     opts_set(opts.warn,  WARN_MISSING_RETURN_VALUES,     true);
-    opts_set(opts.warn,  WARN_USED_UNINITIALIZED,        true);
+    opts_set(opts.warn,  WARN_TOO_FEW_PARAMETERS,        true);
+    opts_set(opts.warn,  WARN_LOCAL_SHADOWS,             false);
     opts_set(opts.warn,  WARN_LOCAL_CONSTANTS,           true);
     opts_set(opts.warn,  WARN_VOID_VARIABLES,            true);
     opts_set(opts.warn,  WARN_IMPLICIT_FUNCTION_POINTER, true);
     opts_set(opts.warn,  WARN_VARIADIC_FUNCTION,         true);
     opts_set(opts.warn,  WARN_FRAME_MACROS,              true);
-    opts_set(opts.warn,  WARN_UNUSED_VARIABLE,           true);
     opts_set(opts.warn,  WARN_EFFECTLESS_STATEMENT,      true);
     opts_set(opts.warn,  WARN_END_SYS_FIELDS,            true);
     opts_set(opts.warn,  WARN_ASSIGN_FUNCTION_TYPES,     true);
