@@ -533,7 +533,7 @@ typedef struct hash_node_t {
  * below.  These should be autovectorized by gcc.
  */
 #ifdef __x86_64__
-GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, register size_t seed) {
+static GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, size_t seed) {
     const uint64_t       mix   = 0xC6A4A7935BD1E995UL;
     const int            rot   = 47;
     size_t               size  = strlen(key);
@@ -575,7 +575,7 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, registe
 }
 
 #else
-GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, register size_t seed) {
+static GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, size_t seed) {
     const uint32_t       mix   = 0x5BD1E995;
     const uint32_t       rot   = 24;
     size_t               size  = strlen(key);
