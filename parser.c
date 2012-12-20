@@ -1894,10 +1894,47 @@ static void parser_addlocal(parser_t *parser, const char *name, ast_expression *
     util_htset(vec_last(parser->variables), name, (void*)e);
 }
 
+static ast_expression* process_condition(parser_t *parser, ast_expression *cond, bool *_ifnot)
+{
+    bool       ifnot = false;
+    ast_unary *unary;
+
+    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING) {
+        cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_S, cond);
+        ifnot = !ifnot;
+    }
+    else if (OPTS_FLAG(CORRECT_LOGIC)) {
+        /* everything must use a NOT_ */
+        unary = (ast_unary*)cond;
+        if (!ast_istype(cond, ast_unary) || unary->op < INSTR_NOT_F || unary->op > INSTR_NOT_FNC)
+        {
+            /* use the right NOT_ */
+            cond = (ast_expression*)ast_unary_new(ast_ctx(cond), type_not_instr[cond->expression.vtype], cond);
+            ifnot = !ifnot;
+        }
+    }
+
+    unary = (ast_unary*)cond;
+    while (ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F && unary->operand->expression.vtype != TYPE_STRING)
+    {
+        cond = unary->operand;
+        unary->operand = NULL;
+        ast_delete(unary);
+        ifnot = !ifnot;
+        unary = (ast_unary*)cond;
+    }
+
+    if (!cond)
+        parseerror(parser, "internal error: failed to process condition");
+
+    if (ifnot) *_ifnot = !*_ifnot;
+    return cond;
+}
+
 static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_ifthen *ifthen;
-    ast_expression *cond, *ontrue, *onfalse = NULL;
+    ast_expression *cond, *ontrue = NULL, *onfalse = NULL;
     bool ifnot = false;
 
     lex_ctx ctx = parser_ctx(parser);
@@ -1959,6 +1996,13 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
             ast_delete(cond);
             return false;
         }
+    }
+
+    cond = process_condition(parser, cond, &ifnot);
+    if (!cond) {
+        if (ontrue)  ast_delete(ontrue);
+        if (onfalse) ast_delete(onfalse);
+        return false;
     }
 
     if (ifnot)

@@ -476,7 +476,7 @@ ast_unary* ast_unary_new(lex_ctx ctx, int op,
 
 void ast_unary_delete(ast_unary *self)
 {
-    ast_unref(self->operand);
+    if (self->operand) ast_unref(self->operand);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
