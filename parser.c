@@ -903,12 +903,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 return false;
                             }
                             out = (ast_expression*)ast_unary_new(ctx, type_not_instr[exprs[i]->expression.vtype], exprs[i]);
-                            if (!out)
-                                break;
+                            if (!out) break;
+                            out = (ast_expression*)ast_unary_new(ctx, type_not_instr[exprs[i]->expression.vtype], out);
+                            if (!out) break;
                             exprs[i] = out; out = NULL;
+                            if (OPTS_FLAG(PERL_LOGIC)) {
+                            }
                         }
-                        if (OPTS_FLAG(PERL_LOGIC))
-                            break;
                     }
                 }
                 out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
