@@ -2255,9 +2255,11 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
     if (!parse_statement_or_block(parser, &ontrue))
         goto onerr;
 
-    cond = process_condition(parser, cond, &ifnot);
-    if (!cond)
-        goto onerr;
+    if (cond) {
+        cond = process_condition(parser, cond, &ifnot);
+        if (!cond)
+            goto onerr;
+    }
     aloop = ast_loop_new(ctx, initexpr, cond, ifnot, NULL, false, increment, ontrue);
     *out = (ast_expression*)aloop;
 
