@@ -56,6 +56,12 @@ Enable or disable a warning.
 .B -Wall
 Enable all warnings. Overrides preceding -W parameters.
 .TP
+.BR -Werror ", " -Wno-error
+Controls whether or not all warnings should be treated as errors.
+.TP
+.BI -Werror- warning "\fR, " "" -Wno-error- warning
+Controls whether a specific warning should be an error.
+.TP
 .B -Whelp
 List all possible warn flags.
 .TP

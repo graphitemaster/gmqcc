@@ -898,7 +898,6 @@ typedef struct {
     bool        memchk;         /* -memchk       */
     bool        dumpfin;        /* -dumpfin      */
     bool        dump;           /* -dump         */
-    bool        werror;         /* -Werror       */
     bool        forcecrc;       /* --force-crc=  */
     uint16_t    forced_crc;     /* --force-crc=  */
     bool        pp_only;        /* -E            */
@@ -906,6 +905,7 @@ typedef struct {
 
     uint32_t flags       [1 + (COUNT_FLAGS         / 32)];
     uint32_t warn        [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t werror      [1 + (COUNT_WARNINGS      / 32)];
     uint32_t optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
 } opts_cmd_t;
 
@@ -914,6 +914,7 @@ extern opts_cmd_t opts;
 /*===================================================================*/
 #define OPTS_FLAG(i)         (!! (opts.flags       [(i)/32] & (1<< ((i)%32))))
 #define OPTS_WARN(i)         (!! (opts.warn        [(i)/32] & (1<< ((i)%32))))
+#define OPTS_WERROR(i)       (!! (opts.werror      [(i)/32] & (1<< ((i)%32))))
 #define OPTS_OPTIMIZATION(i) (!! (opts.optimization[(i)/32] & (1<< ((i)%32))))
 
 #endif

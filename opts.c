@@ -94,6 +94,9 @@ bool opts_setflag (const char *name, bool on) {
 bool opts_setwarn (const char *name, bool on) {
     return opts_setflag_all(name, on, opts.warn,         opts_warn_list, COUNT_WARNINGS);
 }
+bool opts_setwerror(const char *name, bool on) {
+    return opts_setflag_all(name, on, opts.werror,       opts_warn_list, COUNT_WARNINGS);
+}
 bool opts_setoptim(const char *name, bool on) {
     return opts_setflag_all(name, on, opts.optimization, opts_opt_list,  COUNT_OPTIMIZATIONS);
 }

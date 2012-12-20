@@ -71,8 +71,10 @@ static int usage() {
             "  -fhelp                 list possible flags\n");
     con_out("  -W<warning>            enable a warning\n"
             "  -Wno-<warning>         disable a warning\n"
-            "  -Wall                  enable all warnings\n"
-            "  -Werror                treat warnings as errors\n");
+            "  -Wall                  enable all warnings\n");
+    con_out("  -Werror                treat warnings as errors\n"
+            "  -Werror-<warning>      treat a warning as error\n"
+            "  -Wno-error-<warning>   opposite of the above\n");
     con_out("  -Whelp                 list possible warnings\n");
     con_out("  -O<number>             optimization level\n"
             "  -O<name>               enable specific optimization\n"
@@ -318,12 +320,18 @@ static bool options_parse(int argc, char **argv) {
                         }
                         exit(0);
                     }
-                    else if (!strcmp(argv[0]+2, "NO_ERROR")) {
-                        opts.werror = false;
+                    else if (!strcmp(argv[0]+2, "NO_ERROR") ||
+                             !strcmp(argv[0]+2, "NO_ERROR_ALL"))
+                    {
+                        for (itr = 0; itr < sizeof(opts.werror)/sizeof(opts.werror[0]); ++itr)
+                            opts.werror[itr] = 0;
                         break;
                     }
-                    else if (!strcmp(argv[0]+2, "ERROR")) {
-                        opts.werror = true;
+                    else if (!strcmp(argv[0]+2, "ERROR") ||
+                             !strcmp(argv[0]+2, "ERROR_ALL"))
+                    {
+                        for (itr = 0; itr < sizeof(opts.werror)/sizeof(opts.werror[0]); ++itr)
+                            opts.werror[itr] = 0xFFFFFFFFL;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "NONE")) {
@@ -336,7 +344,19 @@ static bool options_parse(int argc, char **argv) {
                             opts.warn[itr] = 0xFFFFFFFFL;
                         break;
                     }
-                    if (!strncmp(argv[0]+2, "NO_", 3)) {
+                    else if (!strncmp(argv[0]+2, "ERROR_", 6)) {
+                        if (!opts_setwarn(argv[0]+8, true)) {
+                            con_out("unknown warning: %s\n", argv[0]+2);
+                            return false;
+                        }
+                    }
+                    else if (!strncmp(argv[0]+2, "NO_ERROR_", 9)) {
+                        if (!opts_setwarn(argv[0]+11, false)) {
+                            con_out("unknown warning: %s\n", argv[0]+2);
+                            return false;
+                        }
+                    }
+                    else if (!strncmp(argv[0]+2, "NO_", 3)) {
                         if (!opts_setwarn(argv[0]+5, false)) {
                             con_out("unknown warning: %s\n", argv[0]+2);
                             return false;

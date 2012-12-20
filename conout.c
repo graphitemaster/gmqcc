@@ -399,7 +399,7 @@ bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_
     warn_name[1] = 'W';
     (void)util_strtononcmd(opts_warn_list[warntype].name, warn_name+2, sizeof(warn_name)-2);
 
-    if (opts.werror) {
+    if (OPTS_WERROR(warntype)) {
         ++compile_errors;
         lvl = LVL_ERROR;
     }
@@ -408,7 +408,7 @@ bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_
 
     con_vprintmsg_c(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap, warn_name);
 
-    return opts.werror;
+    return OPTS_WERROR(warntype);
 }
 
 bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
