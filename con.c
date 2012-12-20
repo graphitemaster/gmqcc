@@ -46,7 +46,7 @@ typedef struct {
  * Doing colored output on windows is fucking stupid.  The linux way is
  * the real way. So we emulate it on windows :)
  */
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -208,7 +208,7 @@ static void con_enablecolor() {
  */
 static int con_write(FILE *handle, const char *fmt, va_list va) {
     int      ln;
-    #ifndef _WIN32
+    #ifndef _MSC_VER
     ln = vfprintf(handle, fmt, va);
     #else
     {
@@ -331,7 +331,7 @@ void con_vprintmsg_c(int level, const char *name, size_t line, const char *msgty
 
     int  err                         = !!(level == LVL_ERROR);
     int  color                       = (err) ? console.color_err : console.color_out;
-    int (*print)(const char *, ...)  = (err) ? &con_err          : &con_out;
+    int (*print) (const char *, ...)  = (err) ? &con_err          : &con_out;
     int (*vprint)(const char *, va_list) = (err) ? &con_verr : &con_vout;
 
     if (color)

@@ -139,50 +139,53 @@
  * for systems that don't have it, which we must
  * assume is all systems. (int8_t not required)
  */
-#if   CHAR_MIN  == -128
-    typedef unsigned char  uint8_t; /* same as below */
-#elif SCHAR_MIN == -128
-    typedef unsigned char  uint8_t; /* same as above */
-#endif
-#if   SHRT_MAX  == 0x7FFF
-    typedef short          int16_t;
-    typedef unsigned short uint16_t;
-#elif INT_MAX   == 0x7FFF
-    typedef int            int16_t;
-    typedef unsigned int   uint16_t;
-#endif
-#if   INT_MAX   == 0x7FFFFFFF
-    typedef int            int32_t;
-    typedef unsigned int   uint32_t;
-#elif LONG_MAX  == 0x7FFFFFFF
-    typedef long           int32_t;
-    typedef unsigned long  uint32_t;
-#endif
+#if __STDC_VERSION__ < 199901L
+#   if   CHAR_MIN  == -128
+        typedef unsigned char  uint8_t; /* same as below */
+#   elif SCHAR_MIN == -128
+        typedef unsigned char  uint8_t; /* same as above */
+#   endif
+#   if   SHRT_MAX  == 0x7FFF
+        typedef short          int16_t;
+        typedef unsigned short uint16_t;
+#   elif INT_MAX   == 0x7FFF
+        typedef int            int16_t;
+        typedef unsigned int   uint16_t;
+#   endif
+#   if   INT_MAX   == 0x7FFFFFFF
+        typedef int            int32_t;
+        typedef unsigned int   uint32_t;
+#   elif LONG_MAX  == 0x7FFFFFFF
+        typedef long           int32_t;
+        typedef unsigned long  uint32_t;
+#   endif
 
-
-#if defined(__GNUC__) || defined (__CLANG__)
-	typedef int              int64_t  __attribute__((__mode__(__DI__)));
-	typedef unsigned int     uint64_t __attribute__((__mode__(__DI__)));
-#elif defined(_MSC_VER)
-	typedef __int64          int64_t;
-	typedef unsigned __int64 uint64_t;
+#   if defined(__GNUC__) || defined (__CLANG__)
+        typedef int              int64_t  __attribute__((__mode__(__DI__)));
+        typedef unsigned int     uint64_t __attribute__((__mode__(__DI__)));
+#   elif defined(_MSC_VER)
+        typedef __int64          int64_t;
+        typedef unsigned __int64 uint64_t;
+#   else
+        /*
+        * Incorrectly size the types so static assertions below will
+        * fail.  There is no valid way to get a 64bit type at this point
+        * without making assumptions of too many things.
+        */
+        typedef struct { char _fail : 0; } int64_t;
+        typedef struct { char _fail : 0; } uint64_t;
+#   endif
+    /* Ensure type sizes are correct: */
+    typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
+    typedef char uint16_size_is_correct [sizeof(uint16_t) == 2?1:-1];
+    typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
+    typedef char uint64_size_is_correct [sizeof(uint64_t) == 8?1:-1];
+    typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
+    typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
+    typedef char int64_size_is_correct  [sizeof(int64_t)  >= 8?1:-1];
 #else
-    /*
-    * Incorrectly size the types so static assertions below will
-    * fail.  There is no valid way to get a 64bit type at this point
-    * without making assumptions of too many things.
-    */
-    typedef struct { char _fail : 0; } int64_t;
-    typedef struct { char _fail : 0; } uint64_t;
+#   include <stdint.h>
 #endif
-/* Ensure type sizes are correct: */
-typedef char uint8_size_is_correct  [sizeof(uint8_t)  == 1?1:-1];
-typedef char uint16_size_is_correct [sizeof(uint16_t) == 2?1:-1];
-typedef char uint32_size_is_correct [sizeof(uint32_t) == 4?1:-1];
-typedef char uint64_size_is_correct [sizeof(uint64_t) == 8?1:-1];
-typedef char int16_size_if_correct  [sizeof(int16_t)  == 2?1:-1];
-typedef char int32_size_is_correct  [sizeof(int32_t)  == 4?1:-1];
-typedef char int64_size_is_correct  [sizeof(int64_t)  >= 8?1:-1];
 
 /*===================================================================*/
 /*=========================== util.c ================================*/
