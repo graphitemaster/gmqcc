@@ -1061,10 +1061,10 @@ const char* ast_function_label(ast_function *self, const char *prefix)
     from = self->labelbuf + sizeof(self->labelbuf)-1;
     *from-- = 0;
     do {
-        unsigned int digit = id % 10;
-        *from = digit + '0';
+        *from-- = (id%10) + '0';
         id /= 10;
     } while (id);
+    ++from;
     memcpy(from - len, prefix, len);
     return from - len;
 }
