@@ -54,6 +54,7 @@ static void opts_setdefault() {
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
     opts_set(opts.flags, FTEPP,                          false);
     opts_set(opts.flags, CORRECT_TERNARY,                true);
+    opts_set(opts.flags, ALLOW_UNREACHABLE_CODE,         true);
 }
 
 void opts_init(const char *output, int standard, size_t arraysize) {

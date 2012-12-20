@@ -1360,13 +1360,20 @@ bool ir_values_overlap(const ir_value *a, const ir_value *b)
  *IR main operations
  */
 
+static bool ir_check_unreachable(ir_block *self)
+{
+    /* The IR should never have to deal with unreachable code */
+    if (!self->final/* || OPTS_FLAG(ALLOW_UNREACHABLE_CODE)*/)
+        return true;
+    irerror(self->context, "unreachable statement (%s)", self->label);
+    return false;
+}
+
 bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *target, ir_value *what)
 {
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
 
     if (target->store == store_value &&
         (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC))
@@ -1441,10 +1448,8 @@ bool ir_block_create_storep(ir_block *self, lex_ctx ctx, ir_value *target, ir_va
 bool ir_block_create_return(ir_block *self, lex_ctx ctx, ir_value *v)
 {
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
     self->final = true;
     self->is_return = true;
     in = ir_instr_new(ctx, self, INSTR_RETURN);
@@ -1464,10 +1469,8 @@ bool ir_block_create_if(ir_block *self, lex_ctx ctx, ir_value *v,
                         ir_block *ontrue, ir_block *onfalse)
 {
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
     self->final = true;
     /*in = ir_instr_new(ctx, self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));*/
     in = ir_instr_new(ctx, self, VINSTR_COND);
@@ -1494,10 +1497,8 @@ bool ir_block_create_if(ir_block *self, lex_ctx ctx, ir_value *v,
 bool ir_block_create_jump(ir_block *self, lex_ctx ctx, ir_block *to)
 {
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
     self->final = true;
     in = ir_instr_new(ctx, self, VINSTR_JUMP);
     if (!in)
@@ -1514,10 +1515,8 @@ bool ir_block_create_jump(ir_block *self, lex_ctx ctx, ir_block *to)
 bool ir_block_create_goto(ir_block *self, lex_ctx ctx, ir_block *to)
 {
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
     self->final = true;
     in = ir_instr_new(ctx, self, INSTR_GOTO);
     if (!in)
@@ -1535,10 +1534,8 @@ ir_instr* ir_block_create_phi(ir_block *self, lex_ctx ctx, const char *label, in
 {
     ir_value *out;
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
     in = ir_instr_new(ctx, self, VINSTR_PHI);
     if (!in)
         return NULL;
@@ -1584,10 +1581,8 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, i
 {
     ir_value *out;
     ir_instr *in;
-    if (self->final) {
-        irerror(self->context, "unreachable statement (%s)", self->label);
+    if (!ir_check_unreachable(self))
         return false;
-    }
     in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
         return NULL;
