@@ -1568,13 +1568,14 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
 
     for (i = 0; i < vec_size(self->exprs); ++i)
     {
-        ast_expression_codegen *gen = self->exprs[i]->expression.codegen;
+        ast_expression_codegen *gen;
         if (func->curblock->final && !ast_istype(self->exprs[i], ast_label)) {
             if (OPTS_FLAG(ALLOW_UNREACHABLE_CODE))
                 continue;
             compile_error(ast_ctx(self->exprs[i]), "unreachable statement");
             return false;
         }
+        gen = self->exprs[i]->expression.codegen;
         if (!(*gen)(self->exprs[i], func, false, out))
             return false;
     }
