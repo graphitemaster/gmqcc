@@ -102,7 +102,7 @@ static const ansi2win[] = {
     WWHITE
 };
 
-static void win_fputs(char *str, FILE *f) {
+static void win_fputs(char *str, FILE *h) {
     /* state for translate */
     int acolor;
     int wcolor;
@@ -117,7 +117,7 @@ static void win_fputs(char *str, FILE *f) {
     int colorpos = 1;
 
     CONSOLE_SCREEN_BUFFER_INFO cinfo;
-    GetConsoleScreenBufferInfo(
+    GetConsoleScreenBufferInfo (
         (GMQCC_IS_STDOUT(h)) ?
             GetStdHandle(STD_OUTPUT_HANDLE) :
             GetStdHandle(STD_ERROR_HANDLE), &cinfo
@@ -156,7 +156,7 @@ static void win_fputs(char *str, FILE *f) {
                     intense = WBLACK;
                 }
 
-                SetConsoleTextattribute(
+                SetConsoleTextAttribute (
                     (h == stdout) ?
                     GetStdHandle(STD_OUTPUT_HANDLE) :
                     GetStdHandle(STD_ERROR_HANDLE),
