@@ -220,6 +220,10 @@ actually want. We recommend the \fI-fcorrect-ternary\fR option.
 .B -Wunknown-pragmas
 Warn when encountering an unrecognized \fI#pragma\fR line.
 .TP
+.B -Wunreachable-code
+Warn about unreachable code. That is: code after a return statement,
+or code after a call to a function marked as 'noreturn'.
+.TP
 .B -Wdebug
 Enable some warnings added in order to help debugging in the compiler.
 You won't need this.
