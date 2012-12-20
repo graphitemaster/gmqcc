@@ -266,6 +266,7 @@ static bool options_parse(int argc, char **argv) {
                 /* debug turns on -flno */
                 case 'g':
                     opts_setflag("LNO", true);
+                    opts.g = true;
                     break;
 
                 case 'D':

@@ -1049,7 +1049,7 @@ const char* ast_function_label(ast_function *self, const char *prefix)
     size_t len;
     char  *from;
 
-    if (!opts.dump && !opts.dumpfin)
+    if (!opts.dump && !opts.dumpfin && !opts.debug)
         return NULL;
 
     id  = (self->labelcount++);
