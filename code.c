@@ -236,6 +236,7 @@ bool code_write(const char *filename, const char *lnofile) {
     }
 
     vec_free(code_statements);
+    vec_free(code_linenums);
     vec_free(code_defs);
     vec_free(code_fields);
     vec_free(code_functions);
