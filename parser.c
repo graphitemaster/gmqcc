@@ -648,10 +648,17 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[0]);
                     break;
                 case TYPE_STRING:
-                    if (CanConstFold1(exprs[0]))
-                        out = (ast_expression*)parser_const_float(parser, !ConstS(0) || !*ConstS(0));
-                    else
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[0]);
+                    if (CanConstFold1(exprs[0])) {
+                        if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
+                            out = (ast_expression*)parser_const_float(parser, !ConstS(0));
+                        else
+                            out = (ast_expression*)parser_const_float(parser, !ConstS(0) || !*ConstS(0));
+                    } else {
+                        if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
+                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
+                        else
+                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[0]);
+                    }
                     break;
                 /* we don't constant-fold NOT for these types */
                 case TYPE_ENTITY:
