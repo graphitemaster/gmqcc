@@ -25,10 +25,10 @@ ifeq ($(track), no)
     CFLAGS += -DNOTRACK
 endif
 
-OBJ_D = util.o code.o ast.o ir.o con.o ftepp.o opts.o
-OBJ_T = test.o util.o con.o
+OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o
+OBJ_T = test.o util.o conout.o
 OBJ_C = main.o lexer.o parser.o
-OBJ_X = exec-standalone.o util.o con.o
+OBJ_X = exec-standalone.o util.o conout.o
 
 ifneq ("$(CYGWIN)", "")
 	#nullify the common variables that
