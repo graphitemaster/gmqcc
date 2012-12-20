@@ -2369,6 +2369,7 @@ error:
 cleanup:
     for (i = 0; i < vec_size(alloc.locals); ++i)
         ir_value_delete(alloc.locals[i]);
+    vec_free(alloc.unique);
     vec_free(alloc.locals);
     vec_free(alloc.sizes);
     vec_free(alloc.positions);
