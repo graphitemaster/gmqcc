@@ -406,7 +406,7 @@ bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_
     else
         ++compile_warnings;
 
-    con_vprintmsg_c(lvl, ctx.file, ctx.line, (opts.werror ? "error" : "warning"), fmt, ap, warn_name);
+    con_vprintmsg_c(lvl, ctx.file, ctx.line, ((lvl == LVL_ERROR) ? "error" : "warning"), fmt, ap, warn_name);
 
     return OPTS_WERROR(warntype);
 }
