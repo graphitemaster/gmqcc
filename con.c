@@ -27,7 +27,14 @@
  * + some other things likewise.
  */
 #ifndef _WIN32
-#include <unistd.h>
+#   include <unistd.h>
+#else
+#   include <io.h>
+    /*
+     * Windows and it's posix underscore bullshit.  We simply fix this
+     * with yay, another macro :P
+     */
+#   define isatty _isatty
 #endif
 
 #define GMQCC_IS_STDOUT(X) ((FILE*)((void*)X) == stdout)
@@ -58,12 +65,6 @@ typedef struct {
 #undef  STDOUT_FILENO
 #define STDERR_FILENO 2
 #define STDOUT_FILENO 1
-
-/*
- * Windows and it's posix underscore bullshit.  We simply fix this
- * with yay, another macro :P
- */
-#define isatty _isatty
 
 enum {
     RESET = 0,
