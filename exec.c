@@ -814,7 +814,7 @@ static void prog_main_setparams(qc_program *prog)
         arg->vector[2] = 0;
         switch (main_params[i].vtype) {
             case TYPE_VECTOR:
-#ifdef WIN32
+#ifdef _MSC_VER
                 (void)sscanf_s(main_params[i].value, " %f %f %f ",
                                &arg->vector[0],
                                &arg->vector[1],
