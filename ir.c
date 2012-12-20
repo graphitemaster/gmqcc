@@ -988,6 +988,8 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
 
 ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
 {
+    char     *name;
+    size_t    len;
     ir_value *m;
     if (member >= 3)
         return NULL;
@@ -995,9 +997,16 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     if (self->members[member])
         return self->members[member];
 
+    len = strlen(self->name);
+    name = (char*)mem_a(len + 3);
+    memcpy(name, self->name, len);
+    name[len+0] = '_';
+    name[len+1] = 'x' + member;
+    name[len+2] = '\0';
     if (self->vtype == TYPE_VECTOR)
     {
-        m = ir_value_var(self->name, self->store, TYPE_FLOAT);
+        m = ir_value_var(name, self->store, TYPE_FLOAT);
+        mem_d(name);
         if (!m)
             return NULL;
         m->context = self->context;
@@ -1009,7 +1018,8 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     {
         if (self->fieldtype != TYPE_VECTOR)
             return NULL;
-        m = ir_value_var(self->name, self->store, TYPE_FIELD);
+        m = ir_value_var(name, self->store, TYPE_FIELD);
+        mem_d(name);
         if (!m)
             return NULL;
         m->fieldtype = TYPE_FLOAT;
@@ -2185,8 +2195,24 @@ bool ir_function_calculate_liferanges(ir_function *self)
         ir_block *block = self->blocks[0];
         for (i = 0; i < vec_size(block->living); ++i) {
             ir_value *v = block->living[i];
-            if (v->memberof || v->store != store_local)
+            if (v->store != store_local)
                 continue;
+            if ((v->members[0] && v->members[1] && v->members[2])) {
+                /* all vector members have been accessed - only treat this as uninitialized
+                 * if any of them is also uninitialized.
+                 */
+                if (!vec_ir_value_find(block->living, v->members[0], NULL) &&
+                    !vec_ir_value_find(block->living, v->members[1], NULL) &&
+                    !vec_ir_value_find(block->living, v->members[2], NULL))
+                {
+                    continue;
+                }
+            }
+            if (v->memberof) {
+                /* A member is only uninitialized if the whole vector is also uninitialized */
+                if (!vec_ir_value_find(block->living, v->memberof, NULL))
+                    continue;
+            }
             if (irwarning(v->context, WARN_USED_UNINITIALIZED,
                           "variable `%s` may be used uninitialized in this function", v->name))
             {
@@ -2462,8 +2488,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (p = 0; p < vec_size(instr->phi); ++p)
         {
             value = instr->phi[p].value;
-            if (value->memberof)
-                value = value->memberof;
             if (!vec_ir_value_find(self->living, value, NULL))
                 vec_push(self->living, value);
         }
@@ -2472,8 +2496,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         for (p = 0; p < vec_size(instr->params); ++p)
         {
             value = instr->params[p];
-            if (value->memberof)
-                value = value->memberof;
             if (!vec_ir_value_find(self->living, value, NULL))
                 vec_push(self->living, value);
         }
@@ -2501,8 +2523,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 continue;
 
             value = instr->_ops[o];
-            if (value->memberof)
-                value = value->memberof;
 
             /* We only care about locals */
             /* we also calculate parameter liferanges so that locals
