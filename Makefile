@@ -1,12 +1,17 @@
 DESTDIR :=
-PREFIX := /usr/local
-BINDIR := $(PREFIX)/bin
+PREFIX  := /usr/local
+BINDIR  := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
-MANDIR := $(DATADIR)/man
+MANDIR  := $(DATADIR)/man
+
+UNAME  = $(shell uname)
+CYGWIN = $(findstring CYGWIN,  $(UNAME))
+MINGW  = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
 CFLAGS += -Wall -Wextra -I. -pedantic-errors
 #turn on tons of warnings if clang is present
+# but also turn off the STUPID ONES
 ifeq ($(CC), clang)
 	CFLAGS +=                         \
 		-Weverything                  \
@@ -15,26 +20,45 @@ ifeq ($(CC), clang)
 		-Wno-disabled-macro-expansion \
 		-Wno-conversion               \
 		-Wno-missing-prototypes
-
 endif
 ifeq ($(track), no)
     CFLAGS += -DNOTRACK
 endif
 
-OBJ     =             \
-          util.o      \
-          code.o      \
-          ast.o       \
-          ir.o        \
-          con.o       \
-          ftepp.o     \
-          opts.o
-
+OBJ_D = util.o code.o ast.o ir.o con.o ftepp.o opts.o
 OBJ_T = test.o util.o con.o
 OBJ_C = main.o lexer.o parser.o
 OBJ_X = exec-standalone.o util.o con.o
 
+ifneq ("$(CYGWIN)", "")
+	#nullify the common variables that
+	#most *nix systems have (for windows)
+	PREFIX   :=
+	BINDIR   :=
+	DATADIR  :=
+	MANDIR   :=
+	QCVM      = qcvm.exe
+	GMQCC     = gmqcc.exe
+	TESTSUITE = testsuite.exe
+else
+ifneq ("$(MINGW32)", "")
+	#nullify the common variables that
+	#most *nix systems have (for windows)
+	PREFIX   :=
+	BINDIR   :=
+	DATADIR  :=
+	MANDIR   :=
+	QCVM      = qcvm.exe
+	GMQCC     = gmqcc.exe
+	TESTSUITE = testsuite.exe
+else
+	QCVM      = qcvm
+	GMQCC     = gmqcc
+	TESTSUITE = testsuite
+endif
+endif
 
+#standard rules
 default: all
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
@@ -42,37 +66,38 @@ default: all
 exec-standalone.o: exec.c
 	$(CC) -c $< -o $@ $(CFLAGS) -DQCVM_EXECUTOR=1
 
-qcvm: $(OBJ_X)
+$(QCVM): $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS) -lm
 
-gmqcc: $(OBJ_C) $(OBJ)
+$(GMQCC): $(OBJ_C) $(OBJ_D)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-testsuite: $(OBJ_T)
+$(TESTSUITE): $(OBJ_T)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-all: gmqcc qcvm testsuite
+all: $(GMQCC) $(QCVM) $(TESTSUITE)
 
 check: all
-	@ ./testsuite
+	@ ./$(TESTSUITE)
 
 clean:
-	rm -f *.o gmqcc qcvm testsuite *.dat
+	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
 
-
+# deps
 $(OBJ) $(OBJ_C) $(OBJ_X): gmqcc.h opts.def
-main.o: lexer.h
+main.o:   lexer.h
 parser.o: ast.h lexer.h
-ast.o: ast.h ir.h
-ir.o: ir.h
+ast.o:    ast.h ir.h
+ir.o:     ir.h
 
+#install rules
 install: install-gmqcc install-qcvm install-doc
-install-gmqcc: gmqcc
+install-gmqcc: $(GMQCC)
 	install -d -m755               $(DESTDIR)$(BINDIR)
-	install    -m755  gmqcc        $(DESTDIR)$(BINDIR)/gmqcc
-install-qcvm: qcvm
+	install    -m755  $(GMQCC)     $(DESTDIR)$(BINDIR)/gmqcc
+install-qcvm: $(QCVM)
 	install -d -m755               $(DESTDIR)$(BINDIR)
-	install    -m755  qcvm         $(DESTDIR)$(BINDIR)/qcvm
+	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/qcvm
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m755  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
