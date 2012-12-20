@@ -41,7 +41,7 @@ ifneq ("$(CYGWIN)", "")
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
 else
-ifneq ("$(MINGW32)", "")
+ifneq ("$(MINGW)", "")
 	#nullify the common variables that
 	#most *nix systems have (for windows)
 	PREFIX   :=
