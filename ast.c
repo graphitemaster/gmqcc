@@ -1505,7 +1505,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     }
 
     /* TODO: check return types */
-    if (!self->curblock->is_return)
+    if (!self->curblock->final)
     {
         if (!self->vtype->expression.next ||
             self->vtype->expression.next->expression.vtype == TYPE_VOID)
