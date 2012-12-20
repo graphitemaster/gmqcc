@@ -904,7 +904,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             }
                             out = (ast_expression*)ast_unary_new(ctx, type_not_instr[exprs[i]->expression.vtype], exprs[i]);
                             if (!out) break;
-                            out = (ast_expression*)ast_unary_new(ctx, type_not_instr[exprs[i]->expression.vtype], out);
+                            out = (ast_expression*)ast_unary_new(ctx, NOT_F, out);
                             if (!out) break;
                             exprs[i] = out; out = NULL;
                             if (OPTS_FLAG(PERL_LOGIC)) {
