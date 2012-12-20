@@ -826,9 +826,10 @@ typedef struct {
     longbit     bit;
 } opts_flag_def;
 
-bool opts_setflag (const char *, bool);
-bool opts_setwarn (const char *, bool);
-bool opts_setoptim(const char *, bool);
+bool opts_setflag  (const char *, bool);
+bool opts_setwarn  (const char *, bool);
+bool opts_setwerror(const char *, bool);
+bool opts_setoptim (const char *, bool);
 
 void opts_init         (const char *, int, size_t);
 void opts_set          (uint32_t   *, size_t, bool);

@@ -345,13 +345,13 @@ static bool options_parse(int argc, char **argv) {
                         break;
                     }
                     else if (!strncmp(argv[0]+2, "ERROR_", 6)) {
-                        if (!opts_setwarn(argv[0]+8, true)) {
+                        if (!opts_setwerror(argv[0]+8, true)) {
                             con_out("unknown warning: %s\n", argv[0]+2);
                             return false;
                         }
                     }
                     else if (!strncmp(argv[0]+2, "NO_ERROR_", 9)) {
-                        if (!opts_setwarn(argv[0]+11, false)) {
+                        if (!opts_setwerror(argv[0]+11, false)) {
                             con_out("unknown warning: %s\n", argv[0]+2);
                             return false;
                         }
