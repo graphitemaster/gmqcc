@@ -468,6 +468,36 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     return true;
 }
 
+static bool immediate_is_true(lex_ctx ctx, ast_value *v)
+{
+    switch (v->expression.vtype) {
+        case TYPE_FLOAT:
+            return !!v->constval.vfloat;
+        case TYPE_INTEGER:
+            return !!v->constval.vint;
+        case TYPE_VECTOR:
+            if (OPTS_FLAG(CORRECT_LOGIC))
+                return v->constval.vvec.x &&
+                       v->constval.vvec.y &&
+                       v->constval.vvec.z;
+            else
+                return !!(v->constval.vvec.x);
+        case TYPE_STRING:
+            if (!v->constval.vstring)
+                return false;
+            if (v->constval.vstring && OPTS_FLAG(TRUE_EMPTY_STRINGS))
+                return true;
+            return !!v->constval.vstring[0];
+        case TYPE_ENTITY:
+            return !!v->constval.ventity;
+        case TYPE_FIELD:
+            return !!v->constval.vfield;
+        default:
+            compile_error(ctx, "internal error: immediate_is_true on invalid type");
+            return !!v->constval.vfunc;
+    }
+}
+
 static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
@@ -526,7 +556,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
              (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
               exprs[0]->expression.vtype != T)
 #define CanConstFold1(A) \
-             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue && (((ast_value*)(A))->cvq == CV_CONST))
+             (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue && (((ast_value*)(A))->cvq == CV_CONST) &&\
+              (A)->expression.vtype != TYPE_FUNCTION)
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
@@ -846,8 +877,16 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 #endif
             if (CanConstFold(exprs[0], exprs[1]))
             {
-                out = (ast_expression*)parser_const_float(parser,
-                    (generated_op == INSTR_OR ? (ConstF(0) || ConstF(1)) : (ConstF(0) && ConstF(1))));
+                if (OPTS_FLAG(PERL_LOGIC)) {
+                    if (immediate_is_true(ctx, asvalue[0]))
+                        out = exprs[1];
+                }
+                else
+                    out = (ast_expression*)parser_const_float(parser,
+                          ( (generated_op == INSTR_OR)
+                            ? (immediate_is_true(ctx, asvalue[0]) || immediate_is_true(ctx, asvalue[1]))
+                            : (immediate_is_true(ctx, asvalue[0]) && immediate_is_true(ctx, asvalue[1])) )
+                          ? 0 : 1);
             }
             else
             {
