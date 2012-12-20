@@ -1570,10 +1570,9 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     {
         ast_expression_codegen *gen;
         if (func->curblock->final && !ast_istype(self->exprs[i], ast_label)) {
-            if (OPTS_FLAG(ALLOW_UNREACHABLE_CODE))
-                continue;
-            compile_error(ast_ctx(self->exprs[i]), "unreachable statement");
-            return false;
+            if (compile_warning(ast_ctx(self->exprs[i]), WARN_UNREACHABLE_CODE, "unreachable statement"))
+                return false;
+            continue;
         }
         gen = self->exprs[i]->expression.codegen;
         if (!(*gen)(self->exprs[i], func, false, out))
