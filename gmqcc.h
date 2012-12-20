@@ -134,11 +134,7 @@
 #    define GMQCC_NORETURN
 #endif
 
-/*
- * stdint.h and inttypes.h -less subset
- * for systems that don't have it, which we must
- * assume is all systems. (int8_t not required)
- */
+/* no stdint.h in < C99 */
 #if __STDC_VERSION__ < 199901L
 #   if   CHAR_MIN  == -128
         typedef unsigned char  uint8_t; /* same as below */
