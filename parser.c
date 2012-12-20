@@ -1910,7 +1910,7 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
         }
         ifnot = !ifnot;
     }
-    else if (OPTS_FLAG(CORRECT_LOGIC)) {
+    if (OPTS_FLAG(CORRECT_LOGIC)) {
         /* everything must use a NOT_ */
         unary = (ast_unary*)cond;
         if (!ast_istype(cond, ast_unary) || unary->op < INSTR_NOT_F || unary->op > INSTR_NOT_FNC)
