@@ -2156,7 +2156,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
             parseerror(parser, "return with invalid expression");
         }
 
-        ret = ast_return_new(exp->expression.node.context, exp);
+        ret = ast_return_new(ctx, exp);
         if (!ret) {
             ast_delete(exp);
             return false;
