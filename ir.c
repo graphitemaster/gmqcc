@@ -2290,7 +2290,9 @@ bool ir_function_allocate_locals(ir_function *self)
 
     for (i = 0; i < vec_size(self->locals); ++i)
     {
+#if 0
         if (!OPTS_OPTIMIZATION(OPTIM_LOCALTEMPS))
+#endif
             self->locals[i]->unique_life = true;
         if (!function_allocator_alloc(&alloc, self->locals[i]))
             goto error;
@@ -3029,9 +3031,6 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     ir_function          *irfun;
 
     size_t i;
-#ifndef NEW_ALLOC_STRAT
-    size_t local_var_end;
-#endif
 
     if (!global->hasvalue || (!global->constval.vfunc))
     {
@@ -3057,41 +3056,6 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     fun.firstlocal = vec_size(code_globals);
 
-#ifndef NEW_ALLOC_STRAT
-    local_var_end = fun.firstlocal;
-    for (i = 0; i < vec_size(irfun->locals); ++i) {
-        if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
-            irerror(irfun->locals[i]->context, "Failed to generate local %s", irfun->locals[i]->name);
-            return false;
-        }
-    }
-    if (vec_size(irfun->locals)) {
-        ir_value *last = vec_last(irfun->locals);
-        local_var_end = last->code.globaladdr;
-        local_var_end += ir_value_sizeof(last);
-    }
-    for (i = 0; i < vec_size(irfun->values); ++i)
-    {
-        /* generate code.globaladdr for ssa values */
-        ir_value *v = irfun->values[i];
-#if 1
-        ir_value_code_setaddr(v, fun.firstlocal + v->code.local);
-#else
-        ir_value_code_setaddr(v, local_var_end + v->code.local);
-#endif
-    }
-#if 1
-    for (i = vec_size(code_globals); i < fun.firstlocal + irfun->allocated_locals; ++i)
-        vec_push(code_globals, 0);
-#else
-    for (i = 0; i < irfun->allocated_locals; ++i) {
-        /* fill the locals with zeros */
-        vec_push(code_globals, 0);
-    }
-#endif
-
-    fun.locals = vec_size(code_globals) - fun.firstlocal;
-#else
     fun.locals = irfun->allocated_locals;
     for (i = 0; i < vec_size(irfun->locals); ++i) {
         if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
@@ -3100,16 +3064,14 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         }
         ir_value_code_setaddr(irfun->locals[i], fun.firstlocal + irfun->locals[i]->code.local);
     }
-    for (i = vec_size(code_globals) - fun.firstlocal; i < fun.locals; ++i) {
-        vec_push(code_globals, 0);
-    }
     for (i = 0; i < vec_size(irfun->values); ++i)
     {
         /* generate code.globaladdr for ssa values */
         ir_value *v = irfun->values[i];
         ir_value_code_setaddr(v, fun.firstlocal + v->code.local);
     }
-#endif
+    for (i = vec_size(code_globals); i < fun.firstlocal + irfun->allocated_locals; ++i)
+        vec_push(code_globals, 0);
 
     if (irfun->builtin)
         fun.entry = irfun->builtin+1;
