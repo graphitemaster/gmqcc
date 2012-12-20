@@ -1898,9 +1898,16 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
 {
     bool       ifnot = false;
     ast_unary *unary;
+    ast_expression *prev;
 
     if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING) {
+        prev = cond;
         cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_S, cond);
+        if (!cond) {
+            ast_unref(prev);
+            parseerror(parser, "internal error: failed to process condition");
+            return NULL;
+        }
         ifnot = !ifnot;
     }
     else if (OPTS_FLAG(CORRECT_LOGIC)) {
@@ -1909,13 +1916,20 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
         if (!ast_istype(cond, ast_unary) || unary->op < INSTR_NOT_F || unary->op > INSTR_NOT_FNC)
         {
             /* use the right NOT_ */
+            prev = cond;
             cond = (ast_expression*)ast_unary_new(ast_ctx(cond), type_not_instr[cond->expression.vtype], cond);
+            if (!cond) {
+                ast_unref(prev);
+                parseerror(parser, "internal error: failed to process condition");
+                return NULL;
+            }
             ifnot = !ifnot;
         }
     }
 
     unary = (ast_unary*)cond;
-    while (ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F && unary->operand->expression.vtype != TYPE_STRING)
+    while (ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F)
+        /*&& unary->operand->expression.vtype != TYPE_STRING) */
     {
         cond = unary->operand;
         unary->operand = NULL;
@@ -2018,6 +2032,8 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
     ast_loop *aloop;
     ast_expression *cond, *ontrue;
 
+    bool ifnot = false;
+
     lex_ctx ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
@@ -2053,7 +2069,12 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
         return false;
     }
 
-    aloop = ast_loop_new(ctx, NULL, cond, NULL, NULL, ontrue);
+    cond = process_condition(parser, cond, &ifnot);
+    if (!cond) {
+        ast_delete(ontrue);
+        return false;
+    }
+    aloop = ast_loop_new(ctx, NULL, cond, ifnot, NULL, false, NULL, ontrue);
     *out = (ast_expression*)aloop;
     return true;
 }
@@ -2062,6 +2083,8 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
 {
     ast_loop *aloop;
     ast_expression *cond, *ontrue;
+
+    bool ifnot = false;
 
     lex_ctx ctx = parser_ctx(parser);
 
@@ -2122,7 +2145,12 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
         return false;
     }
 
-    aloop = ast_loop_new(ctx, NULL, NULL, cond, NULL, ontrue);
+    cond = process_condition(parser, cond, &ifnot);
+    if (!cond) {
+        ast_delete(ontrue);
+        return false;
+    }
+    aloop = ast_loop_new(ctx, NULL, NULL, false, cond, ifnot, NULL, ontrue);
     *out = (ast_expression*)aloop;
     return true;
 }
@@ -2132,7 +2160,9 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
     ast_loop       *aloop;
     ast_expression *initexpr, *cond, *increment, *ontrue;
     ast_value      *typevar;
-    bool   retval = true;
+
+    bool retval = true;
+    bool ifnot  = false;
 
     lex_ctx ctx = parser_ctx(parser);
 
@@ -2225,7 +2255,10 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
     if (!parse_statement_or_block(parser, &ontrue))
         goto onerr;
 
-    aloop = ast_loop_new(ctx, initexpr, cond, NULL, increment, ontrue);
+    cond = process_condition(parser, cond, &ifnot);
+    if (!cond)
+        goto onerr;
+    aloop = ast_loop_new(ctx, initexpr, cond, ifnot, NULL, false, increment, ontrue);
     *out = (ast_expression*)aloop;
 
     if (!parser_leaveblock(parser))

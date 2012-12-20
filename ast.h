@@ -449,11 +449,19 @@ struct ast_loop_s
     ast_expression *postcond;
     ast_expression *increment;
     ast_expression *body;
+    /* For now we allow a seperate flag on whether or not the condition
+     * is supposed to be true or false.
+     * That way, the parser can generate a 'while not(!x)' for `while(x)`
+     * if desired, which is useful for the new -f{true,false}-empty-strings
+     * flag.
+     */
+    bool pre_not;
+    bool post_not;
 };
 ast_loop* ast_loop_new(lex_ctx ctx,
                        ast_expression *initexpr,
-                       ast_expression *precond,
-                       ast_expression *postcond,
+                       ast_expression *precond, bool pre_not,
+                       ast_expression *postcond, bool post_not,
                        ast_expression *increment,
                        ast_expression *body);
 void ast_loop_delete(ast_loop*);

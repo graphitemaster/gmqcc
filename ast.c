@@ -709,8 +709,8 @@ void ast_ternary_delete(ast_ternary *self)
 
 ast_loop* ast_loop_new(lex_ctx ctx,
                        ast_expression *initexpr,
-                       ast_expression *precond,
-                       ast_expression *postcond,
+                       ast_expression *precond, bool pre_not,
+                       ast_expression *postcond, bool post_not,
                        ast_expression *increment,
                        ast_expression *body)
 {
@@ -722,6 +722,9 @@ ast_loop* ast_loop_new(lex_ctx ctx,
     self->postcond  = postcond;
     self->increment = increment;
     self->body      = body;
+
+    self->pre_not   = pre_not;
+    self->post_not  = post_not;
 
     if (initexpr)
         ast_propagate_effects(self, initexpr);
@@ -2546,6 +2549,11 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bpostcond)  ontrue = bpostcond;
         else                 ontrue = bprecond;
         onfalse = bout;
+        if (self->pre_not) {
+            tmpblock = ontrue;
+            ontrue   = onfalse;
+            onfalse  = tmpblock;
+        }
         if (!ir_block_create_if(end_bprecond, ast_ctx(self), precond, ontrue, onfalse))
             return false;
     }
@@ -2581,6 +2589,11 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         else if (bincrement) ontrue = bincrement;
         else                 ontrue = bpostcond;
         onfalse = bout;
+        if (self->post_not) {
+            tmpblock = ontrue;
+            ontrue   = onfalse;
+            onfalse  = tmpblock;
+        }
         if (!ir_block_create_if(end_bpostcond, ast_ctx(self), postcond, ontrue, onfalse))
             return false;
     }
