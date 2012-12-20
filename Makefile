@@ -4,9 +4,9 @@ BINDIR  := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
 MANDIR  := $(DATADIR)/man
 
-UNAME  = $(shell uname)
-CYGWIN = $(findstring CYGWIN,  $(UNAME))
-MINGW  = $(findstring MINGW32, $(UNAME))
+UNAME  ?= $(shell uname)
+CYGWIN  = $(findstring CYGWIN,  $(UNAME))
+MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
 CFLAGS += -Wall -Wextra -I. -pedantic-errors -std=gnu99
