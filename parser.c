@@ -488,10 +488,6 @@ static bool immediate_is_true(lex_ctx ctx, ast_value *v)
             if (v->constval.vstring && OPTS_FLAG(TRUE_EMPTY_STRINGS))
                 return true;
             return !!v->constval.vstring[0];
-        case TYPE_ENTITY:
-            return !!v->constval.ventity;
-        case TYPE_FIELD:
-            return !!v->constval.vfield;
         default:
             compile_error(ctx, "internal error: immediate_is_true on invalid type");
             return !!v->constval.vfunc;
