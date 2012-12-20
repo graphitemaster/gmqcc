@@ -615,7 +615,7 @@ static GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, 
 /* we use the crc table as seeds for the murmur hash :P */
 size_t util_hthash(hash_table_t *ht, const char *key) {
     static   size_t seed = 0;
-    register size_t hash = util_hthashfunc(ht, key, util_crc32_table[seed]);
+    register size_t hash = util_hthashfunc(ht, key, util_crc32_table[seed++]);
 
     /* reset seed */
     if (seed >= sizeof(util_crc32_table) / sizeof(*util_crc32_table))
