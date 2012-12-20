@@ -297,6 +297,31 @@ soption.
 Normally vectors generate 4 defs, once for the vector, and once for
 its components with _x, _y, _z suffixes. This option
 prevents components from being listed.
+.TP
+.B -fcorrect-logic
+Most QC compilers translate if(a_vector) directly as an IF on the
+vector, which means only the x-component is checked. This causes all
+non-float types to use an appropriate NOT instruction on all logic
+operations and invert their use.
+.in +4
+.nf
+if (a_vector) // becomes
+if not(!a_vector)
+// likewise
+a = a_vector && a_float // becomes
+a = !!a_vector && a_float
+.fi
+.in
+.TP
+.B -ftrue-empty-strings
+An empty string is considered to be true everywhere. The NOT_S
+instruction usually considers an empty string to be false, this option
+effectively causes the unary not in strings to use NOT_F instead.
+.TP
+.B -ffalse-empty-strings
+An empty string is considered to be false everywhere. This means loops
+and if statements which depend on a string will perform a NOT_S
+instruction on the string before using it.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
