@@ -1586,12 +1586,10 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, i
     in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
         return NULL;
-    /*
     if (noreturn) {
         self->final = true;
         self->is_return = true;
     }
-    */
     out = ir_value_out(self->owner, label, (func->outtype == TYPE_VOID) ? store_return : store_value, func->outtype);
     if (!out) {
         ir_instr_delete(in);
@@ -1605,6 +1603,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, i
         return NULL;
     }
     vec_push(self->instr, in);
+    /*
     if (noreturn) {
         if (!ir_block_create_return(self, ctx, NULL)) {
             compile_error(ctx, "internal error: failed to generate dummy-return instruction");
@@ -1612,6 +1611,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, i
             return NULL;
         }
     }
+    */
     return in;
 }
 

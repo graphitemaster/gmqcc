@@ -263,6 +263,7 @@ void util_debug(const char *area, const char *ms, ...) {
  * reorders by stride and length, much nicer than other functions for
  * certian-sized types like short or int.
  */
+#if 0
 void util_endianswap(void *m, int s, int l) {
     size_t w = 0;
     size_t i = 0;
@@ -278,6 +279,64 @@ void util_endianswap(void *m, int s, int l) {
             p[i]             = p[s-i-1];
             p[s-i-1]         = t;
         }
+    }
+}
+#endif
+
+static void util_swap16(uint16_t *d, size_t l) {
+    while (l--) {
+        d[l] = (d[l] << 8) | (d[l] >> 8);
+    }
+}
+
+static void util_swap32(uint32_t *d, size_t l) {
+    while (l--) {
+        uint32_t v;
+        v = ((d[l] << 8) & 0xFF00FF00) | ((d[l] >> 8) & 0x00FF00FF);
+        d[l] = (v << 16) | (v >> 16);
+    }
+}
+
+/* Some strange system doesn't like constants that big, AND doesn't recognize an ULL suffix
+ * so let's go the safe way
+ */
+static void util_swap64(uint32_t *d, size_t l) {
+    /*
+    while (l--) {
+        uint64_t v;
+        v = ((d[l] << 8) & 0xFF00FF00FF00FF00) | ((d[l] >> 8) & 0x00FF00FF00FF00FF);
+        v = ((v << 16) & 0xFFFF0000FFFF0000) | ((v >> 16) & 0x0000FFFF0000FFFF);
+        d[l] = (v << 32) | (v >> 32);
+    }
+    */
+    size_t i;
+    for (i = 0; i < l; i += 2) {
+        uint32_t v1 = d[i];
+        d[i] = d[i+1];
+        d[i+1] = v1;
+        util_swap32(d+i, 2);
+    }
+}
+
+void util_endianswap(void *_data, size_t length, unsigned int typesize) {
+    /* I'm guessing there's no GOOD way to do this at compile time:
+     * FIXME:
+     */
+    if (*((char*)&typesize))
+        return;
+    if (typesize == 1)
+        return;
+    if (typesize == 2) {
+        util_swap16((uint16_t*)_data, length>>1);
+        return;
+    }
+    if (typesize == 4) {
+        util_swap32((uint32_t*)_data, length>>2);
+        return;
+    }
+    if (typesize == 4) {
+        util_swap64((uint32_t*)_data, length>>3);
+        return;
     }
 }
 

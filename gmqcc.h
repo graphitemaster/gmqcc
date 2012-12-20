@@ -160,7 +160,7 @@ char *util_strsws        (const char *);
 char *util_strchp        (const char *, const char *);
 void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
-void  util_endianswap    (void *,  int, int);
+void  util_endianswap    (void *,  size_t, unsigned int);
 
 size_t util_strtocmd    (const char *, char *, size_t);
 size_t util_strtononcmd (const char *, char *, size_t);

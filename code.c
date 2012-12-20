@@ -134,6 +134,22 @@ bool code_write(const char *filename, const char *lnofile) {
         vec_push(code_chars, '\0'); /* P */
     }
 
+    /* ensure all data is in LE format */
+    util_endianswap(&code_header.version,    1, sizeof(code_header.version));
+    util_endianswap(&code_header.crc16,      1, sizeof(code_header.crc16));
+    util_endianswap(&code_header.statements, 2, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.defs,       2, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.fields,     2, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.functions,  2, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.strings,    2, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.globals,    2, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.entfield,   1, sizeof(code_header.entfield));
+    util_endianswap(code_statements, vec_size(code_statements), sizeof(prog_section_statement));
+    util_endianswap(code_defs,       vec_size(code_defs),       sizeof(prog_section_def));
+    util_endianswap(code_fields,     vec_size(code_fields),     sizeof(prog_section_field));
+    util_endianswap(code_functions,  vec_size(code_functions),  sizeof(prog_section_function));
+    util_endianswap(code_globals,    vec_size(code_globals),    sizeof(int32_t));
+
     if (lnofile) {
         uint32_t lnotype = *(unsigned int*)"LNOF";
         uint32_t version = 1;
@@ -141,6 +157,9 @@ bool code_write(const char *filename, const char *lnofile) {
         fp = util_fopen(lnofile, "wb");
         if (!fp)
             return false;
+
+        util_endianswap(&version,      1,                       sizeof(version));
+        util_endianswap(code_linenums, vec_size(code_linenums), sizeof(code_linenums[0]));
 
         if (fwrite(&lnotype,                        sizeof(lnotype),                        1,                       fp) != 1 ||
             fwrite(&version,                        sizeof(version),                        1,                       fp) != 1 ||
@@ -156,14 +175,6 @@ bool code_write(const char *filename, const char *lnofile) {
         fclose(fp);
         fp = NULL;
     }
-
-    /* ensure all data is in LE format */
-    util_endianswap(&code_header,    1,                         sizeof(prog_header));
-    util_endianswap(code_statements, vec_size(code_statements), sizeof(prog_section_statement));
-    util_endianswap(code_defs,       vec_size(code_defs),       sizeof(prog_section_def));
-    util_endianswap(code_fields,     vec_size(code_fields),     sizeof(prog_section_field));
-    util_endianswap(code_functions,  vec_size(code_functions),  sizeof(prog_section_function));
-    util_endianswap(code_globals,    vec_size(code_globals),    sizeof(int32_t));
 
     fp = util_fopen(filename, "wb");
     if (!fp)
