@@ -45,7 +45,7 @@ const char *type_name[TYPE_COUNT] = {
     "array"
 };
 
-size_t type_sizeof[TYPE_COUNT] = {
+size_t type_sizeof_[TYPE_COUNT] = {
     1, /* TYPE_VOID     */
     1, /* TYPE_STRING   */
     1, /* TYPE_FLOAT    */
@@ -1036,6 +1036,13 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
 
     m->memberof = self;
     return m;
+}
+
+static GMQCC_INLINE size_t ir_value_sizeof(const ir_value *self)
+{
+    if (self->vtype == TYPE_FIELD && self->fieldtype == TYPE_VECTOR)
+        return type_sizeof_[TYPE_VECTOR];
+    return type_sizeof_[self->vtype];
 }
 
 ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int vtype)
@@ -2242,7 +2249,7 @@ typedef struct {
 static bool function_allocator_alloc(function_allocator *alloc, const ir_value *var)
 {
     ir_value *slot;
-    size_t vsize = type_sizeof[var->vtype];
+    size_t vsize = ir_value_sizeof(var);
 
     slot = ir_value_var("reg", store_global, var->vtype);
     if (!slot)
@@ -2309,7 +2316,7 @@ bool ir_function_allocate_locals(ir_function *self)
              * will be required later when overlapping temps + locals
              */
             if (a < vec_size(self->params) &&
-                alloc.sizes[a] < type_sizeof[v->vtype])
+                alloc.sizes[a] < ir_value_sizeof(v))
             {
                 continue;
             }
@@ -2321,8 +2328,8 @@ bool ir_function_allocate_locals(ir_function *self)
                 goto error;
 
             /* adjust size for this slot */
-            if (alloc.sizes[a] < type_sizeof[v->vtype])
-                alloc.sizes[a] = type_sizeof[v->vtype];
+            if (alloc.sizes[a] < ir_value_sizeof(v))
+                alloc.sizes[a] = ir_value_sizeof(v);
 
             self->values[i]->code.local = a;
             break;
@@ -3045,7 +3052,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         if ((int32_t)i >= fun.nargs)
             fun.argsize[i] = 0;
         else
-            fun.argsize[i] = type_sizeof[irfun->params[i]];
+            fun.argsize[i] = type_sizeof_[irfun->params[i]];
     }
 
     fun.firstlocal = vec_size(code_globals);
@@ -3061,21 +3068,27 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     if (vec_size(irfun->locals)) {
         ir_value *last = vec_last(irfun->locals);
         local_var_end = last->code.globaladdr;
-        if (last->vtype == TYPE_FIELD && last->fieldtype == TYPE_VECTOR)
-            local_var_end += type_sizeof[TYPE_VECTOR];
-        else
-            local_var_end += type_sizeof[last->vtype];
+        local_var_end += ir_value_sizeof(last);
     }
     for (i = 0; i < vec_size(irfun->values); ++i)
     {
         /* generate code.globaladdr for ssa values */
         ir_value *v = irfun->values[i];
+#if 1
+        ir_value_code_setaddr(v, fun.firstlocal + v->code.local);
+#else
         ir_value_code_setaddr(v, local_var_end + v->code.local);
+#endif
     }
+#if 1
+    for (i = vec_size(code_globals); i < fun.firstlocal + irfun->allocated_locals; ++i)
+        vec_push(code_globals, 0);
+#else
     for (i = 0; i < irfun->allocated_locals; ++i) {
         /* fill the locals with zeros */
         vec_push(code_globals, 0);
     }
+#endif
 
     fun.locals = vec_size(code_globals) - fun.firstlocal;
 #else
@@ -3352,14 +3365,14 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             vec_push(code_globals, iptr[0]);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof[global->vtype]; ++d) {
+            for (d = 1; d < type_sizeof_[global->vtype]; ++d) {
                 vec_push(code_globals, iptr[d]);
             }
         } else {
             vec_push(code_globals, 0);
             if (global->code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof[global->vtype]; ++d) {
+            for (d = 1; d < type_sizeof_[global->vtype]; ++d) {
                 vec_push(code_globals, 0);
             }
         }
@@ -3390,7 +3403,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         /* assume biggest type */
             ir_value_code_setaddr(global, vec_size(code_globals));
             vec_push(code_globals, 0);
-            for (i = 1; i < type_sizeof[TYPE_VARIANT]; ++i)
+            for (i = 1; i < type_sizeof_[TYPE_VARIANT]; ++i)
                 vec_push(code_globals, 0);
             return true;
     default:
@@ -3403,7 +3416,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
 
 static void ir_builder_prepare_field(ir_value *field)
 {
-    field->code.fieldaddr = code_alloc_field(type_sizeof[field->fieldtype]);
+    field->code.fieldaddr = code_alloc_field(type_sizeof_[field->fieldtype]);
 }
 
 static bool ir_builder_gen_field(ir_builder *self, ir_value *field)

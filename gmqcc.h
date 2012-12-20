@@ -290,7 +290,6 @@ enum {
 #define CV_WRONG  0x8000
 
 extern const char *type_name        [TYPE_COUNT];
-extern size_t      type_sizeof      [TYPE_COUNT];
 extern uint16_t    type_store_instr [TYPE_COUNT];
 extern uint16_t    field_store_instr[TYPE_COUNT];
 
