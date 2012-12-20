@@ -139,6 +139,88 @@
 #   include <stdint.h>
 #endif
 
+/*
+ * Very roboust way at determining endianess at compile time: this handles
+ * almost every possible situation.  Otherwise a runtime check has to be
+ * performed.
+ */
+#define GMQCC_BYTE_ORDER_LITTLE 1234
+#define GMQCC_BYTE_ORDER_BIG    4321
+
+#if defined (__GNUC__) || defined (__GNU_LIBRARY__)
+#   if defined (__FreeBSD__) || defined (__OpenBSD__)
+#       include <sys/endian.h>
+#   elif defined (BSD) && (BSD >= 199103) || defined (__DJGPP__) || defined (__CYGWIN32__)
+#       include <machine/endiane.h>
+#   elif defined (__APPLE__)
+#       if defined (__BIG_ENDIAN__) && !defined(BIG_ENDIAN)
+#           define BIG_ENDIAN
+#       elif defined (__LITTLE_ENDIAN__) && !defined (LITTLE_ENDIAN)
+#           define LITTLE_ENDIAN
+#       endif
+#   elif !defined (__MINGW32__)
+#       include <endian.h>
+#       if !defined (__BEOS__)
+#           include <byteswap.h>
+#       endif
+#   endif
+#endif
+#if !defined(PLATFORM_BYTE_ORDER)
+#   if defined (LITTLE_ENDIAN) || defined (BIG_ENDIAN)
+#       if defined (LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#       elif !defined (LITTLE_ENDIAN) && defined (BIG_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#       elif defined (BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#       elif defined (BYTE_ORDER) && (BYTE_ORDER == BIG_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#       endif
+#   elif defined (_LITTLE_ENDIAN) || defined (_BIG_ENDIAN)
+#       if defined (_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#       elif !defined (_LITTLE_ENDIAN) && defined (_BIG_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#       elif defined (_BYTE_ORDER) && (_BYTE_ORDER == _LITTLE_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#       elif defined (_BYTE_ORDER) && (_BYTE_ORDER == _BIG_ENDIAN)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#       endif
+#   elif defined (__LITTLE_ENDIAN__) || defined (__BIG_ENDIAN__)
+#       if defined (__LITTLE_ENDIAN__) && !defined (__BIG_ENDIAN__)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#       elif !defined (__LITTLE_ENDIAN__) && defined (__BIG_ENDIAN__)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#       elif defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __LITTLE_ENDIAN__)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#       elif defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __BIG_ENDIAN__)
+#           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#       endif
+#   endif
+#endif
+#if !defined (PLATFORM_BYTE_ORDER)
+#   if   defined (__aplha__) || defined (__aplha)    || defined (i386)       || \
+         defined (__i386__)  || defined (_M_I86)     || defined (_M_IX86)    || \
+         defined (__OS2__)   || defined (sun386)     || defined (__TURBOC__) || \
+         defined (vax)       || defined (vms)        || defined (VMS)        || \
+         defined (__VMS)     || defined (__x86_64__) || defined (_M_IA64)    || \
+         defined (_M_X64)    || defined (__i386)     || defined (__x86_64)
+#       define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
+#   elif defined (AMIGA)     || defined (applec)     || defined (__AS400__)  || \
+         defined (_CRAY)     || defined (__hppa)     || defined (__hp9000)   || \
+         defined (ibm370)    || defined (mc68000)    || defined (m68k)       || \
+         defined (__MRC__)   || defined (__MVS__)    || defined (__MWERKS__) || \
+         defined (sparc)     || defined (__sparc)    || defined (SYMANTEC_C) || \
+         defined (__TANDEM)  || defined (THINK_C)    || defined (__VMCMS__)  || \
+         defined (__PPC__)   || defined (__PPC)      || defined (PPC)
+#       define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
+#   else
+#       define PLATFORM_BYTE_ORDER -1
+#   endif
+#endif
+
+
+
 /*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
