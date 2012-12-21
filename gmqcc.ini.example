@@ -42,6 +42,8 @@
     MULTIBYTE_CHARACTER          = true
     TERNARY_PRECEDENCE           = true
     UNKNOWN_PRAGMAS              = true
+    UNREACHABLE_CODE             = true
+    CPP                          = true
 
 ; enable all optimizations!
 [optimizations]
