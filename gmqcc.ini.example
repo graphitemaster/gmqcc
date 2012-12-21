@@ -1,53 +1,159 @@
-# this is a template for an ini file
-# these are comments
-; so are these
+# This is an example INI file that can be used to set compiler options
+# without the rquirement for supplying them as arguments on the command
+# line, this can be coupled with progs.src.  To utilize this file there
+# are two options availble, if it's named "gmqcc.ini" or "gmqcc.cfg" and
+# the file exists in the directory that GMQCC is invoked from, the compiler
+# will implicitally find and execute regardless.  For more freedom you may
+# use -config=<file> from the command line to specify a more explicit
+# directory/name.ext for the configuration file.
 
+
+# These are common compiler flags usually represented via the -f prefix
+# from the command line.
 [flags]
-    OVERLAP_LOCALS               = false ; comments can exist on lines too
-    DARKPLACES_STRING_TABLE_BUG  = false # like this as well
+    # Enabling this can potentially reduces code size by overlapping
+    # locals where possible.
+    OVERLAP_LOCALS               = false
+
+    # in some older versions of the Darkplaces engine the string table
+    # size is computed wrong causing compiled progs.dat to fail to load
+    # Enabling this works around the bug by writing a few additional
+    # null bytes to the end of the string table to compensate.
+    DARKPLACES_STRING_TABLE_BUG  = false
+
+    # Enabling this corrects the assignment of vector field pointers via
+    # subsituting STORE_FLD with STORE_V.
     ADJUST_VECTOR_FIELDS         = true
+
+    # Enabling this allows the use of the FTEQ preprocessor, as well as
+    # additional preprocessing directives such as #error and #warning.
     FTEPP                        = true
+
+    # Enabling this relaxes switch statement semantics
     RELAXED_SWITCH               = false
+
+    # Enabling this allows short-circut evaluation and logic, opposed
+    # to full evaluation.
     SHORT_LOGIC                  = false
+
+    # Enabling this allows perl-like evaluation/logic.
     PERL_LOGIC                   = true
+
+    # Enabling this allows the use of the "translatable strings" extension
+    # assisted by .po files.
     TRANSLATABLE_STRINGS         = false
+
+    # Enabling this prevents initializations from becoming constant unless
+    # 'const' is specified as a type qualifier.
     INITIALIZED_NONCONSTANTS     = false
+
+    # Enabling this allows function types to be assignable even if their
+    # signatures are invariant of each other.
     ASSIGN_FUNCTION_TYPES        = false
+
+    # Enabling this will allow the generation of .lno files for engine
+    # virtual machine backtraces (this is enabled with -g as well).
     LNO                          = false
+
+    # Enabling this corrects ternary percedence bugs present in fteqcc.
     CORRECT_TERNARY              = true
 
-# enable all warnings (minus debug)
+# These are all the warnings, usually present via the -W prefix from
+# the command line.
 [warnings]
+    # ?? Used for debugging ??
     DEBUG                        = false
+
+    # Enables warnings about unused variables.
     UNUSED_VARIABLE              = true
+
+    # Enables warnings about uninitialized variables.
     USED_UNINITIALIZED           = true
+
+    # Enables warnings about the unknown control sequences in the source
+    # stream.
     UNKNOWN_CONTROL_SEQUENCE     = true
+
+    # Enables warnings about the use of (an) extension(s).
     EXTENSIONS                   = true
+
+    # Enables warnings about redeclared fields.
     FIELD_REDECLARED             = true
+
+    # Enables warnings about missing return values.
     MISSING_RETURN_VALUES        = true
+
+    # Enables warnings about missing parameters for function calls.
     TOO_FEW_PARAMETERS           = true
+
+    # Enables warnings about locals shadowing parameters or other locals.
     LOCAL_SHADOWS                = true
+
+    # Enables warnings about constants specified as locals.
     LOCAL_CONSTANTS              = true
+
+    # Enables warnings about variables declared as type void.
     VOID_VARIABLES               = true
+
+    # Enables warnings about implicitally declared function pointers.
     IMPLICIT_FUNCTION_POINTER    = true
+
+    # Enables warnings for use of varadics for non-builtin functions.
     VARIADIC_FUNCTION            = true
+
+    # Enables warnings about duplicated frame macros.
     FRAME_MACROS                 = true
+
+    # Enables warnings about effectivless statements.
     EFFECTLESS_STATEMENT         = true
+
+    # Enables warnings of "end_sys_fields" beiing declared a field.
     END_SYS_FIELDS               = true
+
+    # Enables warnings for infompatible function pointer signatures used
+    # in assignment.
     ASSIGN_FUNCTION_TYPES        = true
+
+    # Enables warnings about redefined macros in the preprocessor
     PREPROCESSOR                 = true
+
+    # Enables warnings about multi-file if statements
     MULTIFILE_IF                 = true
+
+    # Enables warnings about double declarations
     DOUBLE_DECLARATION           = true
+
+    # Enables warnings about type qualifiers containing both 'var' and
+    # 'const'
     CONST_VAR                    = true
+
+    # Enables warnings about the use of multibytes characters / constants
     MULTIBYTE_CHARACTER          = true
+
+    # Enables warnings about ternary expressions whos precedence may be
+    # not what was initially expected.
     TERNARY_PRECEDENCE           = true
+
+    # Enables warnings about unknown pragmas.
     UNKNOWN_PRAGMAS              = true
+
+    # Enables warnings about unreachable code.
     UNREACHABLE_CODE             = true
+
+    # Enables preprocessor "#warnings"
     CPP                          = true
 
-; enable all optimizations!
+# Finally these are all the optimizations, usually present via the -O
+# prefix from the command line.
 [optimizations]
+    # Enables peephole optimizations.
     PEEPHOLE                     = true
+
+    # Enables localtemp omission optimizations.
     LOCALTEMPS                   = true
+
+    # Enables tail recrusion optimizationd.
     TAIL_RECURSION               = true
+
+    # Enables tail-call optimizations.
     TAIL_CALLS                   = true
