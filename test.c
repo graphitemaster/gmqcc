@@ -156,13 +156,40 @@ int task_pclose(FILE **handles) {
     return status;
 }
 #else
+#	define _WIN32_LEAN_AND_MEAN
+#	define popen  _popen
+#	define pclose _pclose
+#	include <windows.h>
+#   include <io.h>
+#	include <fcntl.h>
+    /*
+     * Bidirectional piping implementation for windows using CreatePipe and DuplicateHandle +
+     * other hacks.
+     */
+
+    typedef struct {
+        int __dummy;
+        /* TODO: implement */
+    } popen_t;
+
+    FILE **task_popen(const char *command, const char *mode) {
+        (void)command;
+        (void)mode;
+
+        /* TODO: implement */
+        return NULL;
+    }
+
+    void task_pclose(FILE **files) {
+        /* TODO: implement */
+        (void)files;
+        return;
+    }
+
 #	ifdef __MINGW32__
         /* mingw32 has dirent.h */
 #		include <dirent.h>
 #	elif defined (_MSC_VER)
-#		define _WIN32_LEAN_AND_MEAN
-#		include <Windows.h>
-#		include <io.h>
         /* 
          * visual studio lacks dirent.h it's a posix thing
          * so we emulate it with the WinAPI.
@@ -235,6 +262,13 @@ int task_pclose(FILE **handles) {
             }
             return data;
         }
+
+        /*
+         * Visual studio also lacks S_ISDIR for sys/stat.h, so we emulate this as well
+         * which is not hard at all.
+         */
+#		undef  S_ISDIR /* undef just incase */
+#		define S_ISDIR(X) ((X)&_S_IFDIR)
 #	endif
 #endif
 
