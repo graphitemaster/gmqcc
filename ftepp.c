@@ -1025,13 +1025,13 @@ static void ftepp_directive_warning(ftepp_t *ftepp) {
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
-        (void)!!ftepp_warn(ftepp, LVL_WARNING, message);
+        (void)!!ftepp_warn(ftepp, WARN_CPP, message);
         vec_free(message);
         return;
     }
 
     unescape  (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
-    (void)!!ftepp_warn(ftepp, LVL_WARNING, "#warning %s", ftepp_tokval(ftepp));
+    (void)!!ftepp_warn(ftepp, WARN_CPP, "#warning %s", ftepp_tokval(ftepp));
 }
 
 static void ftepp_directive_error(ftepp_t *ftepp) {

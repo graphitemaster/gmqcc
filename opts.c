@@ -52,6 +52,7 @@ static void opts_setdefault() {
     opts_set(opts.warn,  WARN_MULTIBYTE_CHARACTER,       true);
     opts_set(opts.warn,  WARN_UNKNOWN_PRAGMAS,           true);
     opts_set(opts.warn,  WARN_UNREACHABLE_CODE,          true);
+    opts_set(opts.warn,  WARN_CPP,                       true);
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
     opts_set(opts.flags, FTEPP,                          false);
