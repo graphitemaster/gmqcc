@@ -77,6 +77,8 @@
 #   endif /* !__STDC_VERSION__ */
 #endif    /* !__cplusplus      */
 
+
+
 /*
  * Of some functions which are generated we want to make sure
  * that the result isn't ignored. To find such function calls,
@@ -271,14 +273,42 @@ size_t util_strtononcmd (const char *, char *, size_t);
 uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
-#ifdef NOTRACK
-#    define mem_a(x)    malloc (x)
-#    define mem_d(x)    free   (x)
-#    define mem_r(x, n) realloc(x, n)
+/*
+ * If we're compiling as C++ code we need to fix some subtle issues regarding casts between mem_a/mem_d
+ * since C++ doesn't allow implicit conversions between void*
+ */
+#ifdef __cplusplus
+        /*
+         * void * will be implicitally converted to gmqcc_voidptr using gmqcc_voidptr(void*).  This is what
+         * essentially allows us to allow implicit conversion to whatever pointer type we're trying to assign
+         * to because it acks as a default assignment constructor.
+         */
+        class gmqcc_voidptr {
+            void *m_pointer;
+        public:
+            gmqcc_voidptr(void *pointer) :
+                m_pointer(pointer)
+            { };
+
+            template <typename T>
+            GMQCC_INLINE operator T *() {
+                return m_pointer;
+            }
+        };
+
+#	define GMQCC_IMPLICIT_POINTER(X) (gmqcc_voidptr(X))
 #else
-#    define mem_a(x)    util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x)    util_memory_d((x), __LINE__, __FILE__)
-#    define mem_r(x, n) util_memory_r((x), (n), __LINE__, __FILE__)
+#	define GMQCC_IMPLICIT_POINTER(X) (X)
+#endif
+
+#ifdef NOTRACK
+#    define mem_a(x)    GMQCC_IMPLICIT_POINTER(malloc (x))
+#    define mem_d(x)    free   ((void*)x)
+#    define mem_r(x, n) realloc((void*)x, n)
+#else
+#    define mem_a(x)    GMQCC_IMPLICIT_POINTER(util_memory_a((x), __LINE__, __FILE__))
+#    define mem_d(x)    util_memory_d((void*)(x),      __LINE__, __FILE__)
+#    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
 #endif
 
 /*

@@ -77,7 +77,7 @@ enum {
     MAGENTA,
     CYAN,
     GRAY,
-    WHITE
+    WHITE = GRAY
 };
 
 enum {
@@ -90,9 +90,9 @@ enum {
     WMAGENTA = WBLUE  | WRED,
     WYELLOW  = WGREEN | WRED,
     WWHITE   = WBLUE  | WGREEN | WRED
-}
+};
 
-static const ansi2win[] = {
+static const int ansi2win[] = {
     WBLACK,
     WRED,
     WGREEN,
@@ -103,7 +103,7 @@ static const ansi2win[] = {
     WWHITE
 };
 
-static void win_fputs(char *str, FILE *h) {
+static int win_fputs(const char *str, FILE *h) {
     /* state for translate */
     int acolor;
     int wcolor;
@@ -115,7 +115,7 @@ static void win_fputs(char *str, FILE *h) {
     int intense  =  -1;
     int colors[] = {-1, -1 };
     int colorpos = 1;
-
+    int length   = 0;
     CONSOLE_SCREEN_BUFFER_INFO cinfo;
     GetConsoleScreenBufferInfo (
         (GMQCC_IS_STDOUT(h)) ?
@@ -125,9 +125,9 @@ static void win_fputs(char *str, FILE *h) {
     icolor = cinfo.wAttributes;
 
     while (*str) {
-        if (*str == '\e')
-            state = '\e';
-        else if (state == '\e' && *str == '[')
+        if (*str == '\x1B')
+            state = '\x1B';
+        else if (state == '\x1B' && *str == '[')
             state = '[';
         else if (state == '[') {
             if (*str != 'm') {
@@ -148,7 +148,7 @@ static void win_fputs(char *str, FILE *h) {
                     intense = WBLACK;
                     wcolor  = icolor;
                 }
-                else if (BLACK < acolor && acolor <= WHITE)
+                else if (BLACK <= acolor && acolor <= WHITE)
                     wcolor = ansi2win[acolor - 30];
                 else if (acolor == 90) {
                     /* special gray really white man */
@@ -157,7 +157,7 @@ static void win_fputs(char *str, FILE *h) {
                 }
 
                 SetConsoleTextAttribute (
-                    (h == stdout) ?
+                    (GMQCC_IS_STDOUT(h)) ?
                     GetStdHandle(STD_OUTPUT_HANDLE) :
                     GetStdHandle(STD_ERROR_HANDLE),
 
@@ -168,7 +168,9 @@ static void win_fputs(char *str, FILE *h) {
             }
         } else {
             fputc(*str, h);
+            length ++;
         }
+        str++;
     }
     /* restore */
     SetConsoleTextAttribute(
@@ -177,6 +179,7 @@ static void win_fputs(char *str, FILE *h) {
         GetStdHandle(STD_ERROR_HANDLE),
         icolor
     );
+    return length;
 }
 #endif
 
@@ -212,16 +215,10 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
     ln = vfprintf(handle, fmt, va);
     #else
     {
-        char *data = NULL;
-        ln   = _vscprintf(fmt, va);
-        data = malloc(ln + 1);
-        data[ln] = 0;
-        vsprintf(data, fmt, va);
-        if (GMQCC_IS_DEFINE(handle))
-            win_fputs(data, handle);
-        else
-            ln = fputs(data, handle);
-        free(data);
+        char data[4096];
+        memset(data, 0, sizeof(data));
+        vsnprintf(data, sizeof(data), fmt, va);
+        ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(data, handle) : fputs(data, handle);
     }
     #endif
     return ln;
