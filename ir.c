@@ -527,7 +527,8 @@ static bool instr_is_operation(uint16_t op)
              (op >= INSTR_LOAD_F && op <= INSTR_LOAD_FNC) ||
              (op == INSTR_ADDRESS) ||
              (op >= INSTR_NOT_F  && op <= INSTR_NOT_FNC) ||
-             (op >= INSTR_AND    && op <= INSTR_BITOR) );
+             (op >= INSTR_AND    && op <= INSTR_BITOR) ||
+             (op >= INSTR_CALL0  && op <= INSTR_CALL8) );
 }
 
 bool ir_function_pass_peephole(ir_function *self)
@@ -2910,7 +2911,7 @@ tailcall:
             code_push_statement(&stmt, instr->context.line);
 
             retvalue = instr->_ops[0];
-            if (retvalue && retvalue->store != store_return && vec_size(retvalue->life))
+            if (retvalue && retvalue->store != store_return && (vec_size(retvalue->life) || retvalue->store == store_global))
             {
                 /* not to be kept in OFS_RETURN */
                 if (retvalue->vtype == TYPE_FIELD && OPTS_FLAG(ADJUST_VECTOR_FIELDS))
