@@ -196,7 +196,12 @@ function to an entity's .think function pointer.
 .TP
 .B -Wpreprocessor
 Enable warnings coming from the preprocessor. Like duplicate macro
-declarations.
+declarations. This warning triggers when there's a problem with the
+way the preprocessor has been used, it will \fBnot\fR affect warnings
+generated with the '#warning' directive. See -Wcpp.
+.TP
+.B -Wcpp
+Show warnings created using the preprocessor's '#warning' directive.
 .TP
 .B -Wmultifile-if
 Warn if there's a preprocessor \fI#if\fR spanning across several
@@ -356,6 +361,10 @@ Here's an example:
 .SH BUGS
 Please report bugs on <http://github.com/graphitemaster/gmqcc/issues>,
 or see <http://graphitemaster.github.com/gmqcc> on how to contact us.
+.SH FILES
+.TP 20
+.B gmqcc.ini.example
+A documented example for a gmqcc.ini file.
 .SH SEE ALSO
 .IR qcvm (1)
 .SH AUTHOR
