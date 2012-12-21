@@ -930,6 +930,17 @@ typedef uint32_t longbit;
 #endif
 
 /*===================================================================*/
+/*=========================== utf8lib.c =============================*/
+/*===================================================================*/
+typedef uint32_t Uchar;
+
+size_t u8_strlen  (const char*);
+size_t u8_strnlen (const char*, size_t);
+Uchar  u8_getchar (const char*, const char**);
+Uchar  u8_getnchar(const char*, const char**, size_t);
+int    u8_fromchar(Uchar w,     char *to,     size_t maxlen);
+
+/*===================================================================*/
 /*============================= opts.c ==============================*/
 /*===================================================================*/
 typedef struct {
