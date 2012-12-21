@@ -638,7 +638,7 @@ bool ir_function_pass_peephole(ir_function *self)
     return true;
 }
 
-bool ir_function_pass_tailcall(ir_function *self)
+bool ir_function_pass_tailrecursion(ir_function *self)
 {
     size_t b, p;
 
@@ -738,8 +738,8 @@ bool ir_function_finalize(ir_function *self)
     }
 
     if (OPTS_OPTIMIZATION(OPTIM_TAIL_RECURSION)) {
-        if (!ir_function_pass_tailcall(self)) {
-            irerror(self->context, "tailcall optimization pass broke something in `%s`", self->name);
+        if (!ir_function_pass_tailrecursion(self)) {
+            irerror(self->context, "tail-recursion optimization pass broke something in `%s`", self->name);
             return false;
         }
     }
@@ -2913,8 +2913,8 @@ tailcall:
             if (retvalue && retvalue->store != store_return && vec_size(retvalue->life))
             {
                 /* not to be kept in OFS_RETURN */
-                if (retvalue->vtype == TYPE_FIELD)
-                    stmt.opcode = field_store_instr[retvalue->vtype];
+                if (retvalue->vtype == TYPE_FIELD && OPTS_FLAG(ADJUST_VECTOR_FIELDS))
+                    stmt.opcode = field_store_instr[retvalue->fieldtype];
                 else
                     stmt.opcode = type_store_instr[retvalue->vtype];
                 stmt.o1.u1 = OFS_RETURN;
