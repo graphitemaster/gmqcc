@@ -110,7 +110,6 @@ static void win_fputs(char *str, FILE *h) {
     int icolor;
 
     int state;
-    int place;
 
     /* attributes */
     int intense  =  -1;
@@ -219,7 +218,7 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
         data[ln] = 0;
         vsprintf(data, fmt, va);
         if (GMQCC_IS_DEFINE(handle))
-            ln = win_fputs(data, handle);
+            win_fputs(data, handle);
         else
             ln = fputs(data, handle);
         free(data);

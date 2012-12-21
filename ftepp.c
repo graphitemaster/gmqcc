@@ -217,7 +217,7 @@ static void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
     }
 }
 
-static inline int ftepp_next(ftepp_t *ftepp)
+static GMQCC_INLINE int ftepp_next(ftepp_t *ftepp)
 {
     return (ftepp->token = lex_do(ftepp->lex));
 }

@@ -23,7 +23,6 @@
 #include "gmqcc.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
 
 opts_cmd_t opts;
 
@@ -50,6 +49,7 @@ char *task_bins[] = {
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <dirent.h>
 #include <unistd.h>
 typedef struct {
     FILE *handles[3];
@@ -156,7 +156,86 @@ int task_pclose(FILE **handles) {
     return status;
 }
 #else
-#error "There is no support for windows yet ... this is not a FTBFS bug"
+#	ifdef __MINGW32__
+        /* mingw32 has dirent.h */
+#		include <dirent.h>
+#	elif defined (_MSC_VER)
+#		define _WIN32_LEAN_AND_MEAN
+#		include <Windows.h>
+#		include <io.h>
+        /* 
+         * visual studio lacks dirent.h it's a posix thing
+         * so we emulate it with the WinAPI.
+         */
+
+        struct dirent {
+            long           d_ino;
+            unsigned short d_reclen;
+            unsigned short d_namlen;
+            char           d_name[FILENAME_MAX];
+        };
+
+        typedef struct {
+            struct _finddata_t dd_dta;
+            struct dirent      dd_dir;
+            long               dd_handle;
+            int                dd_stat;
+            char               dd_name[1];
+        } DIR;
+
+        DIR *opendir(const char *name) {
+            DIR *dir = (DIR*)mem_a(sizeof(DIR) + strlen(name));
+            if (!dir)
+                return NULL;
+
+            strcpy(dir->dd_name, name);
+            return dir;
+        }
+            
+        int closedir(DIR *dir) {
+            FindClose((HANDLE)dir->dd_handle);
+            mem_d ((void*)dir);
+            return 0;
+        }
+
+        struct dirent *readdir(DIR *dir) {
+            WIN32_FIND_DATA info;
+            struct dirent  *data;
+            int             rets;
+
+            if (!dir->dd_handle) {
+                char *dirname;
+                if (*dir->dd_name) {
+                    size_t n = strlen(dir->dd_name);
+                    if ((dirname  = (char*)mem_a(n + 5) /* 4 + 1 */)) {
+                        strcpy(dirname,     dir->dd_name);
+                        strcpy(dirname + n, "\\*.*");   /* 4 + 1 */
+                    }
+                } else {
+                    if (!(dirname = util_strdup("\\*.*")))
+                        return NULL;
+                }
+
+                dir->dd_handle = (long)FindFirstFile(dirname, &info);
+                mem_d(dirname);
+                rets = !(!dir->dd_handle);
+            } else if (dir->dd_handle != -11) {
+                rets = FindNextFile ((HANDLE)dir->dd_handle, &info);
+            } else {
+                rets = 0;
+            }
+
+            if (!rets)
+                return NULL;
+            
+            if ((data = (struct dirent*)mem_a(sizeof(struct dirent)))) {
+                strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
+                data->d_name[FILENAME_MAX - 1] = '\0'; /* terminate */
+                data->d_namlen                 = strlen(data->d_name);
+            }
+            return data;
+        }
+#	endif
 #endif
 
 #define TASK_COMPILE 0

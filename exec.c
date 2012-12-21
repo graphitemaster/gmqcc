@@ -29,22 +29,6 @@
 
 #include "gmqcc.h"
 
-/*
-(prog_section_statement, code)
-(prog_section_def,       defs)
-(prog_section_def,       fields)
-(prog_section_function,  functions)
-(char,                   strings)
-(qcint,                  globals)
-(qcint,                  entitydata)
-(bool,                   entitypool)
-(qcint,         localstack)
-(qc_exec_stack, stack)
-(size_t, profile)
-(prog_builtin, builtins)
-(const char*, function_stack)
-*/
-
 static void loaderror(const char *fmt, ...)
 {
     int     err = errno;

@@ -39,6 +39,7 @@
 #	pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
 #	pragma warning(disable : 4996 ) /* This function or variable may be unsafe                 */
 #	pragma warning(disable : 4700 ) /* uninitialized local variable used                       */
+#	pragma warning(disable : 4129 ) /* unrecognized character secape sequence                  */
 #endif
 
 #define GMQCC_VERSION_MAJOR 0
@@ -134,10 +135,30 @@
 #    define GMQCC_NORETURN
 #endif
 
-/* TODO: visual studiblows work around */
 #ifndef _MSC_VER
 #   include <stdint.h>
+#else
+    typedef unsigned __int8  uint8_t;
+    typedef unsigned __int16 uint16_t;
+    typedef unsigned __int32 uint32_t;
+    typedef unsigned __int64 uint64_t;
+
+    typedef __int16          int16_t;
+    typedef __int32          int32_t;
+    typedef __int64          int64_t;
 #endif
+
+/* 
+ *windows makes these prefixed because they're C99
+ * TODO: utility versions that are type-safe and not
+ * just plain textual subsitution.
+ */
+#ifdef _MSC_VER
+#	define snprintf(X, Y, Z, ...) _snprintf(X, Y, Z, __VA_ARGS__)
+    /* strtof doesn't exist -> strtod does though :) */
+#	define strtof(X, Y)          (float)(strtod(X, Y))
+#endif
+
 
 /*
  * Very roboust way at determining endianess at compile time: this handles
@@ -263,7 +284,7 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 /*
  * TODO: make these safer to use.  Currently this only works on
  * x86 and x86_64, some systems will likely not like this. Such
- * as BE systems.
+ * as BE systems. (and clean this up to use a structure ... )
  */
 #define FLT2INT(Y) *((int32_t*)&(Y))
 #define INT2FLT(Y) *((float  *)&(Y))
@@ -290,6 +311,7 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_shrinkto(A,N)    (_vec_end(A) = (N))
 #define vec_shrinkby(A,N)    (_vec_end(A) -= (N))
 
+/* vec_upload needs to be cleaned up as well to be a function */
 #define vec_upload(X,Y,S)      \
     do {                       \
         size_t E = 0;          \
@@ -365,11 +387,10 @@ enum {
 };
 
 /* const/var qualifiers */
-#define CV_NONE  0
-#define CV_CONST 1
-#define CV_VAR  -1
-/* magic number to help parsing */
-#define CV_WRONG  0x8000
+#define CV_NONE   0
+#define CV_CONST  1
+#define CV_VAR   -1
+#define CV_WRONG  0x8000 /* magic number to help parsing */
 
 extern const char *type_name        [TYPE_COUNT];
 extern uint16_t    type_store_instr [TYPE_COUNT];
@@ -580,6 +601,7 @@ enum {
     VINSTR_NRCALL
 };
 
+/* TODO: cleanup this mess */
 extern prog_section_statement *code_statements;
 extern int                    *code_linenums;
 extern prog_section_def       *code_defs;
@@ -589,6 +611,7 @@ extern int                    *code_globals;
 extern char                   *code_chars;
 extern uint16_t code_crc;
 
+/* uhh? */
 typedef float   qcfloat;
 typedef int32_t qcint;
 
@@ -663,6 +686,7 @@ bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_
 /*===================================================================*/
 /*========================= assembler.c =============================*/
 /*===================================================================*/
+/* TODO: remove this ... */
 static const struct {
     const char  *m; /* menomic     */
     const size_t o; /* operands    */
