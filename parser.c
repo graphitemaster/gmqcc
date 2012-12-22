@@ -893,14 +893,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 if (OPTS_FLAG(CORRECT_LOGIC)) {
                     /* non-floats need to be NOTed */
                     for (i = 0; i < 2; ++i) {
-                        if (exprs[i]->expression.vtype != TYPE_FLOAT) {
-                            if (type_not_instr[exprs[i]->expression.vtype] == AINSTR_END) {
-                                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                                parseerror(parser, "invalid types for logical operation with -fcorrect-logic: %s and %s", ty1, ty2);
-                                return false;
-                            }
-                            out = (ast_expression*)ast_unary_new(ctx, type_not_instr[exprs[i]->expression.vtype], exprs[i]);
+                        if (exprs[i]->expression.vtype == TYPE_VECTOR) {
+                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
                             if (!out) break;
                             out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
                             if (!out) break;
@@ -1901,7 +1895,8 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     ast_unary *unary;
     ast_expression *prev;
 
-    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING) {
+    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING)
+    {
         prev = cond;
         cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_S, cond);
         if (!cond) {
@@ -1911,22 +1906,15 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
         }
         ifnot = !ifnot;
     }
-    if (OPTS_FLAG(CORRECT_LOGIC) &&
-        !(cond->expression.vtype == TYPE_STRING && OPTS_FLAG(TRUE_EMPTY_STRINGS)))
+    else if (OPTS_FLAG(CORRECT_LOGIC) && cond->expression.vtype == TYPE_VECTOR)
     {
-        /* non-floats need to use NOT; except for strings on -ftrue-empty-strings */
-        unary = (ast_unary*)cond;
-        if (!ast_istype(cond, ast_unary) || unary->op < INSTR_NOT_F || unary->op > INSTR_NOT_FNC)
+        /* vector types need to be cast to true booleans */
+        ast_binary *bin = (ast_binary*)cond;
+        if (!OPTS_FLAG(PERL_LOGIC) || !ast_istype(cond, ast_binary) || !(bin->op == INSTR_AND || bin->op == INSTR_OR))
         {
-            /* use the right NOT_ */
+            /* in perl-logic, AND and OR take care of the -fcorrect-logic */
             prev = cond;
-            cond = (ast_expression*)ast_unary_new(ast_ctx(cond), type_not_instr[cond->expression.vtype], cond);
-
-            /*
-             * cppcheck: it thinks there is a possible null pointer dereference
-             * otherwise it would be "redundant" to check it ast_unary_new returned
-             * null, it's wrong.
-             */   
+            cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_V, cond);
             if (!cond) {
                 ast_unref(prev);
                 parseerror(parser, "internal error: failed to process condition");
@@ -1938,7 +1926,6 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
 
     unary = (ast_unary*)cond;
     while (ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F)
-        /*&& unary->operand->expression.vtype != TYPE_STRING) */
     {
         cond = unary->operand;
         unary->operand = NULL;
