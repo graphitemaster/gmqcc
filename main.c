@@ -508,6 +508,11 @@ int main(int argc, char **argv) {
         return usage();
     }
 
+    if (OPTS_FLAG(TRUE_EMPTY_STRINGS) && OPTS_FLAG(FALSE_EMPTY_STRINGS)) {
+        con_err("-ftrue-empty-strings and -ffalse-empty-strings are mutually exclusive");
+        exit(1);
+    }
+
     /* the standard decides which set of operators to use */
     if (opts.standard == COMPILER_GMQCC) {
         operators      = c_operators;
