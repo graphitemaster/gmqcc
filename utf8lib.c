@@ -74,6 +74,7 @@ bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t
 			/* in gmqcc, invalid / overlong encodings are considered an error
 			 * goto findchar;
 			 */
+			if (!s[i]) goto done;
 			return false;
 		}
 		ch = (ch << 6) | (s[i+j] & 0x3F);
@@ -87,6 +88,7 @@ bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t
 		return false;
 	}
 
+done:
 	if (_start)
 		*_start = i;
 	if (_len)
