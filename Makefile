@@ -19,7 +19,9 @@ ifeq ($(CC), clang)
 		-Wno-format-nonliteral        \
 		-Wno-disabled-macro-expansion \
 		-Wno-conversion               \
-		-Wno-missing-prototypes
+		-Wno-missing-prototypes       \
+		-Wno-float-equal              \
+		-Wno-cast-align
 endif
 ifeq ($(track), no)
     CFLAGS += -DNOTRACK

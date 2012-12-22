@@ -1085,7 +1085,6 @@ void _ast_codegen_output_type(ast_expression_common *self, ir_value *out)
 }
 
 #define codegen_output_type(a,o) (_ast_codegen_output_type(&((a)->expression),(o)))
-#define codegen_output_type_expr(a,o) (_ast_codegen_output_type(a,(o)))
 
 bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out)
 {

@@ -206,8 +206,6 @@ static bool options_parse(int argc, char **argv) {
 
             /* show defaults (like pathscale) */
             if (!strcmp(argv[0]+1, "show-defaults")) {
-                size_t itr;
-                char   buffer[1024];
                 for (itr = 0; itr < COUNT_FLAGS; ++itr) {
                     if (!OPTS_FLAG(itr))
                         continue;

@@ -560,28 +560,24 @@ bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long
 #define QCVM_PROFILE 0
 #define QCVM_TRACE   0
 #           include __FILE__
-            break;
         }
         case (VMXF_TRACE):
         {
 #define QCVM_PROFILE 0
 #define QCVM_TRACE   1
 #           include __FILE__
-            break;
         }
         case (VMXF_PROFILE):
         {
 #define QCVM_PROFILE 1
 #define QCVM_TRACE   0
 #           include __FILE__
-            break;
         }
         case (VMXF_TRACE|VMXF_PROFILE):
         {
 #define QCVM_PROFILE 1
 #define QCVM_TRACE   1
 #           include __FILE__
-            break;
         }
     };
 

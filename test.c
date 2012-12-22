@@ -127,8 +127,21 @@ FILE ** task_popen(const char *command, const char *mode) {
         goto task_popen_error_3;
     }
 
+    /*
+     * clang is stupid, it doesn't understand that yes, this code
+     * is actually reachable.
+     */
+#   ifdef __clang__
+#       pragma clang diagnostic push
+#       pragma clang diagnostic ignored "-Wunreachable-code"
+#   endif
     if (argv)
         vec_free(argv);
+
+#   ifdef __clang__
+#    pragma clang diagnostic pop
+#   endif
+
     return data->handles;
 
 task_popen_error_3: close(errhandle[0]), close(errhandle[1]);

@@ -26,8 +26,6 @@
 #include "gmqcc.h"
 #include "lexer.h"
 
-#define PARSER_HT_FIELDS  0
-#define PARSER_HT_GLOBALS 1
 /* beginning of locals */
 #define PARSER_HT_LOCALS  2
 
@@ -4375,7 +4373,6 @@ skipvar:
         }
         else if (parser->tok == '{' || parser->tok == '[')
         {
-            size_t i;
             if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");
                 break;
