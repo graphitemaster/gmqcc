@@ -906,6 +906,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             if (!out) break;
                             exprs[i] = out; out = NULL;
                             if (OPTS_FLAG(PERL_LOGIC)) {
+                                /* here we want to keep the right expressions' type */
+                                break;
                             }
                         }
                     }
