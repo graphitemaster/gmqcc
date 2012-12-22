@@ -331,6 +331,11 @@ effectively causes the unary not in strings to use NOT_F instead.
 An empty string is considered to be false everywhere. This means loops
 and if statements which depend on a string will perform a NOT_S
 instruction on the string before using it.
+.TP
+.B -futf8
+Enable utf8 characters. This allows utf-8 encoded character constants,
+and escape sequence codepoints in the valid utf-8 range. Effectively
+enabling escape sequences like '\\{x2211}'.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
