@@ -1,5 +1,5 @@
 #ifndef NORETURN
-#define NORETURN noreturn
+#define NORETURN [[noreturn]]
 #endif
 
 void          print(...)  = #1;

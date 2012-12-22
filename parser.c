@@ -2350,8 +2350,40 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
     bool had_noref = false;
     bool had_noreturn = false;
 
+    *cvq = CV_WRONG;
     for (;;) {
-        if (!strcmp(parser_tokval(parser), "const"))
+        if (parser->tok == TOKEN_ATTRIBUTE_OPEN) {
+            /* parse an attribute */
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected attribute after `[[`");
+                return false;
+            }
+            if (!strcmp(parser_tokval(parser), "noreturn")) {
+                had_noreturn = true;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`noreturn` attribute has no parameters, expected `]]`");
+                    return false;
+                }
+            }
+            else if (!strcmp(parser_tokval(parser), "noref")) {
+                had_noref = true;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    return false;
+                }
+            }
+            else
+            {
+                /* Skip tokens until we hit a ]] */
+                while (parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "error inside attribute");
+                        return false;
+                    }
+                }
+            }
+        }
+        else if (!strcmp(parser_tokval(parser), "const"))
             had_const = true;
         else if (!strcmp(parser_tokval(parser), "var"))
             had_var = true;
@@ -2359,8 +2391,6 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
-        else if (!strcmp(parser_tokval(parser), "noreturn"))
-            had_noreturn = true;
         else if (!had_const && !had_var && !had_noref && !had_noreturn) {
             return false;
         }
