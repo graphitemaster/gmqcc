@@ -1430,7 +1430,10 @@ int lex_do(lex_file *lex)
                 Uchar u8char;
                 /* check for a valid utf8 character */
                 if (!OPTS_FLAG(UTF8) || !u8_analyze(lex->tok.value, NULL, NULL, &u8char, 8)) {
-                    if (lexwarn(lex, WARN_MULTIBYTE_CHARACTER, "multibyte character: `%s`", lex->tok.value))
+                    if (lexwarn(lex, WARN_MULTIBYTE_CHARACTER,
+                                ( OPTS_FLAG(UTF8) ? "invalid multibyte character sequence `%s`"
+                                                  : "multibyte character: `%s`" ),
+                                lex->tok.value))
                         return (lex->tok.ttype = TOKEN_ERROR);
                 }
                 else
