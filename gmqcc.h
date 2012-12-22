@@ -934,6 +934,7 @@ typedef uint32_t longbit;
 /*===================================================================*/
 typedef uint32_t Uchar;
 
+bool   u8_analyze (const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t _maxlen);
 size_t u8_strlen  (const char*);
 size_t u8_strnlen (const char*, size_t);
 Uchar  u8_getchar (const char*, const char**);

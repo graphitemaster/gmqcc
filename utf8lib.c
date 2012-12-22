@@ -35,12 +35,12 @@ static Uchar utf8_range[5] = {
 /** Analyze the next character and return various information if requested.
  * @param _s      An utf-8 string.
  * @param _start  Filled with the start byte-offset of the next valid character
- * @param _len    Fileed with the length of the next valid character
+ * @param _len    Filled with the length of the next valid character
  * @param _ch     Filled with the unicode value of the next character
  * @param _maxlen Maximum number of bytes to read from _s
  * @return        Whether or not another valid character is in the string
  */
-static bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t _maxlen)
+bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t _maxlen)
 {
 	const unsigned char *s = (const unsigned char*)_s;
 	size_t i, j;
