@@ -222,7 +222,7 @@
 #   endif
 #endif
 #if !defined (PLATFORM_BYTE_ORDER)
-#   if   defined (__aplha__) || defined (__aplha)    || defined (i386)       || \
+#   if   defined (__alpha__) || defined (__alpha)    || defined (i386)       || \
          defined (__i386__)  || defined (_M_I86)     || defined (_M_IX86)    || \
          defined (__OS2__)   || defined (sun386)     || defined (__TURBOC__) || \
          defined (vax)       || defined (vms)        || defined (VMS)        || \
@@ -311,14 +311,6 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
 #endif
 
-/*
- * TODO: make these safer to use.  Currently this only works on
- * x86 and x86_64, some systems will likely not like this. Such
- * as BE systems. (and clean this up to use a structure ... )
- */
-#define FLT2INT(Y) *((int32_t*)&(Y))
-#define INT2FLT(Y) *((float  *)&(Y))
-
 /* New flexible vector implementation from Dale */
 #define _vec_raw(A) (((size_t*)(void*)(A)) - 2)
 #define _vec_beg(A) (_vec_raw(A)[0])
@@ -328,6 +320,7 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #define _vec_forcegrow(A,N) _util_vec_grow(((void**)&(A)), (N), sizeof(*(A)))
 #define _vec_remove(A,S,I,N) (memmove((char*)(A)+(I)*(S),(char*)(A)+((I)+(N))*(S),(S)*(_vec_end(A)-(I)-(N))), _vec_end(A)-=(N))
 void _util_vec_grow(void **a, size_t i, size_t s);
+
 /* exposed interface */
 #define vec_free(A)          ((A) ? (mem_d((void*)_vec_raw(A)), (A) = NULL) : 0)
 #define vec_push(A,V)        (_vec_mightgrow((A),1), (A)[_vec_end(A)++] = (V))
@@ -337,6 +330,7 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_append(A,N,S)    memcpy(vec_add((A), (N)), (S), N * sizeof(*(S)))
 #define vec_remove(A,I,N)    _vec_remove((A), sizeof(*(A)), (I), (N))
 #define vec_pop(A)           (_vec_end(A)-=1)
+
 /* these are supposed to NOT reallocate */
 #define vec_shrinkto(A,N)    (_vec_end(A) = (N))
 #define vec_shrinkby(A,N)    (_vec_end(A) -= (N))
