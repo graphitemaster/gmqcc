@@ -1135,14 +1135,16 @@ int lex_do(lex_file *lex)
                 return (lex->tok.ttype = TOKEN_OPERATOR);
 
         case ']':
-            nextch = lex_getch(lex);
-            if (nextch == ']') {
-                lex_tokench(lex, ch);
-                lex_tokench(lex, nextch);
-                lex_endtoken(lex);
-                return (lex->tok.ttype = TOKEN_ATTRIBUTE_CLOSE);
+            if (lex->flags.noops) {
+                nextch = lex_getch(lex);
+                if (nextch == ']') {
+                    lex_tokench(lex, ch);
+                    lex_tokench(lex, nextch);
+                    lex_endtoken(lex);
+                    return (lex->tok.ttype = TOKEN_ATTRIBUTE_CLOSE);
+                }
+                lex_ungetch(lex, nextch);
             }
-            lex_ungetch(lex, nextch);
             /* FALL THROUGH */
         case ')':
         case ';':
