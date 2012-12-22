@@ -890,19 +890,27 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     parseerror(parser, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
                     return false;
                 }
-                if (OPTS_FLAG(CORRECT_LOGIC)) {
-                    /* non-floats need to be NOTed */
-                    for (i = 0; i < 2; ++i) {
-                        if (exprs[i]->expression.vtype == TYPE_VECTOR) {
-                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
-                            if (!out) break;
-                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
-                            if (!out) break;
-                            exprs[i] = out; out = NULL;
-                            if (OPTS_FLAG(PERL_LOGIC)) {
-                                /* here we want to keep the right expressions' type */
-                                break;
-                            }
+                for (i = 0; i < 2; ++i) {
+                    if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->expression.vtype == TYPE_VECTOR) {
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
+                        if (!out) break;
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        if (!out) break;
+                        exprs[i] = out; out = NULL;
+                        if (OPTS_FLAG(PERL_LOGIC)) {
+                            /* here we want to keep the right expressions' type */
+                            break;
+                        }
+                    }
+                    else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->expression.vtype == TYPE_STRING) {
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[i]);
+                        if (!out) break;
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        if (!out) break;
+                        exprs[i] = out; out = NULL;
+                        if (OPTS_FLAG(PERL_LOGIC)) {
+                            /* here we want to keep the right expressions' type */
+                            break;
                         }
                     }
                 }
