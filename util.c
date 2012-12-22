@@ -176,74 +176,6 @@ char *util_strdup(const char *s) {
     return ptr;
 }
 
-/*
- * Remove quotes from a string, escapes from \ in string
- * as well.  This function shouldn't be used to create a
- * char array that is later freed (it uses pointer arith)
- */
-char *util_strrq(const char *s) {
-    char *dst = (char*)s;
-    char *src = (char*)s;
-    char  chr;
-    while ((chr = *src++) != '\0') {
-        if (chr == '\\') {
-            *dst++ = chr;
-            if ((chr = *src++) == '\0')
-                break;
-            *dst++ = chr;
-        } else if (chr != '"')
-            *dst++ = chr;
-    }
-    *dst = '\0';
-    return dst;
-}
-
-/*
- * Chops a substring from an existing string by creating a
- * copy of it and null terminating it at the required position.
- */
-char *util_strchp(const char *s, const char *e) {
-    const char *c = NULL;
-    if (!s || !e)
-        return NULL;
-
-    c = s;
-    while (c != e)
-        c++;
-
-    return util_strdup(s);
-}
-
-/*
- * Returns true if string is all uppercase, otherwise
- * it returns false.
- */
-bool util_strupper(const char *str) {
-    while (*str) {
-        if(!isupper(*str))
-            return false;
-        str++;
-    }
-    return true;
-}
-
-/*
- * Returns true if string is all digits, otherwise
- * it returns false.
- */
-bool util_strdigit(const char *str) {
-    while (*str) {
-        if(!isdigit(*str))
-            return false;
-        str++;
-    }
-    return true;
-}
-
-bool util_strncmpexact(const char *src, const char *ned, size_t len) {
-    return (!strncmp(src, ned, len) && !src[len]);
-}
-
 void util_debug(const char *area, const char *ms, ...) {
     va_list  va;
     if (!opts.debug)
@@ -257,31 +189,6 @@ void util_debug(const char *area, const char *ms, ...) {
     con_vout(ms, va);
     va_end  (va);
 }
-
-/*
- * Endianess swapping, all data must be stored little-endian.  This
- * reorders by stride and length, much nicer than other functions for
- * certian-sized types like short or int.
- */
-#if 0
-void util_endianswap(void *m, int s, int l) {
-    size_t w = 0;
-    size_t i = 0;
-
-    /* ignore if we're already LE */
-    if(*((char *)&s))
-        return;
-
-    for(; w < (size_t)l; w++) {
-        for(;  i < (size_t)(s << 1); i++) {
-            unsigned char *p = (unsigned char *)m+w*s;
-            unsigned char  t = p[i];
-            p[i]             = p[s-i-1];
-            p[s-i-1]         = t;
-        }
-    }
-}
-#endif
 
 /*
  * only required if big endian .. otherwise no need to swap
