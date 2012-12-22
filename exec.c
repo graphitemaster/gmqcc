@@ -644,7 +644,8 @@ static int qc_print(qc_program *prog)
     const char *laststr = NULL;
     for (i = 0; i < (size_t)prog->argc; ++i) {
         qcany *str = (qcany*)(prog->globals + OFS_PARM0 + 3*i);
-        printf("%s", (laststr = prog_getstring(prog, str->string)));
+        laststr = prog_getstring(prog, str->string);
+        printf("%s", laststr);
     }
     if (laststr && (prog->xflags & VMXF_TRACE)) {
         size_t len = strlen(laststr);

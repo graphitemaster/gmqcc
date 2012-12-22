@@ -414,7 +414,10 @@ bool task_template_generate(task_template_t *template, char tag, const char *fil
      * Value will contain a newline character at the end, we need to strip
      * this otherwise kaboom, seriously, kaboom :P
      */
-    *strrchr(value, '\n')='\0';
+    if (strchr(value, '\n'))
+        *strrchr(value, '\n')='\0';
+    else /* cppcheck: possible nullpointer dereference */
+        abort();
 
     /*
      * Now allocate and set the actual value for the specific tag. Which
@@ -515,7 +518,10 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
                  * Value will contain a newline character at the end, we need to strip
                  * this otherwise kaboom, seriously, kaboom :P
                  */
-                *strrchr(value, '\n')='\0';
+                if (strrchr(value, '\n'))
+                    *strrchr(value, '\n')='\0';
+                else /* cppcheck: possible null pointer dereference */
+                    abort();
 
                 vec_push(template->comparematch, util_strdup(value));
 

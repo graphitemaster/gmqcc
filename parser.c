@@ -1921,6 +1921,12 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
             /* use the right NOT_ */
             prev = cond;
             cond = (ast_expression*)ast_unary_new(ast_ctx(cond), type_not_instr[cond->expression.vtype], cond);
+
+            /*
+             * cppcheck: it thinks there is a possible null pointer dereference
+             * otherwise it would be "redundant" to check it ast_unary_new returned
+             * null, it's wrong.
+             */   
             if (!cond) {
                 ast_unref(prev);
                 parseerror(parser, "internal error: failed to process condition");
