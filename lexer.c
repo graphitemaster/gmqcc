@@ -1117,6 +1117,7 @@ int lex_do(lex_file *lex)
         case '[':
             nextch = lex_getch(lex);
             if (nextch == '[') {
+                lex_tokench(lex, ch);
                 lex_tokench(lex, nextch);
                 lex_endtoken(lex);
                 return (lex->tok.ttype = TOKEN_ATTRIBUTE_OPEN);
@@ -1136,6 +1137,7 @@ int lex_do(lex_file *lex)
         case ']':
             nextch = lex_getch(lex);
             if (nextch == ']') {
+                lex_tokench(lex, ch);
                 lex_tokench(lex, nextch);
                 lex_endtoken(lex);
                 return (lex->tok.ttype = TOKEN_ATTRIBUTE_CLOSE);
