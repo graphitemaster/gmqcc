@@ -48,7 +48,7 @@ static bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch,
 	Uchar ch;
 
 	i = 0;
-findchar:
+/* findchar: */
 	while (i < _maxlen && s[i] && (bits = utf8_lengths[s[i]]) == 0)
 		++i;
 
@@ -71,14 +71,20 @@ findchar:
 		if ( (s[i+j] & 0xC0) != 0x80 )
 		{
 			i += j;
-			goto findchar;
+			/* in gmqcc, invalid / overlong encodings are considered an error
+			 * goto findchar;
+			 */
+			return false;
 		}
 		ch = (ch << 6) | (s[i+j] & 0x3F);
 	}
 	if (ch < utf8_range[bits] || ch >= 0x10FFFF)
 	{
-		i += bits;
-		goto findchar;
+		/* same: error
+		 * i += bits;
+		 * goto findchar;
+		 */
+		return false;
 	}
 
 	if (_start)
