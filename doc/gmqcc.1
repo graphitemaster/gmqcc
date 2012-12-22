@@ -116,7 +116,7 @@ them.
 -f\fIno-\fRcorrect-ternary
 .fi
 .in
-.SH Warnings
+.SH COMPILE WARNINGS
 .TP
 .B -Wunused-variable
 Generate a warning about variables which are declared but never used.
@@ -238,7 +238,11 @@ or code after a call to a function marked as 'noreturn'.
 .B -Wdebug
 Enable some warnings added in order to help debugging in the compiler.
 You won't need this.
-.SH Compile Flags
+.B -Wunknown-attribute
+Warn on an unknown attribute. The warning will inlclude only the first
+token inside the enclosing attribute-brackets. This may change when
+the actual attribute syntax is better defined.
+.SH COMPILE FLAGS
 .TP
 .B -foverlap-locals
 Allow local variables to overlap with each other if they don't
@@ -305,9 +309,9 @@ prevents components from being listed.
 .TP
 .B -fcorrect-logic
 Most QC compilers translate if(a_vector) directly as an IF on the
-vector, which means only the x-component is checked. This causes all
-non-float types to use an appropriate NOT instruction on all logic
-operations and invert their use.
+vector, which means only the x-component is checked. This causes
+vectors to be cast to actual booleans via a NOT_V and, if necessary, a
+NOT_F chained to it.
 .in +4
 .nf
 if (a_vector) // becomes
