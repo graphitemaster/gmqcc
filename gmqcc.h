@@ -35,11 +35,9 @@
  * of my time.
  */
 #ifdef _MSC_VER
-#	pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
-#	pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
-#	pragma warning(disable : 4996 ) /* This function or variable may be unsafe                 */
-#	pragma warning(disable : 4700 ) /* uninitialized local variable used                       */
-#	pragma warning(disable : 4129 ) /* unrecognized character secape sequence                  */
+#   pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
+#   pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
+#   pragma warning(disable : 4996 ) /* This function or variable may be unsafe                 */
 #endif
 
 #define GMQCC_VERSION_MAJOR 0
@@ -257,12 +255,7 @@ void  util_meminfo       ();
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-bool  util_strncmpexact  (const char *, const char *, size_t);
 char *util_strdup        (const char *);
-char *util_strrq         (const char *);
-char *util_strrnl        (const char *);
-char *util_strsws        (const char *);
-char *util_strchp        (const char *, const char *);
 void  util_debug         (const char *, const char *, ...);
 int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  size_t, unsigned int);
@@ -271,7 +264,6 @@ size_t util_strtocmd    (const char *, char *, size_t);
 size_t util_strtononcmd (const char *, char *, size_t);
 
 uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
-uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 
 /*
  * If we're compiling as C++ code we need to fix some subtle issues regarding casts between mem_a/mem_d
@@ -311,6 +303,8 @@ uint32_t util_crc32(uint32_t crc, const char *data, size_t len);
 #    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
 #endif
 
+/** TODO: Cleanup this whole mess {{{ */
+
 /* New flexible vector implementation from Dale */
 #define _vec_raw(A) (((size_t*)(void*)(A)) - 2)
 #define _vec_beg(A) (_vec_raw(A)[0])
@@ -344,6 +338,8 @@ void _util_vec_grow(void **a, size_t i, size_t s);
             E ++;              \
         }                      \
     } while(0)
+
+/** }}} */
 
 typedef struct hash_table_t {
     size_t                size;
@@ -920,14 +916,14 @@ bool parser_compile_string_len(const char *name, const char *str, size_t len);
 /*===================================================================*/
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
-bool ftepp_init             ();
-bool ftepp_preprocess_file  (const char *filename);
-bool ftepp_preprocess_string(const char *name, const char *str);
-void ftepp_finish           ();
-const char *ftepp_get       ();
-void ftepp_flush            ();
-void ftepp_add_define       (const char *source, const char *name);
-void ftepp_add_macro        (const char *name,   const char *value);
+bool        ftepp_init             ();
+bool        ftepp_preprocess_file  (const char *filename);
+bool        ftepp_preprocess_string(const char *name, const char *str);
+void        ftepp_finish           ();
+const char *ftepp_get              ();
+void        ftepp_flush            ();
+void        ftepp_add_define       (const char *source, const char *name);
+void        ftepp_add_macro        (const char *name,   const char *value);
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
@@ -1041,7 +1037,6 @@ typedef struct {
 
 extern opts_cmd_t opts;
 
-/*===================================================================*/
 #define OPTS_FLAG(i)         (!! (opts.flags       [(i)/32] & (1<< ((i)%32))))
 #define OPTS_WARN(i)         (!! (opts.warn        [(i)/32] & (1<< ((i)%32))))
 #define OPTS_WERROR(i)       (!! (opts.werror      [(i)/32] & (1<< ((i)%32))))
