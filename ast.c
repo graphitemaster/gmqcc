@@ -1699,7 +1699,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         return true;
     }
 
-    if (OPTS_FLAG(SHORT_LOGIC) &&
+    if ((OPTS_FLAG(SHORT_LOGIC) || OPTS_FLAG(PERL_LOGIC)) &&
         (self->op == INSTR_AND || self->op == INSTR_OR))
     {
         /* short circuit evaluation */
@@ -1750,12 +1750,50 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         vec_push(func->ir_func->blocks, merge);
 
         func->curblock = merge;
-        phi = ir_block_create_phi(func->curblock, ast_ctx(self), ast_function_label(func, "sce_value"), TYPE_FLOAT);
+        phi = ir_block_create_phi(func->curblock, ast_ctx(self),
+                                  ast_function_label(func, "sce_value"),
+                                  self->expression.vtype);
         ir_phi_add(phi, from_left, left);
         ir_phi_add(phi, from_right, right);
         *out = ir_phi_value(phi);
         if (!*out)
             return false;
+
+        if (!OPTS_FLAG(PERL_LOGIC)) {
+            /* cast-to-bool */
+            if (OPTS_FLAG(CORRECT_LOGIC) && (*out)->vtype == TYPE_VECTOR) {
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool_v"),
+                                             INSTR_NOT_V, *out);
+                if (!*out)
+                    return false;
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool"),
+                                             INSTR_NOT_F, *out);
+                if (!*out)
+                    return false;
+            }
+            else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && (*out)->vtype == TYPE_STRING) {
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool_s"),
+                                             INSTR_NOT_S, *out);
+                if (!*out)
+                    return false;
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool"),
+                                             INSTR_NOT_F, *out);
+                if (!*out)
+                    return false;
+            }
+            else {
+                *out = ir_block_create_binop(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool"),
+                                             INSTR_AND, *out, *out);
+                if (!*out)
+                    return false;
+            }
+        }
+
         self->expression.outr = *out;
         return true;
     }
