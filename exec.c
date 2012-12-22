@@ -976,6 +976,17 @@ int main(int argc, char **argv)
         printf("Program's system-checksum = 0x%04x\n", (unsigned int)prog->crc16);
         printf("Entity field space: %u\n", (unsigned int)prog->entityfields);
         printf("Globals: %u\n", (unsigned int)vec_size(prog->globals));
+        printf("Counts:\n"
+               "      code: %lu\n"
+               "      defs: %lu\n"
+               "    fields: %lu\n"
+               " functions: %lu\n"
+               "   strings: %lu\n",
+               (unsigned long)vec_size(prog->code),
+               (unsigned long)vec_size(prog->defs),
+               (unsigned long)vec_size(prog->fields),
+               (unsigned long)vec_size(prog->functions),
+               (unsigned long)vec_size(prog->strings));
     }
 
     if (opts_info) {
