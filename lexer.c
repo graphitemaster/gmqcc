@@ -50,8 +50,6 @@ static const char *keywords_fg[] = {
     "typedef",
     "goto",
 
-    "noreturn",
-
     "__builtin_debug_printtype"
 };
 static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
