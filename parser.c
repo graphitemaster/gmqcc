@@ -2349,19 +2349,23 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
     bool had_var   = false;
     bool had_noref = false;
     bool had_noreturn = false;
+    bool had_attrib = false;
 
-    *cvq = CV_WRONG;
+    *cvq = CV_NONE;
     for (;;) {
         if (parser->tok == TOKEN_ATTRIBUTE_OPEN) {
+            had_attrib = true;
             /* parse an attribute */
             if (!parser_next(parser)) {
                 parseerror(parser, "expected attribute after `[[`");
+                *cvq = CV_WRONG;
                 return false;
             }
             if (!strcmp(parser_tokval(parser), "noreturn")) {
                 had_noreturn = true;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noreturn` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
                     return false;
                 }
             }
@@ -2369,15 +2373,18 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
                 had_noref = true;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
                     return false;
                 }
             }
             else
             {
                 /* Skip tokens until we hit a ]] */
+                (void)!parsewarning(parser, WARN_UNKNOWN_ATTRIBUTE, "unknown attribute starting with `%s`", parser_tokval(parser));
                 while (parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     if (!parser_next(parser)) {
                         parseerror(parser, "error inside attribute");
+                        *cvq = CV_WRONG;
                         return false;
                     }
                 }
@@ -2391,7 +2398,7 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
-        else if (!had_const && !had_var && !had_noref && !had_noreturn) {
+        else if (!had_const && !had_var && !had_noref && !had_noreturn && !had_attrib) {
             return false;
         }
         else
