@@ -599,61 +599,11 @@ typedef struct hash_node_t {
     struct hash_node_t *next;  /* next node (linked list)        */
 } hash_node_t;
 
-/*
- * x86 and x86_64 optimized murmur hash functions for the hashtable
- * we have individual implementations for optimal performance.
- *
- * Forced inlined as we wrap these up in the actual utility function
- * below.  These should be autovectorized by gcc.
- */
-#ifdef __x86_64__
-GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, size_t seed) {
-    const uint64_t       mix   = 0xC6A4A7935BD1E995;
-    const int            rot   = 47;
-    size_t               size  = strlen(key);
-    uint64_t             hash  = seed ^ (size - mix);
-    uint64_t             alias = 0;
-    const uint64_t      *beg   = (const uint64_t*)key;
-    const uint64_t      *end   = beg + (size / 8);
-    const unsigned char *final = NULL;
-
-    while (beg != end) {
-        alias = *beg++;
-
-        alias *= mix;
-        alias ^= alias >> rot;
-        alias *= mix;
-
-        hash  ^= alias;
-        hash  *= mix;
-    }
-
-    final = (const unsigned char *)beg;
-
-    switch (size & 7) {
-        case 7: hash ^= (uint64_t)(final[6]) << 48;
-        case 6: hash ^= (uint64_t)(final[5]) << 40;
-        case 5: hash ^= (uint64_t)(final[4]) << 32;
-        case 4: hash ^= (uint64_t)(final[3]) << 24;
-        case 3: hash ^= (uint64_t)(final[2]) << 16;
-        case 2: hash ^= (uint64_t)(final[1]) << 8;
-        case 1: hash ^= (uint64_t)(final[0]);
-                hash *= mix;
-    }
-
-    hash ^= hash >> rot;
-    hash *= mix;
-    hash ^= hash >> rot;
-
-    return (uint32_t)(hash % ht->size);
-}
-
-#else
-GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, size_t seed) {
+GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
     const uint32_t       mix   = 0x5BD1E995;
     const uint32_t       rot   = 24;
     size_t               size  = strlen(key);
-    uint32_t             hash  = seed ^ size;
+    uint32_t             hash  = util_crc32_table[10] ^ size;
     uint32_t             alias = 0;
     const unsigned char *data  = (const unsigned char*)key;
 
@@ -682,20 +632,7 @@ GMQCC_INLINE uint32_t util_hthashfunc(hash_table_t *ht, const char *key, size_t 
     hash *= mix;
     hash ^= hash >> 15;
 
-    return hash % ht->size;
-}
-#endif
-
-/* we use the crc table as seeds for the murmur hash :P */
-size_t util_hthash(hash_table_t *ht, const char *key) {
-    static   size_t seed = 0;
-    register size_t hash = util_hthashfunc(ht, key, util_crc32_table[seed]);
-
-    /* reset seed */
-    if (seed >= sizeof(util_crc32_table) / sizeof(*util_crc32_table))
-        seed  = 0;
-
-    return hash;
+    return (size_t) (hash % ht->size);
 }
 
 hash_node_t *_util_htnewpair(const char *key, void *value) {
