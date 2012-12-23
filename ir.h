@@ -202,10 +202,6 @@ ir_value* ir_block_create_fieldaddress(ir_block*, lex_ctx, const char *label, ir
 ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype);
 
-ir_value* ir_block_create_add(ir_block*, lex_ctx, const char *label, ir_value *l, ir_value *r);
-ir_value* ir_block_create_sub(ir_block*, lex_ctx, const char *label, ir_value *l, ir_value *r);
-ir_value* ir_block_create_mul(ir_block*, lex_ctx, const char *label, ir_value *l, ir_value *r);
-ir_value* ir_block_create_div(ir_block*, lex_ctx, const char *label, ir_value *l, ir_value *r);
 ir_instr* ir_block_create_phi(ir_block*, lex_ctx, const char *label, int vtype);
 ir_value* ir_phi_value(ir_instr*);
 void ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
