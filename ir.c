@@ -3185,7 +3185,7 @@ static void gen_vector_defs(prog_section_def def, const char *name)
     char  *component;
     size_t len, i;
 
-    if (!name || OPTS_FLAG(SINGLE_VECTOR_DEFS))
+    if (!name || name[0] == '#' || OPTS_FLAG(SINGLE_VECTOR_DEFS))
         return;
 
     def.type = TYPE_FLOAT;
