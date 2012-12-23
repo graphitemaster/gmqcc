@@ -3136,10 +3136,12 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
     irfun = global->constval.vfunc;
     def   = code_functions + irfun->code_function_def;
 
-    if (opts.g || (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+    if (opts.g || !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS) || (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
         firstlocal = def->firstlocal = vec_size(code_globals);
-    else
+    else {
         firstlocal = def->firstlocal = ir->first_common_local;
+        ++opts_optimizationcount[OPTIM_OVERLAP_LOCALS];
+    }
 
     for (i = vec_size(code_globals); i < firstlocal + irfun->allocated_locals; ++i)
         vec_push(code_globals, 0);
