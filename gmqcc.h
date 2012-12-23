@@ -299,43 +299,39 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 #    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
 #endif
 
-/** TODO: Cleanup this whole mess {{{ */
+/*
+ * A flexible vector implementation: all vector pointers contain some
+ * data baout themselfs exactly - sizeof(vector_t) behind the pointer
+ * this data is represented in the structure below.  Doing this allows
+ * use to use the array [] to access individual data from the vector
+ * opposed to using set/get methods.
+ */     
+typedef struct {
+    size_t  allocated;
+    size_t  used;
+} vector_t;
 
-/* New flexible vector implementation from Dale */
-#define _vec_raw(A) (((size_t*)(void*)(A)) - 2)
-#define _vec_beg(A) (_vec_raw(A)[0])
-#define _vec_end(A) (_vec_raw(A)[1])
-#define _vec_needsgrow(A,N) ((!(A)) || (_vec_end(A) + (N) >= _vec_beg(A)))
-#define _vec_mightgrow(A,N) (_vec_needsgrow((A), (N)) ? (void)_vec_forcegrow((A),(N)) : (void)0)
-#define _vec_forcegrow(A,N) _util_vec_grow(((void**)&(A)), (N), sizeof(*(A)))
-#define _vec_remove(A,S,I,N) (memmove((char*)(A)+(I)*(S),(char*)(A)+((I)+(N))*(S),(S)*(_vec_end(A)-(I)-(N))), _vec_end(A)-=(N))
+/* hidden interface */
 void _util_vec_grow(void **a, size_t i, size_t s);
+#define GMQCC_VEC_WILLGROW(X,Y) ( \
+    ((!(X) || vec_meta(X)->used + Y >= vec_meta(X)->allocated)) ? \
+        (void)_util_vec_grow(((void**)&(X)), (Y), sizeof(*(X))) : \
+        (void)0                                                   \
+)
 
 /* exposed interface */
-#define vec_free(A)          ((A) ? (mem_d((void*)_vec_raw(A)), (A) = NULL) : 0)
-#define vec_push(A,V)        (_vec_mightgrow((A),1), (A)[_vec_end(A)++] = (V))
-#define vec_size(A)          ((A) ? _vec_end(A) : 0)
-#define vec_add(A,N)         (_vec_mightgrow((A),(N)), _vec_end(A)+=(N), &(A)[_vec_end(A)-(N)])
-#define vec_last(A)          ((A)[_vec_end(A)-1])
-#define vec_append(A,N,S)    memcpy(vec_add((A), (N)), (S), N * sizeof(*(S)))
-#define vec_remove(A,I,N)    _vec_remove((A), sizeof(*(A)), (I), (N))
-#define vec_pop(A)           (_vec_end(A)-=1)
-
-/* these are supposed to NOT reallocate */
-#define vec_shrinkto(A,N)    (_vec_end(A) = (N))
-#define vec_shrinkby(A,N)    (_vec_end(A) -= (N))
-
-/* vec_upload needs to be cleaned up as well to be a function */
-#define vec_upload(X,Y,S)      \
-    do {                       \
-        size_t E = 0;          \
-        while (E < S) {        \
-            vec_push(X, Y[E]); \
-            E ++;              \
-        }                      \
-    } while(0)
-
-/** }}} */
+#define vec_meta(A)       (((vector_t*)(A)) - 1)
+#define vec_free(A)       ((A) ? (mem_d((void*)vec_meta(A)), (A) = NULL) : 0)
+#define vec_push(A,V)     (GMQCC_VEC_WILLGROW(A,1), (A)[vec_meta(A)->used++] = V)
+#define vec_size(A)       ((A) ? vec_meta(A)->used : 0)
+#define vec_add(A,N)      (GMQCC_VEC_WILLGROW(A,N), vec_meta(A)->used += (N), &(A)[vec_meta(A)->used-(N)])
+#define vec_last(A)       ((A)[vec_meta(A)->used - 1])
+#define vec_pop(A)        (vec_meta(A)->used -= 1)
+#define vec_shrinkto(A,N) (vec_meta(A)->used  = (N))
+#define vec_shrinkby(A,N) (vec_meta(A)->used -= (N))
+#define vec_append(A,N,S) memcpy(vec_add(A, N), S, N * sizeof(*S))
+#define vec_upload(X,Y,S) memcpy(vec_add(X, S * sizeof(*Y)), Y, S * sizeof(*Y))
+#define vec_remove(A,I,N) memmove((char*)A+I*sizeof(*A),(char*)A+(I+N)*sizeof(*A),sizeof(*A)*(vec_meta(A)->used-I-N)),vec_meta(A)->used-=(N)
 
 typedef struct hash_table_t {
     size_t                size;

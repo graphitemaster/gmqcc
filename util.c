@@ -366,12 +366,15 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
 
 /* TODO: rewrite ... when I redo the ve cleanup */
 void _util_vec_grow(void **a, size_t i, size_t s) {
-    size_t m = *a ? 2*_vec_beg(*a)+i : i+1;
-    void  *p = mem_r((*a ? _vec_raw(*a) : NULL), s * m + sizeof(size_t)*2);
+    vector_t *d = vec_meta(*a);
+    size_t    m = *a ? 2 * d->allocated +i : i+1;
+    void     *p = mem_r((*a ? d : NULL), s * m + sizeof(vector_t));
+
     if (!*a)
-        ((size_t*)p)[1] = 0;
-    *a = (void*)((size_t*)p + 2);
-    _vec_beg(*a) = m;
+        ((vector_t*)p)->used = 0;
+    *a = (vector_t*)p + 1;
+
+    vec_meta(*a)->allocated = m;
 }
 
 /*
