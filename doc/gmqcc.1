@@ -336,6 +336,30 @@ instruction on the string before using it.
 Enable utf8 characters. This allows utf-8 encoded character constants,
 and escape sequence codepoints in the valid utf-8 range. Effectively
 enabling escape sequences like '\\{x2211}'.
+.SH OPTIMIZATIONS
+.TP
+.B -Opeephole
+Some general peephole optimizations. For instance the code `a = b + c`
+typically generates 2 instructions, an ADD and a STORE. This
+optimization removes the STORE and lets the ADD write directly into A.
+This optimization will not happen for MUL_VF or MUL_FV if the target
+is the float operand.
+.TP
+.B -Otail-recursion
+Tail recursive function calls will be turned into loops to avoid the
+overhead of the CALL and RETURN instructions.
+.TP
+.B -Ooverlap-locals
+Make all functions which use neither local arrays nor have locals
+which are seen as possibly uninitialized use the same local section.
+This should be pretty safe compared to other compilers which do not
+check for uninitialized values properly. The problem is that there's
+QC code out there which really doesn't initialize some values. This is
+fine as long as this kind of optimization isn't used, but also, only
+as long as the functions cannot be called in a recursive manner. Since
+it's hard to know whether or not an array is actually fully
+initialized, especially when initializing it via a loop, we assume
+functions with arrays to be too dangerous for this optimization.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
