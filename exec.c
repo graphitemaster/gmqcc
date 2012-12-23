@@ -344,7 +344,10 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
                                          value->vector[2]);
             break;
         case TYPE_STRING:
-            len += print_escaped_string(prog_getstring(prog, value->string), sizeof(spaces)-len-5);
+            if (value->string)
+                len += print_escaped_string(prog_getstring(prog, value->string), sizeof(spaces)-len-5);
+            else
+                len += printf("(null)");
             len += printf(",");
             /* len += printf("\"%s\",", prog_getstring(prog, value->string)); */
             break;
@@ -532,7 +535,7 @@ static qcint prog_leavefunction(qc_program *prog)
 #endif
     if (prev) {
         qcint *globals = prog->globals + prev->firstlocal;
-        memcpy(globals, prog->localstack + oldsp, prev->locals);
+        memcpy(globals, prog->localstack + oldsp, prev->locals * sizeof(prog->localstack[0]));
         /* vec_remove(prog->localstack, oldsp, vec_size(prog->localstack)-oldsp); */
         vec_shrinkto(prog->localstack, oldsp);
     }
