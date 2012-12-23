@@ -196,13 +196,13 @@ void util_debug(const char *area, const char *ms, ...) {
  * data.
  */   
 #if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_BIG
-    static void util_swap16(uint16_t *d, size_t l) {
+    static GMQCC_INLINE void util_swap16(uint16_t *d, size_t l) {
         while (l--) {
             d[l] = (d[l] << 8) | (d[l] >> 8);
         }
     }
 
-    static void util_swap32(uint32_t *d, size_t l) {
+    static GMQCC_INLINE void util_swap32(uint32_t *d, size_t l) {
         while (l--) {
             uint32_t v;
             v = ((d[l] << 8) & 0xFF00FF00) | ((d[l] >> 8) & 0x00FF00FF);
@@ -213,7 +213,7 @@ void util_debug(const char *area, const char *ms, ...) {
     /* Some strange system doesn't like constants that big, AND doesn't recognize an ULL suffix
      * so let's go the safe way
      */
-    static void util_swap64(uint32_t *d, size_t l) {
+    static GMQCC_INLINE void util_swap64(uint32_t *d, size_t l) {
         /*
         while (l--) {
             uint64_t v;
