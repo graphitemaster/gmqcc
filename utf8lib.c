@@ -24,7 +24,7 @@ static unsigned char utf8_lengths[256] = {
 	 */
 };
 
-static Uchar utf8_range[5] = {
+static uchar_t utf8_range[5] = {
 	1,       /* invalid - let's not allow the creation of 0-bytes :P
 	1,        * ascii minimum
 	0x80,     * 2-byte minimum
@@ -40,12 +40,12 @@ static Uchar utf8_range[5] = {
  * @param _maxlen Maximum number of bytes to read from _s
  * @return        Whether or not another valid character is in the string
  */
-bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t _maxlen)
+bool u8_analyze(const char *_s, size_t *_start, size_t *_len, uchar_t *_ch, size_t _maxlen)
 {
 	const unsigned char *s = (const unsigned char*)_s;
 	size_t i, j;
 	size_t bits = 0;
-	Uchar ch;
+	uchar_t ch;
 
 	i = 0;
 /* findchar: */
@@ -61,7 +61,7 @@ bool u8_analyze(const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t
 	if (bits == 1) { /* ascii */
 		if (_start) *_start = i;
 		if (_len) *_len = 1;
-		if (_ch) *_ch = (Uchar)s[i];
+		if (_ch) *_ch = (uchar_t)s[i];
 		return true;
 	}
 
@@ -169,10 +169,10 @@ size_t u8_strnlen(const char *_s, size_t n)
 }
 
 /* Required for character constants */
-Uchar u8_getchar(const char *_s, const char **_end)
+uchar_t u8_getchar(const char *_s, const char **_end)
 {
 	size_t st, ln;
-	Uchar ch;
+	uchar_t ch;
 
 	if (!u8_analyze(_s, &st, &ln, &ch, 0x10))
 		ch = 0;
@@ -181,10 +181,10 @@ Uchar u8_getchar(const char *_s, const char **_end)
 	return ch;
 }
 
-Uchar u8_getnchar(const char *_s, const char **_end, size_t _maxlen)
+uchar_t u8_getnchar(const char *_s, const char **_end, size_t _maxlen)
 {
 	size_t st, ln;
-	Uchar ch;
+	uchar_t ch;
 
 	if (!u8_analyze(_s, &st, &ln, &ch, _maxlen))
 		ch = 0;
@@ -194,7 +194,7 @@ Uchar u8_getnchar(const char *_s, const char **_end, size_t _maxlen)
 }
 
 /* required for \x{asdf}-like string escape sequences */
-int u8_fromchar(Uchar w, char *to, size_t maxlen)
+int u8_fromchar(uchar_t w, char *to, size_t maxlen)
 {
 	if (maxlen < 1)
 		return 0;

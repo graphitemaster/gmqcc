@@ -932,14 +932,14 @@ typedef uint32_t longbit;
 /*===================================================================*/
 /*=========================== utf8lib.c =============================*/
 /*===================================================================*/
-typedef uint32_t Uchar;
+typedef uint32_t uchar_t;
 
-bool   u8_analyze (const char *_s, size_t *_start, size_t *_len, Uchar *_ch, size_t _maxlen);
-size_t u8_strlen  (const char*);
-size_t u8_strnlen (const char*, size_t);
-Uchar  u8_getchar (const char*, const char**);
-Uchar  u8_getnchar(const char*, const char**, size_t);
-int    u8_fromchar(Uchar w,     char *to,     size_t maxlen);
+bool    u8_analyze (const char *_s, size_t *_start, size_t *_len, uchar_t *_ch, size_t _maxlen);
+size_t  u8_strlen  (const char*);
+size_t  u8_strnlen (const char*, size_t);
+uchar_t u8_getchar (const char*, const char**);
+uchar_t u8_getnchar(const char*, const char**, size_t);
+int     u8_fromchar(uchar_t w,   char *to,     size_t maxlen);
 
 /*===================================================================*/
 /*============================= opts.c ==============================*/

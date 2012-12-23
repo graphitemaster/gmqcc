@@ -858,7 +858,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                     }
                 }
                 if (OPTS_FLAG(UTF8) && ch >= 128) {
-                    u8len = u8_fromchar((Uchar)ch, u8buf, sizeof(u8buf));
+                    u8len = u8_fromchar((uchar_t)ch, u8buf, sizeof(u8buf));
                     if (!u8len)
                         ch = 0;
                     else {
@@ -1427,7 +1427,7 @@ int lex_do(lex_file *lex)
         else
         {
             if (!lex->flags.preprocessing && strlen(lex->tok.value) > 1) {
-                Uchar u8char;
+                uchar_t u8char;
                 /* check for a valid utf8 character */
                 if (!OPTS_FLAG(UTF8) || !u8_analyze(lex->tok.value, NULL, NULL, &u8char, 8)) {
                     if (lexwarn(lex, WARN_MULTIBYTE_CHARACTER,
