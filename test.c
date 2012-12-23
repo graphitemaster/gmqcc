@@ -451,7 +451,7 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp) 
         return false;
 
     /* top down parsing */
-    while (util_getline(&back, &size, fp) != EOF) {
+    while (file_getline(&back, &size, fp) != EOF) {
         /* skip whitespace */
         data = back;
         if (*data && (*data == ' ' || *data == '\t'))
@@ -592,7 +592,7 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
     memset  (fullfile, 0, sizeof(fullfile));
     snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
 
-    tempfile = fopen(fullfile, "r");
+    tempfile = file_open(fullfile, "r");
     template = mem_a(sizeof(task_template_t));
     task_template_nullify(template);
 
@@ -667,7 +667,7 @@ task_template_t *task_template_compile(const char *file, const char *dir) {
     }
 
 success:
-    fclose(tempfile);
+    file_close(tempfile);
     return template;
 
 failure:
@@ -676,7 +676,7 @@ failure:
      * so the check to see if it's not null here is required.
      */
     if (tempfile)
-        fclose(tempfile);
+        file_close(tempfile);
     mem_d (template);
 
     return NULL;
@@ -812,7 +812,7 @@ bool task_propagate(const char *curdir) {
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stdout", template->tempfilename);
             task.stdoutlogfile = util_strdup(buf);
-            if (!(task.stdoutlog     = fopen(buf, "w"))) {
+            if (!(task.stdoutlog     = file_open(buf, "w"))) {
                 con_err("error opening %s for stdout\n", buf);
                 continue;
             }
@@ -820,7 +820,7 @@ bool task_propagate(const char *curdir) {
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stderr", template->tempfilename);
             task.stderrlogfile = util_strdup(buf);
-            if (!(task.stderrlog     = fopen(buf, "w"))) {
+            if (!(task.stderrlog     = file_open(buf, "w"))) {
                 con_err("error opening %s for stderr\n", buf);
                 continue;
             }
@@ -904,8 +904,8 @@ void task_destroy(const char *curdir) {
          * annoying to have to do all this cleanup work.
          */
         if (task_tasks[i].runhandles) task_pclose(task_tasks[i].runhandles);
-        if (task_tasks[i].stdoutlog)  fclose     (task_tasks[i].stdoutlog);
-        if (task_tasks[i].stderrlog)  fclose     (task_tasks[i].stderrlog);
+        if (task_tasks[i].stdoutlog)  file_close (task_tasks[i].stdoutlog);
+        if (task_tasks[i].stderrlog)  file_close (task_tasks[i].stderrlog);
 
         /*
          * Only remove the log files if the test actually compiled otherwise
@@ -983,7 +983,7 @@ bool task_execute(task_template_t *template, char ***line) {
         char  *data    = NULL;
         size_t size    = 0;
         size_t compare = 0;
-        while (util_getline(&data, &size, execute) != EOF) {
+        while (file_getline(&data, &size, execute) != EOF) {
             if (!strcmp(data, "No main function found\n")) {
                 con_err("test failure: `%s` [%s] (No main function found)\n",
                     template->description,
@@ -1059,8 +1059,8 @@ void task_schedualize() {
          * Read data from stdout first and pipe that stuff into a log file
          * then we do the same for stderr.
          */
-        while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
-            fputs(data, task_tasks[i].stdoutlog);
+        while (file_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
+            file_puts(task_tasks[i].stdoutlog, data);
 
             if (strstr(data, "failed to open file")) {
                 task_tasks[i].compiled = false;
@@ -1069,7 +1069,7 @@ void task_schedualize() {
 
             fflush(task_tasks[i].stdoutlog);
         }
-        while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
+        while (file_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
             /*
              * If a string contains an error we just dissalow execution
              * of it in the vm.
@@ -1083,7 +1083,7 @@ void task_schedualize() {
                 task_tasks[i].compiled = false;
             }
 
-            fputs(data, task_tasks[i].stderrlog);
+            file_puts(task_tasks[i].stderrlog, data);
             fflush(task_tasks[i].stdoutlog);
         }
 

@@ -154,41 +154,42 @@ bool code_write(const char *filename, const char *lnofile) {
         uint32_t lnotype = *(unsigned int*)"LNOF";
         uint32_t version = 1;
 
-        fp = util_fopen(lnofile, "wb");
+        fp = file_open(lnofile, "wb");
         if (!fp)
             return false;
 
         util_endianswap(&version,      1,                       sizeof(version));
         util_endianswap(code_linenums, vec_size(code_linenums), sizeof(code_linenums[0]));
 
-        if (fwrite(&lnotype,                        sizeof(lnotype),                        1,                       fp) != 1 ||
-            fwrite(&version,                        sizeof(version),                        1,                       fp) != 1 ||
-            fwrite(&code_header.defs.length,        sizeof(code_header.defs.length),        1,                       fp) != 1 ||
-            fwrite(&code_header.globals.length,     sizeof(code_header.globals.length),     1,                       fp) != 1 ||
-            fwrite(&code_header.fields.length,      sizeof(code_header.fields.length),      1,                       fp) != 1 ||
-            fwrite(&code_header.statements.length,  sizeof(code_header.statements.length),  1,                       fp) != 1 ||
-            fwrite(code_linenums,                   sizeof(code_linenums[0]),               vec_size(code_linenums), fp) != vec_size(code_linenums))
+
+        if (file_write(&lnotype,                        sizeof(lnotype),                        1,                       fp) != 1 ||
+            file_write(&version,                        sizeof(version),                        1,                       fp) != 1 ||
+            file_write(&code_header.defs.length,        sizeof(code_header.defs.length),        1,                       fp) != 1 ||
+            file_write(&code_header.globals.length,     sizeof(code_header.globals.length),     1,                       fp) != 1 ||
+            file_write(&code_header.fields.length,      sizeof(code_header.fields.length),      1,                       fp) != 1 ||
+            file_write(&code_header.statements.length,  sizeof(code_header.statements.length),  1,                       fp) != 1 ||
+            file_write(code_linenums,                   sizeof(code_linenums[0]),               vec_size(code_linenums), fp) != vec_size(code_linenums))
         {
             con_err("failed to write lno file\n");
         }
 
-        fclose(fp);
+        file_close(fp);
         fp = NULL;
     }
 
-    fp = util_fopen(filename, "wb");
+    fp = file_open(filename, "wb");
     if (!fp)
         return false;
 
-    if (1                         != fwrite(&code_header,    sizeof(prog_header)           , 1                        , fp) ||
-        vec_size(code_statements) != fwrite(code_statements, sizeof(prog_section_statement), vec_size(code_statements), fp) ||
-        vec_size(code_defs)       != fwrite(code_defs,       sizeof(prog_section_def)      , vec_size(code_defs)      , fp) ||
-        vec_size(code_fields)     != fwrite(code_fields,     sizeof(prog_section_field)    , vec_size(code_fields)    , fp) ||
-        vec_size(code_functions)  != fwrite(code_functions,  sizeof(prog_section_function) , vec_size(code_functions) , fp) ||
-        vec_size(code_globals)    != fwrite(code_globals,    sizeof(int32_t)               , vec_size(code_globals)   , fp) ||
-        vec_size(code_chars)      != fwrite(code_chars,      1                             , vec_size(code_chars)     , fp))
+    if (1                         != file_write(&code_header,    sizeof(prog_header)           , 1                        , fp) ||
+        vec_size(code_statements) != file_write(code_statements, sizeof(prog_section_statement), vec_size(code_statements), fp) ||
+        vec_size(code_defs)       != file_write(code_defs,       sizeof(prog_section_def)      , vec_size(code_defs)      , fp) ||
+        vec_size(code_fields)     != file_write(code_fields,     sizeof(prog_section_field)    , vec_size(code_fields)    , fp) ||
+        vec_size(code_functions)  != file_write(code_functions,  sizeof(prog_section_function) , vec_size(code_functions) , fp) ||
+        vec_size(code_globals)    != file_write(code_globals,    sizeof(int32_t)               , vec_size(code_globals)   , fp) ||
+        vec_size(code_chars)      != file_write(code_chars,      1                             , vec_size(code_chars)     , fp))
     {
-        fclose(fp);
+        file_close(fp);
         return false;
     }
 
@@ -253,6 +254,6 @@ bool code_write(const char *filename, const char *lnofile) {
     vec_free(code_functions);
     vec_free(code_globals);
     vec_free(code_chars);
-    fclose(fp);
+    file_close(fp);
     return true;
 }

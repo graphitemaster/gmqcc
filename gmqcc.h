@@ -26,8 +26,8 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <ctype.h>
 
 /*
@@ -159,7 +159,6 @@
 #	define strtof(X, Y)          (float)(strtod(X, Y))
 #endif
 
-
 /*
  * Very roboust way at determining endianess at compile time: this handles
  * almost every possible situation.  Otherwise a runtime check has to be
@@ -245,8 +244,6 @@
 /*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
-FILE *util_fopen(const char *filename, const char *mode);
-
 void *util_memory_a      (size_t,       unsigned int, const char *);
 void  util_memory_d      (void       *, unsigned int, const char *);
 void *util_memory_r      (void       *, size_t,       unsigned int, const char *);
@@ -257,7 +254,6 @@ bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
 char *util_strdup        (const char *);
 void  util_debug         (const char *, const char *, ...);
-int   util_getline       (char **, size_t *, FILE *);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
 size_t util_strtocmd    (const char *, char *, size_t);
@@ -383,10 +379,31 @@ void          util_htdel (hash_table_t *ht);
 size_t        util_hthash(hash_table_t *ht, const char *key);
 void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
 void          util_htseth(hash_table_t *ht, const char *key, size_t hash, void *value);
+
+/*===================================================================*/
+/*============================ file.c ===============================*/
+/*===================================================================*/
+void   GMQCC_INLINE file_close  (FILE *);
+
+int    GMQCC_INLINE file_error  (FILE *);
+int    GMQCC_INLINE file_getc   (FILE *);
+int    GMQCC_INLINE file_printf (FILE *, const char *, ...);
+int    GMQCC_INLINE file_puts   (FILE *, const char *);
+int    GMQCC_INLINE file_seek   (FILE *, long int, int);
+
+size_t GMQCC_INLINE file_read   (void *,        size_t, size_t, FILE *);
+size_t GMQCC_INLINE file_write  (const void *,  size_t, size_t, FILE *);
+
+FILE*  GMQCC_INLINE file_open   (const char *, const char *);
+
+int   /*NO_INLINE*/ file_getline(char  **, size_t *, FILE *);
+
+
 /*===================================================================*/
 /*=========================== code.c ================================*/
 /*===================================================================*/
 
+/* TODO: cleanup */
 /* Note: if you change the order, fix type_sizeof in ir.c */
 enum {
     TYPE_VOID     ,
@@ -806,6 +823,7 @@ vector  vec3_mulvf(vector, float);
 /*============================= exec.c ==============================*/
 /*===================================================================*/
 
+/* TODO: cleanup */
 /*
  * Darkplaces has (or will have) a 64 bit prog loader
  * where the 32 bit qc program is autoconverted on load.
@@ -910,6 +928,8 @@ bool parser_compile_file  (const char *filename);
 bool parser_compile_string(const char *name, const char *str);
 bool parser_finish        (const char *output);
 void parser_cleanup       ();
+
+/* TODO: make compile_string accept len and remove this */
 /* There's really no need to strlen() preprocessed files */
 bool parser_compile_string_len(const char *name, const char *str, size_t len);
 
@@ -1015,6 +1035,7 @@ typedef enum {
     COMPILER_GMQCC    /* this   QuakeC */
 } opts_std_t;
 
+/* TODO: cleanup this */
 typedef struct {
     uint32_t    O;              /* -Ox           */
     const char *output;         /* -o file       */

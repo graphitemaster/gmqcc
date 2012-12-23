@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 #include "gmqcc.h"
+#include <stdio.h>
 
 /*
  * isatty/STDERR_FILENO/STDOUT_FILNO
@@ -167,7 +168,7 @@ static int win_fputs(const char *str, FILE *h) {
                 state    = -1;
             }
         } else {
-            fputc(*str, h);
+            file_putc(*str, h);
             length ++;
         }
         str++;
@@ -218,7 +219,7 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
         char data[4096];
         memset(data, 0, sizeof(data));
         vsnprintf(data, sizeof(data), fmt, va);
-        ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(data, handle) : fputs(data, handle);
+        ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(data, handle) : file_puts(data, handle);
     }
     #endif
     return ln;
@@ -230,9 +231,9 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
 
 void con_close() {
     if (!GMQCC_IS_DEFINE(console.handle_err))
-        fclose(console.handle_err);
+        file_close(console.handle_err);
     if (!GMQCC_IS_DEFINE(console.handle_out))
-        fclose(console.handle_out);
+        file_close(console.handle_out);
 }
 
 void con_color(int state) {
@@ -268,15 +269,18 @@ void con_reset() {
 int con_change(const char *out, const char *err) {
     con_close();
 
+    if (!out) out = (const char *)((!console.handle_out) ? stdout : console.handle_out);
+    if (!err) err = (const char *)((!console.handle_err) ? stderr : console.handle_err);
+
     if (GMQCC_IS_DEFINE(out)) {
         console.handle_out = GMQCC_IS_STDOUT(out) ? stdout : stderr;
         con_enablecolor();
-    } else if (!(console.handle_out = fopen(out, "w"))) return 0;
+    } else if (!(console.handle_out = file_open(out, "w"))) return 0;
 
     if (GMQCC_IS_DEFINE(err)) {
         console.handle_err = GMQCC_IS_STDOUT(err) ? stdout : stderr;
         con_enablecolor();
-    } else if (!(console.handle_err = fopen(err, "w"))) return 0;
+    } else if (!(console.handle_err = file_open(err, "w"))) return 0;
 
     /* no buffering */
     setvbuf(console.handle_out, NULL, _IONBF, 0);

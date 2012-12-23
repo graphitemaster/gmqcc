@@ -169,7 +169,7 @@ static size_t opts_ini_parse (
     char *read_name;
     char *read_value;
 
-    while (util_getline(&line, &linesize, filehandle) != EOF) {
+    while (file_getline(&line, &linesize, filehandle) != EOF) {
         parse_beg = line;
 
         /* handle BOM */
@@ -315,11 +315,11 @@ void opts_ini_init(const char *file) {
     
     if (!file) {
         /* try ini */
-        if (!(ini = fopen((file = "gmqcc.ini"), "r")))
+        if (!(ini = file_open((file = "gmqcc.ini"), "r")))
             /* try cfg */
-            if (!(ini = fopen((file = "gmqcc.cfg"), "r")))
+            if (!(ini = file_open((file = "gmqcc.cfg"), "r")))
                 return;
-    } else if (!(ini = fopen(file, "r")))
+    } else if (!(ini = file_open(file, "r")))
         return;
 
     con_out("found ini file `%s`\n", file);
@@ -330,5 +330,5 @@ void opts_ini_init(const char *file) {
         vec_free(error);
     }
 
-    fclose(ini);
+    file_close(ini);
 }  

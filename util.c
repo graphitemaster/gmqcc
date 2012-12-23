@@ -25,6 +25,7 @@
 #include <errno.h>
 #include "gmqcc.h"
 
+/* TODO: remove globals ... */
 uint64_t mem_ab = 0;
 uint64_t mem_db = 0;
 uint64_t mem_at = 0;
@@ -347,54 +348,6 @@ uint16_t util_crc16(const char *k, int len, const short clamp) {
 }
 #endif
 
-/*
- * Implements libc getline for systems that don't have it, which is
- * assmed all.  This works the same as getline().
- */
-int util_getline(char **lineptr, size_t *n, FILE *stream) {
-    int   chr;
-    int   ret;
-    char *pos;
-
-    if (!lineptr || !n || !stream)
-        return -1;
-    if (!*lineptr) {
-        if (!(*lineptr = (char*)mem_a((*n=64))))
-            return -1;
-    }
-
-    chr = *n;
-    pos = *lineptr;
-
-    for (;;) {
-        int c = getc(stream);
-
-        if (chr < 2) {
-            *n += (*n > 16) ? *n : 64;
-            chr = *n + *lineptr - pos;
-            if (!(*lineptr = (char*)mem_r(*lineptr,*n)))
-                return -1;
-            pos = *n - chr + *lineptr;
-        }
-
-        if (ferror(stream))
-            return -1;
-        if (c == EOF) {
-            if (pos == *lineptr)
-                return -1;
-            else
-                break;
-        }
-
-        *pos++ = c;
-        chr--;
-        if (c == '\n')
-            break;
-    }
-    *pos = '\0';
-    return (ret = pos - *lineptr);
-}
-
 size_t util_strtocmd(const char *in, char *out, size_t outsz) {
     size_t sz = 1;
     for (; *in && sz < outsz; ++in, ++out, ++sz)
@@ -411,19 +364,7 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
     return sz-1;
 }
 
-
-FILE *util_fopen(const char *filename, const char *mode)
-{
-#ifdef _MSC_VER
-    FILE *out;
-    if (fopen_s(&out, filename, mode) != 0)
-        return NULL;
-    return out;
-#else
-    return fopen(filename, mode);
-#endif
-}
-
+/* TODO: rewrite ... when I redo the ve cleanup */
 void _util_vec_grow(void **a, size_t i, size_t s) {
     size_t m = *a ? 2*_vec_beg(*a)+i : i+1;
     void  *p = mem_r((*a ? _vec_raw(*a) : NULL), s * m + sizeof(size_t)*2);

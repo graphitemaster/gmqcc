@@ -53,29 +53,28 @@ static void qcvmerror(qc_program *prog, const char *fmt, ...)
 
 qc_program* prog_load(const char *filename)
 {
-    qc_program *prog;
-    prog_header header;
-    FILE *file;
+    qc_program   *prog;
+    prog_header   header;
+    FILE         *file   = file_open(filename, "rb");
 
-    file = util_fopen(filename, "rb");
     if (!file)
         return NULL;
 
-    if (fread(&header, sizeof(header), 1, file) != 1) {
+    if (file_read(&header, sizeof(header), 1, file) != 1) {
         loaderror("failed to read header from '%s'", filename);
-        fclose(file);
+        file_close(file);
         return NULL;
     }
 
     if (header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
-        fclose(file);
+        file_close(file);
         return NULL;
     }
 
     prog = (qc_program*)mem_a(sizeof(qc_program));
     if (!prog) {
-        fclose(file);
+        file_close(file);
         printf("failed to allocate program data\n");
         return NULL;
     }
@@ -91,15 +90,17 @@ qc_program* prog_load(const char *filename)
     }
 
 #define read_data(hdrvar, progvar, reserved)                           \
-    if (fseek(file, header.hdrvar.offset, SEEK_SET) != 0) {            \
+    if (file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {        \
         loaderror("seek failed");                                      \
         goto error;                                                    \
     }                                                                  \
-    if (fread(vec_add(prog->progvar, header.hdrvar.length + reserved), \
-              sizeof(*prog->progvar),                                  \
-              header.hdrvar.length, file)                              \
-        != header.hdrvar.length)                                       \
-    {                                                                  \
+    if (file_read (                                                    \
+            vec_add(prog->progvar, header.hdrvar.length + reserved),   \
+            sizeof(*prog->progvar),                                    \
+            header.hdrvar.length,                                      \
+            file                                                       \
+        )!= header.hdrvar.length                                       \
+    ) {                                                                \
         loaderror("read failed");                                      \
         goto error;                                                    \
     }
@@ -113,7 +114,7 @@ qc_program* prog_load(const char *filename)
     read_data1(strings);
     read_data2(globals, 2); /* reserve more in case a RETURN using with the global at "the end" exists */
 
-    fclose(file);
+    file_close(file);
 
     /* profile counters */
     memset(vec_add(prog->profile, vec_size(prog->code)), 0, sizeof(prog->profile[0]) * vec_size(prog->code));

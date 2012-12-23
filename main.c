@@ -139,8 +139,8 @@ static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
     char  buffer[1024];
-    char *redirout = (char*)stdout;
-    char *redirerr = (char*)stderr;
+    char *redirout = NULL;
+    char *redirerr = NULL;
     char *config   = NULL;
 
     while (!argend && argc > 1) {
@@ -474,7 +474,7 @@ static bool progs_nextline(char **out, size_t *alen,FILE *src) {
     char  *end;
 
     line = *out;
-    len = util_getline(&line, alen, src);
+    len  = file_getline(&line, alen, src);
     if (len == -1)
         return false;
 
@@ -553,15 +553,16 @@ int main(int argc, char **argv) {
 
     if (opts.pp_only) {
         if (opts_output_wasset) {
-            outfile = util_fopen(opts.output, "wb");
+            outfile = file_open(opts.output, "wb");
             if (!outfile) {
                 con_err("failed to open `%s` for writing\n", opts.output);
                 retval = 1;
                 goto cleanup;
             }
         }
-        else
-            outfile = stdout;
+        else {
+         /* TODO: stdout without stdout .. */
+        }
     }
 
     if (!opts.pp_only) {
@@ -604,7 +605,7 @@ int main(int argc, char **argv) {
 
         progs_src = true;
 
-        src = util_fopen("progs.src", "rb");
+        src = file_open("progs.src", "rb");
         if (!src) {
             con_err("failed to open `progs.src` for reading\n");
             retval = 1;
@@ -633,7 +634,7 @@ int main(int argc, char **argv) {
         }
 
 srcdone:
-        fclose(src);
+        file_close(src);
         mem_d(line);
     }
 
@@ -663,7 +664,7 @@ srcdone:
                 }
                 out = ftepp_get();
                 if (out)
-                    fprintf(outfile, "%s", out);
+                    file_printf(outfile, "%s", out);
                 ftepp_flush();
             }
             else {
