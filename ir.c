@@ -2760,8 +2760,7 @@ tailcall:
 
             retvalue = instr->_ops[0];
             if (retvalue && retvalue->store != store_return &&
-                (retvalue->store == store_global || (vec_size(retvalue->life) && vec_size(retvalue->reads)))
-               )
+                (retvalue->store == store_global || vec_size(retvalue->life)))
             {
                 /* not to be kept in OFS_RETURN */
                 if (retvalue->vtype == TYPE_FIELD && OPTS_FLAG(ADJUST_VECTOR_FIELDS))
