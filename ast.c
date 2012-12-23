@@ -1317,6 +1317,8 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         ast_expression_common *elemtype = &self->expression.next->expression;
         int vtype = elemtype->vtype;
 
+        func->flags |= IR_FLAG_HAS_ARRAYS;
+
         if (param) {
             compile_error(ast_ctx(self), "array-parameters are not supported");
             return false;
@@ -2856,14 +2858,14 @@ bool ast_goto_codegen(ast_goto *self, ast_function *func, bool lvalue, ir_value 
         if (self->irblock_from) {
             /* we already tried once, this is the callback */
             self->irblock_from->final = false;
-            if (!ir_block_create_jump(self->irblock_from, ast_ctx(self), self->target->irblock)) {
+            if (!ir_block_create_goto(self->irblock_from, ast_ctx(self), self->target->irblock)) {
                 compile_error(ast_ctx(self), "failed to generate goto to `%s`", self->name);
                 return false;
             }
         }
         else
         {
-            if (!ir_block_create_jump(func->curblock, ast_ctx(self), self->target->irblock)) {
+            if (!ir_block_create_goto(func->curblock, ast_ctx(self), self->target->irblock)) {
                 compile_error(ast_ctx(self), "failed to generate goto to `%s`", self->name);
                 return false;
             }

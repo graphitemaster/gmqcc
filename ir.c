@@ -433,6 +433,8 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
         mem_d(self);
         return NULL;
     }
+    self->flags = 0;
+
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
@@ -1529,20 +1531,8 @@ bool ir_block_create_jump(ir_block *self, lex_ctx ctx, ir_block *to)
 
 bool ir_block_create_goto(ir_block *self, lex_ctx ctx, ir_block *to)
 {
-    ir_instr *in;
-    if (!ir_check_unreachable(self))
-        return false;
-    self->final = true;
-    in = ir_instr_new(ctx, self, INSTR_GOTO);
-    if (!in)
-        return false;
-
-    in->bops[0] = to;
-    vec_push(self->instr, in);
-
-    vec_push(self->exits, to);
-    vec_push(to->entries, self);
-    return true;
+    self->owner->flags |= IR_FLAG_HAS_GOTO;
+    return ir_block_create_jump(self, ctx, to);
 }
 
 ir_instr* ir_block_create_phi(ir_block *self, lex_ctx ctx, const char *label, int ot)
@@ -2232,6 +2222,7 @@ bool ir_function_calculate_liferanges(ir_function *self)
                 if (!vec_ir_value_find(block->living, v->memberof, NULL))
                     continue;
             }
+            self->flags |= IR_FLAG_HAS_UNINITIALIZED;
             if (irwarning(v->context, WARN_USED_UNINITIALIZED,
                           "variable `%s` may be used uninitialized in this function", v->name))
             {

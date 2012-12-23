@@ -237,6 +237,8 @@ typedef struct ir_function_s
     int       *params;
     ir_block **blocks;
 
+    uint32_t   flags;
+
     int builtin;
 
     ir_value *value;
@@ -270,6 +272,10 @@ typedef struct ir_function_s
 
     struct ir_builder_s *owner;
 } ir_function;
+#define IR_FLAG_HAS_ARRAYS        (1<<1)
+#define IR_FLAG_HAS_UNINITIALIZED (1<<2)
+#define IR_FLAG_HAS_GOTO          (1<<3)
+#define IR_FLAG_MASK_NO_OVERLAP (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED)
 
 ir_function* ir_function_new(struct ir_builder_s *owner, int returntype);
 void         ir_function_delete(ir_function*);
