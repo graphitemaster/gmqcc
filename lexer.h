@@ -28,23 +28,23 @@ typedef struct token_s token;
 #include "ast.h"
 
 struct token_s {
-	int ttype;
+    int ttype;
 
-	char *value;
+    char *value;
 
-	union {
-		vector v;
-		int    i;
-		double f;
-		int    t; /* type */
-	} constval;
+    union {
+        vector v;
+        int    i;
+        double f;
+        int    t; /* type */
+    } constval;
 
 #if 0
-	struct token_s *next;
-	struct token_s *prev;
+    struct token_s *next;
+    struct token_s *prev;
 #endif
 
-	lex_ctx ctx;
+    lex_ctx ctx;
 };
 
 #if 0
@@ -100,34 +100,34 @@ typedef struct {
 } frame_macro;
 
 typedef struct {
-	FILE   *file;
-	const char *open_string;
-	size_t      open_string_length;
-	size_t      open_string_pos;
+    FILE   *file;
+    const char *open_string;
+    size_t      open_string_length;
+    size_t      open_string_pos;
 
-	char   *name;
-	size_t  line;
-	size_t  sline; /* line at the start of a token */
+    char   *name;
+    size_t  line;
+    size_t  sline; /* line at the start of a token */
 
-	char    peek[256];
-	size_t  peekpos;
+    char    peek[256];
+    size_t  peekpos;
 
-	bool    eof;
+    bool    eof;
 
-	token   tok; /* not a pointer anymore */
+    token   tok; /* not a pointer anymore */
 
-	struct {
-	    bool noops;
-	    bool nodigraphs; /* used when lexing string constants */
-	    bool preprocessing; /* whitespace and EOLs become actual tokens */
-	    bool mergelines; /* backslash at the end of a line escapes the newline */
-	} flags;
+    struct {
+        bool noops;
+        bool nodigraphs; /* used when lexing string constants */
+        bool preprocessing; /* whitespace and EOLs become actual tokens */
+        bool mergelines; /* backslash at the end of a line escapes the newline */
+    } flags;
 
     int framevalue;
-	frame_macro *frames;
-	char *modelname;
+    frame_macro *frames;
+    char *modelname;
 
-	size_t push_line;
+    size_t push_line;
 } lex_file;
 
 lex_file* lex_open (const char *file);
