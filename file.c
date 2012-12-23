@@ -131,12 +131,12 @@
  * These are implemented as just generic wrappers to keep consistency in
  * the API.  Not as macros though  
  */
-void GMQCC_INLINE file_close(FILE *fp) {
+void file_close(FILE *fp) {
     /* Invokes file_exception on windows if fp is null */
     fclose (fp);
 }
 
-size_t GMQCC_INLINE file_write (
+size_t  file_write (
     const void    *buffer,
     size_t         size,
     size_t         count,
@@ -146,22 +146,22 @@ size_t GMQCC_INLINE file_write (
     return fwrite(buffer, size, count, fp);
 }
 
-int GMQCC_INLINE file_error(FILE *fp) {
+int file_error(FILE *fp) {
     /* Invokes file_exception on windows if fp is null */
     return ferror(fp);
 }
 
-int GMQCC_INLINE file_getc(FILE *fp) {
+int file_getc(FILE *fp) {
     /* Invokes file_exception on windows if fp is null */
     return fgetc(fp);
 }
 
-int GMQCC_INLINE file_puts(FILE *fp, const char *str) {
+int file_puts(FILE *fp, const char *str) {
     /* Invokes file_exception on windows if fp is null */
     return fputs(str, fp);
 }
 
-int GMQCC_INLINE file_seek(FILE *fp, long int off, int whence) {
+int file_seek(FILE *fp, long int off, int whence) {
     /* Invokes file_exception on windows if fp is null */
     return fseek(fp, off, whence);
 }

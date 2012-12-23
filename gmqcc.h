@@ -37,7 +37,6 @@
 #ifdef _MSC_VER
 #   pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
 #   pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
-#   pragma warning(disable : 4996 ) /* This function or variable may be unsafe                 */
 #endif
 
 #define GMQCC_VERSION_MAJOR 0
@@ -379,20 +378,18 @@ void          util_htseth(hash_table_t *ht, const char *key, size_t hash, void *
 /*===================================================================*/
 /*============================ file.c ===============================*/
 /*===================================================================*/
-void   GMQCC_INLINE file_close  (FILE *);
+GMQCC_INLINE void    file_close  (FILE *);
+GMQCC_INLINE int     file_error  (FILE *);
+GMQCC_INLINE int     file_getc   (FILE *);
+GMQCC_INLINE int     file_printf (FILE *, const char *, ...);
+GMQCC_INLINE int     file_puts   (FILE *, const char *);
+GMQCC_INLINE int     file_seek   (FILE *, long int, int);
 
-int    GMQCC_INLINE file_error  (FILE *);
-int    GMQCC_INLINE file_getc   (FILE *);
-int    GMQCC_INLINE file_printf (FILE *, const char *, ...);
-int    GMQCC_INLINE file_puts   (FILE *, const char *);
-int    GMQCC_INLINE file_seek   (FILE *, long int, int);
+GMQCC_INLINE size_t  file_read   (void *,        size_t, size_t, FILE *);
+GMQCC_INLINE size_t  file_write  (const void *,  size_t, size_t, FILE *);
 
-size_t GMQCC_INLINE file_read   (void *,        size_t, size_t, FILE *);
-size_t GMQCC_INLINE file_write  (const void *,  size_t, size_t, FILE *);
-
-FILE*  GMQCC_INLINE file_open   (const char *, const char *);
-
-int   /*NO_INLINE*/ file_getline(char  **, size_t *, FILE *);
+GMQCC_INLINE FILE   *file_open   (const char *, const char *);
+/*NOINLINE*/ int     file_getline(char  **, size_t *, FILE *);
 
 
 /*===================================================================*/
