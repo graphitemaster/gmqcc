@@ -2127,7 +2127,7 @@ bool ir_function_allocate_locals(ir_function *self)
 
     for (i = 0; i < vec_size(self->locals); ++i)
     {
-        if (!OPTS_OPTIMIZATION(OPTIM_LOCALTEMPS))
+        if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS))
             self->locals[i]->unique_life = true;
         if (!function_allocator_alloc(&alloc, self->locals[i]))
             goto error;

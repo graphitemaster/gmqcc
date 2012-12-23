@@ -244,10 +244,6 @@ token inside the enclosing attribute-brackets. This may change when
 the actual attribute syntax is better defined.
 .SH COMPILE FLAGS
 .TP
-.B -foverlap-locals
-Allow local variables to overlap with each other if they don't
-interfer with each other. (Not implemented right now)
-.TP
 .B -fdarkplaces-string-table-bug
 Add some additional characters to the string table in order to
 compensate for a wrong boundcheck in some specific version of the
@@ -358,6 +354,14 @@ as long as the functions cannot be called in a recursive manner. Since
 it's hard to know whether or not an array is actually fully
 initialized, especially when initializing it via a loop, we assume
 functions with arrays to be too dangerous for this optimization.
+.TP
+.B -Olocal-temps
+This promotes locally declared variables to "temps". Meaning when a
+temporary result of an operation has to be stored somewhere, a local
+variable which is not 'alive' at that point can be used to keep the
+result. This can reduce the size of the global section.
+This will not have declared variables overlap, even if it was
+possible.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
