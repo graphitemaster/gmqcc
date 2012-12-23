@@ -768,18 +768,43 @@ static int qc_strcat(qc_program *prog)
     return 0;
 }
 
+static int qc_strcmp(qc_program *prog)
+{
+    char  *cstr1, *cstr2;
+    qcany *str1,  *str2;
+    qcany out;
+
+    if (prog->argc != 2 && prog->argc != 3) {
+        printf("ERROR: invalid number of arguments for strcmp/strncmp: %i, expected 2 or 3\n",
+               prog->argc);
+        return -1;
+    }
+
+    str1 = GetArg(0);
+    str2 = GetArg(1);
+    cstr1 = prog_getstring(prog, str1->string);
+    cstr2 = prog_getstring(prog, str2->string);
+    if (prog->argc == 3)
+        out._float = strncmp(cstr1, cstr2, GetArg(2)->_float);
+    else
+        out._float = strcmp(cstr1, cstr2);
+    Return(out);
+    return 0;
+}
+
 static prog_builtin qc_builtins[] = {
     NULL,
-    &qc_print, /*   1   */
-    &qc_ftos,  /*   2   */
-    &qc_spawn, /*   3   */
-    &qc_kill,  /*   4   */
-    &qc_vtos,  /*   5   */
-    &qc_error, /*   6   */
-    &qc_vlen,  /*   7   */
-    &qc_etos,  /*   8   */
-    &qc_stof,  /*   9   */
-    &qc_strcat /*   10  */
+    &qc_print,  /*   1   */
+    &qc_ftos,   /*   2   */
+    &qc_spawn,  /*   3   */
+    &qc_kill,   /*   4   */
+    &qc_vtos,   /*   5   */
+    &qc_error,  /*   6   */
+    &qc_vlen,   /*   7   */
+    &qc_etos,   /*   8   */
+    &qc_stof,   /*   9   */
+    &qc_strcat, /*   10  */
+    &qc_strcmp  /*   11  */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 

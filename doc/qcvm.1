@@ -56,36 +56,64 @@ Append a float parameter to be passed to \fImain\fR.
 Append a string parameter to be passed to \fImain\fR.
 .SH BUILTINS
 The following builtin functions are available:
-.TP
+.fi
+
 .RI "1) " void " print(" string... ") = " "#1" ;
+.in +8
 Print the passed strings to stdout. At most 8 strings are allowed.
-.TP
+.in
+
 .RI "2) " string " ftos(" float ") = " "#2" ;
+.in +8
 Convert a float to a string.
-.TP
+.in
+
 .RI "3) " entity " spawn() = " "#3" ;
+.in +8
 Spawn an entity.
-.TP
+.in
+
 .RI "4) " void " remove(" entity ") = " "#4" ;
+.in +8
 Remove an entity.
-.TP
+.in
+
 .RI "5) " string " vtos(" vector ") = " "#5" ;
+.in +8
 Convert a vector to a string.
-.TP
+.in
+
 .RI "6) " void " error(" string... ") = " "#6" ;
+.in +8
 Print at most 8 strings to stdout and then exit with an error.
-.TP
+.in
+
 .RI "7) " float " vlen(" vector ") = " "#7" ;
+.in +8
 Get the length of a vector.
-.TP
+.in
+
 .RI "8) " string " etos(" entity ") = " "#8" ;
+.in +8
 Get the entity ID as string.
-.TP
+.in
+
 .RI "9) " float " stof(" string ") = " "#9" ;
+.in +8
 Convert a string to a float.
-.TP
+.in
+
 .RI "10) " string " strcat(" string ", " string ") = " "#10" ;
+.in +8
 Concatenate two strings, returning a tempstring.
+.in
+
+.RI "11) " float " strcmp (" string ", " string ") = " "#11" ;
+.fi
+.RI "    " float " strncmp(" string ", " string ", " float ") = " "#11" ;
+.in +8
+Compare two strings. Returns the same as the corresponding C functions.
+.in
 .SH BUGS
 Please report bugs on <http://github.com/graphitemaster/gmqcc/issues>,
 or see <http://graphitemaster.github.com/gmqcc> on how to contact us.
