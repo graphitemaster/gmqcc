@@ -609,7 +609,8 @@ bool ir_function_pass_peephole(ir_function *self)
                     if (inot->_ops[0] != value ||
                         inot->opcode < INSTR_NOT_F ||
                         inot->opcode > INSTR_NOT_FNC ||
-                        inot->opcode == INSTR_NOT_V) /* can't do this one */
+                        inot->opcode == INSTR_NOT_V || /* can't do these */
+                        inot->opcode == INSTR_NOT_S)
                     {
                         break;
                     }
