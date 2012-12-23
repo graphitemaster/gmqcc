@@ -566,7 +566,7 @@ int main(int argc, char **argv) {
             }
         }
         else {
-         /* TODO: stdout without stdout .. */
+            con_default_out();
         }
     }
 
