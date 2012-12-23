@@ -300,14 +300,16 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 
 /*
  * A flexible vector implementation: all vector pointers contain some
- * data baout themselfs exactly - sizeof(vector_t) behind the pointer
+ * data about themselfs exactly - sizeof(vector_t) behind the pointer
  * this data is represented in the structure below.  Doing this allows
- * use to use the array [] to access individual data from the vector
+ * us to use the array [] to access individual elements from the vector
  * opposed to using set/get methods.
  */     
 typedef struct {
     size_t  allocated;
     size_t  used;
+
+    /* can be extended now! whoot */
 } vector_t;
 
 /* hidden interface */
