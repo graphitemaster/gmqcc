@@ -285,6 +285,8 @@ ir_builder* ir_builder_new(const char *modulename)
     self->htfields    = util_htnew(IR_HT_SIZE);
     self->htfunctions = util_htnew(IR_HT_SIZE);
 
+    self->max_locals  = 0;
+
     self->str_immediate = 0;
     self->name = NULL;
     if (!ir_builder_set_name(self, modulename)) {
@@ -3476,6 +3478,11 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     {
         if (!ir_builder_gen_global(self, self->globals[i], false)) {
             return false;
+        }
+        if (self->globals[i]->vtype == TYPE_FUNCTION) {
+            ir_function *func = self->globals[i]->constval.vfunc;
+            if (func && self->max_locals < func->allocated_locals)
+                self->max_locals = func->allocated_locals;
         }
     }
 

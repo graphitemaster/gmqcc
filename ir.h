@@ -312,6 +312,9 @@ typedef struct ir_builder_s
 
     ir_value    **extparams;
 
+    /* the highest func->allocated_locals */
+    size_t        max_locals;
+
     const char **filenames;
     qcint       *filestrings;
     /* we cache the #IMMEDIATE string here */
