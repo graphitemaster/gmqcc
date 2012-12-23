@@ -169,8 +169,9 @@ void prog_delete(qc_program *prog)
 
 char* prog_getstring(qc_program *prog, qcint str)
 {
+    /* cast for return required for C++ */
     if (str < 0 || str >= (qcint)vec_size(prog->strings))
-        return "<<<invalid string>>>";
+        return (char*)"<<<invalid string>>>";
     return prog->strings + str;
 }
 

@@ -64,7 +64,7 @@ void opts_init(const char *output, int standard, size_t arraysize) {
     opts_setdefault();
     
     opts.output         = output;
-    opts.standard       = standard;
+    opts.standard       = (opts_std_t)standard; /* C++ ... y u no like me? */
     opts.max_array_size = arraysize;
 }
 

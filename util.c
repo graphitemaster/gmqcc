@@ -42,7 +42,7 @@ struct memblock_t {
 static struct memblock_t *mem_start = NULL;
 
 void *util_memory_a(size_t byte, unsigned int line, const char *file) {
-    struct memblock_t *info = malloc(sizeof(struct memblock_t) + byte);
+    struct memblock_t *info = (struct memblock_t*)malloc(sizeof(struct memblock_t) + byte);
     void              *data = (void*)(info+1);
     if (!info) return NULL;
     info->line = line;
@@ -170,7 +170,7 @@ char *util_strdup(const char *s) {
     if (!s)
         return NULL;
 
-    if ((len = strlen(s)) && (ptr = mem_a(len+1))) {
+    if ((len = strlen(s)) && (ptr = (char*)mem_a(len+1))) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
@@ -426,7 +426,7 @@ GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
 
 hash_node_t *_util_htnewpair(const char *key, void *value) {
     hash_node_t *node;
-    if (!(node = mem_a(sizeof(hash_node_t))))
+    if (!(node = (hash_node_t*)mem_a(sizeof(hash_node_t))))
         return NULL;
 
     if (!(node->key = util_strdup(key))) {
@@ -452,10 +452,10 @@ hash_table_t *util_htnew(size_t size) {
     if (size < 1)
         return NULL;
 
-    if (!(hashtable = mem_a(sizeof(hash_table_t))))
+    if (!(hashtable = (hash_table_t*)mem_a(sizeof(hash_table_t))))
         return NULL;
 
-    if (!(hashtable->table = mem_a(sizeof(hash_node_t*) * size))) {
+    if (!(hashtable->table = (hash_node_t**)mem_a(sizeof(hash_node_t*) * size))) {
         mem_d(hashtable);
         return NULL;
     }

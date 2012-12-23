@@ -536,7 +536,7 @@ int main(int argc, char **argv) {
                 exit(1);
             }
             operators_free = true;
-            newops = mem_a(sizeof(operators[0]) * operator_count);
+            newops = (oper_info*)mem_a(sizeof(operators[0]) * operator_count);
             memcpy(newops, operators, sizeof(operators[0]) * operator_count);
             memcpy(&newops[operator_count-2], &operators[operator_count-1], sizeof(newops[0]));
             memcpy(&newops[operator_count-1], &operators[operator_count-2], sizeof(newops[0]));

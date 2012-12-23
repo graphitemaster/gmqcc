@@ -32,6 +32,7 @@
 #define PARSER_HT_SIZE    1024
 #define TYPEDEF_HT_SIZE   16
 
+enum parser_pot { POT_PAREN, POT_TERNARY1, POT_TERNARY2 };
 typedef struct {
     lex_file *lex;
     int      tok;
@@ -90,7 +91,7 @@ typedef struct {
      * If we reach a 'comma' operator in a ternary without a paren,
      * we shall trigger -Wternary-precedence.
      */
-    enum { POT_PAREN, POT_TERNARY1, POT_TERNARY2 } *pot;
+    enum parser_pot *pot;
 
     /* pragma flags */
     bool noref;
@@ -234,7 +235,7 @@ static char *parser_strdup(const char *str)
 {
     if (str && !*str) {
         /* actually dup empty strings */
-        char *out = mem_a(1);
+        char *out = (char*)mem_a(1);
         *out = 0;
         return out;
     }
@@ -296,12 +297,12 @@ static ast_value* parser_const_vector_0(parser_t *parser)
 
 static ast_expression* parser_find_field(parser_t *parser, const char *name)
 {
-    return util_htget(parser->htfields, name);
+    return ( ast_expression*)util_htget(parser->htfields, name);
 }
 
 static ast_expression* parser_find_global(parser_t *parser, const char *name)
 {
-    return util_htget(parser->htglobals, name);
+    return (ast_expression*)util_htget(parser->htglobals, name);
 }
 
 static ast_expression* parser_find_param(parser_t *parser, const char *name)
@@ -328,7 +329,7 @@ static ast_expression* parser_find_local(parser_t *parser, const char *name, siz
     *isparam = false;
     for (i = vec_size(parser->variables); i > upto;) {
         --i;
-        if ( (e = util_htgeth(parser->variables[i], name, hash)) )
+        if ( (e = (ast_expression*)util_htgeth(parser->variables[i], name, hash)) )
             return e;
     }
     *isparam = true;
@@ -1479,7 +1480,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             val = parser_const_string(parser, parser_tokval(parser), true);
             wantop = true;
             if (!val)
-                return false;
+                return NULL;
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
             DEBUGSHUNTDO(con_out("push string\n"));
 
@@ -1556,7 +1557,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             wantop = true;
             val = parser_const_float(parser, (parser_token(parser)->constval.f));
             if (!val)
-                return false;
+                return NULL;
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
             DEBUGSHUNTDO(con_out("push %g\n", parser_token(parser)->constval.f));
         }
@@ -1569,7 +1570,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             wantop = true;
             val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
             if (!val)
-                return false;
+                return NULL;
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
             DEBUGSHUNTDO(con_out("push %i\n", parser_token(parser)->constval.i));
         }
@@ -1582,7 +1583,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             wantop = true;
             val = parser_const_string(parser, parser_tokval(parser), false);
             if (!val)
-                return false;
+                return NULL;
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
             DEBUGSHUNTDO(con_out("push string\n"));
         }
@@ -1595,7 +1596,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             wantop = true;
             val = parser_const_vector(parser, parser_token(parser)->constval.v);
             if (!val)
-                return false;
+                return NULL;
             vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
             DEBUGSHUNTDO(con_out("push '%g %g %g'\n",
                                 parser_token(parser)->constval.v.x,
@@ -2966,7 +2967,7 @@ static bool create_vector_members(ast_value *var, ast_member **me)
     size_t len = strlen(var->name);
 
     for (i = 0; i < 3; ++i) {
-        char *name = mem_a(len+3);
+        char *name = (char*)mem_a(len+3);
         memcpy(name, var->name, len);
         name[len+0] = '_';
         name[len+1] = 'x'+i;
@@ -3703,9 +3704,9 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 goto on_error;
             vec_push(params, param);
             if (param->expression.vtype >= TYPE_VARIANT) {
-                char typename[1024];
-                ast_type_to_string((ast_expression*)param, typename, sizeof(typename));
-                parseerror(parser, "type not supported as part of a parameter list: %s", typename);
+                char tname[1024]; /* typename is reserved in C++ */
+                ast_type_to_string((ast_expression*)param, tname, sizeof(tname));
+                parseerror(parser, "type not supported as part of a parameter list: %s", tname);
                 goto on_error;
             }
         }

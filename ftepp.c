@@ -1010,14 +1010,15 @@ static char *ftepp_include_find(ftepp_t *ftepp, const char *file)
     return filename;
 }
 
-static void ftepp_directive_warning(ftepp_t *ftepp) {
+static bool ftepp_directive_warning(ftepp_t *ftepp) {
     char *message = NULL;
 
     if (!ftepp_skipspace(ftepp))
-        return;
+        return false;
 
     /* handle the odd non string constant case so it works like C */
     if (ftepp->token != TOKEN_STRINGCONST) {
+        bool  store   = false;
         vec_upload(message, "#warning", 8);
         ftepp_next(ftepp);
         while (ftepp->token != TOKEN_EOL) {
@@ -1025,13 +1026,13 @@ static void ftepp_directive_warning(ftepp_t *ftepp) {
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
-        (void)!!ftepp_warn(ftepp, WARN_CPP, message);
+        store = ftepp_warn(ftepp, WARN_CPP, message);
         vec_free(message);
-        return;
+        return store;
     }
 
     unescape  (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
-    (void)!!ftepp_warn(ftepp, WARN_CPP, "#warning %s", ftepp_tokval(ftepp));
+    return ftepp_warn(ftepp, WARN_CPP, "#warning %s", ftepp_tokval(ftepp));
 }
 
 static void ftepp_directive_error(ftepp_t *ftepp) {

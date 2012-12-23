@@ -1098,9 +1098,9 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
      * on all the globals.
      */
     if (!self->ir_v) {
-        char typename[1024];
-        ast_type_to_string((ast_expression*)self, typename, sizeof(typename));
-        compile_error(ast_ctx(self), "ast_value used before generated %s %s", typename, self->name);
+        char tname[1024]; /* typename is reserved in C++ */
+        ast_type_to_string((ast_expression*)self, tname, sizeof(tname));
+        compile_error(ast_ctx(self), "ast_value used before generated %s %s", tname, self->name);
         return false;
     }
     *out = self->ir_v;
