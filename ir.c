@@ -2632,7 +2632,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
  *
  * Breaking conventions is annoying...
  */
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal);
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal, bool defs_only);
 
 static bool gen_global_field(ir_value *global)
 {
@@ -3055,24 +3055,8 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
             fun.argsize[i] = type_sizeof_[irfun->params[i]];
     }
 
-    fun.firstlocal = vec_size(code_globals);
-
-    fun.locals = irfun->allocated_locals;
-    for (i = 0; i < vec_size(irfun->locals); ++i) {
-        if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
-            irerror(irfun->locals[i]->context, "Failed to generate local %s", irfun->locals[i]->name);
-            return false;
-        }
-        ir_value_code_setaddr(irfun->locals[i], fun.firstlocal + irfun->locals[i]->code.local);
-    }
-    for (i = 0; i < vec_size(irfun->values); ++i)
-    {
-        /* generate code.globaladdr for ssa values */
-        ir_value *v = irfun->values[i];
-        ir_value_code_setaddr(v, fun.firstlocal + v->code.local);
-    }
-    for (i = vec_size(code_globals); i < fun.firstlocal + irfun->allocated_locals; ++i)
-        vec_push(code_globals, 0);
+    fun.firstlocal = 0;
+    fun.locals     = irfun->allocated_locals;
 
     if (irfun->builtin)
         fun.entry = irfun->builtin+1;
@@ -3142,6 +3126,38 @@ static bool gen_function_extparam_copy(ir_function *self)
     return true;
 }
 
+static bool gen_function_locals(ir_builder *ir, ir_value *global)
+{
+    prog_section_function *def;
+    ir_function           *irfun;
+    size_t                 i;
+    uint32_t               firstlocal;
+
+    irfun = global->constval.vfunc;
+    def   = code_functions + irfun->code_function_def;
+
+    if (opts.g || (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+        firstlocal = def->firstlocal = vec_size(code_globals);
+    else
+        firstlocal = def->firstlocal = ir->first_common_local;
+
+    for (i = vec_size(code_globals); i < firstlocal + irfun->allocated_locals; ++i)
+        vec_push(code_globals, 0);
+    for (i = 0; i < vec_size(irfun->locals); ++i) {
+        ir_value_code_setaddr(irfun->locals[i], firstlocal + irfun->locals[i]->code.local);
+        if (!ir_builder_gen_global(ir, irfun->locals[i], true, true)) {
+            irerror(irfun->locals[i]->context, "failed to generate local %s", irfun->locals[i]->name);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(irfun->values); ++i)
+    {
+        ir_value *v = irfun->values[i];
+        ir_value_code_setaddr(v, firstlocal + v->code.local);
+    }
+    return true;
+}
+
 static bool gen_global_function_code(ir_builder *ir, ir_value *global)
 {
     prog_section_function *fundef;
@@ -3169,6 +3185,10 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     fundef = &code_functions[irfun->code_function_def];
 
     fundef->entry = vec_size(code_statements);
+    if (!gen_function_locals(ir, global)) {
+        irerror(irfun->context, "Failed to generate locals for function %s", irfun->name);
+        return false;
+    }
     if (!gen_function_extparam_copy(irfun)) {
         irerror(irfun->context, "Failed to generate extparam-copy code for function %s", irfun->name);
         return false;
@@ -3236,7 +3256,7 @@ static void gen_vector_fields(prog_section_field fld, const char *name)
     }
 }
 
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal, bool defs_only)
 {
     size_t           i;
     int32_t         *iptr;
@@ -3260,7 +3280,18 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         }
         else
             def.name   = 0;
+        if (defs_only) {
+            def.offset = ir_value_code_addr(global);
+            vec_push(code_defs, def);
+            if (global->vtype == TYPE_VECTOR)
+                gen_vector_defs(def, global->name);
+            else if (global->vtype == TYPE_FIELD && global->fieldtype == TYPE_VECTOR)
+                gen_vector_defs(def, global->name);
+            return true;
+        }
     }
+    if (defs_only)
+        return true;
 
     switch (global->vtype)
     {
@@ -3293,7 +3324,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_FIELD:
         if (pushdef) {
             vec_push(code_defs, def);
-            gen_vector_defs(def, global->name);
+            if (global->fieldtype == TYPE_VECTOR)
+                gen_vector_defs(def, global->name);
         }
         return gen_global_field(global);
     case TYPE_ENTITY:
@@ -3465,7 +3497,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 {
     prog_section_statement stmt;
     size_t i;
-    char   *lnofile = NULL;
+    char  *lnofile = NULL;
 
     code_init();
 
@@ -3476,13 +3508,16 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
     for (i = 0; i < vec_size(self->globals); ++i)
     {
-        if (!ir_builder_gen_global(self, self->globals[i], false)) {
+        if (!ir_builder_gen_global(self, self->globals[i], false, false)) {
             return false;
         }
         if (self->globals[i]->vtype == TYPE_FUNCTION) {
             ir_function *func = self->globals[i]->constval.vfunc;
-            if (func && self->max_locals < func->allocated_locals)
+            if (func && self->max_locals < func->allocated_locals &&
+                !(func->flags & IR_FLAG_MASK_NO_OVERLAP))
+            {
                 self->max_locals = func->allocated_locals;
+            }
         }
     }
 
@@ -3491,6 +3526,12 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         if (!ir_builder_gen_field(self, self->fields[i])) {
             return false;
         }
+    }
+
+    /* generate common locals */
+    self->first_common_local = vec_size(code_globals);
+    for (i = 0; i < self->max_locals; ++i) {
+        vec_push(code_globals, 0);
     }
 
     /* generate function code */

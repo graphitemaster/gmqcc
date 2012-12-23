@@ -314,6 +314,7 @@ typedef struct ir_builder_s
 
     /* the highest func->allocated_locals */
     size_t        max_locals;
+    uint32_t      first_common_local;
 
     const char **filenames;
     qcint       *filestrings;
