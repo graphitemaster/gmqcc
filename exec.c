@@ -744,6 +744,30 @@ static int qc_vlen(qc_program *prog)
     return 0;
 }
 
+static int qc_strcat(qc_program *prog)
+{
+    char  *buffer;
+    size_t len1,   len2;
+    char  *cstr1, *cstr2;
+    qcany *str1,  *str2;
+    qcany  out;
+
+    CheckArgs(2);
+    str1 = GetArg(0);
+    str2 = GetArg(1);
+    cstr1 = prog_getstring(prog, str1->string);
+    cstr2 = prog_getstring(prog, str2->string);
+    len1 = strlen(cstr1);
+    len2 = strlen(cstr2);
+    buffer = (char*)mem_a(len1 + len2 + 1);
+    memcpy(buffer, cstr1, len1);
+    memcpy(buffer+len1, cstr2, len2+1);
+    out.string = prog_tempstring(prog, buffer);
+    mem_d(buffer);
+    Return(out);
+    return 0;
+}
+
 static prog_builtin qc_builtins[] = {
     NULL,
     &qc_print, /*   1   */
@@ -754,7 +778,8 @@ static prog_builtin qc_builtins[] = {
     &qc_error, /*   6   */
     &qc_vlen,  /*   7   */
     &qc_etos,  /*   8   */
-    &qc_stof   /*   9   */
+    &qc_stof,  /*   9   */
+    &qc_strcat /*   10  */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
