@@ -824,14 +824,15 @@ static void usage()
 {
     printf("usage: %s [options] [parameters] file\n", arg0);
     printf("options:\n");
-    printf("  -h, --help    print this message\n"
-           "  -trace        trace the execution\n"
-           "  -profile      perform profiling during execution\n"
-           "  -info         print information from the prog's header\n"
-           "  -disasm       disassemble and exit\n"
-           "  -printdefs    list the defs section\n"
-           "  -printfields  list the field section\n"
-           "  -printfuns    list functions information\n");
+    printf("  -h, --help         print this message\n"
+           "  -trace             trace the execution\n"
+           "  -profile           perform profiling during execution\n"
+           "  -info              print information from the prog's header\n"
+           "  -disasm            disassemble and exit\n"
+           "  -disasm-func func  disassemble and exit\n"
+           "  -printdefs         list the defs section\n"
+           "  -printfields       list the field section\n"
+           "  -printfuns         list functions information\n");
     printf("parameters:\n");
     printf("  -vector <V>   pass a vector parameter to main()\n"
            "  -float  <f>   pass a float parameter to main()\n"
@@ -889,6 +890,7 @@ int main(int argc, char **argv)
     bool        opts_info        = false;
     bool        noexec           = false;
     const char *progsfile        = NULL;
+    const char **dis_list        = NULL;
 
     arg0 = argv[0];
 
@@ -932,6 +934,18 @@ int main(int argc, char **argv)
             --argc;
             ++argv;
             opts_disasm = true;
+            noexec = true;
+        }
+        else if (!strcmp(argv[1], "-disasm-func")) {
+            --argc;
+            ++argv;
+            if (argc <= 1) {
+                usage();
+                exit(1);
+            }
+            vec_push(dis_list, argv[1]);
+            --argc;
+            ++argv;
             noexec = true;
         }
         else if (!strcmp(argv[1], "-printdefs")) {
@@ -1047,6 +1061,17 @@ int main(int argc, char **argv)
     if (opts_info) {
         prog_delete(prog);
         return 0;
+    }
+    for (i = 0; i < vec_size(dis_list); ++i) {
+        size_t k;
+        printf("Looking for `%s`\n", dis_list[i]);
+        for (k = 1; k < vec_size(prog->functions); ++k) {
+            const char *name = prog_getstring(prog, prog->functions[k].name);
+            if (!strcmp(name, dis_list[i])) {
+                prog_disasm_function(prog, k);
+                break;
+            }
+        }
     }
     if (opts_disasm) {
         for (i = 1; i < vec_size(prog->functions); ++i)
