@@ -33,6 +33,13 @@ char                   *code_chars;
 uint16_t                code_crc;
 uint32_t                code_entfields;
 
+/* This is outrageous! */
+#define QCINT_ENTRY void*
+#define QCINT_TO_HASH_ENTRY(q) ((void*)(uintptr_t)(q))
+#define HASH_ENTRY_TO_QCINT(h) ((qcint)(uintptr_t)(h))
+static ht     code_string_cache;
+static qcint  code_string_cached_empty;
+
 void code_push_statement(prog_section_statement *stmt, int linenum)
 {
     vec_push(code_statements, *stmt);
@@ -52,6 +59,7 @@ void code_init() {
     int                    i               = 0;
 
     code_entfields = 0;
+    code_string_cache = util_htnew(1024);
 
     /*
      * The way progs.dat is suppose to work is odd, there needs to be
@@ -69,29 +77,32 @@ void code_init() {
 
 uint32_t code_genstring(const char *str)
 {
-    uint32_t off = vec_size(code_chars);
-    while (*str) {
-        vec_push(code_chars, *str);
-        ++str;
-    }
-    vec_push(code_chars, 0);
-    return off;
-}
+    uint32_t off;
+    size_t   hash;
+    QCINT_ENTRY existing;
 
-uint32_t code_cachedstring(const char *str)
-{
-    size_t s = 0;
-    /* We could implement knuth-morris-pratt or something
-     * and also take substrings, but I'm uncomfortable with
-     * pointing to subparts of strings for the sake of clarity...
-     */
-    while (s < vec_size(code_chars)) {
-        if (!strcmp(str, code_chars + s))
-            return s;
-        while (code_chars[s]) ++s;
-        ++s;
+    if (!str)
+        return 0;
+
+    if (!*str) {
+        if (!code_string_cached_empty) {
+            code_string_cached_empty = vec_size(code_chars);
+            vec_push(code_chars, 0);
+        }
+        return code_string_cached_empty;
     }
-    return code_genstring(str);
+
+    hash = util_hthash(code_string_cache, str);
+    existing = util_htgeth(code_string_cache, str, hash);
+    if (existing)
+        return HASH_ENTRY_TO_QCINT(existing);
+
+    off = vec_size(code_chars);
+    vec_upload(code_chars, str, strlen(str)+1);
+
+    util_htseth(code_string_cache, str, hash, QCINT_TO_HASH_ENTRY(off));
+    existing = util_htgeth(code_string_cache, str, hash);
+    return off;
 }
 
 qcint code_alloc_field (size_t qcsize)

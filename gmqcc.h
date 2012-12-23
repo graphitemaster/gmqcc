@@ -626,7 +626,6 @@ typedef int32_t qcint;
 bool     code_write       (const char *filename, const char *lno);
 void     code_init        ();
 uint32_t code_genstring   (const char *string);
-uint32_t code_cachedstring(const char *string);
 qcint    code_alloc_field (size_t qcsize);
 
 /* this function is used to keep statements and linenumbers together */
