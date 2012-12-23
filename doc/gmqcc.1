@@ -362,6 +362,11 @@ variable which is not 'alive' at that point can be used to keep the
 result. This can reduce the size of the global section.
 This will not have declared variables overlap, even if it was
 possible.
+.TP
+.B -Ostrip-constant-names
+Don't generate defs for immediate values or even declared constants.
+Meaning variables which are implicitly constant or qualified as such
+using the 'const' keyword.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square

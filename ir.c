@@ -3120,7 +3120,13 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         def.type   = global->vtype;
         def.offset = vec_size(code_globals);
 
-        if (global->name) {
+        if (OPTS_OPTIMIZATION(OPTIM_STRIP_CONSTANT_NAMES) &&
+            (global->name[0] == '#' || global->cvq == CV_CONST))
+        {
+            pushdef = false;
+        }
+
+        if (pushdef && global->name) {
             if (global->name[0] == '#') {
                 if (!self->str_immediate)
                     self->str_immediate = code_genstring("IMMEDIATE");
