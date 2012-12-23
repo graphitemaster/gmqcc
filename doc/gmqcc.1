@@ -342,8 +342,6 @@ enabling escape sequences like '\\{x2211}'.
 Some general peephole optimizations. For instance the code `a = b + c`
 typically generates 2 instructions, an ADD and a STORE. This
 optimization removes the STORE and lets the ADD write directly into A.
-This optimization will not happen for MUL_VF or MUL_FV if the target
-is the float operand.
 .TP
 .B -Otail-recursion
 Tail recursive function calls will be turned into loops to avoid the
