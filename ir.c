@@ -998,16 +998,22 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     if (self->members[member])
         return self->members[member];
 
-    len = strlen(self->name);
-    name = (char*)mem_a(len + 3);
-    memcpy(name, self->name, len);
-    name[len+0] = '_';
-    name[len+1] = 'x' + member;
-    name[len+2] = '\0';
+    if (self->name) {
+        len = strlen(self->name);
+        name = (char*)mem_a(len + 3);
+        memcpy(name, self->name, len);
+        name[len+0] = '_';
+        name[len+1] = 'x' + member;
+        name[len+2] = '\0';
+    }
+    else
+        name = NULL;
+
     if (self->vtype == TYPE_VECTOR)
     {
         m = ir_value_var(name, self->store, TYPE_FLOAT);
-        mem_d(name);
+        if (name)
+            mem_d(name);
         if (!m)
             return NULL;
         m->context = self->context;
@@ -1020,7 +1026,8 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
         if (self->fieldtype != TYPE_VECTOR)
             return NULL;
         m = ir_value_var(name, self->store, TYPE_FIELD);
-        mem_d(name);
+        if (name)
+            mem_d(name);
         if (!m)
             return NULL;
         m->fieldtype = TYPE_FLOAT;
@@ -3241,21 +3248,26 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     size_t           i;
     int32_t         *iptr;
     prog_section_def def;
+    bool             pushdef = false;
 
-    def.type   = global->vtype;
-    def.offset = vec_size(code_globals);
+    if (opts.g || !islocal)
+    {
+        pushdef = true;
+        def.type   = global->vtype;
+        def.offset = vec_size(code_globals);
 
-    if (global->name) {
-        if (global->name[0] == '#') {
-            if (!self->str_immediate)
-                self->str_immediate = code_genstring("IMMEDIATE");
-            def.name = global->code.name = self->str_immediate;
+        if (global->name) {
+            if (global->name[0] == '#') {
+                if (!self->str_immediate)
+                    self->str_immediate = code_genstring("IMMEDIATE");
+                def.name = global->code.name = self->str_immediate;
+            }
+            else
+                def.name = global->code.name = code_genstring(global->name);
         }
         else
-            def.name = global->code.name = code_genstring(global->name);
+            def.name   = 0;
     }
-    else
-        def.name   = 0;
 
     switch (global->vtype)
     {
@@ -3280,14 +3292,16 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         ir_value_code_setaddr(global, vec_size(code_globals));
         vec_push(code_globals, 0);
         /* Add the def */
-        vec_push(code_defs, def);
+        if (pushdef) vec_push(code_defs, def);
         return true;
     case TYPE_POINTER:
-        vec_push(code_defs, def);
+        if (pushdef) vec_push(code_defs, def);
         return gen_global_pointer(global);
     case TYPE_FIELD:
-        vec_push(code_defs, def);
-        gen_vector_defs(def, global->name);
+        if (pushdef) {
+            vec_push(code_defs, def);
+            gen_vector_defs(def, global->name);
+        }
         return gen_global_field(global);
     case TYPE_ENTITY:
         /* fall through */
@@ -3302,7 +3316,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         }
         if (!islocal && global->cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        vec_push(code_defs, def);
+        if (pushdef) vec_push(code_defs, def);
 
         return global->code.globaladdr >= 0;
     }
@@ -3316,7 +3330,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         }
         if (!islocal && global->cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        vec_push(code_defs, def);
+        if (pushdef) vec_push(code_defs, def);
         return global->code.globaladdr >= 0;
     }
     case TYPE_VECTOR:
@@ -3342,9 +3356,11 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         if (!islocal && global->cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
 
-        vec_push(code_defs, def);
-        def.type &= ~DEF_SAVEGLOBAL;
-        gen_vector_defs(def, global->name);
+        if (pushdef) {
+            vec_push(code_defs, def);
+            def.type &= ~DEF_SAVEGLOBAL;
+            gen_vector_defs(def, global->name);
+        }
         return global->code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
@@ -3360,7 +3376,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         }
         if (!islocal && global->cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        vec_push(code_defs, def);
+        if (pushdef) vec_push(code_defs, def);
         return true;
     case TYPE_VARIANT:
         /* assume biggest type */
