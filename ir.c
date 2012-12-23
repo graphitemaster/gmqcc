@@ -2292,9 +2292,7 @@ bool ir_function_allocate_locals(ir_function *self)
 
     for (i = 0; i < vec_size(self->locals); ++i)
     {
-#if 0
         if (!OPTS_OPTIMIZATION(OPTIM_LOCALTEMPS))
-#endif
             self->locals[i]->unique_life = true;
         if (!function_allocator_alloc(&alloc, self->locals[i]))
             goto error;
@@ -2500,22 +2498,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     { --i;
         instr = self->instr[i];
 
-        /* PHI operands are always read operands */
-        for (p = 0; p < vec_size(instr->phi); ++p)
-        {
-            value = instr->phi[p].value;
-            if (!vec_ir_value_find(self->living, value, NULL))
-                vec_push(self->living, value);
-        }
-
-        /* call params are read operands too */
-        for (p = 0; p < vec_size(instr->params); ++p)
-        {
-            value = instr->params[p];
-            if (!vec_ir_value_find(self->living, value, NULL))
-                vec_push(self->living, value);
-        }
-
         /* See which operands are read and write operands */
         ir_op_read_write(instr->opcode, &read, &write);
 
@@ -2532,7 +2514,9 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             *changed = *changed || tempbool;
         }
 
-        /* Go through the 3 main operands */
+        /* Go through the 3 main operands
+         * writes first, then reads
+         */
         for (o = 0; o < 3; ++o)
         {
             if (!instr->_ops[o]) /* no such operand */
@@ -2547,13 +2531,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 value->store != store_local &&
                 value->store != store_param)
                 continue;
-
-            /* read operands */
-            if (read & (1<<o))
-            {
-                if (!vec_ir_value_find(self->living, value, NULL))
-                    vec_push(self->living, value);
-            }
 
             /* write operands */
             /* When we write to a local, we consider it "dead" for the
@@ -2597,6 +2574,45 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 }
             }
         }
+
+        for (o = 0; o < 3; ++o)
+        {
+            if (!instr->_ops[o]) /* no such operand */
+                continue;
+
+            value = instr->_ops[o];
+
+            /* We only care about locals */
+            /* we also calculate parameter liferanges so that locals
+             * can take up parameter slots */
+            if (value->store != store_value &&
+                value->store != store_local &&
+                value->store != store_param)
+                continue;
+
+            /* read operands */
+            if (read & (1<<o))
+            {
+                if (!vec_ir_value_find(self->living, value, NULL))
+                    vec_push(self->living, value);
+            }
+        }
+        /* PHI operands are always read operands */
+        for (p = 0; p < vec_size(instr->phi); ++p)
+        {
+            value = instr->phi[p].value;
+            if (!vec_ir_value_find(self->living, value, NULL))
+                vec_push(self->living, value);
+        }
+
+        /* call params are read operands too */
+        for (p = 0; p < vec_size(instr->params); ++p)
+        {
+            value = instr->params[p];
+            if (!vec_ir_value_find(self->living, value, NULL))
+                vec_push(self->living, value);
+        }
+
         /* (A) */
         tempbool = ir_block_living_add_instr(self, instr->eid);
         /*con_err( "living added values\n");*/
