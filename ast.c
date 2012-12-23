@@ -1699,7 +1699,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         return true;
     }
 
-    if (OPTS_FLAG(SHORT_LOGIC) &&
+    if ((OPTS_FLAG(SHORT_LOGIC) || OPTS_FLAG(PERL_LOGIC)) &&
         (self->op == INSTR_AND || self->op == INSTR_OR))
     {
         /* short circuit evaluation */
@@ -1707,64 +1707,42 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         ir_block *from_left, *from_right;
         ir_instr *phi;
         size_t    merge_id;
-        uint16_t  notop;
 
-        /* Note about casting to true boolean values:
-         * We use a single NOT for sub expressions, and an
-         * overall NOT at the end, and for that purpose swap
-         * all the jump conditions in order for the NOT to get
-         * doubled.
-         * ie: (a && b) usually becomes (!!a ? !!b : !!a)
-         * but we translate this to (!(!a ? !a : !b))
-         */
-
+        /* prepare end-block */
         merge_id = vec_size(func->ir_func->blocks);
-        merge = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_merge"));
+        merge    = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_merge"));
 
+        /* generate the left expression */
         cgen = self->left->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
             return false;
-        if (!OPTS_FLAG(PERL_LOGIC)) {
-            notop = type_not_instr[left->vtype];
-            if (notop == AINSTR_END) {
-                compile_error(ast_ctx(self), "don't know how to cast to bool...");
-                return false;
-            }
-            left = ir_block_create_unary(func->curblock, ast_ctx(self),
-                                         ast_function_label(func, "sce_not"),
-                                         notop,
-                                         left);
-        }
+        /* remember the block */
         from_left = func->curblock;
 
+        /* create a new block for the right expression */
         other = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_other"));
-        if ( !(self->op == INSTR_OR) != !OPTS_FLAG(PERL_LOGIC) ) {
+        if (self->op == INSTR_AND) {
+            /* on AND: left==true -> other */
             if (!ir_block_create_if(func->curblock, ast_ctx(self), left, other, merge))
                 return false;
         } else {
+            /* on OR: left==false -> other */
             if (!ir_block_create_if(func->curblock, ast_ctx(self), left, merge, other))
                 return false;
         }
         /* use the likely flag */
         vec_last(func->curblock->instr)->likely = true;
 
+        /* enter the right-expression's block */
         func->curblock = other;
+        /* generate */
         cgen = self->right->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
             return false;
-        if (!OPTS_FLAG(PERL_LOGIC)) {
-            notop = type_not_instr[right->vtype];
-            if (notop == AINSTR_END) {
-                compile_error(ast_ctx(self), "don't know how to cast to bool...");
-                return false;
-            }
-            right = ir_block_create_unary(func->curblock, ast_ctx(self),
-                                          ast_function_label(func, "sce_not"),
-                                          notop,
-                                          right);
-        }
+        /* remember block */
         from_right = func->curblock;
 
+        /* jump to the merge block */
         if (!ir_block_create_jump(func->curblock, ast_ctx(self), merge))
             return false;
 
@@ -1772,23 +1750,50 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         vec_push(func->ir_func->blocks, merge);
 
         func->curblock = merge;
-        phi = ir_block_create_phi(func->curblock, ast_ctx(self), ast_function_label(func, "sce_value"), TYPE_FLOAT);
+        phi = ir_block_create_phi(func->curblock, ast_ctx(self),
+                                  ast_function_label(func, "sce_value"),
+                                  self->expression.vtype);
         ir_phi_add(phi, from_left, left);
         ir_phi_add(phi, from_right, right);
         *out = ir_phi_value(phi);
-        if (!OPTS_FLAG(PERL_LOGIC)) {
-            notop = type_not_instr[(*out)->vtype];
-            if (notop == AINSTR_END) {
-                compile_error(ast_ctx(self), "don't know how to cast to bool...");
-                return false;
-            }
-            *out = ir_block_create_unary(func->curblock, ast_ctx(self),
-                                         ast_function_label(func, "sce_final_not"),
-                                         notop,
-                                         *out);
-        }
         if (!*out)
             return false;
+
+        if (!OPTS_FLAG(PERL_LOGIC)) {
+            /* cast-to-bool */
+            if (OPTS_FLAG(CORRECT_LOGIC) && (*out)->vtype == TYPE_VECTOR) {
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool_v"),
+                                             INSTR_NOT_V, *out);
+                if (!*out)
+                    return false;
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool"),
+                                             INSTR_NOT_F, *out);
+                if (!*out)
+                    return false;
+            }
+            else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && (*out)->vtype == TYPE_STRING) {
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool_s"),
+                                             INSTR_NOT_S, *out);
+                if (!*out)
+                    return false;
+                *out = ir_block_create_unary(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool"),
+                                             INSTR_NOT_F, *out);
+                if (!*out)
+                    return false;
+            }
+            else {
+                *out = ir_block_create_binop(func->curblock, ast_ctx(self),
+                                             ast_function_label(func, "sce_bool"),
+                                             INSTR_AND, *out, *out);
+                if (!*out)
+                    return false;
+            }
+        }
+
         self->expression.outr = *out;
         return true;
     }

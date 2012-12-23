@@ -73,6 +73,9 @@ enum {
 
     TOKEN_DOTS, /* 3 dots, ... */
 
+    TOKEN_ATTRIBUTE_OPEN,  /* [[ */
+    TOKEN_ATTRIBUTE_CLOSE, /* ]] */
+
     TOKEN_STRINGCONST, /* not the typename but an actual "string" */
     TOKEN_CHARCONST,
     TOKEN_VECTORCONST,

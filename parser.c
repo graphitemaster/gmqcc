@@ -890,23 +890,27 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     parseerror(parser, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
                     return false;
                 }
-                if (OPTS_FLAG(CORRECT_LOGIC)) {
-                    /* non-floats need to be NOTed */
-                    for (i = 0; i < 2; ++i) {
-                        if (exprs[i]->expression.vtype != TYPE_FLOAT) {
-                            if (type_not_instr[exprs[i]->expression.vtype] == AINSTR_END) {
-                                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                                parseerror(parser, "invalid types for logical operation with -fcorrect-logic: %s and %s", ty1, ty2);
-                                return false;
-                            }
-                            out = (ast_expression*)ast_unary_new(ctx, type_not_instr[exprs[i]->expression.vtype], exprs[i]);
-                            if (!out) break;
-                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
-                            if (!out) break;
-                            exprs[i] = out; out = NULL;
-                            if (OPTS_FLAG(PERL_LOGIC)) {
-                            }
+                for (i = 0; i < 2; ++i) {
+                    if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->expression.vtype == TYPE_VECTOR) {
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
+                        if (!out) break;
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        if (!out) break;
+                        exprs[i] = out; out = NULL;
+                        if (OPTS_FLAG(PERL_LOGIC)) {
+                            /* here we want to keep the right expressions' type */
+                            break;
+                        }
+                    }
+                    else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->expression.vtype == TYPE_STRING) {
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[i]);
+                        if (!out) break;
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        if (!out) break;
+                        exprs[i] = out; out = NULL;
+                        if (OPTS_FLAG(PERL_LOGIC)) {
+                            /* here we want to keep the right expressions' type */
+                            break;
                         }
                     }
                 }
@@ -1899,7 +1903,8 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     ast_unary *unary;
     ast_expression *prev;
 
-    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING) {
+    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING)
+    {
         prev = cond;
         cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_S, cond);
         if (!cond) {
@@ -1909,22 +1914,15 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
         }
         ifnot = !ifnot;
     }
-    if (OPTS_FLAG(CORRECT_LOGIC) &&
-        !(cond->expression.vtype == TYPE_STRING && OPTS_FLAG(TRUE_EMPTY_STRINGS)))
+    else if (OPTS_FLAG(CORRECT_LOGIC) && cond->expression.vtype == TYPE_VECTOR)
     {
-        /* non-floats need to use NOT; except for strings on -ftrue-empty-strings */
-        unary = (ast_unary*)cond;
-        if (!ast_istype(cond, ast_unary) || unary->op < INSTR_NOT_F || unary->op > INSTR_NOT_FNC)
+        /* vector types need to be cast to true booleans */
+        ast_binary *bin = (ast_binary*)cond;
+        if (!OPTS_FLAG(PERL_LOGIC) || !ast_istype(cond, ast_binary) || !(bin->op == INSTR_AND || bin->op == INSTR_OR))
         {
-            /* use the right NOT_ */
+            /* in perl-logic, AND and OR take care of the -fcorrect-logic */
             prev = cond;
-            cond = (ast_expression*)ast_unary_new(ast_ctx(cond), type_not_instr[cond->expression.vtype], cond);
-
-            /*
-             * cppcheck: it thinks there is a possible null pointer dereference
-             * otherwise it would be "redundant" to check it ast_unary_new returned
-             * null, it's wrong.
-             */   
+            cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_V, cond);
             if (!cond) {
                 ast_unref(prev);
                 parseerror(parser, "internal error: failed to process condition");
@@ -1936,7 +1934,6 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
 
     unary = (ast_unary*)cond;
     while (ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F)
-        /*&& unary->operand->expression.vtype != TYPE_STRING) */
     {
         cond = unary->operand;
         unary->operand = NULL;
@@ -2352,9 +2349,48 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
     bool had_var   = false;
     bool had_noref = false;
     bool had_noreturn = false;
+    bool had_attrib = false;
 
+    *cvq = CV_NONE;
     for (;;) {
-        if (!strcmp(parser_tokval(parser), "const"))
+        if (parser->tok == TOKEN_ATTRIBUTE_OPEN) {
+            had_attrib = true;
+            /* parse an attribute */
+            if (!parser_next(parser)) {
+                parseerror(parser, "expected attribute after `[[`");
+                *cvq = CV_WRONG;
+                return false;
+            }
+            if (!strcmp(parser_tokval(parser), "noreturn")) {
+                had_noreturn = true;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`noreturn` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
+            else if (!strcmp(parser_tokval(parser), "noref")) {
+                had_noref = true;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
+            else
+            {
+                /* Skip tokens until we hit a ]] */
+                (void)!parsewarning(parser, WARN_UNKNOWN_ATTRIBUTE, "unknown attribute starting with `%s`", parser_tokval(parser));
+                while (parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "error inside attribute");
+                        *cvq = CV_WRONG;
+                        return false;
+                    }
+                }
+            }
+        }
+        else if (!strcmp(parser_tokval(parser), "const"))
             had_const = true;
         else if (!strcmp(parser_tokval(parser), "var"))
             had_var = true;
@@ -2362,9 +2398,7 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
-        else if (!strcmp(parser_tokval(parser), "noreturn"))
-            had_noreturn = true;
-        else if (!had_const && !had_var && !had_noref && !had_noreturn) {
+        else if (!had_const && !had_var && !had_noref && !had_noreturn && !had_attrib) {
             return false;
         }
         else

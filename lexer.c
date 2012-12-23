@@ -50,8 +50,6 @@ static const char *keywords_fg[] = {
     "typedef",
     "goto",
 
-    "noreturn",
-
     "__builtin_debug_printtype"
 };
 static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
@@ -1117,6 +1115,15 @@ int lex_do(lex_file *lex)
     switch (ch)
     {
         case '[':
+            nextch = lex_getch(lex);
+            if (nextch == '[') {
+                lex_tokench(lex, ch);
+                lex_tokench(lex, nextch);
+                lex_endtoken(lex);
+                return (lex->tok.ttype = TOKEN_ATTRIBUTE_OPEN);
+            }
+            lex_ungetch(lex, nextch);
+            /* FALL THROUGH */
         case '(':
         case ':':
         case '?':
@@ -1126,11 +1133,23 @@ int lex_do(lex_file *lex)
                 return (lex->tok.ttype = ch);
             else
                 return (lex->tok.ttype = TOKEN_OPERATOR);
+
+        case ']':
+            if (lex->flags.noops) {
+                nextch = lex_getch(lex);
+                if (nextch == ']') {
+                    lex_tokench(lex, ch);
+                    lex_tokench(lex, nextch);
+                    lex_endtoken(lex);
+                    return (lex->tok.ttype = TOKEN_ATTRIBUTE_CLOSE);
+                }
+                lex_ungetch(lex, nextch);
+            }
+            /* FALL THROUGH */
         case ')':
         case ';':
         case '{':
         case '}':
-        case ']':
 
         case '#':
             lex_tokench(lex, ch);
