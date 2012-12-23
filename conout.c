@@ -293,11 +293,11 @@ int con_change(const char *out, const char *err) {
  * Defaultizer because stdio.h shouldn't be used anywhere except here
  * and inside file.c To prevent mis-match of wrapper-interfaces.
  */ 
-void con_default_out() {
-    console.handle_out = stdout;
+FILE *con_default_out() {
+    return (console.handle_out = stdout);
 }
-void con_default_err() {
-    console.handle_err = stderr;
+FILE *con_default_err() {
+    return (console.handle_err = stderr);
 }
 
 int con_verr(const char *fmt, va_list va) {

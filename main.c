@@ -566,7 +566,7 @@ int main(int argc, char **argv) {
             }
         }
         else {
-            con_default_out();
+            outfile = con_default_out();
         }
     }
 
