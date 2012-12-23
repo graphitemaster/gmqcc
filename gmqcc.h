@@ -295,16 +295,16 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 /* exposed interface */
 #define vec_meta(A)       (((vector_t*)(A)) - 1)
 #define vec_free(A)       ((A) ? (mem_d((void*)vec_meta(A)), (A) = NULL) : 0)
-#define vec_push(A,V)     (GMQCC_VEC_WILLGROW(A,1), (A)[vec_meta(A)->used++] = V)
+#define vec_push(A,V)     (GMQCC_VEC_WILLGROW(A,1), (A)[vec_meta(A)->used++] = (V))
 #define vec_size(A)       ((A) ? vec_meta(A)->used : 0)
 #define vec_add(A,N)      (GMQCC_VEC_WILLGROW(A,N), vec_meta(A)->used += (N), &(A)[vec_meta(A)->used-(N)])
 #define vec_last(A)       ((A)[vec_meta(A)->used - 1])
 #define vec_pop(A)        (vec_meta(A)->used -= 1)
 #define vec_shrinkto(A,N) (vec_meta(A)->used  = (N))
 #define vec_shrinkby(A,N) (vec_meta(A)->used -= (N))
-#define vec_append(A,N,S) memcpy(vec_add(A, N), S, N * sizeof(*S))
-#define vec_upload(X,Y,S) memcpy(vec_add(X, S * sizeof(*Y)), Y, S * sizeof(*Y))
-#define vec_remove(A,I,N) memmove((char*)A+I*sizeof(*A),(char*)A+(I+N)*sizeof(*A),sizeof(*A)*(vec_meta(A)->used-I-N)),vec_meta(A)->used-=(N)
+#define vec_append(A,N,S) memcpy(vec_add(A, N), (S), (N) * sizeof(*(S)))
+#define vec_upload(X,Y,S) memcpy(vec_add(X, (S) * sizeof(*(Y))), (Y), (S) * sizeof(*(Y)))
+#define vec_remove(A,I,N) memmove((A)+(I),(A)+((I)+(N)),sizeof(*(A))*(vec_meta(A)->used-(I)-(N))),vec_meta(A)->used-=(N)
 
 typedef struct hash_table_t {
     size_t                size;
