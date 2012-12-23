@@ -2175,7 +2175,7 @@ static void ir_block_enumerate(ir_block *self, size_t *_eid)
 void ir_function_enumerate(ir_function *self)
 {
     size_t i;
-    size_t instruction_id = 0;
+    size_t instruction_id = 1;
     for (i = 0; i < vec_size(self->blocks); ++i)
     {
         self->blocks[i]->eid = i;
@@ -2189,6 +2189,10 @@ bool ir_function_calculate_liferanges(ir_function *self)
 {
     size_t i;
     bool changed;
+
+    /* parameters live at 0 */
+    for (i = 0; i < vec_size(self->params); ++i)
+        ir_value_life_merge(self->locals[i], 0);
 
     do {
         self->run_id++;
