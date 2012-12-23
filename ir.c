@@ -2564,10 +2564,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                      * (A) doesn't.
                      */
                     tempbool = ir_value_life_merge(value, instr->eid);
-                    /*
-                    if (tempbool)
-                        con_err( "value added id %s %i\n", value->name, (int)instr->eid);
-                    */
                     *changed = *changed || tempbool;
                     /* Then remove */
                     vec_remove(self->living, idx, 1);
@@ -2928,7 +2924,9 @@ tailcall:
             code_push_statement(&stmt, instr->context.line);
 
             retvalue = instr->_ops[0];
-            if (retvalue && retvalue->store != store_return && (vec_size(retvalue->life) || retvalue->store == store_global))
+            if (retvalue && retvalue->store != store_return &&
+                (retvalue->store == store_global || (vec_size(retvalue->life) && vec_size(retvalue->reads)))
+               )
             {
                 /* not to be kept in OFS_RETURN */
                 if (retvalue->vtype == TYPE_FIELD && OPTS_FLAG(ADJUST_VECTOR_FIELDS))
