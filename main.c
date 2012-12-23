@@ -681,7 +681,7 @@ srcdone:
                     }
                     data = ftepp_get();
                     if (vec_size(data)) {
-                        if (!parser_compile_string_len(items[itr].filename, data, vec_size(data))) {
+                        if (!parser_compile_string(items[itr].filename, data, vec_size(data))) {
                             retval = 1;
                             goto cleanup;
                         }

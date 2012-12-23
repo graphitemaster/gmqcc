@@ -919,14 +919,10 @@ qcint             prog_tempstring(qc_program *prog, const char *_str);
 /*===================================================================*/
 
 bool parser_init          ();
-bool parser_compile_file  (const char *filename);
-bool parser_compile_string(const char *name, const char *str);
-bool parser_finish        (const char *output);
+bool parser_compile_file  (const char *);
+bool parser_compile_string(const char *, const char *, size_t);
+bool parser_finish        (const char *);
 void parser_cleanup       ();
-
-/* TODO: make compile_string accept len and remove this */
-/* There's really no need to strlen() preprocessed files */
-bool parser_compile_string_len(const char *name, const char *str, size_t len);
 
 /*===================================================================*/
 /*====================== ftepp.c commandline ========================*/
