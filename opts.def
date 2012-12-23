@@ -82,6 +82,7 @@
     GMQCC_DEFINE_FLAG(LOCALTEMPS,     1)
     GMQCC_DEFINE_FLAG(TAIL_RECURSION, 1)
     GMQCC_DEFINE_FLAG(TAIL_CALLS,     2)
+    GMQCC_DEFINE_FLAG(OVERLAP_LOCALS, 3)
 #endif
 
 /* some cleanup so we don't have to */
