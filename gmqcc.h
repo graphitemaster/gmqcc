@@ -153,9 +153,9 @@
  * just plain textual subsitution.
  */
 #ifdef _MSC_VER
-#	define snprintf(X, Y, Z, ...) _snprintf(X, Y, Z, __VA_ARGS__)
+#  define snprintf(X, Y, Z, ...) _snprintf(X, Y, Z, __VA_ARGS__)
     /* strtof doesn't exist -> strtod does though :) */
-#	define strtof(X, Y)          (float)(strtod(X, Y))
+#  define strtof(X, Y)          (float)(strtod(X, Y))
 #endif
 
 /*
