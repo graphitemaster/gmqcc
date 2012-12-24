@@ -23,6 +23,7 @@
  */
 #include "gmqcc.h"
 #include "lexer.h"
+#include <time.h>
 
 /* TODO: cleanup this whole file .. it's a fuckign mess */
 
@@ -504,6 +505,8 @@ int main(int argc, char **argv) {
     app_name = argv[0];
     con_init ();
     opts_init("progs.dat", COMPILER_GMQCC, (1024 << 3));
+
+    util_seed(time(0));
 
     if (!options_parse(argc, argv)) {
         return usage();

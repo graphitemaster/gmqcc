@@ -77,8 +77,8 @@ typedef struct {
  * Implement the predef subsystem now.  We can do this safely with the
  * help of lexer contexts.
  */  
-static int ftepp_predef_countval = 0;
-static int ftepp_predef_randval  = 0;
+static uint32_t ftepp_predef_countval = 0;
+static uint32_t ftepp_predef_randval  = 0;
 
 /* __LINE__ */
 char *ftepp_predef_line(lex_file *context) {
@@ -98,7 +98,7 @@ char *ftepp_predef_file(lex_file *context) {
 /* __COUNTER_LAST__ */
 char *ftepp_predef_counterlast(lex_file *context) {
     char   *value = (char*)mem_a(128);
-    sprintf(value, "%d", ftepp_predef_countval);
+    sprintf(value, "%u", ftepp_predef_countval);
 
     (void)context;
     return value;
@@ -107,7 +107,7 @@ char *ftepp_predef_counterlast(lex_file *context) {
 char *ftepp_predef_counter(lex_file *context) {
     char   *value = (char*)mem_a(128);
     ftepp_predef_countval ++;
-    sprintf(value, "%d", ftepp_predef_countval);
+    sprintf(value, "%u", ftepp_predef_countval);
     (void)context;
 
     return value;
@@ -115,8 +115,8 @@ char *ftepp_predef_counter(lex_file *context) {
 /* __RANDOM__ */
 char *ftepp_predef_random(lex_file *context) {
     char  *value = (char*)mem_a(128);
-    ftepp_predef_randval = rand() % 0xFFFF; /* short int */
-    sprintf(value, "%d", ftepp_predef_randval);
+    ftepp_predef_randval = (util_rand() % 0xFF) + 1;
+    sprintf(value, "%u", ftepp_predef_randval);
 
     (void)context;
     return value;
@@ -124,7 +124,7 @@ char *ftepp_predef_random(lex_file *context) {
 /* __RANDOM_LAST__ */
 char *ftepp_predef_randomlast(lex_file *context) {
     char   *value = (char*)mem_a(128);
-    sprintf(value, "%d", ftepp_predef_randval);
+    sprintf(value, "%u", ftepp_predef_randval);
 
     (void)context;
     return value;
