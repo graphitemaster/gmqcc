@@ -326,6 +326,7 @@ struct ast_member_s
 };
 ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field, const char *name);
 void ast_member_delete(ast_member*);
+bool ast_member_set_name(ast_member*, const char *name);
 
 bool ast_member_codegen(ast_member*, ast_function*, bool lvalue, ir_value**);
 

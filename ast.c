@@ -596,6 +596,14 @@ void ast_member_delete(ast_member *self)
     mem_d(self);
 }
 
+bool ast_member_set_name(ast_member *self, const char *name)
+{
+    if (self->name)
+        mem_d((void*)self->name);
+    self->name = util_strdup(name);
+    return !!self->name;
+}
+
 ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index)
 {
     ast_expression *outtype;
