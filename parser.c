@@ -4015,6 +4015,9 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
     ast_member *me[3];
 
+    if (!localblock && is_static)
+        parseerror(parser, "`static` qualifier is not supported in global scope");
+
     /* get the first complete variable */
     var = parse_typename(parser, &basetype, cached_typedef);
     if (!var) {
