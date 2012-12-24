@@ -2018,7 +2018,7 @@ void ir_function_enumerate(ir_function *self)
 static bool ir_block_life_propagate(ir_block *b, ir_block *prev, bool *changed);
 bool ir_function_calculate_liferanges(ir_function *self)
 {
-    size_t i;
+    size_t i, s;
     bool changed;
 
     /* parameters live at 0 */
@@ -2044,23 +2044,45 @@ bool ir_function_calculate_liferanges(ir_function *self)
             ir_value *v = block->living[i];
             if (v->store != store_local)
                 continue;
-            if ((v->members[0] && v->members[1] && v->members[2])) {
-                /* all vector members have been accessed - only treat this as uninitialized
-                 * if any of them is also uninitialized.
-                 */
-                if (!vec_ir_value_find(block->living, v->members[0], NULL) &&
-                    !vec_ir_value_find(block->living, v->members[1], NULL) &&
-                    !vec_ir_value_find(block->living, v->members[2], NULL))
+            if (v->vtype == TYPE_VECTOR)
+                continue;
+            self->flags |= IR_FLAG_HAS_UNINITIALIZED;
+            /* find the instruction reading from it */
+            for (s = 0; s < vec_size(v->reads); ++s) {
+                if (v->reads[s]->eid == v->life[0].end)
+                    break;
+            }
+            if (s < vec_size(v->reads)) {
+                if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                              "variable `%s` may be used uninitialized in this function\n"
+                              " -> %s:%i",
+                              v->name,
+                              v->reads[s]->context.file, v->reads[s]->context.line)
+                   )
                 {
+                    return false;
+                }
+                continue;
+            }
+            if (v->memberof) {
+                ir_value *vec = v->memberof;
+                for (s = 0; s < vec_size(vec->reads); ++s) {
+                    if (vec->reads[s]->eid == v->life[0].end)
+                        break;
+                }
+                if (s < vec_size(vec->reads)) {
+                    if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                                  "variable `%s` may be used uninitialized in this function\n"
+                                  " -> %s:%i",
+                                  v->name,
+                                  vec->reads[s]->context.file, vec->reads[s]->context.line)
+                       )
+                    {
+                        return false;
+                    }
                     continue;
                 }
             }
-            if (v->memberof) {
-                /* A member is only uninitialized if the whole vector is also uninitialized */
-                if (!vec_ir_value_find(block->living, v->memberof, NULL))
-                    continue;
-            }
-            self->flags |= IR_FLAG_HAS_UNINITIALIZED;
             if (irwarning(v->context, WARN_USED_UNINITIALIZED,
                           "variable `%s` may be used uninitialized in this function", v->name))
             {
@@ -2316,7 +2338,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     ir_instr *instr;
     ir_value *value;
     bool  tempbool;
-    size_t i, o, p;
+    size_t i, o, p, mem;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
     char dbg_ind[16] = { '#', '0' };
@@ -2385,14 +2407,9 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                      * and make sure it's only printed once
                      * since this function is run multiple times.
                      */
-                    /* For now: debug info: */
                     /* con_err( "Value only written %s\n", value->name); */
                     tempbool = ir_value_life_merge(value, instr->eid);
                     *changed = *changed || tempbool;
-                    /*
-                    ir_instr_dump(instr, dbg_ind, printf);
-                    abort();
-                    */
                 } else {
                     /* since 'living' won't contain it
                      * anymore, merge the value, since
@@ -2402,6 +2419,27 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                     *changed = *changed || tempbool;
                     /* Then remove */
                     vec_remove(self->living, idx, 1);
+                }
+                /* Removing a vector removes all members */
+                for (mem = 0; mem < 3; ++mem) {
+                    if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], &idx)) {
+                        tempbool = ir_value_life_merge(value->members[mem], instr->eid);
+                        *changed = *changed || tempbool;
+                        vec_remove(self->living, idx, 1);
+                    }
+                }
+                /* Removing the last member removes the vector */
+                if (value->memberof) {
+                    value = value->memberof;
+                    for (mem = 0; mem < 3; ++mem) {
+                        if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], NULL))
+                            break;
+                    }
+                    if (mem == 3 && vec_ir_value_find(self->living, value, &idx)) {
+                        tempbool = ir_value_life_merge(value, instr->eid);
+                        *changed = *changed || tempbool;
+                        vec_remove(self->living, idx, 1);
+                    }
                 }
             }
         }
@@ -2426,6 +2464,13 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             {
                 if (!vec_ir_value_find(self->living, value, NULL))
                     vec_push(self->living, value);
+                /* reading adds the full vector */
+                if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
+                    vec_push(self->living, value->memberof);
+                for (mem = 0; mem < 3; ++mem) {
+                    if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
+                        vec_push(self->living, value->members[mem]);
+                }
             }
         }
         /* PHI operands are always read operands */
@@ -2434,6 +2479,13 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             value = instr->phi[p].value;
             if (!vec_ir_value_find(self->living, value, NULL))
                 vec_push(self->living, value);
+            /* reading adds the full vector */
+            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
+                vec_push(self->living, value->memberof);
+            for (mem = 0; mem < 3; ++mem) {
+                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
+                    vec_push(self->living, value->members[mem]);
+            }
         }
 
         /* call params are read operands too */
@@ -2442,6 +2494,13 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             value = instr->params[p];
             if (!vec_ir_value_find(self->living, value, NULL))
                 vec_push(self->living, value);
+            /* reading adds the full vector */
+            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
+                vec_push(self->living, value->memberof);
+            for (mem = 0; mem < 3; ++mem) {
+                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
+                    vec_push(self->living, value->members[mem]);
+            }
         }
 
         /* (A) */
@@ -3516,13 +3575,23 @@ void ir_function_dump(ir_function *f, char *ind,
     }
     oprintf("%sliferanges:\n", ind);
     for (i = 0; i < vec_size(f->locals); ++i) {
-        size_t l;
+        size_t l, m;
         ir_value *v = f->locals[i];
         oprintf("%s\t%s: %s@%i ", ind, v->name, (v->unique_life ? "unique " : ""), (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
         oprintf("\n");
+        for (m = 0; m < 3; ++m) {
+            ir_value *vm = v->members[m];
+            if (!vm)
+                continue;
+            oprintf("%s\t%s: %s@%i ", ind, vm->name, (vm->unique_life ? "unique " : ""), (int)vm->code.local);
+            for (l = 0; l < vec_size(vm->life); ++l) {
+                oprintf("[%i,%i] ", vm->life[l].start, vm->life[l].end);
+            }
+            oprintf("\n");
+        }
     }
     for (i = 0; i < vec_size(f->values); ++i) {
         size_t l;
