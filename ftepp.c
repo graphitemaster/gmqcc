@@ -68,6 +68,77 @@ typedef struct {
     char        *includename;
 } ftepp_t;
 
+typedef struct {
+    const char  *name;
+    char      *(*func)(lex_file *);
+} predef_t;
+
+/*
+ * Implement the predef subsystem now.  We can do this safely with the
+ * help of lexer contexts.
+ */  
+static int ftepp_predef_countval = 0;
+static int ftepp_predef_randval  = 0;
+
+/* __LINE__ */
+char *ftepp_predef_line(lex_file *context) {
+    char   *value = (char*)mem_a(128);
+    sprintf(value, "%d", (int)context->line);
+    return value;
+}
+/* __FILE__ */
+char *ftepp_predef_file(lex_file *context) {
+    size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
+    char   *value  = (char*)mem_a(length);
+    memset (value, 0, length);
+    sprintf(value, "\"%s\"", context->name);
+
+    return value;
+}
+/* __COUNTER_LAST__ */
+char *ftepp_predef_counterlast(lex_file *context) {
+    char   *value = (char*)mem_a(128);
+    sprintf(value, "%d", ftepp_predef_countval);
+
+    (void)context;
+    return value;
+}
+/* __COUNTER__ */
+char *ftepp_predef_counter(lex_file *context) {
+    char   *value = (char*)mem_a(128);
+    ftepp_predef_countval ++;
+    sprintf(value, "%d", ftepp_predef_countval);
+    (void)context;
+
+    return value;
+}
+/* __RANDOM__ */
+char *ftepp_predef_random(lex_file *context) {
+    char  *value = (char*)mem_a(128);
+    ftepp_predef_randval = rand() % 0xFFFF; /* short int */
+    sprintf(value, "%d", ftepp_predef_randval);
+
+    (void)context;
+    return value;
+}
+/* __RANDOM_LAST__ */
+char *ftepp_predef_randomlast(lex_file *context) {
+    char   *value = (char*)mem_a(128);
+    sprintf(value, "%d", ftepp_predef_randval);
+
+    (void)context;
+    return value;
+}
+
+static const predef_t ftepp_predefs[] = {
+    { "__LINE__",         &ftepp_predef_line        },
+    { "__FILE__",         &ftepp_predef_file        },
+    { "__COUNTER__",      &ftepp_predef_counter     },
+    { "__COUNTER_LAST__", &ftepp_predef_counterlast },
+    { "__RANDOM__",       &ftepp_predef_random      },
+    { "__RANDOM_LAST__",  &ftepp_predef_randomlast  },
+};
+
 #define ftepp_tokval(f) ((f)->lex->tok.value)
 #define ftepp_ctx(f)    ((f)->lex->tok.ctx)
 
@@ -1298,6 +1369,10 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     ppmacro *macro;
     bool     newline = true;
 
+    /* predef stuff */
+    char    *expand  = NULL;
+    size_t   i;
+
     ftepp->lex->flags.preprocessing = true;
     ftepp->lex->flags.mergelines    = false;
     ftepp->lex->flags.noops         = true;
@@ -1315,10 +1390,23 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
             case TOKEN_KEYWORD:
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
+                /* is it a predef? */
+                for (i = 0; i < sizeof(ftepp_predefs) / sizeof (*ftepp_predefs); i++) {
+                    if (!strcmp(ftepp_predefs[i].name, ftepp_tokval(ftepp))) {
+                        expand = ftepp_predefs[i].func(ftepp->lex);
+                        ftepp_out(ftepp, expand, false);
+                        ftepp_next(ftepp); /* skip */
+
+                        mem_d(expand); /* free memory */
+                        break;
+                    }
+                }
+
                 if (ftepp->output_on)
                     macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
                 else
                     macro = NULL;
+
                 if (!macro) {
                     ftepp_out(ftepp, ftepp_tokval(ftepp), false);
                     ftepp_next(ftepp);
