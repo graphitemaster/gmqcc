@@ -595,12 +595,12 @@ static GMQCC_INLINE void mt_generate() {
      * to [0, MT_SIZE)  (634 iterations).
      */
     for (i = 0; i < MT_SPACE; ++i) {
-        y           = (0x800000000 & mt_state[i]) | (0x7FFFFFF & mt_state[i + 1]);
+        y           = (0x80000000 & mt_state[i]) | (0x7FFFFFF & mt_state[i + 1]);
         mt_state[i] = mt_state[i + MT_PERIOD] ^ (y >> 1) ^ matrix[y & 1];
 
         i ++; /* loop unroll */
 
-        y           = (0x800000000 & mt_state[i]) | (0x7FFFFFF & mt_state[i + 1]);
+        y           = (0x80000000 & mt_state[i]) | (0x7FFFFFF & mt_state[i + 1]);
         mt_state[i] = mt_state[i + MT_PERIOD] ^ (y >> 1) ^ matrix[y & 1];
     }
 
