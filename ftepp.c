@@ -1391,14 +1391,16 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
                 /* is it a predef? */
-                for (i = 0; i < sizeof(ftepp_predefs) / sizeof (*ftepp_predefs); i++) {
-                    if (!strcmp(ftepp_predefs[i].name, ftepp_tokval(ftepp))) {
-                        expand = ftepp_predefs[i].func(ftepp->lex);
-                        ftepp_out(ftepp, expand, false);
-                        ftepp_next(ftepp); /* skip */
+                if (OPTS_FLAG(FTEPP_PREDEFS)) {
+                    for (i = 0; i < sizeof(ftepp_predefs) / sizeof (*ftepp_predefs); i++) {
+                        if (!strcmp(ftepp_predefs[i].name, ftepp_tokval(ftepp))) {
+                            expand = ftepp_predefs[i].func(ftepp->lex);
+                            ftepp_out(ftepp, expand, false);
+                            ftepp_next(ftepp); /* skip */
 
-                        mem_d(expand); /* free memory */
-                        break;
+                            mem_d(expand); /* free memory */
+                            break;
+                        }
                     }
                 }
 

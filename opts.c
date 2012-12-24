@@ -57,6 +57,7 @@ static void opts_setdefault() {
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
     opts_set(opts.flags, FTEPP,                          false);
+    opts_set(opts.flags, FTEPP_PREDEFS,                  false);
     opts_set(opts.flags, CORRECT_TERNARY,                true);
 }
 

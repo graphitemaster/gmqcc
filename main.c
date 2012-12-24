@@ -261,6 +261,7 @@ static bool options_parse(int argc, char **argv) {
 
                 case 'E':
                     opts.pp_only = true;
+                    opts_set(opts.flags, FTEPP_PREDEFS, true); /* predefs on for -E */
                     break;
 
                 /* debug turns on -flno */
