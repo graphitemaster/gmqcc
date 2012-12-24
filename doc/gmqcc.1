@@ -262,6 +262,23 @@ Enable a partially fteqcc-compatible preprocessor. It supports all the
 features used in the Xonotic codebase. If you need more, write a
 ticket.
 .TP
+.B -fftepp-predefs
+Enable some predefined macros. This only works in combination with
+\'-fftepp' and is currently not included by '-std=fteqcc'. The
+following macros will be added:
+.in +4
+.nf
+__LINE__
+__FILE__
+__COUNTER__
+__COUNTER_LAST__
+__RANDOM__
+__RANDOM_LAST__
+.fi
+.in
+Note that fteqcc also defines __FUNC__, __TIME__, __DATE__ and
+__NULL__, which are not yet implemented.
+.TP
 .B -frelaxed-switch
 Allow switch cases to use non constant variables.
 .TP
@@ -399,6 +416,10 @@ Here's an example:
 .fi
 .in
 .SH BUGS
+Currently the '-fftepp-predefs' flag is not included by '-std=fteqcc',
+partially because it is not entirely conformant to fteqcc.
+.sp
+
 Please report bugs on <http://github.com/graphitemaster/gmqcc/issues>,
 or see <http://graphitemaster.github.com/gmqcc> on how to contact us.
 .SH FILES
