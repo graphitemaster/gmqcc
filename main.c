@@ -62,6 +62,7 @@ static int usage() {
     con_out("  -o, --output=file      output file, defaults to progs.dat\n"
             "  -s filename            add a progs.src file to be used\n");
     con_out("  -E                     stop after preprocessing\n");
+    con_out("  -q, --quiet            be less verbose\n");
     con_out("  -config file           use the specified ini file\n");
     con_out("  -std=standard          select one of the following standards\n"
             "       -std=qcc          original QuakeC\n"
@@ -271,6 +272,10 @@ static bool options_parse(int argc, char **argv) {
                     opts.g = true;
                     break;
 
+                case 'q':
+                    opts.quiet = true;
+                    break;
+
                 case 'D':
                     if (!strlen(argv[0]+2)) {
                         con_err("expected name after -D\n");
@@ -438,6 +443,10 @@ static bool options_parse(int argc, char **argv) {
                     else if (!strcmp(argv[0]+2, "version")) {
                         version();
                         exit(0);
+                    }
+                    else if (!strcmp(argv[0]+2, "quiet")) {
+                        opts.quiet = true;
+                        break;
                     }
                     else {
             /* All long options with arguments */
@@ -651,12 +660,12 @@ srcdone:
         goto cleanup;
 
     if (vec_size(items)) {
-        if (!opts.pp_only) {
+        if (!opts.quiet && !opts.pp_only) {
             con_out("Mode: %s\n", (progs_src ? "progs.src" : "manual"));
             con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
         }
         for (itr = 0; itr < vec_size(items); ++itr) {
-            if (!opts.pp_only) {
+            if (!opts.quiet && !opts.pp_only) {
                 con_out("  item: %s (%s)\n",
                        items[itr].filename,
                        ( (items[itr].type == TYPE_QC ? "qc" :
@@ -716,7 +725,7 @@ srcdone:
     }
 
     /* stuff */
-    if (!opts.pp_only) {
+    if (!opts.quiet && !opts.pp_only) {
         for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
             if (opts_optimizationcount[itr]) {
                 con_out("%s: %u\n", opts_opt_list[itr].name, (unsigned int)opts_optimizationcount[itr]);

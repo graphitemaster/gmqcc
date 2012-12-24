@@ -3437,10 +3437,12 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (lnofile)
-        con_out("writing '%s' and '%s'...\n", filename, lnofile);
-    else
-        con_out("writing '%s'\n", filename);
+    if (!opts.quiet) {
+        if (lnofile)
+            con_out("writing '%s' and '%s'...\n", filename, lnofile);
+        else
+            con_out("writing '%s'\n", filename);
+    }
     if (!code_write(filename, lnofile)) {
         vec_free(lnofile);
         return false;

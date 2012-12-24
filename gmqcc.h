@@ -1019,6 +1019,7 @@ typedef enum {
 typedef struct {
     uint32_t    O;              /* -Ox           */
     const char *output;         /* -o file       */
+    bool        quiet;          /* -q --quiet    */
     bool        g;              /* -g            */
     opts_std_t  standard;       /* -std=         */
     bool        debug;          /* -debug        */
