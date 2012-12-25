@@ -389,6 +389,24 @@ possible.
 Don't generate defs for immediate values or even declared constants.
 Meaning variables which are implicitly constant or qualified as such
 using the 'const' keyword.
+.TP
+.B -Ooverlap-strings
+Aggressively reuse strings in the string section. When a string should
+be added which is the trailing substring of an already existing
+string, the existing string's tail will be returned instead of the new
+string being added.
+
+For example the following code will only generate 1 string:
+
+.in +4
+.nf
+print("Hell you!\\n");
+print("you!\\n"); // trailing substring of "Hello you!\\n"
+.fi
+.in
+There's however one limitation. Strings are still processed in order,
+so if the above print statements were reversed, this optimization
+would not happen.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square

@@ -59,7 +59,8 @@ void code_init() {
     int                    i               = 0;
 
     code_entfields = 0;
-    code_string_cache = util_htnew(1024);
+
+    code_string_cache = util_htnew(OPTS_OPTIMIZATION(OPTIM_OVERLAP_STRINGS) ? 0x100 : 1024);
 
     /*
      * The way progs.dat is suppose to work is odd, there needs to be
@@ -75,6 +76,7 @@ void code_init() {
     vec_push(code_fields,     empty_def);
 }
 
+void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin);
 uint32_t code_genstring(const char *str)
 {
     uint32_t off;
@@ -92,8 +94,14 @@ uint32_t code_genstring(const char *str)
         return code_string_cached_empty;
     }
 
-    hash = util_hthash(code_string_cache, str);
-    existing = util_htgeth(code_string_cache, str, hash);
+    if (OPTS_OPTIMIZATION(OPTIM_OVERLAP_STRINGS)) {
+        hash = ((unsigned char*)str)[strlen(str)-1];
+        existing = code_util_str_htgeth(code_string_cache, str, hash);
+    } else {
+        hash = util_hthash(code_string_cache, str);
+        existing = util_htgeth(code_string_cache, str, hash);
+    }
+
     if (existing)
         return HASH_ENTRY_TO_QCINT(existing);
 
@@ -101,7 +109,6 @@ uint32_t code_genstring(const char *str)
     vec_upload(code_chars, str, strlen(str)+1);
 
     util_htseth(code_string_cache, str, hash, QCINT_TO_HASH_ENTRY(off));
-    existing = util_htgeth(code_string_cache, str, hash);
     return off;
 }
 

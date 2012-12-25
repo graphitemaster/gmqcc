@@ -514,6 +514,40 @@ void *util_htget(hash_table_t *ht, const char *key) {
     return util_htgeth(ht, key, util_hthash(ht, key));
 }
 
+void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
+    hash_node_t *pair;
+    size_t len, keylen;
+    int cmp;
+
+    keylen = strlen(key);
+
+    pair = ht->table[bin];
+    while (pair && pair->key) {
+        len = strlen(pair->key);
+        if (len < keylen) {
+            pair = pair->next;
+            continue;
+        }
+        if (keylen == len) {
+            cmp = strcmp(key, pair->key);
+            if (cmp == 0)
+                return pair->value;
+            if (cmp < 0)
+                return NULL;
+            pair = pair->next;
+            continue;
+        }
+        cmp = strcmp(key, pair->key + len - keylen);
+        if (cmp == 0) {
+            uintptr_t up = (uintptr_t)pair->value;
+            up += len - keylen;
+            return (void*)up;
+        }
+        pair = pair->next;
+    }
+    return NULL;
+}
+
 /*
  * Free all allocated data in a hashtable, this is quite the amount
  * of work.
