@@ -194,7 +194,8 @@ uint16_t type_not_instr[TYPE_COUNT] = {
 };
 
 /* protos */
-static void ir_gen_extparam(ir_builder *ir);
+static ir_value* ir_gen_extparam_proto(ir_builder *ir);
+static void      ir_gen_extparam      (ir_builder *ir);
 
 /* error functions */
 
@@ -220,7 +221,7 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
  * Vector utility functions
  */
 
-bool GMQCC_WARN vec_ir_value_find(ir_value **vec, ir_value *what, size_t *idx)
+bool GMQCC_WARN vec_ir_value_find(ir_value **vec, const ir_value *what, size_t *idx)
 {
     size_t i;
     size_t len = vec_size(vec);
@@ -278,12 +279,14 @@ ir_builder* ir_builder_new(const char *modulename)
     self->functions   = NULL;
     self->globals     = NULL;
     self->fields      = NULL;
-    self->extparams   = NULL;
     self->filenames   = NULL;
     self->filestrings = NULL;
     self->htglobals   = util_htnew(IR_HT_SIZE);
     self->htfields    = util_htnew(IR_HT_SIZE);
     self->htfunctions = util_htnew(IR_HT_SIZE);
+
+    self->extparams       = NULL;
+    self->extparam_protos = NULL;
 
     self->max_locals  = 0;
 
@@ -988,6 +991,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
 
     self->unique_life = false;
     self->locked      = false;
+    self->callparam   = false;
 
     self->life = NULL;
     return self;
@@ -2136,7 +2140,7 @@ bool ir_function_allocate_locals(ir_function *self)
     size_t pos;
 
     ir_value *slot;
-    const ir_value *v;
+    ir_value *v;
 
     function_allocator alloc;
 
@@ -2163,6 +2167,41 @@ bool ir_function_allocate_locals(ir_function *self)
 
         if (!vec_size(v->life))
             continue;
+
+        /* CALL optimization:
+         * If the value is a parameter-temp: 1 write, 1 read from a CALL
+         * and it's not "locked", write it to the OFS_PARM directly.
+         */
+        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES)) {
+            if (!v->locked && vec_size(v->reads) == 1 && vec_size(v->writes) == 1 &&
+                (v->reads[0]->opcode == VINSTR_NRCALL ||
+                 (v->reads[0]->opcode >= INSTR_CALL0 && v->reads[0]->opcode <= INSTR_CALL8)
+                )
+               )
+            {
+                size_t    param;
+                ir_instr *call = v->reads[0];
+                if (!vec_ir_value_find(call->params, v, &param)) {
+                    irerror(call->context, "internal error: unlocked parameter %s not found", v->name);
+                    goto error;
+                }
+
+                v->callparam = true;
+                if (param < 8)
+                    ir_value_code_setaddr(v, OFS_PARM0 + 3*param);
+                else {
+                    ir_value *ep;
+                    param -= 8;
+                    if (vec_size(self->owner->extparam_protos) <= param)
+                        ep = ir_gen_extparam_proto(self->owner);
+                    else
+                        ep = self->owner->extparam_protos[param];
+                    ir_instr_op(v->writes[0], 0, ep, true);
+                    call->params[param+8] = ep;
+                }
+                continue;
+            }
+        }
 
         for (a = 0; a < vec_size(alloc.locals); ++a)
         {
@@ -2765,19 +2804,6 @@ tailcall:
         if ( (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8)
            || instr->opcode == VINSTR_NRCALL)
         {
-            /* Trivial call translation:
-             * copy all params to OFS_PARM*
-             * if the output's storetype is not store_return,
-             * add append a STORE instruction!
-             *
-             * NOTES on how to do it better without much trouble:
-             * -) The liferanges!
-             *      Simply check the liferange of all parameters for
-             *      other CALLs. For each param with no CALL in its
-             *      liferange, we can store it in an OFS_PARM at
-             *      generation already. This would even include later
-             *      reuse.... probably... :)
-             */
             size_t p, first;
             ir_value *retvalue;
 
@@ -2787,6 +2813,8 @@ tailcall:
             for (p = 0; p < first; ++p)
             {
                 ir_value *param = instr->params[p];
+                if (param->callparam)
+                    continue;
 
                 stmt.opcode = INSTR_STORE_F;
                 stmt.o3.u1 = 0;
@@ -2806,6 +2834,9 @@ tailcall:
                 ir_builder *ir = func->owner;
                 ir_value *param = instr->params[p];
                 ir_value *targetparam;
+
+                if (param->callparam)
+                    continue;
 
                 if (p-8 >= vec_size(ir->extparams))
                     ir_gen_extparam(ir);
@@ -2992,16 +3023,29 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     return true;
 }
 
+static ir_value* ir_gen_extparam_proto(ir_builder *ir)
+{
+    ir_value *global;
+    char      name[128];
+
+    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)+8));
+    global = ir_value_var(name, store_global, TYPE_VECTOR);
+
+    vec_push(ir->extparam_protos, global);
+    return global;
+}
+
 static void ir_gen_extparam(ir_builder *ir)
 {
     prog_section_def def;
     ir_value        *global;
-    char             name[128];
 
-    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparams)+8));
-    global = ir_value_var(name, store_global, TYPE_VECTOR);
+    if (vec_size(ir->extparam_protos) < vec_size(ir->extparams)+1)
+        global = ir_gen_extparam_proto(ir);
+    else
+        global = ir->extparam_protos[vec_size(ir->extparams)];
 
-    def.name = code_genstring(name);
+    def.name = code_genstring(global->name);
     def.type = TYPE_VECTOR;
     def.offset = vec_size(code_globals);
 
@@ -3078,6 +3122,8 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
     for (i = 0; i < vec_size(irfun->values); ++i)
     {
         ir_value *v = irfun->values[i];
+        if (v->callparam)
+            continue;
         ir_value_code_setaddr(v, firstlocal + v->code.local);
     }
     return true;

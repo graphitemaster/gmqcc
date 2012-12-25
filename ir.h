@@ -79,6 +79,7 @@ typedef struct ir_value_s {
     bool unique_life;
     /* temps living during a CALL must be locked */
     bool      locked;
+    bool      callparam;
 
     /* For the temp allocator */
     ir_life_entry_t *life;
@@ -96,7 +97,7 @@ void      ir_value_delete(ir_value*);
 bool      ir_value_set_name(ir_value*, const char *name);
 ir_value* ir_value_vector_member(ir_value*, unsigned int member);
 
-bool GMQCC_WARN vec_ir_value_find(ir_value **vec, ir_value *what, size_t *idx);
+bool GMQCC_WARN vec_ir_value_find(ir_value **vec, const ir_value *what, size_t *idx);
 
 bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
 bool GMQCC_WARN ir_value_set_func(ir_value*, int f);
@@ -153,7 +154,7 @@ void      ir_instr_delete(ir_instr*);
 
 bool GMQCC_WARN vec_ir_instr_find(ir_instr **vec, ir_instr *what, size_t *idx);
 
-bool GMQCC_WARN ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
+bool ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
 
 void ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 
@@ -309,6 +310,7 @@ typedef struct ir_builder_s
     ht            htfields;
 
     ir_value    **extparams;
+    ir_value    **extparam_protos;
 
     /* the highest func->allocated_locals */
     size_t        max_locals;
