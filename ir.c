@@ -2498,6 +2498,11 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             }
         }
 
+        /* on a call, all these values must be "locked" */
+        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+            if (ir_block_living_lock(self))
+                *changed = true;
+        }
         /* call params are read operands too */
         for (p = 0; p < vec_size(instr->params); ++p)
         {
@@ -2511,11 +2516,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
                     vec_push(self->living, value->members[mem]);
             }
-        }
-        /* on a call, all these values must be "locked" */
-        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
-            if (ir_block_living_lock(self))
-                *changed = true;
         }
 
         /* (A) */
