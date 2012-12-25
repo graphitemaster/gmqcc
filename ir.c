@@ -736,6 +736,8 @@ bool ir_function_pass_tailrecursion(ir_function *self)
 
 bool ir_function_finalize(ir_function *self)
 {
+    size_t i;
+
     if (self->builtin)
         return true;
 
@@ -755,6 +757,27 @@ bool ir_function_finalize(ir_function *self)
 
     if (!ir_function_naive_phi(self))
         return false;
+
+    for (i = 0; i < vec_size(self->locals); ++i) {
+        ir_value *v = self->locals[i];
+        if (v->vtype == TYPE_VECTOR ||
+            (v->vtype == TYPE_FIELD && v->outtype == TYPE_VECTOR))
+        {
+            ir_value_vector_member(v, 0);
+            ir_value_vector_member(v, 1);
+            ir_value_vector_member(v, 2);
+        }
+    }
+    for (i = 0; i < vec_size(self->values); ++i) {
+        ir_value *v = self->values[i];
+        if (v->vtype == TYPE_VECTOR ||
+            (v->vtype == TYPE_FIELD && v->outtype == TYPE_VECTOR))
+        {
+            ir_value_vector_member(v, 0);
+            ir_value_vector_member(v, 1);
+            ir_value_vector_member(v, 2);
+        }
+    }
 
     ir_function_enumerate(self);
 
@@ -3301,12 +3324,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_FIELD:
         if (pushdef) {
             vec_push(code_defs, def);
-            if (global->fieldtype == TYPE_VECTOR) {
+            if (global->fieldtype == TYPE_VECTOR)
                 gen_vector_defs(def, global->name);
-                ir_value_vector_member(global, 0);
-                ir_value_vector_member(global, 1);
-                ir_value_vector_member(global, 2);
-            }
         }
         return gen_global_field(global);
     case TYPE_ENTITY:
@@ -3342,9 +3361,6 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     case TYPE_VECTOR:
     {
         size_t d;
-        ir_value_vector_member(global, 0);
-        ir_value_vector_member(global, 1);
-        ir_value_vector_member(global, 2);
         ir_value_code_setaddr(global, vec_size(code_globals));
         if (global->hasvalue) {
             iptr = (int32_t*)&global->constval.ivec[0];
