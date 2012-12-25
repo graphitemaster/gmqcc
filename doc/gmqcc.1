@@ -407,6 +407,15 @@ print("you!\\n"); // trailing substring of "Hello you!\\n"
 There's however one limitation. Strings are still processed in order,
 so if the above print statements were reversed, this optimization
 would not happen.
+.TP
+.B -Ocall-stores
+By default, all parameters of a CALL are copied into the
+parameter-globals right before the CALL instructions. This is the
+easiest and safest way to translate calls, but also adds a lot of
+unnecessary copying and unnecessary temporary values. This
+optimization makes operations which are used as a parameter evaluate
+directly into the parameter-global if that is possible, which is when
+there's no other CALL instruction in between.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
