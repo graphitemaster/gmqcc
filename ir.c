@@ -728,6 +728,8 @@ bool ir_function_pass_tailrecursion(ir_function *self)
 
 bool ir_function_finalize(ir_function *self)
 {
+    size_t i;
+
     if (self->builtin)
         return true;
 
@@ -747,6 +749,27 @@ bool ir_function_finalize(ir_function *self)
 
     if (!ir_function_naive_phi(self))
         return false;
+
+    for (i = 0; i < vec_size(self->locals); ++i) {
+        ir_value *v = self->locals[i];
+        if (v->vtype == TYPE_VECTOR ||
+            (v->vtype == TYPE_FIELD && v->outtype == TYPE_VECTOR))
+        {
+            ir_value_vector_member(v, 0);
+            ir_value_vector_member(v, 1);
+            ir_value_vector_member(v, 2);
+        }
+    }
+    for (i = 0; i < vec_size(self->values); ++i) {
+        ir_value *v = self->values[i];
+        if (v->vtype == TYPE_VECTOR ||
+            (v->vtype == TYPE_FIELD && v->outtype == TYPE_VECTOR))
+        {
+            ir_value_vector_member(v, 0);
+            ir_value_vector_member(v, 1);
+            ir_value_vector_member(v, 2);
+        }
+    }
 
     ir_function_enumerate(self);
 
