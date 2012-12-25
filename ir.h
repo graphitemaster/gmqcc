@@ -77,6 +77,8 @@ typedef struct ir_value_s {
 
     /* arrays will never overlap with temps */
     bool unique_life;
+    /* temps living during a CALL must be locked */
+    bool      locked;
 
     /* For the temp allocator */
     ir_life_entry_t *life;

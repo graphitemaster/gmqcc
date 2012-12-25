@@ -987,6 +987,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->memberof = NULL;
 
     self->unique_life = false;
+    self->locked      = false;
 
     self->life = NULL;
     return self;
@@ -2289,11 +2290,20 @@ static bool ir_block_living_add_instr(ir_block *self, size_t eid)
     for (i = 0; i != vec_size(self->living); ++i)
     {
         tempbool = ir_value_life_merge(self->living[i], eid);
-        /* debug
-        if (tempbool)
-            irerror(self->context, "block_living_add_instr() value instruction added %s: %i", self->living[i]->_name, (int)eid);
-        */
         changed = changed || tempbool;
+    }
+    return changed;
+}
+
+static bool ir_block_living_lock(ir_block *self)
+{
+    size_t i;
+    bool changed = false;
+    for (i = 0; i != vec_size(self->living); ++i)
+    {
+        if (!self->living[i]->locked)
+            changed = true;
+        self->living[i]->locked = true;
     }
     return changed;
 }
@@ -2501,6 +2511,11 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                 if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
                     vec_push(self->living, value->members[mem]);
             }
+        }
+        /* on a call, all these values must be "locked" */
+        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+            if (ir_block_living_lock(self))
+                *changed = true;
         }
 
         /* (A) */
