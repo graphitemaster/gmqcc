@@ -912,6 +912,8 @@ int main(int argc, char **argv)
         }
         else if (!strcmp(argv[1], "-v")) {
             ++opts_v;
+            --argc;
+            ++argv;
         }
         else if (!strncmp(argv[1], "-vv", 3)) {
             const char *av = argv[1]+1;
