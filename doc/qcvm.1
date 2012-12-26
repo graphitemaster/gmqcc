@@ -47,7 +47,13 @@ This option disables execution.
 .TP
 .B "-printfuns"
 List functions and some information about their parameters.
-This option disables execution.
+This option disables execution. With a verbosity level of 1, builtin
+numbers are printed. With a verbosity of 2, the function's sizes are
+printed as well. This takes a little longer since the size is found by
+searching for a DONE instruction in the code.
+.TP
+.B "-v"
+Increase verbosity level, can be used multiple times.
 .TP
 .BI "-vector """ "x y z" """"
 Append a vector parameter to be passed to \fImain\fR.
