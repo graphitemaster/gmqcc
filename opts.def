@@ -87,6 +87,7 @@
     GMQCC_DEFINE_FLAG(STRIP_CONSTANT_NAMES, 1)
     GMQCC_DEFINE_FLAG(OVERLAP_STRINGS,      2)
     GMQCC_DEFINE_FLAG(CALL_STORES,          1)
+    GMQCC_DEFINE_FLAG(VOID_RETURN,          1)
 #endif
 
 /* some cleanup so we don't have to */

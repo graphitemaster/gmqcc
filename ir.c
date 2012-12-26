@@ -2956,7 +2956,7 @@ tailcall:
 static bool gen_function_code(ir_function *self)
 {
     ir_block *block;
-    prog_section_statement stmt;
+    prog_section_statement stmt, *retst;
 
     /* Starting from entry point, we generate blocks "as they come"
      * for now. Dead blocks will not be translated obviously.
@@ -2976,11 +2976,21 @@ static bool gen_function_code(ir_function *self)
     }
 
     /* code_write and qcvm -disasm need to know that the function ends here */
-    stmt.opcode = INSTR_DONE;
-    stmt.o1.u1 = 0;
-    stmt.o2.u1 = 0;
-    stmt.o3.u1 = 0;
-    code_push_statement(&stmt, vec_last(code_linenums));
+    retst = &vec_last(code_statements);
+    if (OPTS_OPTIMIZATION(OPTIM_VOID_RETURN) &&
+        self->outtype == TYPE_VOID &&
+        retst->opcode == INSTR_RETURN &&
+        !retst->o1.u1 && !retst->o2.u1 && !retst->o3.u1)
+    {
+        retst->opcode = INSTR_DONE;
+        ++opts_optimizationcount[OPTIM_VOID_RETURN];
+    } else {
+        stmt.opcode = INSTR_DONE;
+        stmt.o1.u1 = 0;
+        stmt.o2.u1 = 0;
+        stmt.o3.u1 = 0;
+        code_push_statement(&stmt, vec_last(code_linenums));
+    }
     return true;
 }
 
