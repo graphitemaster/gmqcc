@@ -5,7 +5,7 @@ pkgdesc="An Improved Quake C Compiler"
 arch=('i686' 'x86_64')
 depends=('glibc')
 url="https://github.com/graphitemaster/gmqcc.git"
-license=('custom')
+license=('MIT')
 
 _gitroot="git://github.com/graphitemaster/gmqcc.git"
 _gitname="gmqcc"
