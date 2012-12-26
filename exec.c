@@ -832,7 +832,9 @@ static void usage()
            "  -disasm-func func  disassemble and exit\n"
            "  -printdefs         list the defs section\n"
            "  -printfields       list the field section\n"
-           "  -printfuns         list functions information\n");
+           "  -printfuns         list functions information\n"
+           "  -v                 be verbose\n"
+           "  -vv                be even more verbose\n");
     printf("parameters:\n");
     printf("  -vector <V>   pass a vector parameter to main()\n"
            "  -float  <f>   pass a float parameter to main()\n"
@@ -891,6 +893,7 @@ int main(int argc, char **argv)
     bool        noexec           = false;
     const char *progsfile        = NULL;
     const char **dis_list        = NULL;
+    int         opts_v           = 0;
 
     arg0 = argv[0];
 
@@ -907,8 +910,23 @@ int main(int argc, char **argv)
             usage();
             exit(0);
         }
-        else if (!strcmp(argv[1], "-v") ||
-                 !strcmp(argv[1], "-version") ||
+        else if (!strcmp(argv[1], "-v")) {
+            ++opts_v;
+        }
+        else if (!strncmp(argv[1], "-vv", 3)) {
+            const char *av = argv[1]+1;
+            for (; *av; ++av) {
+                if (*av == 'v')
+                    ++opts_v;
+                else {
+                    usage();
+                    exit(1);
+                }
+            }
+            --argc;
+            ++argv;
+        }
+        else if (!strcmp(argv[1], "-version") ||
                  !strcmp(argv[1], "--version"))
         {
             version();
@@ -1105,9 +1123,32 @@ int main(int argc, char **argv)
             for (a = 0; a < prog->functions[i].nargs; ++a) {
                 printf(" %i", prog->functions[i].argsize[a]);
             }
-            printf(") locals: %i + %i\n",
-                   prog->functions[i].firstlocal,
-                   prog->functions[i].locals);
+            if (opts_v > 1) {
+                int32_t start = prog->functions[i].entry;
+                if (start < 0)
+                    printf(") builtin %i\n", (int)-start);
+                else {
+                    size_t funsize = 0;
+                    prog_section_statement *st = prog->code + start;
+                    for (;st->opcode != INSTR_DONE; ++st)
+                        ++funsize;
+                    printf(") - %lu instructions", (unsigned long)funsize);
+                    if (opts_v > 2) {
+                        printf(" - locals: %i + %i\n",
+                               prog->functions[i].firstlocal,
+                               prog->functions[i].locals);
+                    }
+                    else
+                        printf("\n");
+                }
+            }
+            else if (opts_v) {
+                printf(") locals: %i + %i\n",
+                       prog->functions[i].firstlocal,
+                       prog->functions[i].locals);
+            }
+            else
+                printf(")\n");
         }
     }
     if (!noexec) {
