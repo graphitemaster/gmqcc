@@ -75,7 +75,7 @@ static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const o
     for (i = 0; i < listsize; ++i) {
         if (!strcmp(name, list[i].name)) {
             longbit lb = list[i].bit;
-#if 0
+#if 1
             if (on)
                 flags[lb.idx] |= (1<<(lb.bit));
             else
@@ -105,8 +105,9 @@ bool opts_setoptim (const char *name, bool on) {
 }
 
 void opts_set(uint32_t *flags, size_t idx, bool on) {
-    longbit lb = LONGBIT(idx);
-#if 0
+    longbit lb;
+    LONGBIT_SET(lb, idx);
+#if 1
     if (on)
         flags[lb.idx] |= (1<<(lb.bit));
     else

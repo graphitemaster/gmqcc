@@ -917,18 +917,20 @@ void        ftepp_add_macro        (const char *name,   const char *value);
 /*======================= main.c commandline ========================*/
 /*===================================================================*/
 
-#if 0
+#if 1
 /* Helpers to allow for a whole lot of flags. Otherwise we'd limit
  * to 32 or 64 -f options...
  */
 typedef struct {
     size_t  idx; /* index into an array of 32 bit words */
-    uint8_t bit; /* index _into_ the 32 bit word, thus just uint8 */
+    uint8_t bit; /* bit index for the 8 bit group idx points to */
 } longbit;
 #define LONGBIT(bit) { ((bit)/32), ((bit)%32) }
+#define LONGBIT_SET(B, I) ((B).idx = (I)/32, (B).bit = ((I)%32))
 #else
 typedef uint32_t longbit;
 #define LONGBIT(bit) (bit)
+#define LONGBIT_SET(B, I) ((B) = (I))
 #endif
 
 /*===================================================================*/
