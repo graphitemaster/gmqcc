@@ -396,6 +396,11 @@ result. This can reduce the size of the global section.
 This will not have declared variables overlap, even if it was
 possible.
 .TP
+.B -Oglobal-temps
+Causes temporary values which do not need to be backed up on a CALL to
+not be stored in the function's locals-area. With this, a CALL to a
+function may need to back up fewer values and thus execute faster.
+.TP
 .B -Ostrip-constant-names
 Don't generate defs for immediate values or even declared constants.
 Meaning variables which are implicitly constant or qualified as such
