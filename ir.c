@@ -2623,7 +2623,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
  *
  * Breaking conventions is annoying...
  */
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal, bool defs_only);
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal);
 
 static bool gen_global_field(ir_value *global)
 {
@@ -3154,7 +3154,7 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
         vec_push(code_globals, 0);
     for (i = 0; i < vec_size(irfun->locals); ++i) {
         ir_value_code_setaddr(irfun->locals[i], firstlocal + irfun->locals[i]->code.local);
-        if (!ir_builder_gen_global(ir, irfun->locals[i], true, true)) {
+        if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
             irerror(irfun->locals[i]->context, "failed to generate local %s", irfun->locals[i]->name);
             return false;
         }
@@ -3267,18 +3267,19 @@ static void gen_vector_fields(prog_section_field fld, const char *name)
     }
 }
 
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal, bool defs_only)
+static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
 {
     size_t           i;
     int32_t         *iptr;
     prog_section_def def;
     bool             pushdef = false;
 
+    def.type   = global->vtype;
+    def.offset = vec_size(code_globals);
+    def.name   = 0;
     if (opts.g || !islocal)
     {
         pushdef = true;
-        def.type   = global->vtype;
-        def.offset = vec_size(code_globals);
 
         if (OPTS_OPTIMIZATION(OPTIM_STRIP_CONSTANT_NAMES) &&
             (global->name[0] == '#' || global->cvq == CV_CONST))
@@ -3297,7 +3298,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         }
         else
             def.name   = 0;
-        if (defs_only) {
+        if (islocal) {
             def.offset = ir_value_code_addr(global);
             vec_push(code_defs, def);
             if (global->vtype == TYPE_VECTOR)
@@ -3307,7 +3308,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             return true;
         }
     }
-    if (defs_only)
+    if (islocal)
         return true;
 
     switch (global->vtype)
@@ -3525,7 +3526,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
     for (i = 0; i < vec_size(self->globals); ++i)
     {
-        if (!ir_builder_gen_global(self, self->globals[i], false, false)) {
+        if (!ir_builder_gen_global(self, self->globals[i], false)) {
             return false;
         }
         if (self->globals[i]->vtype == TYPE_FUNCTION) {
