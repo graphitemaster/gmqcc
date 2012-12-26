@@ -2195,8 +2195,8 @@ bool ir_function_allocate_locals(ir_function *self)
          * If the value is a parameter-temp: 1 write, 1 read from a CALL
          * and it's not "locked", write it to the OFS_PARM directly.
          */
-        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES)) {
-            if (!v->locked && vec_size(v->reads) == 1 && vec_size(v->writes) == 1 &&
+        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES) && !v->locked) {
+            if (vec_size(v->reads) == 1 && vec_size(v->writes) == 1 &&
                 (v->reads[0]->opcode == VINSTR_NRCALL ||
                  (v->reads[0]->opcode >= INSTR_CALL0 && v->reads[0]->opcode <= INSTR_CALL8)
                 )
@@ -2222,6 +2222,11 @@ bool ir_function_allocate_locals(ir_function *self)
                     ir_instr_op(v->writes[0], 0, ep, true);
                     call->params[param+8] = ep;
                 }
+                continue;
+            }
+            if (vec_size(v->writes) == 1 && v->writes[0]->opcode == INSTR_CALL0)
+            {
+                v->store = store_return;
                 continue;
             }
         }
