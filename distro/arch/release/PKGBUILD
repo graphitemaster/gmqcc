@@ -1,0 +1,34 @@
+pkgname=gmqcc
+pkgver=0.2.1
+pkgrel=1
+pkgdesc="An Improved Quake C Compiler"
+arch=('i686' 'x86_64')
+depends=('glibc')
+url="https://github.com/graphitemaster/gmqcc.git"
+license=('MIT')
+source=(gmqcc-$pkgver.zip::https://github.com/graphitemaster/gmqcc/zipball/$pkgver)
+sha1sums=('a35cf4e0898325b66e9f7014fa3fc961e42f0c9e')
+
+_gitname=graphitemaster-gmqcc-bd75e9a/
+
+build() {
+	msg "Starting compilation..."
+	cd "$srcdir"/"$_gitname"
+
+	msg "Compiling..."
+	make
+}
+
+check() {
+	cd "$srcdir"/"$_gitname"
+	make check
+}
+
+package() {
+	cd "$srcdir"/"$_gitname"
+	msg "Compiling and installing to pkgdir this time..."
+	make install DESTDIR=$pkgdir PREFIX=/usr
+	msg "Compiling done."
+
+	install -D LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
+}
