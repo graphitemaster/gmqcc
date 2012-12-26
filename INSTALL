@@ -34,6 +34,11 @@
         make PREFIX=/usr install
 
     To install to a package-staging directory such as $pkgdir when
-    writing an ArchLinux PKGBUILD file:
+    writing a build script file:
 
         make DESTDIR=$pkgdir install
+
+
+
+    ArchLinux PKGBUILDs (release and git build) can be found in the
+    respective folders in ./distro/arch
