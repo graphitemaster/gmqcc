@@ -252,6 +252,7 @@ typedef struct ir_function_s
     ir_value **locals;
 
     size_t allocated_locals;
+    size_t globaltemps;
 
     ir_block*     first;
     ir_block*     last;
@@ -314,7 +315,9 @@ typedef struct ir_builder_s
 
     /* the highest func->allocated_locals */
     size_t        max_locals;
+    size_t        max_globaltemps;
     uint32_t      first_common_local;
+    uint32_t      first_common_globaltemp;
 
     const char **filenames;
     qcint       *filestrings;

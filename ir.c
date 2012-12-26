@@ -288,7 +288,10 @@ ir_builder* ir_builder_new(const char *modulename)
     self->extparams       = NULL;
     self->extparam_protos = NULL;
 
-    self->max_locals  = 0;
+    self->first_common_globaltemp = 0;
+    self->max_globaltemps         = 0;
+    self->first_common_local      = 0;
+    self->max_locals              = 0;
 
     self->str_immediate = 0;
     self->name = NULL;
@@ -454,6 +457,7 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
 
     self->code_function_def = -1;
     self->allocated_locals = 0;
+    self->globaltemps      = 0;
 
     self->run_id = 0;
     return self;
@@ -800,6 +804,8 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
     }
 
     ve = ir_value_var(name, (param ? store_param : store_local), vtype);
+    if (param)
+        ve->locked = true;
     vec_push(self->locals, ve);
     return ve;
 }
@@ -2205,26 +2211,36 @@ bool ir_function_allocate_locals(ir_function *self)
     size_t i;
     bool   retval = true;
     size_t pos;
+    bool   opt_gt = OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS);
 
     ir_value *v;
 
-    function_allocator alloc;
+    function_allocator lockalloc, globalloc;
 
     if (!vec_size(self->locals) && !vec_size(self->values))
         return true;
 
-    alloc.locals    = NULL;
-    alloc.sizes     = NULL;
-    alloc.positions = NULL;
-    alloc.unique    = NULL;
+    globalloc.locals    = NULL;
+    globalloc.sizes     = NULL;
+    globalloc.positions = NULL;
+    globalloc.unique    = NULL;
+    lockalloc.locals    = NULL;
+    lockalloc.sizes     = NULL;
+    lockalloc.positions = NULL;
+    lockalloc.unique    = NULL;
 
     for (i = 0; i < vec_size(self->locals); ++i)
     {
-        if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS))
-            self->locals[i]->unique_life = true;
+        v = self->locals[i];
+        if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
+            v->locked      = true;
+            v->unique_life = true;
+        }
         else if (i >= vec_size(self->params))
             break;
-        if (!function_allocator_alloc(&alloc, self->locals[i]))
+        else
+            v->locked = true; /* lock parameters locals */
+        if (!function_allocator_alloc((v->locked || !opt_gt ? &lockalloc : &globalloc), self->locals[i]))
             goto error;
     }
     for (; i < vec_size(self->locals); ++i)
@@ -2232,7 +2248,7 @@ bool ir_function_allocate_locals(ir_function *self)
         v = self->locals[i];
         if (!vec_size(v->life))
             continue;
-        if (!ir_function_allocator_assign(self, &alloc, v))
+        if (!ir_function_allocator_assign(self, (v->locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
 
@@ -2248,7 +2264,7 @@ bool ir_function_allocate_locals(ir_function *self)
          * If the value is a parameter-temp: 1 write, 1 read from a CALL
          * and it's not "locked", write it to the OFS_PARM directly.
          */
-        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES) && !v->locked) {
+        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES) && !v->locked && !v->unique_life) {
             if (vec_size(v->reads) == 1 && vec_size(v->writes) == 1 &&
                 (v->reads[0]->opcode == VINSTR_NRCALL ||
                  (v->reads[0]->opcode >= INSTR_CALL0 && v->reads[0]->opcode <= INSTR_CALL8)
@@ -2286,36 +2302,55 @@ bool ir_function_allocate_locals(ir_function *self)
             }
         }
 
-        if (!ir_function_allocator_assign(self, &alloc, v))
+        if (!ir_function_allocator_assign(self, (v->locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
 
-    if (!alloc.sizes) {
+    if (!lockalloc.sizes && !globalloc.sizes) {
         goto cleanup;
     }
+    vec_push(lockalloc.positions, 0);
+    vec_push(globalloc.positions, 0);
 
     /* Adjust slot positions based on sizes */
-    vec_push(alloc.positions, 0);
-
-    if (vec_size(alloc.sizes))
-        pos = alloc.positions[0] + alloc.sizes[0];
-    else
-        pos = 0;
-    for (i = 1; i < vec_size(alloc.sizes); ++i)
-    {
-        pos = alloc.positions[i-1] + alloc.sizes[i-1];
-        vec_push(alloc.positions, pos);
+    if (lockalloc.sizes) {
+        pos = (vec_size(lockalloc.sizes) ? (lockalloc.positions[0] + lockalloc.sizes[0]) : 0);
+        for (i = 1; i < vec_size(lockalloc.sizes); ++i)
+        {
+            pos = lockalloc.positions[i-1] + lockalloc.sizes[i-1];
+            vec_push(lockalloc.positions, pos);
+        }
+        self->allocated_locals = pos + vec_last(lockalloc.sizes);
     }
-
-    self->allocated_locals = pos + vec_last(alloc.sizes);
+    if (globalloc.sizes) {
+        pos = (vec_size(globalloc.sizes) ? (globalloc.positions[0] + globalloc.sizes[0]) : 0);
+        for (i = 1; i < vec_size(globalloc.sizes); ++i)
+        {
+            pos = globalloc.positions[i-1] + globalloc.sizes[i-1];
+            vec_push(globalloc.positions, pos);
+        }
+        self->globaltemps = pos + vec_last(globalloc.sizes);
+    }
 
     /* Locals need to know their new position */
     for (i = 0; i < vec_size(self->locals); ++i) {
-        self->locals[i]->code.local = alloc.positions[self->locals[i]->code.local];
+        v = self->locals[i];
+        if (i >= vec_size(self->params) && !vec_size(v->life))
+            continue;
+        if (v->locked || !opt_gt)
+            v->code.local = lockalloc.positions[v->code.local];
+        else
+            v->code.local = globalloc.positions[v->code.local];
     }
     /* Take over the actual slot positions on values */
     for (i = 0; i < vec_size(self->values); ++i) {
-        self->values[i]->code.local = alloc.positions[self->values[i]->code.local];
+        v = self->values[i];
+        if (!vec_size(v->life))
+            continue;
+        if (v->locked || !opt_gt)
+            v->code.local = lockalloc.positions[v->code.local];
+        else
+            v->code.local = globalloc.positions[v->code.local];
     }
 
     goto cleanup;
@@ -2323,12 +2358,18 @@ bool ir_function_allocate_locals(ir_function *self)
 error:
     retval = false;
 cleanup:
-    for (i = 0; i < vec_size(alloc.locals); ++i)
-        ir_value_delete(alloc.locals[i]);
-    vec_free(alloc.unique);
-    vec_free(alloc.locals);
-    vec_free(alloc.sizes);
-    vec_free(alloc.positions);
+    for (i = 0; i < vec_size(lockalloc.locals); ++i)
+        ir_value_delete(lockalloc.locals[i]);
+    for (i = 0; i < vec_size(globalloc.locals); ++i)
+        ir_value_delete(globalloc.locals[i]);
+    vec_free(globalloc.unique);
+    vec_free(globalloc.locals);
+    vec_free(globalloc.sizes);
+    vec_free(globalloc.positions);
+    vec_free(lockalloc.unique);
+    vec_free(lockalloc.locals);
+    vec_free(lockalloc.sizes);
+    vec_free(lockalloc.positions);
     return retval;
 }
 
@@ -3158,7 +3199,7 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
     prog_section_function *def;
     ir_function           *irfun;
     size_t                 i;
-    uint32_t               firstlocal;
+    uint32_t               firstlocal, firstglobal;
 
     irfun = global->constval.vfunc;
     def   = code_functions + irfun->code_function_def;
@@ -3170,21 +3211,31 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
         ++opts_optimizationcount[OPTIM_OVERLAP_LOCALS];
     }
 
+    firstglobal = (OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS) ? ir->first_common_globaltemp : firstlocal);
+
     for (i = vec_size(code_globals); i < firstlocal + irfun->allocated_locals; ++i)
         vec_push(code_globals, 0);
     for (i = 0; i < vec_size(irfun->locals); ++i) {
-        ir_value_code_setaddr(irfun->locals[i], firstlocal + irfun->locals[i]->code.local);
-        if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
-            irerror(irfun->locals[i]->context, "failed to generate local %s", irfun->locals[i]->name);
-            return false;
+        ir_value *v = irfun->locals[i];
+        if (v->locked || !OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS)) {
+            ir_value_code_setaddr(v, firstlocal + v->code.local);
+            if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
+                irerror(irfun->locals[i]->context, "failed to generate local %s", irfun->locals[i]->name);
+                return false;
+            }
         }
+        else
+            ir_value_code_setaddr(v, firstglobal + v->code.local);
     }
     for (i = 0; i < vec_size(irfun->values); ++i)
     {
         ir_value *v = irfun->values[i];
         if (v->callparam)
             continue;
-        ir_value_code_setaddr(v, firstlocal + v->code.local);
+        if (v->locked)
+            ir_value_code_setaddr(v, firstlocal + v->code.local);
+        else
+            ir_value_code_setaddr(v, firstglobal + v->code.local);
     }
     return true;
 }
@@ -3556,6 +3607,8 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
             {
                 self->max_locals = func->allocated_locals;
             }
+            if (func && self->max_globaltemps < func->globaltemps)
+                self->max_globaltemps = func->globaltemps;
         }
     }
 
@@ -3566,6 +3619,11 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         }
     }
 
+    /* generate global temps */
+    self->first_common_globaltemp = vec_size(code_globals);
+    for (i = 0; i < self->max_globaltemps; ++i) {
+        vec_push(code_globals, 0);
+    }
     /* generate common locals */
     self->first_common_local = vec_size(code_globals);
     for (i = 0; i < self->max_locals; ++i) {
@@ -3697,9 +3755,16 @@ void ir_function_dump(ir_function *f, char *ind,
     }
     oprintf("%sliferanges:\n", ind);
     for (i = 0; i < vec_size(f->locals); ++i) {
+        const char *attr = "";
         size_t l, m;
         ir_value *v = f->locals[i];
-        oprintf("%s\t%s: %s@%i ", ind, v->name, (v->unique_life ? "unique " : ""), (int)v->code.local);
+        if (v->unique_life && v->locked)
+            attr = "unique,locked ";
+        else if (v->unique_life)
+            attr = "unique ";
+        else if (v->locked)
+            attr = "locked ";
+        oprintf("%s\t%s: %s@%i ", ind, v->name, attr, (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
@@ -3708,7 +3773,13 @@ void ir_function_dump(ir_function *f, char *ind,
             ir_value *vm = v->members[m];
             if (!vm)
                 continue;
-            oprintf("%s\t%s: %s@%i ", ind, vm->name, (vm->unique_life ? "unique " : ""), (int)vm->code.local);
+            if (vm->unique_life && vm->locked)
+                attr = "unique,locked ";
+            else if (vm->unique_life)
+                attr = "unique ";
+            else if (vm->locked)
+                attr = "locked ";
+            oprintf("%s\t%s: %s@%i ", ind, vm->name, attr, (int)vm->code.local);
             for (l = 0; l < vec_size(vm->life); ++l) {
                 oprintf("[%i,%i] ", vm->life[l].start, vm->life[l].end);
             }

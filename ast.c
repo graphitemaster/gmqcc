@@ -1169,6 +1169,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
             v->context = ast_ctx(self);
             v->unique_life = true;
+            v->locked      = true;
             array->ir_v = self->ir_v = v;
 
             namelen = strlen(self->name);
@@ -1187,6 +1188,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 }
                 array->ir_values[ai]->context = ast_ctx(self);
                 array->ir_values[ai]->unique_life = true;
+                array->ir_values[ai]->locked      = true;
             }
             mem_d(name);
         }
@@ -1220,6 +1222,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         }
         v->context = ast_ctx(self);
         v->unique_life = true;
+        v->locked      = true;
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
@@ -1237,6 +1240,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
             self->ir_values[ai]->context = ast_ctx(self);
             self->ir_values[ai]->unique_life = true;
+            self->ir_values[ai]->locked      = true;
         }
         mem_d(name);
     }
@@ -1350,6 +1354,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         }
         v->context = ast_ctx(self);
         v->unique_life = true;
+        v->locked      = true;
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
@@ -1365,6 +1370,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             }
             self->ir_values[ai]->context = ast_ctx(self);
             self->ir_values[ai]->unique_life = true;
+            self->ir_values[ai]->locked      = true;
         }
     }
     else
