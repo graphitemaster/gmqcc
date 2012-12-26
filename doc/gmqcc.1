@@ -416,6 +416,14 @@ unnecessary copying and unnecessary temporary values. This
 optimization makes operations which are used as a parameter evaluate
 directly into the parameter-global if that is possible, which is when
 there's no other CALL instruction in between.
+.TP
+.B -Ovoid-return
+Usually an empty RETURN instruction is added to the end of a void
+typed function. However, additionally after every function a DONE
+instruction is added for several reasons. (For example the qcvm's
+disassemble switch uses it to know when the function ends.). This
+optimization replaces that last RETURN with DONE rather than adding
+the DONE additionally.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
