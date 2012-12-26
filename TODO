@@ -1,4 +1,4 @@
-GMQCC is quite feature compleat.  But that doesn't address the fact that
+GMQCC is quite feature complete.  But that doesn't address the fact that
 it can be improved.  This is a list of things that we'd like to support
 in the distant future.  When the time comes, we can just select a topic
 from here and open a ticket for it on the issue tracker.  But for the
@@ -10,14 +10,14 @@ Optimizations:
 
         Global Value Numbering:
             Eliminate redundancy by constructing a value graph of the source
-            then determinging which values are computed by equivalent expressions.
-            Simaler to Common Subexpression Elimination (CSE), however expressions
-            are determined via underlying equivalnce, opposed to lexically identical
+            then determining which values are computed by equivalent expressions.
+            Similar to Common Subexpression Elimination (CSE), however expressions
+            are determined via underlying equivalence, opposed to lexically identical
             expressions (CSE).
 
-        Spare Conditional Constant Propogation:
-            Simultaneously remove dead code and propogates constants. This is
-            not the same as indivial dead code elimination and constant propogation
+        Spare Conditional Constant Propagation:
+            Simultaneously remove dead code and propagates constants. This is
+            not the same as individual dead code elimination and constant propagation
             passes.  This is multipass.
 
     The following are optimizations that can be implemented before the
@@ -32,8 +32,8 @@ Optimizations:
     The following are optimizations that can be implemented anywhere, ideally
     these are functional language optimizations.
 
-        Removing Recrusion:
-            Tail recrusive algorithms can be converted to iteration, which
+        Removing Recursion:
+            Tail recursive algorithms can be converted to iteration, which
             does not have to have call overhead.
 
 
@@ -45,13 +45,13 @@ Language Features:
         Like C
 
     AST Macros:
-        Macros with sanity.  Not textual subsitution.
+        Macros with sanity.  Not textual substiution.
 
     Classes:
         Like C++, but minus the stupidity:
             - No type operator overloads
             - Keep operator overloading for basic operators though.
-            - No inheritence
+            - No inheritance
             - No virtuals / pure virtuals
             - Essentially "C structs but with operators" :)
 
@@ -69,7 +69,7 @@ Language Features:
         Ability to make individual functions with the same name, but take
         different amount of arguments or type of arguments.
 
-    Default Argument Subsitution:
+    Default Argument Substiution:
         Ability to specify default values for arguments in functions.
         void foo(string bar, string baz="default");
         Supplying just one argument will expand the second argument to
@@ -89,7 +89,7 @@ Language Features:
         }
 
     Array Accessor With C-Semantics:
-        Also the abilit to use them as array accessors:
+        Also the ability to use them as array accessors:
 
         {
             float hugearray['Z'];
@@ -123,19 +123,19 @@ Language Features:
 Standalone QCVM:
     The following are QCVM additions:
 
-        Proper ASM dissasembly:
-            Proper dissasembly of compiled .dat files. Annotated if possible
+        Proper ASM disassembly:
+            Proper disassembly of compiled .dat files. Annotated if possible
             when -g (is used during compilation)
 
         Debugging:
-            A step-through debuger -d (with seperate compilation as well)
+            A step-through debugger -d (with separate compilation as well)
             Called -> qcdb  Optionally alias to qcvm -d :)
 
-            We should beable to see the assembly and source it matches to
+            We should be able to see the assembly and source it matches to
             and the state of OFS_* and calls.
 
 Testsuite:
-    The followiung are things we'd like to see added to the testsuite
+    The following are things we'd like to see added to the testsuite
     in the distant future:
 
     Multithreading:
@@ -145,13 +145,13 @@ Testsuite:
         be used and so we can execute many tests in parallel.
 
     Interface:
-        Ability to select individual tests, or set paramaters manually
+        Ability to select individual tests, or set parameters manually
         opposed to using the static task-template files. (A method to
         override them rather).
 
 
 Assembler:
     Possibly support for a future assembler for QCASM.  But we're not
-    entierly sure if it makes sense.
+    entirely sure if it makes sense.
 
 
