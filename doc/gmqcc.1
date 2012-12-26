@@ -121,6 +121,17 @@ them.
 -f\fIno-\fRcorrect-ternary
 .fi
 .in
+.TP
+.B "-dump"
+DEBUG OPTION. Print the code's intermediate representation before the
+optimization and finalization passes to stdout before generating the
+binary.
+.TP
+.B "-dumpfin"
+DEBUG OPTION. Print the code's intermediate representation after the
+optimization and finalization passes to stdout before generating the
+binary. The instructions will be enumerated, and values will contain a
+list of liferanges.
 .SH COMPILE WARNINGS
 .TP
 .B -Wunused-variable
