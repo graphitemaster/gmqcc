@@ -43,4 +43,6 @@ package() {
 	msg "Compiling and installing to pkgdir this time..."
 	make install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."
+
+	install -D LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
 }
