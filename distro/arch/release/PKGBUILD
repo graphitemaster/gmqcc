@@ -6,15 +6,14 @@ arch=('i686' 'x86_64')
 depends=('glibc')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')
-
 source=(gmqcc-$pkgver.zip::https://github.com/graphitemaster/gmqcc/zipball/$pkgver)
 sha1sums=('a35cf4e0898325b66e9f7014fa3fc961e42f0c9e')
 
 _gitname=graphitemaster-gmqcc-bd75e9a/
-build() {
 
+build() {
 	msg "Starting compilation..."
-	cd "$srcdir/$_gitname"
+	cd "$srcdir"/"$_gitname"
 
 	msg "Compiling..."
 	make
@@ -33,4 +32,3 @@ package() {
 
 	install -D LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
 }
-
