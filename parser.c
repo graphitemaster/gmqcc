@@ -2512,11 +2512,6 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     while (parser->tok != '}') {
         ast_block *caseblock;
 
-        if (parser->tok != TOKEN_KEYWORD) {
-            ast_delete(switchnode);
-            parseerror(parser, "expected 'case' or 'default'");
-            return false;
-        }
         if (!strcmp(parser_tokval(parser), "case")) {
             if (!parser_next(parser)) {
                 ast_delete(switchnode);
@@ -2544,6 +2539,11 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
                 parseerror(parser, "expected colon");
                 return false;
             }
+        }
+        else {
+            ast_delete(switchnode);
+            parseerror(parser, "expected 'case' or 'default'");
+            return false;
         }
 
         /* Now the colon and body */
