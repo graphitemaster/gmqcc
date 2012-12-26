@@ -2209,6 +2209,7 @@ bool ir_function_allocate_locals(ir_function *self)
                     goto error;
                 }
 
+                ++opts_optimizationcount[OPTIM_CALL_STORES];
                 v->callparam = true;
                 if (param < 8)
                     ir_value_code_setaddr(v, OFS_PARM0 + 3*param);
@@ -2227,6 +2228,7 @@ bool ir_function_allocate_locals(ir_function *self)
             if (vec_size(v->writes) == 1 && v->writes[0]->opcode == INSTR_CALL0)
             {
                 v->store = store_return;
+                ++opts_optimizationcount[OPTIM_CALL_STORES];
                 continue;
             }
         }
