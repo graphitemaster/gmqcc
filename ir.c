@@ -2133,10 +2133,12 @@ typedef struct {
     bool      *unique;
 } function_allocator;
 
-static bool function_allocator_alloc(function_allocator *alloc, const ir_value *var)
+static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
 {
     ir_value *slot;
     size_t vsize = ir_value_sizeof(var);
+
+    var->code.local = vec_size(alloc->locals);
 
     slot = ir_value_var("reg", store_global, var->vtype);
     if (!slot)
@@ -2156,13 +2158,54 @@ localerror:
     return false;
 }
 
+static bool ir_function_allocator_assign(ir_function *self, function_allocator *alloc, ir_value *v)
+{
+    size_t a;
+    ir_value *slot;
+
+    for (a = 0; a < vec_size(alloc->locals); ++a)
+    {
+        /* if it's reserved for a unique liferange: skip */
+        if (alloc->unique[a])
+            continue;
+
+        slot = alloc->locals[a];
+
+        /* never resize parameters
+         * will be required later when overlapping temps + locals
+         */
+        if (a < vec_size(self->params) &&
+            alloc->sizes[a] < ir_value_sizeof(v))
+        {
+            continue;
+        }
+
+        if (ir_values_overlap(v, slot))
+            continue;
+
+        if (!ir_value_life_merge_into(slot, v))
+            return false;
+
+        /* adjust size for this slot */
+        if (alloc->sizes[a] < ir_value_sizeof(v))
+            alloc->sizes[a] = ir_value_sizeof(v);
+
+        v->code.local = a;
+        return true;
+    }
+    if (a >= vec_size(alloc->locals)) {
+        if (!function_allocator_alloc(alloc, v))
+            return false;
+    }
+    return true;
+}
+
 bool ir_function_allocate_locals(ir_function *self)
 {
-    size_t i, a;
+    size_t i;
     bool   retval = true;
     size_t pos;
 
-    ir_value *slot;
     ir_value *v;
 
     function_allocator alloc;
@@ -2179,7 +2222,17 @@ bool ir_function_allocate_locals(ir_function *self)
     {
         if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS))
             self->locals[i]->unique_life = true;
+        else if (i >= vec_size(self->params))
+            break;
         if (!function_allocator_alloc(&alloc, self->locals[i]))
+            goto error;
+    }
+    for (; i < vec_size(self->locals); ++i)
+    {
+        v = self->locals[i];
+        if (!vec_size(v->life))
+            continue;
+        if (!ir_function_allocator_assign(self, &alloc, v))
             goto error;
     }
 
@@ -2233,41 +2286,8 @@ bool ir_function_allocate_locals(ir_function *self)
             }
         }
 
-        for (a = 0; a < vec_size(alloc.locals); ++a)
-        {
-            /* if it's reserved for a unique liferange: skip */
-            if (alloc.unique[a])
-                continue;
-
-            slot = alloc.locals[a];
-
-            /* never resize parameters
-             * will be required later when overlapping temps + locals
-             */
-            if (a < vec_size(self->params) &&
-                alloc.sizes[a] < ir_value_sizeof(v))
-            {
-                continue;
-            }
-
-            if (ir_values_overlap(v, slot))
-                continue;
-
-            if (!ir_value_life_merge_into(slot, v))
-                goto error;
-
-            /* adjust size for this slot */
-            if (alloc.sizes[a] < ir_value_sizeof(v))
-                alloc.sizes[a] = ir_value_sizeof(v);
-
-            self->values[i]->code.local = a;
-            break;
-        }
-        if (a >= vec_size(alloc.locals)) {
-            self->values[i]->code.local = vec_size(alloc.locals);
-            if (!function_allocator_alloc(&alloc, v))
-                goto error;
-        }
+        if (!ir_function_allocator_assign(self, &alloc, v))
+            goto error;
     }
 
     if (!alloc.sizes) {
@@ -2291,7 +2311,7 @@ bool ir_function_allocate_locals(ir_function *self)
 
     /* Locals need to know their new position */
     for (i = 0; i < vec_size(self->locals); ++i) {
-        self->locals[i]->code.local = alloc.positions[i];
+        self->locals[i]->code.local = alloc.positions[self->locals[i]->code.local];
     }
     /* Take over the actual slot positions on values */
     for (i = 0; i < vec_size(self->values); ++i) {
