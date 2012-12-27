@@ -2085,11 +2085,6 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
 
     (void)block; /* not touching */
 
-    /* skip the 'while' and check for opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected 'while' condition in parenthesis");
-        return false;
-    }
     /* parse into the expression */
     if (!parser_next(parser)) {
         parseerror(parser, "expected 'while' condition after opening paren");
@@ -2588,7 +2583,59 @@ onerr:
     return true;
 }
 
+static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'while' and get the body */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or 'switch' operand in parenthesis");
+        else
+            parseerror(parser, "expected 'switch' operand in parenthesis");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected 'switch' operand in parenthesis");
+            return false;
+        }
+    }
+
+    if (parser->tok != '(') {
+        parseerror(parser, "expected 'switch' operand in parenthesis");
+        return false;
+    }
+
+    vec_push(parser->breaks, label);
+
+    rv = parse_switch_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->breaks) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else {
+        vec_pop(parser->breaks);
+    }
+    return rv;
+}
+
+static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_expression *operand;
     ast_value      *opval;
@@ -2603,12 +2650,6 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
 
     (void)block; /* not touching */
     (void)opval;
-
-    /* parse over the opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected switch operand in parenthesis");
-        return false;
-    }
 
     /* parse into the expression */
     if (!parser_next(parser)) {

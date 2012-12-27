@@ -608,8 +608,8 @@ struct ast_function_s
 
     ir_function *ir_func;
     ir_block    *curblock;
-    ir_block    *breakblock;
-    ir_block    *continueblock;
+    ir_block    **breakblocks;
+    ir_block    **continueblocks;
 
 #if 0
     /* In order for early-out logic not to go over
