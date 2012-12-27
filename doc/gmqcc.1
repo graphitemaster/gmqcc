@@ -373,6 +373,23 @@ compilation to stop. When disabling this flag by using
 \-fno-bail-on-werror, compilation will continue until the end, but no
 output is generated. Instead the first such error message's context is
 shown.
+.TP
+.B -floop-labels
+Allow loops to be labeled, and allow 'break' and 'continue' to take an
+optional label to decide which loop to actually jump out of or
+continue.
+.sp
+.in +4
+.nf
+for :outer (i = 0; i < n; ++i) {
+    while (inner) {
+        ...;
+        if (something)
+            continue outer;
+    }
+}
+.fi
+.in
 .SH OPTIMIZATIONS
 .TP
 .B -Opeephole
