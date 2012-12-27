@@ -2314,7 +2314,7 @@ bool ir_function_allocate_locals(ir_function *self)
 
     /* Adjust slot positions based on sizes */
     if (lockalloc.sizes) {
-        pos = (vec_size(lockalloc.sizes) ? (lockalloc.positions[0] + lockalloc.sizes[0]) : 0);
+        pos = (vec_size(lockalloc.sizes) ? lockalloc.positions[0] : 0);
         for (i = 1; i < vec_size(lockalloc.sizes); ++i)
         {
             pos = lockalloc.positions[i-1] + lockalloc.sizes[i-1];
@@ -2323,7 +2323,7 @@ bool ir_function_allocate_locals(ir_function *self)
         self->allocated_locals = pos + vec_last(lockalloc.sizes);
     }
     if (globalloc.sizes) {
-        pos = (vec_size(globalloc.sizes) ? (globalloc.positions[0] + globalloc.sizes[0]) : 0);
+        pos = (vec_size(globalloc.sizes) ? globalloc.positions[0] : 0);
         for (i = 1; i < vec_size(globalloc.sizes); ++i)
         {
             pos = globalloc.positions[i-1] + globalloc.sizes[i-1];
