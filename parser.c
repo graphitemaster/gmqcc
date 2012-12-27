@@ -62,7 +62,8 @@ typedef struct {
      */
     ast_label  **labels;
     ast_goto   **gotos;
-    const char **loops;
+    const char **breaks;
+    const char **continues;
 
     /* A list of hashtables for each scope */
     ht *variables;
@@ -2054,19 +2055,22 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
         return false;
     }
 
-    vec_push(parser->loops, label);
+    vec_push(parser->breaks, label);
+    vec_push(parser->continues, label);
 
     rv = parse_while_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->loops) != label) {
+    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         ast_delete(*out);
         *out = NULL;
     }
-    else
-        vec_pop(parser->loops);
+    else {
+        vec_pop(parser->breaks);
+        vec_pop(parser->continues);
+    }
     return rv;
 }
 
@@ -2152,19 +2156,22 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
         }
     }
 
-    vec_push(parser->loops, label);
+    vec_push(parser->breaks, label);
+    vec_push(parser->continues, label);
 
     rv = parse_dowhile_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->loops) != label) {
+    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         ast_delete(*out);
         *out = NULL;
     }
-    else
-        vec_pop(parser->loops);
+    else {
+        vec_pop(parser->breaks);
+        vec_pop(parser->continues);
+    }
     return rv;
 }
 
@@ -2274,19 +2281,22 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
         return false;
     }
 
-    vec_push(parser->loops, label);
+    vec_push(parser->breaks, label);
+    vec_push(parser->continues, label);
 
     rv = parse_for_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->loops) != label) {
+    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         ast_delete(*out);
         *out = NULL;
     }
-    else
-        vec_pop(parser->loops);
+    else {
+        vec_pop(parser->breaks);
+        vec_pop(parser->continues);
+    }
     return rv;
 }
 static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **out)
@@ -2449,9 +2459,10 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
 static bool parse_break_continue(parser_t *parser, ast_block *block, ast_expression **out, bool is_continue)
 {
-    size_t i;
+    size_t       i;
     unsigned int levels = 0;
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx      ctx = parser_ctx(parser);
+    const char **loops = (is_continue ? parser->continues : parser->breaks);
 
     (void)block; /* not touching */
     if (!parser_next(parser)) {
@@ -2462,9 +2473,9 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     if (parser->tok == TOKEN_IDENT) {
         if (!OPTS_FLAG(LOOP_LABELS))
             parseerror(parser, "labeled loops not activated, try using -floop-labels");
-        i = vec_size(parser->loops);
+        i = vec_size(loops);
         while (i--) {
-            if (parser->loops[i] && !strcmp(parser->loops[i], parser_tokval(parser)))
+            if (loops[i] && !strcmp(loops[i], parser_tokval(parser)))
                 break;
             if (!i) {
                 parseerror(parser, "no such loop to %s: `%s`",
@@ -4985,6 +4996,8 @@ void parser_cleanup()
 
     vec_free(parser->labels);
     vec_free(parser->gotos);
+    vec_free(parser->breaks);
+    vec_free(parser->continues);
 
     mem_d(parser);
 }
