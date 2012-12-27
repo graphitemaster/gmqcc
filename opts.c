@@ -59,6 +59,7 @@ static void opts_setdefault() {
     opts_set(opts.flags, FTEPP,                          false);
     opts_set(opts.flags, FTEPP_PREDEFS,                  false);
     opts_set(opts.flags, CORRECT_TERNARY,                true);
+    opts_set(opts.flags, BAIL_ON_WERROR,                 true);
 }
 
 void opts_init(const char *output, int standard, size_t arraysize) {

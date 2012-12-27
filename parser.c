@@ -76,8 +76,6 @@ typedef struct {
     size_t          *_blocktypedefs;
     lex_ctx         *_block_ctx;
 
-    size_t errors;
-
     /* we store the '=' operator info */
     const oper_info *assign_op;
 
@@ -114,11 +112,8 @@ static ast_expression* parse_expression(parser_t *parser, bool stopatcomma);
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
     va_list ap;
-
-    parser->errors++;
-
     va_start(ap, fmt);
-    con_vprintmsg(LVL_ERROR, parser->lex->tok.ctx.file, parser->lex->tok.ctx.line, "parse error", fmt, ap);
+    vcompile_error(parser->lex->tok.ctx, fmt, ap);
     va_end(ap);
 }
 
@@ -992,11 +987,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         field->expression.next->expression.vtype == TYPE_FUNCTION &&
                         exprs[1]->expression.vtype == TYPE_FUNCTION)
                     {
-                        if (parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
-                                         "invalid types in assignment: cannot assign %s to %s", ty2, ty1))
-                        {
-                            parser->errors++;
-                        }
+                        (void)!parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
+                                            "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                     }
                     else
                         parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
@@ -1026,11 +1018,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         exprs[0]->expression.vtype == TYPE_FUNCTION &&
                         exprs[1]->expression.vtype == TYPE_FUNCTION)
                     {
-                        if (parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
-                                         "invalid types in assignment: cannot assign %s to %s", ty2, ty1))
-                        {
-                            parser->errors++;
-                        }
+                        (void)!parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
+                                            "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                     }
                     else
                         parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
@@ -1306,8 +1295,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
             params->exprs = NULL;
             ast_delete(params);
         }
-        if (!ast_call_check_types(call))
-            parser->errors++;
+        (void)!ast_call_check_types(call);
     } else {
         parseerror(parser, "invalid function call");
         return false;
@@ -1873,10 +1861,8 @@ static bool parser_leaveblock(parser_t *parser)
         ast_value      *v = (ast_value*)e;
         vec_pop(parser->_locals);
         if (ast_istype(e, ast_value) && !v->uses) {
-            if (compile_warning(ast_ctx(v), WARN_UNUSED_VARIABLE, "unused variable: `%s`", v->name)) {
-                parser->errors++;
+            if (compile_warning(ast_ctx(v), WARN_UNUSED_VARIABLE, "unused variable: `%s`", v->name))
                 rv = false;
-            }
         }
     }
 
@@ -4742,7 +4728,7 @@ bool parser_compile()
             if (!parser_global_statement(parser)) {
                 if (parser->tok == TOKEN_EOF)
                     parseerror(parser, "unexpected eof");
-                else if (!parser->errors)
+                else if (compile_errors)
                     parseerror(parser, "there have been errors, bailing out");
                 lex_close(parser->lex);
                 parser->lex = NULL;
@@ -4759,7 +4745,7 @@ bool parser_compile()
     lex_close(parser->lex);
     parser->lex = NULL;
 
-    return !parser->errors;
+    return !compile_errors;
 }
 
 bool parser_compile_file(const char *filename)
@@ -4844,133 +4830,138 @@ bool parser_finish(const char *output)
     ir_builder *ir;
     bool retval = true;
 
-    if (!parser->errors)
-    {
-        ir = ir_builder_new("gmqcc_out");
-        if (!ir) {
-            con_out("failed to allocate builder\n");
-            return false;
-        }
-
-        for (i = 0; i < vec_size(parser->fields); ++i) {
-            ast_value *field;
-            bool hasvalue;
-            if (!ast_istype(parser->fields[i], ast_value))
-                continue;
-            field = (ast_value*)parser->fields[i];
-            hasvalue = field->hasvalue;
-            field->hasvalue = false;
-            if (!ast_global_codegen((ast_value*)field, ir, true)) {
-                con_out("failed to generate field %s\n", field->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-            if (hasvalue) {
-                ir_value *ifld;
-                ast_expression *subtype;
-                field->hasvalue = true;
-                subtype = field->expression.next;
-                ifld = ir_builder_create_field(ir, field->name, subtype->expression.vtype);
-                if (subtype->expression.vtype == TYPE_FIELD)
-                    ifld->fieldtype = subtype->expression.next->expression.vtype;
-                else if (subtype->expression.vtype == TYPE_FUNCTION)
-                    ifld->outtype = subtype->expression.next->expression.vtype;
-                (void)!ir_value_set_field(field->ir_v, ifld);
-            }
-        }
-        for (i = 0; i < vec_size(parser->globals); ++i) {
-            ast_value *asvalue;
-            if (!ast_istype(parser->globals[i], ast_value))
-                continue;
-            asvalue = (ast_value*)(parser->globals[i]);
-            if (!asvalue->uses && !asvalue->hasvalue && asvalue->expression.vtype != TYPE_FUNCTION) {
-                retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
-                                               "unused global: `%s`", asvalue->name);
-            }
-            if (!ast_global_codegen(asvalue, ir, false)) {
-                con_out("failed to generate global %s\n", asvalue->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < vec_size(parser->imm_float); ++i) {
-            if (!ast_global_codegen(parser->imm_float[i], ir, false)) {
-                con_out("failed to generate global %s\n", parser->imm_float[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < vec_size(parser->imm_string); ++i) {
-            if (!ast_global_codegen(parser->imm_string[i], ir, false)) {
-                con_out("failed to generate global %s\n", parser->imm_string[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < vec_size(parser->imm_vector); ++i) {
-            if (!ast_global_codegen(parser->imm_vector[i], ir, false)) {
-                con_out("failed to generate global %s\n", parser->imm_vector[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < vec_size(parser->globals); ++i) {
-            ast_value *asvalue;
-            if (!ast_istype(parser->globals[i], ast_value))
-                continue;
-            asvalue = (ast_value*)(parser->globals[i]);
-            if (!ast_generate_accessors(asvalue, ir)) {
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < vec_size(parser->fields); ++i) {
-            ast_value *asvalue;
-            asvalue = (ast_value*)(parser->fields[i]->expression.next);
-
-            if (!ast_istype((ast_expression*)asvalue, ast_value))
-                continue;
-            if (asvalue->expression.vtype != TYPE_ARRAY)
-                continue;
-            if (!ast_generate_accessors(asvalue, ir)) {
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        for (i = 0; i < vec_size(parser->functions); ++i) {
-            if (!ast_function_codegen(parser->functions[i], ir)) {
-                con_out("failed to generate function %s\n", parser->functions[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-        if (opts.dump)
-            ir_builder_dump(ir, con_out);
-        for (i = 0; i < vec_size(parser->functions); ++i) {
-            if (!ir_function_finalize(parser->functions[i]->ir_func)) {
-                con_out("failed to finalize function %s\n", parser->functions[i]->name);
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-
-        if (retval) {
-            if (opts.dumpfin)
-                ir_builder_dump(ir, con_out);
-
-            generate_checksum(parser);
-
-            if (!ir_builder_generate(ir, output)) {
-                con_out("*** failed to generate output file\n");
-                ir_builder_delete(ir);
-                return false;
-            }
-        }
-
-        ir_builder_delete(ir);
-        return retval;
+    if (compile_errors) {
+        con_out("*** there were compile errors\n");
+        return false;
     }
 
-    con_out("*** there were compile errors\n");
-    return false;
+    ir = ir_builder_new("gmqcc_out");
+    if (!ir) {
+        con_out("failed to allocate builder\n");
+        return false;
+    }
+
+    for (i = 0; i < vec_size(parser->fields); ++i) {
+        ast_value *field;
+        bool hasvalue;
+        if (!ast_istype(parser->fields[i], ast_value))
+            continue;
+        field = (ast_value*)parser->fields[i];
+        hasvalue = field->hasvalue;
+        field->hasvalue = false;
+        if (!ast_global_codegen((ast_value*)field, ir, true)) {
+            con_out("failed to generate field %s\n", field->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+        if (hasvalue) {
+            ir_value *ifld;
+            ast_expression *subtype;
+            field->hasvalue = true;
+            subtype = field->expression.next;
+            ifld = ir_builder_create_field(ir, field->name, subtype->expression.vtype);
+            if (subtype->expression.vtype == TYPE_FIELD)
+                ifld->fieldtype = subtype->expression.next->expression.vtype;
+            else if (subtype->expression.vtype == TYPE_FUNCTION)
+                ifld->outtype = subtype->expression.next->expression.vtype;
+            (void)!ir_value_set_field(field->ir_v, ifld);
+        }
+    }
+    for (i = 0; i < vec_size(parser->globals); ++i) {
+        ast_value *asvalue;
+        if (!ast_istype(parser->globals[i], ast_value))
+            continue;
+        asvalue = (ast_value*)(parser->globals[i]);
+        if (!asvalue->uses && !asvalue->hasvalue && asvalue->expression.vtype != TYPE_FUNCTION) {
+            retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
+                                           "unused global: `%s`", asvalue->name);
+        }
+        if (!ast_global_codegen(asvalue, ir, false)) {
+            con_out("failed to generate global %s\n", asvalue->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->imm_float); ++i) {
+        if (!ast_global_codegen(parser->imm_float[i], ir, false)) {
+            con_out("failed to generate global %s\n", parser->imm_float[i]->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->imm_string); ++i) {
+        if (!ast_global_codegen(parser->imm_string[i], ir, false)) {
+            con_out("failed to generate global %s\n", parser->imm_string[i]->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->imm_vector); ++i) {
+        if (!ast_global_codegen(parser->imm_vector[i], ir, false)) {
+            con_out("failed to generate global %s\n", parser->imm_vector[i]->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->globals); ++i) {
+        ast_value *asvalue;
+        if (!ast_istype(parser->globals[i], ast_value))
+            continue;
+        asvalue = (ast_value*)(parser->globals[i]);
+        if (!ast_generate_accessors(asvalue, ir)) {
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->fields); ++i) {
+        ast_value *asvalue;
+        asvalue = (ast_value*)(parser->fields[i]->expression.next);
+
+        if (!ast_istype((ast_expression*)asvalue, ast_value))
+            continue;
+        if (asvalue->expression.vtype != TYPE_ARRAY)
+            continue;
+        if (!ast_generate_accessors(asvalue, ir)) {
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->functions); ++i) {
+        if (!ast_function_codegen(parser->functions[i], ir)) {
+            con_out("failed to generate function %s\n", parser->functions[i]->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    if (opts.dump)
+        ir_builder_dump(ir, con_out);
+    for (i = 0; i < vec_size(parser->functions); ++i) {
+        if (!ir_function_finalize(parser->functions[i]->ir_func)) {
+            con_out("failed to finalize function %s\n", parser->functions[i]->name);
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+
+    if (compile_Werrors) {
+        con_out("*** there were warnings treated as errors\n");
+        compile_show_werrors();
+        retval = false;
+    }
+
+    if (retval) {
+        if (opts.dumpfin)
+            ir_builder_dump(ir, con_out);
+
+        generate_checksum(parser);
+
+        if (!ir_builder_generate(ir, output)) {
+            con_out("*** failed to generate output file\n");
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+
+    ir_builder_delete(ir);
+    return retval;
 }

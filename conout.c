@@ -384,6 +384,14 @@ void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ..
 size_t compile_errors = 0;
 size_t compile_warnings = 0;
 
+size_t compile_Werrors = 0;
+static lex_ctx first_werror;
+
+void compile_show_werrors()
+{
+    con_cprintmsg((void*)&first_werror, LVL_ERROR, "first warning", "was here");
+}
+
 void vcompile_error(lex_ctx ctx, const char *msg, va_list ap)
 {
     ++compile_errors;
@@ -400,8 +408,9 @@ void compile_error(lex_ctx ctx, const char *msg, ...)
 
 bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap)
 {
-    int lvl = LVL_WARNING;
-    char warn_name[1024];
+    const char *msgtype = "warning";
+    int         lvl     = LVL_WARNING;
+    char        warn_name[1024];
 
     if (!OPTS_WARN(warntype))
         return false;
@@ -410,16 +419,22 @@ bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_
     warn_name[1] = 'W';
     (void)util_strtononcmd(opts_warn_list[warntype].name, warn_name+2, sizeof(warn_name)-2);
 
+    ++compile_warnings;
     if (OPTS_WERROR(warntype)) {
-        ++compile_errors;
+        if (!compile_Werrors)
+            first_werror = ctx;
+        ++compile_Werrors;
+        msgtype = "Werror";
+        if (OPTS_FLAG(BAIL_ON_WERROR)) {
+            msgtype = "error";
+            ++compile_errors;
+        }
         lvl = LVL_ERROR;
     }
-    else
-        ++compile_warnings;
 
-    con_vprintmsg_c(lvl, ctx.file, ctx.line, ((lvl == LVL_ERROR) ? "error" : "warning"), fmt, ap, warn_name);
+    con_vprintmsg_c(lvl, ctx.file, ctx.line, msgtype, fmt, ap, warn_name);
 
-    return OPTS_WERROR(warntype);
+    return OPTS_WERROR(warntype) && OPTS_FLAG(BAIL_ON_WERROR);
 }
 
 bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
