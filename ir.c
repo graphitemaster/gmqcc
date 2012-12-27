@@ -1021,16 +1021,22 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     if (self->members[member])
         return self->members[member];
 
-    len = strlen(self->name);
-    name = (char*)mem_a(len + 3);
-    memcpy(name, self->name, len);
-    name[len+0] = '_';
-    name[len+1] = 'x' + member;
-    name[len+2] = '\0';
+    if (self->name) {
+        len = strlen(self->name);
+        name = (char*)mem_a(len + 3);
+        memcpy(name, self->name, len);
+        name[len+0] = '_';
+        name[len+1] = 'x' + member;
+        name[len+2] = '\0';
+    }
+    else
+        name = NULL;
+
     if (self->vtype == TYPE_VECTOR)
     {
         m = ir_value_var(name, self->store, TYPE_FLOAT);
-        mem_d(name);
+        if (name)
+            mem_d(name);
         if (!m)
             return NULL;
         m->context = self->context;
@@ -1043,7 +1049,8 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
         if (self->fieldtype != TYPE_VECTOR)
             return NULL;
         m = ir_value_var(name, self->store, TYPE_FIELD);
-        mem_d(name);
+        if (name)
+            mem_d(name);
         if (!m)
             return NULL;
         m->fieldtype = TYPE_FLOAT;
