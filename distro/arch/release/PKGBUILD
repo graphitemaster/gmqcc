@@ -1,5 +1,5 @@
 pkgname=gmqcc
-pkgver=0.2.1
+pkgver=0.2.2
 pkgrel=1
 pkgdesc="An Improved Quake C Compiler"
 arch=('i686' 'x86_64')
@@ -7,9 +7,9 @@ depends=('glibc')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')
 source=(gmqcc-$pkgver.zip::https://github.com/graphitemaster/gmqcc/zipball/$pkgver)
-sha1sums=('a35cf4e0898325b66e9f7014fa3fc961e42f0c9e')
+sha1sums=('8cd91dc13f70cd9d3767602bf3eb47a1906d9353')
 
-_gitname=graphitemaster-gmqcc-bd75e9a/
+_gitname=graphitemaster-gmqcc-de24486/
 
 build() {
 	msg "Starting compilation..."
