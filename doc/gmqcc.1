@@ -365,6 +365,14 @@ instruction on the string before using it.
 Enable utf8 characters. This allows utf-8 encoded character constants,
 and escape sequence codepoints in the valid utf-8 range. Effectively
 enabling escape sequences like '\\{x2211}'.
+.TP
+.B -fbail-on-werror
+When a warning is treated as an error, and this option is set (which
+it is by default), it is like any other error and will cause
+compilation to stop. When disabling this flag by using
+\-fno-bail-on-werror, compilation will continue until the end, but no
+output is generated. Instead the first such error message's context is
+shown.
 .SH OPTIMIZATIONS
 .TP
 .B -Opeephole
