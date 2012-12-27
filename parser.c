@@ -4486,7 +4486,7 @@ skipvar:
                     ast_unref(cval);
                 }
             } else {
-                bool cvq;
+                int cvq;
                 shunt sy = { NULL, NULL };
                 cvq = var->cvq;
                 var->cvq = CV_NONE;
