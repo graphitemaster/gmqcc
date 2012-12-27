@@ -60,8 +60,9 @@ typedef struct {
     /* All the labels the function defined...
      * Should they be in ast_function instead?
      */
-    ast_label **labels;
-    ast_goto  **gotos;
+    ast_label  **labels;
+    ast_goto   **gotos;
+    const char **loops;
 
     /* A list of hashtables for each scope */
     ht *variables;
@@ -2018,7 +2019,58 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
     return true;
 }
 
+static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'while' and get the body */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or 'while' condition in parenthesis");
+        else
+            parseerror(parser, "expected 'while' condition in parenthesis");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected 'while' condition in parenthesis");
+            return false;
+        }
+    }
+
+    if (parser->tok != '(') {
+        parseerror(parser, "expected 'while' condition in parenthesis");
+        return false;
+    }
+
+    vec_push(parser->loops, label);
+
+    rv = parse_while_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->loops) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else
+        vec_pop(parser->loops);
+    return rv;
+}
+
+static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop *aloop;
     ast_expression *cond, *ontrue;
@@ -2070,7 +2122,53 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
     return true;
 }
 
+static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'do' and get the body */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or body");
+        else
+            parseerror(parser, "expected loop body");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected loop body");
+            return false;
+        }
+    }
+
+    vec_push(parser->loops, label);
+
+    rv = parse_dowhile_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->loops) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else
+        vec_pop(parser->loops);
+    return rv;
+}
+
+static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop *aloop;
     ast_expression *cond, *ontrue;
@@ -2081,11 +2179,6 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
 
     (void)block; /* not touching */
 
-    /* skip the 'do' and get the body */
-    if (!parser_next(parser)) {
-        parseerror(parser, "expected loop body");
-        return false;
-    }
     if (!parse_statement_or_block(parser, &ontrue))
         return false;
 
@@ -2146,7 +2239,57 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
     return true;
 }
 
+static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'for' and check for opening paren */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or 'for' expressions in parenthesis");
+        else
+            parseerror(parser, "expected 'for' expressions in parenthesis");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected 'for' expressions in parenthesis");
+            return false;
+        }
+    }
+
+    if (parser->tok != '(') {
+        parseerror(parser, "expected 'for' expressions in parenthesis");
+        return false;
+    }
+
+    vec_push(parser->loops, label);
+
+    rv = parse_for_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->loops) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else
+        vec_pop(parser->loops);
+    return rv;
+}
+static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop       *aloop;
     ast_expression *initexpr, *cond, *increment, *ontrue;
@@ -2164,11 +2307,6 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
     increment = NULL;
     ontrue    = NULL;
 
-    /* skip the 'while' and check for opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected 'for' expressions in parenthesis");
-        goto onerr;
-    }
     /* parse into the expression */
     if (!parser_next(parser)) {
         parseerror(parser, "expected 'for' initializer after opening paren");
@@ -2311,11 +2449,38 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
 static bool parse_break_continue(parser_t *parser, ast_block *block, ast_expression **out, bool is_continue)
 {
+    size_t i;
+    unsigned int levels = 0;
     lex_ctx ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected semicolon or loop label");
+        return false;
+    }
 
-    if (!parser_next(parser) || parser->tok != ';') {
+    if (parser->tok == TOKEN_IDENT) {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        i = vec_size(parser->loops);
+        while (i--) {
+            if (parser->loops[i] && !strcmp(parser->loops[i], parser_tokval(parser)))
+                break;
+            if (!i) {
+                parseerror(parser, "no such loop to %s: `%s`",
+                           (is_continue ? "continue" : "break out of"),
+                           parser_tokval(parser));
+                return false;
+            }
+            ++levels;
+        }
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected semicolon");
+            return false;
+        }
+    }
+
+    if (parser->tok != ';') {
         parseerror(parser, "expected semicolon");
         return false;
     }
@@ -2323,7 +2488,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     if (!parser_next(parser))
         parseerror(parser, "parse error");
 
-    *out = (ast_expression*)ast_breakcont_new(ctx, is_continue);
+    *out = (ast_expression*)ast_breakcont_new(ctx, is_continue, levels);
     return true;
 }
 

@@ -474,9 +474,10 @@ bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
 struct ast_breakcont_s
 {
     ast_expression_common expression;
-    bool is_continue;
+    bool         is_continue;
+    unsigned int levels;
 };
-ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont);
+ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont, unsigned int levels);
 void ast_breakcont_delete(ast_breakcont*);
 
 bool ast_breakcont_codegen(ast_breakcont*, ast_function*, bool lvalue, ir_value**);

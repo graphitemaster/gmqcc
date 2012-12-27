@@ -764,12 +764,13 @@ void ast_loop_delete(ast_loop *self)
     mem_d(self);
 }
 
-ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont)
+ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont, unsigned int levels)
 {
     ast_instantiate(ast_breakcont, ctx, ast_breakcont_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_breakcont_codegen);
 
     self->is_continue = iscont;
+    self->levels      = levels;
 
     return self;
 }
