@@ -272,6 +272,8 @@ bool code_write(const char *filename, const char *lnofile) {
     vec_free(code_functions);
     vec_free(code_globals);
     vec_free(code_chars);
+    util_htdel(code_string_cache);
+
     file_close(fp);
     return true;
 }
