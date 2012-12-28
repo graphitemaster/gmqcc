@@ -74,8 +74,6 @@
 #   endif /* !__STDC_VERSION__ */
 #endif    /* !__cplusplus      */
 
-
-
 /*
  * Of some functions which are generated we want to make sure
  * that the result isn't ignored. To find such function calls,

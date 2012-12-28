@@ -9,7 +9,7 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -I. -pedantic-errors -fno-strict-aliasing -fsigned-char
+CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
@@ -22,7 +22,16 @@ ifeq ($(CC), clang)
 		-Wno-missing-prototypes       \
 		-Wno-float-equal              \
 		-Wno-cast-align
+else
+	#Tiny C Compiler doesn't know what -pedantic-errors is
+	# and instead of ignoring .. just errors.
+	ifneq ($(CC), tcc)
+		CFLAGS +=-pedantic-errors
+	else
+		CFLAGS += -Wno-pointer-sign -fno-common
+	endif
 endif
+
 ifeq ($(track), no)
     CFLAGS += -DNOTRACK
 endif
