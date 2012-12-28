@@ -95,7 +95,7 @@ typedef struct
     bool             side_effects;
 } ast_node_common;
 
-#define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
+#define ast_delete(x) (*( ((ast_node*)(x))->node.destroy ))((ast_node*)(x))
 #define ast_unref(x) do                     \
 {                                           \
     if (! (((ast_node*)(x))->node.keep) ) { \
