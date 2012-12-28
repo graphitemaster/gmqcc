@@ -238,39 +238,43 @@
                     </tr>
                     <tr>
                         <td>-fcorrect-ternary</td>
-                        <td></td>
+                        <td>Enabling this corrects the ternary percedecce bugs present in fteqcc</td>
+                    </tr>
+                    <tr>
+                        <td>-fsingle-vector-defs</td>
+                        <td>Prevents the creation of progdefs for vectors</td>
                     </tr>
                     <tr>
                         <td>-fcorrect-logic</td>
-                        <td></td>
+                        <td>Use cast vector to real booleans when used in logic expressions</td>
                     </tr>
                     <tr>
                         <td>-ftrue-empty-strings</td>
-                        <td></td>
+                        <td>Always treat empty strings as true</td>
                     </tr>
                     <tr>
                         <td>-ffalse-empty-strings</td>
-                        <td></td>
+                        <td>Opposite of above, empty strings always false</td>
                     </tr>
                     <tr>
                         <td>-futf8</td>
-                        <td></td>
+                        <td>Recognize utf-8 characters in character constants, and encode codepoint escape sequences in strings as utf-8</td>
                     </tr>
                     <tr>
                         <td>-fbail-on-werror</td>
-                        <td></td>
+                        <td>When a warning is printed and it is set to be treated as error via -Werror, compilation will be stopped.</td>
                     </tr>
                     <tr>
                         <td>-floop-labels</td>
-                        <td></td>
+                        <td>Allow loops and switches to be labeled and break and continue to take optional label to target it.</td>
                     </tr>
                     <tr>
                         <td>-funtyped-nil</td>
-                        <td></td>
+                        <td>Enable the 'nil' null constant, which has no type.  It can be used as the right hand of any assignment.</td>
                     </tr>
                     <tr>
                         <td>-fpermissive</td>
-                        <td></td>
+                        <td>Be "permissive", e.g with -funtyped-nil, this will allow local variables with the name 'nil'</td>
                     </tr>
                 </table>
                 <h3>Warning options</h3>
@@ -369,42 +373,42 @@
                     </tr>
                     <tr>
                         <td>-Wunreachable-code</td>
-                        <td></td>
+                        <td>Enables warnings about unreachable code</td>
                     </tr>
                     <tr>
                         <td>-Wcpp</td>
-                        <td></td>
+                        <td>Enables warnings about the preprocessor</td>
                     </tr>
                     <tr>
                         <td>Wunknown-attribute</td>
-                        <td></td>
+                        <td>Enables warnings for when an unknown attribute is encountered.</td>
                     </tr>
                     <tr>
                         <td>-Wreserved-names</td>
-                        <td></td>
+                        <td>Enables warnings for variables or fields that are named with a reserved name</td>
                     </tr>
                     <tr>
                         <td>-Wuninitialized-constant</td>
-                        <td></td>
+                        <td>Enables warnings about const global variables with no initializing value</td>
                     </tr>
                     <tr>
                         <td>-Wuninitialized-global</td>
-                        <td></td>
+                        <td>Enables warnings about non-const gloal variable with no initializing value</td>
                     </tr>
                 </table>
                 <table border="0">
                     <tr><td>Options</td><td>What it does</td></tr>
                     <tr>
                         <td>-Opeephole</td>
-                        <td></td>
+                        <td>Enables peephole optimizations</td>
                     </tr>
                     <tr>
                         <td>-Olocal-temps</td>
-                        <td></td>
+                        <td>Enables local-temp omission optimizations</td>
                     </tr>
                     <tr>
                         <td>-Oglobal-temps</td>
-                        <td></td>
+                        <td>Enables global-temp omission optimizations</td>
                     </tr>
                     <tr>
                         <td>-Otail-recursion</td>
@@ -412,27 +416,35 @@
                     </tr>
                     <tr>
                         <td>-Otail-calls</td>
-                        <td></td>
+                        <td>Enables tail-call optimizations</td>
                     </tr>
                     <tr>
                         <td>-Ooverlap-locals</td>
-                        <td></td>
+                        <td>
+                            Every function where it's safe to do so will share its local
+                            section with others.  The critera being that the function must
+                            have any possibly uninitialized locals, or local arrays regardless
+                            of how they are initialized.
+                        </td>
                     </tr>
                     <tr>
                         <td>-Ostrip-constant-names</td>
-                        <td></td>
+                        <td>Strip the names of constants</td>
                     </tr>
                     <tr>
                         <td>-Ooverlap-strings</td>
-                        <td></td>
+                        <td>Agressivly reuse strings in the string-section.</td>
                     </tr>
                     <tr>
                         <td>-Ocall-stores</td>
-                        <td></td>
+                        <td>
+                            Have expressions which are used as function parameters evaluate directly
+                            into the parameter-globals is possible.  This avoids copying.
+                        </td>
                     </tr>
                     <tr>
                         <td>-Ovoid-return</td>
-                        <td></td>
+                        <td>Do not create a return instruction at the end of return-type void functions</td>
                     </tr>
                 </table>
                 <p>
@@ -649,6 +661,9 @@ $ cd gmqcc
                                    This simply performs compilation only</li>
                                <li>-execute&nbsp;
                                    This will perform compilation and execution</li>
+                               <li>-fail&nbsp;
+                                   This will perform compilation on the requirement it fails, otherwise
+                                   the test fails</li>
                             </ul>
                   
                            This tag must be provided, this tag is NOT optional.
