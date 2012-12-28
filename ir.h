@@ -22,7 +22,7 @@
  */
 #ifndef GMQCC_IR_HDR
 #define GMQCC_IR_HDR
-
+#include "gmqcc.h"
 /* ir_value */
 
 typedef struct
@@ -322,7 +322,9 @@ typedef struct ir_builder_s
     const char **filenames;
     qcint       *filestrings;
     /* we cache the #IMMEDIATE string here */
-    qcint str_immediate;
+    qcint        str_immediate;
+    /* there should just be this one nil */
+    ir_value    *nil;
 } ir_builder;
 
 ir_builder* ir_builder_new(const char *modulename);

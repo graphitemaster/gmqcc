@@ -158,7 +158,11 @@ static bool options_parse(int argc, char **argv) {
             if (options_long_gcc("std", &argc, &argv, &argarg)) {
                 if (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default")) {
 
-                    opts_set(opts.flags, ADJUST_VECTOR_FIELDS,  true);
+                    opts_set(opts.flags, ADJUST_VECTOR_FIELDS, true);
+                    opts_set(opts.flags, CORRECT_LOGIC,        true);
+                    opts_set(opts.flags, FALSE_EMPTY_STRINGS,  false);
+                    opts_set(opts.flags, TRUE_EMPTY_STRINGS,   true);
+                    opts_set(opts.flags, LOOP_LABELS,          true);
                     opts.standard = COMPILER_GMQCC;
 
                 } else if (!strcmp(argarg, "qcc")) {
@@ -523,7 +527,7 @@ int main(int argc, char **argv) {
 
     if (OPTS_FLAG(TRUE_EMPTY_STRINGS) && OPTS_FLAG(FALSE_EMPTY_STRINGS)) {
         con_err("-ftrue-empty-strings and -ffalse-empty-strings are mutually exclusive");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     /* the standard decides which set of operators to use */
@@ -546,7 +550,7 @@ int main(int argc, char **argv) {
                 operators[operator_count-1].id != opid2(':','?'))
             {
                 con_err("internal error: operator precedence table wasn't updated correctly!\n");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             operators_free = true;
             newops = (oper_info*)mem_a(sizeof(operators[0]) * operator_count);

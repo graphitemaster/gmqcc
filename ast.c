@@ -764,12 +764,13 @@ void ast_loop_delete(ast_loop *self)
     mem_d(self);
 }
 
-ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont)
+ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont, unsigned int levels)
 {
     ast_instantiate(ast_breakcont, ctx, ast_breakcont_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_breakcont_codegen);
 
     self->is_continue = iscont;
+    self->levels      = levels;
 
     return self;
 }
@@ -1025,8 +1026,8 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->ir_func = NULL;
     self->curblock = NULL;
 
-    self->breakblock    = NULL;
-    self->continueblock = NULL;
+    self->breakblocks    = NULL;
+    self->continueblocks = NULL;
 
     vtype->hasvalue = true;
     vtype->constval.vfunc = self;
@@ -1051,6 +1052,8 @@ void ast_function_delete(ast_function *self)
     for (i = 0; i < vec_size(self->blocks); ++i)
         ast_delete(self->blocks[i]);
     vec_free(self->blocks);
+    vec_free(self->breakblocks);
+    vec_free(self->continueblocks);
     mem_d(self);
 }
 
@@ -1098,6 +1101,10 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 {
     (void)func;
     (void)lvalue;
+    if (self->expression.vtype == TYPE_NIL) {
+        *out = func->ir_func->owner->nil;
+        return true;
+    }
     /* NOTE: This is the codegen for a variable used in an expression.
      * It is not the codegen to generate the value. For this purpose,
      * ast_local_codegen and ast_global_codegen are to be used before this
@@ -1118,6 +1125,11 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
+
+    if (self->expression.vtype == TYPE_NIL) {
+        compile_error(ast_ctx(self), "internal error: trying to generate a variable of TYPE_NIL");
+        return false;
+    }
 
     if (self->hasvalue && self->expression.vtype == TYPE_FUNCTION)
     {
@@ -1313,6 +1325,12 @@ error: /* clean up */
 bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
+
+    if (self->expression.vtype == TYPE_NIL) {
+        compile_error(ast_ctx(self), "internal error: trying to generate a variable of TYPE_NIL");
+        return false;
+    }
+
     if (self->hasvalue && self->expression.vtype == TYPE_FUNCTION)
     {
         /* Do we allow local functions? I think not...
@@ -2406,9 +2424,6 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     ir_block *bcontinue     = NULL;
     ir_block *bbreak        = NULL;
 
-    ir_block *old_bcontinue = NULL;
-    ir_block *old_bbreak    = NULL;
-
     ir_block *tmpblock      = NULL;
 
     (void)lvalue;
@@ -2501,12 +2516,11 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         /* enter */
         func->curblock = bbody;
 
-        old_bbreak          = func->breakblock;
-        old_bcontinue       = func->continueblock;
-        func->breakblock    = bbreak;
-        func->continueblock = bcontinue;
-        if (!func->continueblock)
-            func->continueblock = bbody;
+        vec_push(func->breakblocks,    bbreak);
+        if (bcontinue)
+            vec_push(func->continueblocks, bcontinue);
+        else
+            vec_push(func->continueblocks, bbody);
 
         /* generate */
         if (self->body) {
@@ -2516,8 +2530,8 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         }
 
         end_bbody = func->curblock;
-        func->breakblock    = old_bbreak;
-        func->continueblock = old_bcontinue;
+        vec_pop(func->breakblocks);
+        vec_pop(func->continueblocks);
     }
 
     /* post-loop-condition */
@@ -2643,9 +2657,9 @@ bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue,
     self->expression.outr = (ir_value*)1;
 
     if (self->is_continue)
-        target = func->continueblock;
+        target = func->continueblocks[vec_size(func->continueblocks)-1-self->levels];
     else
-        target = func->breakblock;
+        target = func->breakblocks[vec_size(func->breakblocks)-1-self->levels];
 
     if (!target) {
         compile_error(ast_ctx(self), "%s is lacking a target block", (self->is_continue ? "continue" : "break"));
@@ -2668,7 +2682,6 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 
     ir_value *dummy     = NULL;
     ir_value *irop      = NULL;
-    ir_block *old_break = NULL;
     ir_block *bout      = NULL;
     ir_block *bfall     = NULL;
     size_t    bout_id;
@@ -2711,8 +2724,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         return false;
 
     /* setup the break block */
-    old_break        = func->breakblock;
-    func->breakblock = bout;
+    vec_push(func->breakblocks, bout);
 
     /* Now create all cases */
     for (c = 0; c < vec_size(self->cases); ++c) {
@@ -2817,7 +2829,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     func->curblock = bout;
 
     /* restore the break block */
-    func->breakblock = old_break;
+    vec_pop(func->breakblocks);
 
     /* Move 'bout' to the end, it's nicer */
     vec_remove(func->ir_func->blocks, bout_id, 1);

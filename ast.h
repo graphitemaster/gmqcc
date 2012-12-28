@@ -95,7 +95,7 @@ typedef struct
     bool             side_effects;
 } ast_node_common;
 
-#define ast_delete(x) ( ( (ast_node*)(x) ) -> node.destroy )((ast_node*)(x))
+#define ast_delete(x) (*( ((ast_node*)(x))->node.destroy ))((ast_node*)(x))
 #define ast_unref(x) do                     \
 {                                           \
     if (! (((ast_node*)(x))->node.keep) ) { \
@@ -142,6 +142,7 @@ typedef struct
 } ast_expression_common;
 #define AST_FLAG_VARIADIC     (1<<0)
 #define AST_FLAG_NORETURN     (1<<1)
+#define AST_FLAG_INLINE       (1<<2)
 
 /* Value
  *
@@ -474,9 +475,10 @@ bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
 struct ast_breakcont_s
 {
     ast_expression_common expression;
-    bool is_continue;
+    bool         is_continue;
+    unsigned int levels;
 };
-ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont);
+ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont, unsigned int levels);
 void ast_breakcont_delete(ast_breakcont*);
 
 bool ast_breakcont_codegen(ast_breakcont*, ast_function*, bool lvalue, ir_value**);
@@ -607,8 +609,8 @@ struct ast_function_s
 
     ir_function *ir_func;
     ir_block    *curblock;
-    ir_block    *breakblock;
-    ir_block    *continueblock;
+    ir_block    **breakblocks;
+    ir_block    **continueblocks;
 
 #if 0
     /* In order for early-out logic not to go over

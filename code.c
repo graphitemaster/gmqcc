@@ -53,7 +53,7 @@ void code_pop_statement()
 }
 
 void code_init() {
-    prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
+    prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0,0,0,0,0,0,0,0}};
     prog_section_statement empty_statement = {0,{0},{0},{0}};
     prog_section_def       empty_def       = {0, 0, 0};
     int                    i               = 0;
@@ -272,6 +272,8 @@ bool code_write(const char *filename, const char *lnofile) {
     vec_free(code_functions);
     vec_free(code_globals);
     vec_free(code_chars);
+    util_htdel(code_string_cache);
+
     file_close(fp);
     return true;
 }

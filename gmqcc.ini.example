@@ -58,6 +58,47 @@
     # Enabling this corrects ternary percedence bugs present in fteqcc.
     CORRECT_TERNARY              = true
 
+    # Prevent the creation of _x, _y and _z progdefs for vectors
+    SINGLE_VECTOR_DEFS           = false
+
+    # Cast vectors to real booleans when used in logic expressions.
+    # This is achieved by using NOT_V.
+    CORRECT_LOGIC                = false
+
+    # Always treat empty strings as true. Usuall !"" yields true, because
+    # the string-NOT instruction considers empty strings to be false, while
+    # an empty string as condition for 'if' will be considered true, since
+    # only the numerical value of the global is looked at.
+    TRUE_EMPTY_STRINGS           = false
+
+    # Opposite of the above, empty strings are always false. Similar to
+    # CORRECT_LOGIC this will always use NOT_S to cast a string to a real
+    # boolean value.
+    FALSE_EMPTY_STRINGS          = false
+
+    # Recognize utf-8 characters in character constants, and encode
+    # codepoint escape sequences in strings as utf-8. This essentially allows
+    # \{1234} escape sequences to be higher than 255.
+    UTF8
+
+    # When a warning is printed and it is set to be treated as error via
+    # a -Werror switch, compilation will be stopped, unless this is false.
+    # When this is false, the rest of the code will be compiled, and at the end
+    # the file and line of the first warning will be shown.
+    BAIL_ON_WERROR               = true
+
+    # Allow loops and switches to be labeled and break and continue to take an
+    # optional label to target a specific loop/switch.
+    LOOP_LABELS                  = false
+
+    # Enable the 'nil' null constant, which has no type. It can be used as the
+    # right hand of any assignment regardless of the required type.
+    UNTYPED_NIL                  = false
+
+    # Be "permissive". For instance, when -funtyped-nil is used, this allows local
+    # variables with the name 'nil' to be declared.
+    PREMISSIVE                   = false
+
 # These are all the warnings, usually present via the -W prefix from
 # the command line.
 [warnings]
@@ -143,6 +184,20 @@
     # Enables preprocessor "#warnings"
     CPP                          = true
 
+    # With the [[attribute]] syntax enabled, warn when an unknown
+    # attribute is encountered. Its first token will be included in the
+    # message.
+    UNKNOWN_ATTRIBUTE            = true
+
+    # Warn when declaring variables or fields with a reserved name like 'nil'
+    RESERVED_NAMES               = true
+
+    # Warn about 'const'-qualified global variables with no initializing value.
+    UNINITIALIZED_CONSTANT       = true
+
+    # Warn about non-constant global variables with no initializing value.
+    UNINITIALIZED_GLOBAL         = true
+
 # Finally these are all the optimizations, usually present via the -O
 # prefix from the command line.
 [optimizations]
@@ -155,5 +210,25 @@
     # Enables tail recrusion optimizationd.
     TAIL_RECURSION               = true
 
-    # Enables tail-call optimizations.
+    # Enables tail-call optimizations. (Not implemented)
     TAIL_CALLS                   = true
+
+    # Every function where it is safe to do so will share its local data section
+    # with the others. The criteria are currently that the function must not have
+    # any possibly uninitialized locals, or local arrays regardless of how they
+    # are initialized.
+    OVERLAP_LOCALS               = false
+
+    # Strip out the names of constants to save some space in the progs.dat
+    STRIP_CONSTANT_NAMES         = true
+
+    # Aggressivly reuse strings in the string-section
+    OVERLAP_STRINGS              = true
+
+    # Have expressions which are used as function parameters evaluate directly
+    # into the parameter-globals if possible.
+    # This avoids a whole lot of copying.
+    CALL_STORES                  = true
+
+    # Do not create a RETURN instruction at the end functions of return-type void.
+    VOID_RETURN                  = true

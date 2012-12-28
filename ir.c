@@ -42,7 +42,9 @@ const char *type_name[TYPE_COUNT] = {
     "variant",
     "struct",
     "union",
-    "array"
+    "array",
+
+    "nil"
 };
 
 size_t type_sizeof_[TYPE_COUNT] = {
@@ -59,6 +61,7 @@ size_t type_sizeof_[TYPE_COUNT] = {
     0, /* TYPE_STRUCT   */
     0, /* TYPE_UNION    */
     0, /* TYPE_ARRAY    */
+    0, /* TYPE_NIL      */
 };
 
 uint16_t type_store_instr[TYPE_COUNT] = {
@@ -81,6 +84,7 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     AINSTR_END, /* struct */
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
+    AINSTR_END, /* nil    */
 };
 
 uint16_t field_store_instr[TYPE_COUNT] = {
@@ -103,6 +107,7 @@ uint16_t field_store_instr[TYPE_COUNT] = {
     AINSTR_END, /* struct */
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
+    AINSTR_END, /* nil    */
 };
 
 uint16_t type_storep_instr[TYPE_COUNT] = {
@@ -125,6 +130,7 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
     AINSTR_END, /* struct */
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
+    AINSTR_END, /* nil    */
 };
 
 uint16_t type_eq_instr[TYPE_COUNT] = {
@@ -147,6 +153,7 @@ uint16_t type_eq_instr[TYPE_COUNT] = {
     AINSTR_END, /* struct */
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
+    AINSTR_END, /* nil    */
 };
 
 uint16_t type_ne_instr[TYPE_COUNT] = {
@@ -169,6 +176,7 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
     AINSTR_END, /* struct */
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
+    AINSTR_END, /* nil    */
 };
 
 uint16_t type_not_instr[TYPE_COUNT] = {
@@ -191,6 +199,7 @@ uint16_t type_not_instr[TYPE_COUNT] = {
     AINSTR_END, /* struct */
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
+    AINSTR_END, /* nil    */
 };
 
 /* protos */
@@ -300,6 +309,9 @@ ir_builder* ir_builder_new(const char *modulename)
         return NULL;
     }
 
+    self->nil = ir_value_var("nil", store_value, TYPE_NIL);
+    self->nil->cvq = CV_CONST;
+
     return self;
 }
 
@@ -325,6 +337,7 @@ void ir_builder_delete(ir_builder* self)
     for (i = 0; i != vec_size(self->fields); ++i) {
         ir_value_delete(self->fields[i]);
     }
+    ir_value_delete(self->nil);
     vec_free(self->fields);
     vec_free(self->filenames);
     vec_free(self->filestrings);
@@ -2481,7 +2494,9 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     size_t i, o, p, mem;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
-    char dbg_ind[16] = { '#', '0' };
+    char dbg_ind[16];
+    dbg_ind[0] = '#';
+    dbg_ind[1] = '0';
     (void)dbg_ind;
 
     if (prev)

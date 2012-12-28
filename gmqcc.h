@@ -46,8 +46,12 @@
 #define GMQCC_VERSION \
     GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
 
+#ifndef GMQCC_GITINFO
+# define GMQCC_GITINFO "(no git info)"
+#endif
+
 /*
- * We cannoy rely on C99 at all, since compilers like MSVC
+ * We cannot rely on C99 at all, since compilers like MSVC
  * simply don't support it.  We define our own boolean type
  * as a result (since we cannot include <stdbool.h>). For
  * compilers that are in 1999 mode (C99 compliant) we can use
@@ -73,8 +77,6 @@
         typedef int bool;
 #   endif /* !__STDC_VERSION__ */
 #endif    /* !__cplusplus      */
-
-
 
 /*
  * Of some functions which are generated we want to make sure
@@ -263,6 +265,10 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 void     util_seed(uint32_t);
 uint32_t util_rand();
 
+int util_vasprintf(char **ret, const char *fmt, va_list);
+int util_asprintf (char **ret, const char *fmt, ...);
+
+
 #ifdef NOTRACK
 #    define mem_a(x)    malloc (x)
 #    define mem_d(x)    free   ((void*)x)
@@ -389,6 +395,8 @@ enum {
     TYPE_STRUCT   ,
     TYPE_UNION    ,
     TYPE_ARRAY    ,
+
+    TYPE_NIL      , /* it's its own type / untyped */
 
     TYPE_COUNT
 };

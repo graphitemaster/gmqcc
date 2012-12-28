@@ -359,7 +359,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
 done:
     if (len < (int)sizeof(spaces)-1) {
         spaces[sizeof(spaces)-1-len] = 0;
-        printf(spaces);
+        file_puts(stdout, spaces);
         spaces[sizeof(spaces)-1-len] = ' ';
     }
 }

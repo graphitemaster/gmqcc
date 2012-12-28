@@ -51,6 +51,7 @@ typedef struct {
     ast_value *imm_float_zero;
     ast_value *imm_float_one;
     ast_value *imm_vector_zero;
+    ast_value *nil;
 
     size_t crc_globals;
     size_t crc_fields;
@@ -60,8 +61,10 @@ typedef struct {
     /* All the labels the function defined...
      * Should they be in ast_function instead?
      */
-    ast_label **labels;
-    ast_goto  **gotos;
+    ast_label  **labels;
+    ast_goto   **gotos;
+    const char **breaks;
+    const char **continues;
 
     /* A list of hashtables for each scope */
     ht *variables;
@@ -101,7 +104,7 @@ static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool noreturn, bool is_static);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags);
 static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
@@ -757,10 +760,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid1('*'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype &&
-                exprs[0]->expression.vtype != TYPE_VECTOR &&
-                exprs[0]->expression.vtype != TYPE_FLOAT &&
-                exprs[1]->expression.vtype != TYPE_VECTOR &&
-                exprs[1]->expression.vtype != TYPE_FLOAT)
+                !(exprs[0]->expression.vtype == TYPE_VECTOR &&
+                  exprs[1]->expression.vtype == TYPE_FLOAT) &&
+                !(exprs[1]->expression.vtype == TYPE_VECTOR &&
+                  exprs[0]->expression.vtype == TYPE_FLOAT)
+                )
             {
                 parseerror(parser, "invalid types used in expression: cannot multiply types %s and %s",
                            type_name[exprs[1]->expression.vtype],
@@ -1011,7 +1015,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
-                else if (!ast_compare_type(exprs[0], exprs[1])) {
+                else if (exprs[1]->expression.vtype != TYPE_NIL &&
+                         !ast_compare_type(exprs[0], exprs[1]))
+                {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (OPTS_FLAG(ASSIGN_FUNCTION_TYPES) &&
@@ -1663,7 +1669,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             const oper_info *olast = NULL;
             size_t o;
             for (o = 0; o < operator_count; ++o) {
-                if ((!(operators[o].flags & OP_PREFIX) == wantop) &&
+                if (((!(operators[o].flags & OP_PREFIX) == !!wantop)) &&
                     /* !(operators[o].flags & OP_SUFFIX) && / * remove this */
                     !strcmp(parser_tokval(parser), operators[o].op))
                 {
@@ -2018,7 +2024,61 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
     return true;
 }
 
+static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'while' and get the body */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or 'while' condition in parenthesis");
+        else
+            parseerror(parser, "expected 'while' condition in parenthesis");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected 'while' condition in parenthesis");
+            return false;
+        }
+    }
+
+    if (parser->tok != '(') {
+        parseerror(parser, "expected 'while' condition in parenthesis");
+        return false;
+    }
+
+    vec_push(parser->breaks, label);
+    vec_push(parser->continues, label);
+
+    rv = parse_while_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else {
+        vec_pop(parser->breaks);
+        vec_pop(parser->continues);
+    }
+    return rv;
+}
+
+static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop *aloop;
     ast_expression *cond, *ontrue;
@@ -2029,11 +2089,6 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
 
     (void)block; /* not touching */
 
-    /* skip the 'while' and check for opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected 'while' condition in parenthesis");
-        return false;
-    }
     /* parse into the expression */
     if (!parser_next(parser)) {
         parseerror(parser, "expected 'while' condition after opening paren");
@@ -2070,7 +2125,56 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
     return true;
 }
 
+static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'do' and get the body */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or body");
+        else
+            parseerror(parser, "expected loop body");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected loop body");
+            return false;
+        }
+    }
+
+    vec_push(parser->breaks, label);
+    vec_push(parser->continues, label);
+
+    rv = parse_dowhile_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else {
+        vec_pop(parser->breaks);
+        vec_pop(parser->continues);
+    }
+    return rv;
+}
+
+static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop *aloop;
     ast_expression *cond, *ontrue;
@@ -2081,11 +2185,6 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
 
     (void)block; /* not touching */
 
-    /* skip the 'do' and get the body */
-    if (!parser_next(parser)) {
-        parseerror(parser, "expected loop body");
-        return false;
-    }
     if (!parse_statement_or_block(parser, &ontrue))
         return false;
 
@@ -2146,7 +2245,60 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
     return true;
 }
 
+static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'for' and check for opening paren */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or 'for' expressions in parenthesis");
+        else
+            parseerror(parser, "expected 'for' expressions in parenthesis");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected 'for' expressions in parenthesis");
+            return false;
+        }
+    }
+
+    if (parser->tok != '(') {
+        parseerror(parser, "expected 'for' expressions in parenthesis");
+        return false;
+    }
+
+    vec_push(parser->breaks, label);
+    vec_push(parser->continues, label);
+
+    rv = parse_for_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else {
+        vec_pop(parser->breaks);
+        vec_pop(parser->continues);
+    }
+    return rv;
+}
+static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_loop       *aloop;
     ast_expression *initexpr, *cond, *increment, *ontrue;
@@ -2164,11 +2316,6 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
     increment = NULL;
     ontrue    = NULL;
 
-    /* skip the 'while' and check for opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected 'for' expressions in parenthesis");
-        goto onerr;
-    }
     /* parse into the expression */
     if (!parser_next(parser)) {
         parseerror(parser, "expected 'for' initializer after opening paren");
@@ -2185,7 +2332,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
         }
-        if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, false))
+        if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, 0))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2311,11 +2458,39 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
 static bool parse_break_continue(parser_t *parser, ast_block *block, ast_expression **out, bool is_continue)
 {
-    lex_ctx ctx = parser_ctx(parser);
+    size_t       i;
+    unsigned int levels = 0;
+    lex_ctx      ctx = parser_ctx(parser);
+    const char **loops = (is_continue ? parser->continues : parser->breaks);
 
     (void)block; /* not touching */
+    if (!parser_next(parser)) {
+        parseerror(parser, "expected semicolon or loop label");
+        return false;
+    }
 
-    if (!parser_next(parser) || parser->tok != ';') {
+    if (parser->tok == TOKEN_IDENT) {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        i = vec_size(loops);
+        while (i--) {
+            if (loops[i] && !strcmp(loops[i], parser_tokval(parser)))
+                break;
+            if (!i) {
+                parseerror(parser, "no such loop to %s: `%s`",
+                           (is_continue ? "continue" : "break out of"),
+                           parser_tokval(parser));
+                return false;
+            }
+            ++levels;
+        }
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected semicolon");
+            return false;
+        }
+    }
+
+    if (parser->tok != ';') {
         parseerror(parser, "expected semicolon");
         return false;
     }
@@ -2323,21 +2498,21 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     if (!parser_next(parser))
         parseerror(parser, "parse error");
 
-    *out = (ast_expression*)ast_breakcont_new(ctx, is_continue);
+    *out = (ast_expression*)ast_breakcont_new(ctx, is_continue, levels);
     return true;
 }
 
 /* returns true when it was a variable qualifier, false otherwise!
  * on error, cvq is set to CV_WRONG
  */
-static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *noreturn, bool *is_static)
+static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *is_static, uint32_t *_flags)
 {
     bool had_const    = false;
     bool had_var      = false;
     bool had_noref    = false;
-    bool had_noreturn = false;
     bool had_attrib   = false;
     bool had_static   = false;
+    uint32_t flags    = 0;
 
     *cvq = CV_NONE;
     for (;;) {
@@ -2350,7 +2525,7 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
                 return false;
             }
             if (!strcmp(parser_tokval(parser), "noreturn")) {
-                had_noreturn = true;
+                flags |= AST_FLAG_NORETURN;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noreturn` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
@@ -2359,6 +2534,14 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             }
             else if (!strcmp(parser_tokval(parser), "noref")) {
                 had_noref = true;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
+            else if (!strcmp(parser_tokval(parser), "inline")) {
+                flags |= AST_FLAG_INLINE;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
@@ -2388,7 +2571,7 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
-        else if (!had_const && !had_var && !had_noref && !had_noreturn && !had_attrib && !had_static) {
+        else if (!had_const && !had_var && !had_noref && !had_attrib && !had_static && !flags) {
             return false;
         }
         else
@@ -2403,8 +2586,8 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
     else
         *cvq = CV_NONE;
     *noref     = had_noref;
-    *noreturn  = had_noreturn;
     *is_static = had_static;
+    *_flags    = flags;
     return true;
 onerr:
     parseerror(parser, "parse error after variable qualifier");
@@ -2412,7 +2595,59 @@ onerr:
     return true;
 }
 
+static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression **out);
 static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **out)
+{
+    bool rv;
+    char *label = NULL;
+
+    /* skip the 'while' and get the body */
+    if (!parser_next(parser)) {
+        if (OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "expected loop label or 'switch' operand in parenthesis");
+        else
+            parseerror(parser, "expected 'switch' operand in parenthesis");
+        return false;
+    }
+
+    if (parser->tok == ':') {
+        if (!OPTS_FLAG(LOOP_LABELS))
+            parseerror(parser, "labeled loops not activated, try using -floop-labels");
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            parseerror(parser, "expected loop label");
+            return false;
+        }
+        label = util_strdup(parser_tokval(parser));
+        if (!parser_next(parser)) {
+            mem_d(label);
+            parseerror(parser, "expected 'switch' operand in parenthesis");
+            return false;
+        }
+    }
+
+    if (parser->tok != '(') {
+        parseerror(parser, "expected 'switch' operand in parenthesis");
+        return false;
+    }
+
+    vec_push(parser->breaks, label);
+
+    rv = parse_switch_go(parser, block, out);
+    if (label)
+        mem_d(label);
+    if (vec_last(parser->breaks) != label) {
+        parseerror(parser, "internal error: label stack corrupted");
+        rv = false;
+        ast_delete(*out);
+        *out = NULL;
+    }
+    else {
+        vec_pop(parser->breaks);
+    }
+    return rv;
+}
+
+static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression **out)
 {
     ast_expression *operand;
     ast_value      *opval;
@@ -2421,18 +2656,13 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     ast_switch_case swcase;
 
     int  cvq;
-    bool noref, noreturn, is_static;
+    bool noref, is_static;
+    uint32_t qflags = 0;
 
     lex_ctx ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
     (void)opval;
-
-    /* parse over the opening paren */
-    if (!parser_next(parser) || parser->tok != '(') {
-        parseerror(parser, "expected switch operand in parenthesis");
-        return false;
-    }
 
     /* parse into the expression */
     if (!parser_next(parser)) {
@@ -2473,19 +2703,19 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
         if (parser->tok == TOKEN_IDENT)
             typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (typevar || parser->tok == TOKEN_TYPENAME) {
-            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, false)) {
+            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0)) {
                 ast_delete(switchnode);
                 return false;
             }
             continue;
         }
-        if (parse_var_qualifiers(parser, true, &cvq, &noref, &noreturn, &is_static))
+        if (parse_qualifiers(parser, true, &cvq, &noref, &is_static, &qflags))
         {
             if (cvq == CV_WRONG) {
                 ast_delete(switchnode);
                 return false;
             }
-            if (!parse_variable(parser, block, false, cvq, NULL, noref, noreturn, is_static)) {
+            if (!parse_variable(parser, block, false, cvq, NULL, noref, is_static, qflags)) {
                 ast_delete(switchnode);
                 return false;
             }
@@ -2700,8 +2930,9 @@ static bool parse_pragma(parser_t *parser)
 
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
-    bool       noref, noreturn, is_static;
+    bool       noref, is_static;
     int        cvq = CV_NONE;
+    uint32_t   qflags = 0;
     ast_value *typevar = NULL;
 
     *out = NULL;
@@ -2720,15 +2951,15 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, false))
+        if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0))
             return false;
         return true;
     }
-    else if (parse_var_qualifiers(parser, !!block, &cvq, &noref, &noreturn, &is_static))
+    else if (parse_qualifiers(parser, !!block, &cvq, &noref, &is_static, &qflags))
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, block, true, cvq, NULL, noref, noreturn, is_static);
+        return parse_variable(parser, block, true, cvq, NULL, noref, is_static, qflags);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -3984,7 +4215,7 @@ static bool parse_typedef(parser_t *parser)
     return true;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool noreturn, bool is_static)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags)
 {
     ast_value *var;
     ast_value *proto;
@@ -4054,14 +4285,20 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         /* in a noref section we simply bump the usecount */
         if (noref || parser->noref)
             var->uses++;
-        if (noreturn)
-            var->expression.flags |= AST_FLAG_NORETURN;
+        var->expression.flags |= qflags;
 
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
          * Also: if there was a prototype, `var` will be deleted and set to `proto` which
          * is then filled with the previous definition and the parameter-names replaced.
          */
+        if (!strcmp(var->name, "nil")) {
+            if (OPTS_FLAG(UNTYPED_NIL)) {
+                if (!localblock || !OPTS_FLAG(PERMISSIVE))
+                    parseerror(parser, "name `nil` not allowed (try -fpermissive)");
+            } else
+                (void)!parsewarning(parser, WARN_RESERVED_NAMES, "variable name `nil` is reserved");
+        }
         if (!localblock) {
             /* Deal with end_sys_ vars */
             was_end = false;
@@ -4561,8 +4798,8 @@ static bool parser_global_statement(parser_t *parser)
 {
     int        cvq       = CV_WRONG;
     bool       noref     = false;
-    bool       noreturn  = false;
     bool       is_static = false;
+    uint32_t   qflags    = 0;
     ast_value *istype    = NULL;
 
     if (parser->tok == TOKEN_IDENT)
@@ -4570,13 +4807,13 @@ static bool parser_global_statement(parser_t *parser)
 
     if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, false);
+        return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, 0);
     }
-    else if (parse_var_qualifiers(parser, false, &cvq, &noref, &noreturn, &is_static))
+    else if (parse_qualifiers(parser, false, &cvq, &noref, &is_static, &qflags))
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, NULL, true, cvq, NULL, noref, noreturn, is_static);
+        return parse_variable(parser, NULL, true, cvq, NULL, noref, is_static, qflags);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -4689,6 +4926,7 @@ static parser_t *parser;
 
 bool parser_init()
 {
+    lex_ctx empty_ctx;
     size_t i;
 
     parser = (parser_t*)mem_a(sizeof(parser_t));
@@ -4713,6 +4951,12 @@ bool parser_init()
     vec_push(parser->variables, parser->htglobals = util_htnew(PARSER_HT_SIZE));
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, 0);
+
+    empty_ctx.file = "<internal>";
+    empty_ctx.line = 0;
+    parser->nil = ast_value_new(empty_ctx, "nil", TYPE_NIL);
+    if (OPTS_FLAG(UNTYPED_NIL))
+        util_htset(parser->htglobals, "nil", (void*)parser->nil);
     return true;
 }
 
@@ -4820,6 +5064,8 @@ void parser_cleanup()
 
     vec_free(parser->labels);
     vec_free(parser->gotos);
+    vec_free(parser->breaks);
+    vec_free(parser->continues);
 
     mem_d(parser);
 }
@@ -4908,6 +5154,14 @@ bool parser_finish(const char *output)
         if (!ast_istype(parser->globals[i], ast_value))
             continue;
         asvalue = (ast_value*)(parser->globals[i]);
+        if (asvalue->cvq == CV_CONST && !asvalue->hasvalue)
+            (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_CONSTANT,
+                                   "uninitialized constant: `%s`",
+                                   asvalue->name);
+        else if ((asvalue->cvq == CV_NONE || asvalue->cvq == CV_CONST) && !asvalue->hasvalue)
+            (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_GLOBAL,
+                                   "uninitialized global: `%s`",
+                                   asvalue->name);
         if (!ast_generate_accessors(asvalue, ir)) {
             ir_builder_delete(ir);
             return false;
