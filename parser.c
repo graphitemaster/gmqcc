@@ -51,6 +51,7 @@ typedef struct {
     ast_value *imm_float_zero;
     ast_value *imm_float_one;
     ast_value *imm_vector_zero;
+    ast_value *nil;
 
     size_t crc_globals;
     size_t crc_fields;
@@ -759,10 +760,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid1('*'):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype &&
-                exprs[0]->expression.vtype != TYPE_VECTOR &&
-                exprs[0]->expression.vtype != TYPE_FLOAT &&
-                exprs[1]->expression.vtype != TYPE_VECTOR &&
-                exprs[1]->expression.vtype != TYPE_FLOAT)
+                !(exprs[0]->expression.vtype == TYPE_VECTOR &&
+                  exprs[1]->expression.vtype == TYPE_FLOAT) &&
+                !(exprs[1]->expression.vtype == TYPE_VECTOR &&
+                  exprs[0]->expression.vtype == TYPE_FLOAT)
+                )
             {
                 parseerror(parser, "invalid types used in expression: cannot multiply types %s and %s",
                            type_name[exprs[1]->expression.vtype],
@@ -1013,7 +1015,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
-                else if (!ast_compare_type(exprs[0], exprs[1])) {
+                else if (exprs[1]->expression.vtype != TYPE_NIL &&
+                         !ast_compare_type(exprs[0], exprs[1]))
+                {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (OPTS_FLAG(ASSIGN_FUNCTION_TYPES) &&
@@ -4906,6 +4910,7 @@ static parser_t *parser;
 
 bool parser_init()
 {
+    lex_ctx empty_ctx;
     size_t i;
 
     parser = (parser_t*)mem_a(sizeof(parser_t));
@@ -4930,6 +4935,12 @@ bool parser_init()
     vec_push(parser->variables, parser->htglobals = util_htnew(PARSER_HT_SIZE));
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, 0);
+
+    empty_ctx.file = "<internal>";
+    empty_ctx.line = 0;
+    parser->nil = ast_value_new(empty_ctx, "nil", TYPE_NIL);
+    if (OPTS_FLAG(UNTYPED_NIL))
+        util_htset(parser->htglobals, "nil", (void*)parser->nil);
     return true;
 }
 
