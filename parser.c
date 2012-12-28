@@ -104,7 +104,7 @@ static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool noreturn, bool is_static);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags);
 static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
@@ -2332,7 +2332,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
         }
-        if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, false))
+        if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, 0))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2505,14 +2505,14 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 /* returns true when it was a variable qualifier, false otherwise!
  * on error, cvq is set to CV_WRONG
  */
-static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *noreturn, bool *is_static)
+static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *is_static, uint32_t *_flags)
 {
     bool had_const    = false;
     bool had_var      = false;
     bool had_noref    = false;
-    bool had_noreturn = false;
     bool had_attrib   = false;
     bool had_static   = false;
+    uint32_t flags    = 0;
 
     *cvq = CV_NONE;
     for (;;) {
@@ -2525,7 +2525,7 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
                 return false;
             }
             if (!strcmp(parser_tokval(parser), "noreturn")) {
-                had_noreturn = true;
+                flags |= AST_FLAG_NORETURN;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noreturn` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
@@ -2534,6 +2534,14 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             }
             else if (!strcmp(parser_tokval(parser), "noref")) {
                 had_noref = true;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
+            else if (!strcmp(parser_tokval(parser), "inline")) {
+                flags |= AST_FLAG_INLINE;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
@@ -2563,7 +2571,7 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
-        else if (!had_const && !had_var && !had_noref && !had_noreturn && !had_attrib && !had_static) {
+        else if (!had_const && !had_var && !had_noref && !had_attrib && !had_static && !flags) {
             return false;
         }
         else
@@ -2578,8 +2586,8 @@ static bool parse_var_qualifiers(parser_t *parser, bool with_local, int *cvq, bo
     else
         *cvq = CV_NONE;
     *noref     = had_noref;
-    *noreturn  = had_noreturn;
     *is_static = had_static;
+    *_flags    = flags;
     return true;
 onerr:
     parseerror(parser, "parse error after variable qualifier");
@@ -2648,7 +2656,8 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
     ast_switch_case swcase;
 
     int  cvq;
-    bool noref, noreturn, is_static;
+    bool noref, is_static;
+    uint32_t qflags = 0;
 
     lex_ctx ctx = parser_ctx(parser);
 
@@ -2694,19 +2703,19 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         if (parser->tok == TOKEN_IDENT)
             typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (typevar || parser->tok == TOKEN_TYPENAME) {
-            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, false)) {
+            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0)) {
                 ast_delete(switchnode);
                 return false;
             }
             continue;
         }
-        if (parse_var_qualifiers(parser, true, &cvq, &noref, &noreturn, &is_static))
+        if (parse_qualifiers(parser, true, &cvq, &noref, &is_static, &qflags))
         {
             if (cvq == CV_WRONG) {
                 ast_delete(switchnode);
                 return false;
             }
-            if (!parse_variable(parser, block, false, cvq, NULL, noref, noreturn, is_static)) {
+            if (!parse_variable(parser, block, false, cvq, NULL, noref, is_static, qflags)) {
                 ast_delete(switchnode);
                 return false;
             }
@@ -2921,8 +2930,9 @@ static bool parse_pragma(parser_t *parser)
 
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
-    bool       noref, noreturn, is_static;
+    bool       noref, is_static;
     int        cvq = CV_NONE;
+    uint32_t   qflags = 0;
     ast_value *typevar = NULL;
 
     *out = NULL;
@@ -2941,15 +2951,15 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, false))
+        if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0))
             return false;
         return true;
     }
-    else if (parse_var_qualifiers(parser, !!block, &cvq, &noref, &noreturn, &is_static))
+    else if (parse_qualifiers(parser, !!block, &cvq, &noref, &is_static, &qflags))
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, block, true, cvq, NULL, noref, noreturn, is_static);
+        return parse_variable(parser, block, true, cvq, NULL, noref, is_static, qflags);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -4205,7 +4215,7 @@ static bool parse_typedef(parser_t *parser)
     return true;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool noreturn, bool is_static)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags)
 {
     ast_value *var;
     ast_value *proto;
@@ -4275,8 +4285,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         /* in a noref section we simply bump the usecount */
         if (noref || parser->noref)
             var->uses++;
-        if (noreturn)
-            var->expression.flags |= AST_FLAG_NORETURN;
+        var->expression.flags |= qflags;
 
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
@@ -4789,8 +4798,8 @@ static bool parser_global_statement(parser_t *parser)
 {
     int        cvq       = CV_WRONG;
     bool       noref     = false;
-    bool       noreturn  = false;
     bool       is_static = false;
+    uint32_t   qflags    = 0;
     ast_value *istype    = NULL;
 
     if (parser->tok == TOKEN_IDENT)
@@ -4798,13 +4807,13 @@ static bool parser_global_statement(parser_t *parser)
 
     if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, false);
+        return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, 0);
     }
-    else if (parse_var_qualifiers(parser, false, &cvq, &noref, &noreturn, &is_static))
+    else if (parse_qualifiers(parser, false, &cvq, &noref, &is_static, &qflags))
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, NULL, true, cvq, NULL, noref, noreturn, is_static);
+        return parse_variable(parser, NULL, true, cvq, NULL, noref, is_static, qflags);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {

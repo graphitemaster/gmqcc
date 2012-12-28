@@ -142,6 +142,7 @@ typedef struct
 } ast_expression_common;
 #define AST_FLAG_VARIADIC     (1<<0)
 #define AST_FLAG_NORETURN     (1<<1)
+#define AST_FLAG_INLINE       (1<<2)
 
 /* Value
  *
