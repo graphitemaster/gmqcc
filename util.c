@@ -574,6 +574,38 @@ void util_htdel(hash_table_t *ht) {
 }
 
 /*
+ * Portable implementation of vasprintf/asprintf. Assumes vsnprintf
+ * exists, otherwise compiler error.
+ */
+int util_vasprintf(char **ret, const char *fmt, va_list args) {
+    int     read;
+    va_list copy;
+    va_copy(copy, args);
+
+    *ret = 0;
+    if ((read = vsnprintf(NULL, 0, fmt, args)) >= 0) {
+        char *buffer;
+        if  ((buffer = (char*)mem_a(read + 1))) {
+            if ((read = vsnprintf(buffer, read + 1, fmt, copy)) < 0)
+                mem_d(buffer);
+            else
+                *ret = buffer;
+        }
+    }
+    va_end(copy);
+    return read;
+}
+int util_asprintf(char **ret, const char *fmt, ...) {
+    va_list  args;
+    int      read;
+    va_start(args, fmt);
+    read = util_vasprintf(ret, fmt, args);
+    va_end  (args);
+
+    return read;
+}
+
+/*
  * Implementation of the Mersenne twister PRNG (pseudo random numer
  * generator).  Implementation of MT19937.  Has a period of 2^19937-1
  * which is a Mersenne Prime (hence the name).

@@ -261,6 +261,10 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 void     util_seed(uint32_t);
 uint32_t util_rand();
 
+int util_vasprintf(char **ret, const char *fmt, va_list);
+int util_asprintf (char **ret, const char *fmt, ...);
+
+
 #ifdef NOTRACK
 #    define mem_a(x)    malloc (x)
 #    define mem_d(x)    free   ((void*)x)

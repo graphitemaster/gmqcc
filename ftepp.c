@@ -82,8 +82,8 @@ static uint32_t ftepp_predef_randval  = 0;
 
 /* __LINE__ */
 char *ftepp_predef_line(lex_file *context) {
-    char   *value = (char*)mem_a(128);
-    sprintf(value, "%d", (int)context->line);
+    char   *value;
+    util_asprintf(&value, "%d", (int)context->line);
     return value;
 }
 /* __FILE__ */
@@ -97,34 +97,34 @@ char *ftepp_predef_file(lex_file *context) {
 }
 /* __COUNTER_LAST__ */
 char *ftepp_predef_counterlast(lex_file *context) {
-    char   *value = (char*)mem_a(128);
-    sprintf(value, "%u", ftepp_predef_countval);
+    char   *value;
+    util_asprintf(&value, "%u", ftepp_predef_countval);
 
     (void)context;
     return value;
 }
 /* __COUNTER__ */
 char *ftepp_predef_counter(lex_file *context) {
-    char   *value = (char*)mem_a(128);
+    char   *value;
     ftepp_predef_countval ++;
-    sprintf(value, "%u", ftepp_predef_countval);
+    util_asprintf(&value, "%u", ftepp_predef_countval);
     (void)context;
 
     return value;
 }
 /* __RANDOM__ */
 char *ftepp_predef_random(lex_file *context) {
-    char  *value = (char*)mem_a(128);
+    char  *value;
     ftepp_predef_randval = (util_rand() % 0xFF) + 1;
-    sprintf(value, "%u", ftepp_predef_randval);
+    util_asprintf(&value, "%u", ftepp_predef_randval);
 
     (void)context;
     return value;
 }
 /* __RANDOM_LAST__ */
 char *ftepp_predef_randomlast(lex_file *context) {
-    char   *value = (char*)mem_a(128);
-    sprintf(value, "%u", ftepp_predef_randval);
+    char   *value;
+    util_asprintf(&value, "%u", ftepp_predef_randval);
 
     (void)context;
     return value;
