@@ -2481,7 +2481,9 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     size_t i, o, p, mem;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
-    char dbg_ind[16] = { '#', '0' };
+    char dbg_ind[16];
+    dbg_ind[0] = '#';
+    dbg_ind[1] = '0';
     (void)dbg_ind;
 
     if (prev)

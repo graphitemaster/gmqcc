@@ -53,7 +53,7 @@ void code_pop_statement()
 }
 
 void code_init() {
-    prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0}};
+    prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0,0,0,0,0,0,0,0}};
     prog_section_statement empty_statement = {0,{0},{0},{0}};
     prog_section_def       empty_def       = {0, 0, 0};
     int                    i               = 0;

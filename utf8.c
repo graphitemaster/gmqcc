@@ -47,11 +47,11 @@ static unsigned char utf8_lengths[256] = {
 };
 
 static uchar_t utf8_range[5] = {
-	1,       /* invalid - let's not allow the creation of 0-bytes :P
-	1,        * ascii minimum
-	0x80,     * 2-byte minimum
-	0x800,    * 3-byte minimum
-	0x10000,  * 4-byte minimum */
+	1,       /* invalid - let's not allow the creation of 0-bytes :P */
+	1,       /* ascii minimum                                        */
+	0x80,    /* 2-byte minimum                                       */
+	0x800,   /* 3-byte minimum                                       */
+	0x10000, /* 4-byte minimum                                       */
 };
 
 /** Analyze the next character and return various information if requested.
