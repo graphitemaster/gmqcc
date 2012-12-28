@@ -78,7 +78,7 @@
         FILE *handle = NULL;
         file_init();
 
-        return ((fopen_s(&handle, filename, mode) != 0) ? NULL : handle;
+        return (fopen_s(&handle, filename, mode) != 0) ? NULL : handle;
     }
 
     size_t file_read(void *buffer, size_t size, size_t count, FILE *fp) {
