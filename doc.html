@@ -136,6 +136,30 @@
                         <td>__STD_VERSION_MAJOR__</td>
                         <td>Specifies the current selected stanadards major version number.</td>
                     </tr>
+                    <tr>
+                        <td>__FILE__</td>
+                        <td>Expands to a const string literal of the current file (requires -fftepp-predef)</td>
+                    </tr>
+                    <tr>
+                        <td>__LINE__</td>
+                        <td>Expands to the current line number (requires -fftepp-predef)</td>
+                    </tr>
+                    <tr>
+                        <td>__RANDOM__</td>
+                        <td>Expands to a random number between [0, 256) (requires -fftepp-predef)</td>
+                    </tr>
+                    <tr>
+                        <td>__COUNTER__</td>
+                        <td>Expands to a unique number, each expansion causes it to increment (requires -fftepp-predef) </td>
+                    </tr>
+                    <tr>
+                        <td>__RANDOM_LAST__</td>
+                        <td>Expands to the last random number (requires -fftepp-predef)</td>
+                    </tr>
+                    <tr>
+                        <td>__COUNTER_LAST__</td>
+                        <td>Expands to the last counter number (requires -fftepp-predef)</td>
+                    </tr>
                 </table>
                 <h3>Unsupported compatability options</h3>
                 <p>
@@ -179,6 +203,10 @@
                     <tr>
                         <td>-fftepp</td>
                         <td>Enables FTEQ preprocessor</td>
+                    </tr>
+                    <tr>
+                        <td>-fftepp-predef</td>
+                        <td>Enables additional predefined macros for the FTEQ preprocessor</td>
                     </tr>
                     <tr>
                         <td>-frelaxted-switch</td>
