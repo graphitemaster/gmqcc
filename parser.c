@@ -4283,6 +4283,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
          * Also: if there was a prototype, `var` will be deleted and set to `proto` which
          * is then filled with the previous definition and the parameter-names replaced.
          */
+        if (!strcmp(var->name, "nil")) {
+            if (OPTS_FLAG(UNTYPED_NIL)) {
+                if (!localblock || !OPTS_FLAG(PERMISSIVE))
+                    parseerror(parser, "name `nil` not allowed (try -fpermissive)");
+            } else
+                (void)!parsewarning(parser, WARN_RESERVED_NAMES, "variable name `nil` is reserved");
+        }
         if (!localblock) {
             /* Deal with end_sys_ vars */
             was_end = false;
