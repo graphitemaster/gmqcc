@@ -736,6 +736,8 @@ static bool lex_finish_frames(lex_file *lex)
         vec_shrinkto(lex->tok.value, 0);
         vec_push(lex->frames, m);
     } while (true);
+
+    return false;
 }
 
 static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)

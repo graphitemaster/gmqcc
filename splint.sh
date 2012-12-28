@@ -18,6 +18,8 @@ FLAGS_STUPID="\
     -predboolint         \
     -boolops             \
     -exportlocal         \
+    -incondefs           \
+    -macroredef          \
     -retvalint           \
     -nullret             \
     -predboolothers      \
@@ -52,7 +54,6 @@ FLAGS_MAYBE="\
     -mayaliasunique      \
     -realcompare         \
     -observertrans       \
-    -noret               \
     -shiftnegative       \
     -exitarg             \
     -freshtrans          \
@@ -64,9 +65,7 @@ FLAGS_MAYBE="\
 # remove one flag from here at a time while fixing the code so that
 FLAGS_TOFIX="\
     -boolcompare         \
-    -incondefs           \
     -initallelements     \
-    -macroredef          \
     -castfcnptr          \
     -evalorder"
 
