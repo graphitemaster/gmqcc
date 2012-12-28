@@ -121,7 +121,7 @@ FILE ** task_popen(const char *command, const char *mode) {
         close(2), dup(errhandle[1]);
 
         execvp(*argv, argv);
-        exit(1);
+        exit(EXIT_FAILURE);
     } else {
         /* fork failed */
         goto task_popen_error_3;

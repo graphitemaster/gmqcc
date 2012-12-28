@@ -527,7 +527,7 @@ int main(int argc, char **argv) {
 
     if (OPTS_FLAG(TRUE_EMPTY_STRINGS) && OPTS_FLAG(FALSE_EMPTY_STRINGS)) {
         con_err("-ftrue-empty-strings and -ffalse-empty-strings are mutually exclusive");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     /* the standard decides which set of operators to use */
@@ -550,7 +550,7 @@ int main(int argc, char **argv) {
                 operators[operator_count-1].id != opid2(':','?'))
             {
                 con_err("internal error: operator precedence table wasn't updated correctly!\n");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             operators_free = true;
             newops = (oper_info*)mem_a(sizeof(operators[0]) * operator_count);

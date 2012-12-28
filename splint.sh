@@ -55,7 +55,6 @@ FLAGS_MAYBE="\
     -realcompare         \
     -observertrans       \
     -shiftnegative       \
-    -exitarg             \
     -freshtrans          \
     -abstract            \
     -statictrans"
