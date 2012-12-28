@@ -5145,6 +5145,14 @@ bool parser_finish(const char *output)
         if (!ast_istype(parser->globals[i], ast_value))
             continue;
         asvalue = (ast_value*)(parser->globals[i]);
+        if (asvalue->cvq == CV_CONST && !asvalue->hasvalue)
+            (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_CONSTANT,
+                                   "uninitialized constant: `%s`",
+                                   asvalue->name);
+        else if ((asvalue->cvq == CV_NONE || asvalue->cvq == CV_CONST) && !asvalue->hasvalue)
+            (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_GLOBAL,
+                                   "uninitialized global: `%s`",
+                                   asvalue->name);
         if (!ast_generate_accessors(asvalue, ir)) {
             ir_builder_delete(ir);
             return false;
