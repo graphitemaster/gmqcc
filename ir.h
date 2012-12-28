@@ -22,7 +22,7 @@
  */
 #ifndef GMQCC_IR_HDR
 #define GMQCC_IR_HDR
-
+#include "gmqcc.h"
 /* ir_value */
 
 typedef struct
