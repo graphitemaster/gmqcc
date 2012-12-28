@@ -61,7 +61,7 @@
     # Prevent the creation of _x, _y and _z progdefs for vectors
     SINGLE_VECTOR_DEFS           = false
 
-    # Use cast vectors to real booleans when used in logic expressions
+    # Cast vectors to real booleans when used in logic expressions.
     # This is achieved by using NOT_V.
     CORRECT_LOGIC                = false
 
