@@ -56,7 +56,7 @@ ifneq ("$(MINGW)", "")
 else
 	#arm support for linux .. we need to allow unaligned accesses
 	#to memory otherwise we just segfault everywhere
-	ifneq (, $(findstring $(shell uname -m), arm))
+	ifneq (, $(findstring arm, $(shell uname -m)))
 		CFLAGS += -munaligned-access
 	endif
 
