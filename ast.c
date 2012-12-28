@@ -1101,6 +1101,10 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 {
     (void)func;
     (void)lvalue;
+    if (self->expression.vtype == TYPE_NIL) {
+        *out = func->ir_func->owner->nil;
+        return true;
+    }
     /* NOTE: This is the codegen for a variable used in an expression.
      * It is not the codegen to generate the value. For this purpose,
      * ast_local_codegen and ast_global_codegen are to be used before this
@@ -1121,6 +1125,11 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
+
+    if (self->expression.vtype == TYPE_NIL) {
+        compile_error(ast_ctx(self), "internal error: trying to generate a variable of TYPE_NIL");
+        return false;
+    }
 
     if (self->hasvalue && self->expression.vtype == TYPE_FUNCTION)
     {
@@ -1316,6 +1325,12 @@ error: /* clean up */
 bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
+
+    if (self->expression.vtype == TYPE_NIL) {
+        compile_error(ast_ctx(self), "internal error: trying to generate a variable of TYPE_NIL");
+        return false;
+    }
+
     if (self->hasvalue && self->expression.vtype == TYPE_FUNCTION)
     {
         /* Do we allow local functions? I think not...

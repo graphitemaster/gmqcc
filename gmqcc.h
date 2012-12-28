@@ -392,6 +392,8 @@ enum {
     TYPE_UNION    ,
     TYPE_ARRAY    ,
 
+    TYPE_NIL      , /* it's its own type / untyped */
+
     TYPE_COUNT
 };
 
