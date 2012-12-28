@@ -261,6 +261,15 @@ the actual attribute syntax is better defined.
 .TP
 .B -Wreserved-names
 Warn when using reserved names such as 'nil'.
+.TP
+.B -Wuninitialized-constant
+Warn about global constants (using the 'const' keyword) with no
+assigned value.
+.TP
+.B -Wuninitialized-global
+Warn about global variables with no initializing value. This is off by
+default, and is added mostly to help find null-values which are
+supposed to be replaced by the untyped 'nil' constant.
 .SH COMPILE FLAGS
 .TP
 .B -fdarkplaces-string-table-bug
