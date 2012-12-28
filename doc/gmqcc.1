@@ -258,6 +258,9 @@ You won't need this.
 Warn on an unknown attribute. The warning will inlclude only the first
 token inside the enclosing attribute-brackets. This may change when
 the actual attribute syntax is better defined.
+.TP
+.B -Wreserved-names
+Warn when using reserved names such as 'nil'.
 .SH COMPILE FLAGS
 .TP
 .B -fdarkplaces-string-table-bug
@@ -390,6 +393,19 @@ for :outer (i = 0; i < n; ++i) {
 }
 .fi
 .in
+.TP
+.B -funtyped-nil
+Adds a global named 'nil' which is of no type and can be assigned to
+anything. No typechecking will be performed on assignments. Assigning
+to it is forbidden, using it in any other kind of expression is also
+not allowed.
+.TP
+.B -fpermissive
+Various effects, usually to weaken some conditions.
+.RS
+.IP "with -funtyped-nil"
+Allow local variables named 'nil'. (This will not allow declaring a
+global of that name.)
 .SH OPTIMIZATIONS
 .TP
 .B -Opeephole
