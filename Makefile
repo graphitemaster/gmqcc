@@ -54,6 +54,12 @@ ifneq ("$(MINGW)", "")
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
 else
+	#arm support for linux .. we need to allow unaligned accesses
+	#to memory otherwise we just segfault everywhere
+	ifneq (, $(findstring $(shell uname -m), "arm"))
+		CFLAGS += -munaligned-access
+	endif
+
 	QCVM      = qcvm
 	GMQCC     = gmqcc
 	TESTSUITE = testsuite
