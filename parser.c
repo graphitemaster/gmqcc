@@ -1665,7 +1665,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             const oper_info *olast = NULL;
             size_t o;
             for (o = 0; o < operator_count; ++o) {
-                if ((!(operators[o].flags & OP_PREFIX) == wantop) &&
+                if (((!(operators[o].flags & OP_PREFIX) == !!wantop)) &&
                     /* !(operators[o].flags & OP_SUFFIX) && / * remove this */
                     !strcmp(parser_tokval(parser), operators[o].op))
                 {
