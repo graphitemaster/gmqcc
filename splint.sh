@@ -64,7 +64,6 @@ FLAGS_MAYBE="\
 # remove one flag from here at a time while fixing the code so that
 FLAGS_TOFIX="\
     -boolcompare         \
-    -unreachable         \
     -incondefs           \
     -initallelements     \
     -macroredef          \
