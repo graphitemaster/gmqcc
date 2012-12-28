@@ -9,7 +9,7 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -I. -pedantic-errors -fno-strict-aliasing
+CFLAGS += -Wall -Wextra -I. -pedantic-errors -fno-strict-aliasing -fsigned-char
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
