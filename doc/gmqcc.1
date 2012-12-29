@@ -490,6 +490,15 @@ instruction is added for several reasons. (For example the qcvm's
 disassemble switch uses it to know when the function ends.). This
 optimization replaces that last RETURN with DONE rather than adding
 the DONE additionally.
+.TP
+.B -Ovector-components
+Because traditional QC code doesn't allow you to access individual
+vector components of a computed vector without storing it in a local
+first, sometimes people multiply it by a constant like '0 1 0' to get,
+in this case, the y component of a vector. This optimization will turn
+such a multiplication into a direct component access. If the factor is
+anything other than 1, a float-multiplication will be added, which is
+still faster than a vector multiplication.
 .SH CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square

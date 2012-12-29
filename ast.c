@@ -570,7 +570,8 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
         self->expression.next = ast_shallow_type(ctx, TYPE_FLOAT);
     }
 
-    self->owner = owner;
+    self->rvalue = false;
+    self->owner  = owner;
     ast_propagate_effects(self, owner);
 
     self->field = field;
@@ -2082,14 +2083,17 @@ bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_va
     ir_value *vec;
 
     /* in QC this is always an lvalue */
-    (void)lvalue;
+    if (lvalue && self->rvalue) {
+        compile_error(ast_ctx(self), "not an l-value (member access)");
+        return false;
+    }
     if (self->expression.outl) {
         *out = self->expression.outl;
         return true;
     }
 
     cgen = self->owner->expression.codegen;
-    if (!(*cgen)((ast_expression*)(self->owner), func, true, &vec))
+    if (!(*cgen)((ast_expression*)(self->owner), func, false, &vec))
         return false;
 
     if (vec->vtype != TYPE_VECTOR &&

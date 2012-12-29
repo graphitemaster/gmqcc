@@ -2310,6 +2310,9 @@ bool ir_function_allocate_locals(ir_function *self)
             if (vec_size(v->writes) == 1 && v->writes[0]->opcode == INSTR_CALL0)
             {
                 v->store = store_return;
+                if (v->members[0]) v->members[0]->store = store_return;
+                if (v->members[1]) v->members[1]->store = store_return;
+                if (v->members[2]) v->members[2]->store = store_return;
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
                 continue;
             }
@@ -3779,7 +3782,7 @@ void ir_function_dump(ir_function *f, char *ind,
             attr = "unique ";
         else if (v->locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s@%i ", ind, v->name, attr, (int)v->code.local);
+        oprintf("%s\t%s: %s %s@%i ", ind, v->name, type_name[v->vtype], attr, (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
@@ -3802,13 +3805,36 @@ void ir_function_dump(ir_function *f, char *ind,
         }
     }
     for (i = 0; i < vec_size(f->values); ++i) {
-        size_t l;
+        const char *attr = "";
+        size_t l, m;
         ir_value *v = f->values[i];
-        oprintf("%s\t%s: @%i ", ind, v->name, (int)v->code.local);
+        if (v->unique_life && v->locked)
+            attr = "unique,locked ";
+        else if (v->unique_life)
+            attr = "unique ";
+        else if (v->locked)
+            attr = "locked ";
+        oprintf("%s\t%s: %s %s@%i ", ind, v->name, type_name[v->vtype], attr, (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
         oprintf("\n");
+        for (m = 0; m < 3; ++m) {
+            ir_value *vm = v->members[m];
+            if (!vm)
+                continue;
+            if (vm->unique_life && vm->locked)
+                attr = "unique,locked ";
+            else if (vm->unique_life)
+                attr = "unique ";
+            else if (vm->locked)
+                attr = "locked ";
+            oprintf("%s\t%s: %s@%i ", ind, vm->name, attr, (int)vm->code.local);
+            for (l = 0; l < vec_size(vm->life); ++l) {
+                oprintf("[%i,%i] ", vm->life[l].start, vm->life[l].end);
+            }
+            oprintf("\n");
+        }
     }
     if (vec_size(f->blocks))
     {

@@ -324,6 +324,7 @@ struct ast_member_s
     ast_expression *owner;
     unsigned int    field;
     const char     *name;
+    bool            rvalue;
 };
 ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field, const char *name);
 void ast_member_delete(ast_member*);
