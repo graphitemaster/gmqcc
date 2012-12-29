@@ -232,3 +232,7 @@
 
     # Do not create a RETURN instruction at the end functions of return-type void.
     VOID_RETURN                  = true
+
+    # Turn extraction-multiplications such as (a_vector * '0 1 0')
+    # into direct component accesses
+    VECTOR_COMPONENTS            = true
