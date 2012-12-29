@@ -270,6 +270,14 @@ assigned value.
 Warn about global variables with no initializing value. This is off by
 default, and is added mostly to help find null-values which are
 supposed to be replaced by the untyped 'nil' constant.
+.TP
+.B -Wdifferent-qualifiers
+Warn when a variables is redeclared with a different qualifier. For
+example when redeclaring a variable as \'var\' which was previously
+marked \'const\'.
+.TP
+.B -Wdifferent-attributes
+Similar to the above but for attributes like "[[noreturn]]".
 .SH COMPILE FLAGS
 .TP
 .B -fdarkplaces-string-table-bug
