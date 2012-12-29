@@ -806,6 +806,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 0, NULL);
                                 out->expression.node.keep = false;
+                                ((ast_member*)out)->rvalue = true;
                                 if (vec.x != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.x), out);
                             }
@@ -813,6 +814,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 1, NULL);
                                 out->expression.node.keep = false;
+                                ((ast_member*)out)->rvalue = true;
                                 if (vec.y != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.y), out);
                             }
@@ -820,6 +822,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 2, NULL);
                                 out->expression.node.keep = false;
+                                ((ast_member*)out)->rvalue = true;
                                 if (vec.z != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.z), out);
                             }
@@ -832,6 +835,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, NULL);
                                 out->expression.node.keep = false;
+                                ((ast_member*)out)->rvalue = true;
                                 if (vec.x != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.x));
                             }
@@ -839,6 +843,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 1, NULL);
                                 out->expression.node.keep = false;
+                                ((ast_member*)out)->rvalue = true;
                                 if (vec.y != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.y));
                             }
@@ -846,6 +851,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 2, NULL);
                                 out->expression.node.keep = false;
+                                ((ast_member*)out)->rvalue = true;
                                 if (vec.z != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.z));
                             }
