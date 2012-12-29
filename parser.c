@@ -4812,8 +4812,12 @@ skipvar:
 
             if (!localblock) {
                 cval = (ast_value*)cexp;
-                if (!ast_istype(cval, ast_value) || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
+                if (cval != parser->nil &&
+                    (!ast_istype(cval, ast_value) || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
+                   )
+                {
                     parseerror(parser, "cannot initialize a global constant variable with a non-constant expression");
+                }
                 else
                 {
                     if (opts.standard != COMPILER_GMQCC &&
@@ -4822,14 +4826,19 @@ skipvar:
                     {
                         var->cvq = CV_CONST;
                     }
-                    var->hasvalue = true;
-                    if (cval->expression.vtype == TYPE_STRING)
-                        var->constval.vstring = parser_strdup(cval->constval.vstring);
-                    else if (cval->expression.vtype == TYPE_FIELD)
-                        var->constval.vfield = cval;
+                    if (cval == parser->nil)
+                        var->expression.flags |= AST_FLAG_INITIALIZED;
                     else
-                        memcpy(&var->constval, &cval->constval, sizeof(var->constval));
-                    ast_unref(cval);
+                    {
+                        var->hasvalue = true;
+                        if (cval->expression.vtype == TYPE_STRING)
+                            var->constval.vstring = parser_strdup(cval->constval.vstring);
+                        else if (cval->expression.vtype == TYPE_FIELD)
+                            var->constval.vfield = cval;
+                        else
+                            memcpy(&var->constval, &cval->constval, sizeof(var->constval));
+                        ast_unref(cval);
+                    }
                 }
             } else {
                 int cvq;
@@ -5064,6 +5073,7 @@ bool parser_init()
     empty_ctx.file = "<internal>";
     empty_ctx.line = 0;
     parser->nil = ast_value_new(empty_ctx, "nil", TYPE_NIL);
+    parser->nil->cvq = CV_CONST;
     if (OPTS_FLAG(UNTYPED_NIL))
         util_htset(parser->htglobals, "nil", (void*)parser->nil);
     return true;
@@ -5263,14 +5273,17 @@ bool parser_finish(const char *output)
         if (!ast_istype(parser->globals[i], ast_value))
             continue;
         asvalue = (ast_value*)(parser->globals[i]);
-        if (asvalue->cvq == CV_CONST && !asvalue->hasvalue)
-            (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_CONSTANT,
-                                   "uninitialized constant: `%s`",
-                                   asvalue->name);
-        else if ((asvalue->cvq == CV_NONE || asvalue->cvq == CV_CONST) && !asvalue->hasvalue)
-            (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_GLOBAL,
-                                   "uninitialized global: `%s`",
-                                   asvalue->name);
+        if (!(asvalue->expression.flags & AST_FLAG_INITIALIZED))
+        {
+            if (asvalue->cvq == CV_CONST && !asvalue->hasvalue)
+                (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_CONSTANT,
+                                       "uninitialized constant: `%s`",
+                                       asvalue->name);
+            else if ((asvalue->cvq == CV_NONE || asvalue->cvq == CV_CONST) && !asvalue->hasvalue)
+                (void)!compile_warning(ast_ctx(asvalue), WARN_UNINITIALIZED_GLOBAL,
+                                       "uninitialized global: `%s`",
+                                       asvalue->name);
+        }
         if (!ast_generate_accessors(asvalue, ir)) {
             ir_builder_delete(ir);
             return false;

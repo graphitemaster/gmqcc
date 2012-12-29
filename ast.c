@@ -209,8 +209,11 @@ bool ast_compare_type(ast_expression *a, ast_expression *b)
         return false;
     if (vec_size(a->expression.params) != vec_size(b->expression.params))
         return false;
-    if (a->expression.flags != b->expression.flags)
+    if ((a->expression.flags & AST_FLAG_TYPE_MASK) !=
+        (b->expression.flags & AST_FLAG_TYPE_MASK) )
+    {
         return false;
+    }
     if (vec_size(a->expression.params)) {
         size_t i;
         for (i = 0; i < vec_size(a->expression.params); ++i) {
