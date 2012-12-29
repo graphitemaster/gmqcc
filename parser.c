@@ -4273,6 +4273,44 @@ static bool parse_typedef(parser_t *parser)
     return true;
 }
 
+static const char *cvq_to_str(int cvq) {
+    switch (cvq) {
+        case CV_NONE:  return "none";
+        case CV_VAR:   return "`var`";
+        case CV_CONST: return "`const`";
+        default:       return "<INVALID>";
+    }
+}
+
+static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, const ast_value *proto)
+{
+    bool av, ao;
+    if (proto->cvq != var->cvq) {
+        if (!(proto->cvq == CV_CONST && var->cvq == CV_NONE &&
+              !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
+              parser->tok == '='))
+        {
+            return !parsewarning(parser, WARN_DIFFERENT_QUALIFIERS,
+                                 "`%s` declared with different qualifiers: %s\n"
+                                 " -> previous declaration here: %s:%i uses %s",
+                                 var->name, cvq_to_str(var->cvq),
+                                 ast_ctx(proto).file, ast_ctx(proto).line,
+                                 cvq_to_str(proto->cvq));
+        }
+    }
+    av = (var  ->expression.flags & AST_FLAG_NORETURN);
+    ao = (proto->expression.flags & AST_FLAG_NORETURN);
+    if (av != ao) {
+        return !parsewarning(parser, WARN_DIFFERENT_ATTRIBUTES,
+                             "`%s` declared with different attributes%s\n"
+                             " -> previous declaration here: %s:%i",
+                             var->name, (av ? ": noreturn" : ""),
+                             ast_ctx(proto).file, ast_ctx(proto).line,
+                             (ao ? ": noreturn" : ""));
+    }
+    return true;
+}
+
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags)
 {
     ast_value *var;
@@ -4340,9 +4378,6 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
 
         var->cvq = qualifier;
-        /* in a noref section we simply bump the usecount */
-        if (noref || parser->noref)
-            var->uses++;
         var->expression.flags |= qflags;
 
         /* Part 1:
@@ -4434,6 +4469,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     /* we need the new parameter-names */
                     for (i = 0; i < vec_size(proto->expression.params); ++i)
                         ast_value_set_name(proto->expression.params[i], var->expression.params[i]->name);
+                    if (!parser_check_qualifiers(parser, var, proto)) {
+                        retval = false;
+                        proto = NULL;
+                        goto cleanup;
+                    }
+                    proto->expression.flags |= var->expression.flags;
                     ast_delete(var);
                     var = proto;
                 }
@@ -4461,6 +4502,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                                 proto = NULL;
                                 goto cleanup;
                             }
+                            if (!parser_check_qualifiers(parser, var, proto)) {
+                                retval = false;
+                                proto = NULL;
+                                goto cleanup;
+                            }
+                            proto->expression.flags |= var->expression.flags;
                             ast_delete(var);
                             var = proto;
                         }
@@ -4503,6 +4550,10 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
             }
         }
+
+        /* in a noref section we simply bump the usecount */
+        if (noref || parser->noref)
+            var->uses++;
 
         /* Part 2:
          * Create the global/local, and deal with vector types.
