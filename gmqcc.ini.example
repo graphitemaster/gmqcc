@@ -198,6 +198,13 @@
     # Warn about non-constant global variables with no initializing value.
     UNINITIALIZED_GLOBAL         = true
 
+    # Redeclaring a 'const' as 'var' or the other way round.
+    DIFFERENT_QUALIFIERS         = true
+
+    # Redeclaring a function with different attributes such as
+    # [[noreturn]]
+    DIFFERENT_ATTRIBUTES         = true
+
 # Finally these are all the optimizations, usually present via the -O
 # prefix from the command line.
 [optimizations]
