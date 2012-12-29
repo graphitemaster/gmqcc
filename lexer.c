@@ -742,6 +742,7 @@ static bool lex_finish_frames(lex_file *lex)
 
 static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 {
+    uchar_t chr;
     int ch = 0;
     int nextch;
     bool hex;
@@ -827,7 +828,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             case '[':  ch = 16; break;
             case ']':  ch = 17; break;
             case '{':
-                ch = 0;
+                chr = 0;
                 nextch = lex_getch(lex);
                 hex = (nextch == 'x');
                 if (!hex)
@@ -835,32 +836,31 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                 for (nextch = lex_getch(lex); nextch != '}'; nextch = lex_getch(lex)) {
                     if (!hex) {
                         if (nextch >= '0' && nextch <= '9')
-                            ch = ch * 10 + nextch - '0';
+                            chr = chr * 10 + nextch - '0';
                         else {
                             lexerror(lex, "bad character code");
                             return (lex->tok.ttype = TOKEN_ERROR);
                         }
                     } else {
-                        if (nextch >= '0' || nextch <= '9')
-                            ch = ch * 16 + nextch - '0';
+                        if (nextch >= '0' && nextch <= '9')
+                            chr = chr * 0x10 + nextch - '0';
                         else if (nextch >= 'a' && nextch <= 'f')
-                            ch = ch * 16 + nextch - 'a' + 10;
+                            chr = chr * 0x10 + nextch - 'a' + 10;
                         else if (nextch >= 'A' && nextch <= 'F')
-                            ch = ch * 16 + nextch - 'A' + 10;
+                            chr = chr * 0x10 + nextch - 'A' + 10;
                         else {
                             lexerror(lex, "bad character code");
                             return (lex->tok.ttype = TOKEN_ERROR);
                         }
                     }
-                    if ( (!OPTS_FLAG(UTF8) && ch > 255) ||
-                         ( OPTS_FLAG(UTF8) && ch > 0x10FFFF) )
+                    if (chr > 0x10FFFF || (!OPTS_FLAG(UTF8) && chr > 255))
                     {
                         lexerror(lex, "character code out of range");
                         return (lex->tok.ttype = TOKEN_ERROR);
                     }
                 }
-                if (OPTS_FLAG(UTF8) && ch >= 128) {
-                    u8len = u8_fromchar((uchar_t)ch, u8buf, sizeof(u8buf));
+                if (OPTS_FLAG(UTF8) && chr >= 128) {
+                    u8len = u8_fromchar(chr, u8buf, sizeof(u8buf));
                     if (!u8len)
                         ch = 0;
                     else {
@@ -873,6 +873,8 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                         ch = u8buf[uc];
                     }
                 }
+                else
+                    ch = chr;
                 break;
             case '\n':  ch = '\n'; break;
 
