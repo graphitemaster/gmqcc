@@ -800,6 +800,58 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
                             out = (ast_expression*)parser_const_float(parser, vec3_mulvv(ConstV(0), ConstV(1)));
+                        else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && CanConstFold1(exprs[0])) {
+                            vector vec = ConstV(0);
+                            if (!vec.y && !vec.z) { /* 'n 0 0' * v */
+                                ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+                                out = (ast_expression*)ast_member_new(ctx, exprs[1], 0, NULL);
+                                out->expression.node.keep = false;
+                                if (vec.x != 1)
+                                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.x), out);
+                            }
+                            else if (!vec.x && !vec.z) { /* '0 n 0' * v */
+                                ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+                                out = (ast_expression*)ast_member_new(ctx, exprs[1], 1, NULL);
+                                out->expression.node.keep = false;
+                                if (vec.y != 1)
+                                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.y), out);
+                            }
+                            else if (!vec.x && !vec.y) { /* '0 n 0' * v */
+                                ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+                                out = (ast_expression*)ast_member_new(ctx, exprs[1], 2, NULL);
+                                out->expression.node.keep = false;
+                                if (vec.z != 1)
+                                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.z), out);
+                            }
+                            else
+                                out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
+                        }
+                        else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && CanConstFold1(exprs[1])) {
+                            vector vec = ConstV(1);
+                            if (!vec.y && !vec.z) { /* v * 'n 0 0' */
+                                ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+                                out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, NULL);
+                                out->expression.node.keep = false;
+                                if (vec.x != 1)
+                                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.x));
+                            }
+                            else if (!vec.x && !vec.z) { /* v * '0 n 0' */
+                                ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+                                out = (ast_expression*)ast_member_new(ctx, exprs[0], 1, NULL);
+                                out->expression.node.keep = false;
+                                if (vec.y != 1)
+                                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.y));
+                            }
+                            else if (!vec.x && !vec.y) { /* v * '0 n 0' */
+                                ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+                                out = (ast_expression*)ast_member_new(ctx, exprs[0], 2, NULL);
+                                out->expression.node.keep = false;
+                                if (vec.z != 1)
+                                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.z));
+                            }
+                            else
+                                out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
+                        }
                         else
                             out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                     }

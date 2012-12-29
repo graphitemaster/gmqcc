@@ -2089,7 +2089,7 @@ bool ast_member_codegen(ast_member *self, ast_function *func, bool lvalue, ir_va
     }
 
     cgen = self->owner->expression.codegen;
-    if (!(*cgen)((ast_expression*)(self->owner), func, true, &vec))
+    if (!(*cgen)((ast_expression*)(self->owner), func, false, &vec))
         return false;
 
     if (vec->vtype != TYPE_VECTOR &&
