@@ -56,6 +56,7 @@ static void opts_setdefault() {
     opts_set(opts.warn,  WARN_UNKNOWN_ATTRIBUTE,         true);
     opts_set(opts.warn,  WARN_RESERVED_NAMES,            true);
     opts_set(opts.warn,  WARN_UNINITIALIZED_CONSTANT,    true);
+    opts_set(opts.warn,  WARN_UNINITIALIZED_GLOBAL,      false);
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
     opts_set(opts.flags, FTEPP,                          false);
