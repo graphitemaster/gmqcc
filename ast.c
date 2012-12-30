@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012
  *     Wolfgang Bumiller
+ *     Dale Weiler 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -341,6 +342,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 
     self->setter = NULL;
     self->getter = NULL;
+    self->desc   = NULL;
 
     return self;
 }
@@ -368,6 +370,10 @@ void ast_value_delete(ast_value* self)
     }
     if (self->ir_values)
         mem_d(self->ir_values);
+
+    if (self->desc)
+        mem_d(self->desc);
+
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }

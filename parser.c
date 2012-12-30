@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2012
  *     Wolfgang Bumiller
- *
+ *     Dale Weiler
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -104,7 +105,7 @@ static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags);
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring);
 static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
@@ -1381,14 +1382,23 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         ast_value *fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
 
         if (fun->expression.flags & AST_FLAG_DEPRECATED) {
-            if (!fval)
-                return !parsewarning(parser, WARN_DEPRECATED, "call to function (which is marked deprecated)\n"
-                                    "-> it has been declared here: %s:%i",
-                                    ast_ctx(fun).file, ast_ctx(fun).line);
-            else
-                return !parsewarning(parser, WARN_DEPRECATED, "call to `%s` (which is marked deprecated)\n"
-                                    "-> `%s` declared here: %s:%i",
-                                    fval->name, fval->name, ast_ctx(fun).file, ast_ctx(fun).line);
+            if (!fval) {
+                return !parsewarning(parser, WARN_DEPRECATED,
+                        "call to function (which is marked deprecated)\n",
+                        "-> it has been declared here: %s:%i",
+                        ast_ctx(fun).file, ast_ctx(fun).line);
+            }
+            if (!fval->desc) {
+                return !parsewarning(parser, WARN_DEPRECATED,
+                        "call to `%s` (which is marked deprecated)\n"
+                        "-> `%s` declared here: %s:%i",
+                        fval->name, fval->name, ast_ctx(fun).file, ast_ctx(fun).line);
+            }
+            return !parsewarning(parser, WARN_DEPRECATED,
+                    "call to `%s` (deprecated: %s)\n"
+                    "-> `%s` declared here: %s:%i",
+                    fval->name, fval->desc, fval->name, ast_ctx(fun).file,
+                    ast_ctx(fun).line); 
         }
 
         if (vec_size(fun->expression.params) != paramcount &&
@@ -2401,7 +2411,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
         }
-        if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, 0))
+        if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, 0, NULL))
             goto onerr;
     }
     else if (parser->tok != ';')
@@ -2574,7 +2584,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 /* returns true when it was a variable qualifier, false otherwise!
  * on error, cvq is set to CV_WRONG
  */
-static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *is_static, uint32_t *_flags)
+static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *is_static, uint32_t *_flags, char **message)
 {
     bool had_const    = false;
     bool had_var      = false;
@@ -2617,11 +2627,48 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                     return false;
                 }
             }
-            else if (!strcmp(parser_tokval(parser), "deprecated")) {
-                flags |= AST_FLAG_DEPRECATED;
-                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`deprecated` attribute has no parameters, expected `]]`");
-                    *cvq = CV_WRONG;
+
+
+            else if (!strcmp(parser_tokval(parser), "deprecated") && !(flags & AST_FLAG_DEPRECATED)) {
+                flags   |= AST_FLAG_DEPRECATED;
+                *message = NULL;
+                
+                if (!parser_next(parser)) {
+                    parseerror(parser, "parse error in attribute");
+                    goto argerr;
+                }
+
+                if (parser->tok == '(') {
+                    if (!parser_next(parser) || parser->tok != TOKEN_STRINGCONST) {
+                        parseerror(parser, "`deprecated` attribute missing parameter");
+                        goto argerr;
+                    }
+
+                    *message = util_strdup(parser_tokval(parser));
+
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "parse error in attribute");
+                        goto argerr;
+                    }
+
+                    if(parser->tok != ')') {
+                        parseerror(parser, "`deprecated` attribute expected `)` after parameter");
+                        goto argerr;
+                    }
+
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "parse error in attribute");
+                        goto argerr;
+                    }
+                }
+                /* no message */
+                if (parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`deprecated` attribute expected `]]`");
+
+                    argerr: /* ugly */
+                    if (*message) mem_d(*message);
+                    *message = NULL;
+                    *cvq     = CV_WRONG;
                     return false;
                 }
             }
@@ -2780,19 +2827,19 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         if (parser->tok == TOKEN_IDENT)
             typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (typevar || parser->tok == TOKEN_TYPENAME) {
-            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0)) {
+            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0, NULL)) {
                 ast_delete(switchnode);
                 return false;
             }
             continue;
         }
-        if (parse_qualifiers(parser, true, &cvq, &noref, &is_static, &qflags))
+        if (parse_qualifiers(parser, true, &cvq, &noref, &is_static, &qflags, NULL))
         {
             if (cvq == CV_WRONG) {
                 ast_delete(switchnode);
                 return false;
             }
-            if (!parse_variable(parser, block, false, cvq, NULL, noref, is_static, qflags)) {
+            if (!parse_variable(parser, block, false, cvq, NULL, noref, is_static, qflags, NULL)) {
                 ast_delete(switchnode);
                 return false;
             }
@@ -3008,9 +3055,10 @@ static bool parse_pragma(parser_t *parser)
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases)
 {
     bool       noref, is_static;
-    int        cvq = CV_NONE;
-    uint32_t   qflags = 0;
+    int        cvq     = CV_NONE;
+    uint32_t   qflags  = 0;
     ast_value *typevar = NULL;
+    char      *vstring = NULL;
 
     *out = NULL;
 
@@ -3028,15 +3076,15 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
-        if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0))
+        if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0, NULL))
             return false;
         return true;
     }
-    else if (parse_qualifiers(parser, !!block, &cvq, &noref, &is_static, &qflags))
+    else if (parse_qualifiers(parser, !!block, &cvq, &noref, &is_static, &qflags, &vstring))
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, block, true, cvq, NULL, noref, is_static, qflags);
+        return parse_variable(parser, block, true, cvq, NULL, noref, is_static, qflags, vstring);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -4330,7 +4378,7 @@ static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, cons
     return true;
 }
 
-static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags)
+static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring)
 {
     ast_value *var;
     ast_value *proto;
@@ -4398,6 +4446,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
         var->cvq = qualifier;
         var->expression.flags |= qflags;
+        if (var->expression.flags & AST_FLAG_DEPRECATED)
+            var->desc = vstring;
 
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
@@ -4478,6 +4528,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         goto cleanup;
                     }
                     proto = (ast_value*)old;
+                    proto->desc = var->desc;
                     if (!ast_compare_type((ast_expression*)proto, (ast_expression*)var)) {
                         parseerror(parser, "conflicting types for `%s`, previous declaration was here: %s:%i",
                                    proto->name,
@@ -4490,6 +4541,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         ast_value_set_name(proto->expression.params[i], var->expression.params[i]->name);
                     if (!parser_check_qualifiers(parser, var, proto)) {
                         retval = false;
+                        if (proto->desc) 
+                            mem_d(proto->desc);
                         proto = NULL;
                         goto cleanup;
                     }
@@ -4938,19 +4991,20 @@ static bool parser_global_statement(parser_t *parser)
     bool       is_static = false;
     uint32_t   qflags    = 0;
     ast_value *istype    = NULL;
+    char      *vstring   = NULL;
 
     if (parser->tok == TOKEN_IDENT)
         istype = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
     {
-        return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, 0);
+        return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, 0, NULL);
     }
-    else if (parse_qualifiers(parser, false, &cvq, &noref, &is_static, &qflags))
+    else if (parse_qualifiers(parser, false, &cvq, &noref, &is_static, &qflags, &vstring))
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, NULL, true, cvq, NULL, noref, is_static, qflags);
+        return parse_variable(parser, NULL, true, cvq, NULL, noref, is_static, qflags, vstring);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -5204,6 +5258,8 @@ void parser_cleanup()
     vec_free(parser->gotos);
     vec_free(parser->breaks);
     vec_free(parser->continues);
+
+    ast_value_delete(parser->nil);
 
     mem_d(parser);
 }

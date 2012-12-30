@@ -159,6 +159,7 @@ struct ast_value_s
     ast_expression_common expression;
 
     const char *name;
+    const char *desc;
 
     /*
     int         vtype;
