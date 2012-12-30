@@ -475,7 +475,8 @@ static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
     st.function = func;
 
     if (prog->xflags & VMXF_TRACE) {
-        vec_push(prog->function_stack, prog_getstring(prog, func->name));
+        const char *str = prog_getstring(prog, func->name);
+        vec_push(prog->function_stack, str);
     }
 
 #ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS

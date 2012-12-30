@@ -63,8 +63,7 @@ FLAGS_MAYBE="\
 #these don't need to be here to onhibit the warning
 # remove one flag from here at a time while fixing the code so that
 FLAGS_TOFIX="\
-    -castfcnptr          \
-    -evalorder"
+    -castfcnptr"
 
 
 splint $FLAGS_STUPID $FLAGS_MAYBE $FLAGS_TOFIX $FLAGS_OTHERS *.c *.h
