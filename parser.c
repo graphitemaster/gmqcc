@@ -4366,7 +4366,7 @@ static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, cons
     }
     av = (var  ->expression.flags & AST_FLAG_NORETURN);
     ao = (proto->expression.flags & AST_FLAG_NORETURN);
-    if (av != ao) {
+    if (!av != !ao) {
         return !parsewarning(parser, WARN_DIFFERENT_ATTRIBUTES,
                              "`%s` declared with different attributes%s\n"
                              " -> previous declaration here: %s:%i",
