@@ -234,6 +234,7 @@ static ftepp_t* ftepp_new()
 static void ftepp_delete(ftepp_t *self)
 {
     size_t i;
+    ftepp_flush(self);
     if (self->itemname)
         mem_d(self->itemname);
     if (self->includename)
