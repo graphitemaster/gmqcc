@@ -1374,7 +1374,6 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     }
 
-    
     if (!fun->expression.next) {
         parseerror(parser, "could not determine function return type");
         return false;
@@ -1398,7 +1397,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                     "call to `%s` (deprecated: %s)\n"
                     "-> `%s` declared here: %s:%i",
                     fval->name, fval->desc, fval->name, ast_ctx(fun).file,
-                    ast_ctx(fun).line); 
+                    ast_ctx(fun).line);
         }
 
         if (vec_size(fun->expression.params) != paramcount &&
