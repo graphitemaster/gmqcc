@@ -278,6 +278,11 @@ marked \'const\'.
 .TP
 .B -Wdifferent-attributes
 Similar to the above but for attributes like "[[noreturn]]".
+.TP
+.B -Wdeprecated
+Warn when a function is marked with the attribute
+"[[deprecated]]". This flag enables a warning on calls to functions
+marked as such.
 .SH COMPILE FLAGS
 .TP
 .B -fdarkplaces-string-table-bug

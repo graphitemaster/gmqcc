@@ -205,6 +205,11 @@
     # [[noreturn]]
     DIFFERENT_ATTRIBUTES         = true
 
+    # Warn when a function is marked with the attribute
+    # "[[deprecated]]". This flag enables a warning on calls to functions
+    # marked as such.
+    DEPRECATED                   = true
+
 # Finally these are all the optimizations, usually present via the -O
 # prefix from the command line.
 [optimizations]

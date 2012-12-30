@@ -144,6 +144,7 @@ typedef struct
 #define AST_FLAG_NORETURN     (1<<1)
 #define AST_FLAG_INLINE       (1<<2)
 #define AST_FLAG_INITIALIZED  (1<<3)
+#define AST_FLAG_DEPRECATED   (1<<4)
 #define AST_FLAG_TYPE_MASK (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value

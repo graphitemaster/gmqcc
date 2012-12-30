@@ -1373,18 +1373,29 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     }
 
+    
     if (!fun->expression.next) {
         parseerror(parser, "could not determine function return type");
         return false;
     } else {
+        ast_value *fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
+
+        if (fun->expression.flags & AST_FLAG_DEPRECATED) {
+            if (!fval)
+                return !parsewarning(parser, WARN_DEPRECATED, "call to function (which is marked deprecated)\n"
+                                    "-> it has been declared here: %s:%i",
+                                    ast_ctx(fun).file, ast_ctx(fun).line);
+            else
+                return !parsewarning(parser, WARN_DEPRECATED, "call to `%s` (which is marked deprecated)\n"
+                                    "-> `%s` declared here: %s:%i",
+                                    fval->name, fval->name, ast_ctx(fun).file, ast_ctx(fun).line);
+        }
+
         if (vec_size(fun->expression.params) != paramcount &&
             !((fun->expression.flags & AST_FLAG_VARIADIC) &&
               vec_size(fun->expression.params) < paramcount))
         {
-            ast_value *fval;
             const char *fewmany = (vec_size(fun->expression.params) > paramcount) ? "few" : "many";
-
-            fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
             if (opts.standard == COMPILER_GMQCC)
             {
                 if (fval)
@@ -2602,6 +2613,14 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                 flags |= AST_FLAG_INLINE;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
+            else if (!strcmp(parser_tokval(parser), "deprecated")) {
+                flags |= AST_FLAG_DEPRECATED;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`deprecated` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
                     return false;
                 }
