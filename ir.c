@@ -772,8 +772,10 @@ bool ir_function_finalize(ir_function *self)
         }
     }
 
-    if (!ir_function_naive_phi(self))
+    if (!ir_function_naive_phi(self)) {
+        irerror(self->context, "internal error: ir_function_naive_phi failed");
         return false;
+    }
 
     for (i = 0; i < vec_size(self->locals); ++i) {
         ir_value *v = self->locals[i];

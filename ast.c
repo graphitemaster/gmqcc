@@ -2399,15 +2399,18 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     /* Here, now, we need a PHI node
      * but first some sanity checking...
      */
-    if (trueval->vtype != falseval->vtype) {
+    if (trueval->vtype != falseval->vtype && trueval->vtype != TYPE_NIL && falseval->vtype != TYPE_NIL) {
         /* error("ternary with different types on the two sides"); */
+        compile_error(ast_ctx(self), "internal error: ternary operand types invalid");
         return false;
     }
 
     /* create PHI */
-    phi = ir_block_create_phi(merge, ast_ctx(self), ast_function_label(func, "phi"), trueval->vtype);
-    if (!phi)
+    phi = ir_block_create_phi(merge, ast_ctx(self), ast_function_label(func, "phi"), self->expression.vtype);
+    if (!phi) {
+        compile_error(ast_ctx(self), "internal error: failed to generate phi node");
         return false;
+    }
     ir_phi_add(phi, ontrue_out,  trueval);
     ir_phi_add(phi, onfalse_out, falseval);
 
