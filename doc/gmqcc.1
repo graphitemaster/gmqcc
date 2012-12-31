@@ -283,6 +283,11 @@ Similar to the above but for attributes like "[[noreturn]]".
 Warn when a function is marked with the attribute
 "[[deprecated]]". This flag enables a warning on calls to functions
 marked as such.
+.TP
+.B -Wparenthesis
+Warn about possible mistakes caused by missing or wrong parenthesis,
+like an assignment in an 'if' condition when there's no additional set
+of parens around the assignment.
 .SH COMPILE FLAGS
 .TP
 .B -fdarkplaces-string-table-bug
