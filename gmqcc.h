@@ -172,7 +172,7 @@
 #   if defined (__FreeBSD__) || defined (__OpenBSD__)
 #       include <sys/endian.h>
 #   elif defined (BSD) && (BSD >= 199103) || defined (__DJGPP__) || defined (__CYGWIN32__)
-#       include <machine/endiane.h>
+#       include <machine/endian.h>
 #   elif defined (__APPLE__)
 #       if defined (__BIG_ENDIAN__) && !defined(BIG_ENDIAN)
 #           define BIG_ENDIAN
