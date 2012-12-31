@@ -4561,35 +4561,28 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 {
                     /* other globals */
                     if (old) {
-                        if (opts.standard == COMPILER_GMQCC) {
-                            parseerror(parser, "global `%s` already declared here: %s:%i",
-                                       var->name, ast_ctx(old).file, ast_ctx(old).line);
+                        if (parsewarning(parser, WARN_DOUBLE_DECLARATION,
+                                         "global `%s` already declared here: %s:%i",
+                                         var->name, ast_ctx(old).file, ast_ctx(old).line))
+                        {
                             retval = false;
                             goto cleanup;
-                        } else {
-                            if (parsewarning(parser, WARN_DOUBLE_DECLARATION,
-                                             "global `%s` already declared here: %s:%i",
-                                             var->name, ast_ctx(old).file, ast_ctx(old).line))
-                            {
-                                retval = false;
-                                goto cleanup;
-                            }
-                            proto = (ast_value*)old;
-                            if (!ast_istype(old, ast_value)) {
-                                parseerror(parser, "internal error: not an ast_value");
-                                retval = false;
-                                proto = NULL;
-                                goto cleanup;
-                            }
-                            if (!parser_check_qualifiers(parser, var, proto)) {
-                                retval = false;
-                                proto = NULL;
-                                goto cleanup;
-                            }
-                            proto->expression.flags |= var->expression.flags;
-                            ast_delete(var);
-                            var = proto;
                         }
+                        proto = (ast_value*)old;
+                        if (!ast_istype(old, ast_value)) {
+                            parseerror(parser, "internal error: not an ast_value");
+                            retval = false;
+                            proto = NULL;
+                            goto cleanup;
+                        }
+                        if (!parser_check_qualifiers(parser, var, proto)) {
+                            retval = false;
+                            proto = NULL;
+                            goto cleanup;
+                        }
+                        proto->expression.flags |= var->expression.flags;
+                        ast_delete(var);
+                        var = proto;
                     }
                     if (opts.standard == COMPILER_QCC &&
                         (old = parser_find_field(parser, var->name)))
