@@ -158,11 +158,12 @@ static bool options_parse(int argc, char **argv) {
             if (options_long_gcc("std", &argc, &argv, &argarg)) {
                 if (!strcmp(argarg, "gmqcc") || !strcmp(argarg, "default")) {
 
-                    opts_set(opts.flags, ADJUST_VECTOR_FIELDS, true);
-                    opts_set(opts.flags, CORRECT_LOGIC,        true);
-                    opts_set(opts.flags, FALSE_EMPTY_STRINGS,  false);
-                    opts_set(opts.flags, TRUE_EMPTY_STRINGS,   true);
-                    opts_set(opts.flags, LOOP_LABELS,          true);
+                    opts_set(opts.flags, ADJUST_VECTOR_FIELDS,          true);
+                    opts_set(opts.flags, CORRECT_LOGIC,                 true);
+                    opts_set(opts.flags, FALSE_EMPTY_STRINGS,           false);
+                    opts_set(opts.flags, TRUE_EMPTY_STRINGS,            true);
+                    opts_set(opts.flags, LOOP_LABELS,                   true);
+                    opts_set(opts.werror, WARN_INVALID_PARAMETER_COUNT, true);
                     opts.standard = COMPILER_GMQCC;
 
                 } else if (!strcmp(argarg, "qcc")) {

@@ -1403,35 +1403,18 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
               vec_size(fun->expression.params) < paramcount))
         {
             const char *fewmany = (vec_size(fun->expression.params) > paramcount) ? "few" : "many";
-            if (opts.standard == COMPILER_GMQCC)
-            {
-                if (fval)
-                    parseerror(parser, "too %s parameters for call to %s: expected %i, got %i\n"
-                               " -> `%s` has been declared here: %s:%i",
-                               fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
-                               fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
-                else
-                    parseerror(parser, "too %s parameters for function call: expected %i, got %i\n"
-                               " -> it has been declared here: %s:%i",
-                               fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
-                               ast_ctx(fun).file, (int)ast_ctx(fun).line);
-                return false;
-            }
+            if (fval)
+                return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
+                                     "too %s parameters for call to %s: expected %i, got %i\n"
+                                     " -> `%s` has been declared here: %s:%i",
+                                     fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
+                                     fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
             else
-            {
-                if (fval)
-                    return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
-                                         "too %s parameters for call to %s: expected %i, got %i\n"
-                                         " -> `%s` has been declared here: %s:%i",
-                                         fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
-                                         fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
-                else
-                    return !parsewarning(parser, WARN_TOO_FEW_PARAMETERS,
-                                         "too %s parameters for function call: expected %i, got %i\n"
-                                         " -> it has been declared here: %s:%i",
-                                         fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
-                                         ast_ctx(fun).file, (int)ast_ctx(fun).line);
-            }
+                return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
+                                     "too %s parameters for function call: expected %i, got %i\n"
+                                     " -> it has been declared here: %s:%i",
+                                     fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
+                                     ast_ctx(fun).file, (int)ast_ctx(fun).line);
         }
     }
 

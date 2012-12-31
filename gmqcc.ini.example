@@ -125,7 +125,7 @@
     MISSING_RETURN_VALUES        = true
 
     # Enables warnings about missing parameters for function calls.
-    TOO_FEW_PARAMETERS           = true
+    INVALID_PARAMETER_COUNT      = true
 
     # Enables warnings about locals shadowing parameters or other locals.
     LOCAL_SHADOWS                = true

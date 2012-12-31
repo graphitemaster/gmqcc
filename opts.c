@@ -35,7 +35,7 @@ static void opts_setdefault() {
     opts_set(opts.warn,  WARN_EXTENSIONS,                true);
     opts_set(opts.warn,  WARN_FIELD_REDECLARED,          true);
     opts_set(opts.warn,  WARN_MISSING_RETURN_VALUES,     true);
-    opts_set(opts.warn,  WARN_TOO_FEW_PARAMETERS,        true);
+    opts_set(opts.warn,  WARN_INVALID_PARAMETER_COUNT,   true);
     opts_set(opts.warn,  WARN_LOCAL_SHADOWS,             false);
     opts_set(opts.warn,  WARN_LOCAL_CONSTANTS,           true);
     opts_set(opts.warn,  WARN_VOID_VARIABLES,            true);
