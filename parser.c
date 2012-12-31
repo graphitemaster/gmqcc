@@ -4892,8 +4892,7 @@ skipvar:
                 }
                 else
                 {
-                    if (opts.standard != COMPILER_GMQCC &&
-                        !OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
+                    if (!OPTS_FLAG(INITIALIZED_NONCONSTANTS) &&
                         qualifier != CV_VAR)
                     {
                         var->cvq = CV_CONST;
