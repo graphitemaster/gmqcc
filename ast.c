@@ -204,6 +204,9 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
 
 bool ast_compare_type(ast_expression *a, ast_expression *b)
 {
+    if (a->expression.vtype == TYPE_NIL ||
+        b->expression.vtype == TYPE_NIL)
+        return true;
     if (a->expression.vtype != b->expression.vtype)
         return false;
     if (!a->expression.next != !b->expression.next)
@@ -909,8 +912,7 @@ bool ast_call_check_types(ast_call *self)
         count = vec_size(func->expression.params);
 
     for (i = 0; i < count; ++i) {
-        if (self->params[i]->expression.vtype != TYPE_NIL &&
-            !ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i])))
+        if (!ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i])))
         {
             char texp[1024];
             char tgot[1024];

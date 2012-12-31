@@ -1041,8 +1041,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 }
                 else
                     assignop = type_storep_instr[exprs[0]->expression.vtype];
-                if (assignop == AINSTR_END ||
-                    (exprs[1]->expression.vtype != TYPE_NIL && !ast_compare_type(field->expression.next, exprs[1])))
+                if (assignop == AINSTR_END || !ast_compare_type(field->expression.next, exprs[1]))
                 {
                     ast_type_to_string(field->expression.next, ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -1074,8 +1073,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
-                else if (exprs[1]->expression.vtype != TYPE_NIL &&
-                         !ast_compare_type(exprs[0], exprs[1]))
+                else if (!ast_compare_type(exprs[0], exprs[1]))
                 {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
