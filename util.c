@@ -576,6 +576,8 @@ void util_htdel(hash_table_t *ht) {
 /*
  * Portable implementation of vasprintf/asprintf. Assumes vsnprintf
  * exists, otherwise compiler error.
+ *
+ * TODO: fix for MSVC ....  
  */
 int util_vasprintf(char **ret, const char *fmt, va_list args) {
     int     read;
