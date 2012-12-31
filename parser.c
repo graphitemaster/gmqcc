@@ -110,7 +110,7 @@ static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
-static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma);
+static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue);
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
@@ -939,7 +939,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                           ( (generated_op == INSTR_OR)
                             ? (immediate_is_true(ctx, asvalue[0]) || immediate_is_true(ctx, asvalue[1]))
                             : (immediate_is_true(ctx, asvalue[0]) && immediate_is_true(ctx, asvalue[1])) )
-                          ? 0 : 1);
+                          ? 1 : 0);
             }
             else
             {
@@ -1501,12 +1501,16 @@ static void parser_reclassify_token(parser_t *parser)
     }
 }
 
-static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma)
+static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue)
 {
     ast_expression *expr = NULL;
     shunt sy;
     bool wantop = false;
     bool gotmemberof = false;
+    /* only warn once about an assignment in a truth value because the current code
+     * would trigger twice on: if(a = b && ...), once for the if-truth-value, once for the && part
+     */
+    bool warn_truthvalue = true;
 
     /* count the parens because an if starts with one, so the
      * end of a condition is an unmatched closing paren
@@ -1783,6 +1787,28 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             if (vec_size(sy.ops) && !vec_last(sy.ops).paren)
                 olast = &operators[vec_last(sy.ops).etype-1];
 
+#define IsAssignOp(x) (\
+                (x) == opid1('=') || \
+                (x) == opid2('+','=') || \
+                (x) == opid2('-','=') || \
+                (x) == opid2('*','=') || \
+                (x) == opid2('/','=') || \
+                (x) == opid2('%','=') || \
+                (x) == opid2('&','=') || \
+                (x) == opid2('|','=') || \
+                (x) == opid3('&','~','=') \
+                )
+            if (warn_truthvalue) {
+                if ( (olast && IsAssignOp(olast->id) && (op->id == opid2('&','&') || op->id == opid2('|','|'))) ||
+                     (olast && IsAssignOp(op->id) && (olast->id == opid2('&','&') || olast->id == opid2('|','|'))) ||
+                     (truthvalue && !vec_size(parser->pot) && IsAssignOp(op->id))
+                   )
+                {
+                    (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around assignment used as truth value");
+                    warn_truthvalue = false;
+                }
+            }
+
             while (olast && (
                     (op->prec < olast->prec) ||
                     (op->assoc == ASSOC_LEFT && op->prec <= olast->prec) ) )
@@ -1902,7 +1928,7 @@ onerr:
 
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma)
 {
-    ast_expression *e = parse_expression_leave(parser, stopatcomma);
+    ast_expression *e = parse_expression_leave(parser, stopatcomma, false);
     if (!e)
         return NULL;
     if (!parser_next(parser)) {
@@ -2052,7 +2078,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         return false;
     }
     /* parse the condition */
-    cond = parse_expression_leave(parser, false);
+    cond = parse_expression_leave(parser, false, true);
     if (!cond)
         return false;
     /* closing paren */
@@ -2173,7 +2199,7 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
         return false;
     }
     /* parse the condition */
-    cond = parse_expression_leave(parser, false);
+    cond = parse_expression_leave(parser, false, true);
     if (!cond)
         return false;
     /* closing paren */
@@ -2288,7 +2314,7 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
         return false;
     }
     /* parse the condition */
-    cond = parse_expression_leave(parser, false);
+    cond = parse_expression_leave(parser, false, true);
     if (!cond)
         return false;
     /* closing paren */
@@ -2415,7 +2441,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
     }
     else if (parser->tok != ';')
     {
-        initexpr = parse_expression_leave(parser, false);
+        initexpr = parse_expression_leave(parser, false, false);
         if (!initexpr)
             goto onerr;
     }
@@ -2432,7 +2458,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the condition */
     if (parser->tok != ';') {
-        cond = parse_expression_leave(parser, false);
+        cond = parse_expression_leave(parser, false, true);
         if (!cond)
             goto onerr;
     }
@@ -2449,7 +2475,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the incrementor */
     if (parser->tok != ')') {
-        increment = parse_expression_leave(parser, false);
+        increment = parse_expression_leave(parser, false, false);
         if (!increment)
             goto onerr;
         if (!ast_side_effects(increment)) {
@@ -2793,7 +2819,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         return false;
     }
     /* parse the operand */
-    operand = parse_expression_leave(parser, false);
+    operand = parse_expression_leave(parser, false, false);
     if (!operand)
         return false;
 
@@ -2857,7 +2883,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
                 parseerror(parser, "expected expression for case");
                 return false;
             }
-            swcase.value = parse_expression_leave(parser, false);
+            swcase.value = parse_expression_leave(parser, false, false);
             if (!swcase.value) {
                 ast_delete(switchnode);
                 parseerror(parser, "expected expression for case");
@@ -3390,7 +3416,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         if (!parser_next(parser))
             return false;
 
-        framenum = parse_expression_leave(parser, true);
+        framenum = parse_expression_leave(parser, true, false);
         if (!framenum) {
             parseerror(parser, "expected a framenumber constant in[frame,think] notation");
             return false;
@@ -3438,7 +3464,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             nextthink = (ast_expression*)thinkfunc;
 
         } else {
-            nextthink = parse_expression_leave(parser, true);
+            nextthink = parse_expression_leave(parser, true, false);
             if (!nextthink) {
                 ast_unref(framenum);
                 parseerror(parser, "expected a think-function in [frame,think] notation");
@@ -4104,7 +4130,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
         return NULL;
     }
 
-    cexp = parse_expression_leave(parser, true);
+    cexp = parse_expression_leave(parser, true, false);
 
     if (!cexp || !ast_istype(cexp, ast_value)) {
         if (cexp)
@@ -4877,7 +4903,7 @@ skipvar:
             ast_expression *cexp;
             ast_value      *cval;
 
-            cexp = parse_expression_leave(parser, true);
+            cexp = parse_expression_leave(parser, true, false);
             if (!cexp)
                 break;
 
