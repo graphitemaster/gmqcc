@@ -2534,7 +2534,9 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
         if (!exp)
             return false;
 
-        if (exp->expression.vtype != expected->expression.next->expression.vtype) {
+        if (exp->expression.vtype != TYPE_NIL &&
+            exp->expression.vtype != expected->expression.next->expression.vtype)
+        {
             parseerror(parser, "return with invalid expression");
         }
 
