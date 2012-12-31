@@ -210,6 +210,10 @@
     # marked as such.
     DEPRECATED                   = true
 
+    # Warn about possible problems from missing parenthesis, like an
+    # assignment used as truth value without additional parens around.
+    PARENTHESIS                  = true
+
 # Finally these are all the optimizations, usually present via the -O
 # prefix from the command line.
 [optimizations]
