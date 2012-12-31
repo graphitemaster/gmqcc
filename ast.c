@@ -909,7 +909,9 @@ bool ast_call_check_types(ast_call *self)
         count = vec_size(func->expression.params);
 
     for (i = 0; i < count; ++i) {
-        if (!ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i]))) {
+        if (self->params[i]->expression.vtype != TYPE_NIL &&
+            !ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i])))
+        {
             char texp[1024];
             char tgot[1024];
             ast_type_to_string(self->params[i], tgot, sizeof(tgot));
