@@ -579,23 +579,63 @@ void util_htdel(hash_table_t *ht) {
  *
  * TODO: fix for MSVC ....  
  */
-int util_vasprintf(char **ret, const char *fmt, va_list args) {
-    int     read;
-    va_list copy;
-    va_copy(copy, args);
+int util_vasprintf(char **dat, const char *fmt, va_list args) {
+    int   ret;
+    int   len;
+    char *tmp = NULL;
 
-    *ret = 0;
-    if ((read = vsnprintf(NULL, 0, fmt, args)) >= 0) {
-        char *buffer;
-        if  ((buffer = (char*)mem_a(read + 1))) {
-            if ((read = vsnprintf(buffer, read + 1, fmt, copy)) < 0)
-                mem_d(buffer);
-            else
-                *ret = buffer;
+    /*
+     * For visuals tido _vsnprintf doesn't tell you the length of a
+     * formatted string if it overflows. However there is a MSVC
+     * intrinsic (which is documented wrong) called _vcsprintf which
+     * will return the required amount to allocate.
+     */     
+    #ifdef _MSC_VER
+        char *str;
+        if ((len = _vscprintf(fmt, args)) < 0) {
+            *dat = NULL;
+            return -1;
         }
-    }
-    va_end(copy);
-    return read;
+
+        tmp = mem_a(len + 1);
+        if ((ret = _vsnprintf(tmp, len+1, fmt, args)) != len) {
+            mem_d(tmp);
+            *dat = NULL;
+            return -1;
+        }
+        *dat = tmp;
+        return len;
+    #else
+        /*
+         * For everything else we have a decent conformint vsnprintf that
+         * returns the number of bytes needed.  We give it a try though on
+         * a short buffer, since efficently speaking, it could be nice to
+         * above a second vsnprintf call.
+         */
+        char    buf[128];
+        va_list cpy;
+        va_copy(cpy, args);
+        len = vsnprintf(buf, sizeof(buf), fmt, cpy);
+        va_end (cpy);
+
+        if (len < (int)sizeof(buf)) {
+            *dat = util_strdup(buf);
+            return len;
+        }
+
+        /* not large enough ... */
+        tmp = mem_a(len + 1);
+        if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
+            mem_d(tmp);
+            *dat = NULL;
+            return -1;
+        }
+
+        *dat = tmp;
+        return len;
+    #endif
+    /* never reached ... */
+    return -1;
 }
 int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
