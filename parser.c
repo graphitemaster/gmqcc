@@ -2412,11 +2412,13 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (typevar || parser->tok == TOKEN_TYPENAME) {
+#if 0
         if (opts.standard != COMPILER_GMQCC) {
             if (parsewarning(parser, WARN_EXTENSIONS,
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
         }
+#endif
         if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, 0, NULL))
             goto onerr;
     }
