@@ -696,6 +696,7 @@ void ast_ifthen_delete(ast_ifthen *self)
 
 ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
 {
+    ast_expression *exprtype = ontrue;
     ast_instantiate(ast_ternary, ctx, ast_ternary_delete);
     /* This time NEITHER must be NULL */
     if (!ontrue || !onfalse) {
@@ -711,7 +712,9 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
     ast_propagate_effects(self, ontrue);
     ast_propagate_effects(self, onfalse);
 
-    if (!ast_type_adopt(self, ontrue)) {
+    if (ontrue->expression.vtype == TYPE_NIL)
+        exprtype = onfalse;
+    if (!ast_type_adopt(self, exprtype)) {
         ast_ternary_delete(self);
         return NULL;
     }

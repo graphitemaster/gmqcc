@@ -983,14 +983,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             vec_pop(parser->pot);
-            if (exprs[1]->expression.vtype != exprs[2]->expression.vtype) {
+            if (!ast_compare_type(exprs[1], exprs[2])) {
                 ast_type_to_string(exprs[1], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[2], ty2, sizeof(ty2));
                 parseerror(parser, "operands of ternary expression must have the same type, got %s and %s", ty1, ty2);
                 return false;
             }
             if (CanConstFold1(exprs[0]))
-                out = (ConstF(0) ? exprs[1] : exprs[2]);
+                out = (immediate_is_true(ctx, asvalue[0]) ? exprs[1] : exprs[2]);
             else
                 out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
             break;
