@@ -2534,10 +2534,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
         if (!parser_next(parser))
             parseerror(parser, "parse error");
         if (expected->expression.next->expression.vtype != TYPE_VOID) {
-            if (opts.standard != COMPILER_GMQCC)
-                (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
-            else
-                parseerror(parser, "return without value");
+            (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
         }
         ret = ast_return_new(ctx, NULL);
     }

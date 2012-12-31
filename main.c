@@ -164,6 +164,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, TRUE_EMPTY_STRINGS,            true);
                     opts_set(opts.flags, LOOP_LABELS,                   true);
                     opts_set(opts.werror, WARN_INVALID_PARAMETER_COUNT, true);
+                    opts_set(opts.werror, WARN_MISSING_RETURN_VALUES,   true);
                     opts.standard = COMPILER_GMQCC;
 
                 } else if (!strcmp(argarg, "qcc")) {
