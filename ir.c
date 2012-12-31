@@ -2932,6 +2932,8 @@ tailcall:
 
                 if (param->vtype == TYPE_FIELD)
                     stmt.opcode = field_store_instr[param->fieldtype];
+                else if (param->vtype == TYPE_NIL)
+                    stmt.opcode = INSTR_STORE_V;
                 else
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
@@ -2959,6 +2961,8 @@ tailcall:
 
                 if (param->vtype == TYPE_FIELD)
                     stmt.opcode = field_store_instr[param->fieldtype];
+                else if (param->vtype == TYPE_NIL)
+                    stmt.opcode = INSTR_STORE_V;
                 else
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
