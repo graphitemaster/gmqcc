@@ -1846,6 +1846,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         }
 
         self->expression.outr = *out;
+        codegen_output_type(self, *out);
         return true;
     }
 
@@ -1862,6 +1863,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     if (!*out)
         return false;
     self->expression.outr = *out;
+    codegen_output_type(self, *out);
 
     return true;
 }
