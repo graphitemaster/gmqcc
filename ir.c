@@ -3643,6 +3643,12 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         }
     }
 
+    /* generate nil */
+    ir_value_code_setaddr(self->nil, vec_size(code_globals));
+    vec_push(code_globals, 0);
+    vec_push(code_globals, 0);
+    vec_push(code_globals, 0);
+
     /* generate global temps */
     self->first_common_globaltemp = vec_size(code_globals);
     for (i = 0; i < self->max_globaltemps; ++i) {
