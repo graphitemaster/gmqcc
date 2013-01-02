@@ -26,6 +26,7 @@
 
 #include "gmqcc.h"
 #include "lexer.h"
+#include "ast.h"
 
 /* beginning of locals */
 #define PARSER_HT_LOCALS  2

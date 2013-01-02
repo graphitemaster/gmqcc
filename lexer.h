@@ -25,8 +25,6 @@
 
 typedef struct token_s token;
 
-#include "ast.h"
-
 struct token_s {
     int ttype;
 
