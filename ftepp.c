@@ -647,6 +647,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         goto cleanup;
     }
     ftepp->output_string = old_string;
+    inlex->line = ftepp->lex->line;
+    inlex->sline = ftepp->lex->sline;
     ftepp->lex = inlex;
     ftepp_recursion_header(ftepp);
     if (!ftepp_preprocess(ftepp)) {
