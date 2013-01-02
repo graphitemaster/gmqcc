@@ -49,6 +49,7 @@ typedef struct {
     char  **params;
     /* yes we need an extra flag since `#define FOO x` is not the same as `#define FOO() x` */
     bool    has_params;
+    bool    variadic;
 
     pptoken **output;
 } ppmacro;
@@ -231,10 +232,15 @@ static ftepp_t* ftepp_new()
     return ftepp;
 }
 
+static void ftepp_flush_do(ftepp_t *self)
+{
+    vec_free(self->output_string);
+}
+
 static void ftepp_delete(ftepp_t *self)
 {
     size_t i;
-    ftepp_flush(self);
+    ftepp_flush_do(self);
     if (self->itemname)
         mem_d(self->itemname);
     if (self->includename)
@@ -337,15 +343,22 @@ static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
             case TOKEN_KEYWORD:
+                vec_push(macro->params, util_strdup(ftepp_tokval(ftepp)));
+                break;
+            case TOKEN_DOTS:
+                macro->variadic = true;
                 break;
             default:
                 ftepp_error(ftepp, "unexpected token in parameter list");
                 return false;
         }
-        vec_push(macro->params, util_strdup(ftepp_tokval(ftepp)));
         ftepp_next(ftepp);
         if (!ftepp_skipspace(ftepp))
             return false;
+        if (macro->variadic && ftepp->token != ')') {
+            ftepp_error(ftepp, "cannot have parameters after the variadic parameters");
+            return false;
+        }
     } while (ftepp->token == ',');
     if (ftepp->token != ')') {
         ftepp_error(ftepp, "expected closing paren after macro parameter list");
@@ -360,6 +373,8 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 {
     pptoken *ptok;
     while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
+        if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__"))
+            ftepp->token = TOKEN_VA_ARGS;
         ptok = pptoken_make(ftepp);
         vec_push(macro->output, ptok);
         ftepp_next(ftepp);
@@ -571,17 +586,37 @@ static void ftepp_recursion_footer(ftepp_t *ftepp)
     ftepp_out(ftepp, "\n#pragma pop(line)\n", false);
 }
 
+static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
+{
+    size_t   i;
+    pptoken *out;
+    for (i = 0; i < vec_size(param->tokens); ++i) {
+        out = param->tokens[i];
+        if (out->token == TOKEN_EOL)
+            ftepp_out(ftepp, "\n", false);
+        else
+            ftepp_out(ftepp, out->value, false);
+    }
+}
+
 static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
 {
-    char     *old_string = ftepp->output_string;
-    lex_file *old_lexer = ftepp->lex;
-    bool retval = true;
+    char     *old_string   = ftepp->output_string;
+    lex_file *old_lexer    = ftepp->lex;
+    size_t    vararg_start = vec_size(macro->params);
+    bool      retval       = true;
+    size_t    varargs;
 
-    size_t    o, pi, pv;
+    size_t    o, pi;
     lex_file *inlex;
 
     int nextok;
+
+    if (vararg_start < vec_size(params))
+        varargs = vec_size(params) - vararg_start;
+    else
+        varargs = 0;
 
     /* really ... */
     if (!vec_size(macro->output))
@@ -591,21 +626,28 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     for (o = 0; o < vec_size(macro->output); ++o) {
         pptoken *out = macro->output[o];
         switch (out->token) {
+            case TOKEN_VA_ARGS:
+                if (!macro->variadic) {
+                    ftepp_error(ftepp, "internal preprocessor error: TOKEN_VA_ARGS in non-variadic macro");
+                    return false;
+                }
+                if (!varargs)
+                    break;
+                pi = 0;
+                ftepp_param_out(ftepp, &params[pi + vararg_start]);
+                for (++pi; pi < varargs; ++pi) {
+                    ftepp_out(ftepp, ", ", false);
+                    ftepp_param_out(ftepp, &params[pi + vararg_start]);
+                }
+                break;
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
             case TOKEN_KEYWORD:
                 if (!macro_params_find(macro, out->value, &pi)) {
                     ftepp_out(ftepp, out->value, false);
                     break;
-                } else {
-                    for (pv = 0; pv < vec_size(params[pi].tokens); ++pv) {
-                        out = params[pi].tokens[pv];
-                        if (out->token == TOKEN_EOL)
-                            ftepp_out(ftepp, "\n", false);
-                        else
-                            ftepp_out(ftepp, out->value, false);
-                    }
-                }
+                } else
+                    ftepp_param_out(ftepp, &params[pi]);
                 break;
             case '#':
                 if (o + 1 < vec_size(macro->output)) {
@@ -694,8 +736,11 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
     if (!ftepp_macro_call_params(ftepp, &params))
         return false;
 
-    if (vec_size(params) != vec_size(macro->params)) {
-        ftepp_error(ftepp, "macro %s expects %u paramteters, %u provided", macro->name,
+    if ( vec_size(params) < vec_size(macro->params) ||
+        (vec_size(params) > vec_size(macro->params) && !macro->variadic) )
+    {
+        ftepp_error(ftepp, "macro %s expects%s %u paramteters, %u provided", macro->name,
+                    (macro->variadic ? " at least" : ""),
                     (unsigned int)vec_size(macro->params),
                     (unsigned int)vec_size(params));
         retval = false;
@@ -1593,7 +1638,7 @@ const char *ftepp_get()
 
 void ftepp_flush()
 {
-    vec_free(ftepp->output_string);
+    ftepp_flush_do(ftepp);
 }
 
 void ftepp_finish()
