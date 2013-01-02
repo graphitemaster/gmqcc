@@ -105,6 +105,7 @@ clean:
 $(OBJ_D) $(OBJ_C) $(OBJ_X): gmqcc.h opts.def
 main.o:   lexer.h
 parser.o: ast.h lexer.h
+ftepp.o:  lexer.h
 lexer.o:  lexer.h
 ast.o:    ast.h ir.h
 ir.o:     ir.h
