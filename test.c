@@ -156,7 +156,7 @@ int task_pclose(FILE **handles) {
 #    define popen  _popen
 #    define pclose _pclose
 #    include <windows.h>
-#   include <io.h>
+#    include <io.h>
 #    include <fcntl.h>
     /*
      * Bidirectional piping implementation for windows using CreatePipe and DuplicateHandle +
@@ -185,7 +185,7 @@ int task_pclose(FILE **handles) {
 #    ifdef __MINGW32__
         /* mingw32 has dirent.h */
 #        include <dirent.h>
-#    elif defined (_MSC_VER)
+#    elif defined (_WIN32)
         /* 
          * visual studio lacks dirent.h it's a posix thing
          * so we emulate it with the WinAPI.

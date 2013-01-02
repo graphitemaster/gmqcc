@@ -165,6 +165,11 @@ int file_seek(FILE *fp, long int off, int whence) {
     return fseek(fp, off, whence);
 }
 
+int file_putc(FILE *fp, int ch) {
+    /* Invokes file_exception on windows if fp is null */
+    return fputc(ch, fp);
+}
+
 /*
  * Implements libc getline for systems that don't have it, which is
  * assmed all.  This works the same as getline().

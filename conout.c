@@ -54,7 +54,7 @@ typedef struct {
  * Doing colored output on windows is fucking stupid.  The linux way is
  * the real way. So we emulate it on windows :)
  */
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -104,7 +104,7 @@ static const int ansi2win[] = {
     WWHITE
 };
 
-static int win_fputs(const char *str, FILE *h) {
+static int win_fputs(FILE *h, const char *str) {
     /* state for translate */
     int acolor;
     int wcolor;
@@ -168,7 +168,7 @@ static int win_fputs(const char *str, FILE *h) {
                 state    = -1;
             }
         } else {
-            file_putc(*str, h);
+            file_putc(h, *str);
             length ++;
         }
         str++;
@@ -212,7 +212,7 @@ static void con_enablecolor() {
  */
 static int con_write(FILE *handle, const char *fmt, va_list va) {
     int      ln;
-    #ifndef _MSC_VER
+    #ifndef _WIN32
     ln = vfprintf(handle, fmt, va);
     #else
     {

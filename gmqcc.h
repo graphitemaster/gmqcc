@@ -413,6 +413,7 @@ GMQCC_INLINE int     file_error  (FILE *);
 GMQCC_INLINE int     file_getc   (FILE *);
 GMQCC_INLINE int     file_printf (FILE *, const char *, ...);
 GMQCC_INLINE int     file_puts   (FILE *, const char *);
+GMQCC_INLINE int     file_putc   (FILE *, int);
 GMQCC_INLINE int     file_seek   (FILE *, long int, int);
 
 GMQCC_INLINE size_t  file_read   (void *,        size_t, size_t, FILE *);
