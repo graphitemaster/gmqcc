@@ -3029,7 +3029,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         vec_push(parser->gotos, gt);
 
     if (!parser_next(parser) || parser->tok != ';') {
-        parseerror(parser, "semicolon expected after goto label got");
+        parseerror(parser, "semicolon expected after goto label");
         return false;
     }
     if (!parser_next(parser)) {
