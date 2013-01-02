@@ -485,7 +485,7 @@ unroll:
     if (command) {
         vec_pop(command);
         while (vec_size(command)) {
-            lex_ungetch(lex, vec_last(command));
+            lex_ungetch(lex, (unsigned char)vec_last(command));
             vec_pop(command);
         }
         vec_free(command);
@@ -494,7 +494,7 @@ unroll:
     if (command) {
         vec_pop(command);
         while (vec_size(command)) {
-            lex_ungetch(lex, vec_last(command));
+            lex_ungetch(lex, (unsigned char)vec_last(command));
             vec_pop(command);
         }
         vec_free(command);
@@ -503,7 +503,7 @@ unroll:
     if (pragma) {
         vec_pop(pragma);
         while (vec_size(pragma)) {
-            lex_ungetch(lex, vec_last(pragma));
+            lex_ungetch(lex, (unsigned char)vec_last(pragma));
             vec_pop(pragma);
         }
         vec_free(pragma);
