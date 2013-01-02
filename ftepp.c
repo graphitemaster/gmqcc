@@ -788,12 +788,21 @@ static bool ftepp_if_value(ftepp_t *ftepp, bool *out, double *value_out)
 {
     ppmacro *macro;
     bool     wasnot = false;
+    bool     wasneg = false;
 
     if (!ftepp_skipspace(ftepp))
         return false;
 
     while (ftepp->token == '!') {
         wasnot = true;
+        ftepp_next(ftepp);
+        if (!ftepp_skipspace(ftepp))
+            return false;
+    }
+
+    if (ftepp->token == TOKEN_OPERATOR && !strcmp(ftepp_tokval(ftepp), "-"))
+    {
+        wasneg = true;
         ftepp_next(ftepp);
         if (!ftepp_skipspace(ftepp))
             return false;
@@ -855,6 +864,7 @@ static bool ftepp_if_value(ftepp_t *ftepp, bool *out, double *value_out)
             }
             break;
         case TOKEN_STRINGCONST:
+            *value_out = 0;
             *out = false;
             break;
         case TOKEN_INTCONST:
@@ -878,8 +888,12 @@ static bool ftepp_if_value(ftepp_t *ftepp, bool *out, double *value_out)
 
         default:
             ftepp_error(ftepp, "junk in #if: `%s` ...", ftepp_tokval(ftepp));
+            if (opts.debug)
+                ftepp_error(ftepp, "internal: token %i\n", ftepp->token);
             return false;
     }
+    if (wasneg)
+        *value_out = -*value_out;
     if (wasnot) {
         *out = !*out;
         *value_out = (*out ? 1 : 0);
