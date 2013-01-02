@@ -300,6 +300,17 @@ static ast_expression* parser_find_field(parser_t *parser, const char *name)
     return ( ast_expression*)util_htget(parser->htfields, name);
 }
 
+static ast_expression* parser_find_label(parser_t *parser, const char *name) {
+    size_t i;
+    if (!parser->labels)
+        return NULL;
+ 
+    for(i = 0; i < vec_size(parser->labels); i++)
+        if (!strcmp(parser->labels[i]->name, name))
+            return (ast_expression*)parser->labels[i];
+    return NULL;
+}
+
 static ast_expression* parser_find_global(parser_t *parser, const char *name)
 {
     return (ast_expression*)util_htget(parser->htglobals, name);
@@ -1573,18 +1584,19 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     parseerror(parser, "namespace for member not found");
                     goto onerr;
                 }
-                else
-                    var = parser_find_var(parser, parser_tokval(parser));
+                else if (!(var = parser_find_var(parser, parser_tokval(parser))))
+                    var = (ast_expression*)parser_find_label(parser, parser_tokval(parser));
             } else {
                 var = parser_find_var(parser, parser_tokval(parser));
                 if (!var)
                     var = parser_find_field(parser, parser_tokval(parser));
+                if (!var)
+                    var = parser_find_label(parser, parser_tokval(parser));
             }
             if (!var) {
                 /* intrinsics */
                 if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                     var = (ast_expression*)intrinsic_debug_typestring;
-
                 }
                 else
                 {
@@ -2957,16 +2969,54 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
     return true;
 }
 
+/* parse computed goto sides */
+static ast_expression *parse_goto_computed(parser_t *parser, ast_expression *side) {
+    ast_expression *on_true;
+    ast_expression *on_false;
+
+    if (!side)
+        return NULL;
+
+    if (ast_istype(side, ast_ternary)) {
+        on_true  = parse_goto_computed(parser, ((ast_ternary*)side)->on_true);
+        on_false = parse_goto_computed(parser, ((ast_ternary*)side)->on_false);
+
+        return (ast_expression*)ast_ifthen_new(parser_ctx(parser), ((ast_ternary*)side)->cond, on_true, on_false);
+    } else if (ast_istype(side, ast_label)) {
+        ast_goto *gt = ast_goto_new(parser_ctx(parser), ((ast_label*)side)->name);
+        ast_goto_set_label(gt, ((ast_label*)side));
+        return (ast_expression*)gt;
+    }
+    return NULL;
+}
+
 static bool parse_goto(parser_t *parser, ast_expression **out)
 {
     size_t    i;
-    ast_goto *gt;
+    ast_goto *gt = NULL;
 
-    if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
-        parseerror(parser, "expected label name after `goto`");
+    if (!parser_next(parser))
         return false;
+
+    if (parser->tok != TOKEN_IDENT) {
+        ast_expression *expression;
+        /* could be an expression i.e computed goto :-) */
+        if (parser->tok != '(') {
+            parseerror(parser, "expected label name after `goto`");
+            return false;
+        }
+
+        /* failed to parse expression for goto */
+        if (!(expression = parse_expression(parser, false)))
+            return false;
+
+        if (!(*out = parse_goto_computed(parser, expression)))
+            return false;
+
+        return true;
     }
 
+    /* not computed goto */
     gt = ast_goto_new(parser_ctx(parser), parser_tokval(parser));
 
     for (i = 0; i < vec_size(parser->labels); ++i) {
@@ -2979,7 +3029,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         vec_push(parser->gotos, gt);
 
     if (!parser_next(parser) || parser->tok != ';') {
-        parseerror(parser, "semicolon expected after goto label");
+        parseerror(parser, "semicolon expected after goto label got");
         return false;
     }
     if (!parser_next(parser)) {
