@@ -100,6 +100,24 @@ char *ftepp_predef_date(lex_file *context) {
     return value;
 }
 
+/* __TIME__ */
+char *ftepp_predef_time(lex_file *context) {
+    struct tm *itime;
+    time_t     rtime;
+    char      *value = mem_a(82);
+    /* 82 is enough for strftime but we also have " " in our string */
+
+    (void)context;
+
+    /* get time */
+    time (&rtime);
+    itime = localtime(&rtime);
+
+    strftime(value, 82, "\"%X\"", itime);
+
+    return value;
+}
+
 /* __LINE__ */
 char *ftepp_predef_line(lex_file *context) {
     char   *value;
@@ -157,7 +175,8 @@ static const predef_t ftepp_predefs[] = {
     { "__COUNTER_LAST__", &ftepp_predef_counterlast },
     { "__RANDOM__",       &ftepp_predef_random      },
     { "__RANDOM_LAST__",  &ftepp_predef_randomlast  },
-    { "__DATE__",         &ftepp_predef_date        }
+    { "__DATE__",         &ftepp_predef_date        },
+    { "__TIME__",         &ftepp_predef_time        }
 };
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
