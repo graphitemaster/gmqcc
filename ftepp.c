@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <time.h>
 #include "gmqcc.h"
 #include "lexer.h"
 
@@ -81,6 +82,24 @@ typedef struct {
 static uint32_t ftepp_predef_countval = 0;
 static uint32_t ftepp_predef_randval  = 0;
 
+/* __DATE__ */
+char *ftepp_predef_date(lex_file *context) {
+    struct tm *itime;
+    time_t     rtime;
+    char      *value = mem_a(82);
+    /* 82 is enough for strftime but we also have " " in our string */
+
+    (void)context;
+
+    /* get time */
+    time (&rtime);
+    itime = localtime(&rtime);
+
+    strftime(value, 82, "\"%b %d %Y\"", itime);
+
+    return value;
+}
+
 /* __LINE__ */
 char *ftepp_predef_line(lex_file *context) {
     char   *value;
@@ -138,6 +157,7 @@ static const predef_t ftepp_predefs[] = {
     { "__COUNTER_LAST__", &ftepp_predef_counterlast },
     { "__RANDOM__",       &ftepp_predef_random      },
     { "__RANDOM_LAST__",  &ftepp_predef_randomlast  },
+    { "__DATE__",         &ftepp_predef_date        }
 };
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
