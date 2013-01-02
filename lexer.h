@@ -111,7 +111,7 @@ typedef struct {
     size_t  line;
     size_t  sline; /* line at the start of a token */
 
-    char    peek[256];
+    int     peek[256];
     size_t  peekpos;
 
     bool    eof;
