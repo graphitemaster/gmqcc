@@ -746,6 +746,7 @@ bool task_propagate(const char *curdir) {
         if (strcmp(files->d_name + strlen(files->d_name) - 5, ".tmpl") == 0) {
             task_template_t *template = task_template_compile(files->d_name, curdir);
             char             buf[4096]; /* one page should be enough */
+            char            *qcflags = NULL;
             task_t           task;
 
             util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
@@ -762,18 +763,36 @@ bool task_propagate(const char *curdir) {
             template->tempfilename = tempnam(curdir, "TMPDAT");
 
             /*
+             * Additional QCFLAGS enviroment variable may be used
+             * to test compile flags for all tests.  This needs to be
+             * BEFORE other flags (so that the .tmpl can override them)
+             */
+            qcflags = getenv("QCFLAGS");
+
+            /*
              * Generate the command required to open a pipe to a process
              * which will be refered to with a handle in the task for
              * reading the data from the pipe.
              */
-            memset  (buf,0,sizeof(buf));
-            snprintf(buf,  sizeof(buf), "%s %s/%s %s -o %s",
-                task_bins[TASK_COMPILE],
-                curdir,
-                template->sourcefile,
-                template->compileflags,
-                template->tempfilename
-            );
+            memset (buf,0,sizeof(buf));
+            if (qcflags) {
+                snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
+                    task_bins[TASK_COMPILE],
+                    curdir,
+                    template->sourcefile,
+                    qcflags,
+                    template->compileflags,
+                    template->tempfilename
+                );
+            } else {
+                snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
+                    task_bins[TASK_COMPILE],
+                    curdir,
+                    template->sourcefile,
+                    template->compileflags,
+                    template->tempfilename
+                );
+            }
 
             /*
              * The task template was compiled, now lets create a task from
@@ -822,31 +841,6 @@ bool task_propagate(const char *curdir) {
 }
 
 /*
- * Removes all temporary 'progs.dat' files created during compilation
- * of all tests'
- */
-void task_cleanup(const char *curdir) {
-    DIR             *dir;
-    struct dirent   *files;
-    char             buffer[4096];
-
-    dir = opendir(curdir);
-
-    while ((files = readdir(dir))) {
-        memset(buffer, 0, sizeof(buffer));
-        if (strstr(files->d_name, "TMP")) {
-            snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
-            if (remove(buffer))
-                con_err("error removing temporary file: %s\n", buffer);
-            else
-                util_debug("TEST", "removed temporary file: %s\n", buffer);
-        }
-    }
-
-    closedir(dir);
-}
-
-/*
  * Task precleanup removes any existing temporary files or log files
  * left behind from a previous invoke of the test-suite.
  */
@@ -874,7 +868,7 @@ void task_precleanup(const char *curdir) {
     closedir(dir);
 }
 
-void task_destroy(const char *curdir) {
+void task_destroy(void) {
     /*
      * Free all the data in the task list and finally the list itself
      * then proceed to cleanup anything else outside the program like
@@ -900,11 +894,12 @@ void task_destroy(const char *curdir) {
                 con_err("error removing stdout log file: %s\n", task_tasks[i].stdoutlogfile);
             else
                 util_debug("TEST", "removed stdout log file: %s\n", task_tasks[i].stdoutlogfile);
-
             if (remove(task_tasks[i].stderrlogfile))
                 con_err("error removing stderr log file: %s\n", task_tasks[i].stderrlogfile);
             else
                 util_debug("TEST", "removed stderr log file: %s\n", task_tasks[i].stderrlogfile);
+
+            remove(task_tasks[i].template->tempfilename);
         }
 
         /* free util_strdup data for log files */
@@ -914,11 +909,6 @@ void task_destroy(const char *curdir) {
         task_template_destroy(&task_tasks[i].template);
     }
     vec_free(task_tasks);
-
-    /*
-     * Cleanup outside stuff like temporary files.
-     */
-    task_cleanup(curdir);
 }
 
 /*
@@ -1172,7 +1162,7 @@ bool test_perform(const char *curdir) {
     task_precleanup(curdir);
     if (!task_propagate(curdir)) {
         con_err("error: failed to propagate tasks\n");
-        task_destroy(curdir);
+        task_destroy();
         return false;
     }
     /*
@@ -1183,7 +1173,7 @@ bool test_perform(const char *curdir) {
      * issues.
      */
     task_schedualize();
-    task_destroy(curdir);
+    task_destroy();
 
     return true;
 }
