@@ -652,11 +652,13 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     ftepp->lex = inlex;
     ftepp_recursion_header(ftepp);
     if (!ftepp_preprocess(ftepp)) {
+        vec_free(ftepp->lex->open_string);
         old_string = ftepp->output_string;
         lex_close(ftepp->lex);
         retval = false;
         goto cleanup;
     }
+    vec_free(ftepp->lex->open_string);
     ftepp_recursion_footer(ftepp);
     old_string = ftepp->output_string;
 
