@@ -2981,15 +2981,10 @@ static ast_expression *parse_goto_computed(parser_t *parser, ast_expression *sid
         on_true  = parse_goto_computed(parser, ((ast_ternary*)side)->on_true);
         on_false = parse_goto_computed(parser, ((ast_ternary*)side)->on_false);
 
-        if (!on_true) {
+        if (!on_true || !on_false) {
             parseerror(parser, "expected label or expression in ternary");
-            ast_unref(((ast_ternary*)side)->on_false);
-            return NULL;
-        }
-
-        if (!on_false) {
-            parseerror(parser, "expected label or expression in ternary");
-            ast_unref(((ast_ternary*)side)->on_true);
+            if (((ast_ternary*)side)->on_false) ast_unref(((ast_ternary*)side)->on_false);
+            if (((ast_ternary*)side)->on_true)  ast_unref(((ast_ternary*)side)->on_true);
             return NULL;
         }
 
@@ -3012,6 +3007,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
 
     if (parser->tok != TOKEN_IDENT) {
         ast_expression *expression;
+
         /* could be an expression i.e computed goto :-) */
         if (parser->tok != '(') {
             parseerror(parser, "expected label name after `goto`");
@@ -3022,6 +3018,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         if (!(expression = parse_expression(parser, false)) ||
             !(*out = parse_goto_computed(parser, expression))) {
             parseerror(parser, "invalid goto expression");
+            ast_unref(expression);
             return false;
         }
 
