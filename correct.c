@@ -93,31 +93,36 @@ static int correct_update(ht *table, const char *word) {
  * alpha character.
  */
 static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
-static char *correct_substr(const char *str, size_t off, size_t lim) {
-    char   *nstr;
-    size_t  slen = strlen(str);
 
-    /* lots of compares */
-    if ((lim > slen) || ((off + lim) > slen) || (slen < 1) || (!lim))
+static char *correct_strndup(const char *src, size_t n) {
+    char   *ret;
+    size_t  len = strlen(src);
+
+    if (n < len)
+        len = n;
+
+    if (!(ret = (char*)mem_a(len + 1)))
         return NULL;
 
-    if (!(nstr = mem_a(lim + 1)))
-        return NULL;
-
-    strncpy(nstr, str+off, lim);
-    nstr[lim] = '\0';
-
-    return nstr;
+    ret[len] = '\0';
+    return (char*)memcpy(ret, src, len);
 }
 
-static char *correct_concat(char *str1, char *str2) {
-    if (!str1) str1 = mem_a(1), *str1 = '\0';
-    if (!str2) str2 = mem_a(1), *str2 = '\0';
+static char *correct_concat(char *str1, char *str2, bool next) {
+    char *ret = NULL;
 
-    str1 = mem_r(str1, strlen(str1) + strlen(str2) + 1);
-    strcat(str1, str2);
+    if (!str1) {
+         str1 = mem_a(1);
+        *str1 = '\0';
+    }
 
-    return str1;
+    str1 = mem_r (str1, strlen(str1) + strlen(str2) + 1);
+    ret  = strcat(str1, str2);
+
+    if (str2 && next)
+        mem_d(str2);
+
+    return ret;
 }
 
 /*
@@ -133,8 +138,9 @@ static size_t correct_deletion(const char *ident, char **array, size_t index) {
 
     for (itr = 0; itr < len; itr++) {
         array[index + itr] = correct_concat (
-            correct_substr (ident, 0,     itr),
-            correct_substr (ident, itr+1, len-(itr+1))
+            correct_strndup (ident,       itr),
+            correct_strndup (ident+itr+1, len-(itr+1)),
+            true
         );
     }
 
@@ -148,13 +154,16 @@ static size_t correct_transposition(const char *ident, char **array, size_t inde
     for (itr = 0; itr < len - 1; itr++) {
         array[index + itr] = correct_concat (
             correct_concat (
-                correct_substr(ident, 0,     itr),
-                correct_substr(ident, itr+1, 1)
+                correct_strndup(ident,     itr),
+                correct_strndup(ident+itr+1, 1),
+                true
             ),
             correct_concat (
-                correct_substr(ident, itr,   1),
-                correct_substr(ident, itr+2, len-(itr+2))
-            )
+                correct_strndup(ident+itr,   1),
+                correct_strndup(ident+itr+2, len-(itr+2)),
+                true
+            ),
+            true
         );
     }
 
@@ -173,14 +182,15 @@ static size_t correct_alteration(const char *ident, char **array, size_t index) 
             *cct = correct_alpha[jtr];
             array[index + ktr] = correct_concat (
                 correct_concat (
-                    correct_substr(ident, 0, itr),
-                    (char *) &cct
+                    correct_strndup(ident, itr),
+                    (char *) &cct,
+                    false
                 ),
-                correct_substr (
-                    ident,
-                    itr + 1,
+                correct_strndup (
+                    ident+itr+1,
                     len - (itr + 1)
-                )
+                ),
+                true
             );
         }
     }
@@ -200,14 +210,15 @@ static size_t correct_insertion(const char *ident, char **array, size_t index) {
             *cct = correct_alpha[jtr];
             array[index + ktr] = correct_concat (
                 correct_concat (
-                    correct_substr (ident, 0, itr),
-                    (char *) &cct
+                    correct_strndup (ident, itr),
+                    (char *) &cct,
+                    false
                 ),
-                correct_substr (
-                    ident,
-                    itr,
+                correct_strndup (
+                    ident+itr,
                     len - itr
-                )
+                ),
+                true
             );
         }
     }
@@ -224,12 +235,12 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
      */   
 
     register size_t len = strlen(ident);
-    return (len) + (len - 1) + (len * sizeof(correct_alpha)) + (len + 1) * sizeof(correct_alpha);
+    return (len) + (len - 1) + (len * sizeof(correct_alpha)) + ((len + 1) * sizeof(correct_alpha));
 }
 
 static char **correct_edit(const char *ident) {
     size_t next;
-    char **find = mem_a(correct_size(ident) * sizeof(char*));
+    char **find = (char**)mem_a(correct_size(ident) * sizeof(char*));
 
     if (!find)
         return NULL;
@@ -330,8 +341,8 @@ char *correct_correct(ht table, const char *ident) {
     char  *e2ident;
     char  *found = util_strdup(ident);
 
-    size_t e1rows;
-    size_t e2rows;
+    size_t e1rows = 0;
+    size_t e2rows = 0;
 
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
@@ -384,19 +395,23 @@ int main() {
     correct_add(t, &d, "world");
 
     printf("found identifiers: (2)\n");
-    printf(" 1: hello\n");
-    printf(" 2: world\n");
+    printf(" 1: hellobain\n");
+    printf(" 2: ellor\n");
+    printf(" 3: world\n");
 
     char *b = correct_correct(t, "rld");
     char *a = correct_correct(t, "ello");
+    char *c = correct_correct(t, "helbain");
 
-    printf("%s, did you mean `%s` ?\n", "ello", a);
-    printf("%s, did you mean `%s` ?\n", "rld", b);
+    printf("invalid identifier: `%s` (did you mean: `%s`?)\n", "ello", a);
+    printf("invalid identifier: `%s` (did you mean: `%s`?)\n", "rld", b);
+    printf("invalid identifier: `%s` (did you mean: `%s`?)\n", "helbain", c);
 
     correct_del(t, d);
     mem_d(b);
     mem_d(a);
+    mem_d(c);
 
-    util_meminfo();
+    /*util_meminfo();*/
 
 }
