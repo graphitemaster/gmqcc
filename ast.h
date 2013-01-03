@@ -525,9 +525,11 @@ struct ast_label_s
     const char *name;
     ir_block   *irblock;
     ast_goto  **gotos;
+    /* means it has not yet been defined */
+    bool        undefined;
 };
 
-ast_label* ast_label_new(lex_ctx ctx, const char *name);
+ast_label* ast_label_new(lex_ctx ctx, const char *name, bool undefined);
 void ast_label_delete(ast_label*);
 void ast_label_register_goto(ast_label*, ast_goto*);
 

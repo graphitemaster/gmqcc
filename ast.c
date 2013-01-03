@@ -826,14 +826,15 @@ void ast_switch_delete(ast_switch *self)
     mem_d(self);
 }
 
-ast_label* ast_label_new(lex_ctx ctx, const char *name)
+ast_label* ast_label_new(lex_ctx ctx, const char *name, bool undefined)
 {
     ast_instantiate(ast_label, ctx, ast_label_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_label_codegen);
 
-    self->name    = util_strdup(name);
-    self->irblock = NULL;
-    self->gotos   = NULL;
+    self->name      = util_strdup(name);
+    self->irblock   = NULL;
+    self->gotos     = NULL;
+    self->undefined = undefined;
 
     return self;
 }
@@ -2867,6 +2868,11 @@ bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_valu
 {
     size_t i;
     ir_value *dummy;
+
+    if (self->undefined) {
+        compile_error(ast_ctx(self), "internal error: ast_label never defined");
+        return false;
+    }
 
     *out = NULL;
     if (lvalue) {

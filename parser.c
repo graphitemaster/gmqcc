@@ -111,8 +111,8 @@ static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
-static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue);
-static ast_expression* parse_expression(parser_t *parser, bool stopatcomma);
+static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels);
+static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -300,11 +300,9 @@ static ast_expression* parser_find_field(parser_t *parser, const char *name)
     return ( ast_expression*)util_htget(parser->htfields, name);
 }
 
-static ast_expression* parser_find_label(parser_t *parser, const char *name) {
+static ast_expression* parser_find_label(parser_t *parser, const char *name)
+{
     size_t i;
-    if (!parser->labels)
-        return NULL;
- 
     for(i = 0; i < vec_size(parser->labels); i++)
         if (!strcmp(parser->labels[i]->name, name))
             return (ast_expression*)parser->labels[i];
@@ -1494,7 +1492,7 @@ static void parser_reclassify_token(parser_t *parser)
     }
 }
 
-static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue)
+static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels)
 {
     ast_expression *expr = NULL;
     shunt sy;
@@ -1584,14 +1582,20 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     parseerror(parser, "namespace for member not found");
                     goto onerr;
                 }
-                else if (!(var = parser_find_var(parser, parser_tokval(parser))))
-                    var = (ast_expression*)parser_find_label(parser, parser_tokval(parser));
+                else
+                    var = parser_find_var(parser, parser_tokval(parser));
             } else {
                 var = parser_find_var(parser, parser_tokval(parser));
                 if (!var)
                     var = parser_find_field(parser, parser_tokval(parser));
-                if (!var)
-                    var = parser_find_label(parser, parser_tokval(parser));
+            }
+            if (!var && with_labels) {
+                var = (ast_expression*)parser_find_label(parser, parser_tokval(parser));
+                if (!with_labels) {
+                    ast_label *lbl = ast_label_new(parser_ctx(parser), parser_tokval(parser), true);
+                    var = (ast_expression*)lbl;
+                    vec_push(parser->labels, lbl);
+                }
             }
             if (!var) {
                 /* intrinsics */
@@ -1920,9 +1924,9 @@ onerr:
     return NULL;
 }
 
-static ast_expression* parse_expression(parser_t *parser, bool stopatcomma)
+static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels)
 {
-    ast_expression *e = parse_expression_leave(parser, stopatcomma, false);
+    ast_expression *e = parse_expression_leave(parser, stopatcomma, false, with_labels);
     if (!e)
         return NULL;
     if (!parser_next(parser)) {
@@ -2072,7 +2076,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         return false;
     }
     /* parse the condition */
-    cond = parse_expression_leave(parser, false, true);
+    cond = parse_expression_leave(parser, false, true, false);
     if (!cond)
         return false;
     /* closing paren */
@@ -2193,7 +2197,7 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
         return false;
     }
     /* parse the condition */
-    cond = parse_expression_leave(parser, false, true);
+    cond = parse_expression_leave(parser, false, true, false);
     if (!cond)
         return false;
     /* closing paren */
@@ -2308,7 +2312,7 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
         return false;
     }
     /* parse the condition */
-    cond = parse_expression_leave(parser, false, true);
+    cond = parse_expression_leave(parser, false, true, false);
     if (!cond)
         return false;
     /* closing paren */
@@ -2437,7 +2441,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
     }
     else if (parser->tok != ';')
     {
-        initexpr = parse_expression_leave(parser, false, false);
+        initexpr = parse_expression_leave(parser, false, false, false);
         if (!initexpr)
             goto onerr;
     }
@@ -2454,7 +2458,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the condition */
     if (parser->tok != ';') {
-        cond = parse_expression_leave(parser, false, true);
+        cond = parse_expression_leave(parser, false, true, false);
         if (!cond)
             goto onerr;
     }
@@ -2471,7 +2475,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the incrementor */
     if (parser->tok != ')') {
-        increment = parse_expression_leave(parser, false, false);
+        increment = parse_expression_leave(parser, false, false, false);
         if (!increment)
             goto onerr;
         if (!ast_side_effects(increment)) {
@@ -2528,7 +2532,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     }
 
     if (parser->tok != ';') {
-        exp = parse_expression(parser, false);
+        exp = parse_expression(parser, false, false);
         if (!exp)
             return false;
 
@@ -2814,7 +2818,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         return false;
     }
     /* parse the operand */
-    operand = parse_expression_leave(parser, false, false);
+    operand = parse_expression_leave(parser, false, false, false);
     if (!operand)
         return false;
 
@@ -2878,7 +2882,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
                 parseerror(parser, "expected expression for case");
                 return false;
             }
-            swcase.value = parse_expression_leave(parser, false, false);
+            swcase.value = parse_expression_leave(parser, false, false, false);
             if (!swcase.value) {
                 ast_delete(switchnode);
                 parseerror(parser, "expected expression for case");
@@ -2999,8 +3003,8 @@ static ast_expression *parse_goto_computed(parser_t *parser, ast_expression *sid
 
 static bool parse_goto(parser_t *parser, ast_expression **out)
 {
-    size_t    i;
-    ast_goto *gt = NULL;
+    ast_goto       *gt = NULL;
+    ast_expression *lbl;
 
     if (!parser_next(parser))
         return false;
@@ -3015,7 +3019,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         }
 
         /* failed to parse expression for goto */
-        if (!(expression = parse_expression(parser, false)) ||
+        if (!(expression = parse_expression(parser, false, true)) ||
             !(*out = parse_goto_computed(parser, expression))) {
             parseerror(parser, "invalid goto expression");
             ast_unref(expression);
@@ -3027,14 +3031,16 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
 
     /* not computed goto */
     gt = ast_goto_new(parser_ctx(parser), parser_tokval(parser));
-
-    for (i = 0; i < vec_size(parser->labels); ++i) {
-        if (!strcmp(parser->labels[i]->name, parser_tokval(parser))) {
-            ast_goto_set_label(gt, parser->labels[i]);
-            break;
+    lbl = parser_find_label(parser, gt->name);
+    if (lbl) {
+        if (!ast_istype(lbl, ast_label)) {
+            parseerror(parser, "internal error: label is not an ast_label");
+            ast_delete(gt);
+            return false;
         }
+        ast_goto_set_label(gt, (ast_label*)lbl);
     }
-    if (i == vec_size(parser->labels))
+    else
         vec_push(parser->gotos, gt);
 
     if (!parser_next(parser) || parser->tok != ';') {
@@ -3269,10 +3275,18 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             parseerror(parser, "label must be an identifier");
             return false;
         }
-        label = ast_label_new(parser_ctx(parser), parser_tokval(parser));
-        if (!label)
-            return false;
-        vec_push(parser->labels, label);
+        label = (ast_label*)parser_find_label(parser, parser_tokval(parser));
+        if (label) {
+            if (!label->undefined) {
+                parseerror(parser, "label `%s` already defined", label->name);
+                return false;
+            }
+            label->undefined = false;
+        }
+        else {
+            label = ast_label_new(parser_ctx(parser), parser_tokval(parser), false);
+            vec_push(parser->labels, label);
+        }
         *out = (ast_expression*)label;
         if (!parser_next(parser)) {
             parseerror(parser, "parse error after label");
@@ -3297,7 +3311,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     }
     else
     {
-        ast_expression *exp = parse_expression(parser, false);
+        ast_expression *exp = parse_expression(parser, false, false);
         if (!exp)
             return false;
         *out = exp;
@@ -3458,7 +3472,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         if (!parser_next(parser))
             return false;
 
-        framenum = parse_expression_leave(parser, true, false);
+        framenum = parse_expression_leave(parser, true, false, false);
         if (!framenum) {
             parseerror(parser, "expected a framenumber constant in[frame,think] notation");
             return false;
@@ -3506,7 +3520,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             nextthink = (ast_expression*)thinkfunc;
 
         } else {
-            nextthink = parse_expression_leave(parser, true, false);
+            nextthink = parse_expression_leave(parser, true, false, false);
             if (!nextthink) {
                 ast_unref(framenum);
                 parseerror(parser, "expected a think-function in [frame,think] notation");
@@ -4172,7 +4186,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
         return NULL;
     }
 
-    cexp = parse_expression_leave(parser, true, false);
+    cexp = parse_expression_leave(parser, true, false, false);
 
     if (!cexp || !ast_istype(cexp, ast_value)) {
         if (cexp)
@@ -4938,7 +4952,7 @@ skipvar:
             ast_expression *cexp;
             ast_value      *cval;
 
-            cexp = parse_expression_leave(parser, true, false);
+            cexp = parse_expression_leave(parser, true, false, false);
             if (!cexp)
                 break;
 
