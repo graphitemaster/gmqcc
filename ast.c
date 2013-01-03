@@ -831,6 +831,8 @@ ast_label* ast_label_new(lex_ctx ctx, const char *name, bool undefined)
     ast_instantiate(ast_label, ctx, ast_label_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_label_codegen);
 
+    self->expression.vtype = TYPE_NOEXPR;
+
     self->name      = util_strdup(name);
     self->irblock   = NULL;
     self->gotos     = NULL;

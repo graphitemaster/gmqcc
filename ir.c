@@ -44,7 +44,8 @@ const char *type_name[TYPE_COUNT] = {
     "union",
     "array",
 
-    "nil"
+    "nil",
+    "<no-expression>"
 };
 
 size_t type_sizeof_[TYPE_COUNT] = {
@@ -62,6 +63,7 @@ size_t type_sizeof_[TYPE_COUNT] = {
     0, /* TYPE_UNION    */
     0, /* TYPE_ARRAY    */
     0, /* TYPE_NIL      */
+    0, /* TYPE_NOESPR   */
 };
 
 uint16_t type_store_instr[TYPE_COUNT] = {
@@ -85,6 +87,7 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
     AINSTR_END, /* nil    */
+    AINSTR_END, /* noexpr */
 };
 
 uint16_t field_store_instr[TYPE_COUNT] = {
@@ -108,6 +111,7 @@ uint16_t field_store_instr[TYPE_COUNT] = {
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
     AINSTR_END, /* nil    */
+    AINSTR_END, /* noexpr */
 };
 
 uint16_t type_storep_instr[TYPE_COUNT] = {
@@ -131,6 +135,7 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
     AINSTR_END, /* nil    */
+    AINSTR_END, /* noexpr */
 };
 
 uint16_t type_eq_instr[TYPE_COUNT] = {
@@ -154,6 +159,7 @@ uint16_t type_eq_instr[TYPE_COUNT] = {
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
     AINSTR_END, /* nil    */
+    AINSTR_END, /* noexpr */
 };
 
 uint16_t type_ne_instr[TYPE_COUNT] = {
@@ -177,6 +183,7 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
     AINSTR_END, /* nil    */
+    AINSTR_END, /* noexpr */
 };
 
 uint16_t type_not_instr[TYPE_COUNT] = {
@@ -200,6 +207,7 @@ uint16_t type_not_instr[TYPE_COUNT] = {
     AINSTR_END, /* union  */
     AINSTR_END, /* array  */
     AINSTR_END, /* nil    */
+    AINSTR_END, /* noexpr */
 };
 
 /* protos */

@@ -445,6 +445,7 @@ enum {
     TYPE_ARRAY    ,
 
     TYPE_NIL      , /* it's its own type / untyped */
+    TYPE_NOEXPR   , /* simply invalid in expressions */
 
     TYPE_COUNT
 };
