@@ -54,7 +54,10 @@ void *util_memory_a(size_t byte, unsigned int line, const char *file) {
         mem_start->prev = info;
     mem_start = info;
 
+    #if 0
     util_debug("MEM", "allocation:   % 8u (bytes) address 0x%08X @ %s:%u\n", byte, data, file, line);
+    #endif
+
     mem_at++;
     mem_ab += info->byte;
 
@@ -67,7 +70,10 @@ void util_memory_d(void *ptrn, unsigned int line, const char *file) {
     if (!ptrn) return;
     info = ((struct memblock_t*)ptrn - 1);
 
+    #if 0
     util_debug("MEM", "released:     % 8u (bytes) address 0x%08X @ %s:%u\n", info->byte, ptrn, file, line);
+    #endif
+
     mem_db += info->byte;
     mem_dt++;
 
@@ -96,7 +102,9 @@ void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file
     oldinfo = ((struct memblock_t*)ptrn - 1);
     newinfo = ((struct memblock_t*)malloc(sizeof(struct memblock_t) + byte));
 
+    #if 0
     util_debug("MEM", "reallocation: % 8u -> %u (bytes) address 0x%08X -> 0x%08X @ %s:%u\n", oldinfo->byte, byte, ptrn, (void*)(newinfo+1), file, line);
+    #endif
 
     /* new data */
     if (!newinfo) {
