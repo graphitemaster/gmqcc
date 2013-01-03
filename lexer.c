@@ -1299,6 +1299,17 @@ int lex_do(lex_file *lex)
                 lex_tokench(lex, nextch);
                 lex_tokench(lex, thirdch);
             }
+        }
+        else if (lex->flags.preprocessing &&
+                 ch == '-' && isdigit(nextch))
+        {
+            lex->tok.ttype = lex_finish_digit(lex, nextch);
+            if (lex->tok.ttype == TOKEN_INTCONST)
+                lex->tok.constval.i = -lex->tok.constval.i;
+            else
+                lex->tok.constval.f = -lex->tok.constval.f;
+            lex_endtoken(lex);
+            return lex->tok.ttype;
         } else
             lex_ungetch(lex, nextch);
 
