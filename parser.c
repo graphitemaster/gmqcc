@@ -549,6 +549,16 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         exprs[i]  = sy->out[vec_size(sy->out)+i].out;
         blocks[i] = sy->out[vec_size(sy->out)+i].block;
         asvalue[i] = (ast_value*)exprs[i];
+
+        if (exprs[i]->expression.vtype == TYPE_NOEXPR &&
+            !(i != 0 && op->id == opid2('?',':')))
+        {
+            if (ast_istype(exprs[i], ast_label))
+                compile_error(ast_ctx(exprs[i]), "expected expression, got an unknown identifier");
+            else
+                compile_error(ast_ctx(exprs[i]), "not an expression");
+            (void)!compile_warning(ast_ctx(exprs[i]), WARN_DEBUG, "expression %u\n", (unsigned int)i);
+        }
     }
 
     if (blocks[0] && !vec_size(blocks[0]->exprs) && op->id != opid1(',')) {
