@@ -99,7 +99,7 @@ typedef struct {
     int   value;
 } frame_macro;
 
-typedef struct {
+typedef struct lex_file_s {
     FILE   *file;
     const char *open_string;
     size_t      open_string_length;

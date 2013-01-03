@@ -70,11 +70,6 @@ typedef struct {
     char        *includename;
 } ftepp_t;
 
-typedef struct {
-    const char  *name;
-    char      *(*func)(lex_file *);
-} predef_t;
-
 /*
  * Implement the predef subsystem now.  We can do this safely with the
  * help of lexer contexts.
@@ -168,7 +163,7 @@ char *ftepp_predef_randomlast(lex_file *context) {
     return value;
 }
 
-static const predef_t ftepp_predefs[] = {
+const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT] = {
     { "__LINE__",         &ftepp_predef_line        },
     { "__FILE__",         &ftepp_predef_file        },
     { "__COUNTER__",      &ftepp_predef_counter     },

@@ -963,6 +963,18 @@ void parser_cleanup       ();
 /*===================================================================*/
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
+struct lex_file_s;
+typedef struct {
+    const char  *name;
+    char      *(*func)(struct lex_file_s *);
+} ftepp_predef_t;
+
+/*
+ * line, file, counter, counter_last, random, random_last, date, time
+ * increment when items are added
+ */
+#define FTEPP_PREDEF_COUNT 8
+
 bool        ftepp_init             ();
 bool        ftepp_preprocess_file  (const char *filename);
 bool        ftepp_preprocess_string(const char *name, const char *str);
@@ -971,6 +983,8 @@ const char *ftepp_get              ();
 void        ftepp_flush            ();
 void        ftepp_add_define       (const char *source, const char *name);
 void        ftepp_add_macro        (const char *name,   const char *value);
+
+extern const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT];
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/

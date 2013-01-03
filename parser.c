@@ -1604,6 +1604,21 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
                 else
                 {
+                    /*
+                     * sometimes people use preprocessing predefs without enabling them
+                     * i've done this thousands of times already myself.  Lets check for
+                     * it in the predef table.  And diagnose it better :)
+                     */
+                    if (!OPTS_FLAG(FTEPP_PREDEFS)) {
+                        size_t i;
+                        for (i = 0; i < sizeof(ftepp_predefs)/sizeof(*ftepp_predefs); i++) {
+                            if (!strcmp(ftepp_predefs[i].name, parser_tokval(parser))) {
+                                parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
+                                goto onerr;
+                            }
+                        }
+                    }
+
                     parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     goto onerr;
                 }
