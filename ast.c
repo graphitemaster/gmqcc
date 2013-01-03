@@ -724,9 +724,12 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
 
 void ast_ternary_delete(ast_ternary *self)
 {
-    ast_unref(self->cond);
-    ast_unref(self->on_true);
-    ast_unref(self->on_false);
+    /* the if()s are only there because computed-gotos can set them
+     * to NULL
+     */
+    if (self->cond)     ast_unref(self->cond);
+    if (self->on_true)  ast_unref(self->on_true);
+    if (self->on_false) ast_unref(self->on_false);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }

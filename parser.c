@@ -2999,28 +2999,35 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
 }
 
 /* parse computed goto sides */
-static ast_expression *parse_goto_computed(parser_t *parser, ast_expression *side) {
+static ast_expression *parse_goto_computed(parser_t *parser, ast_expression **side) {
     ast_expression *on_true;
     ast_expression *on_false;
+    ast_expression *cond;
 
-    if (!side)
+    if (!*side)
         return NULL;
 
-    if (ast_istype(side, ast_ternary)) {
-        on_true  = parse_goto_computed(parser, ((ast_ternary*)side)->on_true);
-        on_false = parse_goto_computed(parser, ((ast_ternary*)side)->on_false);
+    if (ast_istype(*side, ast_ternary)) {
+        ast_ternary *tern = (ast_ternary*)*side;
+        on_true  = parse_goto_computed(parser, &tern->on_true);
+        on_false = parse_goto_computed(parser, &tern->on_false);
 
         if (!on_true || !on_false) {
             parseerror(parser, "expected label or expression in ternary");
-            if (((ast_ternary*)side)->on_false) ast_unref(((ast_ternary*)side)->on_false);
-            if (((ast_ternary*)side)->on_true)  ast_unref(((ast_ternary*)side)->on_true);
+            if (on_true) ast_unref(on_true);
+            if (on_false) ast_unref(on_false);
             return NULL;
         }
 
-        return (ast_expression*)ast_ifthen_new(parser_ctx(parser), ((ast_ternary*)side)->cond, on_true, on_false);
-    } else if (ast_istype(side, ast_label)) {
-        ast_goto *gt = ast_goto_new(parser_ctx(parser), ((ast_label*)side)->name);
-        ast_goto_set_label(gt, ((ast_label*)side));
+        cond = tern->cond;
+        tern->cond = NULL;
+        ast_delete(tern);
+        *side = NULL;
+        return (ast_expression*)ast_ifthen_new(parser_ctx(parser), cond, on_true, on_false);
+    } else if (ast_istype(*side, ast_label)) {
+        ast_goto *gt = ast_goto_new(parser_ctx(parser), ((ast_label*)*side)->name);
+        ast_goto_set_label(gt, ((ast_label*)*side));
+        *side = NULL;
         return (ast_expression*)gt;
     }
     return NULL;
@@ -3045,7 +3052,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
 
         /* failed to parse expression for goto */
         if (!(expression = parse_expression(parser, false, true)) ||
-            !(*out = parse_goto_computed(parser, expression))) {
+            !(*out = parse_goto_computed(parser, &expression))) {
             parseerror(parser, "invalid goto expression");
             ast_unref(expression);
             return false;
