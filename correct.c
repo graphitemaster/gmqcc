@@ -187,8 +187,8 @@ static size_t correct_alteration(const char *ident, char **array, size_t index) 
                     false
                 ),
                 correct_strndup (
-                    ident+itr+1,
-                    len - (itr + 1)
+                    ident + (itr+1),
+                    len   - (itr+1)
                 ),
                 true
             );
@@ -285,6 +285,8 @@ static char **correct_known(ht table, char **array, size_t rows, size_t *next) {
                 res[len++] = end[jtr];
             }
         }
+
+        mem_d(end);
     }
 
     *next = len;
