@@ -342,7 +342,7 @@ void correct_add(ht table, size_t ***size, const char *ident) {
     }
 }
 
-char *correct_correct(ht table, const char *ident) {
+char *correct_str(ht table, const char *ident) {
     char **e1;
     char **e2;
     char  *e1ident;
@@ -384,38 +384,4 @@ void correct_del(ht dictonary, size_t **data) {
 
     vec_free(data);
     util_htdel(dictonary);
-}
-
-int main() {
-    opts.debug = true;
-    opts.memchk = true;
-    con_init();
-
-    ht       t = util_htnew(1024);
-    size_t **d = NULL;
-
-    correct_add(t, &d, "hellobain");
-    correct_add(t, &d, "ellor");
-    correct_add(t, &d, "world");
-
-    printf("found identifiers: (2)\n");
-    printf(" 1: hellobain\n");
-    printf(" 2: ellor\n");
-    printf(" 3: world\n");
-
-    char *b = correct_correct(t, "rld");
-    char *a = correct_correct(t, "ello");
-    char *c = correct_correct(t, "helbain");
-
-    printf("invalid identifier: `%s` (did you mean: `%s`?)\n", "ello", a);
-    printf("invalid identifier: `%s` (did you mean: `%s`?)\n", "rld", b);
-    printf("invalid identifier: `%s` (did you mean: `%s`?)\n", "helbain", c);
-
-    correct_del(t, d);
-    mem_d(b);
-    mem_d(a);
-    mem_d(c);
-
-    /*util_meminfo();*/
-
 }
