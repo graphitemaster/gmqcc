@@ -245,9 +245,9 @@
 /*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
-void *util_memory_a      (size_t,       unsigned int, const char *);
-void  util_memory_d      (void       *, unsigned int, const char *);
-void *util_memory_r      (void       *, size_t,       unsigned int, const char *);
+void *util_memory_a      (size_t, /*****/ unsigned int, const char *);
+void *util_memory_r      (void *, size_t, unsigned int, const char *);
+void  util_memory_d      (void *);
 void  util_meminfo       ();
 
 bool  util_filexists     (const char *);
@@ -275,7 +275,7 @@ int util_asprintf (char **ret, const char *fmt, ...);
 #    define mem_r(x, n) realloc((void*)x, n)
 #else
 #    define mem_a(x)    util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x)    util_memory_d((void*)(x),      __LINE__, __FILE__)
+#    define mem_d(x)    util_memory_d((void*)(x))
 #    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
 #endif
 
@@ -422,6 +422,13 @@ GMQCC_INLINE size_t  file_write  (const void *,  size_t, size_t, FILE *);
 GMQCC_INLINE FILE   *file_open   (const char *, const char *);
 /*NOINLINE*/ int     file_getline(char  **, size_t *, FILE *);
 
+
+/*===================================================================*/
+/*=========================== correct.c =============================*/
+/*===================================================================*/
+void  correct_del(ht, size_t **);
+void  correct_add(ht, size_t ***, const char *);
+char *correct_str(ht, /********/  const char *);
 
 /*===================================================================*/
 /*=========================== code.c ================================*/

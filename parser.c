@@ -74,6 +74,10 @@ typedef struct {
     ht htglobals;
     ht *typedefs;
 
+    /* same as above but for the spelling corrector */
+    ht       *correct_variables;
+    size_t ***correct_variables_score;  /* vector of vector of size_t* */
+
     /* not to be used directly, we use the hash table */
     ast_expression **_locals;
     size_t          *_blocklocals;
@@ -1614,13 +1618,15 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
                 else
                 {
+                    size_t i;
+                    char  *correct = NULL;
+
                     /*
                      * sometimes people use preprocessing predefs without enabling them
                      * i've done this thousands of times already myself.  Lets check for
                      * it in the predef table.  And diagnose it better :)
                      */
                     if (!OPTS_FLAG(FTEPP_PREDEFS)) {
-                        size_t i;
                         for (i = 0; i < sizeof(ftepp_predefs)/sizeof(*ftepp_predefs); i++) {
                             if (!strcmp(ftepp_predefs[i].name, parser_tokval(parser))) {
                                 parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
@@ -1629,7 +1635,29 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                         }
                     }
 
-                    parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                    /*
+                     * TODO: determine the best score for the identifier: be it
+                     * a variable, a field.
+                     *
+                     * We should also consider adding correction tables for
+                     * other things as well.
+                     */
+                    for (i = 0; i < vec_size(parser->correct_variables); i++) {
+                        correct = correct_str(parser->correct_variables[i], "ello");
+                        if (strcmp(correct, parser_tokval(parser))) {
+                            break;
+                        } else if (correct) {
+                            mem_d(correct);
+                        }
+                    }
+
+                    if (correct) {
+                        parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
+                        mem_d(correct);
+                    } else {
+                        parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                    }
+
                     goto onerr;
                 }
             }
@@ -1968,6 +1996,10 @@ static void parser_enterblock(parser_t *parser)
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, vec_size(parser->_typedefs));
     vec_push(parser->_block_ctx, parser_ctx(parser));
+
+    /* corrector */
+    vec_push(parser->correct_variables, util_htnew(PARSER_HT_SIZE));
+    vec_push(parser->correct_variables_score, NULL);
 }
 
 static bool parser_leaveblock(parser_t *parser)
@@ -1981,7 +2013,11 @@ static bool parser_leaveblock(parser_t *parser)
     }
 
     util_htdel(vec_last(parser->variables));
+    correct_del(vec_last(parser->correct_variables), vec_last(parser->correct_variables_score));
+
     vec_pop(parser->variables);
+    vec_pop(parser->correct_variables);
+    vec_pop(parser->correct_variables_score);
     if (!vec_size(parser->_blocklocals)) {
         parseerror(parser, "internal error: parser_leaveblock with no block (2)");
         return false;
@@ -2008,6 +2044,7 @@ static bool parser_leaveblock(parser_t *parser)
     vec_pop(parser->typedefs);
 
     vec_pop(parser->_block_ctx);
+
     return rv;
 }
 
@@ -2015,6 +2052,13 @@ static void parser_addlocal(parser_t *parser, const char *name, ast_expression *
 {
     vec_push(parser->_locals, e);
     util_htset(vec_last(parser->variables), name, (void*)e);
+
+    /* corrector */
+    correct_add (
+         vec_last(parser->correct_variables),
+        &vec_last(parser->correct_variables_score),
+        name
+    );
 }
 
 static ast_expression* process_condition(parser_t *parser, ast_expression *cond, bool *_ifnot)
@@ -3549,6 +3593,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
             vec_push(parser->globals, (ast_expression*)thinkfunc);
             util_htset(parser->htglobals, thinkfunc->name, thinkfunc);
+
             nextthink = (ast_expression*)thinkfunc;
 
         } else {
@@ -4790,6 +4835,14 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
                     /* Add it to the local scope */
                     util_htset(vec_last(parser->variables), var->name, (void*)var);
+
+                    /* corrector */
+                    correct_add (
+                         vec_last(parser->correct_variables),
+                        &vec_last(parser->correct_variables_score),
+                        var->name
+                    );
+
                     /* now rename the global */
                     ln = strlen(var->name);
                     vec_append(defname, ln, var->name);
@@ -4802,6 +4855,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     if (isvector) {
                         for (i = 0; i < 3; ++i) {
                             util_htset(vec_last(parser->variables), me[i]->name, (void*)(me[i]));
+
+                            /* corrector */
+                            correct_add(
+                                 vec_last(parser->correct_variables),
+                                &vec_last(parser->correct_variables_score),
+                                me[i]->name
+                            );
 
                             vec_shrinkto(defname, prefix_len);
                             ln = strlen(me[i]->name);
@@ -5348,6 +5408,17 @@ void parser_cleanup()
     vec_free(parser->variables);
     vec_free(parser->_blocklocals);
     vec_free(parser->_locals);
+
+    /* corrector */
+    for (i = 0; i < vec_size(parser->correct_variables); ++i) {
+        correct_del(parser->correct_variables[i], parser->correct_variables_score[i]);
+    }
+    for (i = 0; i < vec_size(parser->correct_variables_score); ++i) {
+        vec_free(parser->correct_variables_score[i]);
+    }
+    vec_free(parser->correct_variables);
+    vec_free(parser->correct_variables_score);
+
 
     for (i = 0; i < vec_size(parser->_typedefs); ++i)
         ast_delete(parser->_typedefs[i]);
