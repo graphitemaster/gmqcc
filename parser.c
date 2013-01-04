@@ -1642,22 +1642,23 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                      * We should also consider adding correction tables for
                      * other things as well.
                      */
-                    for (i = 0; i < vec_size(parser->correct_variables); i++) {
-                        correct = correct_str(parser->correct_variables[i], parser_tokval(parser));
-                        if (strcmp(correct, parser_tokval(parser))) {
-                            break;
-                        } else if (correct) {
+                    if (OPTS_FLAG(ENHANCED_DIAGNOSTICS)) {
+                        for (i = 0; i < vec_size(parser->correct_variables); i++) {
+                            correct = correct_str(parser->correct_variables[i], parser_tokval(parser));
+                            if (strcmp(correct, parser_tokval(parser))) {
+                                break;
+                            } else if (correct) {
+                                mem_d(correct);
+                            }
+                        }
+
+                        if (correct) {
+                            parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
                             mem_d(correct);
+                            goto onerr;
                         }
                     }
-
-                    if (correct) {
-                        parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
-                        mem_d(correct);
-                    } else {
-                        parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
-                    }
-
+                    parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     goto onerr;
                 }
             }

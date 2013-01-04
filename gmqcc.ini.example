@@ -99,6 +99,10 @@
     # variables with the name 'nil' to be declared.
     PREMISSIVE                   = false
 
+    # Enable enhanced diagnostic messages. i.e provides a "did you mean"
+    # <ident> when you accidently typo. Amongst others
+    ENHANCED_DIAGNOSTICS         = true
+
 # These are all the warnings, usually present via the -W prefix from
 # the command line.
 [warnings]
