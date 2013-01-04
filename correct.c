@@ -356,11 +356,12 @@ char *correct_str(ht table, const char *ident) {
     if (correct_find(table, ident))
         return found;
 
-    mem_d(found);
+    /*mem_d(found);*/
     if ((e1rows = correct_size(ident))) {
         e1      = correct_edit(ident);
 
         if ((e1ident = correct_maximum(table, e1, e1rows))) {
+            mem_d(found);
             found = util_strdup(e1ident);
             correct_cleanup(e1, e1rows);
             return found;
@@ -368,8 +369,10 @@ char *correct_str(ht table, const char *ident) {
     }
 
     e2 = correct_known(table, e1, e1rows, &e2rows);
-    if (e2rows && ((e2ident = correct_maximum(table, e2, e2rows))))
+    if (e2rows && ((e2ident = correct_maximum(table, e2, e2rows)))) {
+        mem_d(found);
         found = util_strdup(e2ident);
+    }
     
     correct_cleanup(e1, e1rows);
     correct_cleanup(e2, e2rows);
