@@ -1643,7 +1643,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                      * other things as well.
                      */
                     for (i = 0; i < vec_size(parser->correct_variables); i++) {
-                        correct = correct_str(parser->correct_variables[i], "ello");
+                        correct = correct_str(parser->correct_variables[i], parser_tokval(parser));
                         if (strcmp(correct, parser_tokval(parser))) {
                             break;
                         } else if (correct) {
