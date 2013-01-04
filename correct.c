@@ -94,39 +94,6 @@ static int correct_update(ht *table, const char *word) {
  */
 static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 
-static char *correct_strndup(const char *src, size_t n) {
-    char   *ret;
-    size_t  len = strlen(src);
-
-    if (n < len)
-        len = n;
-
-    if (!(ret = (char*)mem_a(len + 1)))
-        return NULL;
-
-    ret[len] = '\0';
-    return (char*)memcpy(ret, src, len);
-}
-
-static char *correct_concat(char *str1, char *str2, bool next) {
-    char *ret = NULL;
-
-#if 0
-    if (!str1) {
-         str1 = mem_a(1);
-        *str1 = '\0';
-    }
-#endif
-
-    str1 = mem_r (str1, strlen(str1) + strlen(str2) + 1);
-    ret  = strcat(str1, str2);
-
-    if (str2 && next)
-        mem_d(str2);
-
-    return ret;
-}
-
 /*
  * correcting logic for the following forms of transformations:
  *  1) deletion
@@ -139,11 +106,10 @@ static size_t correct_deletion(const char *ident, char **array, size_t index) {
     size_t len = strlen(ident);
 
     for (itr = 0; itr < len; itr++) {
-        array[index + itr] = correct_concat (
-            correct_strndup (ident,       itr),
-            correct_strndup (ident+itr+1, len-(itr+1)),
-            true
-        );
+        char *a = (char*)mem_a(len+1);
+        memcpy(a, ident, itr);
+        memcpy(a + itr, ident + itr + 1, len - itr);
+        array[index + itr] = a;
     }
 
     return itr;
@@ -154,19 +120,13 @@ static size_t correct_transposition(const char *ident, char **array, size_t inde
     size_t len = strlen(ident);
 
     for (itr = 0; itr < len - 1; itr++) {
-        array[index + itr] = correct_concat (
-            correct_concat (
-                correct_strndup(ident,     itr),
-                correct_strndup(ident+itr+1, 1),
-                true
-            ),
-            correct_concat (
-                correct_strndup(ident+itr,   1),
-                correct_strndup(ident+itr+2, len-(itr+2)),
-                true
-            ),
-            true
-        );
+        char  tmp;
+        char *a = (char*)mem_a(len+1);
+        memcpy(a, ident, len+1);
+        tmp      = a[itr];
+        a[itr  ] = a[itr+1];
+        a[itr+1] = tmp;
+        array[index + itr] = a;
     }
 
     return itr;
@@ -177,23 +137,13 @@ static size_t correct_alteration(const char *ident, char **array, size_t index) 
     size_t jtr;
     size_t ktr;
     size_t len    = strlen(ident);
-    char   cct[2] = { 0, 0 }; /* char code table, for concatenation */
 
     for (itr = 0, ktr = 0; itr < len; itr++) {
-        for (jtr = 0; jtr < sizeof(correct_alpha); jtr++, ktr++) {
-            *cct = correct_alpha[jtr];
-            array[index + ktr] = correct_concat (
-                correct_concat (
-                    correct_strndup(ident, itr),
-                    (char *) &cct,
-                    false
-                ),
-                correct_strndup (
-                    ident + (itr+1),
-                    len   - (itr+1)
-                ),
-                true
-            );
+        for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
+            char *a = (char*)mem_a(len+1);
+            memcpy(a, ident, len+1);
+            a[itr] = correct_alpha[jtr];
+            array[index + ktr] = a;
         }
     }
 
@@ -205,23 +155,14 @@ static size_t correct_insertion(const char *ident, char **array, size_t index) {
     size_t jtr;
     size_t ktr;
     size_t len    = strlen(ident);
-    char   cct[2] = { 0, 0 }; /* char code table, for concatenation */
 
     for (itr = 0, ktr = 0; itr <= len; itr++) {
-        for (jtr = 0; jtr < sizeof(correct_alpha); jtr++, ktr++) {
-            *cct = correct_alpha[jtr];
-            array[index + ktr] = correct_concat (
-                correct_concat (
-                    correct_strndup (ident, itr),
-                    (char *) &cct,
-                    false
-                ),
-                correct_strndup (
-                    ident+itr,
-                    len - itr
-                ),
-                true
-            );
+        for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
+            char *a = (char*)mem_a(len+2);
+            memcpy(a, ident, itr);
+            a[itr] = correct_alpha[jtr];
+            memcpy(a + itr + 1, ident + itr, len - itr + 1);
+            array[index + ktr] = a;
         }
     }
 
@@ -237,7 +178,7 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
      */   
 
     register size_t len = strlen(ident);
-    return (len) + (len - 1) + (len * sizeof(correct_alpha)) + ((len + 1) * sizeof(correct_alpha));
+    return (len) + (len - 1) + (len * (sizeof(correct_alpha)-1)) + ((len + 1) * (sizeof(correct_alpha)-1));
 }
 
 static char **correct_edit(const char *ident) {
