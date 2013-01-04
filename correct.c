@@ -111,10 +111,12 @@ static char *correct_strndup(const char *src, size_t n) {
 static char *correct_concat(char *str1, char *str2, bool next) {
     char *ret = NULL;
 
+#if 0
     if (!str1) {
          str1 = mem_a(1);
         *str1 = '\0';
     }
+#endif
 
     str1 = mem_r (str1, strlen(str1) + strlen(str2) + 1);
     ret  = strcat(str1, str2);
@@ -283,6 +285,8 @@ static char **correct_known(ht table, char **array, size_t rows, size_t *next) {
             if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
                 res        = mem_r(res, sizeof(char*) * (len + 1));
                 res[len++] = end[jtr];
+            } else {
+                mem_d(end[jtr]);
             }
         }
 
@@ -313,6 +317,8 @@ static void correct_cleanup(char **array, size_t rows) {
     size_t itr;
     for (itr = 0; itr < rows; itr++)
         mem_d(array[itr]);
+
+    mem_d(array);
 }
 
 /*
@@ -357,7 +363,6 @@ char *correct_correct(ht table, const char *ident) {
         if ((e1ident = correct_maximum(table, e1, e1rows))) {
             found = util_strdup(e1ident);
             correct_cleanup(e1, e1rows);
-            mem_d(e1);
             return found;
         }
     }
@@ -368,9 +373,6 @@ char *correct_correct(ht table, const char *ident) {
     
     correct_cleanup(e1, e1rows);
     correct_cleanup(e2, e2rows);
-
-    mem_d(e1);
-    mem_d(e2);
     
     return found;
 }
