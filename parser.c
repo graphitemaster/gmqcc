@@ -1653,7 +1653,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 
                     if (correct) {
                         parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
-                        /*mem_d(correct);*/
+                        mem_d(correct);
                     } else {
                         parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
                     }
@@ -2013,11 +2013,11 @@ static bool parser_leaveblock(parser_t *parser)
     }
 
     util_htdel(vec_last(parser->variables));
-    util_htdel(vec_last(parser->correct_variables)); /* corrector */
-    vec_free(vec_last(parser->correct_variables_score)); /* corrector */
+    correct_del(vec_last(parser->correct_variables), vec_last(parser->correct_variables_score));
 
     vec_pop(parser->variables);
-    vec_pop(parser->correct_variables); /* corrector */
+    vec_pop(parser->correct_variables);
+    vec_pop(parser->correct_variables_score);
     if (!vec_size(parser->_blocklocals)) {
         parseerror(parser, "internal error: parser_leaveblock with no block (2)");
         return false;

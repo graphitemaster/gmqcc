@@ -356,7 +356,6 @@ char *correct_str(ht table, const char *ident) {
     if (correct_find(table, ident))
         return found;
 
-    /*mem_d(found);*/
     if ((e1rows = correct_size(ident))) {
         e1      = correct_edit(ident);
 
