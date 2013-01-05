@@ -75,8 +75,8 @@ typedef struct {
     ht *typedefs;
 
     /* same as above but for the spelling corrector */
-    ht       *correct_variables;
-    size_t ***correct_variables_score;  /* vector of vector of size_t* */
+    correct_trie_t  **correct_variables;
+    size_t         ***correct_variables_score;  /* vector of vector of size_t* */
 
     /* not to be used directly, we use the hash table */
     ast_expression **_locals;
@@ -1999,7 +1999,7 @@ static void parser_enterblock(parser_t *parser)
     vec_push(parser->_block_ctx, parser_ctx(parser));
 
     /* corrector */
-    vec_push(parser->correct_variables, util_htnew(PARSER_HT_SIZE));
+    vec_push(parser->correct_variables, correct_trie_new());
     vec_push(parser->correct_variables_score, NULL);
 }
 

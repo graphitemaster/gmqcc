@@ -315,6 +315,14 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_upload(X,Y,S) memcpy(vec_add((X), (S) * sizeof(*(Y))), (Y), (S) * sizeof(*(Y)))
 #define vec_remove(A,I,N) memmove((A)+(I),(A)+((I)+(N)),sizeof(*(A))*(vec_meta(A)->used-(I)-(N))),vec_meta(A)->used-=(N)
 
+typedef struct trie_s {
+    struct trie_s *entries;
+    unsigned char  ch;
+    void          *value;
+} correct_trie_t;
+
+correct_trie_t* correct_trie_new();
+
 typedef struct hash_table_t {
     size_t                size;
     struct hash_node_t **table;
@@ -426,9 +434,9 @@ GMQCC_INLINE FILE   *file_open   (const char *, const char *);
 /*===================================================================*/
 /*=========================== correct.c =============================*/
 /*===================================================================*/
-void  correct_del(ht, size_t **);
-void  correct_add(ht, size_t ***, const char *);
-char *correct_str(ht, /********/  const char *);
+void  correct_del(correct_trie_t*, size_t **);
+void  correct_add(correct_trie_t*, size_t ***, const char *);
+char *correct_str(correct_trie_t*, /********/  const char *);
 
 /*===================================================================*/
 /*=========================== code.c ================================*/

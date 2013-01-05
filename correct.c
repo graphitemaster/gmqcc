@@ -22,6 +22,133 @@
  */
 #include "gmqcc.h"
 
+unsigned char **pools;
+unsigned char  *poolptr;
+size_t          poolat;
+#define C_POOLSIZE (128*1024*1024)
+
+static GMQCC_INLINE void newpool() {
+    poolat = 0;
+    poolptr = mem_a(C_POOLSIZE);
+    vec_push(pools, poolptr);
+}
+
+void correct_init(void) {
+    newpool();
+}
+
+static GMQCC_INLINE void *correct_alloc(size_t _b) {
+    size_t *ptr;
+    size_t b = _b + sizeof(size_t);
+    if (poolat + b >= C_POOLSIZE)
+        newpool();
+    poolat += b;
+    ptr = (size_t*)poolptr;
+    poolptr += b;
+    *ptr = _b;
+    return (void*)(ptr+1);
+}
+
+static GMQCC_INLINE void *correct_realloc(void *_ptr, size_t _b) {
+    size_t *ptr   = ((size_t*)_ptr) - 1;
+    size_t oldlen = *ptr;
+    size_t len    = (oldlen < _b ? oldlen : _b);
+    size_t b      = _b + sizeof(size_t);
+    size_t *newptr;
+
+    newptr    = (size_t*)correct_alloc(b);
+    *newptr++ = _b;
+    memcpy(newptr, _ptr, len);
+    return (void*)(newptr);
+}
+
+void correct_delete(void) {
+    size_t i;
+    for (i = 0; i < vec_size(pools); ++i)
+        mem_d(pools[i]);
+    pools   = NULL;
+    poolptr = NULL;
+    poolat  = 0;
+}
+
+static GMQCC_INLINE char *correct_outstr(const char *s) {
+    char *o = util_strdup(s);
+    correct_delete();
+    return o;
+}
+
+correct_trie_t* correct_trie_new()
+{
+    correct_trie_t *t = (correct_trie_t*)mem_a(sizeof(correct_trie_t));
+    t->value   = NULL;
+    t->entries = NULL;
+    return t;
+}
+
+void correct_trie_del_sub(correct_trie_t *t)
+{
+    size_t i;
+    for (i = 0; i < vec_size(t->entries); ++i)
+        correct_trie_del_sub(&t->entries[i]);
+    vec_free(t->entries);
+}
+
+void correct_trie_del(correct_trie_t *t)
+{
+    size_t i;
+    for (i = 0; i < vec_size(t->entries); ++i)
+        correct_trie_del_sub(&t->entries[i]);
+    vec_free(t->entries);
+    mem_d(t);
+}
+
+void* correct_trie_get(const correct_trie_t *t, const char *key)
+{
+    const unsigned char *data = (const unsigned char*)key;
+    while (*data) {
+        unsigned char ch = *data;
+        const size_t  vs = vec_size(t->entries);
+        size_t        i;
+        const correct_trie_t *entries = t->entries;
+        for (i = 0; i < vs; ++i) {
+            if (entries[i].ch == ch) {
+                t = &entries[i];
+                ++data;
+                break;
+            }
+        }
+        if (i == vs)
+            return NULL;
+    }
+    return t->value;
+}
+
+void correct_trie_set(correct_trie_t *t, const char *key, void * const value)
+{
+    const unsigned char *data = (const unsigned char*)key;
+    while (*data) {
+        unsigned char ch = *data;
+        correct_trie_t       *entries = t->entries;
+        const size_t  vs = vec_size(t->entries);
+        size_t        i;
+        for (i = 0; i < vs; ++i) {
+            if (entries[i].ch == ch) {
+                t = &entries[i];
+                break;
+            }
+        }
+        if (i == vs) {
+            correct_trie_t *elem  = (correct_trie_t*)vec_add(t->entries, 1);
+            elem->ch      = ch;
+            elem->value   = NULL;
+            elem->entries = NULL;
+            t = elem;
+        }
+        ++data;
+    }
+    t->value = value;
+}
+
 /*
  * This is a very clever method for correcting mistakes in QuakeC code
  * most notably when invalid identifiers are used or inproper assignments;
@@ -73,11 +200,11 @@
  */
 
 /* some hashtable management for dictonaries */
-static size_t *correct_find(ht table, const char *word) {
-    return (size_t*)util_htget(table, word);
+static size_t *correct_find(correct_trie_t *table, const char *word) {
+    return (size_t*)correct_trie_get(table, word);
 }
 
-static int correct_update(ht *table, const char *word) {
+static int correct_update(correct_trie_t* *table, const char *word) {
     size_t *data = correct_find(*table, word);
     if (!data)
         return 0;
@@ -85,6 +212,38 @@ static int correct_update(ht *table, const char *word) {
     (*data)++;
     return 1;
 }
+
+void correct_add(correct_trie_t* table, size_t ***size, const char *ident) {
+    size_t     *data = NULL;
+    const char *add  = ident;
+    
+    if (!correct_update(&table, add)) {
+        data  = (size_t*)mem_a(sizeof(size_t));
+        *data = 1;
+
+        vec_push((*size), data);
+        correct_trie_set(table, add, data);
+    }
+}
+
+void correct_del(correct_trie_t* dictonary, size_t **data) {
+    size_t i;
+    const size_t vs = vec_size(data);
+    for (i = 0; i < vs; i++)
+        mem_d(data[i]);
+
+    vec_free(data);
+    correct_trie_del(dictonary);
+}
+#if 1
+#undef mem_a
+#undef mem_r
+#undef mem_d
+#define mem_a(x)   correct_alloc((x))
+#define mem_r(a,b) correct_realloc((a),(b))
+/* doing this in order to avoid 'unused variable' warnings */
+#define mem_d(x)   ((void)(0 && (x)))
+#endif
 
 
 /*
@@ -154,14 +313,14 @@ static size_t correct_insertion(const char *ident, char **array, size_t index) {
     size_t itr;
     size_t jtr;
     size_t ktr;
-    size_t len    = strlen(ident);
+    const size_t len    = strlen(ident);
 
     for (itr = 0, ktr = 0; itr <= len; itr++) {
         for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
             char *a = (char*)mem_a(len+2);
             memcpy(a, ident, itr);
-            a[itr] = correct_alpha[jtr];
             memcpy(a + itr + 1, ident + itr, len - itr + 1);
+            a[itr] = correct_alpha[jtr];
             array[index + ktr] = a;
         }
     }
@@ -210,7 +369,7 @@ static int correct_exist(char **array, size_t rows, char *ident) {
     return 0;
 }
 
-static char **correct_known(ht table, char **array, size_t rows, size_t *next) {
+static char **correct_known(correct_trie_t* table, char **array, size_t rows, size_t *next) {
     size_t itr;
     size_t jtr;
     size_t len;
@@ -238,7 +397,7 @@ static char **correct_known(ht table, char **array, size_t rows, size_t *next) {
     return res;
 }
 
-static char *correct_maximum(ht table, char **array, size_t rows) {
+static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
     char   *str  = NULL;
     size_t *itm  = NULL;
     size_t  itr;
@@ -270,20 +429,8 @@ static void correct_cleanup(char **array, size_t rows) {
  * the add function works the same.  Except the identifier is used to
  * add to the dictonary.  
  */   
-void correct_add(ht table, size_t ***size, const char *ident) {
-    size_t     *data = NULL;
-    const char *add  = ident;
-    
-    if (!correct_update(&table, add)) {
-        data  = (size_t*)mem_a(sizeof(size_t));
-        *data = 1;
 
-        vec_push((*size), data);
-        util_htset(table, add, data);
-    }
-}
-
-char *correct_str(ht table, const char *ident) {
+char *correct_str(correct_trie_t* table, const char *ident) {
     char **e1;
     char **e2;
     char  *e1ident;
@@ -293,9 +440,11 @@ char *correct_str(ht table, const char *ident) {
     size_t e1rows = 0;
     size_t e2rows = 0;
 
+    correct_init();
+
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
-        return found;
+        return correct_outstr(found);
 
     if ((e1rows = correct_size(ident))) {
         e1      = correct_edit(ident);
@@ -304,7 +453,7 @@ char *correct_str(ht table, const char *ident) {
             mem_d(found);
             found = util_strdup(e1ident);
             correct_cleanup(e1, e1rows);
-            return found;
+            return correct_outstr(found);
         }
     }
 
@@ -316,15 +465,6 @@ char *correct_str(ht table, const char *ident) {
     
     correct_cleanup(e1, e1rows);
     correct_cleanup(e2, e2rows);
-    
-    return found;
-}
 
-void correct_del(ht dictonary, size_t **data) {
-    size_t i;
-    for (i = 0; i < vec_size(data); i++)
-        mem_d(data[i]);
-
-    vec_free(data);
-    util_htdel(dictonary);
+    return correct_outstr(found);
 }

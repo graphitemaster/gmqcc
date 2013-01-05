@@ -570,7 +570,7 @@ int main(int argc, char **argv) {
             con_out("Flag %s = %i\n",    opts_flag_list[itr].name, OPTS_FLAG(itr));
         for (itr = 0; itr < COUNT_WARNINGS; ++itr)
             con_out("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
-        
+
         con_out("output             = %s\n", opts.output);
         con_out("optimization level = %d\n", opts.O);
         con_out("standard           = %i\n", opts.standard);
