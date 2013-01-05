@@ -5,4 +5,10 @@ compiler:
 # Change this to your needs
 script: make && make check
 notifications:
-    irc: "irc.freenode.org#kf-engine"
+    irc:
+        channels:
+          - "irc.freenode.org#kf-engine"
+        template:
+          - "[%{commit} : %{author}] %{message} "
+        use_notice: true
+        skip_join: true
