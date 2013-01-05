@@ -4,4 +4,5 @@ compiler:
   - clang
 # Change this to your needs
 script: make && make check
-irc: "irc.freenode.org#kf-engine"
+notifications:
+    irc: "irc.freenode.org#kf-engine"
