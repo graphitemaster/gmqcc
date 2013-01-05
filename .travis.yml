@@ -10,5 +10,4 @@ notifications:
           - "irc.freenode.org#kf-engine"
         template:
           - "[%{commit} : %{author}] %{message} "
-        use_notice: true
         skip_join: true
