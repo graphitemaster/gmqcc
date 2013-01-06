@@ -69,8 +69,14 @@
  *  probability of the transposition from C to I.  It's simply much more
  *  cleaner, and direct to seperate the two factors.
  *
+ *  Research tells us that 80% to 95% of all spelling errors have an edit
+ *  distance no greater than one.  Knowing this we can optimize for most
+ *  cases of mistakes without taking a performance hit.  Which is what we
+ *  base longer edit distances off of.  Opposed to the original method of
+ *  I had concieved of checking everything.     
+ *  
  * A little information on additional algorithms used:
- * 
+ *
  *   Initially when I implemented this corrector, it was very slow.
  *   Need I remind you this is essentially a brute force attack on strings,
  *   and since every transformation requires dynamic memory allocations,
@@ -89,6 +95,21 @@
  *   very slow.  To combat this I had suggested burst tries to Blub.
  *   The next day he had implemented them. Sure enough this brought
  *   down the runtime by a factory > 100%
+ *
+ * Future Work (If we really need it)
+ *
+ *   Currently we can only distinguishes one source of error in the
+ *   language model we use.  This could become an issue for identifiers
+ *   that have close colliding rates, e.g colate->coat yields collate.
+ *
+ *   Currently the error model has been fairly trivial, the smaller the
+ *   edit distance the smaller the error.  This usually causes some un-
+ *   expected problems. e.g reciet->recite yields recipt.  For QuakeC
+ *   this could become a problem when lots of identifiers are involved. 
+ *
+ *   Our control mechanisim could use a limit, i.e limit the number of
+ *   sets of edits for distance X.  This would also increase execution
+ *   speed considerably.  
  */
 
 
@@ -193,10 +214,11 @@ void* correct_trie_get(const correct_trie_t *t, const char *key) {
 void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
-        unsigned char ch = *data;
-        correct_trie_t       *entries = t->entries;
-        const size_t  vs = vec_size(t->entries);
-        size_t        i;
+        const size_t    vs      = vec_size(t->entries);
+        unsigned char   ch      = *data;
+        correct_trie_t *entries = t->entries;
+        size_t          i;
+
         for (i = 0; i < vs; ++i) {
             if (entries[i].ch == ch) {
                 t = &entries[i];
@@ -205,10 +227,11 @@ void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
         }
         if (i == vs) {
             correct_trie_t *elem  = (correct_trie_t*)vec_add(t->entries, 1);
+
             elem->ch      = ch;
             elem->value   = NULL;
             elem->entries = NULL;
-            t = elem;
+            t             = elem;
         }
         ++data;
     }
@@ -247,8 +270,9 @@ void correct_add(correct_trie_t* table, size_t ***size, const char *ident) {
 }
 
 void correct_del(correct_trie_t* dictonary, size_t **data) {
-    size_t i;
+    size_t       i;
     const size_t vs = vec_size(data);
+
     for (i = 0; i < vs; i++)
         mem_d(data[i]);
 
@@ -261,7 +285,9 @@ void correct_del(correct_trie_t* dictonary, size_t **data) {
  * because they're only valid after the first character is of a _, or
  * alpha character.
  */
-static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyz"
+                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                    "_"; /* TODO: Numbers ... */
 
 /*
  * correcting logic for the following forms of transformations:
@@ -392,19 +418,19 @@ static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, s
 }
 
 static char **correct_known(correct_trie_t* table, char **array, size_t rows, size_t *next) {
-    size_t itr;
-    size_t jtr;
-    size_t len;
-    size_t row;
+    size_t itr = 0;
+    size_t jtr = 0;
+    size_t len = 0;
+    size_t row = 0;
     size_t nxt = 8;
     char **res = correct_pool_alloc(sizeof(char *) * nxt);
     char **end = NULL;
 
-    for (itr = 0, len = 0; itr < rows; itr++) {
+    for (; itr < rows; itr++) {
         end = correct_edit(array[itr]);
         row = correct_size(array[itr]);
 
-        for (jtr = 0; jtr < row; jtr++) {
+        for (; jtr < row; jtr++) {
             if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
@@ -417,12 +443,12 @@ static char **correct_known(correct_trie_t* table, char **array, size_t rows, si
 }
 
 static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
-    char   *str  = NULL;
-    size_t *itm  = NULL;
-    size_t  itr;
-    size_t  top;
+    char   *str = NULL;
+    size_t *itm = NULL;
+    size_t  itr = 0;
+    size_t  top = 0;
 
-    for (itr = 0, top = 0; itr < rows; itr++) {
+    for (; itr < rows; itr++) {
         if ((itm = correct_find(table, array[itr])) && (*itm > top)) {
             top = *itm;
             str = array[itr];
@@ -439,8 +465,7 @@ static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
  *
  * the add function works the same.  Except the identifier is used to
  * add to the dictonary.  
- */   
-
+ */
 char *correct_str(correct_trie_t* table, const char *ident) {
     char **e1;
     char **e2;
