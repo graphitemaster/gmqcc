@@ -101,6 +101,9 @@ check: all
 clean:
 	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
 
+splint:
+	@ ./splint.sh
+
 depend:
 	makedepend -Y -w 65536 \
 		$(subst .o,.c,$(OBJ_D))
