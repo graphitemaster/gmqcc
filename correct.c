@@ -457,7 +457,7 @@ static int correct_exist(char **array, size_t rows, char *ident) {
 static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, size_t size) {
     size_t oldallocated = *allocated;
     char **out;
-    if (size+1 < oldallocated)
+    if (size < oldallocated)
         return res;
 
     out = correct_pool_alloc(sizeof(*res) * oldallocated + 32);
