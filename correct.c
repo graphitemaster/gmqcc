@@ -33,7 +33,7 @@
  *
  * A little about how it works, and probability theory:
  *
- *  When given an identifier (which we will denote I), we're essentially
+ *      When given an identifier (which we will denote I), we're essentially
  *  just trying to choose the most likely correction for that identifier.
  *  (the actual "correction" can very well be the identifier itself).
  *  There is actually no way to know for sure that certian identifers
@@ -44,9 +44,20 @@
  *  out of all possible corrections that maximizes the probability of C
  *  for the original identifer I.
  *
- *  Bayes' Therom suggests something of the following:
+ *      Thankfully there exists some theroies for probalistic interpretations
+ *  of data.  Since we're operating on two distictive intepretations, the
+ *  transposition from I to C. We need something that can express how much
+ *  degree of I should rationally change to become C.  this is called the
+ *  Bayesian interpretation. You can read more about it from here:
+ *  http://www.celiagreen.com/charlesmccreery/statistics/bayestutorial.pdf
+ *  (which is probably the only good online documentation for bayes theroy
+ *  no lie.  Everything else just sucks ..)  
+ * 
+ *  Bayes' Thereom suggests something like the following:
  *      AC P(I|C) P(C) / P(I)
- *  Since P(I) is the same for every possibly I, we can ignore it giving
+ * 
+ *  However since P(I) is the same for every possibility of I, we can
+ *  complete ignore it giving just:
  *      AC P(I|C) P(C)
  *
  *  This greatly helps visualize how the parts of the expression are performed
@@ -78,7 +89,7 @@
  *  
  * A little information on additional algorithms used:
  *
- *   Initially when I implemented this corrector, it was very slow.
+ *      Initially when I implemented this corrector, it was very slow.
  *   Need I remind you this is essentially a brute force attack on strings,
  *   and since every transformation requires dynamic memory allocations,
  *   you can easily imagine where most of the runtime conflated.  Yes
@@ -87,7 +98,7 @@
  *   shock to me.  A forward allocator (or as some call it a bump-point
  *   allocator, or just a memory pool) was implemented. To combat this.
  *
- *   But of course even other factors were making it slow.  Initially
+ *      But of course even other factors were making it slow.  Initially
  *   this used a hashtable.  And hashtables have a good constant lookup
  *   time complexity.  But the problem wasn't in the hashtable, it was
  *   in the hashing (despite having one of the fastest hash functions
@@ -99,18 +110,19 @@
  *
  * Future Work (If we really need it)
  *
- *   Currently we can only distinguishes one source of error in the
+ *      Currently we can only distinguishes one source of error in the
  *   language model we use.  This could become an issue for identifiers
  *   that have close colliding rates, e.g colate->coat yields collate.
  *
- *   Currently the error model has been fairly trivial, the smaller the
+ *      Currently the error model has been fairly trivial, the smaller the
  *   edit distance the smaller the error.  This usually causes some un-
  *   expected problems. e.g reciet->recite yields recipt.  For QuakeC
  *   this could become a problem when lots of identifiers are involved. 
  *
- *   Our control mechanisim could use a limit, i.e limit the number of
+ *      Our control mechanisim could use a limit, i.e limit the number of
  *   sets of edits for distance X.  This would also increase execution
- *   speed considerably.  
+ *   speed considerably.
+ *
  */
 
 
@@ -163,12 +175,12 @@ static GMQCC_INLINE char *correct_pool_claim(const char *data) {
 }
 
 /*
- * A fast space efficent trie for a disctonary of identifiers.  This is
+ * A fast space efficent trie for a dictionary of identifiers.  This is
  * faster than a hashtable for one reason.  A hashtable itself may have
  * fast constant lookup time, but the hash itself must be very fast. We
  * have one of the fastest hash functions for strings, but if you do a
  * lost of hashing (which we do, almost 3 million hashes per identifier)
- * a hashtable becomes slow. Very Very Slow.
+ * a hashtable becomes slow.
  */   
 correct_trie_t* correct_trie_new() {
     correct_trie_t *t = (correct_trie_t*)mem_a(sizeof(correct_trie_t));
@@ -440,7 +452,8 @@ static char **correct_known(correct_trie_t* table, char **array, size_t rows, si
         end = correct_edit(array[itr]);
         row = correct_size(array[itr]);
 
-        for (; jtr < row; jtr++) {
+        /* removing jtr=0 here speeds it up by 100ms O_o */
+        for (jtr = 0; jtr < row; jtr++) {
             if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
