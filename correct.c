@@ -392,8 +392,6 @@ static char **correct_known(correct_trie_t* table, char **array, size_t rows, si
             if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
-            } else {
-                mem_d(end[jtr]);
             }
         }
     }
