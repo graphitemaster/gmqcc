@@ -125,6 +125,7 @@ install-doc:
 	install    -m755  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
 
 # DO NOT DELETE
+
 util.o: gmqcc.h opts.def
 code.o: gmqcc.h opts.def
 ast.o: gmqcc.h opts.def ast.h ir.h
