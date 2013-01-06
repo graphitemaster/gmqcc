@@ -1001,7 +1001,7 @@ int main(int argc, char **argv)
 
             --argc;
             ++argv;
-            if (argc < 3) {
+            if (argc < 2) {
                 usage();
                 exit(1);
             }
@@ -1028,27 +1028,20 @@ int main(int argc, char **argv)
         }
         else
         {
+            printf("unknown parameter: %s\n", argv[1]);
             usage();
             exit(1);
         }
     }
 
-    if (argc > 2) {
-        usage();
-        exit(1);
-    }
-    if (argc > 1) {
-        if (progsfile) {
-            printf("only 1 program file may be specified\n");
-            usage();
-            exit(1);
-        }
+    if (argc == 2 && !progsfile) {
         progsfile = argv[1];
         --argc;
         ++argv;
     }
 
     if (!progsfile) {
+        printf("must specify a program to execute\n");
         usage();
         exit(1);
     }
