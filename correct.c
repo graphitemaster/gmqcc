@@ -467,13 +467,12 @@ static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
  * add to the dictonary.  
  */
 char *correct_str(correct_trie_t* table, const char *ident) {
-    char **e1;
-    char **e2;
-    char  *e1ident;
-    char  *e2ident;
-
-    size_t e1rows = 0;
-    size_t e2rows = 0;
+    char **e1      = NULL;
+    char **e2      = NULL;
+    char  *e1ident = NULL;
+    char  *e2ident = NULL;
+    size_t e1rows  = 0;
+    size_t e2rows  = 0;
 
     correct_pool_new();
 
