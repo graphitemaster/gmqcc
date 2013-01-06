@@ -125,7 +125,8 @@
  */
 
 
-#define CORRECT_POOLSIZE (128*1024*1024)
+#define CORRECT_POOL_SIZE (128*1024*1024)
+#define CORRECT_POOL_GETLEN(X) *((size_t*)(X) - 1)
 /*
  * A forward allcator for the corrector.  This corrector requires a lot
  * of allocations.  This forward allocator combats all those allocations
@@ -139,20 +140,19 @@ static size_t          correct_pool_addr = 0;
 
 static GMQCC_INLINE void correct_pool_new(void) {
     correct_pool_addr = 0;
-    correct_pool_this = (unsigned char *)mem_a(CORRECT_POOLSIZE);
+    correct_pool_this = (unsigned char *)mem_a(CORRECT_POOL_SIZE);
 
     vec_push(correct_pool_data, correct_pool_this);
 }
 
 static GMQCC_INLINE void *correct_pool_alloc(size_t bytes) {
     void *data;
-    if (correct_pool_addr + bytes >= CORRECT_POOLSIZE)
+    if (correct_pool_addr + bytes>= CORRECT_POOL_SIZE)
         correct_pool_new();
 
-    data               = correct_pool_this;
+    data               = (void*)correct_pool_this;
     correct_pool_this += bytes;
     correct_pool_addr += bytes;
-
     return data;
 }
 
@@ -205,11 +205,13 @@ void correct_trie_del(correct_trie_t *t) {
 
 void* correct_trie_get(const correct_trie_t *t, const char *key) {
     const unsigned char *data = (const unsigned char*)key;
+
     while (*data) {
-        unsigned char ch = *data;
-        const size_t  vs = vec_size(t->entries);
-        size_t        i;
         const correct_trie_t *entries = t->entries;
+        unsigned char         ch      = *data;
+        const size_t          vs      = vec_size(entries);
+        size_t                i;
+
         for (i = 0; i < vs; ++i) {
             if (entries[i].ch == ch) {
                 t = &entries[i];
@@ -226,9 +228,9 @@ void* correct_trie_get(const correct_trie_t *t, const char *key) {
 void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
-        const size_t    vs      = vec_size(t->entries);
-        unsigned char   ch      = *data;
         correct_trie_t *entries = t->entries;
+        const size_t    vs      = vec_size(entries);
+        unsigned char   ch      = *data;
         size_t          i;
 
         for (i = 0; i < vs; ++i) {
@@ -255,17 +257,17 @@ void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
  * Implementation of the corrector algorithm commences. A very efficent
  * brute-force attack (thanks to tries and mempool :-)).
  */  
-static size_t *correct_find(correct_trie_t *table, const char *word) {
+static GMQCC_INLINE size_t *correct_find(correct_trie_t *table, const char *word) {
     return (size_t*)correct_trie_get(table, word);
 }
 
-static int correct_update(correct_trie_t* *table, const char *word) {
+static GMQCC_INLINE bool correct_update(correct_trie_t* *table, const char *word) {
     size_t *data = correct_find(*table, word);
     if (!data)
-        return 0;
+        return false;
 
     (*data)++;
-    return 1;
+    return true;
 }
 
 void correct_add(correct_trie_t* table, size_t ***size, const char *ident) {
@@ -419,9 +421,36 @@ static char **correct_edit(const char *ident) {
  */   
 static int correct_exist(char **array, size_t rows, char *ident) {
     size_t itr;
-    for (itr = 0; itr < rows; itr++)
+    /*
+     * As an experiment I tried the following assembly for memcmp here:
+     *
+     * correct_cmp_loop: 
+     * incl %eax            ; eax =  LHS
+     * incl %edx            ; edx =  LRS
+     * cmpl %eax, %ebx      ; ebx = &LHS[END_POS]
+     *
+     * jbe correct_cmp_eq
+     * movb (%edx), %cl     ; micro-optimized on even atoms :-)
+     * cmpb %cl, (%eax)     ; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     * jg  correct_cmp_gt
+     * jge correct_cmp_loop
+     * ...
+     *
+     * Despite how much optimization went in to this, the speed was the
+     * being conflicted by the strlen(ident) used for &LHS[END_POS]
+     * If we could eliminate the strlen with what I suggested on line
+     * 311 ... we can accelerate this whole damn thing quite a bit.
+     *
+     * However there is still something we can do here that does give
+     * us a little more speed.  Although one more branch, we know for
+     * sure there is at least one byte to compare, if that one byte
+     * simply isn't the same we can skip the full check. Which means
+     * we skip a whole strlen call.
+     */
+    for (itr = 0; itr < rows; itr++) {
         if (!memcmp(array[itr], ident, strlen(ident)))
             return 1;
+    }
 
     return 0;
 }
