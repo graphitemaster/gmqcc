@@ -169,7 +169,6 @@ bool code_write(const char *filename, const char *lnofile) {
     util_endianswap(code_globals,    vec_size(code_globals),    sizeof(int32_t));
 
     if (lnofile) {
-        uint32_t lnotype = *(unsigned int*)"LNOF";
         uint32_t version = 1;
 
         fp = file_open(lnofile, "wb");
@@ -180,7 +179,7 @@ bool code_write(const char *filename, const char *lnofile) {
         util_endianswap(code_linenums, vec_size(code_linenums), sizeof(code_linenums[0]));
 
 
-        if (file_write(&lnotype,                        sizeof(lnotype),                        1,                       fp) != 1 ||
+        if (file_write("LNOF",                          4,                                      1,                       fp) != 1 ||
             file_write(&version,                        sizeof(version),                        1,                       fp) != 1 ||
             file_write(&code_header.defs.length,        sizeof(code_header.defs.length),        1,                       fp) != 1 ||
             file_write(&code_header.globals.length,     sizeof(code_header.globals.length),     1,                       fp) != 1 ||
