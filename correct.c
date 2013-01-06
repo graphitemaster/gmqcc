@@ -318,7 +318,7 @@ static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyz"
  * need to take a size_t ** to carry it along (would all the argument
  * overhead be worth it?)  
  */
-static size_t correct_deletion(const char *ident, char **array, size_t index) {
+static size_t correct_deletion(const char *ident, char **array) {
     size_t       itr = 0;
     const size_t len = strlen(ident);
 
@@ -326,13 +326,13 @@ static size_t correct_deletion(const char *ident, char **array, size_t index) {
         char *a = (char*)correct_pool_alloc(len+1);
         memcpy(a, ident, itr);
         memcpy(a + itr, ident + itr + 1, len - itr);
-        array[index + itr] = a;
+        array[itr] = a;
     }
 
     return itr;
 }
 
-static size_t correct_transposition(const char *ident, char **array, size_t index) {
+static size_t correct_transposition(const char *ident, char **array) {
     size_t       itr = 0;
     const size_t len = strlen(ident);
 
@@ -343,13 +343,13 @@ static size_t correct_transposition(const char *ident, char **array, size_t inde
         tmp      = a[itr];
         a[itr  ] = a[itr+1];
         a[itr+1] = tmp;
-        array[index + itr] = a;
+        array[itr] = a;
     }
 
     return itr;
 }
 
-static size_t correct_alteration(const char *ident, char **array, size_t index) {
+static size_t correct_alteration(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
     size_t       ktr = 0;
@@ -360,14 +360,14 @@ static size_t correct_alteration(const char *ident, char **array, size_t index) 
             char *a = (char*)correct_pool_alloc(len+1);
             memcpy(a, ident, len+1);
             a[itr] = correct_alpha[jtr];
-            array[index + ktr] = a;
+            array[ktr] = a;
         }
     }
 
     return ktr;
 }
 
-static size_t correct_insertion(const char *ident, char **array, size_t index) {
+static size_t correct_insertion(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
     size_t       ktr = 0;
@@ -379,7 +379,7 @@ static size_t correct_insertion(const char *ident, char **array, size_t index) {
             memcpy(a, ident, itr);
             memcpy(a + itr + 1, ident + itr, len - itr + 1);
             a[itr] = correct_alpha[jtr];
-            array[index + ktr] = a;
+            array[ktr] = a;
         }
     }
 
@@ -405,10 +405,10 @@ static char **correct_edit(const char *ident) {
     if (!find)
         return NULL;
 
-    next  = correct_deletion     (ident, find, 0);
-    next += correct_transposition(ident, find, next);
-    next += correct_alteration   (ident, find, next);
-    /*****/ correct_insertion    (ident, find, next);
+    next  = correct_deletion     (ident, find);
+    next += correct_transposition(ident, find+next);
+    next += correct_alteration   (ident, find+next);
+    /*****/ correct_insertion    (ident, find+next);
 
     return find;
 }
