@@ -109,13 +109,13 @@ splint:
 	@ ./splint.sh
 
 depend:
-	makedepend -Y -w 65536 \
+	@makedepend    -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_D))
-	makedepend -a -Y -w 65536 \
+	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_T))
-	makedepend -a -Y -w 65536 \
+	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_C))
-	makedepend -a -Y -w 65536 \
+	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_X))
 
 #install rules
