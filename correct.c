@@ -132,7 +132,7 @@
  * and speeds us up a little.  It also saves us space in a way since each
  * allocation isn't wasting a little header space for when NOTRACK isn't
  * defined.
- */    
+ */
 static unsigned char **correct_pool_data = NULL;
 static unsigned char  *correct_pool_this = NULL;
 static size_t          correct_pool_addr = 0;
@@ -179,7 +179,7 @@ static GMQCC_INLINE char *correct_pool_claim(const char *data) {
  * have one of the fastest hash functions for strings, but if you do a
  * lost of hashing (which we do, almost 3 million hashes per identifier)
  * a hashtable becomes slow.
- */   
+ */
 correct_trie_t* correct_trie_new() {
     correct_trie_t *t = (correct_trie_t*)mem_a(sizeof(correct_trie_t));
     t->value   = NULL;
@@ -255,7 +255,7 @@ void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
 /*
  * Implementation of the corrector algorithm commences. A very efficent
  * brute-force attack (thanks to tries and mempool :-)).
- */  
+ */
 static GMQCC_INLINE size_t *correct_find(correct_trie_t *table, const char *word) {
     return (size_t*)correct_trie_get(table, word);
 }
@@ -272,7 +272,7 @@ static GMQCC_INLINE bool correct_update(correct_trie_t* *table, const char *word
 void correct_add(correct_trie_t* table, size_t ***size, const char *ident) {
     size_t     *data = NULL;
     const char *add  = ident;
-    
+
     if (!correct_update(&table, add)) {
         data  = (size_t*)mem_a(sizeof(size_t));
         *data = 1;
@@ -392,7 +392,7 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
      * transposition = len - 1
      * alteration    = len * sizeof(correct_alpha)
      * insertion     = (len + 1) * sizeof(correct_alpha)
-     */   
+     */
 
     register size_t len = strlen(ident);
     return (len) + (len - 1) + (len * (sizeof(correct_alpha)-1)) + ((len + 1) * (sizeof(correct_alpha)-1));
@@ -417,7 +417,7 @@ static char **correct_edit(const char *ident) {
  * We could use a hashtable but the space complexity isn't worth it
  * since we're only going to determine the "did you mean?" identifier
  * on error.
- */   
+ */
 static int correct_exist(char **array, size_t rows, char *ident) {
     size_t itr;
     /*
