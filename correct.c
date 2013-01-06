@@ -126,7 +126,6 @@
 
 
 #define CORRECT_POOL_SIZE (128*1024*1024)
-#define CORRECT_POOL_GETLEN(X) *((size_t*)(X) - 1)
 /*
  * A forward allcator for the corrector.  This corrector requires a lot
  * of allocations.  This forward allocator combats all those allocations
