@@ -106,11 +106,22 @@
  *   there is also a hash.  After 3 million hashes .. you start to get
  *   very slow.  To combat this I had suggested burst tries to Blub.
  *   The next day he had implemented them. Sure enough this brought
- *   down the runtime by a factory > 100%
+ *   down the runtime by a factor > 100%
  *
+ *   The trie initially was designed to work on all strings, but later it
+ *   became aparent that not only was this not a requirement. It was also
+ *   slowing down get/sets' for the trie.  To fully understand, only
+ *   correct_alpha needs to be understood by the trie system, knowing this
+ *   We can combat the slowness using a very clever but evil optimization.
+ *   By Setting a fixed sized amount of branches for the trie using a
+ *   char-to-index map into the branches. We've complelty made the trie
+ *   accesses entierly constant in lookup time.  No really, a lookup is
+ *   literally trie[str[0]] [str[1]] [2] .... .value.
+ * 
+ * 
  * Future Work (If we really need it)
  *
- *   Currently we can only distinguishes one source of error in the
+ *   Currently we can only distinguish one source of error in the
  *   language model we use.  This could become an issue for identifiers
  *   that have close colliding rates, e.g colate->coat yields collate.
  *
