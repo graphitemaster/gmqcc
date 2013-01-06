@@ -98,17 +98,24 @@ all: $(GMQCC) $(QCVM) $(TESTSUITE)
 check: all
 	@ ./$(TESTSUITE)
 
+# alias to check because test.o exists and people will get confused
+# about the undefined references to X.
+test: check
+
 clean:
 	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
 
+splint:
+	@ ./splint.sh
+
 depend:
-	makedepend -Y -w 65536 \
+	@makedepend    -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_D))
-	makedepend -a -Y -w 65536 \
+	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_T))
-	makedepend -a -Y -w 65536 \
+	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_C))
-	makedepend -a -Y -w 65536 \
+	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_X))
 
 #install rules
