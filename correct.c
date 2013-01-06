@@ -399,7 +399,7 @@ static char **correct_edit(const char *ident) {
 static int correct_exist(char **array, size_t rows, char *ident) {
     size_t itr;
     for (itr = 0; itr < rows; itr++)
-        if (!strcmp(array[itr], ident))
+        if (!memcmp(array[itr], ident, strlen(ident)))
             return 1;
 
     return 0;
