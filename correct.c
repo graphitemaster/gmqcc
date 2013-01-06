@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2012, 2013
  *     Dale Weiler
- *
+ *     Wolfgang Bumiller
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -295,6 +296,15 @@ static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyz"
  *  2) transposition
  *  3) alteration
  *  4) insertion
+ *
+ * These functions could take an additional size_t **size paramater
+ * and store back the results of their new length in an array that
+ * is the same as **array for the memcmp in correct_exists. I'm just
+ * not able to figure out how to do that just yet.  As my brain is
+ * not in the mood to figure out that logic.  This is a reminder to
+ * do it, or for someone else to :-) correct_edit however would also
+ * need to take a size_t ** to carry it along (would all the argument
+ * overhead be worth it?)  
  */
 static size_t correct_deletion(const char *ident, char **array, size_t index) {
     size_t       itr = 0;
