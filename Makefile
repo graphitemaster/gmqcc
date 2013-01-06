@@ -9,7 +9,7 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char
+CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char -O2
 CFLAGS += -DGMQCC_GITINFO="`git describe`"
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
@@ -101,14 +101,15 @@ check: all
 clean:
 	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
 
-# deps
-$(OBJ_D) $(OBJ_C) $(OBJ_X): gmqcc.h opts.def
-main.o:   lexer.h
-parser.o: ast.h lexer.h
-ftepp.o:  lexer.h
-lexer.o:  lexer.h
-ast.o:    ast.h ir.h
-ir.o:     ir.h
+depend:
+	makedepend -Y -w 65536 \
+		$(subst .o,.c,$(OBJ_D))
+	makedepend -a -Y -w 65536 \
+		$(subst .o,.c,$(OBJ_T))
+	makedepend -a -Y -w 65536 \
+		$(subst .o,.c,$(OBJ_C))
+	makedepend -a -Y -w 65536 \
+		$(subst .o,.c,$(OBJ_X))
 
 #install rules
 install: install-gmqcc install-qcvm install-doc
@@ -122,3 +123,30 @@ install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m755  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
 	install    -m755  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
+
+# DO NOT DELETE
+
+util.o: gmqcc.h opts.def
+code.o: gmqcc.h opts.def
+ast.o: gmqcc.h opts.def ast.h ir.h
+ir.o: gmqcc.h opts.def ir.h
+conout.o: gmqcc.h opts.def
+ftepp.o: gmqcc.h opts.def lexer.h
+opts.o: gmqcc.h opts.def
+file.o: gmqcc.h opts.def
+utf8.o: gmqcc.h opts.def
+correct.o: gmqcc.h opts.def
+
+test.o: gmqcc.h opts.def
+util.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+file.o: gmqcc.h opts.def
+
+main.o: gmqcc.h opts.def lexer.h
+lexer.o: gmqcc.h opts.def lexer.h
+parser.o: gmqcc.h opts.def lexer.h ast.h ir.h
+file.o: gmqcc.h opts.def
+
+util.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+file.o: gmqcc.h opts.def
