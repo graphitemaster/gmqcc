@@ -101,8 +101,20 @@ them.
 .sp
 .BR -std=gmqcc " includes:"
 .in +4
+.nf
 -fadjust-vector-fields
+-fcorrect-logic
+-ftrue-empty-strings
+-floop-labels
+-finitialized-nonconstants
+-ftranslatable-strings
+-f\fIno-\fRfalse-empty-strings
+-Winvalid-parameter-count
+-Wmissing-returnvalues
+-fcorrect-ternary (cannot be turned off)
+.fi
 .in
+.sp
 .BR -std=qcc " includes:"
 .in +4
 .nf
@@ -110,6 +122,7 @@ them.
 -f\fIno-\fRadjust-vector-fields
 .fi
 .in
+.sp
 .BR -std=fteqcc " includes:"
 .in +4
 .nf
