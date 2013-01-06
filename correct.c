@@ -33,7 +33,7 @@
  *
  * A little about how it works, and probability theory:
  *
- *      When given an identifier (which we will denote I), we're essentially
+ *  When given an identifier (which we will denote I), we're essentially
  *  just trying to choose the most likely correction for that identifier.
  *  (the actual "correction" can very well be the identifier itself).
  *  There is actually no way to know for sure that certian identifers
@@ -44,7 +44,7 @@
  *  out of all possible corrections that maximizes the probability of C
  *  for the original identifer I.
  *
- *      Thankfully there exists some theroies for probalistic interpretations
+ *  Thankfully there exists some theroies for probalistic interpretations
  *  of data.  Since we're operating on two distictive intepretations, the
  *  transposition from I to C. We need something that can express how much
  *  degree of I should rationally change to become C.  this is called the
@@ -57,7 +57,7 @@
  *      AC P(I|C) P(C) / P(I)
  * 
  *  However since P(I) is the same for every possibility of I, we can
- *  complete ignore it giving just:
+ *  completley ignore it giving just:
  *      AC P(I|C) P(C)
  *
  *  This greatly helps visualize how the parts of the expression are performed
@@ -73,7 +73,7 @@
  *     enumerates all feasible values of C, to determine the one that
  *     gives the greatest probability score.
  * 
- *      In reality the requirement for a more complex expression involving
+ *  In reality the requirement for a more complex expression involving
  *  two seperate models is considerably a waste.  But one must recognize
  *  that P(C|I) is already conflating two factors.  It's just much simpler
  *  to seperate the two models and deal with them explicitaly.  To properly
@@ -89,7 +89,7 @@
  *  
  * A little information on additional algorithms used:
  *
- *      Initially when I implemented this corrector, it was very slow.
+ *   Initially when I implemented this corrector, it was very slow.
  *   Need I remind you this is essentially a brute force attack on strings,
  *   and since every transformation requires dynamic memory allocations,
  *   you can easily imagine where most of the runtime conflated.  Yes
@@ -98,7 +98,7 @@
  *   shock to me.  A forward allocator (or as some call it a bump-point
  *   allocator, or just a memory pool) was implemented. To combat this.
  *
- *      But of course even other factors were making it slow.  Initially
+ *   But of course even other factors were making it slow.  Initially
  *   this used a hashtable.  And hashtables have a good constant lookup
  *   time complexity.  But the problem wasn't in the hashtable, it was
  *   in the hashing (despite having one of the fastest hash functions
@@ -110,19 +110,18 @@
  *
  * Future Work (If we really need it)
  *
- *      Currently we can only distinguishes one source of error in the
+ *   Currently we can only distinguishes one source of error in the
  *   language model we use.  This could become an issue for identifiers
  *   that have close colliding rates, e.g colate->coat yields collate.
  *
- *      Currently the error model has been fairly trivial, the smaller the
+ *   Currently the error model has been fairly trivial, the smaller the
  *   edit distance the smaller the error.  This usually causes some un-
  *   expected problems. e.g reciet->recite yields recipt.  For QuakeC
  *   this could become a problem when lots of identifiers are involved. 
  *
- *      Our control mechanisim could use a limit, i.e limit the number of
+ *   Our control mechanisim could use a limit, i.e limit the number of
  *   sets of edits for distance X.  This would also increase execution
  *   speed considerably.
- *
  */
 
 
