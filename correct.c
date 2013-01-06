@@ -229,16 +229,6 @@ void correct_del(correct_trie_t* dictonary, size_t **data) {
     vec_free(data);
     correct_trie_del(dictonary);
 }
-#if 1
-#undef mem_a
-#undef mem_r
-#undef mem_d
-#define mem_a(x)   correct_alloc((x))
-#define mem_r(a,b) correct_realloc((a),(b))
-/* doing this in order to avoid 'unused variable' warnings */
-#define mem_d(x)   ((void)(0 && (x)))
-#endif
-
 
 /*
  * _ is valid in identifiers. I've yet to implement numerics however
