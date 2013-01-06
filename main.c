@@ -163,6 +163,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, FALSE_EMPTY_STRINGS,           false);
                     opts_set(opts.flags, TRUE_EMPTY_STRINGS,            true);
                     opts_set(opts.flags, LOOP_LABELS,                   true);
+                    opts_set(opts.flags, TRANSLATABLE_STRINGS,          true);
                     opts_set(opts.flags, INITIALIZED_NONCONSTANTS,      true);
                     opts_set(opts.werror, WARN_INVALID_PARAMETER_COUNT, true);
                     opts_set(opts.werror, WARN_MISSING_RETURN_VALUES,   true);
@@ -180,8 +181,8 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, TRANSLATABLE_STRINGS,     true);
                     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,     false);
                     opts_set(opts.flags, ASSIGN_FUNCTION_TYPES,    true);
-                    opts_set(opts.warn, WARN_TERNARY_PRECEDENCE,   true);
                     opts_set(opts.flags, CORRECT_TERNARY,          false);
+                    opts_set(opts.warn, WARN_TERNARY_PRECEDENCE,   true);
                     opts.standard = COMPILER_FTEQCC;
 
                 } else if (!strcmp(argarg, "qccx")) {
