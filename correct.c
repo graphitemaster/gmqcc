@@ -22,58 +22,52 @@
  */
 #include "gmqcc.h"
 
-unsigned char **pools;
-unsigned char  *poolptr;
-size_t          poolat;
-#define C_POOLSIZE (128*1024*1024)
+/*
+ * A forward allcator for the corrector.  This corrector requires a lot
+ * of allocations.  This forward allocator combats all those allocations
+ * and speeds us up a little.  It also saves us space in a way since each
+ * allocation isn't wasting a little header space for when NOTRACK isn't
+ * defined.
+ */    
+#define CORRECT_POOLSIZE (128*1024*1024)
 
-static GMQCC_INLINE void newpool() {
-    poolat = 0;
-    poolptr = mem_a(C_POOLSIZE);
-    vec_push(pools, poolptr);
+static unsigned char **correct_pool_data = NULL;
+static unsigned char  *correct_pool_this = NULL;
+static size_t          correct_pool_addr = 0;
+
+static GMQCC_INLINE void correct_pool_new(void) {
+    correct_pool_addr = 0;
+    correct_pool_this = (unsigned char *)mem_a(CORRECT_POOLSIZE);
+
+    vec_push(correct_pool_data, correct_pool_this);
 }
 
-void correct_init(void) {
-    newpool();
+static GMQCC_INLINE void *correct_pool_alloc(size_t bytes) {
+    void *data;
+    if (correct_pool_addr + bytes >= CORRECT_POOLSIZE)
+        correct_pool_new();
+
+    data               = correct_pool_this;
+    correct_pool_this += bytes;
+    correct_pool_addr += bytes;
+
+    return data;
 }
 
-static GMQCC_INLINE void *correct_alloc(size_t _b) {
-    size_t *ptr;
-    size_t b = _b + sizeof(size_t);
-    if (poolat + b >= C_POOLSIZE)
-        newpool();
-    poolat += b;
-    ptr = (size_t*)poolptr;
-    poolptr += b;
-    *ptr = _b;
-    return (void*)(ptr+1);
-}
-
-static GMQCC_INLINE void *correct_realloc(void *_ptr, size_t _b) {
-    size_t *ptr   = ((size_t*)_ptr) - 1;
-    size_t oldlen = *ptr;
-    size_t len    = (oldlen < _b ? oldlen : _b);
-    size_t b      = _b + sizeof(size_t);
-    size_t *newptr;
-
-    newptr    = (size_t*)correct_alloc(b);
-    *newptr++ = _b;
-    memcpy(newptr, _ptr, len);
-    return (void*)(newptr);
-}
-
-void correct_delete(void) {
+static GMQCC_INLINE void correct_pool_delete(void) {
     size_t i;
-    for (i = 0; i < vec_size(pools); ++i)
-        mem_d(pools[i]);
-    pools   = NULL;
-    poolptr = NULL;
-    poolat  = 0;
+    for (i = 0; i < vec_size(correct_pool_data); ++i)
+        mem_d(correct_pool_data[i]);
+
+    correct_pool_data = NULL;
+    correct_pool_this = NULL;
+    correct_pool_addr = 0;
 }
+
 
 static GMQCC_INLINE char *correct_outstr(const char *s) {
     char *o = util_strdup(s);
-    correct_delete();
+    correct_pool_delete();
     return o;
 }
 
@@ -265,7 +259,7 @@ static size_t correct_deletion(const char *ident, char **array, size_t index) {
     size_t len = strlen(ident);
 
     for (itr = 0; itr < len; itr++) {
-        char *a = (char*)mem_a(len+1);
+        char *a = (char*)correct_pool_alloc(len+1);
         memcpy(a, ident, itr);
         memcpy(a + itr, ident + itr + 1, len - itr);
         array[index + itr] = a;
@@ -280,7 +274,7 @@ static size_t correct_transposition(const char *ident, char **array, size_t inde
 
     for (itr = 0; itr < len - 1; itr++) {
         char  tmp;
-        char *a = (char*)mem_a(len+1);
+        char *a = (char*)correct_pool_alloc(len+1);
         memcpy(a, ident, len+1);
         tmp      = a[itr];
         a[itr  ] = a[itr+1];
@@ -299,7 +293,7 @@ static size_t correct_alteration(const char *ident, char **array, size_t index) 
 
     for (itr = 0, ktr = 0; itr < len; itr++) {
         for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
-            char *a = (char*)mem_a(len+1);
+            char *a = (char*)correct_pool_alloc(len+1);
             memcpy(a, ident, len+1);
             a[itr] = correct_alpha[jtr];
             array[index + ktr] = a;
@@ -317,7 +311,7 @@ static size_t correct_insertion(const char *ident, char **array, size_t index) {
 
     for (itr = 0, ktr = 0; itr <= len; itr++) {
         for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
-            char *a = (char*)mem_a(len+2);
+            char *a = (char*)correct_pool_alloc(len+2);
             memcpy(a, ident, itr);
             memcpy(a + itr + 1, ident + itr, len - itr + 1);
             a[itr] = correct_alpha[jtr];
@@ -342,7 +336,7 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
 
 static char **correct_edit(const char *ident) {
     size_t next;
-    char **find = (char**)mem_a(correct_size(ident) * sizeof(char*));
+    char **find = (char**)correct_pool_alloc(correct_size(ident) * sizeof(char*));
 
     if (!find)
         return NULL;
@@ -369,13 +363,26 @@ static int correct_exist(char **array, size_t rows, char *ident) {
     return 0;
 }
 
+static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, size_t size) {
+    size_t oldallocated = *allocated;
+    char **out;
+    if (size+1 < *allocated)
+        return res;
+
+    *allocated += 32;
+    out = correct_pool_alloc(sizeof(*res) * *allocated);
+    memcpy(out, res, sizeof(*res) * oldallocated);
+    return out;
+}
+
 static char **correct_known(correct_trie_t* table, char **array, size_t rows, size_t *next) {
     size_t itr;
     size_t jtr;
     size_t len;
     size_t row;
-    char **res = NULL;
-    char **end;
+    size_t nxt = 8;
+    char **res = correct_pool_alloc(sizeof(char *) * nxt);
+    char **end = NULL;
 
     for (itr = 0, len = 0; itr < rows; itr++) {
         end = correct_edit(array[itr]);
@@ -383,14 +390,12 @@ static char **correct_known(correct_trie_t* table, char **array, size_t rows, si
 
         for (jtr = 0; jtr < row; jtr++) {
             if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
-                res        = mem_r(res, sizeof(char*) * (len + 1));
+                res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
             } else {
                 mem_d(end[jtr]);
             }
         }
-
-        mem_d(end);
     }
 
     *next = len;
@@ -413,14 +418,6 @@ static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
     return str;
 }
 
-static void correct_cleanup(char **array, size_t rows) {
-    size_t itr;
-    for (itr = 0; itr < rows; itr++)
-        mem_d(array[itr]);
-
-    mem_d(array);
-}
-
 /*
  * This is the exposed interface:
  * takes a table for the dictonary a vector of sizes (used for internal
@@ -440,7 +437,7 @@ char *correct_str(correct_trie_t* table, const char *ident) {
     size_t e1rows = 0;
     size_t e2rows = 0;
 
-    correct_init();
+    correct_pool_new();
 
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
@@ -450,21 +447,15 @@ char *correct_str(correct_trie_t* table, const char *ident) {
         e1      = correct_edit(ident);
 
         if ((e1ident = correct_maximum(table, e1, e1rows))) {
-            mem_d(found);
             found = util_strdup(e1ident);
-            correct_cleanup(e1, e1rows);
             return correct_outstr(found);
         }
     }
 
     e2 = correct_known(table, e1, e1rows, &e2rows);
     if (e2rows && ((e2ident = correct_maximum(table, e2, e2rows)))) {
-        mem_d(found);
         found = util_strdup(e2ident);
     }
-    
-    correct_cleanup(e1, e1rows);
-    correct_cleanup(e2, e2rows);
 
     return correct_outstr(found);
 }
