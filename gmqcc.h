@@ -316,9 +316,8 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_remove(A,I,N) memmove((A)+(I),(A)+((I)+(N)),sizeof(*(A))*(vec_meta(A)->used-(I)-(N))),vec_meta(A)->used-=(N)
 
 typedef struct trie_s {
-    struct trie_s *entries;
-    unsigned char  ch;
     void          *value;
+    struct trie_s *entries;
 } correct_trie_t;
 
 correct_trie_t* correct_trie_new();

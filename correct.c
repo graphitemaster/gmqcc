@@ -173,6 +173,26 @@ static GMQCC_INLINE char *correct_pool_claim(const char *data) {
 }
 
 /*
+ * _ is valid in identifiers. I've yet to implement numerics however
+ * because they're only valid after the first character is of a _, or
+ * alpha character.
+ */
+static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyz"
+                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                    "_"; /* TODO: Numbers ... */
+
+static const size_t correct_alpha_index[0x80] = {
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,  0,  0,  0,  0, 52,
+     0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  0,  0,  0,  0,  0
+};
+
+/*
  * A fast space efficent trie for a dictionary of identifiers.  This is
  * faster than a hashtable for one reason.  A hashtable itself may have
  * fast constant lookup time, but the hash itself must be very fast. We
@@ -189,16 +209,21 @@ correct_trie_t* correct_trie_new() {
 
 void correct_trie_del_sub(correct_trie_t *t) {
     size_t i;
-    for (i = 0; i < vec_size(t->entries); ++i)
+    if (!t->entries)
+        return;
+    for (i = 0; i < sizeof(correct_alpha)-1; ++i) {
         correct_trie_del_sub(&t->entries[i]);
-    vec_free(t->entries);
+    }
+    mem_d(t->entries);
 }
 
 void correct_trie_del(correct_trie_t *t) {
     size_t i;
-    for (i = 0; i < vec_size(t->entries); ++i)
-        correct_trie_del_sub(&t->entries[i]);
-    vec_free(t->entries);
+    if (t->entries) {
+        for (i = 0; i < sizeof(correct_alpha)-1; ++i)
+            correct_trie_del_sub(&t->entries[i]);
+        mem_d(t->entries);
+    }
     mem_d(t);
 }
 
@@ -206,20 +231,10 @@ void* correct_trie_get(const correct_trie_t *t, const char *key) {
     const unsigned char *data = (const unsigned char*)key;
 
     while (*data) {
-        const correct_trie_t *entries = t->entries;
-        unsigned char         ch      = *data;
-        const size_t          vs      = vec_size(entries);
-        size_t                i;
-
-        for (i = 0; i < vs; ++i) {
-            if (entries[i].ch == ch) {
-                t = &entries[i];
-                ++data;
-                break;
-            }
-        }
-        if (i == vs)
+        if (!t->entries)
             return NULL;
+        t = t->entries + correct_alpha_index[*data];
+        ++data;
     }
     return t->value;
 }
@@ -227,25 +242,11 @@ void* correct_trie_get(const correct_trie_t *t, const char *key) {
 void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
-        correct_trie_t *entries = t->entries;
-        const size_t    vs      = vec_size(entries);
-        unsigned char   ch      = *data;
-        size_t          i;
-
-        for (i = 0; i < vs; ++i) {
-            if (entries[i].ch == ch) {
-                t = &entries[i];
-                break;
-            }
+        if (!t->entries) {
+            t->entries = (correct_trie_t*)mem_a(sizeof(correct_trie_t)*(sizeof(correct_alpha)-1));
+            memset(t->entries, 0, sizeof(correct_trie_t)*(sizeof(correct_alpha)-1));
         }
-        if (i == vs) {
-            correct_trie_t *elem  = (correct_trie_t*)vec_add(t->entries, 1);
-
-            elem->ch      = ch;
-            elem->value   = NULL;
-            elem->entries = NULL;
-            t             = elem;
-        }
+        t = t->entries + correct_alpha_index[*data];
         ++data;
     }
     t->value = value;
@@ -292,15 +293,6 @@ void correct_del(correct_trie_t* dictonary, size_t **data) {
     vec_free(data);
     correct_trie_del(dictonary);
 }
-
-/*
- * _ is valid in identifiers. I've yet to implement numerics however
- * because they're only valid after the first character is of a _, or
- * alpha character.
- */
-static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyz"
-                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                    "_"; /* TODO: Numbers ... */
 
 /*
  * correcting logic for the following forms of transformations:
@@ -370,20 +362,19 @@ static size_t correct_alteration(const char *ident, char **array) {
 static size_t correct_insertion(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
-    size_t       ktr = 0;
     const size_t len = strlen(ident);
 
     for (; itr <= len; itr++) {
-        for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
+        for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++) {
             char *a = (char*)correct_pool_alloc(len+2);
             memcpy(a, ident, itr);
             memcpy(a + itr + 1, ident + itr, len - itr + 1);
             a[itr] = correct_alpha[jtr];
-            array[ktr] = a;
+            array[itr * (sizeof(correct_alpha)-1) + jtr] = a;
         }
     }
 
-    return ktr;
+    return (len+1)*(sizeof(correct_alpha)-1);
 }
 
 static GMQCC_INLINE size_t correct_size(const char *ident) {
