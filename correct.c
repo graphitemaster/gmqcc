@@ -297,10 +297,10 @@ static const char correct_alpha[] = "abcdefghijklmnopqrstuvwxyz"
  *  4) insertion
  */
 static size_t correct_deletion(const char *ident, char **array, size_t index) {
-    size_t itr;
-    size_t len = strlen(ident);
+    size_t       itr = 0;
+    const size_t len = strlen(ident);
 
-    for (itr = 0; itr < len; itr++) {
+    for (; itr < len; itr++) {
         char *a = (char*)correct_pool_alloc(len+1);
         memcpy(a, ident, itr);
         memcpy(a + itr, ident + itr + 1, len - itr);
@@ -311,10 +311,10 @@ static size_t correct_deletion(const char *ident, char **array, size_t index) {
 }
 
 static size_t correct_transposition(const char *ident, char **array, size_t index) {
-    size_t itr;
-    size_t len = strlen(ident);
+    size_t       itr = 0;
+    const size_t len = strlen(ident);
 
-    for (itr = 0; itr < len - 1; itr++) {
+    for (; itr < len - 1; itr++) {
         char  tmp;
         char *a = (char*)correct_pool_alloc(len+1);
         memcpy(a, ident, len+1);
@@ -328,12 +328,12 @@ static size_t correct_transposition(const char *ident, char **array, size_t inde
 }
 
 static size_t correct_alteration(const char *ident, char **array, size_t index) {
-    size_t itr;
-    size_t jtr;
-    size_t ktr;
-    size_t len    = strlen(ident);
+    size_t       itr = 0;
+    size_t       jtr = 0;
+    size_t       ktr = 0;
+    const size_t len = strlen(ident);
 
-    for (itr = 0, ktr = 0; itr < len; itr++) {
+    for (; itr < len; itr++) {
         for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
             char *a = (char*)correct_pool_alloc(len+1);
             memcpy(a, ident, len+1);
@@ -346,12 +346,12 @@ static size_t correct_alteration(const char *ident, char **array, size_t index) 
 }
 
 static size_t correct_insertion(const char *ident, char **array, size_t index) {
-    size_t itr;
-    size_t jtr;
-    size_t ktr;
-    const size_t len    = strlen(ident);
+    size_t       itr = 0;
+    size_t       jtr = 0;
+    size_t       ktr = 0;
+    const size_t len = strlen(ident);
 
-    for (itr = 0, ktr = 0; itr <= len; itr++) {
+    for (; itr <= len; itr++) {
         for (jtr = 0; jtr < sizeof(correct_alpha)-1; jtr++, ktr++) {
             char *a = (char*)correct_pool_alloc(len+2);
             memcpy(a, ident, itr);
