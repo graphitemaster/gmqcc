@@ -770,8 +770,6 @@ int util_vasprintf(char **dat, const char *fmt, va_list args) {
         *dat = tmp;
         return len;
     #endif
-    /* never reached ... */
-    return -1;
 }
 int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
