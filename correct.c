@@ -437,7 +437,7 @@ static int correct_exist(char **array, size_t rows, char *ident) {
      * jge correct_cmp_loop
      * ...
      *
-     * Despite how much optimization went in to this, the speed was the
+     * Despite how much optimization went in to this, the speed was
      * being conflicted by the strlen(ident) used for &LHS[END_POS]
      * If we could eliminate the strlen with what I suggested on line
      * 311 ... we can accelerate this whole damn thing quite a bit.
