@@ -457,12 +457,13 @@ static int correct_exist(char **array, size_t rows, char *ident) {
 static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, size_t size) {
     size_t oldallocated = *allocated;
     char **out;
-    if (size+1 < *allocated)
+    if (size+1 < oldallocated)
         return res;
 
-    *allocated += 32;
-    out = correct_pool_alloc(sizeof(*res) * *allocated);
+    out = correct_pool_alloc(sizeof(*res) * oldallocated + 32);
     memcpy(out, res, sizeof(*res) * oldallocated);
+
+    *allocated += 32;
     return out;
 }
 
