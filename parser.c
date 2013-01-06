@@ -2165,6 +2165,8 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         ast_delete(cond);
         return false;
     }
+    if (!ontrue)
+        ontrue = (ast_expression*)ast_block_new(parser_ctx(parser));
     /* check for an else */
     if (!strcmp(parser_tokval(parser), "else")) {
         /* parse into the 'else' branch */
