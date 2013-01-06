@@ -429,7 +429,7 @@ static int correct_exist(char **array, size_t rows, char *ident) {
      * cmpl %eax, %ebx      ; ebx = &LHS[END_POS]
      *
      * jbe correct_cmp_eq
-     * movb (%edx), %cl     ; micro-optimized on even atoms :-)
+     * movb (%edx), %cl     ; micro-optimized even on atoms :-)
      * cmpb %cl, (%eax)     ; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      * jg  correct_cmp_gt
      * jge correct_cmp_loop
@@ -512,10 +512,7 @@ static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
 /*
  * This is the exposed interface:
  * takes a table for the dictonary a vector of sizes (used for internal
- * probability calculation, and an identifier to "correct"
- *
- * the add function works the same.  Except the identifier is used to
- * add to the dictonary.  
+ * probability calculation), and an identifier to "correct".
  */
 char *correct_str(correct_trie_t* table, const char *ident) {
     char **e1      = NULL;
