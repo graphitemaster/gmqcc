@@ -1652,6 +1652,10 @@ bool ftepp_init()
         ftepp_add_define(NULL, "__STD_GMQCC__");
         sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
         sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
+    } else if (opts.standard == COMPILER_QCCX) {
+        ftepp_add_define(NULL, "__STD_QCCX__");
+        sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
+        sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (opts.standard == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
         /* 1.0 */
