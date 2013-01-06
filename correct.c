@@ -23,14 +23,83 @@
 #include "gmqcc.h"
 
 /*
+ * This is a very clever method for correcting mistakes in QuakeC code
+ * most notably when invalid identifiers are used or inproper assignments;
+ * we can proprly lookup in multiple dictonaries (depening on the rules
+ * of what the task is trying to acomplish) to find the best possible
+ * match.
+ *
+ *
+ * A little about how it works, and probability theory:
+ *
+ *  When given an identifier (which we will denote I), we're essentially
+ *  just trying to choose the most likely correction for that identifier.
+ *  (the actual "correction" can very well be the identifier itself).
+ *  There is actually no way to know for sure that certian identifers
+ *  such as "lates", need to be corrected to "late" or "latest" or any
+ *  other permutations that look lexically the same.  This is why we
+ *  must advocate the usage of probabilities.  This means that instead of
+ *  just guessing, instead we're trying to find the correction for C,
+ *  out of all possible corrections that maximizes the probability of C
+ *  for the original identifer I.
+ *
+ *  Bayes' Therom suggests something of the following:
+ *      AC P(I|C) P(C) / P(I)
+ *  Since P(I) is the same for every possibly I, we can ignore it giving
+ *      AC P(I|C) P(C)
+ *
+ *  This greatly helps visualize how the parts of the expression are performed
+ *  there is essentially three, from right to left we perform the following:
+ *
+ *  1: P(C), the probability that a proposed correction C will stand on its
+ *     own.  This is called the language model.
+ *
+ *  2: P(I|C), the probability that I would be used, when the programmer
+ *     really meant C.  This is the error model.
+ *
+ *  3: AC, the control mechanisim, an enumerator if you will, one that
+ *     enumerates all feasible values of C, to determine the one that
+ *     gives the greatest probability score.
+ * 
+ *      In reality the requirement for a more complex expression involving
+ *  two seperate models is considerably a waste.  But one must recognize
+ *  that P(C|I) is already conflating two factors.  It's just much simpler
+ *  to seperate the two models and deal with them explicitaly.  To properly
+ *  estimate P(C|I) you have to consider both the probability of C and
+ *  probability of the transposition from C to I.  It's simply much more
+ *  cleaner, and direct to seperate the two factors.
+ *
+ * A little information on additional algorithms used:
+ * 
+ *   Initially when I implemented this corrector, it was very slow.
+ *   Need I remind you this is essentially a brute force attack on strings,
+ *   and since every transformation requires dynamic memory allocations,
+ *   you can easily imagine where most of the runtime conflated.  Yes
+ *   It went right to malloc.  More than THREE MILLION malloc calls are
+ *   performed for an identifier about 16 bytes long.  This was such a
+ *   shock to me.  A forward allocator (or as some call it a bump-point
+ *   allocator, or just a memory pool) was implemented. To combat this.
+ *
+ *   But of course even other factors were making it slow.  Initially
+ *   this used a hashtable.  And hashtables have a good constant lookup
+ *   time complexity.  But the problem wasn't in the hashtable, it was
+ *   in the hashing (despite having one of the fastest hash functions
+ *   known).  Remember those 3 million mallocs? Well for every malloc
+ *   there is also a hash.  After 3 million hashes .. you start to get
+ *   very slow.  To combat this I had suggested burst tries to Blub.
+ *   The next day he had implemented them. Sure enough this brought
+ *   down the runtime by a factory > 100%
+ */
+
+
+#define CORRECT_POOLSIZE (128*1024*1024)
+/*
  * A forward allcator for the corrector.  This corrector requires a lot
  * of allocations.  This forward allocator combats all those allocations
  * and speeds us up a little.  It also saves us space in a way since each
  * allocation isn't wasting a little header space for when NOTRACK isn't
  * defined.
  */    
-#define CORRECT_POOLSIZE (128*1024*1024)
-
 static unsigned char **correct_pool_data = NULL;
 static unsigned char  *correct_pool_this = NULL;
 static size_t          correct_pool_addr = 0;
@@ -65,30 +134,35 @@ static GMQCC_INLINE void correct_pool_delete(void) {
 }
 
 
-static GMQCC_INLINE char *correct_outstr(const char *s) {
-    char *o = util_strdup(s);
+static GMQCC_INLINE char *correct_pool_claim(const char *data) {
+    char *claim = util_strdup(data);
     correct_pool_delete();
-    return o;
+    return claim;
 }
 
-correct_trie_t* correct_trie_new()
-{
+/*
+ * A fast space efficent trie for a disctonary of identifiers.  This is
+ * faster than a hashtable for one reason.  A hashtable itself may have
+ * fast constant lookup time, but the hash itself must be very fast. We
+ * have one of the fastest hash functions for strings, but if you do a
+ * lost of hashing (which we do, almost 3 million hashes per identifier)
+ * a hashtable becomes slow. Very Very Slow.
+ */   
+correct_trie_t* correct_trie_new() {
     correct_trie_t *t = (correct_trie_t*)mem_a(sizeof(correct_trie_t));
     t->value   = NULL;
     t->entries = NULL;
     return t;
 }
 
-void correct_trie_del_sub(correct_trie_t *t)
-{
+void correct_trie_del_sub(correct_trie_t *t) {
     size_t i;
     for (i = 0; i < vec_size(t->entries); ++i)
         correct_trie_del_sub(&t->entries[i]);
     vec_free(t->entries);
 }
 
-void correct_trie_del(correct_trie_t *t)
-{
+void correct_trie_del(correct_trie_t *t) {
     size_t i;
     for (i = 0; i < vec_size(t->entries); ++i)
         correct_trie_del_sub(&t->entries[i]);
@@ -96,8 +170,7 @@ void correct_trie_del(correct_trie_t *t)
     mem_d(t);
 }
 
-void* correct_trie_get(const correct_trie_t *t, const char *key)
-{
+void* correct_trie_get(const correct_trie_t *t, const char *key) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
         unsigned char ch = *data;
@@ -117,8 +190,7 @@ void* correct_trie_get(const correct_trie_t *t, const char *key)
     return t->value;
 }
 
-void correct_trie_set(correct_trie_t *t, const char *key, void * const value)
-{
+void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
         unsigned char ch = *data;
@@ -143,57 +215,11 @@ void correct_trie_set(correct_trie_t *t, const char *key, void * const value)
     t->value = value;
 }
 
-/*
- * This is a very clever method for correcting mistakes in QuakeC code
- * most notably when invalid identifiers are used or inproper assignments;
- * we can proprly lookup in multiple dictonaries (depening on the rules
- * of what the task is trying to acomplish) to find the best possible
- * match.
- *
- *
- * A little about how it works, and probability theory:
- *
- *  When given an identifier (which we will denote I), we're essentially
- *  just trying to choose the most likely correction for that identifier.
- *  (the actual "correction" can very well be the identifier itself).
- *  There is actually no way to know for sure that certian identifers
- *  such as "lates", need to be corrected to "late" or "latest" or any
- *  other permutations that look lexically the same.  This is why we
- *  must advocate the usage of probabilities.  This implies that we're
- *  trying to find the correction for C, out of all possible corrections
- *  that maximizes the probability of C for the original identifer I.
- *
- *  Bayes' Therom suggests something of the following:
- *      AC P(I|C) P(C) / P(I)
- *  Since P(I) is the same for every possibly I, we can ignore it giving
- *      AC P(I|C) P(C)
- *
- *  This greatly helps visualize how the parts of the expression are performed
- *  there is essentially three, from right to left we perform the following:
- *
- *  1: P(C), the probability that a proposed correction C will stand on its
- *     own.  This is called the language model.
- *
- *  2: P(I|C), the probability that I would be used, when the programmer
- *     really meant C.  This is the error model.
- *
- *  3: AC, the control mechanisim, which implies the enumeration of all
- *     feasible values of C, and then determine the one that gives the
- *     greatest probability score. Selecting it as the "correction"
- *   
- *
- * The requirement for complex expression involving two models:
- * 
- *  In reality the requirement for a more complex expression involving
- *  two seperate models is considerably a waste.  But one must recognize
- *  that P(C|I) is already conflating two factors.  It's just much simpler
- *  to seperate the two models and deal with them explicitaly.  To properly
- *  estimate P(C|I) you have to consider both the probability of C and
- *  probability of the transposition from C to I.  It's simply much more
- *  cleaner, and direct to seperate the two factors.
- */
 
-/* some hashtable management for dictonaries */
+/*
+ * Implementation of the corrector algorithm commences. A very efficent
+ * brute-force attack (thanks to tries and mempool :-)).
+ */  
 static size_t *correct_find(correct_trie_t *table, const char *word) {
     return (size_t*)correct_trie_get(table, word);
 }
@@ -420,7 +446,6 @@ char *correct_str(correct_trie_t* table, const char *ident) {
     char **e2;
     char  *e1ident;
     char  *e2ident;
-    char  *found = util_strdup(ident);
 
     size_t e1rows = 0;
     size_t e2rows = 0;
@@ -429,21 +454,20 @@ char *correct_str(correct_trie_t* table, const char *ident) {
 
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
-        return correct_outstr(found);
+        return correct_pool_claim(ident);
 
     if ((e1rows = correct_size(ident))) {
         e1      = correct_edit(ident);
 
-        if ((e1ident = correct_maximum(table, e1, e1rows))) {
-            found = util_strdup(e1ident);
-            return correct_outstr(found);
-        }
+        if ((e1ident = correct_maximum(table, e1, e1rows)))
+            return correct_pool_claim(e1ident);
     }
 
     e2 = correct_known(table, e1, e1rows, &e2rows);
-    if (e2rows && ((e2ident = correct_maximum(table, e2, e2rows)))) {
-        found = util_strdup(e2ident);
-    }
+    if (e2rows && ((e2ident = correct_maximum(table, e2, e2rows))))
+        return correct_pool_claim(e2ident);
 
-    return correct_outstr(found);
+
+    correct_pool_delete();
+    return util_strdup(ident);
 }
