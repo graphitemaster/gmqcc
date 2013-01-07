@@ -2263,7 +2263,7 @@ bool ir_function_allocate_locals(ir_function *self)
             break;
         else
             v->locked = true; /* lock parameters locals */
-        if (!function_allocator_alloc((v->locked || !opt_gt ? &lockalloc : &globalloc), self->locals[i]))
+        if (!function_allocator_alloc((v->locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
     for (; i < vec_size(self->locals); ++i)
@@ -2457,9 +2457,10 @@ static bool ir_block_living_lock(ir_block *self)
     bool changed = false;
     for (i = 0; i != vec_size(self->living); ++i)
     {
-        if (!self->living[i]->locked)
+        if (!self->living[i]->locked) {
+            self->living[i]->locked = true;
             changed = true;
-        self->living[i]->locked = true;
+        }
     }
     return changed;
 }
@@ -3802,7 +3803,9 @@ void ir_function_dump(ir_function *f, char *ind,
             attr = "unique ";
         else if (v->locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s %s@%i ", ind, v->name, type_name[v->vtype], attr, (int)v->code.local);
+        oprintf("%s\t%s: %s %s%s@%i ", ind, v->name, type_name[v->vtype],
+                attr, (v->callparam ? "callparam " : ""),
+                (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
@@ -3834,7 +3837,9 @@ void ir_function_dump(ir_function *f, char *ind,
             attr = "unique ";
         else if (v->locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s %s@%i ", ind, v->name, type_name[v->vtype], attr, (int)v->code.local);
+        oprintf("%s\t%s: %s %s%s@%i ", ind, v->name, type_name[v->vtype],
+                attr, (v->callparam ? "callparam " : ""),
+                (int)v->code.local);
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
