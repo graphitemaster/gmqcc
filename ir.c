@@ -2884,7 +2884,7 @@ tailcall:
             if (onfalse->generated) {
                 /* fixup the jump address */
                 code_statements[stidx].o2.s1 = (onfalse->code_start) - (stidx);
-                if (code_statements[stidx].o2.s1 == 1) {
+                if (stidx+2 == vec_size(code_statements) && code_statements[stidx].o2.s1 == 1) {
                     code_statements[stidx] = code_statements[stidx+1];
                     if (code_statements[stidx].o1.s1 < 0)
                         code_statements[stidx].o1.s1++;
@@ -2909,7 +2909,7 @@ tailcall:
                     code_push_statement(&stmt, instr->context.line);
                 return true;
             }
-            else if (code_statements[stidx].o2.s1 == 1) {
+            else if (stidx+2 == vec_size(code_statements) && code_statements[stidx].o2.s1 == 1) {
                 code_statements[stidx] = code_statements[stidx+1];
                 if (code_statements[stidx].o1.s1 < 0)
                     code_statements[stidx].o1.s1++;
