@@ -276,6 +276,15 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
     }
     #include "opts.def"
 
+    /* Werror-individuals */
+    #define GMQCC_TYPE_WARNS
+    #define GMQCC_DEFINE_FLAG(X)                                       \
+    if (!strcmp(section, "errors") && !strcmp(name, #X)) {             \
+        opts_set(opts.werror, WARN_##X, opts_ini_bool(value));         \
+        found = true;                                                  \
+    }
+    #include "opts.def"
+
     /* optimizations */
     #define GMQCC_TYPE_OPTIMIZATIONS
     #define GMQCC_DEFINE_FLAG(X,Y)                                     \
