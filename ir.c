@@ -1913,26 +1913,6 @@ bool ir_function_naive_phi(ir_function *self)
     return true;
 }
 
-#if 0
-static bool ir_naive_phi_emit_store(ir_block *block, size_t iid, ir_value *old, ir_value *what)
-{
-    ir_instr *instr;
-    size_t i;
-
-    /* create a store */
-    if (!ir_block_create_store(block, old, what))
-        return false;
-
-    /* we now move it up */
-    instr = vec_last(block->instr);
-    for (i = vec_size(block->instr)-1; i > iid; --i)
-        block->instr[i] = block->instr[i-1];
-    block->instr[i] = instr;
-
-    return true;
-}
-#endif
-
 static bool ir_block_naive_phi(ir_block *self)
 {
     size_t i, p; /*, w;*/
@@ -1975,58 +1955,6 @@ static bool ir_block_naive_phi(ir_block *self)
                 vec_push(b->instr, prevjump);
                 b->final = true;
             }
-
-#if 0
-            ir_value *v = instr->phi[p].value;
-            for (w = 0; w < vec_size(v->writes); ++w) {
-                ir_value *old;
-
-                if (!v->writes[w]->_ops[0])
-                    continue;
-
-                /* When the write was to a global, we have to emit a mov */
-                old = v->writes[w]->_ops[0];
-
-                /* The original instruction now writes to the PHI target local */
-                if (v->writes[w]->_ops[0] == v)
-                    v->writes[w]->_ops[0] = instr->_ops[0];
-
-                if (old->store != store_value && old->store != store_local && old->store != store_param)
-                {
-                    /* If it originally wrote to a global we need to store the value
-                     * there as welli
-                     */
-                    if (!ir_naive_phi_emit_store(self, i+1, old, v))
-                        return false;
-                    if (i+1 < vec_size(self->instr))
-                        instr = self->instr[i+1];
-                    else
-                        instr = NULL;
-                    /* In case I forget and access instr later, it'll be NULL
-                     * when it's a problem, to make sure we crash, rather than accessing
-                     * invalid data.
-                     */
-                }
-                else
-                {
-                    /* If it didn't, we can replace all reads by the phi target now. */
-                    size_t r;
-                    for (r = 0; r < vec_size(old->reads); ++r)
-                    {
-                        size_t op;
-                        ir_instr *ri = old->reads[r];
-                        for (op = 0; op < vec_size(ri->phi); ++op) {
-                            if (ri->phi[op].value == old)
-                                ri->phi[op].value = v;
-                        }
-                        for (op = 0; op < 3; ++op) {
-                            if (ri->_ops[op] == old)
-                                ri->_ops[op] = v;
-                        }
-                    }
-                }
-            }
-#endif
         }
         ir_instr_delete(instr);
     }
@@ -2192,6 +2120,9 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
     size_t a;
     ir_value *slot;
 
+    if (v->unique_life)
+        return function_allocator_alloc(alloc, v);
+
     for (a = 0; a < vec_size(alloc->locals); ++a)
     {
         /* if it's reserved for a unique liferange: skip */
@@ -2229,6 +2160,16 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
     return true;
 }
 
+static bool ir_value_has_point_life(const ir_value *v)
+{
+    size_t i, vs = vec_size(v->life);
+    for (i = 0; i < vs; ++i) {
+        if (v->life[i].start == v->life[i].end)
+            return true;
+    }
+    return false;
+}
+
 bool ir_function_allocate_locals(ir_function *self)
 {
     size_t i;
@@ -2255,6 +2196,8 @@ bool ir_function_allocate_locals(ir_function *self)
     for (i = 0; i < vec_size(self->locals); ++i)
     {
         v = self->locals[i];
+        if (ir_value_has_point_life(v))
+            v->unique_life = true;
         if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
             v->locked      = true;
             v->unique_life = true;
@@ -2271,6 +2214,8 @@ bool ir_function_allocate_locals(ir_function *self)
         v = self->locals[i];
         if (!vec_size(v->life))
             continue;
+        if (ir_value_has_point_life(v))
+            v->unique_life = true;
         if (!ir_function_allocator_assign(self, (v->locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
@@ -2282,6 +2227,15 @@ bool ir_function_allocate_locals(ir_function *self)
 
         if (!vec_size(v->life))
             continue;
+        if (ir_value_has_point_life(v)) {
+            /* happens on free ternarys like:
+             if (x) {
+                 cond ? a : b;
+             }
+            irerror(v->context, "internal error: point life SSA value leaked: %s", v->name);
+            */
+            v->unique_life = true;
+        }
 
         /* CALL optimization:
          * If the value is a parameter-temp: 1 write, 1 read from a CALL
