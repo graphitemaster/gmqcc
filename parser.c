@@ -2644,6 +2644,13 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
         return false;
     }
 
+    if (!vec_size(loops)) {
+        if (is_continue)
+            parseerror(parser, "`continue` can only be used inside loops");
+        else
+            parseerror(parser, "`break` can only be used inside loops or switches");
+    }
+
     if (parser->tok == TOKEN_IDENT) {
         if (!OPTS_FLAG(LOOP_LABELS))
             parseerror(parser, "labeled loops not activated, try using -floop-labels");
