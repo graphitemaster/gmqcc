@@ -76,6 +76,57 @@ else
 endif
 endif
 
+#splint flags
+SPLINTFLAGS =            \
+    -redef               \
+    -noeffect            \
+    -nullderef           \
+    -usedef              \
+    -type                \
+    -mustfreeonly        \
+    -nullstate           \
+    -varuse              \
+    -mustfreefresh       \
+    -compdestroy         \
+    -compmempass         \
+    -nullpass            \
+    -onlytrans           \
+    -predboolint         \
+    -boolops             \
+    -exportlocal         \
+    -incondefs           \
+    -macroredef          \
+    -retvalint           \
+    -nullret             \
+    -predboolothers      \
+    -globstate           \
+    -dependenttrans      \
+    -branchstate         \
+    -compdef             \
+    -temptrans           \
+    -usereleased         \
+    -warnposix           \
+    -shiftimplementation \
+    +charindex           \
+    -kepttrans           \
+    -unqualifiedtrans    \
+    +matchanyintegral    \
+    -bufferoverflowhigh  \
+    +voidabstract        \
+    -nullassign          \
+    -unrecog             \
+    -casebreak           \
+    -retvalbool          \
+    -retvalother         \
+    -mayaliasunique      \
+    -realcompare         \
+    -observertrans       \
+    -shiftnegative       \
+    -freshtrans          \
+    -abstract            \
+    -statictrans         \
+    -castfcnptr
+
 #standard rules
 default: all
 %.o: %.c
@@ -106,7 +157,7 @@ clean:
 	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
 
 splint:
-	@ ./splint.sh
+	@  splint $(SPLINTFLAGS) *.c *.h
 
 depend:
 	@makedepend    -Y -w 65536 2> /dev/null \
