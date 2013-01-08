@@ -1991,9 +1991,14 @@ static void ir_block_enumerate(ir_block *self, size_t *_eid)
 void ir_function_enumerate(ir_function *self)
 {
     size_t i;
-    size_t instruction_id = 1;
+    size_t instruction_id = 0;
     for (i = 0; i < vec_size(self->blocks); ++i)
     {
+        /* each block now gets an additional "entry" instruction id
+         * we can use to avoid point-life issues
+         */
+        ++instruction_id;
+
         self->blocks[i]->eid = i;
         self->blocks[i]->run_id = 0;
         ir_block_enumerate(self->blocks[i], &instruction_id);
@@ -2160,16 +2165,6 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
     return true;
 }
 
-static bool ir_value_has_point_life(const ir_value *v)
-{
-    size_t i, vs = vec_size(v->life);
-    for (i = 0; i < vs; ++i) {
-        if (v->life[i].start == v->life[i].end)
-            return true;
-    }
-    return false;
-}
-
 bool ir_function_allocate_locals(ir_function *self)
 {
     size_t i;
@@ -2196,8 +2191,6 @@ bool ir_function_allocate_locals(ir_function *self)
     for (i = 0; i < vec_size(self->locals); ++i)
     {
         v = self->locals[i];
-        if (ir_value_has_point_life(v))
-            v->unique_life = true;
         if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
             v->locked      = true;
             v->unique_life = true;
@@ -2214,8 +2207,6 @@ bool ir_function_allocate_locals(ir_function *self)
         v = self->locals[i];
         if (!vec_size(v->life))
             continue;
-        if (ir_value_has_point_life(v))
-            v->unique_life = true;
         if (!ir_function_allocator_assign(self, (v->locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
@@ -2227,15 +2218,6 @@ bool ir_function_allocate_locals(ir_function *self)
 
         if (!vec_size(v->life))
             continue;
-        if (ir_value_has_point_life(v)) {
-            /* happens on free ternarys like:
-             if (x) {
-                 cond ? a : b;
-             }
-            irerror(v->context, "internal error: point life SSA value leaked: %s", v->name);
-            */
-            v->unique_life = true;
-        }
 
         /* CALL optimization:
          * If the value is a parameter-temp: 1 write, 1 read from a CALL
@@ -2635,8 +2617,10 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         tempbool = ir_block_living_add_instr(self, instr->eid);
         /*con_err( "living added values\n");*/
         *changed = *changed || tempbool;
-
     }
+    /* the "entry" instruction ID */
+    tempbool = ir_block_living_add_instr(self, instr->eid-1);
+    *changed = *changed || tempbool;
 
     if (self->run_id == self->owner->run_id)
         return true;
@@ -3837,6 +3821,8 @@ void ir_block_dump(ir_block* b, char *ind,
     oprintf("%s:%s\n", ind, b->label);
     strncat(ind, "\t", IND_BUFSZ);
 
+    if (b->instr && b->instr[0])
+        oprintf("%s (%i) [entry]\n", ind, (int)(b->instr[0]->eid-1));
     for (i = 0; i < vec_size(b->instr); ++i)
         ir_instr_dump(b->instr[i], ind, oprintf);
     ind[strlen(ind)-1] = 0;
