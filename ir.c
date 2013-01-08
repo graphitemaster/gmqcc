@@ -2463,19 +2463,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         /* See which operands are read and write operands */
         ir_op_read_write(instr->opcode, &read, &write);
 
-        if (instr->opcode == INSTR_MUL_VF)
-        {
-            /* the float source will get an additional lifetime */
-            tempbool = ir_value_life_merge(instr->_ops[2], instr->eid+1);
-            *changed = *changed || tempbool;
-        }
-        else if (instr->opcode == INSTR_MUL_FV)
-        {
-            /* the float source will get an additional lifetime */
-            tempbool = ir_value_life_merge(instr->_ops[1], instr->eid+1);
-            *changed = *changed || tempbool;
-        }
-
         /* Go through the 3 main operands
          * writes first, then reads
          */
@@ -2547,6 +2534,25 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                     }
                 }
             }
+        }
+
+        if (instr->opcode == INSTR_MUL_VF)
+        {
+            value = instr->_ops[2];
+            /* the float source will get an additional lifetime */
+            if (ir_value_life_merge(value, instr->eid+1))
+                *changed = true;
+            if (value->memberof && ir_value_life_merge(value->memberof, instr->eid+1))
+                *changed = true;
+        }
+        else if (instr->opcode == INSTR_MUL_FV)
+        {
+            value = instr->_ops[1];
+            /* the float source will get an additional lifetime */
+            if (ir_value_life_merge(value, instr->eid+1))
+                *changed = true;
+            if (value->memberof && ir_value_life_merge(value->memberof, instr->eid+1))
+                *changed = true;
         }
 
         for (o = 0; o < 3; ++o)
@@ -3711,6 +3717,10 @@ void ir_builder_dump(ir_builder *b, int (*oprintf)(const char*, ...))
     oprintf("endmodule %s\n", b->name);
 }
 
+static const char *storenames[] = {
+    "[global]", "[local]", "[param]", "[value]", "[return]"
+};
+
 void ir_function_dump(ir_function *f, char *ind,
                       int (*oprintf)(const char*, ...))
 {
@@ -3741,9 +3751,12 @@ void ir_function_dump(ir_function *f, char *ind,
             attr = "unique ";
         else if (v->locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s %s%s@%i ", ind, v->name, type_name[v->vtype],
+        oprintf("%s\t%s: %s %s %s%s@%i ", ind, v->name, type_name[v->vtype],
+                storenames[v->store],
                 attr, (v->callparam ? "callparam " : ""),
                 (int)v->code.local);
+        if (!v->life)
+            oprintf("[null]");
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
@@ -3752,13 +3765,7 @@ void ir_function_dump(ir_function *f, char *ind,
             ir_value *vm = v->members[m];
             if (!vm)
                 continue;
-            if (vm->unique_life && vm->locked)
-                attr = "unique,locked ";
-            else if (vm->unique_life)
-                attr = "unique ";
-            else if (vm->locked)
-                attr = "locked ";
-            oprintf("%s\t%s: %s@%i ", ind, vm->name, attr, (int)vm->code.local);
+            oprintf("%s\t%s: @%i ", ind, vm->name, (int)vm->code.local);
             for (l = 0; l < vec_size(vm->life); ++l) {
                 oprintf("[%i,%i] ", vm->life[l].start, vm->life[l].end);
             }
@@ -3775,9 +3782,12 @@ void ir_function_dump(ir_function *f, char *ind,
             attr = "unique ";
         else if (v->locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s %s%s@%i ", ind, v->name, type_name[v->vtype],
+        oprintf("%s\t%s: %s %s %s%s@%i ", ind, v->name, type_name[v->vtype],
+                storenames[v->store],
                 attr, (v->callparam ? "callparam " : ""),
                 (int)v->code.local);
+        if (!v->life)
+            oprintf("[null]");
         for (l = 0; l < vec_size(v->life); ++l) {
             oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
         }
