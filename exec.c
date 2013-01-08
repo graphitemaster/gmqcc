@@ -733,6 +733,16 @@ static int qc_kill(qc_program *prog)
     return 0;
 }
 
+static int qc_sqrt(qc_program *prog)
+{
+    qcany *num, out;
+    CheckArgs(1);
+    num = GetArg(0);
+    out._float = sqrt(num->_float);
+    Return(out);
+    return 0;
+}
+
 static int qc_vlen(qc_program *prog)
 {
     qcany *vec, len;
@@ -742,6 +752,27 @@ static int qc_vlen(qc_program *prog)
                       vec->vector[1] * vec->vector[1] +
                       vec->vector[2] * vec->vector[2]);
     Return(len);
+    return 0;
+}
+
+static int qc_normalize(qc_program *prog)
+{
+    double len;
+    qcany *vec;
+    qcany out;
+    CheckArgs(1);
+    vec = GetArg(0);
+    len = sqrt(vec->vector[0] * vec->vector[0] +
+               vec->vector[1] * vec->vector[1] +
+               vec->vector[2] * vec->vector[2]);
+    if (len)
+        len = 1.0 / len;
+    else
+        len = 0;
+    out.vector[0] = len * vec->vector[0];
+    out.vector[1] = len * vec->vector[1];
+    out.vector[2] = len * vec->vector[2];
+    Return(out);
     return 0;
 }
 
@@ -795,17 +826,19 @@ static int qc_strcmp(qc_program *prog)
 
 static prog_builtin qc_builtins[] = {
     NULL,
-    &qc_print,  /*   1   */
-    &qc_ftos,   /*   2   */
-    &qc_spawn,  /*   3   */
-    &qc_kill,   /*   4   */
-    &qc_vtos,   /*   5   */
-    &qc_error,  /*   6   */
-    &qc_vlen,   /*   7   */
-    &qc_etos,   /*   8   */
-    &qc_stof,   /*   9   */
-    &qc_strcat, /*   10  */
-    &qc_strcmp  /*   11  */
+    &qc_print,       /*   1   */
+    &qc_ftos,        /*   2   */
+    &qc_spawn,       /*   3   */
+    &qc_kill,        /*   4   */
+    &qc_vtos,        /*   5   */
+    &qc_error,       /*   6   */
+    &qc_vlen,        /*   7   */
+    &qc_etos,        /*   8   */
+    &qc_stof,        /*   9   */
+    &qc_strcat,      /*   10  */
+    &qc_strcmp,      /*   11  */
+    &qc_normalize,   /*   12  */
+    &qc_sqrt         /*   13  */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
