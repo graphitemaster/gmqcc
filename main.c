@@ -343,8 +343,10 @@ static bool options_parse(int argc, char **argv) {
                     else if (!strcmp(argv[0]+2, "ERROR") ||
                              !strcmp(argv[0]+2, "ERROR_ALL"))
                     {
+                        opts_backup_non_Werror_all();
                         for (itr = 0; itr < sizeof(opts.werror)/sizeof(opts.werror[0]); ++itr)
                             opts.werror[itr] = 0xFFFFFFFFL;
+                        opts_restore_non_Werror_all();
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "NONE")) {
@@ -353,8 +355,10 @@ static bool options_parse(int argc, char **argv) {
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "ALL")) {
+                        opts_backup_non_Wall();
                         for (itr = 0; itr < sizeof(opts.warn)/sizeof(opts.warn[0]); ++itr)
                             opts.warn[itr] = 0xFFFFFFFFL;
+                        opts_restore_non_Wall();
                         break;
                     }
                     else if (!strncmp(argv[0]+2, "ERROR_", 6)) {

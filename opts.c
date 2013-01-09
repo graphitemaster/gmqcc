@@ -68,9 +68,33 @@ static void opts_setdefault() {
     opts_set(opts.flags, ENHANCED_DIAGNOSTICS,           true);
 }
 
+void opts_backup_non_Wall() {
+    size_t i;
+    for (i = 0; i <= WARN_DEBUG; ++i)
+        opts_set(opts.warn_backup, i, OPTS_WARN(i));
+}
+
+void opts_restore_non_Wall() {
+    size_t i;
+    for (i = 0; i <= WARN_DEBUG; ++i)
+        opts_set(opts.warn, i, OPTS_GENERIC(opts.warn_backup, i));
+}
+
+void opts_backup_non_Werror_all() {
+    size_t i;
+    for (i = 0; i <= WARN_DEBUG; ++i)
+        opts_set(opts.werror_backup, i, OPTS_WERROR(i));
+}
+
+void opts_restore_non_Werror_all() {
+    size_t i;
+    for (i = 0; i <= WARN_DEBUG; ++i)
+        opts_set(opts.werror, i, OPTS_GENERIC(opts.werror_backup, i));
+}
+
 void opts_init(const char *output, int standard, size_t arraysize) {
     opts_setdefault();
-    
+
     opts.output         = output;
     opts.standard       = (opts_std_t)standard; /* C++ ... y u no like me? */
     opts.max_array_size = arraysize;

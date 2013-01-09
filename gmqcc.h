@@ -1050,6 +1050,12 @@ void opts_set          (uint32_t   *, size_t, bool);
 void opts_setoptimlevel(unsigned int);
 void opts_ini_init     (const char *);
 
+/* Saner flag handling */
+void opts_backup_non_Wall();
+void opts_restore_non_Wall();
+void opts_backup_non_Werror_all();
+void opts_restore_non_Werror_all();
+
 enum {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) X,
@@ -1120,17 +1126,20 @@ typedef struct {
     bool        pp_only;        /* -E            */
     size_t      max_array_size; /* --max-array=  */
 
-    uint32_t flags       [1 + (COUNT_FLAGS         / 32)];
-    uint32_t warn        [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t werror      [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t optimization[1 + (COUNT_OPTIMIZATIONS / 32)];
+    uint32_t flags        [1 + (COUNT_FLAGS         / 32)];
+    uint32_t warn         [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t werror       [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t warn_backup  [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t werror_backup[1 + (COUNT_WARNINGS      / 32)];
+    uint32_t optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
 } opts_cmd_t;
 
 extern opts_cmd_t opts;
 
-#define OPTS_FLAG(i)         (!! (opts.flags       [(i)/32] & (1<< ((i)%32))))
-#define OPTS_WARN(i)         (!! (opts.warn        [(i)/32] & (1<< ((i)%32))))
-#define OPTS_WERROR(i)       (!! (opts.werror      [(i)/32] & (1<< ((i)%32))))
-#define OPTS_OPTIMIZATION(i) (!! (opts.optimization[(i)/32] & (1<< ((i)%32))))
+#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< ((i)%32))))
+#define OPTS_FLAG(i)         OPTS_GENERIC(opts.flags,        (i))
+#define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
+#define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))
+#define OPTS_OPTIMIZATION(i) OPTS_GENERIC(opts.optimization, (i))
 
 #endif
