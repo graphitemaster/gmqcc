@@ -1649,6 +1649,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                                 break;
                             } else if (correct) {
                                 mem_d(correct);
+                                correct = NULL;
                             }
                         }
 
