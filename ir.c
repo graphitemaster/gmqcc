@@ -2740,7 +2740,6 @@ static bool gen_blocks_recursive(ir_function *func, ir_block *block)
     size_t    stidx;
     size_t    i;
 
-tailcall:
     block->generated = true;
     block->code_start = vec_size(code_statements);
     for (i = 0; i < vec_size(block->instr); ++i)
@@ -2757,10 +2756,8 @@ tailcall:
             /* for uncoditional jumps, if the target hasn't been generated
              * yet, we generate them right here.
              */
-            if (!target->generated) {
-                block = target;
-                goto tailcall;
-            }
+            if (!target->generated)
+                return gen_blocks_recursive(func, target);
 
             /* otherwise we generate a jump instruction */
             stmt.opcode = INSTR_GOTO;
@@ -2798,16 +2795,12 @@ tailcall:
                     code_push_statement(&stmt, instr->context.line);
             }
             if (!ontrue->generated) {
-                if (onfalse->generated) {
-                    block = ontrue;
-                    goto tailcall;
-                }
+                if (onfalse->generated)
+                    return gen_blocks_recursive(func, ontrue);
             }
             if (!onfalse->generated) {
-                if (ontrue->generated) {
-                    block = onfalse;
-                    goto tailcall;
-                }
+                if (ontrue->generated)
+                    return gen_blocks_recursive(func, onfalse);
             }
             /* neither ontrue nor onfalse exist */
             stmt.opcode = INSTR_IFNOT;
@@ -2861,8 +2854,7 @@ tailcall:
                 code_pop_statement();
             }
             /* if not, generate now */
-            block = onfalse;
-            goto tailcall;
+            return gen_blocks_recursive(func, onfalse);
         }
 
         if ( (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8)
