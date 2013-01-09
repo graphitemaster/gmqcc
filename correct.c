@@ -179,7 +179,6 @@ static GMQCC_INLINE void correct_pool_delete(void) {
 
 static GMQCC_INLINE char *correct_pool_claim(const char *data) {
     char *claim = util_strdup(data);
-    correct_pool_delete();
     return claim;
 }
 
@@ -469,7 +468,7 @@ static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, s
     return out;
 }
 
-static char **correct_known(correct_trie_t* table, char **array, size_t rows, size_t *next) {
+static char **correct_known(correction_t *corr, correct_trie_t* table, char **array, size_t rows, size_t *next) {
     size_t itr = 0;
     size_t jtr = 0;
     size_t len = 0;
@@ -479,10 +478,14 @@ static char **correct_known(correct_trie_t* table, char **array, size_t rows, si
     char **end = NULL;
 
     for (; itr < rows; itr++) {
-        end = correct_edit(array[itr]);
+        if (vec_size(corr->edits) > itr+1)
+            end = corr->edits[itr+1];
+        else {
+            end = correct_edit(array[itr]);
+            vec_push(corr->edits, end);
+        }
         row = correct_size(array[itr]);
 
-        /* removing jtr=0 here speeds it up by 100ms O_o */
         for (jtr = 0; jtr < row; jtr++) {
             if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
@@ -516,7 +519,19 @@ static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
  * takes a table for the dictonary a vector of sizes (used for internal
  * probability calculation), and an identifier to "correct".
  */
-char *correct_str(correct_trie_t* table, const char *ident) {
+void correct_init(correction_t *c)
+{
+    correct_pool_new();
+    c->edits = NULL;
+}
+
+void correct_free(correction_t *c)
+{
+    vec_free(c->edits);
+    correct_pool_delete();
+}
+
+char *correct_str(correction_t *corr, correct_trie_t* table, const char *ident) {
     char **e1      = NULL;
     char **e2      = NULL;
     char  *e1ident = NULL;
@@ -524,24 +539,26 @@ char *correct_str(correct_trie_t* table, const char *ident) {
     size_t e1rows  = 0;
     size_t e2rows  = 0;
 
-    correct_pool_new();
-
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
         return correct_pool_claim(ident);
 
     if ((e1rows = correct_size(ident))) {
-        e1      = correct_edit(ident);
+        if (vec_size(corr->edits) > 0)
+            e1 = corr->edits[0];
+        else {
+            e1 = correct_edit(ident);
+            vec_push(corr->edits, e1);
+        }
 
         if ((e1ident = correct_maximum(table, e1, e1rows)))
             return correct_pool_claim(e1ident);
     }
 
-    e2 = correct_known(table, e1, e1rows, &e2rows);
+    e2 = correct_known(corr, table, e1, e1rows, &e2rows);
     if (e2rows && ((e2ident = correct_maximum(table, e2, e2rows))))
         return correct_pool_claim(e2ident);
 
 
-    correct_pool_delete();
     return util_strdup(ident);
 }

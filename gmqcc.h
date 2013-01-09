@@ -433,9 +433,15 @@ GMQCC_INLINE FILE   *file_open   (const char *, const char *);
 /*===================================================================*/
 /*=========================== correct.c =============================*/
 /*===================================================================*/
-void  correct_del(correct_trie_t*, size_t **);
-void  correct_add(correct_trie_t*, size_t ***, const char *);
-char *correct_str(correct_trie_t*, /********/  const char *);
+typedef struct {
+    char ***edits;
+} correction_t;
+
+void  correct_del (correct_trie_t*, size_t **);
+void  correct_add (correct_trie_t*, size_t ***, const char *);
+char *correct_str (correction_t *, correct_trie_t*, const char *);
+void  correct_init(correction_t *);
+void  correct_free(correction_t *);
 
 /*===================================================================*/
 /*=========================== code.c ================================*/

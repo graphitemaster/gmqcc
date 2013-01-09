@@ -1644,8 +1644,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                      * other things as well.
                      */
                     if (OPTS_FLAG(ENHANCED_DIAGNOSTICS)) {
+                        correction_t corr;
+                        correct_init(&corr);
+
                         for (i = 0; i < vec_size(parser->correct_variables); i++) {
-                            correct = correct_str(parser->correct_variables[i], parser_tokval(parser));
+                            correct = correct_str(&corr, parser->correct_variables[i], parser_tokval(parser));
                             if (strcmp(correct, parser_tokval(parser))) {
                                 break;
                             } else if (correct) {
@@ -1653,6 +1656,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                                 correct = NULL;
                             }
                         }
+                        correct_free(&corr);
 
                         if (correct) {
                             parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
