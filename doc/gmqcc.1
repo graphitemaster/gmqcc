@@ -59,7 +59,14 @@ some others. Warnings and errors will of course still be displayed.
 Enable or disable a warning.
 .TP
 .B -Wall
-Enable all warnings. Overrides preceding -W parameters.
+Enable almost all warnings. Overrides preceding -W parameters.
+.sp
+The following warnings will \fBnot\fR be anbled:
+.in +4
+.nf
+-Wuninitialized-global
+.fi
+.in
 .TP
 .BR -Werror ", " -Wno-error
 Controls whether or not all warnings should be treated as errors.
