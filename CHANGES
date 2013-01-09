@@ -1,0 +1,56 @@
+Release v0.2.4
+    * Preprocessor:
+        - __VA_ARGS__ support
+        - Predefined macros like __DATE__, __TIME__, ...
+          (check the manpage for a full list)
+        - Signed numbers as single token in the
+        - Fixes some issues with #if operations on macros.
+    * Language:
+        - Untyped `nil` keyword.
+        - Removed the `noreturn` keyword.
+        - Added generic attribute syntax and reintroduced `noreturn`
+          as [[noreturn]].
+        - Added [[deprecated]] and [[deprecated("message")]].
+        - Support for `static` variables in functions.
+        - Support for labeled loops.
+        - UTF-8 Support
+    * Compilation:
+        - Various optimizations and progs-size reductions.
+        - A new spell-checking algorithm tries to hint you at existing
+          variables on error.
+    * qcvm:
+        - Improved commandline argument handling.
+        - More builtins: sqrt(), normalize()
+    * Commandline:
+        - Support for making individual warnings an error
+        - via -Werror-<warning>
+    * Testsuite:
+        - Support for QCFLAGS to run tests with several additional
+          flags.
+
+2012-12-27 Hotfix v0.2.2
+    * Liferanges
+    * Crashes
+
+2012-12-23 Hotfix v0.2.1
+    * General bugfixes
+
+2012-12-23 Release 0.2
+    * Preprocessor:
+        - Added xonotic compatible preprocessor.
+    * Language
+        - Basic xonotic compatibility
+        - Array support
+        - Added fteqcc's string escape sequences.
+        - Support for `noref`.
+        - Support for `goto` with labels like in fteqcc.
+        - `break` and `continue`.
+        - Short circuit logic.
+        - `noreturn` keyword.
+        - Support for translatable strings via _("str") like in
+          fteqcc.
+    * Compilation
+        - Warnings about uninitialized values
+
+2012-11-17 Release 0.1
+    * Compiles id1 code
