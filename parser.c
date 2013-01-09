@@ -109,6 +109,7 @@ static const ast_expression *intrinsic_debug_typestring = (ast_expression*)0x10;
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
+static void parser_addglobal(parser_t *parser, const char *name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring);
 static ast_block* parse_block(parser_t *parser);
@@ -2063,6 +2064,19 @@ static void parser_addlocal(parser_t *parser, const char *name, ast_expression *
     );
 }
 
+static void parser_addglobal(parser_t *parser, const char *name, ast_expression *e)
+{
+    vec_push(parser->globals, e);
+    util_htset(parser->htglobals, name, e);
+
+    /* corrector */
+    correct_add (
+         parser->correct_variables[0],
+        &parser->correct_variables_score[0],
+        name
+    );
+}
+
 static ast_expression* process_condition(parser_t *parser, ast_expression *cond, bool *_ifnot)
 {
     bool       ifnot = false;
@@ -3602,8 +3616,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
                 return false;
             }
 
-            vec_push(parser->globals, (ast_expression*)thinkfunc);
-            util_htset(parser->htglobals, thinkfunc->name, thinkfunc);
+            parser_addglobal(parser, thinkfunc->name, (ast_expression*)thinkfunc);
 
             nextthink = (ast_expression*)thinkfunc;
 
@@ -4820,12 +4833,10 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     }
                 }
                 else {
-                    vec_push(parser->globals, (ast_expression*)var);
-                    util_htset(parser->htglobals, var->name, var);
+                    parser_addglobal(parser, var->name, (ast_expression*)var);
                     if (isvector) {
                         for (i = 0; i < 3; ++i) {
-                            vec_push(parser->globals, (ast_expression*)me[i]);
-                            util_htset(parser->htglobals, me[i]->name, me[i]);
+                            parser_addglobal(parser, me[i]->name, (ast_expression*)me[i]);
                         }
                     }
                 }
@@ -5319,6 +5330,10 @@ bool parser_init()
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, 0);
 
+    /* corrector */
+    vec_push(parser->correct_variables, correct_trie_new());
+    vec_push(parser->correct_variables_score, NULL);
+
     empty_ctx.file = "<internal>";
     empty_ctx.line = 0;
     parser->nil = ast_value_new(empty_ctx, "nil", TYPE_NIL);
@@ -5423,9 +5438,6 @@ void parser_cleanup()
     /* corrector */
     for (i = 0; i < vec_size(parser->correct_variables); ++i) {
         correct_del(parser->correct_variables[i], parser->correct_variables_score[i]);
-    }
-    for (i = 0; i < vec_size(parser->correct_variables_score); ++i) {
-        vec_free(parser->correct_variables_score[i]);
     }
     vec_free(parser->correct_variables);
     vec_free(parser->correct_variables_score);
