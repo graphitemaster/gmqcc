@@ -1957,7 +1957,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             goto onerr;
         }
         if (parser->tok == ';' ||
-            (!parens && parser->tok == ']'))
+            (!parens && (parser->tok == ']' || parser->tok == ')')))
         {
             break;
         }
@@ -1996,8 +1996,13 @@ static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool
     ast_expression *e = parse_expression_leave(parser, stopatcomma, false, with_labels);
     if (!e)
         return NULL;
+    if (parser->tok != ';') {
+        parseerror(parser, "semicolon expected after expression");
+        ast_unref(e);
+        return NULL;
+    }
     if (!parser_next(parser)) {
-        ast_delete(e);
+        ast_unref(e);
         return NULL;
     }
     return e;
