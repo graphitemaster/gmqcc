@@ -448,13 +448,18 @@ anything. No typechecking will be performed on assignments. Assigning
 to it is forbidden, using it in any other kind of expression is also
 not allowed.
 .sp
-Note that this is different from fteqcc's __NULL__ in that gmqcc
-generates an actual empty global, rather than using the global at
-offset 0 because it would overlap with the global RETURN variable when
-dealing with vectors, which starts at offset 1. Setting a vector to
-__NULL__ in fteqcc causes only the vector's x component to be 0.
-However, its y and z components will contain the previous x and y
-components of the global OFS_RETURN.
+Note that this is different from fteqcc's __NULL__: In fteqcc,
+__NULL__ maps to the integer written as '0i'. It's can be assigned to
+function pointers and integers, but it'll error about invalid
+instructions when assigning it to floats without enabling the FTE
+instruction set. There's also a bug which allows it to be assigned to
+vectors, for which the source will be the global at offset 0, meaning
+the vector's y and z components will contain the OFS_RETURN x and y
+components.
+.sp
+In that gmqcc the nil global is an actual global filled with zeroes,
+and can be assigned to anything including fields, vectors or function
+pointers, and they end up becoming zeroed.
 .TP
 .B -fpermissive
 Various effects, usually to weaken some conditions.
