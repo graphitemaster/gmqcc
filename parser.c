@@ -929,14 +929,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     exprs[0], exprs[1]);
             break;
         case opid1('^'):
-            parseerror(parser, "TODO: bitxor");
+            compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor via ^");
             return false;
 
         case opid2('<','<'):
         case opid2('>','>'):
+            if (CanConstFold(exprs[0], exprs[1]) && ! NotSameType(TYPE_FLOAT)) {
+                if (op->id == opid2('<','<'))
+                    out = (ast_expression*)parser_const_float(parser, (double)((int)(ConstF(0)) << (int)(ConstF(1))));
+                else
+                    out = (ast_expression*)parser_const_float(parser, (double)((int)(ConstF(0)) >> (int)(ConstF(1))));
+                break;
+            }
         case opid3('<','<','='):
         case opid3('>','>','='):
-            parseerror(parser, "TODO: shifts");
+            compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-shifts");
             return false;
 
         case opid2('|','|'):
