@@ -88,17 +88,14 @@ typedef struct {
     /* we store the '=' operator info */
     const oper_info *assign_op;
 
-    /* TYPE_FIELD -> parser_find_fields is used instead of find_var
-     * TODO: TYPE_VECTOR -> x, y and z are accepted in the gmqcc standard
-     * anything else: type error
-     */
-    qcint  memberof;
-
     /* Keep track of our ternary vs parenthesis nesting state.
      * If we reach a 'comma' operator in a ternary without a paren,
      * we shall trigger -Wternary-precedence.
      */
     enum parser_pot *pot;
+
+    /* magic values */
+    ast_value *const_vec[3];
 
     /* pragma flags */
     bool noref;
@@ -556,7 +553,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         asvalue[i] = (ast_value*)exprs[i];
 
         if (exprs[i]->expression.vtype == TYPE_NOEXPR &&
-            !(i != 0 && op->id == opid2('?',':')))
+            !(i != 0 && op->id == opid2('?',':')) &&
+            !(i == 1 && op->id == opid1('.')))
         {
             if (ast_istype(exprs[i], ast_label))
                 compile_error(ast_ctx(exprs[i]), "expected expression, got an unknown identifier");
@@ -589,7 +587,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             return false;
 
         case opid1('.'):
-            if (exprs[0]->expression.vtype == TYPE_ENTITY) {
+            if (exprs[0]->expression.vtype == TYPE_VECTOR &&
+                exprs[1]->expression.vtype == TYPE_NOEXPR)
+            {
+                if      (exprs[1] == (ast_expression*)parser->const_vec[0])
+                    out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, NULL);
+                else if (exprs[1] == (ast_expression*)parser->const_vec[1])
+                    out = (ast_expression*)ast_member_new(ctx, exprs[0], 1, NULL);
+                else if (exprs[1] == (ast_expression*)parser->const_vec[2])
+                    out = (ast_expression*)ast_member_new(ctx, exprs[0], 2, NULL);
+                else {
+                    parseerror(parser, "access to invalid vector component");
+                    return false;
+                }
+            }
+            else if (exprs[0]->expression.vtype == TYPE_ENTITY) {
                 if (exprs[1]->expression.vtype != TYPE_FIELD) {
                     parseerror(parser, "type error: right hand of member-operand should be an entity-field");
                     return false;
@@ -597,7 +609,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (ast_expression*)ast_entfield_new(ctx, exprs[0], exprs[1]);
             }
             else if (exprs[0]->expression.vtype == TYPE_VECTOR) {
-                parseerror(parser, "internal error: vector access is not supposed to be handled at this point");
+                parseerror(parser, "vectors cannot be accessed this way");
                 return false;
             }
             else {
@@ -1519,7 +1531,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     ast_expression *expr = NULL;
     shunt sy;
     bool wantop = false;
-    bool gotmemberof = false;
     /* only warn once about an assignment in a truth value because the current code
      * would trigger twice on: if(a = b && ...), once for the if-truth-value, once for the && part
      */
@@ -1540,11 +1551,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 
     while (true)
     {
-        if (gotmemberof)
-            gotmemberof = false;
-        else
-            parser->memberof = 0;
-
         if (OPTS_FLAG(TRANSLATABLE_STRINGS) &&
             parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "_"))
         {
@@ -1580,32 +1586,27 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         }
         else if (parser->tok == TOKEN_IDENT)
         {
+            const char     *ctoken = parser_tokval(parser);
+            ast_expression *prev = vec_size(sy.out) ? vec_last(sy.out).out : NULL;
             ast_expression *var;
             if (wantop) {
                 parseerror(parser, "expected operator or end of statement");
                 goto onerr;
             }
             wantop = true;
-            /* variable */
-            if (opts.standard == COMPILER_GMQCC)
+            /* a_vector.{x,y,z} */
+            if (!vec_size(sy.ops) ||
+                !vec_last(sy.ops).etype ||
+                operators[vec_last(sy.ops).etype-1].id != opid1('.') ||
+                (prev >= intrinsic_debug_typestring &&
+                 prev <= intrinsic_debug_typestring))
             {
-                if (parser->memberof == TYPE_ENTITY) {
-                    /* still get vars first since there could be a fieldpointer */
-                    var = parser_find_var(parser, parser_tokval(parser));
-                    if (!var)
-                        var = parser_find_field(parser, parser_tokval(parser));
-                }
-                else if (parser->memberof == TYPE_VECTOR)
-                {
-                    parseerror(parser, "TODO: implement effective vector member access");
-                    goto onerr;
-                }
-                else if (parser->memberof) {
-                    parseerror(parser, "namespace for member not found");
-                    goto onerr;
-                }
-                else
-                    var = parser_find_var(parser, parser_tokval(parser));
+                /* When adding more intrinsics, fix the above condition */
+                prev = NULL;
+            }
+            if (prev && prev->expression.vtype == TYPE_VECTOR && ctoken[0] >= 'x' && ctoken[0] <= 'z' && !ctoken[1])
+            {
+                var = (ast_expression*)parser->const_vec[ctoken[0]-'x'];
             } else {
                 var = parser_find_var(parser, parser_tokval(parser));
                 if (!var)
@@ -1884,24 +1885,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     olast = &operators[vec_last(sy.ops).etype-1];
                 else
                     olast = NULL;
-            }
-
-            if (op->id == opid1('.') && opts.standard == COMPILER_GMQCC) {
-                /* for gmqcc standard: open up the namespace of the previous type */
-                ast_expression *prevex = vec_last(sy.out).out;
-                if (!prevex) {
-                    parseerror(parser, "unexpected member operator");
-                    goto onerr;
-                }
-                if (prevex->expression.vtype == TYPE_ENTITY)
-                    parser->memberof = TYPE_ENTITY;
-                else if (prevex->expression.vtype == TYPE_VECTOR)
-                    parser->memberof = TYPE_VECTOR;
-                else {
-                    parseerror(parser, "type error: type has no members");
-                    goto onerr;
-                }
-                gotmemberof = true;
             }
 
             if (op->id == opid1('(')) {
@@ -5460,6 +5443,10 @@ bool parser_init()
     parser->nil->cvq = CV_CONST;
     if (OPTS_FLAG(UNTYPED_NIL))
         util_htset(parser->htglobals, "nil", (void*)parser->nil);
+
+    parser->const_vec[0] = ast_value_new(empty_ctx, "<vector.x>", TYPE_NOEXPR);
+    parser->const_vec[1] = ast_value_new(empty_ctx, "<vector.y>", TYPE_NOEXPR);
+    parser->const_vec[2] = ast_value_new(empty_ctx, "<vector.z>", TYPE_NOEXPR);
     return true;
 }
 
@@ -5579,6 +5566,10 @@ void parser_cleanup()
     vec_free(parser->continues);
 
     ast_value_delete(parser->nil);
+
+    ast_value_delete(parser->const_vec[0]);
+    ast_value_delete(parser->const_vec[1]);
+    ast_value_delete(parser->const_vec[2]);
 
     mem_d(parser);
 }
