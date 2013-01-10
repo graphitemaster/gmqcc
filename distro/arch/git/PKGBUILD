@@ -1,11 +1,12 @@
 # Contributor: matthiaskrgr <matthiaskrgr _strange_curverd_character_ freedroid D0T org>
 
 pkgname=gmqcc
-pkgver=20121226
+pkgver=20130110
 pkgrel=1
 pkgdesc="An Improved Quake C Compiler"
 arch=('i686' 'x86_64')
 depends=('glibc')
+makedepends=('git')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')
 
