@@ -46,10 +46,6 @@
 #define GMQCC_VERSION \
     GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
 
-#ifndef GMQCC_GITINFO
-# define GMQCC_GITINFO "(no git info)"
-#endif
-
 /*
  * We cannot rely on C99 at all, since compilers like MSVC
  * simply don't support it.  We define our own boolean type

@@ -51,6 +51,9 @@ static void version() {
         __DATE__,
         __TIME__
     );
+#ifdef GMQCC_GITINFO
+    con_out("git build: %s\n", GMQCC_GITINFO);
+#endif
 }
 
 static int usage() {
