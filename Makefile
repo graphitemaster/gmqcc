@@ -10,7 +10,9 @@ MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
 CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char
-CFLAGS += -DGMQCC_GITINFO="\"`git describe`\""
+ifneq ($(shell git describe --always 2>/dev/null),)
+    CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
+endif
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
