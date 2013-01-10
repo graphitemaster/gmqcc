@@ -3487,7 +3487,7 @@ static bool parse_enum(parser_t *parser)
         old = parse_expression_leave(parser, true, false, false);
         asvalue = (ast_value*)old;
         if (!ast_istype(old, ast_value) || asvalue->cvq != CV_CONST || !asvalue->hasvalue) {
-            parseerror(parser, "enumeration value for must be a constant");
+            compile_error(ast_ctx(var), "constant value or expression expected");
             goto onerror;
         }
         num = (var->constval.vfloat = asvalue->constval.vfloat) + 1;
