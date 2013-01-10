@@ -478,6 +478,8 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
     char **end = NULL;
 
     for (; itr < rows; itr++) {
+        if (!array[itr][0])
+            continue;
         if (vec_size(corr->edits) > itr+1)
             end = corr->edits[itr+1];
         else {
