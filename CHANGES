@@ -16,6 +16,8 @@ Release v0.2.4
         - UTF-8 Support
         - enum support: without enum-types
           (ie no `typedef enum { } foo;`)
+        - Accessing vector components via the dot operator on all
+          expressions. Eg: (3 * v).y
     * Compilation:
         - Various optimizations and progs-size reductions.
         - A new spell-checking algorithm tries to hint you at existing
