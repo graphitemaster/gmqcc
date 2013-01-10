@@ -1,25 +1,47 @@
-void(string, ...)   print  = #1;
-string(float)       ftos   = #2;
+void(string, ...)   print  = #1;enum {
+    // this behaviour is confusing, but I like that
+    // we support it.
+    __ = (__ - 1),
+    A  = (__ + 1),
 
-enum {
-    FOO,
-    BAR,
-    BAZ,
-    OMG = BAR,
-    POO,
-    LAST = OMG + POO
+    B,
+    C
 };
 
-enum {A};
-enum {B=A+1};
-enum {C=A};
+enum {
+    D = C + B,
+    E = C + C,
+    F = C + D,
+};
 
+enum {
+    G = (B + F), H = (C + F),
+    I = (D + F), J = (B + I)
+};
+enum {
+    K = A + B - C + D - E + F *
+        G - H + I - J + A - B -
+        J + A,
+    L,
+    M,
+    N
+};
+
+void (string, ...) print = #1;
+string (float)  ftos = #2;
 void main() {
-    print(ftos(FOO), "\n");
-    print(ftos(BAR), "\n");
-    print(ftos(BAZ), "\n");
-    print(ftos(OMG), "\n");
-    print(ftos(POO), "\n");
-    print(ftos(LAST), "\n");
+    print(ftos(A), "\n");
+    print(ftos(B), "\n");
     print(ftos(C), "\n");
-}
+    print(ftos(D), "\n");
+    print(ftos(E), "\n");
+    print(ftos(F), "\n");
+    print(ftos(G), "\n");
+    print(ftos(H), "\n");
+    print(ftos(I), "\n");
+    print(ftos(J), "\n");
+    print(ftos(K), "\n");
+    print(ftos(L), "\n");
+    print(ftos(M), "\n");
+    print(ftos(N), "\n");
+};
