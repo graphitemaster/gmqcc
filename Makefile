@@ -150,10 +150,8 @@ all: $(GMQCC) $(QCVM) $(TESTSUITE)
 
 check: all
 	@ ./$(TESTSUITE)
-
-# alias to check because test.o exists and people will get confused
-# about the undefined references to X.
 test: check
+	@ ./$(TESTSUITE)
 
 clean:
 	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
