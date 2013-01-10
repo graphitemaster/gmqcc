@@ -1957,7 +1957,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             goto onerr;
         }
         if (parser->tok == ';' ||
-            (!parens && (parser->tok == ']' || parser->tok == ')')))
+            (!parens && (parser->tok == ']' || parser->tok == ')' || parser->tok == '}')))
         {
             break;
         }
@@ -3508,6 +3508,13 @@ static bool parse_enum(parser_t *parser)
             goto onerror;
         }
         num = (var->constval.vfloat = asvalue->constval.vfloat) + 1;
+
+        if (parser->tok == '}')
+            break;
+        if (parser->tok != ',') {
+            parseerror(parser, "expected `}` or comma after expression");
+            goto onerror;
+        }
     }
 
     if (parser->tok != '}') {
