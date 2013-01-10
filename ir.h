@@ -171,6 +171,7 @@ typedef struct ir_block_s
     ir_value          **living;
 
     /* For the temp-allocation */
+    size_t entry_id;
     size_t eid;
     bool   is_return;
     size_t run_id;

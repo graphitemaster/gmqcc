@@ -1997,6 +1997,7 @@ void ir_function_enumerate(ir_function *self)
         /* each block now gets an additional "entry" instruction id
          * we can use to avoid point-life issues
          */
+        self->blocks[i]->entry_id = instruction_id;
         ++instruction_id;
 
         self->blocks[i]->eid = i;
@@ -2625,7 +2626,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         *changed = *changed || tempbool;
     }
     /* the "entry" instruction ID */
-    tempbool = ir_block_living_add_instr(self, instr->eid-1);
+    tempbool = ir_block_living_add_instr(self, self->entry_id);
     *changed = *changed || tempbool;
 
     if (self->run_id == self->owner->run_id)
