@@ -3440,6 +3440,99 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     }
 }
 
+static bool parse_enum(parser_t *parser)
+{
+    qcfloat     num = 0;
+    ast_value **values = NULL;
+    ast_value  *var = NULL;
+    ast_value  *asvalue;
+
+    ast_expression *old;
+
+    if (!parser_next(parser) || parser->tok != '{') {
+        parseerror(parser, "expected `{` after `enum` keyword");
+        return false;
+    }
+
+    while (true) {
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+            if (parser->tok == '}') {
+                /* allow an empty enum */
+                break;
+            }
+            parseerror(parser, "expected identifier or `}`");
+            goto onerror;
+        }
+
+        old = parser_find_field(parser, parser_tokval(parser));
+        if (!old)
+            old = parser_find_global(parser, parser_tokval(parser));
+        if (old) {
+            parseerror(parser, "value `%s` has already been declared here: %s:%i",
+                       parser_tokval(parser), ast_ctx(old).file, ast_ctx(old).line);
+            goto onerror;
+        }
+
+        var = ast_value_new(parser_ctx(parser), parser_tokval(parser), TYPE_FLOAT);
+        vec_push(values, var);
+        var->cvq             = CV_CONST;
+        var->hasvalue        = true;
+        var->constval.vfloat = num++;
+
+        parser_addglobal(parser, var->name, (ast_expression*)var);
+
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected `=`, `}` or comma after identifier");
+            goto onerror;
+        }
+
+        if (parser->tok == ',')
+            continue;
+        if (parser->tok == '}')
+            break;
+        if (parser->tok != '=') {
+            parseerror(parser, "expected `=`, `}` or comma after identifier");
+            goto onerror;
+        }
+
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected expression after `=`");
+            goto onerror;
+        }
+
+        /* We got a value! */
+        old = parse_expression_leave(parser, true, false, false);
+        asvalue = (ast_value*)old;
+        if (!ast_istype(old, ast_value) || asvalue->cvq != CV_CONST || !asvalue->hasvalue) {
+            parseerror(parser, "enumeration value for must be a constant");
+            goto onerror;
+        }
+        num = (var->constval.vfloat = asvalue->constval.vfloat) + 1;
+    }
+
+    if (parser->tok != '}') {
+        parseerror(parser, "internal error: breaking without `}`");
+        goto onerror;
+    }
+
+    if (!parser_next(parser) || parser->tok != ';') {
+        parseerror(parser, "expected semicolon after enumeration");
+        goto onerror;
+    }
+
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error after enumeration");
+        goto onerror;
+    }
+
+    vec_free(values);
+    return true;
+
+onerror:
+    vec_free(values);
+    return false;
+}
+
 static bool parse_block_into(parser_t *parser, ast_block *block)
 {
     bool   retval = true;
@@ -5208,6 +5301,10 @@ static bool parser_global_statement(parser_t *parser)
         if (cvq == CV_WRONG)
             return false;
         return parse_variable(parser, NULL, true, cvq, NULL, noref, is_static, qflags, vstring);
+    }
+    else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "enum"))
+    {
+        return parse_enum(parser);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
