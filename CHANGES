@@ -14,6 +14,8 @@ Release v0.2.4
         - Support for `static` variables in functions.
         - Support for labeled loops.
         - UTF-8 Support
+        - enum support: without enum-types
+          (ie no `typedef enum { } foo;`)
     * Compilation:
         - Various optimizations and progs-size reductions.
         - A new spell-checking algorithm tries to hint you at existing
