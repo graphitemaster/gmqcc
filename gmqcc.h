@@ -48,6 +48,25 @@
 /* Undefine the following on a release-tag: */
 #define GMQCC_VERSION_TYPE_DEVEL
 
+/* Full version string in case we need it */
+#ifdef GMQCC_GITINFO
+#    define GMQCC_DEV_VERSION_STRING "git build: " GMQCC_GITINFO "\n"
+#elif defined(GMQCC_VERSION_TYPE_DEVEL
+#    define GMQCC_DEV_VERSION_STRING "development build\n"
+#else
+#    define GMQCC_DEV_VERSION_STRING
+#endif
+
+#define GMQCC_STRINGIFY(x) #x
+#define GMQCC_IND_STRING(x) GMQCC_STRINGIFY(x)
+#define GMQCC_FULL_VERSION_STRING \
+"GMQCC " \
+GMQCC_IND_STRING(GMQCC_VERSION_MAJOR) "." \
+GMQCC_IND_STRING(GMQCC_VERSION_MINOR) "." \
+GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
+" Built " __DATE__ " " __TIME__ \
+"\n" GMQCC_DEV_VERSION_STRING
+
 /*
  * We cannot rely on C99 at all, since compilers like MSVC
  * simply don't support it.  We define our own boolean type
@@ -1129,6 +1148,7 @@ typedef struct {
     uint16_t    forced_crc;     /* --force-crc=  */
     bool        pp_only;        /* -E            */
     size_t      max_array_size; /* --max-array=  */
+    bool        add_info;       /* --add-info    */
 
     uint32_t flags        [1 + (COUNT_FLAGS         / 32)];
     uint32_t warn         [1 + (COUNT_WARNINGS      / 32)];

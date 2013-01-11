@@ -465,6 +465,10 @@ static bool options_parse(int argc, char **argv) {
                         opts.quiet = true;
                         break;
                     }
+                    else if (!strcmp(argv[0]+2, "add-info")) {
+                        opts.add_info = true;
+                        break;
+                    }
                     else {
             /* All long options with arguments */
                         if (options_long_witharg("output", &argc, &argv, &argarg)) {

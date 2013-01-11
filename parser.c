@@ -54,6 +54,7 @@ typedef struct {
     ast_value *imm_float_one;
     ast_value *imm_vector_zero;
     ast_value *nil;
+    ast_value *reserved_version;
 
     size_t crc_globals;
     size_t crc_fields;
@@ -5447,6 +5448,16 @@ bool parser_init()
     parser->const_vec[0] = ast_value_new(empty_ctx, "<vector.x>", TYPE_NOEXPR);
     parser->const_vec[1] = ast_value_new(empty_ctx, "<vector.y>", TYPE_NOEXPR);
     parser->const_vec[2] = ast_value_new(empty_ctx, "<vector.z>", TYPE_NOEXPR);
+
+    if (opts.add_info) {
+        parser->reserved_version = ast_value_new(empty_ctx, "reserved:version", TYPE_STRING);
+        parser->reserved_version->cvq = CV_CONST;
+        parser->reserved_version->hasvalue = true;
+        parser->reserved_version->expression.flags |= AST_FLAG_INCLUDE_DEF;
+        parser->reserved_version->constval.vstring = util_strdup(GMQCC_FULL_VERSION_STRING);
+    } else {
+        parser->reserved_version = NULL;
+    }
     return true;
 }
 
@@ -5631,6 +5642,13 @@ bool parser_finish(const char *output)
             ir_builder_delete(ir);
             return false;
         }
+    }
+    if (parser->reserved_version &&
+        !ast_global_codegen(parser->reserved_version, ir, false))
+    {
+        con_out("failed to generate reserved::version");
+        ir_builder_delete(ir);
+        return false;
     }
     for (i = 0; i < vec_size(parser->imm_float); ++i) {
         if (!ast_global_codegen(parser->imm_float[i], ir, false)) {
