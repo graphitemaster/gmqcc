@@ -1018,6 +1018,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->fieldtype = TYPE_VOID;
     self->outtype = TYPE_VOID;
     self->store = storetype;
+    self->flags = 0;
 
     self->reads  = NULL;
     self->writes = NULL;
@@ -3323,6 +3324,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         pushdef = true;
 
         if (OPTS_OPTIMIZATION(OPTIM_STRIP_CONSTANT_NAMES) &&
+            !(global->flags & IR_FLAG_INCLUDE_DEF) &&
             (global->name[0] == '#' || global->cvq == CV_CONST))
         {
             pushdef = false;

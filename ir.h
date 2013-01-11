@@ -44,6 +44,7 @@ typedef struct ir_value_s {
     int       outtype;
     /* 'const' vs 'var' qualifier */
     int       cvq;
+    uint32_t  flags;
 
     struct ir_instr_s **reads;
     struct ir_instr_s **writes;
@@ -276,6 +277,7 @@ typedef struct ir_function_s
 #define IR_FLAG_HAS_ARRAYS        (1<<1)
 #define IR_FLAG_HAS_UNINITIALIZED (1<<2)
 #define IR_FLAG_HAS_GOTO          (1<<3)
+#define IR_FLAG_INCLUDE_DEF       (1<<4)
 #define IR_FLAG_MASK_NO_OVERLAP (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED)
 
 ir_function* ir_function_new(struct ir_builder_s *owner, int returntype);
