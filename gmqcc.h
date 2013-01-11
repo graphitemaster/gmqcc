@@ -51,7 +51,7 @@
 /* Full version string in case we need it */
 #ifdef GMQCC_GITINFO
 #    define GMQCC_DEV_VERSION_STRING "git build: " GMQCC_GITINFO "\n"
-#elif defined(GMQCC_VERSION_TYPE_DEVEL
+#elif defined(GMQCC_VERSION_TYPE_DEVEL)
 #    define GMQCC_DEV_VERSION_STRING "development build\n"
 #else
 #    define GMQCC_DEV_VERSION_STRING
