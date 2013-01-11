@@ -51,7 +51,6 @@ Release v0.2.4
         - Support for `goto` with labels like in fteqcc.
         - `break` and `continue`.
         - Short circuit logic.
-        - `noreturn` keyword.
         - Support for translatable strings via _("str") like in
           fteqcc.
     * Compilation
