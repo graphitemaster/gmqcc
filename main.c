@@ -53,6 +53,8 @@ static void version() {
     );
 #ifdef GMQCC_GITINFO
     con_out("git build: %s\n", GMQCC_GITINFO);
+#elif defined(GMQCC_VERION_TYPE_DEVEL)
+    con_out("development build\n");
 #endif
 }
 
