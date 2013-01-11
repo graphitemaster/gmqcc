@@ -142,6 +142,15 @@ them.
 .fi
 .in
 .TP
+.B "--add-info"
+Adds compiler information to the generated binary file. Currently
+this includes the following globals:
+.RS
+.IP "reserved:version"
+String containing the compiler version as printed by the --version
+parameter.
+.RE
+.TP
 .B "-dump"
 DEBUG OPTION. Print the code's intermediate representation before the
 optimization and finalization passes to stdout before generating the
@@ -467,6 +476,7 @@ Various effects, usually to weaken some conditions.
 .IP "with -funtyped-nil"
 Allow local variables named 'nil'. (This will not allow declaring a
 global of that name.)
+.RE
 .SH OPTIMIZATIONS
 .TP
 .B -Opeephole
