@@ -28,6 +28,7 @@ Release v0.2.4
     * Commandline:
         - Support for making individual warnings an error
         - via -Werror-<warning>
+        - added --add-info
     * Testsuite:
         - Support for QCFLAGS to run tests with several additional
           flags.
