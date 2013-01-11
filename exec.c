@@ -243,13 +243,8 @@ void prog_free_entity(qc_program *prog, qcint e)
     prog->entitypool[e] = false;
 }
 
-qcint prog_tempstring(qc_program *prog, const char *_str)
+qcint prog_tempstring(qc_program *prog, const char *str)
 {
-    /* we don't access it, but the macro-generated functions don't use
-     * const
-     */
-    char *str = (char*)_str;
-
     size_t len = strlen(str);
     size_t at = prog->tempstring_at;
 
