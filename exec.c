@@ -609,10 +609,16 @@ const char *type_name[TYPE_COUNT] = {
     "field",
     "function",
     "pointer",
-#if 0
     "integer",
-#endif
-    "variant"
+
+    "variant",
+
+    "struct",
+    "union",
+    "array",
+
+    "nil",
+    "noexpr"
 };
 
 typedef struct {
