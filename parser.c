@@ -1713,6 +1713,10 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         else if (parser->tok == TOKEN_DOTS)
         {
             ast_expression *va;
+            if (!OPTS_FLAG(VARIADIC_ARGS)) {
+                parseerror(parser, "cannot access varargs (try -fvariadic-args)");
+                goto onerr;
+            }
             if (wantop) {
                 parseerror(parser, "expected operator or end of statement");
                 goto onerr;
@@ -3776,7 +3780,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         return false;
     }
 
-    if (var->expression.flags & AST_FLAG_VARIADIC) {
+    if (!OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC) {
         if (parsewarning(parser, WARN_VARIADIC_FUNCTION,
                          "variadic function with implementation will not be able to access additional parameters"))
         {
@@ -4012,7 +4016,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         func->argc = argc;
     }
 
-    if (var->expression.flags & AST_FLAG_VARIADIC) {
+    if (OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC) {
         char name[1024];
         ast_value *varargs = ast_value_new(ast_ctx(var), "reserved:va_args", TYPE_ARRAY);
         varargs->expression.flags |= AST_FLAG_IS_VARARG;
