@@ -103,6 +103,9 @@
     # <ident> when you accidently typo. Amongst others
     ENHANCED_DIAGNOSTICS         = true
 
+    # Allow vararg access from within QC of the form: ...(argnumber, type)
+    VARIADIC_ARGS                = true
+
 # These are all the warnings, usually present via the -W prefix from
 # the command line.
 [warnings]
