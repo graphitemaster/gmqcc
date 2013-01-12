@@ -1074,6 +1074,8 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     vtype->hasvalue = true;
     vtype->constval.vfunc = self;
 
+    self->varargs = NULL;
+
     return self;
 }
 
@@ -1096,6 +1098,8 @@ void ast_function_delete(ast_function *self)
     vec_free(self->blocks);
     vec_free(self->breakblocks);
     vec_free(self->continueblocks);
+    if (self->varargs)
+        ast_delete(self->varargs);
     mem_d(self);
 }
 
@@ -1405,7 +1409,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
         func->flags |= IR_FLAG_HAS_ARRAYS;
 
-        if (param) {
+        if (param && !(self->expression.flags & AST_FLAG_IS_VARARG)) {
             compile_error(ast_ctx(self), "array-parameters are not supported");
             return false;
         }
@@ -1569,6 +1573,11 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
             if (!ast_local_codegen(ec->params[i], self->ir_func, true))
                 return false;
         }
+    }
+
+    if (self->varargs) {
+        if (!ast_local_codegen(self->varargs, self->ir_func, true))
+            return false;
     }
 
     if (self->builtin) {

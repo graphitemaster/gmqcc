@@ -150,7 +150,8 @@ typedef struct
 #define AST_FLAG_INITIALIZED  (1<<3)
 #define AST_FLAG_DEPRECATED   (1<<4)
 #define AST_FLAG_INCLUDE_DEF  (1<<5)
-#define AST_FLAG_VARARG_COUNT (1<<6)
+#define AST_FLAG_IS_VARARG    (1<<6)
+#define AST_FLAG_VARARG_COUNT (1<<7)
 #define AST_FLAG_TYPE_MASK (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value
@@ -644,6 +645,8 @@ struct ast_function_s
     char         labelbuf[64];
 
     ast_block* *blocks;
+
+    ast_value   *varargs;
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */

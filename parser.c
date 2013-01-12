@@ -119,6 +119,8 @@ static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels);
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
+static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname);
+static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -210,12 +212,18 @@ static ast_value* parser_const_float(parser_t *parser, double d)
 {
     size_t i;
     ast_value *out;
+    lex_ctx ctx;
     for (i = 0; i < vec_size(parser->imm_float); ++i) {
         const double compare = parser->imm_float[i]->constval.vfloat;
         if (memcmp((const void*)&compare, (const void *)&d, sizeof(double)) == 0)
             return parser->imm_float[i];
     }
-    out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_FLOAT);
+    if (parser->lex)
+        ctx = parser_ctx(parser);
+    else {
+        memset(&ctx, 0, sizeof(ctx));
+    }
+    out = ast_value_new(ctx, "#IMMEDIATE", TYPE_FLOAT);
     out->cvq      = CV_CONST;
     out->hasvalue = true;
     out->constval.vfloat = d;
@@ -3872,6 +3880,27 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
     vec_push(parser->functions, func);
 
+    if (var->expression.flags & AST_FLAG_VARIADIC) {
+        char name[1024];
+        ast_value *varargs = ast_value_new(ast_ctx(var), "reserved:va_args", TYPE_ARRAY);
+        varargs->expression.flags |= AST_FLAG_IS_VARARG;
+        varargs->expression.next = (ast_expression*)ast_value_new(ast_ctx(var), NULL, TYPE_VECTOR);
+        varargs->expression.count = 0;
+        snprintf(name, sizeof(name), "%s##va##SET", var->name);
+        if (!parser_create_array_setter_proto(parser, varargs, name)) {
+            ast_delete(varargs);
+            ast_block_delete(block);
+            goto enderr;
+        }
+        snprintf(name, sizeof(name), "%s##va##GET", var->name);
+        if (!parser_create_array_getter_proto(parser, varargs, varargs->expression.next, name)) {
+            ast_delete(varargs);
+            ast_block_delete(block);
+            goto enderr;
+        }
+        func->varargs = varargs;
+    }
+
     parser->function = func;
     if (!parse_block_into(parser, block)) {
         ast_block_delete(block);
@@ -4142,9 +4171,8 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
     return true;
 }
 
-static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
+static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname)
 {
-    ast_expression *root = NULL;
     ast_value      *index = NULL;
     ast_value      *value = NULL;
     ast_function   *func;
@@ -4152,11 +4180,11 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
 
     if (!ast_istype(array->expression.next, ast_value)) {
         parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
-        return false;
+        return NULL;
     }
 
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
-        return false;
+        return NULL;
     func = fval->constval.vfunc;
     fval->expression.next = (ast_expression*)ast_value_new(ast_ctx(array), "<void>", TYPE_VOID);
 
@@ -4171,21 +4199,39 @@ static bool parser_create_array_setter(parser_t *parser, ast_value *array, const
     vec_push(fval->expression.params, index);
     vec_push(fval->expression.params, value);
 
-    root = array_setter_node(parser, array, index, value, 0, array->expression.count);
-    if (!root) {
-        parseerror(parser, "failed to build accessor search tree");
-        goto cleanup;
-    }
-
     array->setter = fval;
-    return ast_block_add_expr(func->blocks[0], root);
+    return fval;
 cleanup:
     if (index) ast_delete(index);
     if (value) ast_delete(value);
-    if (root)  ast_delete(root);
     ast_delete(func);
     ast_delete(fval);
-    return false;
+    return NULL;
+}
+
+static bool parser_create_array_setter_impl(parser_t *parser, ast_value *array)
+{
+    ast_expression *root = NULL;
+    root = array_setter_node(parser, array,
+                             array->setter->expression.params[0],
+                             array->setter->expression.params[1],
+                             0, array->expression.count);
+    if (!root) {
+        parseerror(parser, "failed to build accessor search tree");
+        return false;
+    }
+    if (!ast_block_add_expr(array->setter->constval.vfunc->blocks[0], root)) {
+        ast_delete(root);
+        return false;
+    }
+    return true;
+}
+
+static bool parser_create_array_setter(parser_t *parser, ast_value *array, const char *funcname)
+{
+    if (!parser_create_array_setter_proto(parser, array, funcname))
+        return false;
+    return parser_create_array_setter_impl(parser, array);
 }
 
 static bool parser_create_array_field_setter(parser_t *parser, ast_value *array, const char *funcname)
@@ -4237,9 +4283,8 @@ cleanup:
     return false;
 }
 
-static bool parser_create_array_getter(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname)
+static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname)
 {
-    ast_expression *root = NULL;
     ast_value      *index = NULL;
     ast_value      *fval;
     ast_function   *func;
@@ -4249,11 +4294,11 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
      */
     if (!ast_istype(array->expression.next, ast_value)) {
         parseerror(parser, "internal error: array accessor needs to build an ast_value with a copy of the element type");
-        return false;
+        return NULL;
     }
 
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
-        return false;
+        return NULL;
     func = fval->constval.vfunc;
     fval->expression.next = ast_type_copy(ast_ctx(array), elemtype);
 
@@ -4265,20 +4310,36 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     }
     vec_push(fval->expression.params, index);
 
-    root = array_getter_node(parser, array, index, 0, array->expression.count);
-    if (!root) {
-        parseerror(parser, "failed to build accessor search tree");
-        goto cleanup;
-    }
-
     array->getter = fval;
-    return ast_block_add_expr(func->blocks[0], root);
+    return fval;
 cleanup:
     if (index) ast_delete(index);
-    if (root)  ast_delete(root);
     ast_delete(func);
     ast_delete(fval);
-    return false;
+    return NULL;
+}
+
+static bool parser_create_array_getter_impl(parser_t *parser, ast_value *array)
+{
+    ast_expression *root = NULL;
+
+    root = array_getter_node(parser, array, array->getter->expression.params[0], 0, array->expression.count);
+    if (!root) {
+        parseerror(parser, "failed to build accessor search tree");
+        return false;
+    }
+    if (!ast_block_add_expr(array->getter->constval.vfunc->blocks[0], root)) {
+        ast_delete(root);
+        return false;
+    }
+    return true;
+}
+
+static bool parser_create_array_getter(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname)
+{
+    if (!parser_create_array_getter_proto(parser, array, elemtype, funcname))
+        return false;
+    return parser_create_array_getter_impl(parser, array);
 }
 
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
@@ -5737,8 +5798,27 @@ bool parser_finish(const char *output)
         }
     }
     for (i = 0; i < vec_size(parser->functions); ++i) {
-        if (!ast_function_codegen(parser->functions[i], ir)) {
-            con_out("failed to generate function %s\n", parser->functions[i]->name);
+        ast_function *f = parser->functions[i];
+        if (f->varargs) {
+            if (parser->max_param_count > vec_size(f->vtype->expression.params)) {
+                f->varargs->expression.count = parser->max_param_count - vec_size(f->vtype->expression.params);
+                if (!parser_create_array_setter_impl(parser, f->varargs)) {
+                    con_out("failed to generate vararg setter for %s\n", f->name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+                if (!parser_create_array_getter_impl(parser, f->varargs)) {
+                    con_out("failed to generate vararg getter for %s\n", f->name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+            } else {
+                ast_delete(f->varargs);
+                f->varargs = NULL;
+            }
+        }
+        if (!ast_function_codegen(f, ir)) {
+            con_out("failed to generate function %s\n", f->name);
             ir_builder_delete(ir);
             return false;
         }
