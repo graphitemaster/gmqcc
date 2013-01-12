@@ -2204,7 +2204,7 @@ bool ir_function_allocate_locals(ir_function *self)
     for (i = 0; i < vec_size(self->locals); ++i)
     {
         v = self->locals[i];
-        if (!OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
+        if ((self->flags & IR_FLAG_MASK_NO_LOCAL_TEMPS) || !OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
             v->locked      = true;
             v->unique_life = true;
         }

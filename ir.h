@@ -281,7 +281,8 @@ typedef struct ir_function_s
 #define IR_FLAG_HAS_UNINITIALIZED (1<<2)
 #define IR_FLAG_HAS_GOTO          (1<<3)
 #define IR_FLAG_INCLUDE_DEF       (1<<4)
-#define IR_FLAG_MASK_NO_OVERLAP (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED)
+#define IR_FLAG_MASK_NO_OVERLAP     (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED)
+#define IR_FLAG_MASK_NO_LOCAL_TEMPS (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED)
 
 ir_function* ir_function_new(struct ir_builder_s *owner, int returntype);
 void         ir_function_delete(ir_function*);
