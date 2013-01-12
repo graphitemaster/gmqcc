@@ -2750,7 +2750,7 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
             else if (!strcmp(parser_tokval(parser), "deprecated") && !(flags & AST_FLAG_DEPRECATED)) {
                 flags   |= AST_FLAG_DEPRECATED;
                 *message = NULL;
-                
+
                 if (!parser_next(parser)) {
                     parseerror(parser, "parse error in attribute");
                     goto argerr;
@@ -2803,7 +2803,7 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                 }
             }
         }
-        else if (!strcmp(parser_tokval(parser), "static"))
+        else if (with_local && !strcmp(parser_tokval(parser), "static"))
             had_static = true;
         else if (!strcmp(parser_tokval(parser), "const"))
             had_const = true;
