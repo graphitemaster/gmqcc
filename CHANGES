@@ -20,6 +20,7 @@ Release v0.2.4
           expressions. Eg: (3 * v).y
         - Type restricted variadict parameters:
           ie: void print(string...);
+        - Accessing varargs from QC via: ...(index, type)
     * Compilation:
         - Various optimizations and progs-size reductions.
         - A new spell-checking algorithm tries to hint you at existing
