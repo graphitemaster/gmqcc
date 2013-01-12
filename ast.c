@@ -2253,6 +2253,8 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
 
         *out = ir_call_value(call);
         self->expression.outr = *out;
+        (*out)->vtype = self->expression.vtype;
+        codegen_output_type(self, *out);
         return true;
     }
 
@@ -2278,6 +2280,8 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
         compile_error(ast_ctx(self), "array indexing here needs an integer constant");
         return false;
     }
+    (*out)->vtype = self->expression.vtype;
+    codegen_output_type(self, *out);
     return true;
 }
 
