@@ -105,7 +105,7 @@ typedef struct {
     size_t     max_param_count;
 } parser_t;
 
-static const ast_expression *intrinsic_debug_typestring = (ast_expression*)0x10;
+static ast_expression * const intrinsic_debug_typestring = (ast_expression*)0x1;
 
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
@@ -121,6 +121,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
 static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname);
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -1555,6 +1556,102 @@ static void parser_reclassify_token(parser_t *parser)
     }
 }
 
+static ast_expression* parse_vararg_do(parser_t *parser)
+{
+    ast_expression *idx, *out;
+    ast_value      *typevar;
+    ast_value      *funtype = parser->function->vtype;
+
+    lex_ctx ctx = parser_ctx(parser);
+
+    if (!parser_next(parser) || parser->tok != '(') {
+        parseerror(parser, "expected parameter index and type in parenthesis");
+        return NULL;
+    }
+    if (!parser_next(parser)) {
+        parseerror(parser, "error parsing parameter index");
+        return NULL;
+    }
+
+    idx = parse_expression_leave(parser, true, false, false);
+    if (!idx)
+        return NULL;
+
+    if (parser->tok != ',') {
+        ast_unref(idx);
+        parseerror(parser, "expected comma after parameter index");
+        return NULL;
+    }
+
+    if (!parser_next(parser) || (parser->tok != TOKEN_IDENT && parser->tok != TOKEN_TYPENAME)) {
+        ast_unref(idx);
+        parseerror(parser, "expected typename for vararg");
+        return NULL;
+    }
+
+    typevar = parse_typename(parser, NULL, NULL);
+    if (!typevar) {
+        ast_unref(idx);
+        return NULL;
+    }
+
+    if (parser->tok != ')') {
+        ast_unref(idx);
+        ast_delete(typevar);
+        parseerror(parser, "expected closing paren");
+        return NULL;
+    }
+
+#if 0
+    if (!parser_next(parser)) {
+        ast_unref(idx);
+        ast_delete(typevar);
+        parseerror(parser, "parse error after vararg");
+        return NULL;
+    }
+#endif
+
+    if (!parser->function->varargs) {
+        ast_unref(idx);
+        ast_delete(typevar);
+        parseerror(parser, "function has no variable argument list");
+        return NULL;
+    }
+
+    if (funtype->expression.varparam &&
+        !ast_compare_type((ast_expression*)typevar, (ast_expression*)funtype->expression.varparam))
+    {
+        char ty1[1024];
+        char ty2[1024];
+        ast_type_to_string((ast_expression*)typevar, ty1, sizeof(ty1));
+        ast_type_to_string((ast_expression*)funtype->expression.varparam, ty2, sizeof(ty2));
+        compile_error(ast_ctx(typevar),
+                      "function was declared to take varargs of type `%s`, requested type is: %s",
+                      ty2, ty1);
+    }
+
+    out = (ast_expression*)ast_array_index_new(ctx, (ast_expression*)(parser->function->varargs), idx);
+    ast_type_adopt(out, typevar);
+    ast_delete(typevar);
+    return out;
+}
+
+static ast_expression* parse_vararg(parser_t *parser)
+{
+    bool             old_noops = parser->lex->flags.noops;
+    enum parser_pot *old_pot   = parser->pot;
+
+    ast_expression *out;
+
+    parser->pot = NULL;
+    parser->lex->flags.noops = true;
+    out = parse_vararg_do(parser);
+
+    parser->pot              = old_pot;
+    parser->lex->flags.noops = old_noops;
+    return out;
+}
+
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels)
 {
     ast_expression *expr = NULL;
@@ -1612,6 +1709,20 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 parseerror(parser, "expected closing paren after translatable string");
                 goto onerr;
             }
+        }
+        else if (parser->tok == TOKEN_DOTS)
+        {
+            ast_expression *va;
+            if (wantop) {
+                parseerror(parser, "expected operator or end of statement");
+                goto onerr;
+            }
+            wantop = true;
+            va = parse_vararg(parser);
+            if (!va)
+                goto onerr;
+            vec_push(sy.out, syexp(parser_ctx(parser), va));
+            DEBUGSHUNTDO(con_out("push `...`\n"));
         }
         else if (parser->tok == TOKEN_IDENT)
         {

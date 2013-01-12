@@ -1244,31 +1244,37 @@ int lex_do(lex_file *lex)
             default:
                 break;
         }
+    }
 
-        if (ch == '.')
-        {
-            lex_tokench(lex, ch);
-            /* peak ahead once */
-            nextch = lex_getch(lex);
-            if (nextch != '.') {
-                lex_ungetch(lex, nextch);
-                lex_endtoken(lex);
-                return (lex->tok.ttype = ch);
-            }
-            /* peak ahead again */
-            nextch = lex_getch(lex);
-            if (nextch != '.') {
-                lex_ungetch(lex, nextch);
-                lex_ungetch(lex, '.');
-                lex_endtoken(lex);
-                return (lex->tok.ttype = ch);
-            }
-            /* fill the token to be "..." */
-            lex_tokench(lex, ch);
-            lex_tokench(lex, ch);
+    if (ch == '.')
+    {
+        lex_tokench(lex, ch);
+        /* peak ahead once */
+        nextch = lex_getch(lex);
+        if (nextch != '.') {
+            lex_ungetch(lex, nextch);
             lex_endtoken(lex);
-            return (lex->tok.ttype = TOKEN_DOTS);
+            if (lex->flags.noops)
+                return (lex->tok.ttype = ch);
+            else
+                return (lex->tok.ttype = TOKEN_OPERATOR);
         }
+        /* peak ahead again */
+        nextch = lex_getch(lex);
+        if (nextch != '.') {
+            lex_ungetch(lex, nextch);
+            lex_ungetch(lex, '.');
+            lex_endtoken(lex);
+            if (lex->flags.noops)
+                return (lex->tok.ttype = ch);
+            else
+                return (lex->tok.ttype = TOKEN_OPERATOR);
+        }
+        /* fill the token to be "..." */
+        lex_tokench(lex, ch);
+        lex_tokench(lex, ch);
+        lex_endtoken(lex);
+        return (lex->tok.ttype = TOKEN_DOTS);
     }
 
     if (ch == ',' || ch == '.') {
