@@ -1353,6 +1353,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 {
     /* was a function call */
     ast_expression *fun;
+    ast_value      *funval = NULL;
     ast_call       *call;
 
     size_t          fid;
@@ -1420,6 +1421,20 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     } else {
         parseerror(parser, "invalid function call");
         return false;
+    }
+
+    if (ast_istype(fun, ast_value)) {
+        funval = (ast_value*)fun;
+        if ((fun->expression.flags & AST_FLAG_VARIADIC) &&
+            !(funval->cvq == CV_CONST && funval->hasvalue && funval->constval.vfunc->builtin))
+        {
+            size_t va_count;
+            if (paramcount < vec_size(fun->expression.params))
+                va_count = 0;
+            else
+                va_count = paramcount - vec_size(fun->expression.params);
+            call->va_count = (ast_expression*)parser_const_float(parser, (double)va_count);
+        }
     }
 
     /* overwrite fid, the function, with a call */
@@ -5742,6 +5757,31 @@ bool parser_finish(const char *output)
         ir_builder_delete(ir);
         return false;
     }
+    /* Build function vararg accessor ast tree now before generating
+     * immediates, because the accessors may add new immediates
+     */
+    for (i = 0; i < vec_size(parser->functions); ++i) {
+        ast_function *f = parser->functions[i];
+        if (f->varargs) {
+            if (parser->max_param_count > vec_size(f->vtype->expression.params)) {
+                f->varargs->expression.count = parser->max_param_count - vec_size(f->vtype->expression.params);
+                if (!parser_create_array_setter_impl(parser, f->varargs)) {
+                    con_out("failed to generate vararg setter for %s\n", f->name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+                if (!parser_create_array_getter_impl(parser, f->varargs)) {
+                    con_out("failed to generate vararg getter for %s\n", f->name);
+                    ir_builder_delete(ir);
+                    return false;
+                }
+            } else {
+                ast_delete(f->varargs);
+                f->varargs = NULL;
+            }
+        }
+    }
+    /* Now we can generate immediates */
     for (i = 0; i < vec_size(parser->imm_float); ++i) {
         if (!ast_global_codegen(parser->imm_float[i], ir, false)) {
             con_out("failed to generate global %s\n", parser->imm_float[i]->name);
@@ -5799,24 +5839,6 @@ bool parser_finish(const char *output)
     }
     for (i = 0; i < vec_size(parser->functions); ++i) {
         ast_function *f = parser->functions[i];
-        if (f->varargs) {
-            if (parser->max_param_count > vec_size(f->vtype->expression.params)) {
-                f->varargs->expression.count = parser->max_param_count - vec_size(f->vtype->expression.params);
-                if (!parser_create_array_setter_impl(parser, f->varargs)) {
-                    con_out("failed to generate vararg setter for %s\n", f->name);
-                    ir_builder_delete(ir);
-                    return false;
-                }
-                if (!parser_create_array_getter_impl(parser, f->varargs)) {
-                    con_out("failed to generate vararg getter for %s\n", f->name);
-                    ir_builder_delete(ir);
-                    return false;
-                }
-            } else {
-                ast_delete(f->varargs);
-                f->varargs = NULL;
-            }
-        }
         if (!ast_function_codegen(f, ir)) {
             con_out("failed to generate function %s\n", f->name);
             ir_builder_delete(ir);
