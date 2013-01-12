@@ -18,6 +18,8 @@ Release v0.2.4
           (ie no `typedef enum { } foo;`)
         - Accessing vector components via the dot operator on all
           expressions. Eg: (3 * v).y
+        - Type restricted variadict parameters:
+          ie: void print(string...);
     * Compilation:
         - Various optimizations and progs-size reductions.
         - A new spell-checking algorithm tries to hint you at existing
