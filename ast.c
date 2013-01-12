@@ -894,8 +894,9 @@ ast_call* ast_call_new(lex_ctx ctx,
 
     ast_side_effects(self) = true;
 
-    self->params = NULL;
-    self->func   = funcexpr;
+    self->params   = NULL;
+    self->func     = funcexpr;
+    self->va_count = NULL;
 
     ast_type_adopt(self, funcexpr->expression.next);
 
@@ -911,6 +912,9 @@ void ast_call_delete(ast_call *self)
 
     if (self->func)
         ast_unref(self->func);
+
+    if (self->va_count)
+        ast_unref(self->va_count);
 
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
@@ -3028,6 +3032,20 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
         if (!param)
             goto error;
         vec_push(params, param);
+    }
+
+    /* varargs counter */
+    if (self->va_count) {
+        ir_value   *va_count;
+        ir_builder *builder = func->curblock->owner->owner;
+        cgen = self->va_count->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->va_count), func, false, &va_count))
+            return false;
+        if (!ir_block_create_store_op(func->curblock, ast_ctx(self), INSTR_STORE_F,
+                                      ir_builder_get_va_count(builder), va_count))
+        {
+            return false;
+        }
     }
 
     callinstr = ir_block_create_call(func->curblock, ast_ctx(self),

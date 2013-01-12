@@ -151,7 +151,6 @@ typedef struct
 #define AST_FLAG_DEPRECATED   (1<<4)
 #define AST_FLAG_INCLUDE_DEF  (1<<5)
 #define AST_FLAG_IS_VARARG    (1<<6)
-#define AST_FLAG_VARARG_COUNT (1<<7)
 #define AST_FLAG_TYPE_MASK (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value
@@ -577,6 +576,7 @@ struct ast_call_s
     ast_expression_common expression;
     ast_expression *func;
     ast_expression* *params;
+    ast_expression *va_count;
 };
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr);

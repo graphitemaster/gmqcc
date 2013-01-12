@@ -320,6 +320,8 @@ ir_builder* ir_builder_new(const char *modulename)
     self->nil = ir_value_var("nil", store_value, TYPE_NIL);
     self->nil->cvq = CV_CONST;
 
+    self->reserved_va_count = NULL;
+
     return self;
 }
 
@@ -416,6 +418,13 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
     vec_push(self->globals, ve);
     util_htset(self->htglobals, name, ve);
     return ve;
+}
+
+ir_value* ir_builder_get_va_count(ir_builder *self)
+{
+    if (self->reserved_va_count)
+        return self->reserved_va_count;
+    return (self->reserved_va_count = ir_builder_create_global(self, "reserved:va_count", TYPE_FLOAT));
 }
 
 ir_value* ir_builder_get_field(ir_builder *self, const char *name)

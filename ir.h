@@ -328,6 +328,7 @@ typedef struct ir_builder_s
     qcint        str_immediate;
     /* there should just be this one nil */
     ir_value    *nil;
+    ir_value    *reserved_va_count;
 } ir_builder;
 
 ir_builder* ir_builder_new(const char *modulename);
@@ -342,6 +343,8 @@ ir_value* ir_builder_get_global(ir_builder*, const char *fun);
 ir_value* ir_builder_create_global(ir_builder*, const char *name, int vtype);
 ir_value* ir_builder_get_field(ir_builder*, const char *fun);
 ir_value* ir_builder_create_field(ir_builder*, const char *name, int vtype);
+
+ir_value* ir_builder_get_va_count(ir_builder*);
 
 bool ir_builder_generate(ir_builder *self, const char *filename);
 
