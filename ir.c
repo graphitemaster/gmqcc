@@ -485,6 +485,8 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self->values = NULL;
     self->locals = NULL;
 
+    self->max_varargs = NULL;
+
     self->code_function_def = -1;
     self->allocated_locals = 0;
     self->globaltemps      = 0;

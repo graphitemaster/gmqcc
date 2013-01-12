@@ -273,6 +273,9 @@ typedef struct ir_function_s
     size_t run_id;
 
     struct ir_builder_s *owner;
+
+    /* vararg support: */
+    size_t max_varargs;
 } ir_function;
 #define IR_FLAG_HAS_ARRAYS        (1<<1)
 #define IR_FLAG_HAS_UNINITIALIZED (1<<2)

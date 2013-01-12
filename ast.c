@@ -1582,6 +1582,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     if (self->varargs) {
         if (!ast_local_codegen(self->varargs, self->ir_func, true))
             return false;
+        irf->max_varargs = self->varargs->expression.count;
     }
 
     if (self->builtin) {
