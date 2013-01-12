@@ -3998,12 +3998,6 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
-    if (var->argcounter) {
-        ast_value *argc = ast_value_new(ast_ctx(var), var->argcounter, TYPE_FLOAT);
-        ast_block_collect(block, (ast_expression*)argc);
-        parser_addlocal(parser, argc->name, (ast_expression*)argc);
-    }
-
     func = ast_function_new(ast_ctx(var), var->name, var);
     if (!func) {
         parseerror(parser, "failed to allocate function for `%s`", var->name);
@@ -4011,6 +4005,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         goto enderr;
     }
     vec_push(parser->functions, func);
+
+    if (var->argcounter) {
+        ast_value *argc = ast_value_new(ast_ctx(var), var->argcounter, TYPE_FLOAT);
+        parser_addlocal(parser, argc->name, (ast_expression*)argc);
+        func->argc = argc;
+    }
 
     if (var->expression.flags & AST_FLAG_VARIADIC) {
         char name[1024];

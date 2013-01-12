@@ -1079,6 +1079,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     vtype->constval.vfunc = self;
 
     self->varargs = NULL;
+    self->argc    = NULL;
 
     return self;
 }
@@ -1104,6 +1105,8 @@ void ast_function_delete(ast_function *self)
     vec_free(self->continueblocks);
     if (self->varargs)
         ast_delete(self->varargs);
+    if (self->argc)
+        ast_delete(self->argc);
     mem_d(self);
 }
 
@@ -1554,7 +1557,8 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 {
     ir_function *irf;
     ir_value    *dummy;
-    ast_expression_common *ec;
+    ast_expression_common  *ec;
+    ast_expression_codegen *cgen;
     size_t    i;
 
     (void)ir;
@@ -1601,9 +1605,23 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return false;
     }
 
+    if (self->argc) {
+        ir_value *va_count;
+        if (!ast_local_codegen(self->argc, self->ir_func, true))
+            return false;
+        cgen = self->argc->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->argc), self, false, &va_count))
+            return false;
+        if (!ir_block_create_store_op(self->curblock, ast_ctx(self), INSTR_STORE_F,
+                                      va_count, ir_builder_get_va_count(ir)))
+        {
+            return false;
+        }
+    }
+
     for (i = 0; i < vec_size(self->blocks); ++i) {
-        ast_expression_codegen *gen = self->blocks[i]->expression.codegen;
-        if (!(*gen)((ast_expression*)self->blocks[i], self, false, &dummy))
+        cgen = self->blocks[i]->expression.codegen;
+        if (!(*cgen)((ast_expression*)self->blocks[i], self, false, &dummy))
             return false;
     }
 
