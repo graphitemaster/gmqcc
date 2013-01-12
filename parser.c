@@ -4191,6 +4191,9 @@ static ast_expression *array_field_setter_node(
         if (!subscript)
             return NULL;
 
+        subscript->expression.next = ast_type_copy(ast_ctx(subscript), (ast_expression*)subscript);
+        subscript->expression.vtype = TYPE_FIELD;
+
         entfield = ast_entfield_new_force(ctx,
                                           (ast_expression*)entity,
                                           (ast_expression*)subscript,
@@ -5011,7 +5014,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     goto cleanup;
                     */
                 }
-                if (opts.standard == COMPILER_QCC &&
+                if ((opts.standard == COMPILER_QCC || opts.standard == COMPILER_FTEQCC) &&
                     (old = parser_find_global(parser, var->name)))
                 {
                     parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
