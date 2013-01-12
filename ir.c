@@ -2310,8 +2310,6 @@ bool ir_function_allocate_locals(ir_function *self)
     /* Locals need to know their new position */
     for (i = 0; i < vec_size(self->locals); ++i) {
         v = self->locals[i];
-        if (i >= vec_size(self->params) && !vec_size(v->life))
-            continue;
         if (v->locked || !opt_gt)
             v->code.local = lockalloc.positions[v->code.local];
         else
@@ -2320,8 +2318,6 @@ bool ir_function_allocate_locals(ir_function *self)
     /* Take over the actual slot positions on values */
     for (i = 0; i < vec_size(self->values); ++i) {
         v = self->values[i];
-        if (!vec_size(v->life))
-            continue;
         if (v->locked || !opt_gt)
             v->code.local = lockalloc.positions[v->code.local];
         else
