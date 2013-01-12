@@ -5750,13 +5750,6 @@ bool parser_finish(const char *output)
             return false;
         }
     }
-    if (parser->reserved_version &&
-        !ast_global_codegen(parser->reserved_version, ir, false))
-    {
-        con_out("failed to generate reserved::version");
-        ir_builder_delete(ir);
-        return false;
-    }
     /* Build function vararg accessor ast tree now before generating
      * immediates, because the accessors may add new immediates
      */
@@ -5836,6 +5829,13 @@ bool parser_finish(const char *output)
             ir_builder_delete(ir);
             return false;
         }
+    }
+    if (parser->reserved_version &&
+        !ast_global_codegen(parser->reserved_version, ir, false))
+    {
+        con_out("failed to generate reserved::version");
+        ir_builder_delete(ir);
+        return false;
     }
     for (i = 0; i < vec_size(parser->functions); ++i) {
         ast_function *f = parser->functions[i];
