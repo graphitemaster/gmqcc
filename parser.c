@@ -4291,6 +4291,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
     ast_value  *fval;
     bool        first = true;
     bool        variadic = false;
+    ast_value  *varparam = NULL;
 
     ctx = parser_ctx(parser);
 
@@ -4320,11 +4321,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         if (parser->tok == TOKEN_DOTS) {
             /* '...' indicates a varargs function */
             variadic = true;
-            if (!parser_next(parser)) {
-                parseerror(parser, "expected parameter");
-                return NULL;
-            }
-            if (parser->tok != ')') {
+            if (!parser_next(parser) || parser->tok != ')') {
                 parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                 goto on_error;
             }
@@ -4341,6 +4338,16 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 ast_type_to_string((ast_expression*)param, tname, sizeof(tname));
                 parseerror(parser, "type not supported as part of a parameter list: %s", tname);
                 goto on_error;
+            }
+            /* type-restricted varargs */
+            if (parser->tok == TOKEN_DOTS) {
+                variadic = true;
+                varparam = vec_last(params);
+                vec_pop(params);
+                if (!parser_next(parser) || parser->tok != ')') {
+                    parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
+                    goto on_error;
+                }
             }
         }
     }
@@ -4365,7 +4372,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         fval->expression.flags |= AST_FLAG_VARIADIC;
     var = fval;
 
-    var->expression.params = params;
+    var->expression.params   = params;
+    var->expression.varparam = (ast_expression*)varparam;
     params = NULL;
 
     return var;

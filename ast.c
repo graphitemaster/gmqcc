@@ -75,6 +75,7 @@ static void ast_expression_init(ast_expression *self,
     self->expression.params   = NULL;
     self->expression.count    = 0;
     self->expression.flags    = 0;
+    self->expression.varparam = NULL;
 }
 
 static void ast_expression_delete(ast_expression *self)

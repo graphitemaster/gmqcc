@@ -132,6 +132,10 @@ typedef struct
     size_t                  count;
     ast_value*             *params;
     uint32_t                flags;
+    /* void foo(string...) gets varparam set as a restriction
+     * for variadic parameters
+     */
+    ast_expression         *varparam;
     /* The codegen functions should store their output values
      * so we can call it multiple times without re-evaluating.
      * Store lvalue and rvalue seperately though. So that
@@ -146,6 +150,7 @@ typedef struct
 #define AST_FLAG_INITIALIZED  (1<<3)
 #define AST_FLAG_DEPRECATED   (1<<4)
 #define AST_FLAG_INCLUDE_DEF  (1<<5)
+#define AST_FLAG_VARARG_COUNT (1<<6)
 #define AST_FLAG_TYPE_MASK (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value
