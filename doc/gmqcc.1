@@ -477,6 +477,23 @@ Various effects, usually to weaken some conditions.
 Allow local variables named 'nil'. (This will not allow declaring a
 global of that name.)
 .RE
+.TP
+.B -fvariadic-args
+Allow variadic parameters to be accessed by QC code. This can be
+achieved via the '...' function, which takes a parameter index and a
+typename.
+
+Example:
+.sp
+.in +4
+.nf
+void vafunc(string...count) {
+    float i;
+    for (i = 0; i < count; ++i)
+        print(...(i, string), "\\n");
+}
+.fi
+.in
 .SH OPTIMIZATIONS
 .TP
 .B -Opeephole
