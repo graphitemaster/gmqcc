@@ -100,6 +100,9 @@ typedef struct {
 
     /* pragma flags */
     bool noref;
+
+    /* collected information */
+    size_t     max_param_count;
 } parser_t;
 
 static const ast_expression *intrinsic_debug_typestring = (ast_expression*)0x10;
@@ -1403,6 +1406,8 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
             params->exprs = NULL;
             ast_delete(params);
         }
+        if (parser->max_param_count < paramcount)
+            parser->max_param_count = paramcount;
         (void)!ast_call_check_types(call);
     } else {
         parseerror(parser, "invalid function call");
