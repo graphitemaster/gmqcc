@@ -1426,7 +1426,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     if (ast_istype(fun, ast_value)) {
         funval = (ast_value*)fun;
         if ((fun->expression.flags & AST_FLAG_VARIADIC) &&
-            !(funval->cvq == CV_CONST && funval->hasvalue && funval->constval.vfunc->builtin))
+            !(/*funval->cvq == CV_CONST && */ funval->hasvalue && funval->constval.vfunc->builtin))
         {
             size_t va_count;
             if (paramcount < vec_size(fun->expression.params))
