@@ -348,6 +348,8 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->getter = NULL;
     self->desc   = NULL;
 
+    self->argcounter = NULL;
+
     return self;
 }
 
@@ -355,6 +357,8 @@ void ast_value_delete(ast_value* self)
 {
     if (self->name)
         mem_d((void*)self->name);
+    if (self->argcounter)
+        mem_d((void*)self->argcounter);
     if (self->hasvalue) {
         switch (self->expression.vtype)
         {

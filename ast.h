@@ -167,6 +167,8 @@ struct ast_value_s
     const char *name;
     const char *desc;
 
+    const char *argcounter;
+
     /*
     int         vtype;
     ast_value  *next;

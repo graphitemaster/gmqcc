@@ -4292,6 +4292,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
     bool        first = true;
     bool        variadic = false;
     ast_value  *varparam = NULL;
+    char       *argcounter = NULL;
 
     ctx = parser_ctx(parser);
 
@@ -4321,9 +4322,16 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         if (parser->tok == TOKEN_DOTS) {
             /* '...' indicates a varargs function */
             variadic = true;
-            if (!parser_next(parser) || parser->tok != ')') {
+            if (!parser_next(parser) || (parser->tok != ')' && parser->tok != TOKEN_IDENT)) {
                 parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                 goto on_error;
+            }
+            if (parser->tok == TOKEN_IDENT) {
+                argcounter = util_strdup(parser_tokval(parser));
+                if (!parser_next(parser) || parser->tok != ')') {
+                    parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
+                    goto on_error;
+                }
             }
         }
         else
@@ -4344,9 +4352,16 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 variadic = true;
                 varparam = vec_last(params);
                 vec_pop(params);
-                if (!parser_next(parser) || parser->tok != ')') {
+                if (!parser_next(parser) || (parser->tok != ')' && parser->tok != TOKEN_IDENT)) {
                     parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                     goto on_error;
+                }
+                if (parser->tok == TOKEN_IDENT) {
+                    argcounter = util_strdup(parser_tokval(parser));
+                    if (!parser_next(parser) || parser->tok != ')') {
+                        parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
+                        goto on_error;
+                    }
                 }
             }
         }
@@ -4374,11 +4389,14 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 
     var->expression.params   = params;
     var->expression.varparam = (ast_expression*)varparam;
+    var->argcounter          = argcounter;
     params = NULL;
 
     return var;
 
 on_error:
+    if (argcounter)
+        mem_d(argcounter);
     ast_delete(var);
     for (i = 0; i < vec_size(params); ++i)
         ast_delete(params[i]);
