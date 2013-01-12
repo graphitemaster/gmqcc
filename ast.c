@@ -914,6 +914,8 @@ void ast_call_delete(ast_call *self)
 
 bool ast_call_check_types(ast_call *self)
 {
+    char texp[1024];
+    char tgot[1024];
     size_t i;
     bool   retval = true;
     const  ast_expression *func = self->func;
@@ -924,14 +926,26 @@ bool ast_call_check_types(ast_call *self)
     for (i = 0; i < count; ++i) {
         if (!ast_compare_type(self->params[i], (ast_expression*)(func->expression.params[i])))
         {
-            char texp[1024];
-            char tgot[1024];
             ast_type_to_string(self->params[i], tgot, sizeof(tgot));
             ast_type_to_string((ast_expression*)func->expression.params[i], texp, sizeof(texp));
             compile_error(ast_ctx(self), "invalid type for parameter %u in function call: expected %s, got %s",
                      (unsigned int)(i+1), texp, tgot);
             /* we don't immediately return */
             retval = false;
+        }
+    }
+    count = vec_size(self->params);
+    if (count > vec_size(func->expression.params) && func->expression.varparam) {
+        for (; i < count; ++i) {
+            if (!ast_compare_type(self->params[i], func->expression.varparam))
+            {
+                ast_type_to_string(self->params[i], tgot, sizeof(tgot));
+                ast_type_to_string(func->expression.varparam, texp, sizeof(texp));
+                compile_error(ast_ctx(self), "invalid type for parameter %u in function call: expected %s, got %s",
+                         (unsigned int)(i+1), texp, tgot);
+                /* we don't immediately return */
+                retval = false;
+            }
         }
     }
     return retval;
