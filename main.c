@@ -465,6 +465,14 @@ static bool options_parse(int argc, char **argv) {
                         opts.quiet = true;
                         break;
                     }
+                    else if (!strcmp(argv[0]+2, "correct")) {
+                        opts.correction = true;
+                        break;
+                    }
+                    else if (!strcmp(argv[0]+2, "no-correct")) {
+                        opts.correction = false;
+                        break;
+                    }
                     else if (!strcmp(argv[0]+2, "add-info")) {
                         opts.add_info = true;
                         break;

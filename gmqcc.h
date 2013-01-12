@@ -1149,6 +1149,7 @@ typedef struct {
     bool        pp_only;        /* -E            */
     size_t      max_array_size; /* --max-array=  */
     bool        add_info;       /* --add-info    */
+    bool        correction;     /* --correct     */
 
     uint32_t flags        [1 + (COUNT_FLAGS         / 32)];
     uint32_t warn         [1 + (COUNT_WARNINGS      / 32)];

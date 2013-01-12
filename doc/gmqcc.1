@@ -151,6 +151,10 @@ String containing the compiler version as printed by the --version
 parameter.
 .RE
 .TP
+.BR "--correct" ", " "--no-correct"
+When enabled, errors about undefined values try to suggest an existing
+value via spell checking.
+.TP
 .B "-dump"
 DEBUG OPTION. Print the code's intermediate representation before the
 optimization and finalization passes to stdout before generating the

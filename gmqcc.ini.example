@@ -99,10 +99,6 @@
     # variables with the name 'nil' to be declared.
     PREMISSIVE                   = false
 
-    # Enable enhanced diagnostic messages. i.e provides a "did you mean"
-    # <ident> when you accidently typo. Amongst others
-    ENHANCED_DIAGNOSTICS         = true
-
     # Allow vararg access from within QC of the form: ...(argnumber, type)
     VARIADIC_ARGS                = true
 

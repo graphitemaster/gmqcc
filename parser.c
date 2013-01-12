@@ -1795,7 +1795,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                      * We should also consider adding correction tables for
                      * other things as well.
                      */
-                    if (OPTS_FLAG(ENHANCED_DIAGNOSTICS)) {
+                    if (opts.correction) {
                         correction_t corr;
                         correct_init(&corr);
 

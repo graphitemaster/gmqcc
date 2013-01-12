@@ -27,7 +27,8 @@ opts_cmd_t   opts; /* command lien options */
 
 static void opts_setdefault() {
     memset(&opts, 0, sizeof(opts_cmd_t));
-    
+    opts.correction = true;
+
     /* warnings */
     opts_set(opts.warn,  WARN_UNUSED_VARIABLE,           true);
     opts_set(opts.warn,  WARN_USED_UNINITIALIZED,        true);
@@ -65,7 +66,6 @@ static void opts_setdefault() {
     opts_set(opts.flags, FTEPP_PREDEFS,                  false);
     opts_set(opts.flags, CORRECT_TERNARY,                true);
     opts_set(opts.flags, BAIL_ON_WERROR,                 true);
-    opts_set(opts.flags, ENHANCED_DIAGNOSTICS,           true);
 }
 
 void opts_backup_non_Wall() {
