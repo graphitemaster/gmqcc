@@ -3176,6 +3176,42 @@ static bool gen_function_extparam_copy(ir_function *self)
     return true;
 }
 
+static bool gen_function_varargs_copy(ir_function *self)
+{
+    size_t i, ext, numparams, maxparams;
+
+    ir_builder *ir = self->owner;
+    ir_value   *ep;
+    prog_section_statement stmt;
+
+    numparams = vec_size(self->params);
+    if (!numparams)
+        return true;
+
+    stmt.opcode = INSTR_STORE_V;
+    stmt.o3.s1 = 0;
+    maxparams = numparams + self->max_varargs;
+    for (i = numparams; i < maxparams; ++i) {
+        if (i <= 8) {
+            stmt.o1.u1 = OFS_PARM0 + 3*i;
+            stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
+            code_push_statement(&stmt, self->context.line);
+            continue;
+        }
+        ext = i - 8;
+        if (ext >= vec_size(ir->extparams))
+            ir_gen_extparam(ir);
+
+        ep = ir->extparams[ext];
+
+        stmt.o1.u1 = ir_value_code_addr(ep);
+        stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
+        code_push_statement(&stmt, self->context.line);
+    }
+
+    return true;
+}
+
 static bool gen_function_locals(ir_builder *ir, ir_value *global)
 {
     prog_section_function *def;
@@ -3255,6 +3291,10 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     }
     if (!gen_function_extparam_copy(irfun)) {
         irerror(irfun->context, "Failed to generate extparam-copy code for function %s", irfun->name);
+        return false;
+    }
+    if (irfun->max_varargs && !gen_function_varargs_copy(irfun)) {
+        irerror(irfun->context, "Failed to generate vararg-copy code for function %s", irfun->name);
         return false;
     }
     if (!gen_function_code(irfun)) {
