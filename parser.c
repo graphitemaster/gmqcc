@@ -921,16 +921,39 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             };
             break;
         case opid1('/'):
-            if (NotSameType(TYPE_FLOAT)) {
-                compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s",
-                              type_name[exprs[0]->expression.vtype],
-                              type_name[exprs[1]->expression.vtype]);
+            if (exprs[1]->expression.vtype != TYPE_FLOAT) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                compile_error(ctx, "invalid types used in expression: cannot divide tyeps %s and %s", ty1, ty2);
                 return false;
             }
-            if (CanConstFold(exprs[0], exprs[1]))
-                out = (ast_expression*)parser_const_float(parser, ConstF(0) / ConstF(1));
+            if (exprs[0]->expression.vtype == TYPE_FLOAT) {
+                if (CanConstFold(exprs[0], exprs[1]))
+                    out = (ast_expression*)parser_const_float(parser, ConstF(0) / ConstF(1));
+                else
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+            }
+            else if (exprs[0]->expression.vtype == TYPE_VECTOR) {
+                if (CanConstFold(exprs[0], exprs[1]))
+                    out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(0), 1.0/ConstF(1)));
+                else {
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
+                                                          (ast_expression*)parser_const_float_1(parser),
+                                                          exprs[1]);
+                    if (!out) {
+                        compile_error(ctx, "internal error: failed to generate division");
+                        return false;
+                    }
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], out);
+                }
+            }
             else
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+            {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                compile_error(ctx, "invalid types used in expression: cannot divide tyeps %s and %s", ty1, ty2);
+                return false;
+            }
             break;
         case opid1('%'):
         case opid2('%','='):
