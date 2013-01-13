@@ -106,4 +106,5 @@
 /* some cleanup so we don't have to */
 #undef GMQCC_TYPE_FLAGS
 #undef GMQCC_TYPE_WARNS
+#undef GMQCC_TYPE_OPTIMIZATIONS
 #undef GMQCC_DEFINE_FLAG
