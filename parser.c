@@ -548,8 +548,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     DEBUGSHUNTDO(con_out("apply %s\n", op->op));
 
     if (vec_size(sy->out) < op->operands) {
-        parseerror(parser, "internal error: not enough operands: %i (operator %s (%i))", vec_size(sy->out),
-                   op->op, (int)op->id);
+        compile_error(ctx, "internal error: not enough operands: %i (operator %s (%i))", vec_size(sy->out),
+                      op->op, (int)op->id);
         return false;
     }
 
@@ -578,7 +578,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     }
 
     if (blocks[0] && !vec_size(blocks[0]->exprs) && op->id != opid1(',')) {
-        parseerror(parser, "internal error: operator cannot be applied on empty blocks");
+        compile_error(ctx, "internal error: operator cannot be applied on empty blocks");
         return false;
     }
 
@@ -596,7 +596,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     switch (op->id)
     {
         default:
-            parseerror(parser, "internal error: unhandled operator: %s (%i)", op->op, (int)op->id);
+            compile_error(ctx, "internal error: unhandled operator: %s (%i)", op->op, (int)op->id);
             return false;
 
         case opid1('.'):
@@ -610,23 +610,23 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 else if (exprs[1] == (ast_expression*)parser->const_vec[2])
                     out = (ast_expression*)ast_member_new(ctx, exprs[0], 2, NULL);
                 else {
-                    parseerror(parser, "access to invalid vector component");
+                    compile_error(ctx, "access to invalid vector component");
                     return false;
                 }
             }
             else if (exprs[0]->expression.vtype == TYPE_ENTITY) {
                 if (exprs[1]->expression.vtype != TYPE_FIELD) {
-                    parseerror(parser, "type error: right hand of member-operand should be an entity-field");
+                    compile_error(ast_ctx(exprs[1]), "type error: right hand of member-operand should be an entity-field");
                     return false;
                 }
                 out = (ast_expression*)ast_entfield_new(ctx, exprs[0], exprs[1]);
             }
             else if (exprs[0]->expression.vtype == TYPE_VECTOR) {
-                parseerror(parser, "vectors cannot be accessed this way");
+                compile_error(ast_ctx(exprs[1]), "vectors cannot be accessed this way");
                 return false;
             }
             else {
-                parseerror(parser, "type error: member-of operator on something that is not an entity or vector");
+                compile_error(ast_ctx(exprs[1]), "type error: member-of operator on something that is not an entity or vector");
                 return false;
             }
             break;
@@ -637,12 +637,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                   exprs[0]->expression.next->expression.vtype == TYPE_ARRAY))
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                parseerror(parser, "cannot index value of type %s", ty1);
+                compile_error(ast_ctx(exprs[0]), "cannot index value of type %s", ty1);
                 return false;
             }
             if (exprs[1]->expression.vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                parseerror(parser, "index must be of type float, not %s", ty1);
+                compile_error(ast_ctx(exprs[1]), "index must be of type float, not %s", ty1);
                 return false;
             }
             out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
@@ -701,8 +701,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                                               exprs[0]);
                     break;
                 default:
-                parseerror(parser, "invalid types used in expression: cannot negate type %s",
-                           type_name[exprs[0]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot negate type %s",
+                              type_name[exprs[0]->expression.vtype]);
                 return false;
             }
             break;
@@ -743,8 +743,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_FNC, exprs[0]);
                     break;
                 default:
-                parseerror(parser, "invalid types used in expression: cannot logically negate type %s",
-                           type_name[exprs[0]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot logically negate type %s",
+                              type_name[exprs[0]->expression.vtype]);
                 return false;
             }
             break;
@@ -753,9 +753,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
                 (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
             {
-                parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
+                              type_name[exprs[0]->expression.vtype],
+                              type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             switch (exprs[0]->expression.vtype) {
@@ -774,9 +774,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "invalid types used in expression: cannot add type %s and %s",
-                               type_name[exprs[0]->expression.vtype],
-                               type_name[exprs[1]->expression.vtype]);
+                    compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
+                                  type_name[exprs[0]->expression.vtype],
+                                  type_name[exprs[1]->expression.vtype]);
                     return false;
             };
             break;
@@ -784,9 +784,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
                 (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
             {
-                parseerror(parser, "invalid types used in expression: cannot subtract type %s from %s",
-                           type_name[exprs[1]->expression.vtype],
-                           type_name[exprs[0]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
+                              type_name[exprs[1]->expression.vtype],
+                              type_name[exprs[0]->expression.vtype]);
                 return false;
             }
             switch (exprs[0]->expression.vtype) {
@@ -803,9 +803,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "invalid types used in expression: cannot subtract type %s from %s",
-                               type_name[exprs[1]->expression.vtype],
-                               type_name[exprs[0]->expression.vtype]);
+                    compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
+                                  type_name[exprs[1]->expression.vtype],
+                                  type_name[exprs[0]->expression.vtype]);
                     return false;
             };
             break;
@@ -817,9 +817,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                   exprs[0]->expression.vtype == TYPE_FLOAT)
                 )
             {
-                parseerror(parser, "invalid types used in expression: cannot multiply types %s and %s",
-                           type_name[exprs[1]->expression.vtype],
-                           type_name[exprs[0]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
+                              type_name[exprs[1]->expression.vtype],
+                              type_name[exprs[0]->expression.vtype]);
                 return false;
             }
             switch (exprs[0]->expression.vtype) {
@@ -914,17 +914,17 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     }
                     break;
                 default:
-                    parseerror(parser, "invalid types used in expression: cannot multiply types %s and %s",
-                               type_name[exprs[1]->expression.vtype],
-                               type_name[exprs[0]->expression.vtype]);
+                    compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
+                                  type_name[exprs[1]->expression.vtype],
+                                  type_name[exprs[0]->expression.vtype]);
                     return false;
             };
             break;
         case opid1('/'):
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "invalid types used in expression: cannot divide types %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s",
+                              type_name[exprs[0]->expression.vtype],
+                              type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             if (CanConstFold(exprs[0], exprs[1]))
@@ -934,14 +934,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid1('%'):
         case opid2('%','='):
-            parseerror(parser, "qc does not have a modulo operator");
+            compile_error(ctx, "qc does not have a modulo operator");
             return false;
         case opid1('|'):
         case opid1('&'):
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "invalid types used in expression: cannot perform bit operations between types %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot perform bit operations between types %s and %s",
+                              type_name[exprs[0]->expression.vtype],
+                              type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             if (CanConstFold(exprs[0], exprs[1]))
@@ -975,16 +975,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             generated_op += 1; /* INSTR_OR */
         case opid2('&','&'):
             generated_op += INSTR_AND;
-#if 0
-            if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "invalid types used in expression: cannot perform logical operations between types %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
-                parseerror(parser, "TODO: logical ops for arbitrary types using INSTR_NOT");
-                parseerror(parser, "TODO: optional early out");
-                return false;
-            }
-#endif
             if (CanConstFold(exprs[0], exprs[1]))
             {
                 if (OPTS_FLAG(PERL_LOGIC)) {
@@ -1003,7 +993,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 if (OPTS_FLAG(PERL_LOGIC) && !ast_compare_type(exprs[0], exprs[1])) {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                    parseerror(parser, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
+                    compile_error(ctx, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
                     return false;
                 }
                 for (i = 0; i < 2; ++i) {
@@ -1036,14 +1026,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid2('?',':'):
             if (vec_last(parser->pot) != POT_TERNARY2) {
-                parseerror(parser, "mismatched parenthesis/ternary");
+                compile_error(ctx, "mismatched parenthesis/ternary");
                 return false;
             }
             vec_pop(parser->pot);
             if (!ast_compare_type(exprs[1], exprs[2])) {
                 ast_type_to_string(exprs[1], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[2], ty2, sizeof(ty2));
-                parseerror(parser, "operands of ternary expression must have the same type, got %s and %s", ty1, ty2);
+                compile_error(ctx, "operands of ternary expression must have the same type, got %s and %s", ty1, ty2);
                 return false;
             }
             if (CanConstFold1(exprs[0]))
@@ -1061,27 +1051,27 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid2('<', '='):
             generated_op += INSTR_LE;
             if (NotSameType(TYPE_FLOAT)) {
-                parseerror(parser, "invalid types used in expression: cannot perform comparison between types %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
+                              type_name[exprs[0]->expression.vtype],
+                              type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             break;
         case opid2('!', '='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "invalid types used in expression: cannot perform comparison between types %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
+                              type_name[exprs[0]->expression.vtype],
+                              type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->expression.vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
             if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
-                parseerror(parser, "invalid types used in expression: cannot perform comparison between types %s and %s",
-                           type_name[exprs[0]->expression.vtype],
-                           type_name[exprs[1]->expression.vtype]);
+                compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
+                              type_name[exprs[0]->expression.vtype],
+                              type_name[exprs[1]->expression.vtype]);
                 return false;
             }
             out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->expression.vtype], exprs[0], exprs[1]);
@@ -1110,7 +1100,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                             "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                     }
                     else
-                        parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                        compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
             }
             else
@@ -1128,7 +1118,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 if (assignop == AINSTR_END) {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                    parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                    compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
                 else if (!ast_compare_type(exprs[0], exprs[1]))
                 {
@@ -1142,11 +1132,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                             "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                     }
                     else
-                        parseerror(parser, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                        compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
             }
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
@@ -1155,7 +1145,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             /* prefix ++ */
             if (exprs[0]->expression.vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                parseerror(parser, "invalid type for prefix increment: %s", ty1);
+                compile_error(ast_ctx(exprs[0]), "invalid type for prefix increment: %s", ty1);
                 return false;
             }
             if (op->id == opid3('+','+','P'))
@@ -1163,7 +1153,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             else
                 addop = INSTR_SUB_F;
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ast_ctx(exprs[0]), "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
@@ -1180,7 +1170,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             /* prefix ++ */
             if (exprs[0]->expression.vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                parseerror(parser, "invalid type for suffix increment: %s", ty1);
+                compile_error(ast_ctx(exprs[0]), "invalid type for suffix increment: %s", ty1);
                 return false;
             }
             if (op->id == opid3('S','+','+')) {
@@ -1191,7 +1181,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 subop = INSTR_ADD_F;
             }
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ast_ctx(exprs[0]), "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
@@ -1215,12 +1205,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
-                           ty1, ty2);
+                compile_error(ctx, "invalid types used in expression: cannot add or subtract type %s and %s",
+                              ty1, ty2);
                 return false;
             }
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
@@ -1238,9 +1228,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                                             exprs[0], exprs[1]);
                     break;
                 default:
-                    parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
-                               type_name[exprs[0]->expression.vtype],
-                               type_name[exprs[1]->expression.vtype]);
+                    compile_error(ctx, "invalid types used in expression: cannot add or subtract type %s and %s",
+                                  type_name[exprs[0]->expression.vtype],
+                                  type_name[exprs[1]->expression.vtype]);
                     return false;
             };
             break;
@@ -1252,12 +1242,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                parseerror(parser, "invalid types used in expression: %s and %s",
-                           ty1, ty2);
+                compile_error(ctx, "invalid types used in expression: %s and %s",
+                              ty1, ty2);
                 return false;
             }
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
@@ -1285,9 +1275,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     }
                     break;
                 default:
-                    parseerror(parser, "invalid types used in expression: cannot add or subtract type %s and %s",
-                               type_name[exprs[0]->expression.vtype],
-                               type_name[exprs[1]->expression.vtype]);
+                    compile_error(ctx, "invalid types used in expression: cannot add or subtract type %s and %s",
+                                  type_name[exprs[0]->expression.vtype],
+                                  type_name[exprs[1]->expression.vtype]);
                     return false;
             };
             break;
@@ -1296,12 +1286,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (NotSameType(TYPE_FLOAT)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                parseerror(parser, "invalid types used in expression: %s and %s",
-                           ty1, ty2);
+                compile_error(ctx, "invalid types used in expression: %s and %s",
+                              ty1, ty2);
                 return false;
             }
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->expression.vtype];
@@ -1319,8 +1309,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (NotSameType(TYPE_FLOAT)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                parseerror(parser, "invalid types used in expression: %s and %s",
-                           ty1, ty2);
+                compile_error(ctx, "invalid types used in expression: %s and %s",
+                              ty1, ty2);
                 return false;
             }
             if (ast_istype(exprs[0], ast_entfield))
@@ -1331,7 +1321,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!out)
                 return false;
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                parseerror(parser, "assignment to constant `%s`", asvalue[0]->name);
+                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
             asbinstore->keep_dest = true;
@@ -1341,7 +1331,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 #undef NotSameType
 
     if (!out) {
-        parseerror(parser, "failed to apply operand %s", op->op);
+        compile_error(ctx, "failed to apply operand %s", op->op);
         return false;
     }
 
