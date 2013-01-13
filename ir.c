@@ -2554,7 +2554,7 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
             if (value->memberof && ir_value_life_merge(value->memberof, instr->eid+1))
                 *changed = true;
         }
-        else if (instr->opcode == INSTR_MUL_FV)
+        else if (instr->opcode == INSTR_MUL_FV || instr->opcode == INSTR_LOAD_V)
         {
             value = instr->_ops[1];
             /* the float source will get an additional lifetime */
