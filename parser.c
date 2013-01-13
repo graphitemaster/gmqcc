@@ -937,9 +937,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 if (CanConstFold(exprs[0], exprs[1]))
                     out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(0), 1.0/ConstF(1)));
                 else {
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
-                                                          (ast_expression*)parser_const_float_1(parser),
-                                                          exprs[1]);
+                    if (CanConstFold1(exprs[1])) {
+                        out = (ast_expression*)parser_const_float(parser, 1.0 / ConstF(1));
+                    } else {
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
+                                                              (ast_expression*)parser_const_float_1(parser),
+                                                              exprs[1]);
+                    }
                     if (!out) {
                         compile_error(ctx, "internal error: failed to generate division");
                         return false;
@@ -1288,11 +1292,17 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                                                 exprs[0], exprs[1]);
                     } else {
                         /* there's no DIV_VF */
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
-                                                              (ast_expression*)parser_const_float_1(parser),
-                                                              exprs[1]);
-                        if (!out)
+                        if (CanConstFold1(exprs[1])) {
+                            out = (ast_expression*)parser_const_float(parser, 1.0 / ConstF(1));
+                        } else {
+                            out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
+                                                                  (ast_expression*)parser_const_float_1(parser),
+                                                                  exprs[1]);
+                        }
+                        if (!out) {
+                            compile_error(ctx, "internal error: failed to generate division");
                             return false;
+                        }
                         out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_MUL_VF,
                                                                 exprs[0], out);
                     }
