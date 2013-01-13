@@ -8,9 +8,6 @@ testsuite
 qcvm
 gmqcc
 
-distro/arch/git/gmqcc-20121228-1-x86_64.pkg.tar.xz
-distro/arch/git/pkg
-distro/arch/release/gmqcc-0.2.2-1-x86_64.pkg.tar.xz
-distro/arch/release/gmqcc-0.2.2.zip
-distro/arch/release/pkg
-distro/arch/release/*
+distro/arch/*
+!distro/arch/git/PKGBUILD
+!distro/arch/release/PKGBUILD
