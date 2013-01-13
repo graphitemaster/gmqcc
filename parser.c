@@ -1096,8 +1096,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         field->expression.next->expression.vtype == TYPE_FUNCTION &&
                         exprs[1]->expression.vtype == TYPE_FUNCTION)
                     {
-                        (void)!parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
-                                            "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                        (void)!compile_warning(ctx, WARN_ASSIGN_FUNCTION_TYPES,
+                                               "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                     }
                     else
                         compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
@@ -1128,8 +1128,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         exprs[0]->expression.vtype == TYPE_FUNCTION &&
                         exprs[1]->expression.vtype == TYPE_FUNCTION)
                     {
-                        (void)!parsewarning(parser, WARN_ASSIGN_FUNCTION_TYPES,
-                                            "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
+                        (void)!compile_warning(ctx, WARN_ASSIGN_FUNCTION_TYPES,
+                                               "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                     }
                     else
                         compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
