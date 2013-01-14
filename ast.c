@@ -1599,7 +1599,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return false;
     }
 
-    self->curblock = ir_function_create_block(ast_ctx(self), irf, "entry");
+    irf->first = self->curblock = ir_function_create_block(ast_ctx(self), irf, "entry");
     if (!self->curblock) {
         compile_error(ast_ctx(self), "failed to allocate entry block for `%s`", self->name);
         return false;
@@ -1633,7 +1633,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         {
             return ir_block_create_return(self->curblock, ast_ctx(self), NULL);
         }
-        else if (vec_size(self->curblock->entries))
+        else if (vec_size(self->curblock->entries) || self->curblock == irf->first)
         {
             /* error("missing return"); */
             if (compile_warning(ast_ctx(self), WARN_MISSING_RETURN_VALUES,
