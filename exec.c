@@ -1282,15 +1282,21 @@ while (1) {
                           OPA->vector[2]*OPB->vector[2];
             break;
         case INSTR_MUL_FV:
-            OPC->vector[0] = OPA->_float * OPB->vector[0];
-            OPC->vector[1] = OPA->_float * OPB->vector[1];
-            OPC->vector[2] = OPA->_float * OPB->vector[2];
+        {
+            qcfloat f = OPA->_float;
+            OPC->vector[0] = f * OPB->vector[0];
+            OPC->vector[1] = f * OPB->vector[1];
+            OPC->vector[2] = f * OPB->vector[2];
             break;
+        }
         case INSTR_MUL_VF:
-            OPC->vector[0] = OPB->_float * OPA->vector[0];
-            OPC->vector[1] = OPB->_float * OPA->vector[1];
-            OPC->vector[2] = OPB->_float * OPA->vector[2];
+        {
+            qcfloat f = OPB->_float;
+            OPC->vector[0] = f * OPA->vector[0];
+            OPC->vector[1] = f * OPA->vector[1];
+            OPC->vector[2] = f * OPA->vector[2];
             break;
+        }
         case INSTR_DIV_F:
             if (OPB->_float != 0.0f)
                 OPC->_float = OPA->_float / OPB->_float;
@@ -1396,9 +1402,10 @@ while (1) {
                 goto cleanup;
             }
             ed = prog_getedict(prog, OPA->edict);
-            OPC->ivector[0] = ((qcany*)( ((qcint*)ed) + OPB->_int ))->ivector[0];
-            OPC->ivector[1] = ((qcany*)( ((qcint*)ed) + OPB->_int ))->ivector[1];
-            OPC->ivector[2] = ((qcany*)( ((qcint*)ed) + OPB->_int ))->ivector[2];
+            ptr = (qcany*)( ((qcint*)ed) + OPB->_int );
+            OPC->ivector[0] = ptr->ivector[0];
+            OPC->ivector[1] = ptr->ivector[1];
+            OPC->ivector[2] = ptr->ivector[2];
             break;
 
         case INSTR_ADDRESS:
