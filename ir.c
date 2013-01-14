@@ -600,6 +600,13 @@ bool ir_function_pass_peephole(ir_function *self)
                 if (!instr_is_operation(oper->opcode))
                     continue;
 
+                if (OPTS_FLAG(LEGACY_VECTOR_MATHS)) {
+                    if (oper->opcode == INSTR_MUL_VF && oper->_ops[2]->memberof == oper->_ops[1])
+                        continue;
+                    if (oper->opcode == INSTR_MUL_FV && oper->_ops[1]->memberof == oper->_ops[2])
+                        continue;
+                }
+
                 value = oper->_ops[0];
 
                 /* only do it for SSA values */
