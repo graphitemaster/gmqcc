@@ -498,6 +498,10 @@ void vafunc(string...count) {
 }
 .fi
 .in
+.TP -flegacy-vector-maths
+Most Quake VMs, including the one from FTEQW or up till recently
+Darkplaces, do not cope well with vector instructions with overlapping
+input and output. This option will avoid producing such code.
 .SH OPTIMIZATIONS
 .TP
 .B -Opeephole
