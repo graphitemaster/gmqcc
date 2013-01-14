@@ -102,6 +102,11 @@
     # Allow vararg access from within QC of the form: ...(argnumber, type)
     VARIADIC_ARGS                = true
 
+    # Most Quake VMs, including the one from FTEQW or up till recently
+    # Darkplaces, do not cope well with vector instructions with overlapping
+    # input and output. This option will avoid producing such code.
+    LEGACY_VECTOR_MATHS          = true
+
 # These are all the warnings, usually present via the -W prefix from
 # the command line.
 [warnings]
