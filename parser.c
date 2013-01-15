@@ -1684,6 +1684,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 {
     ast_expression *expr = NULL;
     shunt sy;
+    size_t i;
     bool wantop = false;
     /* only warn once about an assignment in a truth value because the current code
      * would trigger twice on: if(a = b && ...), once for the if-truth-value, once for the && part
@@ -2141,6 +2142,10 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 
 onerr:
     parser->lex->flags.noops = true;
+    for (i = 0; i < vec_size(sy.out); ++i) {
+        if (sy.out[i].out)
+            ast_unref(sy.out[i].out);
+    }
     vec_free(sy.out);
     vec_free(sy.ops);
     return NULL;
