@@ -1531,16 +1531,21 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
     }
     */
     while (vec_size(sy->ops)) {
-        if (sy->ops[vec_size(sy->ops)-1].paren == SY_PAREN_FUNC) {
+        if (vec_last(sy->ops).paren == SY_PAREN_FUNC) {
             if (!parser_close_call(parser, sy))
                 return false;
             break;
         }
-        if (sy->ops[vec_size(sy->ops)-1].paren == SY_PAREN_EXPR) {
+        if (vec_last(sy->ops).paren == SY_PAREN_EXPR) {
+            if (!vec_size(sy->out)) {
+                compile_error(vec_last(sy->ops).ctx, "empty paren expression");
+                vec_shrinkby(sy->ops, 1);
+                return false;
+            }
             vec_shrinkby(sy->ops, 1);
             return !functions_only;
         }
-        if (sy->ops[vec_size(sy->ops)-1].paren == SY_PAREN_INDEX) {
+        if (vec_last(sy->ops).paren == SY_PAREN_INDEX) {
             if (functions_only)
                 return false;
             /* pop off the parenthesis */
@@ -1550,7 +1555,7 @@ static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
                 return false;
             return true;
         }
-        if (sy->ops[vec_size(sy->ops)-1].paren == SY_PAREN_TERNARY) {
+        if (vec_last(sy->ops).paren == SY_PAREN_TERNARY) {
             if (functions_only)
                 return false;
             if (vec_last(parser->pot) != POT_TERNARY1) {
