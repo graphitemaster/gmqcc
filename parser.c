@@ -31,7 +31,7 @@
 /* beginning of locals */
 #define PARSER_HT_LOCALS  2
 
-#define PARSER_HT_SIZE    1024
+#define PARSER_HT_SIZE    128
 #define TYPEDEF_HT_SIZE   16
 
 enum parser_pot { POT_PAREN, POT_TERNARY1, POT_TERNARY2 };
