@@ -634,7 +634,7 @@ static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
 }
 
 static bool ftepp_preprocess(ftepp_t *ftepp);
-static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params)
+static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params, bool resetline)
 {
     char     *old_string   = ftepp->output_string;
     lex_file *old_lexer    = ftepp->lex;
@@ -740,6 +740,11 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     vec_free(ftepp->lex->open_string);
     if (has_newlines)
         ftepp_recursion_footer(ftepp);
+    if (resetline) {
+        char lineno[128];
+        sprintf(lineno, "\n#pragma line(%lu)\n", old_lexer->sline);
+        ftepp_out(ftepp, lineno, false);
+    }
     old_string = ftepp->output_string;
 
 cleanup:
@@ -753,9 +758,10 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
     size_t     o;
     macroparam *params = NULL;
     bool        retval = true;
+    size_t      paramline;
 
     if (!macro->has_params) {
-        if (!ftepp_macro_expand(ftepp, macro, NULL))
+        if (!ftepp_macro_expand(ftepp, macro, NULL, false))
             return false;
         ftepp_next(ftepp);
         return true;
@@ -771,6 +777,7 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
     }
 
     ftepp_next(ftepp);
+    paramline = ftepp->lex->sline;
     if (!ftepp_macro_call_params(ftepp, &params))
         return false;
 
@@ -785,7 +792,7 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
         goto cleanup;
     }
 
-    if (!ftepp_macro_expand(ftepp, macro, params))
+    if (!ftepp_macro_expand(ftepp, macro, params, (paramline != ftepp->lex->sline)))
         retval = false;
     ftepp_next(ftepp);
 
