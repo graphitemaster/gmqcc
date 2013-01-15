@@ -2392,13 +2392,13 @@ static void ir_op_read_write(int op, size_t *read, size_t *write)
 
 static bool ir_block_living_add_instr(ir_block *self, size_t eid)
 {
-    size_t i;
-    bool changed = false;
-    bool tempbool;
-    for (i = 0; i != vec_size(self->living); ++i)
+    size_t       i;
+    const size_t vs = vec_size(self->living);
+    bool         changed = false;
+    for (i = 0; i != vs; ++i)
     {
-        tempbool = ir_value_life_merge(self->living[i], eid);
-        changed = changed || tempbool;
+        if (ir_value_life_merge(self->living[i], eid))
+            changed = true;
     }
     return changed;
 }
