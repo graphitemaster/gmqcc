@@ -3805,7 +3805,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     if (!OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC) {
         if (parsewarning(parser, WARN_VARIADIC_FUNCTION,
-                         "variadic function with implementation will not be able to access additional parameters"))
+                         "variadic function with implementation will not be able to access additional parameters (try -fvariadic-args)"))
         {
             return false;
         }
