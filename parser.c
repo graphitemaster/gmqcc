@@ -4059,13 +4059,13 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         if (!parser_create_array_setter_proto(parser, varargs, name)) {
             ast_delete(varargs);
             ast_block_delete(block);
-            goto enderr;
+            goto enderrfn;
         }
         snprintf(name, sizeof(name), "%s##va##GET", var->name);
         if (!parser_create_array_getter_proto(parser, varargs, varargs->expression.next, name)) {
             ast_delete(varargs);
             ast_block_delete(block);
-            goto enderr;
+            goto enderrfn;
         }
         func->varargs = varargs;
     }
