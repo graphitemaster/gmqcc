@@ -1265,12 +1265,13 @@ bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
 bool ir_value_life_merge(ir_value *self, size_t s)
 {
     size_t i;
+    const size_t vs = vec_size(self->life);
     ir_life_entry_t *life = NULL;
     ir_life_entry_t *before = NULL;
     ir_life_entry_t new_entry;
 
     /* Find the first range >= s */
-    for (i = 0; i < vec_size(self->life); ++i)
+    for (i = 0; i < vs; ++i)
     {
         before = life;
         life = &self->life[i];
@@ -1278,7 +1279,7 @@ bool ir_value_life_merge(ir_value *self, size_t s)
             break;
     }
     /* nothing found? append */
-    if (i == vec_size(self->life)) {
+    if (i == vs) {
         ir_life_entry_t e;
         if (life && life->end+1 == s)
         {
@@ -2456,7 +2457,6 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
 {
     ir_instr *instr;
     ir_value *value;
-    bool  tempbool;
     size_t i, o, p, mem;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
@@ -2516,23 +2516,23 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                      * since this function is run multiple times.
                      */
                     /* con_err( "Value only written %s\n", value->name); */
-                    tempbool = ir_value_life_merge(value, instr->eid);
-                    *changed = *changed || tempbool;
+                    if (ir_value_life_merge(value, instr->eid))
+                        *changed = true;
                 } else {
                     /* since 'living' won't contain it
                      * anymore, merge the value, since
                      * (A) doesn't.
                      */
-                    tempbool = ir_value_life_merge(value, instr->eid);
-                    *changed = *changed || tempbool;
+                    if (ir_value_life_merge(value, instr->eid))
+                        *changed = true;
                     /* Then remove */
                     vec_remove(self->living, idx, 1);
                 }
                 /* Removing a vector removes all members */
                 for (mem = 0; mem < 3; ++mem) {
                     if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], &idx)) {
-                        tempbool = ir_value_life_merge(value->members[mem], instr->eid);
-                        *changed = *changed || tempbool;
+                        if (ir_value_life_merge(value->members[mem], instr->eid))
+                            *changed = true;
                         vec_remove(self->living, idx, 1);
                     }
                 }
@@ -2544,8 +2544,8 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
                             break;
                     }
                     if (mem == 3 && vec_ir_value_find(self->living, value, &idx)) {
-                        tempbool = ir_value_life_merge(value, instr->eid);
-                        *changed = *changed || tempbool;
+                        if (ir_value_life_merge(value, instr->eid))
+                            *changed = true;
                         vec_remove(self->living, idx, 1);
                     }
                 }
@@ -2636,13 +2636,12 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
         }
 
         /* (A) */
-        tempbool = ir_block_living_add_instr(self, instr->eid);
-        /*con_err( "living added values\n");*/
-        *changed = *changed || tempbool;
+        if (ir_block_living_add_instr(self, instr->eid))
+            *changed = true;
     }
     /* the "entry" instruction ID */
-    tempbool = ir_block_living_add_instr(self, self->entry_id);
-    *changed = *changed || tempbool;
+    if (ir_block_living_add_instr(self, self->entry_id))
+        *changed = true;
 
     if (self->run_id == self->owner->run_id)
         return true;
