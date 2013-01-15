@@ -4010,6 +4010,14 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
+    func = ast_function_new(ast_ctx(var), var->name, var);
+    if (!func) {
+        parseerror(parser, "failed to allocate function for `%s`", var->name);
+        ast_block_delete(block);
+        goto enderr;
+    }
+    vec_push(parser->functions, func);
+
     parser_enterblock(parser);
 
     for (parami = 0; parami < vec_size(var->expression.params); ++parami) {
@@ -4026,7 +4034,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
         if (!create_vector_members(param, me)) {
             ast_block_delete(block);
-            return false;
+            goto enderrfn;
         }
 
         for (e = 0; e < 3; ++e) {
@@ -4034,14 +4042,6 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             ast_block_collect(block, (ast_expression*)me[e]);
         }
     }
-
-    func = ast_function_new(ast_ctx(var), var->name, var);
-    if (!func) {
-        parseerror(parser, "failed to allocate function for `%s`", var->name);
-        ast_block_delete(block);
-        goto enderr;
-    }
-    vec_push(parser->functions, func);
 
     if (var->argcounter) {
         ast_value *argc = ast_value_new(ast_ctx(var), var->argcounter, TYPE_FLOAT);
@@ -4093,12 +4093,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     return retval;
 
 enderrfn:
+    (void)!parser_leaveblock(parser);
     vec_pop(parser->functions);
     ast_function_delete(func);
     var->constval.vfunc = NULL;
 
 enderr:
-    (void)!parser_leaveblock(parser);
     parser->function = old;
     return false;
 }
