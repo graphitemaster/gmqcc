@@ -640,6 +640,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     lex_file *old_lexer    = ftepp->lex;
     size_t    vararg_start = vec_size(macro->params);
     bool      retval       = true;
+    bool      has_newlines;
     size_t    varargs;
 
     size_t    o, pi;
@@ -712,6 +713,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         }
     }
     vec_push(ftepp->output_string, 0);
+    has_newlines = (strchr(ftepp->output_string, '\n') != NULL);
     /* Now run the preprocessor recursively on this string buffer */
     /*
     printf("__________\n%s\n=========\n", ftepp->output_string);
@@ -726,7 +728,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     inlex->line = ftepp->lex->line;
     inlex->sline = ftepp->lex->sline;
     ftepp->lex = inlex;
-    ftepp_recursion_header(ftepp);
+    if (has_newlines)
+        ftepp_recursion_header(ftepp);
     if (!ftepp_preprocess(ftepp)) {
         vec_free(ftepp->lex->open_string);
         old_string = ftepp->output_string;
@@ -735,7 +738,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         goto cleanup;
     }
     vec_free(ftepp->lex->open_string);
-    ftepp_recursion_footer(ftepp);
+    if (has_newlines)
+        ftepp_recursion_footer(ftepp);
     old_string = ftepp->output_string;
 
 cleanup:
