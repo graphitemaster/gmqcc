@@ -4817,7 +4817,6 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
         if (!var) {
             if (name)
                 mem_d((void*)name);
-            ast_delete(var);
             return NULL;
         }
     }
