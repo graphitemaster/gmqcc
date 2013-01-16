@@ -3200,7 +3200,7 @@ static bool gen_function_varargs_copy(ir_function *self)
             code_push_statement(&stmt, self->context.line);
             continue;
         }
-        ext = i - 8;
+        ext = i - 9;
         if (ext >= vec_size(ir->extparams))
             ir_gen_extparam(ir);
 
