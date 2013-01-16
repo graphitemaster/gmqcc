@@ -68,6 +68,7 @@ typedef struct {
 
     char        *itemname;
     char        *includename;
+    bool         in_macro;
 } ftepp_t;
 
 /*
@@ -646,6 +647,8 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     size_t    o, pi;
     lex_file *inlex;
 
+    bool      old_inmacro;
+
     int nextok;
 
     if (vararg_start < vec_size(params))
@@ -728,21 +731,25 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     inlex->line = ftepp->lex->line;
     inlex->sline = ftepp->lex->sline;
     ftepp->lex = inlex;
-    if (has_newlines)
+    if (has_newlines && !ftepp->in_macro)
         ftepp_recursion_header(ftepp);
+    old_inmacro = ftepp->in_macro;
+    ftepp->in_macro = true;
     if (!ftepp_preprocess(ftepp)) {
+        ftepp->in_macro = old_inmacro;
         vec_free(ftepp->lex->open_string);
         old_string = ftepp->output_string;
         lex_close(ftepp->lex);
         retval = false;
         goto cleanup;
     }
+    ftepp->in_macro = old_inmacro;
     vec_free(ftepp->lex->open_string);
-    if (has_newlines)
+    if (has_newlines && !ftepp->in_macro)
         ftepp_recursion_footer(ftepp);
-    if (resetline) {
+    if (resetline && !ftepp->in_macro) {
         char lineno[128];
-        sprintf(lineno, "\n#pragma line(%lu)\n", old_lexer->sline);
+        sprintf(lineno, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
     old_string = ftepp->output_string;
@@ -1550,7 +1557,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
                 break;
             case TOKEN_WHITE:
                 /* same as default but don't set newline=false */
-                ftepp_out(ftepp, ftepp_tokval(ftepp), false);
+                ftepp_out(ftepp, ftepp_tokval(ftepp), true);
                 ftepp_next(ftepp);
                 break;
             default:
