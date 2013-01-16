@@ -638,6 +638,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params, bool resetline)
 {
     char     *old_string   = ftepp->output_string;
+    char     *inner_string;
     lex_file *old_lexer    = ftepp->lex;
     size_t    vararg_start = vec_size(macro->params);
     bool      retval       = true;
@@ -667,6 +668,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
             case TOKEN_VA_ARGS:
                 if (!macro->variadic) {
                     ftepp_error(ftepp, "internal preprocessor error: TOKEN_VA_ARGS in non-variadic macro");
+                    vec_free(old_string);
                     return false;
                 }
                 if (!varargs)
@@ -716,7 +718,6 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         }
     }
     vec_push(ftepp->output_string, 0);
-    has_newlines = (strchr(ftepp->output_string, '\n') != NULL);
     /* Now run the preprocessor recursively on this string buffer */
     /*
     printf("__________\n%s\n=========\n", ftepp->output_string);
@@ -727,33 +728,47 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
         retval = false;
         goto cleanup;
     }
-    ftepp->output_string = old_string;
-    inlex->line = ftepp->lex->line;
+
+    inlex->line  = ftepp->lex->line;
     inlex->sline = ftepp->lex->sline;
-    ftepp->lex = inlex;
-    if (has_newlines && !ftepp->in_macro)
-        ftepp_recursion_header(ftepp);
-    old_inmacro = ftepp->in_macro;
+    ftepp->lex   = inlex;
+
+    old_inmacro     = ftepp->in_macro;
     ftepp->in_macro = true;
+    ftepp->output_string = NULL;
     if (!ftepp_preprocess(ftepp)) {
         ftepp->in_macro = old_inmacro;
         vec_free(ftepp->lex->open_string);
-        old_string = ftepp->output_string;
+        vec_free(ftepp->output_string);
         lex_close(ftepp->lex);
         retval = false;
         goto cleanup;
     }
     ftepp->in_macro = old_inmacro;
     vec_free(ftepp->lex->open_string);
-    if (has_newlines && !ftepp->in_macro)
+    lex_close(ftepp->lex);
+
+    inner_string = ftepp->output_string;
+    ftepp->output_string = old_string;
+
+    has_newlines = (strchr(inner_string, '\n') != NULL);
+
+    if (has_newlines && !old_inmacro)
+        ftepp_recursion_header(ftepp);
+
+    vec_append(ftepp->output_string, vec_size(inner_string), inner_string);
+    vec_free(inner_string);
+
+    if (has_newlines && !old_inmacro)
         ftepp_recursion_footer(ftepp);
+
     if (resetline && !ftepp->in_macro) {
         char lineno[128];
         sprintf(lineno, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
-    old_string = ftepp->output_string;
 
+    old_string = ftepp->output_string;
 cleanup:
     ftepp->lex           = old_lexer;
     ftepp->output_string = old_string;
