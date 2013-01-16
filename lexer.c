@@ -291,12 +291,16 @@ static int lex_try_trigraph(lex_file *lex, int old)
 {
     int c2, c3;
     c2 = lex_fgetc(lex);
+    if (!lex->push_line && c2 == '\n')
+        lex->line++;
     if (c2 != '?') {
         lex_ungetch(lex, c2);
         return old;
     }
 
     c3 = lex_fgetc(lex);
+    if (!lex->push_line && c3 == '\n')
+        lex->line++;
     switch (c3) {
         case '=': return '#';
         case '/': return '\\';
