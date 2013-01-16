@@ -1417,10 +1417,8 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     }
 
     call = ast_call_new(sy->ops[vec_size(sy->ops)].ctx, fun);
-    if (!call) {
-        parseerror(parser, "internal error: failed to create ast_call node");
+    if (!call)
         return false;
-    }
 
     if (fid+1 == vec_size(sy->out)) {
         /* no arguments */

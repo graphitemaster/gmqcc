@@ -890,6 +890,11 @@ ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr)
 {
     ast_instantiate(ast_call, ctx, ast_call_delete);
+    if (!funcexpr->expression.next) {
+        compile_error(ctx, "not a function");
+        mem_d(self);
+        return NULL;
+    }
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_call_codegen);
 
     ast_side_effects(self) = true;
