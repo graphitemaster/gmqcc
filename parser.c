@@ -1800,8 +1800,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
                 else
                 {
-                    size_t i;
-                    char  *correct = NULL;
+                    char *correct = NULL;
 
                     /*
                      * sometimes people use preprocessing predefs without enabling them
