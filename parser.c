@@ -5708,6 +5708,8 @@ bool parser_init()
     if (OPTS_FLAG(UNTYPED_NIL))
         util_htset(parser->htglobals, "nil", (void*)parser->nil);
 
+    parser->max_param_count = 1;
+
     parser->const_vec[0] = ast_value_new(empty_ctx, "<vector.x>", TYPE_NOEXPR);
     parser->const_vec[1] = ast_value_new(empty_ctx, "<vector.y>", TYPE_NOEXPR);
     parser->const_vec[2] = ast_value_new(empty_ctx, "<vector.z>", TYPE_NOEXPR);
