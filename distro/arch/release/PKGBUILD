@@ -16,7 +16,8 @@ _gitname=graphitemaster-gmqcc-de24486/
 build() {
 	msg "Starting compilation..."
 	cd "$srcdir"/"$_gitname"
-
+	msg "Making clean"
+	make clean
 	msg "Compiling..."
 	make
 }
