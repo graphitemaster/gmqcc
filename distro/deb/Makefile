@@ -11,9 +11,9 @@ DEBDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)
 DEB     := $(DEBDIR).deb
 
 base:
-	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR)/ PREFIX=usr install
+	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR)/ PREFIX=$(PREFIX) install
 	@install -d -m755 $(DEBDIR)/DEBIAN
-	@cp        control                $(DEBDIR)/DEBIAN/
+	@cp       control $(DEBDIR)/DEBIAN/
 
 	@tar czf data.tar.gz $(DEBDIR)/[a-z]*
 	@tar czf control.tar.gz $(DEBDIR)/DEBIAN/*
