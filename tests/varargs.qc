@@ -9,6 +9,15 @@ void nbva(float a, string...count) {
         print("Vararg ", ftos(a), " = ", ...(a, string), "\n");
 }
 
+var void unstable(...);
+void stability(float a, float b, ...count)
+{
+    print("Got: ", ftos(count), "\n");
+}
+
 void main() {
     nbva(1, "Hello", "You", "There");
+    stability(1, 2, 3, 4, 5);
+    unstable = stability;
+    unstable(1, 2, 3, 4, 5);
 }
