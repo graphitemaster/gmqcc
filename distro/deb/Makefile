@@ -1,8 +1,5 @@
 BASEDIR := ../..
-PREFIX  := usr
-BINDIR  := $(PREFIX)/bin
-DATADIR := $(PREFIX)/share
-MANDIR  := $(DATADIR)/man
+PREFIX  := /usr
 HEADER  := $(BASEDIR)/gmqcc.h
 MAJOR   := `sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' $(HEADER)`
 MINOR   := `sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' $(HEADER)`
@@ -11,7 +8,7 @@ DEBDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)
 DEB     := $(DEBDIR).deb
 
 base:
-	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR)/ PREFIX=$(PREFIX) install
+	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR) PREFIX=$(PREFIX) install
 	@install -d -m755 $(DEBDIR)/DEBIAN
 	@cp       control $(DEBDIR)/DEBIAN/
 	@tar czf data.tar.gz $(DEBDIR)/[a-z]*
