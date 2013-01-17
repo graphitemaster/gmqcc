@@ -348,7 +348,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->getter = NULL;
     self->desc   = NULL;
 
-    self->argcounter = NULL;
+    self->argcounter  = NULL;
 
     return self;
 }
@@ -1083,8 +1083,9 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     vtype->hasvalue = true;
     vtype->constval.vfunc = self;
 
-    self->varargs = NULL;
-    self->argc    = NULL;
+    self->varargs     = NULL;
+    self->argc        = NULL;
+    self->fixedparams = NULL;
 
     return self;
 }
@@ -1112,6 +1113,8 @@ void ast_function_delete(ast_function *self)
         ast_delete(self->varargs);
     if (self->argc)
         ast_delete(self->argc);
+    if (self->fixedparams)
+        ast_unref(self->fixedparams);
     mem_d(self);
 }
 
@@ -1612,13 +1615,23 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     if (self->argc) {
         ir_value *va_count;
+        ir_value *fixed;
+        ir_value *sub;
         if (!ast_local_codegen(self->argc, self->ir_func, true))
             return false;
         cgen = self->argc->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->argc), self, false, &va_count))
             return false;
+        cgen = self->fixedparams->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->fixedparams), self, false, &fixed))
+            return false;
+        sub = ir_block_create_binop(self->curblock, ast_ctx(self),
+                                    ast_function_label(self, "va_count"), INSTR_SUB_F,
+                                    ir_builder_get_va_count(ir), fixed);
+        if (!sub)
+            return false;
         if (!ir_block_create_store_op(self->curblock, ast_ctx(self), INSTR_STORE_F,
-                                      va_count, ir_builder_get_va_count(ir)))
+                                      va_count, sub))
         {
             return false;
         }

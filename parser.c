@@ -1450,12 +1450,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         if ((fun->expression.flags & AST_FLAG_VARIADIC) &&
             !(/*funval->cvq == CV_CONST && */ funval->hasvalue && funval->constval.vfunc->builtin))
         {
-            size_t va_count;
-            if (paramcount < vec_size(fun->expression.params))
-                va_count = 0;
-            else
-                va_count = paramcount - vec_size(fun->expression.params);
-            call->va_count = (ast_expression*)parser_const_float(parser, (double)va_count);
+            call->va_count = (ast_expression*)parser_const_float(parser, (double)paramcount);
         }
     }
 
@@ -4065,6 +4060,8 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             goto enderrfn;
         }
         func->varargs = varargs;
+
+        func->fixedparams = parser_const_float(parser, vec_size(var->expression.params));
     }
 
     parser->function = func;
