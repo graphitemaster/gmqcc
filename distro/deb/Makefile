@@ -11,21 +11,9 @@ DEBDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)
 DEB     := $(DEBDIR).deb
 
 base:
-	@mkdir     $(DEBDIR)
-	@mkdir     $(DEBDIR)/$(PREFIX)
-	@mkdir -p  $(DEBDIR)/$(BINDIR)
-	@mkdir -p  $(DEBDIR)/$(DATADIR)
-	@mkdir -p  $(DEBDIR)/$(MANDIR)
-	@mkdir -p  $(DEBDIR)/$(MANDIR)/man1
-	@mkdir -p  $(DEBDIR)/DEBIAN
-
-	@cp        $(BASEDIR)/doc/gmqcc.1 $(DEBDIR)/$(MANDIR)/man1/
-	@cp        $(BASEDIR)/doc/qcvm.1  $(DEBDIR)/$(MANDIR)/man1/
-	@cp        $(BASEDIR)/gmqcc       $(DEBDIR)/$(BINDIR)/
-	@cp        $(BASEDIR)/qcvm        $(DEBDIR)/$(BINDIR)/
+	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR)/ PREFIX=/usr install
+	@install -d m755 $(DEBDIR)/DEBIAN
 	@cp        control                $(DEBDIR)/DEBIAN/
-
-	@chmod -R 755 $(DEBDIR)
 
 	@tar czf data.tar.gz $(DEBDIR)/[a-z]*
 	@tar czf control.tar.gz $(DEBDIR)/DEBIAN/*
