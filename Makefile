@@ -179,8 +179,8 @@ install-qcvm: $(QCVM)
 	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/qcvm
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
-	install    -m755  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
-	install    -m755  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
+	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
+	install    -m644  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
 
 # DO NOT DELETE
 
