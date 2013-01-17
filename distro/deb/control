@@ -1,0 +1,7 @@
+Package: gmqcc
+Version: 0.3.0
+Section: user/hidden 
+Priority: optional
+Architecture: any
+Installed-Size: `du -ks usr|cut -f 1`
+Maintainer: <killfieldengine@gmail.com>
