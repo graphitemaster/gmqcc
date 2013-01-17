@@ -51,7 +51,7 @@ static void qcvmerror(qc_program *prog, const char *fmt, ...)
     putchar('\n');
 }
 
-qc_program* prog_load(const char *filename)
+qc_program* prog_load(const char *filename, bool skipversion)
 {
     qc_program   *prog;
     prog_header   header;
@@ -66,7 +66,7 @@ qc_program* prog_load(const char *filename)
         return NULL;
     }
 
-    if (header.version != 6) {
+    if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
         file_close(file);
         return NULL;
@@ -1080,7 +1080,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    prog = prog_load(progsfile);
+    prog = prog_load(progsfile, noexec);
     if (!prog) {
         printf("failed to load program '%s'\n", progsfile);
         exit(1);

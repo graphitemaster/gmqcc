@@ -975,7 +975,7 @@ typedef struct qc_program_s {
     int    argc; /* current arg count for debugging */
 } qc_program;
 
-qc_program* prog_load(const char *filename);
+qc_program* prog_load(const char *filename, bool ignoreversion);
 void        prog_delete(qc_program *prog);
 
 bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
