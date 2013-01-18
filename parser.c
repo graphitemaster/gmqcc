@@ -34,7 +34,6 @@
 #define PARSER_HT_SIZE    128
 #define TYPEDEF_HT_SIZE   16
 
-enum parser_pot { POT_PAREN, POT_TERNARY1, POT_TERNARY2 };
 typedef struct {
     lex_file *lex;
     int      tok;
@@ -88,12 +87,6 @@ typedef struct {
 
     /* we store the '=' operator info */
     const oper_info *assign_op;
-
-    /* Keep track of our ternary vs parenthesis nesting state.
-     * If we reach a 'comma' operator in a ternary without a paren,
-     * we shall trigger -Wternary-precedence.
-     */
-    enum parser_pot *pot;
 
     /* magic values */
     ast_value *const_vec[3];
@@ -386,22 +379,27 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
 typedef struct
 {
     size_t etype; /* 0 = expression, others are operators */
-    int             paren;
+    bool            isparen;
     size_t          off;
     ast_expression *out;
     ast_block      *block; /* for commas and function calls */
     lex_ctx ctx;
 } sy_elem;
+
+enum {
+    PAREN_EXPR,
+    PAREN_FUNC,
+    PAREN_INDEX,
+    PAREN_TERNARY1,
+    PAREN_TERNARY2
+};
 typedef struct
 {
-    sy_elem *out;
-    sy_elem *ops;
+    sy_elem        *out;
+    sy_elem        *ops;
+    size_t         *argc;
+    unsigned int   *paren;
 } shunt;
-
-#define SY_PAREN_EXPR '('
-#define SY_PAREN_FUNC 'f'
-#define SY_PAREN_INDEX '['
-#define SY_PAREN_TERNARY '?'
 
 static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     sy_elem e;
@@ -410,7 +408,7 @@ static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     e.out   = v;
     e.block = NULL;
     e.ctx   = ctx;
-    e.paren = 0;
+    e.isparen = false;
     return e;
 }
 
@@ -421,7 +419,7 @@ static sy_elem syblock(lex_ctx ctx, ast_block *v) {
     e.out   = (ast_expression*)v;
     e.block = v;
     e.ctx   = ctx;
-    e.paren = 0;
+    e.isparen = false;
     return e;
 }
 
@@ -432,26 +430,20 @@ static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     e.out   = NULL;
     e.block = NULL;
     e.ctx   = ctx;
-    e.paren = 0;
+    e.isparen = false;
     return e;
 }
 
-static sy_elem syparen(lex_ctx ctx, int p, size_t off) {
+static sy_elem syparen(lex_ctx ctx, size_t off) {
     sy_elem e;
     e.etype = 0;
     e.off   = off;
     e.out   = NULL;
     e.block = NULL;
     e.ctx   = ctx;
-    e.paren = p;
+    e.isparen = true;
     return e;
 }
-
-#ifdef DEBUGSHUNT
-# define DEBUGSHUNTDO(x) x
-#else
-# define DEBUGSHUNTDO(x)
-#endif
 
 /* With regular precedence rules, ent.foo[n] is the same as (ent.foo)[n],
  * so we need to rotate it to become ent.(foo[n]).
@@ -537,15 +529,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         return false;
     }
 
-    if (vec_last(sy->ops).paren) {
+    if (vec_last(sy->ops).isparen) {
         parseerror(parser, "unmatched parenthesis");
         return false;
     }
 
     op = &operators[vec_last(sy->ops).etype - 1];
     ctx = vec_last(sy->ops).ctx;
-
-    DEBUGSHUNTDO(con_out("apply %s\n", op->op));
 
     if (vec_size(sy->out) < op->operands) {
         compile_error(ctx, "internal error: not enough operands: %i (operator %s (%i))", vec_size(sy->out),
@@ -661,6 +651,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
 
         case opid1(','):
+            if (vec_size(sy->paren) && vec_last(sy->paren) == PAREN_FUNC) {
+                vec_push(sy->out, syexp(ctx, exprs[0]));
+                vec_push(sy->out, syexp(ctx, exprs[1]));
+                vec_last(sy->argc)++;
+                return true;
+            }
             if (blocks[0]) {
                 if (!ast_block_add_expr(blocks[0], exprs[1]))
                     return false;
@@ -1052,11 +1048,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
 
         case opid2('?',':'):
-            if (vec_last(parser->pot) != POT_TERNARY2) {
+            if (vec_last(sy->paren) != PAREN_TERNARY2) {
                 compile_error(ctx, "mismatched parenthesis/ternary");
                 return false;
             }
-            vec_pop(parser->pot);
+            vec_pop(sy->paren);
             if (!ast_compare_type(exprs[1], exprs[2])) {
                 ast_type_to_string(exprs[1], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[2], ty2, sizeof(ty2));
@@ -1364,11 +1360,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 #undef NotSameType
 
     if (!out) {
-        compile_error(ctx, "failed to apply operand %s", op->op);
+        compile_error(ctx, "failed to apply operator %s", op->op);
         return false;
     }
 
-    DEBUGSHUNTDO(con_out("applied %s\n", op->op));
     vec_push(sy->out, syexp(ctx, out));
     return true;
 }
@@ -1381,20 +1376,27 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     ast_call       *call;
 
     size_t          fid;
-    size_t          paramcount;
+    size_t          paramcount, i;
 
+    fid = vec_last(sy->ops).off;
     vec_shrinkby(sy->ops, 1);
-    fid = sy->ops[vec_size(sy->ops)].off;
 
     /* out[fid] is the function
      * everything above is parameters...
-     * 0 params = nothing
-     * 1 params = ast_expression
-     * more = ast_block
      */
+    if (!vec_size(sy->argc)) {
+        parseerror(parser, "internal error: no argument counter available");
+        return false;
+    }
 
-    if (vec_size(sy->out) < 1 || vec_size(sy->out) <= fid) {
-        parseerror(parser, "internal error: function call needs function and parameter list...");
+    paramcount = vec_last(sy->argc);
+    vec_pop(sy->argc);
+
+    if (vec_size(sy->out) < fid) {
+        parseerror(parser, "internal error: broken function call%lu < %lu+%lu\n",
+                   (unsigned long)vec_size(sy->out),
+                   (unsigned long)fid,
+                   (unsigned long)paramcount);
         return false;
     }
 
@@ -1420,30 +1422,21 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     if (!call)
         return false;
 
-    if (fid+1 == vec_size(sy->out)) {
-        /* no arguments */
-        paramcount = 0;
-    } else if (fid+2 == vec_size(sy->out)) {
-        ast_block *params;
-        vec_shrinkby(sy->out, 1);
-        params = sy->out[vec_size(sy->out)].block;
-        if (!params) {
-            /* 1 param */
-            paramcount = 1;
-            vec_push(call->params, sy->out[vec_size(sy->out)].out);
-        } else {
-            paramcount = vec_size(params->exprs);
-            call->params = params->exprs;
-            params->exprs = NULL;
-            ast_delete(params);
-        }
-        if (parser->max_param_count < paramcount)
-            parser->max_param_count = paramcount;
-        (void)!ast_call_check_types(call);
-    } else {
-        parseerror(parser, "invalid function call");
+    if (fid+1 < vec_size(sy->out))
+        ++paramcount;
+
+    if (fid+1 + paramcount != vec_size(sy->out)) {
+        parseerror(parser, "internal error: parameter count mismatch: (%lu+1+%lu), %lu",
+                   (unsigned long)fid, (unsigned long)paramcount, (unsigned long)vec_size(sy->out));
         return false;
     }
+
+    for (i = 0; i < paramcount; ++i)
+        vec_push(call->params, sy->out[fid+1 + i].out);
+    vec_shrinkby(sy->out, paramcount);
+    (void)!ast_call_check_types(call);
+    if (parser->max_param_count < paramcount)
+        parser->max_param_count = paramcount;
 
     if (ast_istype(fun, ast_value)) {
         funval = (ast_value*)fun;
@@ -1511,54 +1504,48 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     return true;
 }
 
-static bool parser_close_paren(parser_t *parser, shunt *sy, bool functions_only)
+static bool parser_close_paren(parser_t *parser, shunt *sy)
 {
     if (!vec_size(sy->ops)) {
         parseerror(parser, "unmatched closing paren");
         return false;
     }
-    /* this would for bit a + (x) because there are no operators inside (x)
-    if (sy->ops[vec_size(sy->ops)-1].paren == 1) {
-        parseerror(parser, "empty parenthesis expression");
-        return false;
-    }
-    */
+
     while (vec_size(sy->ops)) {
-        if (vec_last(sy->ops).paren == SY_PAREN_FUNC) {
-            if (!parser_close_call(parser, sy))
-                return false;
-            break;
-        }
-        if (vec_last(sy->ops).paren == SY_PAREN_EXPR) {
-            if (!vec_size(sy->out)) {
-                compile_error(vec_last(sy->ops).ctx, "empty paren expression");
+        if (vec_last(sy->ops).isparen) {
+            if (vec_last(sy->paren) == PAREN_FUNC) {
+                vec_pop(sy->paren);
+                if (!parser_close_call(parser, sy))
+                    return false;
+                break;
+            }
+            if (vec_last(sy->paren) == PAREN_EXPR) {
+                vec_pop(sy->paren);
+                if (!vec_size(sy->out)) {
+                    compile_error(vec_last(sy->ops).ctx, "empty paren expression");
+                    vec_shrinkby(sy->ops, 1);
+                    return false;
+                }
                 vec_shrinkby(sy->ops, 1);
-                return false;
+                break;
             }
-            vec_shrinkby(sy->ops, 1);
-            return !functions_only;
-        }
-        if (vec_last(sy->ops).paren == SY_PAREN_INDEX) {
-            if (functions_only)
-                return false;
-            /* pop off the parenthesis */
-            vec_shrinkby(sy->ops, 1);
-            /* then apply the index operator */
-            if (!parser_sy_apply_operator(parser, sy))
-                return false;
-            return true;
-        }
-        if (vec_last(sy->ops).paren == SY_PAREN_TERNARY) {
-            if (functions_only)
-                return false;
-            if (vec_last(parser->pot) != POT_TERNARY1) {
-                parseerror(parser, "mismatched colon in ternary expression (missing closing paren?)");
-                return false;
+            if (vec_last(sy->paren) == PAREN_INDEX) {
+                vec_pop(sy->paren);
+                /* pop off the parenthesis */
+                vec_shrinkby(sy->ops, 1);
+                /* then apply the index operator */
+                if (!parser_sy_apply_operator(parser, sy))
+                    return false;
+                break;
             }
-            vec_last(parser->pot) = POT_TERNARY2;
-            /* pop off the parenthesis */
-            vec_shrinkby(sy->ops, 1);
-            return true;
+            if (vec_last(sy->paren) == PAREN_TERNARY1) {
+                vec_last(sy->paren) = PAREN_TERNARY2;
+                /* pop off the parenthesis */
+                vec_shrinkby(sy->ops, 1);
+                break;
+            }
+            compile_error(vec_last(sy->ops).ctx, "invalid parenthesis");
+            return false;
         }
         if (!parser_sy_apply_operator(parser, sy))
             return false;
@@ -1659,18 +1646,195 @@ static ast_expression* parse_vararg_do(parser_t *parser)
 
 static ast_expression* parse_vararg(parser_t *parser)
 {
-    bool             old_noops = parser->lex->flags.noops;
-    enum parser_pot *old_pot   = parser->pot;
+    bool           old_noops = parser->lex->flags.noops;
 
     ast_expression *out;
 
-    parser->pot = NULL;
     parser->lex->flags.noops = true;
     out = parse_vararg_do(parser);
 
-    parser->pot              = old_pot;
     parser->lex->flags.noops = old_noops;
     return out;
+}
+
+static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
+{
+    if (OPTS_FLAG(TRANSLATABLE_STRINGS) &&
+        parser->tok == TOKEN_IDENT &&
+        !strcmp(parser_tokval(parser), "_"))
+    {
+        /* a translatable string */
+        ast_value *val;
+
+        parser->lex->flags.noops = true;
+        if (!parser_next(parser) || parser->tok != '(') {
+            parseerror(parser, "use _(\"string\") to create a translatable string constant");
+            return false;
+        }
+        parser->lex->flags.noops = false;
+        if (!parser_next(parser) || parser->tok != TOKEN_STRINGCONST) {
+            parseerror(parser, "expected a constant string in translatable-string extension");
+            return false;
+        }
+        val = parser_const_string(parser, parser_tokval(parser), true);
+        if (!val)
+            return false;
+        vec_push(sy->out, syexp(parser_ctx(parser), (ast_expression*)val));
+
+        if (!parser_next(parser) || parser->tok != ')') {
+            parseerror(parser, "expected closing paren after translatable string");
+            return false;
+        }
+        return true;
+    }
+    else if (parser->tok == TOKEN_DOTS)
+    {
+        ast_expression *va;
+        if (!OPTS_FLAG(VARIADIC_ARGS)) {
+            parseerror(parser, "cannot access varargs (try -fvariadic-args)");
+            return false;
+        }
+        va = parse_vararg(parser);
+        if (!va)
+            return false;
+        vec_push(sy->out, syexp(parser_ctx(parser), va));
+        return true;
+    }
+    else if (parser->tok == TOKEN_FLOATCONST) {
+        ast_value *val;
+        val = parser_const_float(parser, (parser_token(parser)->constval.f));
+        if (!val)
+            return false;
+        vec_push(sy->out, syexp(parser_ctx(parser), (ast_expression*)val));
+        return true;
+    }
+    else if (parser->tok == TOKEN_INTCONST || parser->tok == TOKEN_CHARCONST) {
+        ast_value *val;
+        val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
+        if (!val)
+            return false;
+        vec_push(sy->out, syexp(parser_ctx(parser), (ast_expression*)val));
+        return true;
+    }
+    else if (parser->tok == TOKEN_STRINGCONST) {
+        ast_value *val;
+        val = parser_const_string(parser, parser_tokval(parser), false);
+        if (!val)
+            return false;
+        vec_push(sy->out, syexp(parser_ctx(parser), (ast_expression*)val));
+        return true;
+    }
+    else if (parser->tok == TOKEN_VECTORCONST) {
+        ast_value *val;
+        val = parser_const_vector(parser, parser_token(parser)->constval.v);
+        if (!val)
+            return false;
+        vec_push(sy->out, syexp(parser_ctx(parser), (ast_expression*)val));
+        return true;
+    }
+    else if (parser->tok == TOKEN_IDENT)
+    {
+        const char     *ctoken = parser_tokval(parser);
+        ast_expression *prev = vec_size(sy->out) ? vec_last(sy->out).out : NULL;
+        ast_expression *var;
+        /* a_vector.{x,y,z} */
+        if (!vec_size(sy->ops) ||
+            !vec_last(sy->ops).etype ||
+            operators[vec_last(sy->ops).etype-1].id != opid1('.') ||
+            (prev >= intrinsic_debug_typestring &&
+             prev <= intrinsic_debug_typestring))
+        {
+            /* When adding more intrinsics, fix the above condition */
+            prev = NULL;
+        }
+        if (prev && prev->expression.vtype == TYPE_VECTOR && ctoken[0] >= 'x' && ctoken[0] <= 'z' && !ctoken[1])
+        {
+            var = (ast_expression*)parser->const_vec[ctoken[0]-'x'];
+        } else {
+            var = parser_find_var(parser, parser_tokval(parser));
+            if (!var)
+                var = parser_find_field(parser, parser_tokval(parser));
+        }
+        if (!var && with_labels) {
+            var = (ast_expression*)parser_find_label(parser, parser_tokval(parser));
+            if (!with_labels) {
+                ast_label *lbl = ast_label_new(parser_ctx(parser), parser_tokval(parser), true);
+                var = (ast_expression*)lbl;
+                vec_push(parser->labels, lbl);
+            }
+        }
+        if (!var) {
+            /* intrinsics */
+            if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
+                var = (ast_expression*)intrinsic_debug_typestring;
+            }
+            else
+            {
+                char *correct = NULL;
+                size_t i;
+
+                /*
+                 * sometimes people use preprocessing predefs without enabling them
+                 * i've done this thousands of times already myself.  Lets check for
+                 * it in the predef table.  And diagnose it better :)
+                 */
+                if (!OPTS_FLAG(FTEPP_PREDEFS)) {
+                    for (i = 0; i < sizeof(ftepp_predefs)/sizeof(*ftepp_predefs); i++) {
+                        if (!strcmp(ftepp_predefs[i].name, parser_tokval(parser))) {
+                            parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
+                            return false;
+                        }
+                    }
+                }
+
+                /*
+                 * TODO: determine the best score for the identifier: be it
+                 * a variable, a field.
+                 *
+                 * We should also consider adding correction tables for
+                 * other things as well.
+                 */
+                if (opts.correction) {
+                    correction_t corr;
+                    correct_init(&corr);
+
+                    for (i = 0; i < vec_size(parser->correct_variables); i++) {
+                        correct = correct_str(&corr, parser->correct_variables[i], parser_tokval(parser));
+                        if (strcmp(correct, parser_tokval(parser))) {
+                            break;
+                        } else if (correct) {
+                            mem_d(correct);
+                            correct = NULL;
+                        }
+                    }
+                    correct_free(&corr);
+
+                    if (correct) {
+                        parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
+                        mem_d(correct);
+                        return false;
+                    }
+                }
+                parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                return false;
+            }
+        }
+        else
+        {
+            if (ast_istype(var, ast_value)) {
+                ((ast_value*)var)->uses++;
+            }
+            else if (ast_istype(var, ast_member)) {
+                ast_member *mem = (ast_member*)var;
+                if (ast_istype(mem->owner, ast_value))
+                    ((ast_value*)(mem->owner))->uses++;
+            }
+        }
+        vec_push(sy->out, syexp(parser_ctx(parser), var));
+        return true;
+    }
+    parseerror(parser, "unexpected token `%s`", parser_tokval(parser));
+    return false;
 }
 
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels)
@@ -1687,11 +1851,9 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     /* count the parens because an if starts with one, so the
      * end of a condition is an unmatched closing paren
      */
-    int parens = 0;
     int ternaries = 0;
 
-    sy.out = NULL;
-    sy.ops = NULL;
+    memset(&sy, 0, sizeof(sy));
 
     parser->lex->flags.noops = false;
 
@@ -1699,283 +1861,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 
     while (true)
     {
-        if (OPTS_FLAG(TRANSLATABLE_STRINGS) &&
-            parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "_"))
-        {
-            /* a translatable string */
-            ast_value *val;
-
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement, got constant");
-                goto onerr;
-            }
-
-            parser->lex->flags.noops = true;
-            if (!parser_next(parser) || parser->tok != '(') {
-                parseerror(parser, "use _(\"string\") to create a translatable string constant");
-                goto onerr;
-            }
-            parser->lex->flags.noops = false;
-            if (!parser_next(parser) || parser->tok != TOKEN_STRINGCONST) {
-                parseerror(parser, "expected a constant string in translatable-string extension");
-                goto onerr;
-            }
-            val = parser_const_string(parser, parser_tokval(parser), true);
-            wantop = true;
-            if (!val)
-                return NULL;
-            vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
-            DEBUGSHUNTDO(con_out("push string\n"));
-
-            if (!parser_next(parser) || parser->tok != ')') {
-                parseerror(parser, "expected closing paren after translatable string");
-                goto onerr;
-            }
-        }
-        else if (parser->tok == TOKEN_DOTS)
-        {
-            ast_expression *va;
-            if (!OPTS_FLAG(VARIADIC_ARGS)) {
-                parseerror(parser, "cannot access varargs (try -fvariadic-args)");
-                goto onerr;
-            }
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement");
-                goto onerr;
-            }
-            wantop = true;
-            va = parse_vararg(parser);
-            if (!va)
-                goto onerr;
-            vec_push(sy.out, syexp(parser_ctx(parser), va));
-            DEBUGSHUNTDO(con_out("push `...`\n"));
-        }
-        else if (parser->tok == TOKEN_IDENT)
-        {
-            const char     *ctoken = parser_tokval(parser);
-            ast_expression *prev = vec_size(sy.out) ? vec_last(sy.out).out : NULL;
-            ast_expression *var;
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement");
-                goto onerr;
-            }
-            wantop = true;
-            /* a_vector.{x,y,z} */
-            if (!vec_size(sy.ops) ||
-                !vec_last(sy.ops).etype ||
-                operators[vec_last(sy.ops).etype-1].id != opid1('.') ||
-                (prev >= intrinsic_debug_typestring &&
-                 prev <= intrinsic_debug_typestring))
-            {
-                /* When adding more intrinsics, fix the above condition */
-                prev = NULL;
-            }
-            if (prev && prev->expression.vtype == TYPE_VECTOR && ctoken[0] >= 'x' && ctoken[0] <= 'z' && !ctoken[1])
-            {
-                var = (ast_expression*)parser->const_vec[ctoken[0]-'x'];
-            } else {
-                var = parser_find_var(parser, parser_tokval(parser));
-                if (!var)
-                    var = parser_find_field(parser, parser_tokval(parser));
-            }
-            if (!var && with_labels) {
-                var = (ast_expression*)parser_find_label(parser, parser_tokval(parser));
-                if (!with_labels) {
-                    ast_label *lbl = ast_label_new(parser_ctx(parser), parser_tokval(parser), true);
-                    var = (ast_expression*)lbl;
-                    vec_push(parser->labels, lbl);
-                }
-            }
-            if (!var) {
-                /* intrinsics */
-                if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
-                    var = (ast_expression*)intrinsic_debug_typestring;
-                }
-                else
-                {
-                    char *correct = NULL;
-
-                    /*
-                     * sometimes people use preprocessing predefs without enabling them
-                     * i've done this thousands of times already myself.  Lets check for
-                     * it in the predef table.  And diagnose it better :)
-                     */
-                    if (!OPTS_FLAG(FTEPP_PREDEFS)) {
-                        for (i = 0; i < sizeof(ftepp_predefs)/sizeof(*ftepp_predefs); i++) {
-                            if (!strcmp(ftepp_predefs[i].name, parser_tokval(parser))) {
-                                parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
-                                goto onerr;
-                            }
-                        }
-                    }
-
-                    /*
-                     * TODO: determine the best score for the identifier: be it
-                     * a variable, a field.
-                     *
-                     * We should also consider adding correction tables for
-                     * other things as well.
-                     */
-                    if (opts.correction) {
-                        correction_t corr;
-                        correct_init(&corr);
-
-                        for (i = 0; i < vec_size(parser->correct_variables); i++) {
-                            correct = correct_str(&corr, parser->correct_variables[i], parser_tokval(parser));
-                            if (strcmp(correct, parser_tokval(parser))) {
-                                break;
-                            } else if (correct) {
-                                mem_d(correct);
-                                correct = NULL;
-                            }
-                        }
-                        correct_free(&corr);
-
-                        if (correct) {
-                            parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
-                            mem_d(correct);
-                            goto onerr;
-                        }
-                    }
-                    parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
-                    goto onerr;
-                }
-            }
-            else
-            {
-                if (ast_istype(var, ast_value)) {
-                    ((ast_value*)var)->uses++;
-                }
-                else if (ast_istype(var, ast_member)) {
-                    ast_member *mem = (ast_member*)var;
-                    if (ast_istype(mem->owner, ast_value))
-                        ((ast_value*)(mem->owner))->uses++;
-                }
-            }
-            vec_push(sy.out, syexp(parser_ctx(parser), var));
-            DEBUGSHUNTDO(con_out("push %s\n", parser_tokval(parser)));
-        }
-        else if (parser->tok == TOKEN_FLOATCONST) {
-            ast_value *val;
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement, got constant");
-                goto onerr;
-            }
-            wantop = true;
-            val = parser_const_float(parser, (parser_token(parser)->constval.f));
-            if (!val)
-                return NULL;
-            vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
-            DEBUGSHUNTDO(con_out("push %g\n", parser_token(parser)->constval.f));
-        }
-        else if (parser->tok == TOKEN_INTCONST || parser->tok == TOKEN_CHARCONST) {
-            ast_value *val;
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement, got constant");
-                goto onerr;
-            }
-            wantop = true;
-            val = parser_const_float(parser, (double)(parser_token(parser)->constval.i));
-            if (!val)
-                return NULL;
-            vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
-            DEBUGSHUNTDO(con_out("push %i\n", parser_token(parser)->constval.i));
-        }
-        else if (parser->tok == TOKEN_STRINGCONST) {
-            ast_value *val;
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement, got constant");
-                goto onerr;
-            }
-            wantop = true;
-            val = parser_const_string(parser, parser_tokval(parser), false);
-            if (!val)
-                return NULL;
-            vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
-            DEBUGSHUNTDO(con_out("push string\n"));
-        }
-        else if (parser->tok == TOKEN_VECTORCONST) {
-            ast_value *val;
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement, got constant");
-                goto onerr;
-            }
-            wantop = true;
-            val = parser_const_vector(parser, parser_token(parser)->constval.v);
-            if (!val)
-                return NULL;
-            vec_push(sy.out, syexp(parser_ctx(parser), (ast_expression*)val));
-            DEBUGSHUNTDO(con_out("push '%g %g %g'\n",
-                                parser_token(parser)->constval.v.x,
-                                parser_token(parser)->constval.v.y,
-                                parser_token(parser)->constval.v.z));
-        }
-        else if (parser->tok == '(') {
-            parseerror(parser, "internal error: '(' should be classified as operator");
-            goto onerr;
-        }
-        else if (parser->tok == '[') {
-            parseerror(parser, "internal error: '[' should be classified as operator");
-            goto onerr;
-        }
-        else if (parser->tok == ')') {
-            if (wantop) {
-                DEBUGSHUNTDO(con_out("do[op] )\n"));
-                --parens;
-                if (parens < 0)
-                    break;
-                /* we do expect an operator next */
-                /* closing an opening paren */
-                if (!parser_close_paren(parser, &sy, false))
-                    goto onerr;
-                if (vec_last(parser->pot) != POT_PAREN) {
-                    parseerror(parser, "mismatched parentheses (closing paren during ternary expression?)");
-                    goto onerr;
-                }
-                vec_pop(parser->pot);
-            } else {
-                DEBUGSHUNTDO(con_out("do[nop] )\n"));
-                --parens;
-                if (parens < 0)
-                    break;
-                /* allowed for function calls */
-                if (!parser_close_paren(parser, &sy, true))
-                    goto onerr;
-                if (vec_last(parser->pot) != POT_PAREN) {
-                    parseerror(parser, "mismatched parentheses (closing paren during ternary expression?)");
-                    goto onerr;
-                }
-                vec_pop(parser->pot);
-            }
-            wantop = true;
-        }
-        else if (parser->tok == ']') {
-            if (!wantop)
-                parseerror(parser, "operand expected");
-            --parens;
-            if (parens < 0)
-                break;
-            if (!parser_close_paren(parser, &sy, false))
-                goto onerr;
-            if (vec_last(parser->pot) != POT_PAREN) {
-                parseerror(parser, "mismatched parentheses (closing paren during ternary expression?)");
-                goto onerr;
-            }
-            vec_pop(parser->pot);
-            wantop = true;
-        }
-        else if (parser->tok == TOKEN_TYPENAME) {
+        if (parser->tok == TOKEN_TYPENAME) {
             parseerror(parser, "unexpected typename");
             goto onerr;
         }
-        else if (parser->tok != TOKEN_OPERATOR) {
-            if (wantop) {
-                parseerror(parser, "expected operator or end of statement");
-                goto onerr;
-            }
-            break;
-        }
-        else
+
+        if (parser->tok == TOKEN_OPERATOR)
         {
             /* classify the operator */
             const oper_info *op;
@@ -1997,7 +1888,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             op = &operators[o];
 
             /* when declaring variables, a comma starts a new variable */
-            if (op->id == opid1(',') && !parens && stopatcomma) {
+            if (op->id == opid1(',') && !vec_size(sy.paren) && stopatcomma) {
                 /* fixup the token */
                 parser->tok = ',';
                 break;
@@ -2010,12 +1901,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             }
 
             if (op->id == opid1(',')) {
-                if (vec_size(parser->pot) && vec_last(parser->pot) == POT_TERNARY2) {
+                if (vec_size(sy.paren) && vec_last(sy.paren) == PAREN_TERNARY2) {
                     (void)!parsewarning(parser, WARN_TERNARY_PRECEDENCE, "suggesting parenthesis around ternary expression");
                 }
             }
 
-            if (vec_size(sy.ops) && !vec_last(sy.ops).paren)
+            if (vec_size(sy.ops) && !vec_last(sy.ops).isparen)
                 olast = &operators[vec_last(sy.ops).etype-1];
 
 #define IsAssignOp(x) (\
@@ -2032,7 +1923,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             if (warn_truthvalue) {
                 if ( (olast && IsAssignOp(olast->id) && (op->id == opid2('&','&') || op->id == opid2('|','|'))) ||
                      (olast && IsAssignOp(op->id) && (olast->id == opid2('&','&') || olast->id == opid2('|','|'))) ||
-                     (truthvalue && !vec_size(parser->pot) && IsAssignOp(op->id))
+                     (truthvalue && !vec_size(sy.paren) && IsAssignOp(op->id))
                    )
                 {
                     (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around assignment used as truth value");
@@ -2046,7 +1937,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             {
                 if (!parser_sy_apply_operator(parser, &sy))
                     goto onerr;
-                if (vec_size(sy.ops) && !vec_last(sy.ops).paren)
+                if (vec_size(sy.ops) && !vec_last(sy.ops).isparen)
                     olast = &operators[vec_last(sy.ops).etype-1];
                 else
                     olast = NULL;
@@ -2055,14 +1946,13 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             if (op->id == opid1('(')) {
                 if (wantop) {
                     size_t sycount = vec_size(sy.out);
-                    DEBUGSHUNTDO(con_out("push [op] (\n"));
-                    ++parens; vec_push(parser->pot, POT_PAREN);
                     /* we expected an operator, this is the function-call operator */
-                    vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_FUNC, sycount-1));
+                    vec_push(sy.paren, PAREN_FUNC);
+                    vec_push(sy.ops, syparen(parser_ctx(parser), sycount-1));
+                    vec_push(sy.argc, 0);
                 } else {
-                    ++parens; vec_push(parser->pot, POT_PAREN);
-                    vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_EXPR, 0));
-                    DEBUGSHUNTDO(con_out("push [nop] (\n"));
+                    vec_push(sy.paren, PAREN_EXPR);
+                    vec_push(sy.ops, syparen(parser_ctx(parser), 0));
                 }
                 wantop = false;
             } else if (op->id == opid1('[')) {
@@ -2070,42 +1960,97 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     parseerror(parser, "unexpected array subscript");
                     goto onerr;
                 }
-                ++parens; vec_push(parser->pot, POT_PAREN);
+                vec_push(sy.paren, PAREN_INDEX);
                 /* push both the operator and the paren, this makes life easier */
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
-                vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_INDEX, 0));
+                vec_push(sy.ops, syparen(parser_ctx(parser), 0));
                 wantop = false;
             } else if (op->id == opid2('?',':')) {
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
-                vec_push(sy.ops, syparen(parser_ctx(parser), SY_PAREN_TERNARY, 0));
+                vec_push(sy.ops, syparen(parser_ctx(parser), 0));
                 wantop = false;
                 ++ternaries;
-                vec_push(parser->pot, POT_TERNARY1);
+                vec_push(sy.paren, PAREN_TERNARY1);
             } else if (op->id == opid2(':','?')) {
-                if (!vec_size(parser->pot)) {
+                if (!vec_size(sy.paren)) {
                     parseerror(parser, "unexpected colon outside ternary expression (missing parenthesis?)");
                     goto onerr;
                 }
-                if (vec_last(parser->pot) != POT_TERNARY1) {
+                if (vec_last(sy.paren) != PAREN_TERNARY1) {
                     parseerror(parser, "unexpected colon outside ternary expression (missing parenthesis?)");
                     goto onerr;
                 }
-                if (!parser_close_paren(parser, &sy, false))
+                if (!parser_close_paren(parser, &sy))
                     goto onerr;
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 wantop = false;
                 --ternaries;
             } else {
-                DEBUGSHUNTDO(con_out("push operator %s\n", op->op));
                 vec_push(sy.ops, syop(parser_ctx(parser), op));
                 wantop = !!(op->flags & OP_SUFFIX);
             }
         }
+        else if (parser->tok == ')') {
+            if (wantop) {
+                if (!vec_size(sy.paren))
+                    break;
+                if (vec_last(sy.paren) == PAREN_TERNARY1) {
+                    parseerror(parser, "mismatched parentheses (closing paren in ternary expression?)");
+                    goto onerr;
+                }
+                if (!parser_close_paren(parser, &sy))
+                    goto onerr;
+            } else {
+                /* must be a function call without parameters */
+                if (!vec_size(sy.paren))
+                    break;
+                if (vec_last(sy.paren) != PAREN_FUNC) {
+                    parseerror(parser, "closing paren in invalid position");
+                    goto onerr;
+                }
+                if (!parser_close_paren(parser, &sy))
+                    goto onerr;
+            }
+            wantop = true;
+        }
+        else if (parser->tok == '(') {
+            parseerror(parser, "internal error: '(' should be classified as operator");
+            goto onerr;
+        }
+        else if (parser->tok == '[') {
+            parseerror(parser, "internal error: '[' should be classified as operator");
+            goto onerr;
+        }
+        else if (parser->tok == ']') {
+            if (!vec_size(sy.paren))
+                break;
+            if (!vec_size(sy.paren) || vec_last(sy.paren) != PAREN_INDEX) {
+                parseerror(parser, "mismatched parentheses, unexpected ']'");
+                goto onerr;
+            }
+            if (!parser_close_paren(parser, &sy))
+                goto onerr;
+        }
+        else if (!wantop) {
+            if (!parse_sya_operand(parser, &sy, with_labels))
+                goto onerr;
+#if 0
+            if (vec_size(sy.paren) && vec_last(sy.ops).isparen && vec_last(sy.paren) == PAREN_FUNC)
+                vec_last(sy.argc)++;
+#endif
+            wantop = true;
+        }
+        else {
+            parseerror(parser, "expected operator or end of statement");
+            goto onerr;
+        }
+
         if (!parser_next(parser)) {
             goto onerr;
         }
         if (parser->tok == ';' ||
-            (!parens && (parser->tok == ']' || parser->tok == ')' || parser->tok == '}')))
+            ((!vec_size(sy.paren) || (vec_size(sy.paren) == 1 && vec_last(sy.paren) == PAREN_TERNARY2)) &&
+            (parser->tok == ']' || parser->tok == ')' || parser->tok == '}')))
         {
             break;
         }
@@ -2124,12 +2069,12 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         expr = sy.out[0].out;
     vec_free(sy.out);
     vec_free(sy.ops);
-    DEBUGSHUNTDO(con_out("shunt done\n"));
-    if (vec_size(parser->pot)) {
-        parseerror(parser, "internal error: vec_size(parser->pot) = %lu", (unsigned long)vec_size(parser->pot));
+    if (vec_size(sy.paren)) {
+        parseerror(parser, "internal error: vec_size(sy.paren) = %lu", (unsigned long)vec_size(sy.paren));
         return NULL;
     }
-    vec_free(parser->pot);
+    vec_free(sy.paren);
+    vec_free(sy.argc);
     return expr;
 
 onerr:
@@ -2140,6 +2085,8 @@ onerr:
     }
     vec_free(sy.out);
     vec_free(sy.ops);
+    vec_free(sy.paren);
+    vec_free(sy.argc);
     return NULL;
 }
 
@@ -5458,7 +5405,7 @@ skipvar:
                 }
             } else {
                 int cvq;
-                shunt sy = { NULL, NULL };
+                shunt sy = { NULL, NULL, NULL, NULL };
                 cvq = var->cvq;
                 var->cvq = CV_NONE;
                 vec_push(sy.out, syexp(ast_ctx(var), (ast_expression*)var));
