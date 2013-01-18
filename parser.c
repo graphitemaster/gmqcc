@@ -1991,9 +1991,13 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             }
         }
         else if (parser->tok == ')') {
+            while (vec_size(sy.paren) && vec_last(sy.paren) == PAREN_TERNARY2) {
+                if (!parser_sy_apply_operator(parser, &sy))
+                    goto onerr;
+            }
+            if (!vec_size(sy.paren))
+                break;
             if (wantop) {
-                if (!vec_size(sy.paren))
-                    break;
                 if (vec_last(sy.paren) == PAREN_TERNARY1) {
                     parseerror(parser, "mismatched parentheses (closing paren in ternary expression?)");
                     goto onerr;
@@ -2002,8 +2006,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     goto onerr;
             } else {
                 /* must be a function call without parameters */
-                if (!vec_size(sy.paren))
-                    break;
                 if (vec_last(sy.paren) != PAREN_FUNC) {
                     parseerror(parser, "closing paren in invalid position");
                     goto onerr;
@@ -2022,14 +2024,19 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             goto onerr;
         }
         else if (parser->tok == ']') {
+            while (vec_size(sy.paren) && vec_last(sy.paren) == PAREN_TERNARY2) {
+                if (!parser_sy_apply_operator(parser, &sy))
+                    goto onerr;
+            }
             if (!vec_size(sy.paren))
                 break;
-            if (!vec_size(sy.paren) || vec_last(sy.paren) != PAREN_INDEX) {
+            if (vec_last(sy.paren) != PAREN_INDEX) {
                 parseerror(parser, "mismatched parentheses, unexpected ']'");
                 goto onerr;
             }
             if (!parser_close_paren(parser, &sy))
                 goto onerr;
+            wantop = true;
         }
         else if (!wantop) {
             if (!parse_sya_operand(parser, &sy, with_labels))
