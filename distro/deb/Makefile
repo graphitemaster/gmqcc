@@ -10,13 +10,12 @@ DEB     := $(DEBDIR).deb
 base:
 	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR) PREFIX=$(PREFIX) install
 	@install -d -m755 $(DEBDIR)/DEBIAN
-	@cp       control $(DEBDIR)/DEBIAN/
-	@tar czf data.tar.gz $(DEBDIR)/[a-z]*
-	@tar czf control.tar.gz $(DEBDIR)/DEBIAN/*
+	@cp       control $(DEBDIR)/DEBIAN/control
+	@tar czf data.tar.gz -C $(DEBDIR)/ . --exclude=DEBIAN
+	@tar czf control.tar.gz -C $(DEBDIR)/DEBIAN/ .
 	@echo 2.0 > debian-binary
 	@ar r $(DEB) debian-binary control.tar.gz data.tar.gz
-	@rm -rf $(DEBDIR) debian-binary control.tar.gz data.tar.gz
-
+	@rm -rf debian-binary control.tar.gz data.tar.gz $(DEBDIR)
 clean:
 	@rm -f $(DEB)
 

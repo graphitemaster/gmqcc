@@ -1,7 +1,13 @@
 Package: gmqcc
 Version: 0.3.0
-Section: user/hidden 
+Section: user/hidden
 Priority: optional
-Architecture: any
+Architecture: i386
 Installed-Size: `du -ks usr|cut -f 1`
-Maintainer: <killfieldengine@gmail.com>
+Maintainer: Dale Weiler <killfieldengine@gmail.com>
+Description: An improved Quake C Compiler
+   For an enduring period of time the options for a decent compiler for the Quake C programming language
+   were confined to a specific compiler known as QCC. Attempts were made to extend and improve upon the
+   design of QCC, but many foreseen the consequences of building on a broken foundation. The solution
+   was obvious, a new compiler; one born from the NIH realm of sarcastic wit. We welcome you. You won't
+   find a better Quake C compiler.
