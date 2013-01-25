@@ -3113,7 +3113,7 @@ static ir_value* ir_gen_extparam_proto(ir_builder *ir)
     ir_value *global;
     char      name[128];
 
-    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)+8));
+    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)));
     global = ir_value_var(name, store_global, TYPE_VECTOR);
 
     vec_push(ir->extparam_protos, global);
