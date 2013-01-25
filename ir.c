@@ -2257,18 +2257,22 @@ bool ir_function_allocate_locals(ir_function *self)
                     irerror(call->context, "internal error: unlocked parameter %s not found", v->name);
                     goto error;
                 }
-
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
                 v->callparam = true;
                 if (param < 8)
                     ir_value_code_setaddr(v, OFS_PARM0 + 3*param);
                 else {
+                    size_t nprotos = vec_size(self->owner->extparam_protos);
                     ir_value *ep;
                     param -= 8;
-                    if (vec_size(self->owner->extparam_protos) <= param)
-                        ep = ir_gen_extparam_proto(self->owner);
-                    else
+                    if (nprotos > param)
                         ep = self->owner->extparam_protos[param];
+                    else
+                    {
+                        ep = ir_gen_extparam_proto(self->owner);
+                        while (++nprotos <= param)
+                            ep = ir_gen_extparam_proto(self->owner);
+                    }
                     ir_instr_op(v->writes[0], 0, ep, true);
                     call->params[param+8] = ep;
                 }
