@@ -1128,11 +1128,33 @@ int main(int argc, char **argv)
     }
     if (opts_printdefs) {
         for (i = 0; i < vec_size(prog->defs); ++i) {
-            printf("Global: %8s %-16s at %u%s\n",
+            printf("Global: %8s %-16s at %u%s",
                    type_name[prog->defs[i].type & DEF_TYPEMASK],
                    prog_getstring(prog, prog->defs[i].name),
                    (unsigned int)prog->defs[i].offset,
                    ((prog->defs[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
+            if (opts_v) {
+                switch (prog->defs[i].type & DEF_TYPEMASK) {
+                    case TYPE_FLOAT:
+                        printf(" [init: %g]", ((qcany*)(prog->globals + prog->defs[i].offset))->_float);
+                        break;
+                    case TYPE_INTEGER:
+                        printf(" [init: %i]", (int)( ((qcany*)(prog->globals + prog->defs[i].offset))->_int ));
+                        break;
+                    case TYPE_ENTITY:
+                    case TYPE_FUNCTION:
+                    case TYPE_FIELD:
+                    case TYPE_POINTER:
+                        printf(" [init: %u]", (unsigned)( ((qcany*)(prog->globals + prog->defs[i].offset))->_int ));
+                        break;
+                    case TYPE_STRING:
+                        printf(" [init: `%s`]", prog_getstring(prog, ((qcany*)(prog->globals + prog->defs[i].offset))->string ));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            printf("\n");
         }
     }
     if (opts_printfields) {
