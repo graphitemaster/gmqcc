@@ -135,16 +135,6 @@ static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *
     return r;
 }
 
-static bool GMQCC_WARN genwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
-{
-    bool    r;
-    va_list ap;
-    va_start(ap, fmt);
-    r = vcompile_warning(ctx, warntype, fmt, ap);
-    va_end(ap);
-    return r;
-}
-
 /**********************************************************************
  * some maths used for constant folding
  */
@@ -2690,11 +2680,12 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the incrementor */
     if (parser->tok != ')') {
+        lex_ctx ctx = parser_ctx(parser);
         increment = parse_expression_leave(parser, false, false, false);
         if (!increment)
             goto onerr;
         if (!ast_side_effects(increment)) {
-            if (genwarning(ast_ctx(increment), WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+            if (compile_warning(ctx, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
                 goto onerr;
         }
     }
@@ -3540,12 +3531,13 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     }
     else
     {
+        lex_ctx ctx = parser_ctx(parser);
         ast_expression *exp = parse_expression(parser, false, false);
         if (!exp)
             return false;
         *out = exp;
         if (!ast_side_effects(exp)) {
-            if (genwarning(ast_ctx(exp), WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+            if (compile_warning(ctx, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
                 return false;
         }
         return true;
@@ -5853,8 +5845,8 @@ bool parser_finish(const char *output)
             continue;
         asvalue = (ast_value*)(parser->globals[i]);
         if (!asvalue->uses && !asvalue->hasvalue && asvalue->expression.vtype != TYPE_FUNCTION) {
-            retval = retval && !genwarning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
-                                           "unused global: `%s`", asvalue->name);
+            retval = retval && !compile_warning(ast_ctx(asvalue), WARN_UNUSED_VARIABLE,
+                                                "unused global: `%s`", asvalue->name);
         }
         if (!ast_global_codegen(asvalue, ir, false)) {
             con_out("failed to generate global %s\n", asvalue->name);
