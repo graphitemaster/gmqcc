@@ -2205,6 +2205,12 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     ast_unary *unary;
     ast_expression *prev;
 
+    if (cond->expression.vtype == TYPE_VOID || cond->expression.vtype >= TYPE_VARIANT) {
+        char ty[1024];
+        ast_type_to_string(cond, ty, sizeof(ty));
+        compile_error(ast_ctx(cond), "invalid type for if() condition: %s", ty);
+    }
+
     if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING)
     {
         prev = cond;
