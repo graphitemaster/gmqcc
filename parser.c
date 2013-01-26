@@ -2680,12 +2680,12 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the incrementor */
     if (parser->tok != ')') {
-        lex_ctx ctx = parser_ctx(parser);
+        lex_ctx condctx = parser_ctx(parser);
         increment = parse_expression_leave(parser, false, false, false);
         if (!increment)
             goto onerr;
         if (!ast_side_effects(increment)) {
-            if (compile_warning(ctx, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
+            if (compile_warning(condctx, WARN_EFFECTLESS_STATEMENT, "statement has no effect"))
                 goto onerr;
         }
     }
