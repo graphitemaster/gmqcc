@@ -408,13 +408,18 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 {
     pptoken *ptok;
     while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
-        size_t index;
+        bool   subscript = false;
+        size_t index     = 0;
         if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__")) {
             /* remember the token */
-            if (ftepp_next(ftepp) == '#' &&
-                ftepp_next(ftepp) == '#' &&
-                ftepp_next(ftepp) == '[')
-            {
+            if (ftepp_next(ftepp) == '#') {
+                subscript = true;
+            }
+
+            if (subscript && ftepp_next(ftepp) != '#') {
+                ftepp_error(ftepp, "expected `##` in __VA_ARGS__ for subscripting");
+                return false;
+            } else if (subscript && ftepp_next(ftepp) == '[') {
                 if (ftepp_next(ftepp) != TOKEN_INTCONST) {
                     ftepp_error(ftepp, "expected index for __VA_ARGS__ subscript");
                     return false;
