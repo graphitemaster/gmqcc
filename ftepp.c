@@ -408,11 +408,48 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 {
     pptoken *ptok;
     while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
-        if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__"))
-            ftepp->token = TOKEN_VA_ARGS;
-        ptok = pptoken_make(ftepp);
-        vec_push(macro->output, ptok);
-        ftepp_next(ftepp);
+        size_t index;
+        if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__")) {
+            /* remember the token */
+            if (ftepp_next(ftepp) == '#' &&
+                ftepp_next(ftepp) == '#' &&
+                ftepp_next(ftepp) == '[')
+            {
+                if (ftepp_next(ftepp) != TOKEN_INTCONST) {
+                    ftepp_error(ftepp, "expected index for __VA_ARGS__ subscript");
+                    return false;
+                }
+
+                index = atoi(ftepp_tokval(ftepp));
+
+                if (ftepp_next(ftepp) != ']') {
+                    ftepp_error(ftepp, "expected `]` in __VA_ARGS__ subscript");
+                    return false;
+                }
+
+                /*
+                 * mark it as an array to be handled later as such and not
+                 * as traditional __VA_ARGS__
+                 */
+                ftepp->token = TOKEN_VA_ARGS_ARRAY;
+                ptok = pptoken_make(ftepp);
+                ptok->constval.i = index;
+                vec_push(macro->output, ptok);
+                ftepp_next(ftepp);
+            } else {
+                int old = ftepp->token;
+                ftepp->token = TOKEN_VA_ARGS;
+                ptok = pptoken_make(ftepp);
+                vec_push(macro->output, ptok);
+                ftepp->token = old;
+            }
+        }
+        else
+        {
+            ptok = pptoken_make(ftepp);
+            vec_push(macro->output, ptok);
+            ftepp_next(ftepp);
+        }
     }
     /* recursive expansion can cause EOFs here */
     if (ftepp->token != TOKEN_EOL && ftepp->token != TOKEN_EOF) {
@@ -673,6 +710,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 }
                 if (!varargs)
                     break;
+
                 pi = 0;
                 ftepp_param_out(ftepp, &params[pi + vararg_start]);
                 for (++pi; pi < varargs; ++pi) {
@@ -680,6 +718,17 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                     ftepp_param_out(ftepp, &params[pi + vararg_start]);
                 }
                 break;
+
+            case TOKEN_VA_ARGS_ARRAY:
+                if (out->constval.i >= varargs) {
+                    ftepp_error(ftepp, "subscript of `[%u]` is out of bounds for `__VA_ARGS__`", out->constval.i);
+                    vec_free(old_string);
+                    return false;
+                }
+
+                ftepp_param_out(ftepp, &params[out->constval.i + vararg_start]);
+                break;
+
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
             case TOKEN_KEYWORD:
