@@ -11,4 +11,5 @@ gmqcc
 distro/arch/*
 !distro/arch/git/PKGBUILD
 !distro/arch/release/PKGBUILD
+!distro/arch/bsd-release/PKGBUILD
 !distro/arch/this/Makefile
