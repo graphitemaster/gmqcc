@@ -720,7 +720,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 break;
 
             case TOKEN_VA_ARGS_ARRAY:
-                if (out->constval.i >= varargs) {
+                if ((size_t)out->constval.i >= varargs) {
                     ftepp_error(ftepp, "subscript of `[%u]` is out of bounds for `__VA_ARGS__`", out->constval.i);
                     vec_free(old_string);
                     return false;
