@@ -30,7 +30,7 @@ base:
 	@echo "makepkgopt = purge" >> $(PKGINFO)
 	@echo "makepkgopt = !upx" >> $(PKGINFO)
 	@tar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO usr/
-
+	@rm -rf $(PKGDIR)
 
 clean:
 	@rm -f  $(PKG)
