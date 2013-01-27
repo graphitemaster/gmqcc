@@ -1,7 +1,7 @@
 # Contributor: matthiaskrgr <matthiaskrgr _strange_curverd_character_ freedroid D0T org>
 
 pkgname=gmqcc-git
-pkgver=20130110
+pkgver=20130127
 pkgrel=1
 pkgdesc="An Improved Quake C Compiler"
 arch=('i686' 'x86_64')

@@ -182,6 +182,12 @@ install-doc:
 	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
 	install    -m644  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
 
+uninstall:
+	rm $(DESTDIR)$(BINDIR)/gmqcc
+	rm $(DESTDIR)$(BINDIR)/qcvm
+	rm $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
+	rm $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
+
 # DO NOT DELETE
 
 util.o: gmqcc.h opts.def

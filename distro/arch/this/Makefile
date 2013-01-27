@@ -21,7 +21,6 @@ base:
 	@echo "license = MIT" >> $(PKGINFO)
 	@echo "conflict = gmqcc" >> $(PKGINFO)
 	@echo "depend = glibc" >> $(PKGINFO)
-	@echo "provides = gmqcc= $(MAJOR).$(MINOR).$(PATCH)" >> $(PKGINFO)
 	@echo "makepkgopt = strip" >> $(PKGINFO)
 	@echo "makepkgopt = docs" >> $(PKGINFO)
 	@echo "makepkgopt = libtool" >> $(PKGINFO)
