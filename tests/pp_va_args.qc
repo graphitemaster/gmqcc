@@ -13,9 +13,12 @@ void print(...) = #1;
 // method 3
 #define METHOD_3(F,...) F __VA_ARGS__
 
+// selector
+#define METHOD(I, F, ...) METHOD_##I (F, __VA_ARGS__)
+
 void main() {
-    METHOD_0(print, ("Method", " <zero>\n"));
-    METHOD_1(print, ("Method", " <one>\n"));
-    METHOD_2(print, ("Method", " <two>\n"));
-    METHOD_3(print, ("Method", " <three>\n"));
+    METHOD(0, print, ("Method", " <zero>\n"));
+    METHOD(1, print, ("Method", " <one>\n"));
+    METHOD(2, print, ("Method", " <two>\n"));
+    METHOD(3, print, ("Method", " <three>\n"));
 }
