@@ -411,36 +411,38 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
         bool   subscript = false;
         size_t index     = 0;
         if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__")) {
-            /* remember the token */
-            if (ftepp_next(ftepp) == '#') {
-                subscript = true;
-            }
+            subscript = !!(ftepp_next(ftepp) == '#');
 
             if (subscript && ftepp_next(ftepp) != '#') {
                 ftepp_error(ftepp, "expected `##` in __VA_ARGS__ for subscripting");
                 return false;
-            } else if (subscript && ftepp_next(ftepp) == '[') {
-                if (ftepp_next(ftepp) != TOKEN_INTCONST) {
-                    ftepp_error(ftepp, "expected index for __VA_ARGS__ subscript");
+            } else if (subscript) {
+                if (ftepp_next(ftepp) == '[') {
+                    if (ftepp_next(ftepp) != TOKEN_INTCONST) {
+                        ftepp_error(ftepp, "expected index for __VA_ARGS__ subscript");
+                        return false;
+                    }
+
+                    index = atoi(ftepp_tokval(ftepp));
+
+                    if (ftepp_next(ftepp) != ']') {
+                        ftepp_error(ftepp, "expected `]` in __VA_ARGS__ subscript");
+                        return false;
+                    }
+
+                    /*
+                     * mark it as an array to be handled later as such and not
+                     * as traditional __VA_ARGS__
+                     */
+                    ftepp->token = TOKEN_VA_ARGS_ARRAY;
+                    ptok = pptoken_make(ftepp);
+                    ptok->constval.i = index;
+                    vec_push(macro->output, ptok);
+                    ftepp_next(ftepp);
+                } else {
+                    ftepp_error(ftepp, "expected `[` for subscripting of __VA_ARGS__");
                     return false;
                 }
-
-                index = atoi(ftepp_tokval(ftepp));
-
-                if (ftepp_next(ftepp) != ']') {
-                    ftepp_error(ftepp, "expected `]` in __VA_ARGS__ subscript");
-                    return false;
-                }
-
-                /*
-                 * mark it as an array to be handled later as such and not
-                 * as traditional __VA_ARGS__
-                 */
-                ftepp->token = TOKEN_VA_ARGS_ARRAY;
-                ptok = pptoken_make(ftepp);
-                ptok->constval.i = index;
-                vec_push(macro->output, ptok);
-                ftepp_next(ftepp);
             } else {
                 int old = ftepp->token;
                 ftepp->token = TOKEN_VA_ARGS;
