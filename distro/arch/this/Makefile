@@ -9,14 +9,14 @@ PKG     := $(PKGDIR).tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
 
 base:
-	$(MAKE) -C $(BASEDIR) DESTDIR=distro/arch/this/$(PKGDIR) PREFIX=$(PREFIX) install
+	$(MAKE) -C $(BASEDIR) DESTDIR=distro/arch/this/$(PKGDIR) PREFIX=$(PREFIX) CFLAGS+=-m64 install
 	@echo "pkgname = gmqcc" > $(PKGINFO)
 	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)" >> $(PKGINFO)
 	@echo "pkgdesc = An Improved Quake C Compiler" >> $(PKGINFO)
 	@echo "url = https://github.com/graphitemaster/gmqcc.git" >> $(PKGINFO)
 	@echo "builddate = `date -u \"+%s\"`" >> $(PKGINFO)
 	@echo "packager = Unknown Packager" >> $(PKGINFO)
-	@echo "size = $(shell du -shb $(PKGDIR) | awk '{s+=$$1} END {print s}')" >> $(PKGINFO)
+	@echo "size = `du -shb $(shell echo $(PKGDIR)) | awk \"{s+=\\$$1} END {print s}\"`" >> $(PKGINFO)
 	@echo "arch = x86_64" >> $(PKGINFO)
 	@echo "license = MIT" >> $(PKGINFO)
 	@echo "conflict = gmqcc" >> $(PKGINFO)
@@ -30,7 +30,6 @@ base:
 	@echo "makepkgopt = purge" >> $(PKGINFO)
 	@echo "makepkgopt = !upx" >> $(PKGINFO)
 	@tar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO usr/
-	@rm -rf $(PKGDIR)
 
 
 clean:
