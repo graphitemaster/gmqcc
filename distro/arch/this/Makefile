@@ -1,23 +1,25 @@
 BASEDIR := ../../../
 PREFIX  := /usr
 HEADER  := $(BASEDIR)/gmqcc.h
-MAJOR   := `sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' $(HEADER)`
-MINOR   := `sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' $(HEADER)`
-PATCH   := `sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' $(HEADER)`
-PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)
-PKG     := $(PKGDIR).tar.xz
+MAJOR   := $(shell sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' $(HEADER))
+MINOR   := $(shell sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' $(HEADER))
+PATCH   := $(shell sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' $(HEADER))
+PKGREL  := 1
+CARCH   := $(shell uname -m)
+PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)-$(CARCH)
+PKG     := $(PKGDIR).pkg.tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
 
-base:
+base: clean
 	$(MAKE) -C $(BASEDIR) DESTDIR=distro/arch/this/$(PKGDIR) PREFIX=$(PREFIX) CFLAGS+=-m64 install
 	@echo "pkgname = gmqcc" > $(PKGINFO)
-	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)" >> $(PKGINFO)
+	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)" >> $(PKGINFO)
 	@echo "pkgdesc = An Improved Quake C Compiler" >> $(PKGINFO)
 	@echo "url = https://github.com/graphitemaster/gmqcc.git" >> $(PKGINFO)
 	@echo "builddate = `date -u \"+%s\"`" >> $(PKGINFO)
 	@echo "packager = Unknown Packager" >> $(PKGINFO)
-	@echo "size = `du -shb $(shell echo $(PKGDIR)) | awk \"{s+=\\$$1} END {print s}\"`" >> $(PKGINFO)
-	@echo "arch = x86_64" >> $(PKGINFO)
+	@echo "size = `du -sk $(PKGDIR) | awk '{print $$1 * 1024}'`" >> $(PKGINFO)
+	@echo "arch = $(CARCH)" >> $(PKGINFO)
 	@echo "license = MIT" >> $(PKGINFO)
 	@echo "conflict = gmqcc" >> $(PKGINFO)
 	@echo "depend = glibc" >> $(PKGINFO)
