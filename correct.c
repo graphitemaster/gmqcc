@@ -129,10 +129,6 @@
  *   edit distance the smaller the error.  This usually causes some un-
  *   expected problems. e.g reciet->recite yields recipt.  For QuakeC
  *   this could become a problem when lots of identifiers are involved. 
- *
- *   Our control mechanisim could use a limit, i.e limit the number of
- *   sets of edits for distance X.  This would also increase execution
- *   speed considerably.
  */
 
 
@@ -419,15 +415,14 @@ static GMQCC_INLINE char **correct_edit(const char *ident, size_t **lens) {
     return find;
 }
 
-/*
- * We could use a hashtable but the space complexity isn't worth it
- * since we're only going to determine the "did you mean?" identifier
- * on error.
- */
-static GMQCC_INLINE int correct_exist(char **array, size_t rows, char *ident, size_t len) {
+static GMQCC_INLINE int correct_exist(char **array, register size_t *sizes, size_t rows, char *ident, register size_t len) {
     size_t itr;
     for (itr = 0; itr < rows; itr++) {
-        if (!memcmp(array[itr], ident, len))
+        /*
+         * We can save tons of calls to memcmp if we simply ignore comparisions
+         * that we know cannot contain the same length.
+         */   
+        if (sizes[itr] == len && !memcmp(array[itr], ident, len))
             return 1;
     }
 
@@ -471,7 +466,7 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
         row = correct_size(array[itr]);
 
         for (jtr = 0; jtr < row; jtr++) {
-            if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr], bit[jtr])) {
+            if (correct_find(table, end[jtr]) && !correct_exist(res, bit, len, end[jtr], bit[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
             }
