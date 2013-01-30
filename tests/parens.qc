@@ -1,6 +1,3 @@
-void(string...)   print  = #1;
-string(float)     ftos   = #2;
-
 float arr[2];
 
 string gets() { return "S\n"; }

@@ -27,8 +27,6 @@ enum {
     N
 };
 
-void (string, ...) print = #1;
-string (float)  ftos = #2;
 void main() {
     print(ftos(A), "\n");
     print(ftos(B), "\n");

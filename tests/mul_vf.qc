@@ -1,6 +1,3 @@
-void print(...) = #1;
-string vtos(vector) = #5;
-
 // getter to work around future -O
 vector get(vector v) {
     return v;

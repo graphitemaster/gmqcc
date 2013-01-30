@@ -1,4 +1,4 @@
-typedef void(string, ...) ptype;
+typedef void(...)     ptype;
 typedef string(float) funcsf;
 
 ptype print = #1;

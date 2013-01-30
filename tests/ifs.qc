@@ -1,5 +1,3 @@
-void(string, ...) print = #1;
-
 void(float c) main = {
     if (c == 1)
         print("One\n");

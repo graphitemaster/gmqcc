@@ -311,6 +311,9 @@ int task_pclose(FILE **handles) {
  *          Used to set the compilation flags for the given task, this
  *          must be provided, this tag is NOT optional.
  *
+ *      F:  Used to set some test suite flags, currently the only option
+ *          is -no-defs (to including of defs.qh)
+ *
  *      E:
  *          Used to set the execution flags for the given task. This tag
  *          must be provided if T == -execute, otherwise it's erroneous
@@ -350,6 +353,7 @@ typedef struct {
     char  *tempfilename;
     char **comparematch;
     char  *rulesfile;
+    char  *testflags;
 } task_template_t;
 
 /*
@@ -369,6 +373,7 @@ bool task_template_generate(task_template_t *template, char tag, const char *fil
         case 'C': destval = &template->compileflags;   break;
         case 'E': destval = &template->executeflags;   break;
         case 'I': destval = &template->sourcefile;     break;
+        case 'F': destval = &template->testflags;      break;
         default:
             con_printmsg(LVL_ERROR, __FILE__, __LINE__, "internal error",
                 "invalid tag `%c:` during code generation\n",
@@ -475,6 +480,7 @@ bool task_template_parse(const char *file, task_template_t *template, FILE *fp, 
             case 'C':
             case 'E':
             case 'I':
+            case 'F':
                 if (data[1] != ':') {
                     con_printmsg(LVL_ERROR, file, line, "template parse error",
                         "expected `:` after `%c`",
@@ -561,6 +567,7 @@ void task_template_nullify(task_template_t *template) {
     template->sourcefile     = NULL;
     template->tempfilename   = NULL;
     template->rulesfile      = NULL;
+    template->testflags      = NULL;
 }
 
 task_template_t *task_template_compile(const char *file, const char *dir, size_t *pad) {
@@ -682,6 +689,7 @@ void task_template_destroy(task_template_t **template) {
     if ((*template)->executeflags)   mem_d((*template)->executeflags);
     if ((*template)->sourcefile)     mem_d((*template)->sourcefile);
     if ((*template)->rulesfile)      mem_d((*template)->rulesfile);
+    if ((*template)->testflags)      mem_d((*template)->testflags);
 
     /*
      * Delete all allocated string for task template then destroy the
@@ -722,7 +730,7 @@ task_t *task_tasks = NULL;
  * Read a directory and searches for all template files in it
  * which is later used to run all tests.
  */
-bool task_propagate(const char *curdir, size_t *pad) {
+bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     bool             success = true;
     DIR             *dir;
     struct dirent   *files;
@@ -782,22 +790,47 @@ bool task_propagate(const char *curdir, size_t *pad) {
              */
             memset (buf,0,sizeof(buf));
             if (qcflags) {
-                snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
-                    task_bins[TASK_COMPILE],
-                    curdir,
-                    template->sourcefile,
-                    qcflags,
-                    template->compileflags,
-                    template->tempfilename
-                );
+                if (template->testflags && !strcmp(template->testflags, "-no-defs")) {
+                    snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
+                        task_bins[TASK_COMPILE],
+                        curdir,
+                        template->sourcefile,
+                        qcflags,
+                        template->compileflags,
+                        template->tempfilename
+                    );
+                } else {
+                    snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
+                        task_bins[TASK_COMPILE],
+                        curdir,
+                        defs,
+                        curdir,
+                        template->sourcefile,
+                        qcflags,
+                        template->compileflags,
+                        template->tempfilename
+                    );
+                }
             } else {
-                snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
-                    task_bins[TASK_COMPILE],
-                    curdir,
-                    template->sourcefile,
-                    template->compileflags,
-                    template->tempfilename
-                );
+                if (template->testflags && !strcmp(template->testflags, "-no-defs")) {
+                    snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
+                        task_bins[TASK_COMPILE],
+                        curdir,
+                        template->sourcefile,
+                        template->compileflags,
+                        template->tempfilename
+                    );
+                } else {
+                    snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
+                        task_bins[TASK_COMPILE],
+                        curdir,
+                        defs,
+                        curdir,
+                        template->sourcefile,
+                        template->compileflags,
+                        template->tempfilename
+                    );
+                }
             }
 
             /*
@@ -1165,13 +1198,24 @@ void task_schedualize(size_t *pad) {
  *
  * It expects con_init() was called before hand.
  */
-GMQCC_WARN bool test_perform(const char *curdir) {
+GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
+    static const char *default_defs = "defs.qh";
+
     size_t pad[] = {
         0, 0
     };
 
+    /*
+     * If the default definition file isn't set to anything.  We will
+     * use the default_defs here, which is "defs.qc"
+     */   
+    if (!defs) {
+        defs = default_defs;
+    }
+        
+
     task_precleanup(curdir);
-    if (!task_propagate(curdir, pad)) {
+    if (!task_propagate(curdir, pad, defs)) {
         con_err("error: failed to propagate tasks\n");
         task_destroy();
         return false;
@@ -1223,6 +1267,7 @@ int main(int argc, char **argv) {
     bool          succeed  = false;
     char         *redirout = (char*)stdout;
     char         *redirerr = (char*)stderr;
+    char         *defs     = NULL;
 
     con_init();
 
@@ -1238,6 +1283,8 @@ int main(int argc, char **argv) {
             if (parsecmd("redirout", &argc, &argv, &redirout, 1, false))
                 continue;
             if (parsecmd("redirerr", &argc, &argv, &redirerr, 1, false))
+                continue;
+            if (parsecmd("defs",     &argc, &argv, &defs,     1, false))
                 continue;
 
             con_change(redirout, redirerr);
@@ -1260,7 +1307,7 @@ int main(int argc, char **argv) {
         }
     }
     con_change(redirout, redirerr);
-    succeed = test_perform("tests");
+    succeed = test_perform("tests", defs);
     util_meminfo();
 
 

@@ -1,6 +1,3 @@
-void   print(...) = #1;
-string ftos(float) = #2;
-
 float glob1;
 float glob2;
 float glob3;

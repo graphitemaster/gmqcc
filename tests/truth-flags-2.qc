@@ -1,6 +1,3 @@
-void   print(...)   = #1;
-string ftos (float) = #2;
-
 float test_s_not  (string s)           { return !s; }
 float test_s_and  (string s, string t) { return s && t; }
 float test_s_or   (string s, string t) { return s || t; }

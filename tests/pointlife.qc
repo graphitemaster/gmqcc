@@ -1,5 +1,3 @@
-void print(...) = #1;
-
 var float foo = 0;
 
 void funcall() {}

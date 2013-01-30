@@ -1,5 +1,3 @@
-void(string, string) print = #1;
-
 string() getter = {
     return "correct";
 };

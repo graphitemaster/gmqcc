@@ -16,7 +16,7 @@ endif
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
-	CFLAGS +=                              \
+	CFLAGS +=                              	\
 		-Weverything                       \
 		-Wno-padded                        \
 		-Wno-format-nonliteral             \

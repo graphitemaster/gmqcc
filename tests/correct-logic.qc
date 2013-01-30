@@ -1,6 +1,3 @@
-void   print(...)   = #1;
-string ftos (float) = #2;
-
 float test_s_not  (vector s)           { return !s; }
 float test_s_and  (vector s, vector t) { return s && t; }
 float test_s_or   (vector s, vector t) { return s || t; }

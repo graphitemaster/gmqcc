@@ -1,6 +1,3 @@
-void   print(...)   = #1;
-string ftos (float) = #2;
-
 void main() {
     print("Sum: \{x2211} ");
     print("\{8721} ");

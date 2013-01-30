@@ -28,7 +28,6 @@
 
 #   define ABC ALPHA(a)##ALPHA(b)##ALPHA(c)
 
-    void(string, ...) print = #1;
     void() main = {
         if (ABC == "abc")
             print("ABC\n");

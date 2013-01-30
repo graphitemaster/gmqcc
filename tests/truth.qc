@@ -1,6 +1,3 @@
-void   print(...)   = #1;
-string ftos (float) = #2;
-
 void test(string s) {
     print(ftos(!s));
     if (s)   print(" on");

@@ -1,5 +1,3 @@
-void print(...) = #1;
-
 // method 0
 #define METHOD__(...) __VA_ARGS__
 #define METHOD_0(F,A) F METHOD__(A)

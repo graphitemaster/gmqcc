@@ -1,6 +1,3 @@
-void   print(...) = #1;
-string ftos(float) = #2;
-
 void p10(float a, float b, float c, float d, float e, float f, float g, float h,
          float e1, float e2)
 {

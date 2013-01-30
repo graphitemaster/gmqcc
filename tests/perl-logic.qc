@@ -1,5 +1,3 @@
-void print(...) = #1;
-
 void main() {
     vector va, vb;
     string sa, sb;

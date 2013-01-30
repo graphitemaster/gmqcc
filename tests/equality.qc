@@ -1,6 +1,3 @@
-void(string, ...) print = #1;
-string(float) ftos = #2;
-
 void(float a, float b) main = {
     if (a == b) print("eq,");
     if (a != b) print("ne,");

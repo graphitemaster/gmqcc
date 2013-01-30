@@ -1,5 +1,3 @@
-void(string, ...) print = #1;
-
 // correct execution order:
 // label_3
 // label_2

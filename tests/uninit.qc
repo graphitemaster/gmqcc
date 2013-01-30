@@ -1,7 +1,3 @@
-void   print(...)    = #1;
-string ftos (float)  = #2;
-string vtos (vector) = #5;
-
 vector main(float a, vector vin) {
     vector v;
 
