@@ -63,7 +63,7 @@
 
         "Enable some predefined macros. This only works in combination\n"
         "with '-fftepp' and is currently not included by '-std=fteqcc'.\n"
-        "The following macros will be added:\n"
+        "The following macros will be added:\n\n"
         "    __LINE__\n"
         "    __FILE__\n"
         "    __COUNTER__\n"
@@ -71,7 +71,7 @@
         "    __RANDOM__\n"
         "    __RANDOM_LAST__\n"
         "    __DATE__\n"
-        "    __TIME__\n"
+        "    __TIME__\n\n"
         "Note that fteqcc also defines __NULL__ which is not implemented\n"
         "yet.  (See -funtyped-nil about gmqcc's alternative to __NULL__)."
     )
@@ -245,7 +245,7 @@
         "   void vafunc(string...count) {\n"
         "       float i;\n"
         "       for (i = 0; i < count; ++i)\n"
-        "           print(...(i, string), \"\n\");\n"
+        "           print(...(i, string), \"\\n\");\n"
         "   }"
     )
 
