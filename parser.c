@@ -3292,15 +3292,26 @@ static bool parse_eol(parser_t *parser)
     return parser->tok == TOKEN_EOL;
 }
 
-static bool parse_pragma_do(parser_t *parser)
-{
-    if (!parser_next(parser) ||
-        parser->tok != TOKEN_IDENT ||
-        strcmp(parser_tokval(parser), "pragma"))
-    {
-        parseerror(parser, "expected `pragma` keyword after `#`, got `%s`", parser_tokval(parser));
-        return false;
-    }
+/*
+ * Traditionally you'd implement warning, error, and message
+ * directives in the preprocessor. However, like #pragma, these
+ * shouldn't depend on -fftepp to utilize.  So they're instead
+ * implemented here.
+ */   
+enum {
+    PARSE_DIRECTIVE_ERROR,
+    PARSE_DIRECTIVE_MESSAGE,
+    PARSE_DIRECTIVE_WARNING,
+    PARSE_DIRECTIVE_COUNT
+};
+
+static const char *parser_directives[PARSE_DIRECTIVE_COUNT] = {
+    "error",
+    "message",
+    "warning"
+};
+
+static bool parse_pragma_do(parser_t *parser) {
     if (!parse_skipwhite(parser) || parser->tok != TOKEN_IDENT) {
         parseerror(parser, "expected pragma, got `%s`", parser_tokval(parser));
         return false;
@@ -3311,35 +3322,102 @@ static bool parse_pragma_do(parser_t *parser)
             parseerror(parser, "`noref` pragma requires an argument: 0 or 1");
             return false;
         }
+
         parser->noref = !!parser_token(parser)->constval.i;
+
         if (!parse_eol(parser)) {
             parseerror(parser, "parse error after `noref` pragma");
             return false;
         }
-    }
-    else
-    {
+    } else {
         (void)!parsewarning(parser, WARN_UNKNOWN_PRAGMAS, "ignoring #pragma %s", parser_tokval(parser));
         return false;
+    }
+    return true;
+}
+
+static bool parse_directive_or_pragma_do(parser_t *parser, bool *pragma) {
+
+    size_t type = PARSE_DIRECTIVE_COUNT;
+
+    if (!parser_next(parser) || parser->tok != TOKEN_IDENT) {
+        parseerror(parser, "expected `pragma, error, message, warning` after `#`, got `%s`",
+            parser_tokval(parser));
+
+        return false;
+    }
+
+    if (!strcmp(parser_tokval(parser), "pragma" )) {
+        *pragma = true;
+
+        return parse_pragma_do(parser);
+    }
+
+    if (!strcmp(parser_tokval(parser), "error"  )) type = PARSE_DIRECTIVE_ERROR;
+    if (!strcmp(parser_tokval(parser), "message")) type = PARSE_DIRECTIVE_MESSAGE;
+    if (!strcmp(parser_tokval(parser), "warning")) type = PARSE_DIRECTIVE_WARNING;
+
+    switch (type) {
+        case PARSE_DIRECTIVE_ERROR:
+        case PARSE_DIRECTIVE_MESSAGE:
+        case PARSE_DIRECTIVE_WARNING:
+            *pragma = false;
+
+            if (!parse_skipwhite(parser) || parser->tok != TOKEN_STRINGCONST) {
+                parseerror(parser, "expected %s, got `%`", parser_directives[type], parser_tokval(parser));
+                return false;
+            }
+
+            switch (type) {
+                case PARSE_DIRECTIVE_ERROR:
+                    con_cprintmsg(&parser->lex->tok.ctx, LVL_ERROR, "error", parser_tokval(parser));
+                    compile_errors ++; /* hack */
+                    break;
+                    /*break;*/
+
+                case PARSE_DIRECTIVE_MESSAGE:
+                    con_cprintmsg(&parser->lex->tok.ctx, LVL_MSG, "message", parser_tokval(parser));
+                    break;
+
+                case PARSE_DIRECTIVE_WARNING:
+                    con_cprintmsg(&parser->lex->tok.ctx, LVL_WARNING, "warning", parser_tokval(parser));
+                    break;
+            }
+
+            if (!parse_eol(parser)) {
+                parseerror(parser, "parse error after `%` directive", parser_directives[type]);
+                return false;
+            }
+
+            return (type != PARSE_DIRECTIVE_ERROR);
+
+        default:
+            parseerror(parser, "invalid directive `%s`", parser_tokval(parser));
+            return false;
     }
 
     return true;
 }
 
-static bool parse_pragma(parser_t *parser)
+static bool parse_directive_or_pragma(parser_t *parser)
 {
     bool rv;
+    bool pragma; /* true when parsing pragma */
+ 
     parser->lex->flags.preprocessing = true;
-    parser->lex->flags.mergelines = true;
-    rv = parse_pragma_do(parser);
+    parser->lex->flags.mergelines    = true;
+
+    rv = parse_directive_or_pragma_do(parser, &pragma);
+
     if (parser->tok != TOKEN_EOL) {
-        parseerror(parser, "junk after pragma");
+        parseerror(parser, "junk after %s", (pragma) ? "pragma" : "directive");
         rv = false;
     }
     parser->lex->flags.preprocessing = false;
-    parser->lex->flags.mergelines = false;
+    parser->lex->flags.mergelines    = false;
+
     if (!parser_next(parser)) {
-        parseerror(parser, "parse error after pragma");
+        parseerror(parser, "parse error after %s", (pragma) ? "pragma" : "directive");
         rv = false;
     }
     return rv;
@@ -5520,7 +5598,7 @@ static bool parser_global_statement(parser_t *parser)
     }
     else if (parser->tok == '#')
     {
-        return parse_pragma(parser);
+        return parse_directive_or_pragma(parser);
     }
     else if (parser->tok == '$')
     {

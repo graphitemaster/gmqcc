@@ -1269,55 +1269,6 @@ static char *ftepp_include_find(ftepp_t *ftepp, const char *file)
     return filename;
 }
 
-static bool ftepp_directive_warning(ftepp_t *ftepp) {
-    char *message = NULL;
-
-    if (!ftepp_skipspace(ftepp))
-        return false;
-
-    /* handle the odd non string constant case so it works like C */
-    if (ftepp->token != TOKEN_STRINGCONST) {
-        bool  store   = false;
-        vec_upload(message, "#warning", 8);
-        ftepp_next(ftepp);
-        while (ftepp->token != TOKEN_EOL) {
-            vec_upload(message, ftepp_tokval(ftepp), strlen(ftepp_tokval(ftepp)));
-            ftepp_next(ftepp);
-        }
-        vec_push(message, '\0');
-        store = ftepp_warn(ftepp, WARN_CPP, message);
-        vec_free(message);
-        return store;
-    }
-
-    unescape  (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
-    return ftepp_warn(ftepp, WARN_CPP, "#warning %s", ftepp_tokval(ftepp));
-}
-
-static void ftepp_directive_error(ftepp_t *ftepp) {
-    char *message = NULL;
-
-    if (!ftepp_skipspace(ftepp))
-        return;
-
-    /* handle the odd non string constant case so it works like C */
-    if (ftepp->token != TOKEN_STRINGCONST) {
-        vec_upload(message, "#error", 6);
-        ftepp_next(ftepp);
-        while (ftepp->token != TOKEN_EOL) {
-            vec_upload(message, ftepp_tokval(ftepp), strlen(ftepp_tokval(ftepp)));
-            ftepp_next(ftepp);
-        }
-        vec_push(message, '\0');
-        ftepp_error(ftepp, message);
-        vec_free(message);
-        return;
-    }
-
-    unescape  (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
-    ftepp_error(ftepp, "#error %s", ftepp_tokval(ftepp));
-}
-
 /**
  * Include a file.
  * FIXME: do we need/want a -I option?
@@ -1511,14 +1462,6 @@ static bool ftepp_hash(ftepp_t *ftepp)
             }
             else if (!strcmp(ftepp_tokval(ftepp), "pragma")) {
                 ftepp_out(ftepp, "#", false);
-                break;
-            }
-            else if (!strcmp(ftepp_tokval(ftepp), "warning")) {
-                ftepp_directive_warning(ftepp);
-                break;
-            }
-            else if (!strcmp(ftepp_tokval(ftepp), "error")) {
-                ftepp_directive_error(ftepp);
                 break;
             }
             else {
