@@ -3390,13 +3390,10 @@ static bool parse_directive_or_pragma_do(parser_t *parser, bool *pragma) {
             }
 
             return (type != PARSE_DIRECTIVE_ERROR);
-
-        default:
-            parseerror(parser, "invalid directive `%s`", parser_tokval(parser));
-            return false;
     }
 
-    return true;
+    parseerror(parser, "invalid directive `%s`", parser_tokval(parser));
+    return false;
 }
 
 static bool parse_directive_or_pragma(parser_t *parser)
