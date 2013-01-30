@@ -1165,7 +1165,7 @@ void task_schedualize(size_t *pad) {
  *
  * It expects con_init() was called before hand.
  */
-bool test_perform(const char *curdir) {
+GMQCC_WARN bool test_perform(const char *curdir) {
     size_t pad[] = {
         0, 0
     };
@@ -1220,6 +1220,7 @@ static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out,
 }
 
 int main(int argc, char **argv) {
+    bool          succeed  = false;
     char         *redirout = (char*)stdout;
     char         *redirerr = (char*)stderr;
 
@@ -1259,7 +1260,9 @@ int main(int argc, char **argv) {
         }
     }
     con_change(redirout, redirerr);
-    test_perform("tests");
+    succeed = test_perform("tests");
     util_meminfo();
-    return 0;
+
+
+    return (succeed) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
