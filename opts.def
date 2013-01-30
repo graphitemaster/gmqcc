@@ -633,18 +633,27 @@
     GMQCC_DEFINE_FLAG (
         O,
 
-        ""
+        "Specify the optimization level\n"
+        "3        Highest optimization level\n"
+        "2        Default optimization level\n"
+        "1        Minimal optimization level\n"
+        "0        Disable optimization entirely"
     )
     GMQCC_DEFINE_FLAG (
         OUTPUT,
 
-        ""
+        "Specify the output file name. Defaults to progs.dat. This will\n"
+        "overwrite the output file listed in a progs.src file in case such\n"
+        "a file is used."
     )
 
     GMQCC_DEFINE_FLAG (
         QUIET,
 
-        ""
+        "Be less verbose. In particular removes the messages about which\n"
+        "files are being processed, and which compilation mode is being\n"
+        "used, and some others. Warnings and errors will of course still\n"
+        "be displayed."
     )
 
     GMQCC_DEFINE_FLAG (
@@ -656,67 +665,108 @@
     GMQCC_DEFINE_FLAG (
         STANDARD,
 
-        ""
+        "Use the specified standard for parsing QC code. The following\n"
+        "standards are available: gmqcc, qcc, fteqcc Selecting a standard\n"
+        "also implies some -f options and behaves as if those options have\n"
+        "been written right after the -std option, meaning if you changed\n"
+        "them before the --std option, you're now overwriting them.\n\n"
+        "-std=gmqcc includes:\n"
+        "   -fadjust-vector-fields\n"
+        "   -fcorrect-logic\n"
+        "   -ftrue-empty-strings\n"
+        "   -floop-labels\n"
+        "   -finitialized-nonconstants\n"
+        "   -ftranslatable-strings\n"
+        "   -fno-false-empty-strings\n"
+        "   -Winvalid-parameter-count\n"
+        "   -Wmissing-returnvalues\n"
+        "   -fcorrect-ternary (cannot be turned off)\n\n"
+        "-std=qcc includes:\n"
+        "   -fassign-function-types\n"
+        "   -fIno-adjust-vector-fields\n\n"
+        "-std=fteqcc includes:\n"
+        "   -fftepp\n"
+        "   -ftranslatable-strings\n"
+        "   -fassign-function-types\n"
+        "   -Wternary-precedence\n"
+        "   -fno-adjust-vector-fields\n"
+        "   -fno-correct-ternary"
     )
 
     GMQCC_DEFINE_FLAG (
         DEBUG,
 
-        ""
+        "Turn on some compiler debuggin mechanisms"
     )
 
     GMQCC_DEFINE_FLAG (
         MEMCHK,
 
-        ""
+        "Turn on compiler mem-chk. (Shows allocations and checks for\n"
+        "leaks.)"
     )
 
     GMQCC_DEFINE_FLAG (
         DUMPFIN,
 
-        ""
+        "DEBUG OPTION. Print the code's intermediate representation after\n"
+        "the optimization and finalization passes to stdout before gener‐\n"
+        "ating the binary. The instructions will be enumerated, and values\n"
+        "will contain a list of liferanges."
     )
 
     GMQCC_DEFINE_FLAG (
         DUMP,
 
-        ""
+        "DEBUG OPTION. Print the code's intermediate representation before\n"
+        "the optimization and finalization passes to stdout before gener‐\n"
+        "ating the binary."
     )
 
     GMQCC_DEFINE_FLAG (
         FORCECRC,
 
-        ""
+        "When enabled allows forcing a specific CRC16 for the generated\n"
+        "progs.dat"
     )
 
     GMQCC_DEFINE_FLAG (
         FORCED_CRC,
 
-        ""
+        "Value which represents the CRC to force into the progs.dat"
     )
 
     GMQCC_DEFINE_FLAG (
         PP_ONLY,
 
-        ""
+        "Run only the preprocessor as if -fftepp was used and print the\n"
+        "preprocessed code to stdout."
     )
 
     GMQCC_DEFINE_FLAG (
         MAX_ARRAY_SIZE,
 
-        ""
+        "Maximum allowed one-dimensional array size.  Arrays are expensive\n"
+        "since binary search trees are generated for each set/get of an array\n"
+        "the more elements in an array (the larger it is), the longer it will\n"
+        "take to set/get elements."
     )
 
     GMQCC_DEFINE_FLAG (
         ADD_INFO,
 
-        ""
+        "Adds compiler information to the generated binary file. Currently\n"
+        "this includes the following globals:\n"
+        "   reserved:version\n"
+        "       String containing the compiler version as printed by the\n"
+        "       --version parameter."
     )
 
     GMQCC_DEFINE_FLAG (
         CORRECTION,
 
-        ""
+        "When enabled, errors about undefined values try to suggest an\n"
+        "existing value via spell checking."
     )
 #endif
 
