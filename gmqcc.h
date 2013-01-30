@@ -1153,13 +1153,6 @@ typedef enum {
     COMPILER_GMQCC    /* this   QuakeC */
 } opts_std_t;
 
-typedef enum {
-    OPT_TYPE_BOOL,
-    OPT_TYPE_U16,
-    OPT_TYPE_U32,
-    OPT_TYPE_STR
-} opt_type_t;
-
 typedef union {
     bool     B;
     uint16_t U16;
