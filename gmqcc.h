@@ -1139,9 +1139,8 @@ GMQCC_USED static const char *opts_options_descriptions[] = {
 #   define GMQCC_TYPE_OPTIONS
 #   define GMQCC_DEFINE_FLAG(X, Y) Y,
 #   include "opts.def"
-    "<null>"
+    ""
 };
-
 
 extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
