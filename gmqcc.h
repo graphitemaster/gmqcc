@@ -102,8 +102,10 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
  */
 #if defined(__GNUC__) || defined(__CLANG__)
 #   define GMQCC_WARN __attribute__((warn_unused_result))
+#   define GMQCC_USED __attribute__((used))
 #else
 #   define GMQCC_WARN
+#   define GMQCC_USED
 #endif
 /*
  * This is a hack to silent clang regarding empty
@@ -1133,7 +1135,7 @@ enum {
 };
 
 
-static const char *opts_options_descriptions[] = {
+GMQCC_USED static const char *opts_options_descriptions[] = {
 #   define GMQCC_TYPE_OPTIONS
 #   define GMQCC_DEFINE_FLAG(X, Y) Y,
 #   include "opts.def"
