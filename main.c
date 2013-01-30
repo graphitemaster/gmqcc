@@ -460,7 +460,13 @@ static bool options_parse(int argc, char **argv) {
                     }
             /* All long options without arguments */
                     else if (!strcmp(argv[0]+2, "help")) {
-                        usage();
+                        /* TODO .. map name back .. prittery print of
+                         * options and their associations.
+                         */  
+                        for (itr = 0; itr < OPTION_COUNT; itr++) {
+                            con_out("%s\n\n", opts_options_descriptions[itr]);
+                        }
+
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "version")) {
