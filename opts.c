@@ -284,7 +284,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* flags */
     #define GMQCC_TYPE_FLAGS
-    #define GMQCC_DEFINE_FLAG(X)                                       \
+    #define GMQCC_DEFINE_FLAG(X, Y)                                    \
     if (!strcmp(section, "flags") && !strcmp(name, #X)) {              \
         opts_set(opts.flags, X, opts_ini_bool(value));                 \
         found = true;                                                  \
@@ -293,7 +293,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* warnings */
     #define GMQCC_TYPE_WARNS
-    #define GMQCC_DEFINE_FLAG(X)                                       \
+    #define GMQCC_DEFINE_FLAG(X, Y)                                    \
     if (!strcmp(section, "warnings") && !strcmp(name, #X)) {           \
         opts_set(opts.warn, WARN_##X, opts_ini_bool(value));           \
         found = true;                                                  \
@@ -302,7 +302,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* Werror-individuals */
     #define GMQCC_TYPE_WARNS
-    #define GMQCC_DEFINE_FLAG(X)                                       \
+    #define GMQCC_DEFINE_FLAG(X, Y)                                    \
     if (!strcmp(section, "errors") && !strcmp(name, #X)) {             \
         opts_set(opts.werror, WARN_##X, opts_ini_bool(value));         \
         found = true;                                                  \
@@ -311,7 +311,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* optimizations */
     #define GMQCC_TYPE_OPTIMIZATIONS
-    #define GMQCC_DEFINE_FLAG(X,Y)                                     \
+    #define GMQCC_DEFINE_FLAG(X,Y,Z)                                   \
     if (!strcmp(section, "optimizations") && !strcmp(name, #X)) {      \
         opts_set(opts.optimization, OPTIM_##X, opts_ini_bool(value));  \
         found = true;                                                  \
