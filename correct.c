@@ -217,7 +217,7 @@ correct_trie_t* correct_trie_new() {
     return t;
 }
 
-void correct_trie_del_sub(correct_trie_t *t) {
+static GMQCC_INLINE void correct_trie_del_sub(correct_trie_t *t) {
     size_t i;
     if (!t->entries)
         return;
@@ -227,7 +227,7 @@ void correct_trie_del_sub(correct_trie_t *t) {
     mem_d(t->entries);
 }
 
-void correct_trie_del(correct_trie_t *t) {
+static GMQCC_INLINE void correct_trie_del(correct_trie_t *t) {
     size_t i;
     if (t->entries) {
         for (i = 0; i < sizeof(correct_alpha)-1; ++i)
@@ -237,7 +237,7 @@ void correct_trie_del(correct_trie_t *t) {
     mem_d(t);
 }
 
-void* correct_trie_get(const correct_trie_t *t, const char *key) {
+static GMQCC_INLINE void* correct_trie_get(const correct_trie_t *t, const char *key) {
     const unsigned char *data = (const unsigned char*)key;
 
     while (*data) {
@@ -249,7 +249,7 @@ void* correct_trie_get(const correct_trie_t *t, const char *key) {
     return t->value;
 }
 
-void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
+static GMQCC_INLINE void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
         if (!t->entries) {
@@ -320,7 +320,7 @@ void correct_del(correct_trie_t* dictonary, size_t **data) {
  * need to take a size_t ** to carry it along (would all the argument
  * overhead be worth it?)  
  */
-static size_t correct_deletion(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_deletion(const char *ident, char **array) {
     size_t       itr = 0;
     const size_t len = strlen(ident);
 
@@ -334,7 +334,7 @@ static size_t correct_deletion(const char *ident, char **array) {
     return itr;
 }
 
-static size_t correct_transposition(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_transposition(const char *ident, char **array) {
     size_t       itr = 0;
     const size_t len = strlen(ident);
 
@@ -351,7 +351,7 @@ static size_t correct_transposition(const char *ident, char **array) {
     return itr;
 }
 
-static size_t correct_alteration(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_alteration(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
     size_t       ktr = 0;
@@ -369,7 +369,7 @@ static size_t correct_alteration(const char *ident, char **array) {
     return ktr;
 }
 
-static size_t correct_insertion(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_insertion(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
     const size_t len = strlen(ident);
@@ -399,7 +399,7 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
     return (len) + (len - 1) + (len * (sizeof(correct_alpha)-1)) + ((len + 1) * (sizeof(correct_alpha)-1));
 }
 
-static char **correct_edit(const char *ident) {
+static GMQCC_INLINE char **correct_edit(const char *ident) {
     size_t next;
     char **find = (char**)correct_pool_alloc(correct_size(ident) * sizeof(char*));
 
@@ -419,7 +419,7 @@ static char **correct_edit(const char *ident) {
  * since we're only going to determine the "did you mean?" identifier
  * on error.
  */
-static int correct_exist(char **array, size_t rows, char *ident) {
+static GMQCC_INLINE int correct_exist(char **array, size_t rows, char *ident) {
     size_t itr;
     /*
      * As an experiment I tried the following assembly for memcmp here:
@@ -500,7 +500,7 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
     return res;
 }
 
-static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
+static GMQCC_INLINE char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
     char   *str = NULL;
     size_t *itm = NULL;
     size_t  itr = 0;
