@@ -83,11 +83,11 @@ uint16_t type_store_instr[TYPE_COUNT] = {
 
     INSTR_STORE_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t field_store_instr[TYPE_COUNT] = {
@@ -107,11 +107,11 @@ uint16_t field_store_instr[TYPE_COUNT] = {
 
     INSTR_STORE_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_storep_instr[TYPE_COUNT] = {
@@ -131,11 +131,11 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
 
     INSTR_STOREP_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_eq_instr[TYPE_COUNT] = {
@@ -155,11 +155,11 @@ uint16_t type_eq_instr[TYPE_COUNT] = {
 
     INSTR_EQ_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_ne_instr[TYPE_COUNT] = {
@@ -179,11 +179,11 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
 
     INSTR_NE_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_not_instr[TYPE_COUNT] = {
@@ -203,11 +203,11 @@ uint16_t type_not_instr[TYPE_COUNT] = {
 
     INSTR_NOT_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 /* protos */

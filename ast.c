@@ -2834,7 +2834,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         return true;
 
     cmpinstr = type_eq_instr[irop->vtype];
-    if (cmpinstr >= AINSTR_END) {
+    if (cmpinstr >= VINSTR_END) {
         ast_type_to_string(self->operand, typestr, sizeof(typestr));
         compile_error(ast_ctx(self), "invalid type to perform a switch on: %s", typestr);
         return false;

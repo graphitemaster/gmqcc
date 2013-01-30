@@ -684,16 +684,10 @@ enum {
     INSTR_BITOR,
 
     /*
-     * Virtual instructions used by the assembler
-     * keep at the end but before virtual instructions
-     * for the IR below.
-     */
-    AINSTR_END,
-
-    /*
      * Virtual instructions used by the IR
      * Keep at the end!
      */
+    VINSTR_END,
     VINSTR_PHI,
     VINSTR_JUMP,
     VINSTR_COND,
