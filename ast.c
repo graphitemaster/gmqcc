@@ -1124,9 +1124,9 @@ const char* ast_function_label(ast_function *self, const char *prefix)
     size_t len;
     char  *from;
 
-    if (!OPTION_VALUE_BOOL(OPTION_DUMP)    &&
-        !OPTION_VALUE_BOOL(OPTION_DUMPFIN) &&
-        !OPTION_VALUE_BOOL(OPTION_DEBUG))
+    if (!OPTS_OPTION_BOOL(OPTION_DUMP)    &&
+        !OPTS_OPTION_BOOL(OPTION_DUMPFIN) &&
+        !OPTS_OPTION_BOOL(OPTION_DEBUG))
     {
         return NULL;
     }
@@ -1235,7 +1235,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
 
             /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-            if (!array->expression.count || array->expression.count > OPTION_VALUE_U32(OPTION_MAX_ARRAY_SIZE))
+            if (!array->expression.count || array->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
                 compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
 
             elemtype = &array->expression.next->expression;
@@ -1297,7 +1297,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         int vtype = elemtype->vtype;
 
         /* same as with field arrays */
-        if (!self->expression.count || self->expression.count > OPTION_VALUE_U32(OPTION_MAX_ARRAY_SIZE))
+        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
 
         v = ir_builder_create_global(ir, self->name, vtype);
@@ -1434,7 +1434,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         }
 
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-        if (!self->expression.count || self->expression.count > OPTION_VALUE_U32(OPTION_MAX_ARRAY_SIZE)) {
+        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
         }
 
@@ -1706,7 +1706,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     for (i = 0; i < vec_size(self->locals); ++i)
     {
         if (!ast_local_codegen(self->locals[i], func->ir_func, false)) {
-            if (OPTION_VALUE_BOOL(OPTION_DEBUG))
+            if (OPTS_OPTION_BOOL(OPTION_DEBUG))
                 compile_error(ast_ctx(self), "failed to generate local `%s`", self->locals[i]->name);
             return false;
         }

@@ -132,7 +132,7 @@ void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file
 void util_meminfo() {
     struct memblock_t *info;
 
-    if (!OPTION_VALUE_BOOL(OPTION_MEMCHK))
+    if (!OPTS_OPTION_BOOL(OPTION_MEMCHK))
         return;
 
     for (info = mem_start; info; info = info->next) {
@@ -175,10 +175,10 @@ char *util_strdup(const char *s) {
 
 void util_debug(const char *area, const char *ms, ...) {
     va_list  va;
-    if (!OPTION_VALUE_BOOL(OPTION_DEBUG))
+    if (!OPTS_OPTION_BOOL(OPTION_DEBUG))
         return;
 
-    if (!strcmp(area, "MEM") && !OPTION_VALUE_BOOL(OPTION_MEMCHK))
+    if (!strcmp(area, "MEM") && !OPTS_OPTION_BOOL(OPTION_MEMCHK))
         return;
 
     va_start(va, ms);

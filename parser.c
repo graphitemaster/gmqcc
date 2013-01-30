@@ -630,7 +630,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             {
 #if 0
                 /* This is not broken in fteqcc anymore */
-                if (OPTION_VALUE_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
+                if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
                     /* this error doesn't need to make us bail out */
                     (void)!parsewarning(parser, WARN_EXTENSIONS,
                                         "accessing array-field members of an entity without parenthesis\n"
@@ -1784,7 +1784,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                  * We should also consider adding correction tables for
                  * other things as well.
                  */
-                if (OPTION_VALUE_BOOL(OPTION_CORRECTION)) {
+                if (OPTS_OPTION_BOOL(OPTION_CORRECTION)) {
                     correction_t corr;
                     correct_init(&corr);
 
@@ -2635,7 +2635,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     if (typevar || parser->tok == TOKEN_TYPENAME) {
 #if 0
-        if (OPTION_VALUE_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
+        if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
             if (parsewarning(parser, WARN_EXTENSIONS,
                              "current standard does not allow variable declarations in for-loop initializers"))
                 goto onerr;
@@ -3440,7 +3440,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             parseerror(parser, "cannot declare a variable from here");
             return false;
         }
-        if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC) {
+        if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
             if (parsewarning(parser, WARN_EXTENSIONS, "missing 'local' keyword when declaring a local variable"))
                 return false;
         }
@@ -3507,7 +3507,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         }
         else if (!strcmp(parser_tokval(parser), "for"))
         {
-            if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC) {
+            if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
                 if (parsewarning(parser, WARN_EXTENSIONS, "for loops are not recognized in the original Quake C standard, to enable try an alternate standard --std=?"))
                     return false;
             }
@@ -4109,7 +4109,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     if (parser->tok == ';')
         return parser_next(parser);
-    else if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC)
+    else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
         parseerror(parser, "missing semicolon after function body (mandatory with -std=qcc)");
     return retval;
 
@@ -4625,7 +4625,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         vec_free(params);
 
     /* sanity check */
-    if (vec_size(params) > 8 && OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC)
+    if (vec_size(params) > 8 && OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
         (void)!parsewarning(parser, WARN_EXTENSIONS, "more than 8 parameters are not supported by this standard");
 
     /* parse-out */
@@ -4839,7 +4839,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     }
 
     /* now there may be function parens again */
-    if (parser->tok == '(' && OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC)
+    if (parser->tok == '(' && OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
         parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
     if (parser->tok == '(' && wasarray)
         parseerror(parser, "arrays as part of a return type is not supported");
@@ -4978,7 +4978,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
         /* Part 0: finish the type */
         if (parser->tok == '(') {
-            if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC)
+            if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
                 parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
             var = parse_parameter_list(parser, var);
             if (!var) {
@@ -5001,7 +5001,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
         /* for functions returning functions */
         while (parser->tok == '(') {
-            if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC)
+            if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
                 parseerror(parser, "C-style function syntax is not allowed in -std=qcc");
             var = parse_parameter_list(parser, var);
             if (!var) {
@@ -5071,7 +5071,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     goto cleanup;
                     */
                 }
-                if ((OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC || OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_FTEQCC) &&
+                if ((OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC || OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC) &&
                     (old = parser_find_global(parser, var->name)))
                 {
                     parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
@@ -5143,7 +5143,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         ast_delete(var);
                         var = proto;
                     }
-                    if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC &&
+                    if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC &&
                         (old = parser_find_field(parser, var->name)))
                     {
                         parseerror(parser, "cannot declare a field and a global of the same name with -std=qcc");
@@ -5174,7 +5174,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     retval = false;
                     goto cleanup;
                 }
-                if (OPTION_VALUE_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
+                if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
                     ast_delete(var);
                     var = NULL;
                     goto skipvar;
@@ -5354,7 +5354,7 @@ skipvar:
             break;
         }
 
-        if (localblock && OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC) {
+        if (localblock && OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
             if (parsewarning(parser, WARN_LOCAL_CONSTANTS,
                              "initializing expression turns variable `%s` into a constant in this standard",
                              var->name) )
@@ -5374,7 +5374,7 @@ skipvar:
                 break;
             }
         }
-        else if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC) {
+        else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
             parseerror(parser, "expected '=' before function body in this standard");
         }
 
@@ -5735,7 +5735,7 @@ bool parser_init()
     parser->const_vec[1] = ast_value_new(empty_ctx, "<vector.y>", TYPE_NOEXPR);
     parser->const_vec[2] = ast_value_new(empty_ctx, "<vector.z>", TYPE_NOEXPR);
 
-    if (OPTION_VALUE_BOOL(OPTION_ADD_INFO)) {
+    if (OPTS_OPTION_BOOL(OPTION_ADD_INFO)) {
         parser->reserved_version = ast_value_new(empty_ctx, "reserved:version", TYPE_STRING);
         parser->reserved_version->cvq = CV_CONST;
         parser->reserved_version->hasvalue = true;
@@ -6024,7 +6024,7 @@ bool parser_finish(const char *output)
             return false;
         }
     }
-    if (OPTION_VALUE_BOOL(OPTION_DUMP))
+    if (OPTS_OPTION_BOOL(OPTION_DUMP))
         ir_builder_dump(ir, con_out);
     for (i = 0; i < vec_size(parser->functions); ++i) {
         if (!ir_function_finalize(parser->functions[i]->ir_func)) {
@@ -6041,7 +6041,7 @@ bool parser_finish(const char *output)
     }
 
     if (retval) {
-        if (OPTION_VALUE_BOOL(OPTION_DUMPFIN))
+        if (OPTS_OPTION_BOOL(OPTION_DUMPFIN))
             ir_builder_dump(ir, con_out);
 
         generate_checksum(parser);

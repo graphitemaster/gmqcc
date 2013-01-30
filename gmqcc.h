@@ -1131,12 +1131,16 @@ enum {
 #   include "opts.def"
     OPTION_COUNT
 };
+
+/* disabled for now */
+#if 0
 static const char *opts_options_descriptions[OPTION_COUNT + 1] = {
 #   define GMQCC_TYPE_OPTIONS
 #   define GMQCC_DEFINE_FLAG(X, Y) Y,
 #   include "opts.def"
     ""
 };
+#endif
 
 extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
@@ -1163,10 +1167,6 @@ typedef union {
 } opt_value_t;
 
 
-#define OPTION_VALUE_BOOL(X) (opts.options[X].B)
-#define OPTION_VALUE_U16(X)  (opts.options[X].U16)
-#define OPTION_VALUE_U32(X)  (opts.options[X].U32)
-#define OPTION_VALUE_STR(X)  (opts.options[X].STR)
 typedef struct {
     opt_value_t  options      [OPTION_COUNT];
     uint32_t     flags        [1 + (COUNT_FLAGS         / 32)];
@@ -1184,5 +1184,9 @@ extern opts_cmd_t opts;
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
 #define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))
 #define OPTS_OPTIMIZATION(i) OPTS_GENERIC(opts.optimization, (i))
+#define OPTS_OPTION_BOOL(X) (opts.options[X].B)
+#define OPTS_OPTION_U16(X)  (opts.options[X].U16)
+#define OPTS_OPTION_U32(X)  (opts.options[X].U32)
+#define OPTS_OPTION_STR(X)  (opts.options[X].STR)
 
 #endif
