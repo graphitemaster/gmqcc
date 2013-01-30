@@ -399,17 +399,22 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
     return (len) + (len - 1) + (len * (sizeof(correct_alpha)-1)) + ((len + 1) * (sizeof(correct_alpha)-1));
 }
 
-static GMQCC_INLINE char **correct_edit(const char *ident) {
+static GMQCC_INLINE char **correct_edit(const char *ident, size_t **lens) {
     size_t next;
-    char **find = (char**)correct_pool_alloc(correct_size(ident) * sizeof(char*));
+    size_t size = correct_size(ident);
+    char **find = (char**)correct_pool_alloc(size * sizeof(char*));
 
-    if (!find)
+    if (!find || !(*lens = (size_t*)correct_pool_alloc(size * sizeof(size_t))))
         return NULL;
 
     next  = correct_deletion     (ident, find);
     next += correct_transposition(ident, find+next);
     next += correct_alteration   (ident, find+next);
     /*****/ correct_insertion    (ident, find+next);
+
+    /* precompute lengths */
+    for (next = 0; next < size; next++)
+        (*lens)[next] = strlen(find[next]);
 
     return find;
 }
@@ -419,36 +424,10 @@ static GMQCC_INLINE char **correct_edit(const char *ident) {
  * since we're only going to determine the "did you mean?" identifier
  * on error.
  */
-static GMQCC_INLINE int correct_exist(char **array, size_t rows, char *ident) {
+static GMQCC_INLINE int correct_exist(char **array, size_t rows, char *ident, size_t len) {
     size_t itr;
-    /*
-     * As an experiment I tried the following assembly for memcmp here:
-     *
-     * correct_cmp_loop: 
-     * incl %eax            ; eax =  LHS
-     * incl %edx            ; edx =  LRS
-     * cmpl %eax, %ebx      ; ebx = &LHS[END_POS]
-     *
-     * jbe correct_cmp_eq
-     * movb (%edx), %cl     ; micro-optimized even on atoms :-)
-     * cmpb %cl, (%eax)     ; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     * jg  correct_cmp_gt
-     * jge correct_cmp_loop
-     * ...
-     *
-     * Despite how much optimization went in to this, the speed was
-     * being conflicted by the strlen(ident) used for &LHS[END_POS]
-     * If we could eliminate the strlen with what I suggested on line
-     * 311 ... we can accelerate this whole damn thing quite a bit.
-     *
-     * However there is still something we can do here that does give
-     * us a little more speed.  Although one more branch, we know for
-     * sure there is at least one byte to compare, if that one byte
-     * simply isn't the same we can skip the full check. Which means
-     * we skip a whole strlen call.
-     */
     for (itr = 0; itr < rows; itr++) {
-        if (!memcmp(array[itr], ident, strlen(ident)))
+        if (!memcmp(array[itr], ident, len))
             return 1;
     }
 
@@ -474,22 +453,25 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
     size_t len = 0;
     size_t row = 0;
     size_t nxt = 8;
-    char **res = (char**)correct_pool_alloc(sizeof(char *) * nxt);
-    char **end = NULL;
+    char   **res = (char**)correct_pool_alloc(sizeof(char *) * nxt);
+    char   **end = NULL;
+    size_t  *bit = NULL;
 
     for (; itr < rows; itr++) {
         if (!array[itr][0])
             continue;
-        if (vec_size(corr->edits) > itr+1)
+        if (vec_size(corr->edits) > itr+1) {
             end = corr->edits[itr+1];
-        else {
-            end = correct_edit(array[itr]);
+            bit = corr->lens [itr+1];
+        } else {
+            end = correct_edit(array[itr], &bit);
             vec_push(corr->edits, end);
+            vec_push(corr->lens,  bit);
         }
         row = correct_size(array[itr]);
 
         for (jtr = 0; jtr < row; jtr++) {
-            if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
+            if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr], bit[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
             }
@@ -540,6 +522,7 @@ char *correct_str(correction_t *corr, correct_trie_t* table, const char *ident) 
     char  *e2ident = NULL;
     size_t e1rows  = 0;
     size_t e2rows  = 0;
+    size_t *bits   = NULL;
 
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
@@ -549,8 +532,9 @@ char *correct_str(correction_t *corr, correct_trie_t* table, const char *ident) 
         if (vec_size(corr->edits) > 0)
             e1 = corr->edits[0];
         else {
-            e1 = correct_edit(ident);
+            e1 = correct_edit(ident, &bits);
             vec_push(corr->edits, e1);
+            vec_push(corr->lens,  bits);
         }
 
         if ((e1ident = correct_maximum(table, e1, e1rows)))

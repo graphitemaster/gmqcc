@@ -453,7 +453,8 @@ GMQCC_INLINE FILE   *file_open   (const char *, const char *);
 /*=========================== correct.c =============================*/
 /*===================================================================*/
 typedef struct {
-    char ***edits;
+    char   ***edits;
+    size_t  **lens;
 } correction_t;
 
 void  correct_del (correct_trie_t*, size_t **);
