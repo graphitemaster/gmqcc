@@ -3292,8 +3292,15 @@ static bool parse_eol(parser_t *parser)
     return parser->tok == TOKEN_EOL;
 }
 
-
-static bool parse_pragma_do(parser_t *parser) {
+static bool parse_pragma_do(parser_t *parser)
+{
+    if (!parser_next(parser) ||
+        parser->tok != TOKEN_IDENT ||
+        strcmp(parser_tokval(parser), "pragma"))
+    {
+        parseerror(parser, "expected `pragma` keyword after `#`, got `%s`", parser_tokval(parser));
+        return false;
+    }
     if (!parse_skipwhite(parser) || parser->tok != TOKEN_IDENT) {
         parseerror(parser, "expected pragma, got `%s`", parser_tokval(parser));
         return false;
@@ -3304,37 +3311,33 @@ static bool parse_pragma_do(parser_t *parser) {
             parseerror(parser, "`noref` pragma requires an argument: 0 or 1");
             return false;
         }
-
         parser->noref = !!parser_token(parser)->constval.i;
-
         if (!parse_eol(parser)) {
             parseerror(parser, "parse error after `noref` pragma");
             return false;
         }
-    } else {
+    }
+    else
+    {
         (void)!parsewarning(parser, WARN_UNKNOWN_PRAGMAS, "ignoring #pragma %s", parser_tokval(parser));
         return false;
     }
+
     return true;
 }
-
 
 static bool parse_pragma(parser_t *parser)
 {
     bool rv;
- 
     parser->lex->flags.preprocessing = true;
-    parser->lex->flags.mergelines    = true;
-
+    parser->lex->flags.mergelines = true;
     rv = parse_pragma_do(parser);
-
     if (parser->tok != TOKEN_EOL) {
         parseerror(parser, "junk after pragma");
         rv = false;
     }
     parser->lex->flags.preprocessing = false;
-    parser->lex->flags.mergelines    = false;
-
+    parser->lex->flags.mergelines = false;
     if (!parser_next(parser)) {
         parseerror(parser, "parse error after pragma");
         rv = false;
