@@ -82,7 +82,7 @@ static uint32_t ftepp_predef_randval  = 0;
 char *ftepp_predef_date(lex_file *context) {
     struct tm *itime;
     time_t     rtime;
-    char      *value = mem_a(82);
+    char      *value = (char*)mem_a(82);
     /* 82 is enough for strftime but we also have " " in our string */
 
     (void)context;
@@ -100,7 +100,7 @@ char *ftepp_predef_date(lex_file *context) {
 char *ftepp_predef_time(lex_file *context) {
     struct tm *itime;
     time_t     rtime;
-    char      *value = mem_a(82);
+    char      *value = (char*)mem_a(82);
     /* 82 is enough for strftime but we also have " " in our string */
 
     (void)context;

@@ -461,7 +461,7 @@ static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, s
     if (size < oldallocated)
         return res;
 
-    out = correct_pool_alloc(sizeof(*res) * oldallocated + 32);
+    out = (char**)correct_pool_alloc(sizeof(*res) * oldallocated + 32);
     memcpy(out, res, sizeof(*res) * oldallocated);
 
     *allocated += 32;
@@ -474,7 +474,7 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
     size_t len = 0;
     size_t row = 0;
     size_t nxt = 8;
-    char **res = correct_pool_alloc(sizeof(char *) * nxt);
+    char **res = (char**)correct_pool_alloc(sizeof(char *) * nxt);
     char **end = NULL;
 
     for (; itr < rows; itr++) {
