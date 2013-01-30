@@ -481,7 +481,7 @@ static bool ftepp_define(ftepp_t *ftepp)
         case TOKEN_KEYWORD:
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
             if (macro && ftepp->output_on) {
-                if (ftepp_warn(ftepp, WARN_PREPROCESSOR, "redefining `%s`", ftepp_tokval(ftepp)))
+                if (ftepp_warn(ftepp, WARN_CPP, "redefining `%s`", ftepp_tokval(ftepp)))
                     return false;
                 ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
             }

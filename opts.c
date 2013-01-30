@@ -46,7 +46,7 @@ static void opts_setdefault() {
     opts_set(opts.warn,  WARN_EFFECTLESS_STATEMENT,      true);
     opts_set(opts.warn,  WARN_END_SYS_FIELDS,            true);
     opts_set(opts.warn,  WARN_ASSIGN_FUNCTION_TYPES,     true);
-    opts_set(opts.warn,  WARN_PREPROCESSOR,              true);
+    opts_set(opts.warn,  WARN_CPP,                       true);
     opts_set(opts.warn,  WARN_MULTIFILE_IF,              true);
     opts_set(opts.warn,  WARN_DOUBLE_DECLARATION,        true);
     opts_set(opts.warn,  WARN_CONST_VAR,                 true);
