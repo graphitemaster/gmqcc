@@ -1011,7 +1011,7 @@ static bool ftepp_if_value(ftepp_t *ftepp, bool *out, double *value_out)
 
         default:
             ftepp_error(ftepp, "junk in #if: `%s` ...", ftepp_tokval(ftepp));
-            if (opts.debug)
+            if (OPTION_VALUE_BOOL(OPTION_DEBUG))
                 ftepp_error(ftepp, "internal: token %i\n", ftepp->token);
             return false;
     }
@@ -1670,7 +1670,7 @@ bool ftepp_init()
 
     /* set the right macro based on the selected standard */
     ftepp_add_define(NULL, "GMQCC");
-    if (opts.standard == COMPILER_FTEQCC) {
+    if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_FTEQCC) {
         ftepp_add_define(NULL, "__STD_FTEQCC__");
         /* 1.00 */
         major[0] = '"';
@@ -1680,15 +1680,15 @@ bool ftepp_init()
         minor[0] = '"';
         minor[1] = '0';
         minor[2] = '"';
-    } else if (opts.standard == COMPILER_GMQCC) {
+    } else if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         ftepp_add_define(NULL, "__STD_GMQCC__");
         sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
         sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
-    } else if (opts.standard == COMPILER_QCCX) {
+    } else if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCCX) {
         ftepp_add_define(NULL, "__STD_QCCX__");
         sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
         sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
-    } else if (opts.standard == COMPILER_QCC) {
+    } else if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
         /* 1.0 */
         major[0] = '"';

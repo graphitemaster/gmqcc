@@ -1387,7 +1387,7 @@ int lex_do(lex_file *lex)
                 if (!strcmp(v, keywords_qc[kw]))
                     return (lex->tok.ttype = TOKEN_KEYWORD);
             }
-            if (opts.standard != COMPILER_QCC) {
+            if (OPTION_VALUE_U32(OPTION_STANDARD) != COMPILER_QCC) {
                 for (kw = 0; kw < num_keywords_fg; ++kw) {
                     if (!strcmp(v, keywords_fg[kw]))
                         return (lex->tok.ttype = TOKEN_KEYWORD);

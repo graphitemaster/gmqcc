@@ -1242,11 +1242,11 @@ int main(int argc, char **argv) {
             con_change(redirout, redirerr);
 
             if (!strcmp(argv[0]+1, "debug")) {
-                opts.debug = true;
+                OPTION_VALUE_BOOL(OPTION_DEBUG) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "memchk")) {
-                opts.memchk = true;
+                OPTION_VALUE_BOOL(OPTION_MEMCHK) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "nocolor")) {

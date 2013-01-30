@@ -629,8 +629,100 @@
     )
 #endif
 
+#ifdef GMQCC_TYPE_OPTIONS
+    GMQCC_DEFINE_FLAG (
+        O,
+
+        ""
+    )
+    GMQCC_DEFINE_FLAG (
+        OUTPUT,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        QUIET,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        G,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        STANDARD,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DEBUG,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MEMCHK,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DUMPFIN,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DUMP,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FORCECRC,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FORCED_CRC,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        PP_ONLY,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MAX_ARRAY_SIZE,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        ADD_INFO,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        CORRECTION,
+
+        ""
+    )
+#endif
+
 /* some cleanup so we don't have to */
 #undef GMQCC_TYPE_FLAGS
 #undef GMQCC_TYPE_WARNS
+#undef GMQCC_TYPE_OPTIONS
 #undef GMQCC_TYPE_OPTIMIZATIONS
 #undef GMQCC_DEFINE_FLAG

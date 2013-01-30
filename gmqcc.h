@@ -1124,6 +1124,20 @@ static const unsigned int opts_opt_oflag[] = {
 #  include "opts.def"
     0
 };
+
+enum {
+#   define GMQCC_TYPE_OPTIONS
+#   define GMQCC_DEFINE_FLAG(X, Y) OPTION_##X,
+#   include "opts.def"
+    OPTION_COUNT
+};
+static const char *opts_options_descriptions[OPTION_COUNT + 1] = {
+#   define GMQCC_TYPE_OPTIONS
+#   define GMQCC_DEFINE_FLAG(X, Y) Y,
+#   include "opts.def"
+    ""
+};
+
 extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
 /* other options: */
@@ -1134,30 +1148,33 @@ typedef enum {
     COMPILER_GMQCC    /* this   QuakeC */
 } opts_std_t;
 
-/* TODO: cleanup this */
-typedef struct {
-    uint32_t    O;              /* -Ox           */
-    const char *output;         /* -o file       */
-    bool        quiet;          /* -q --quiet    */
-    bool        g;              /* -g            */
-    opts_std_t  standard;       /* -std=         */
-    bool        debug;          /* -debug        */
-    bool        memchk;         /* -memchk       */
-    bool        dumpfin;        /* -dumpfin      */
-    bool        dump;           /* -dump         */
-    bool        forcecrc;       /* --force-crc=  */
-    uint16_t    forced_crc;     /* --force-crc=  */
-    bool        pp_only;        /* -E            */
-    size_t      max_array_size; /* --max-array=  */
-    bool        add_info;       /* --add-info    */
-    bool        correction;     /* --correct     */
+typedef enum {
+    OPT_TYPE_BOOL,
+    OPT_TYPE_U16,
+    OPT_TYPE_U32,
+    OPT_TYPE_STR
+} opt_type_t;
 
-    uint32_t flags        [1 + (COUNT_FLAGS         / 32)];
-    uint32_t warn         [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t werror       [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t warn_backup  [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t werror_backup[1 + (COUNT_WARNINGS      / 32)];
-    uint32_t optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
+typedef union {
+    bool     B;
+    uint16_t U16;
+    uint32_t U32;
+    char    *STR;
+} opt_value_t;
+
+
+#define OPTION_VALUE_BOOL(X) (opts.options[X].B)
+#define OPTION_VALUE_U16(X)  (opts.options[X].U16)
+#define OPTION_VALUE_U32(X)  (opts.options[X].U32)
+#define OPTION_VALUE_STR(X)  (opts.options[X].STR)
+typedef struct {
+    opt_value_t  options      [OPTION_COUNT];
+    uint32_t     flags        [1 + (COUNT_FLAGS         / 32)];
+    uint32_t     warn         [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     werror       [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     warn_backup  [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     werror_backup[1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
 } opts_cmd_t;
 
 extern opts_cmd_t opts;

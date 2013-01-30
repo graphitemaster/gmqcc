@@ -3228,9 +3228,12 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
     irfun = global->constval.vfunc;
     def   = code_functions + irfun->code_function_def;
 
-    if (opts.g || !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS) || (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+    if (OPTION_VALUE_BOOL(OPTION_G) ||
+        !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS)        ||
+        (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+    {
         firstlocal = def->firstlocal = vec_size(code_globals);
-    else {
+    } else {
         firstlocal = def->firstlocal = ir->first_common_local;
         ++opts_optimizationcount[OPTIM_OVERLAP_LOCALS];
     }
@@ -3376,7 +3379,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     def.type   = global->vtype;
     def.offset = vec_size(code_globals);
     def.name   = 0;
-    if (opts.g || !islocal)
+    if (OPTION_VALUE_BOOL(OPTION_G) || !islocal)
     {
         pushdef = true;
 
@@ -3552,7 +3555,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     def.offset = (uint16_t)vec_size(code_globals);
 
     /* create a global named the same as the field */
-    if (opts.standard == COMPILER_GMQCC) {
+    if (OPTION_VALUE_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         /* in our standard, the global gets a dot prefix */
         size_t len = strlen(field->name);
         char name[1024];
@@ -3690,7 +3693,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         code_push_statement(&stmt, vec_last(code_linenums));
     }
 
-    if (opts.pp_only)
+    if (OPTION_VALUE_BOOL(OPTION_PP_ONLY))
         return true;
 
     if (vec_size(code_statements) != vec_size(code_linenums)) {
@@ -3711,7 +3714,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (!opts.quiet) {
+    if (!OPTION_VALUE_BOOL(OPTION_QUIET)) {
         if (lnofile)
             con_out("writing '%s' and '%s'...\n", filename, lnofile);
         else
