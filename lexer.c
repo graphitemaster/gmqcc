@@ -1288,10 +1288,11 @@ int lex_do(lex_file *lex)
     }
 
     if (ch == '+' || ch == '-' || /* ++, --, +=, -=  and -> as well! */
-        ch == '>' || ch == '<' || /* <<, >>, <=, >= */
-        ch == '=' || ch == '!' || /* ==, != */
-        ch == '&' || ch == '|')   /* &&, ||, &=, |= */
-    {
+        ch == '>' || ch == '<' || /* <<, >>, <=, >=                  */
+        ch == '=' || ch == '!' || /* ==, !=                          */
+        ch == '&' || ch == '|' || /* &&, ||, &=, |=                  */
+        ch == '~'                 /* ~=, ~                           */
+    )  {
         lex_tokench(lex, ch);
 
         nextch = lex_getch(lex);
@@ -1484,6 +1485,6 @@ int lex_do(lex_file *lex)
         return (lex->tok.ttype = ch);
     }
 
-    lexerror(lex, "unknown token");
+    lexerror(lex, "unknown token: %c", lex->tok);
     return (lex->tok.ttype = TOKEN_ERROR);
 }

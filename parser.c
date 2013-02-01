@@ -951,6 +951,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             return false;
         case opid1('|'):
         case opid1('&'):
+        case opid1('~'):
             if (NotSameType(TYPE_FLOAT)) {
                 compile_error(ctx, "invalid types used in expression: cannot perform bit operations between types %s and %s",
                               type_name[exprs[0]->expression.vtype],
@@ -1346,6 +1347,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             asbinstore->keep_dest = true;
             out = (ast_expression*)asbinstore;
             break;
+
+        case opid2('~', 'P'):
+            if (exprs[0]->expression.vtype != TYPE_FLOAT) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                compile_error(ast_ctx(exprs[0]), "invalid type for bit not: %s", ty1);
+                return false;
+            }
+
+            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
+                compile_error(ast_ctx(exprs[0]), "assignment to constant `%s`", asvalue[0]->name);
+            }
+
+            out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float(parser, -1), exprs[0]);
+            break;
+            
     }
 #undef NotSameType
 
