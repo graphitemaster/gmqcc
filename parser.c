@@ -51,7 +51,10 @@ typedef struct {
 
     ast_value *imm_float_zero;
     ast_value *imm_float_one;
+    ast_value *imm_float_neg_one;
+
     ast_value *imm_vector_zero;
+
     ast_value *nil;
     ast_value *reserved_version;
 
@@ -220,6 +223,12 @@ static ast_value* parser_const_float_0(parser_t *parser)
     if (!parser->imm_float_zero)
         parser->imm_float_zero = parser_const_float(parser, 0);
     return parser->imm_float_zero;
+}
+
+static ast_value* parser_const_float_neg1(parser_t *parser) {
+    if (!parser->imm_float_neg_one)
+        parser->imm_float_zero = parser_const_float(parser, -1);
+    return parser->imm_float_neg_one;
 }
 
 static ast_value* parser_const_float_1(parser_t *parser)
@@ -951,7 +960,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             return false;
         case opid1('|'):
         case opid1('&'):
-        case opid1('~'):
             if (NotSameType(TYPE_FLOAT)) {
                 compile_error(ctx, "invalid types used in expression: cannot perform bit operations between types %s and %s",
                               type_name[exprs[0]->expression.vtype],
@@ -1355,11 +1363,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
 
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ast_ctx(exprs[0]), "assignment to constant `%s`", asvalue[0]->name);
-            }
-
-            out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float(parser, -1), exprs[0]);
+            if(CanConstFold1(exprs[0]))
+                out = (ast_expression*)parser_const_float(parser, ~(qcint)ConstF(0));
+            else
+                out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
             break;
             
     }
