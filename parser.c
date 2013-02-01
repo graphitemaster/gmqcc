@@ -227,7 +227,7 @@ static ast_value* parser_const_float_0(parser_t *parser)
 
 static ast_value* parser_const_float_neg1(parser_t *parser) {
     if (!parser->imm_float_neg_one)
-        parser->imm_float_zero = parser_const_float(parser, -1);
+        parser->imm_float_neg_one = parser_const_float(parser, -1);
     return parser->imm_float_neg_one;
 }
 
