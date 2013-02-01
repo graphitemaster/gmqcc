@@ -502,11 +502,13 @@ void correct_init(correction_t *c)
 {
     correct_pool_new();
     c->edits = NULL;
+    c->lens  = NULL;
 }
 
 void correct_free(correction_t *c)
 {
     vec_free(c->edits);
+    vec_free(c->lens);
     correct_pool_delete();
 }
 
