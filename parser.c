@@ -5554,7 +5554,7 @@ static bool parser_global_statement(parser_t *parser)
     }
     else
     {
-        parseerror(parser, "unexpected token: %s", parser->lex->tok.value);
+        parseerror(parser, "unexpected token: `%s`", parser->lex->tok.value);
         return false;
     }
     return true;
