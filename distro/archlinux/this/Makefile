@@ -11,7 +11,7 @@ PKG     := $(PKGDIR).pkg.tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
 
 base: clean
-	$(MAKE) -C $(BASEDIR) DESTDIR=distro/arch/this/$(PKGDIR) PREFIX=$(PREFIX) CFLAGS+=-m64 install
+	$(MAKE) -C $(BASEDIR) DESTDIR=distro/archlinux/this/$(PKGDIR) PREFIX=$(PREFIX) install
 	@echo "pkgname = gmqcc" > $(PKGINFO)
 	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)" >> $(PKGINFO)
 	@echo "pkgdesc = An Improved Quake C Compiler" >> $(PKGINFO)
