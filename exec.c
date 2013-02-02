@@ -51,7 +51,7 @@ static void qcvmerror(qc_program *prog, const char *fmt, ...)
     putchar('\n');
 }
 
-qc_program* prog_load(const char *filename)
+qc_program* prog_load(const char *filename, bool skipversion)
 {
     qc_program   *prog;
     prog_header   header;
@@ -66,7 +66,7 @@ qc_program* prog_load(const char *filename)
         return NULL;
     }
 
-    if (header.version != 6) {
+    if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
         file_close(file);
         return NULL;
@@ -75,7 +75,7 @@ qc_program* prog_load(const char *filename)
     prog = (qc_program*)mem_a(sizeof(qc_program));
     if (!prog) {
         file_close(file);
-        printf("failed to allocate program data\n");
+        fprintf(stderr, "failed to allocate program data\n");
         return NULL;
     }
     memset(prog, 0, sizeof(*prog));
@@ -199,7 +199,7 @@ qcany* prog_getedict(qc_program *prog, qcint e)
 {
     if (e >= (qcint)vec_size(prog->entitypool)) {
         prog->vmerror++;
-        printf("Accessing out of bounds edict %i\n", (int)e);
+        fprintf(stderr, "Accessing out of bounds edict %i\n", (int)e);
         e = 0;
     }
     return (qcany*)(prog->entitydata + (prog->entityfields * e));
@@ -227,17 +227,17 @@ void prog_free_entity(qc_program *prog, qcint e)
 {
     if (!e) {
         prog->vmerror++;
-        printf("Trying to free world entity\n");
+        fprintf(stderr, "Trying to free world entity\n");
         return;
     }
     if (e >= (qcint)vec_size(prog->entitypool)) {
         prog->vmerror++;
-        printf("Trying to free out of bounds entity\n");
+        fprintf(stderr, "Trying to free out of bounds entity\n");
         return;
     }
     if (!prog->entitypool[e]) {
         prog->vmerror++;
-        printf("Double free on entity\n");
+        fprintf(stderr, "Double free on entity\n");
         return;
     }
     prog->entitypool[e] = false;
@@ -631,7 +631,7 @@ qcvm_parameter *main_params = NULL;
 #define CheckArgs(num) do {                                                    \
     if (prog->argc != (num)) {                                                 \
         prog->vmerror++;                                                       \
-        printf("ERROR: invalid number of arguments for %s: %i, expected %i\n", \
+        fprintf(stderr, "ERROR: invalid number of arguments for %s: %i, expected %i\n", \
         __FUNCTION__, prog->argc, (num));                                      \
         return -1;                                                             \
     }                                                                          \
@@ -660,7 +660,7 @@ static int qc_print(qc_program *prog)
 
 static int qc_error(qc_program *prog)
 {
-    printf("*** VM raised an error:\n");
+    fprintf(stderr, "*** VM raised an error:\n");
     qc_print(prog);
     prog->vmerror++;
     return -1;
@@ -808,7 +808,7 @@ static int qc_strcmp(qc_program *prog)
     qcany out;
 
     if (prog->argc != 2 && prog->argc != 3) {
-        printf("ERROR: invalid number of arguments for strcmp/strncmp: %i, expected 2 or 3\n",
+        fprintf(stderr, "ERROR: invalid number of arguments for strcmp/strncmp: %i, expected 2 or 3\n",
                prog->argc);
         return -1;
     }
@@ -907,7 +907,7 @@ static void prog_main_setparams(qc_program *prog)
                 arg->string = prog_tempstring(prog, main_params[i].value);
                 break;
             default:
-                printf("error: unhandled parameter type: %i\n", main_params[i].vtype);
+                fprintf(stderr, "error: unhandled parameter type: %i\n", main_params[i].vtype);
                 break;
         }
     }
@@ -1052,7 +1052,7 @@ int main(int argc, char **argv)
         }
         else if (argv[1][0] != '-') {
             if (progsfile) {
-                printf("only 1 program file may be specified\n");
+                fprintf(stderr, "only 1 program file may be specified\n");
                 usage();
                 exit(1);
             }
@@ -1062,7 +1062,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            printf("unknown parameter: %s\n", argv[1]);
+            fprintf(stderr, "unknown parameter: %s\n", argv[1]);
             usage();
             exit(1);
         }
@@ -1075,14 +1075,14 @@ int main(int argc, char **argv)
     }
 
     if (!progsfile) {
-        printf("must specify a program to execute\n");
+        fprintf(stderr, "must specify a program to execute\n");
         usage();
         exit(1);
     }
 
-    prog = prog_load(progsfile);
+    prog = prog_load(progsfile, noexec);
     if (!prog) {
-        printf("failed to load program '%s'\n", progsfile);
+        fprintf(stderr, "failed to load program '%s'\n", progsfile);
         exit(1);
     }
 
@@ -1128,11 +1128,33 @@ int main(int argc, char **argv)
     }
     if (opts_printdefs) {
         for (i = 0; i < vec_size(prog->defs); ++i) {
-            printf("Global: %8s %-16s at %u%s\n",
+            printf("Global: %8s %-16s at %u%s",
                    type_name[prog->defs[i].type & DEF_TYPEMASK],
                    prog_getstring(prog, prog->defs[i].name),
                    (unsigned int)prog->defs[i].offset,
                    ((prog->defs[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
+            if (opts_v) {
+                switch (prog->defs[i].type & DEF_TYPEMASK) {
+                    case TYPE_FLOAT:
+                        printf(" [init: %g]", ((qcany*)(prog->globals + prog->defs[i].offset))->_float);
+                        break;
+                    case TYPE_INTEGER:
+                        printf(" [init: %i]", (int)( ((qcany*)(prog->globals + prog->defs[i].offset))->_int ));
+                        break;
+                    case TYPE_ENTITY:
+                    case TYPE_FUNCTION:
+                    case TYPE_FIELD:
+                    case TYPE_POINTER:
+                        printf(" [init: %u]", (unsigned)( ((qcany*)(prog->globals + prog->defs[i].offset))->_int ));
+                        break;
+                    case TYPE_STRING:
+                        printf(" [init: `%s`]", prog_getstring(prog, ((qcany*)(prog->globals + prog->defs[i].offset))->string ));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            printf("\n");
         }
     }
     if (opts_printfields) {
@@ -1193,7 +1215,7 @@ int main(int argc, char **argv)
             prog_exec(prog, &prog->functions[fnmain], xflags, VM_JUMPS_DEFAULT);
         }
         else
-            printf("No main function found\n");
+            fprintf(stderr, "No main function found\n");
     }
 
     prog_delete(prog);

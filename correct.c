@@ -129,10 +129,6 @@
  *   edit distance the smaller the error.  This usually causes some un-
  *   expected problems. e.g reciet->recite yields recipt.  For QuakeC
  *   this could become a problem when lots of identifiers are involved. 
- *
- *   Our control mechanisim could use a limit, i.e limit the number of
- *   sets of edits for distance X.  This would also increase execution
- *   speed considerably.
  */
 
 
@@ -217,7 +213,7 @@ correct_trie_t* correct_trie_new() {
     return t;
 }
 
-void correct_trie_del_sub(correct_trie_t *t) {
+static GMQCC_INLINE void correct_trie_del_sub(correct_trie_t *t) {
     size_t i;
     if (!t->entries)
         return;
@@ -227,7 +223,7 @@ void correct_trie_del_sub(correct_trie_t *t) {
     mem_d(t->entries);
 }
 
-void correct_trie_del(correct_trie_t *t) {
+static GMQCC_INLINE void correct_trie_del(correct_trie_t *t) {
     size_t i;
     if (t->entries) {
         for (i = 0; i < sizeof(correct_alpha)-1; ++i)
@@ -237,7 +233,7 @@ void correct_trie_del(correct_trie_t *t) {
     mem_d(t);
 }
 
-void* correct_trie_get(const correct_trie_t *t, const char *key) {
+static GMQCC_INLINE void* correct_trie_get(const correct_trie_t *t, const char *key) {
     const unsigned char *data = (const unsigned char*)key;
 
     while (*data) {
@@ -249,7 +245,7 @@ void* correct_trie_get(const correct_trie_t *t, const char *key) {
     return t->value;
 }
 
-void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
+static GMQCC_INLINE void correct_trie_set(correct_trie_t *t, const char *key, void * const value) {
     const unsigned char *data = (const unsigned char*)key;
     while (*data) {
         if (!t->entries) {
@@ -320,7 +316,7 @@ void correct_del(correct_trie_t* dictonary, size_t **data) {
  * need to take a size_t ** to carry it along (would all the argument
  * overhead be worth it?)  
  */
-static size_t correct_deletion(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_deletion(const char *ident, char **array) {
     size_t       itr = 0;
     const size_t len = strlen(ident);
 
@@ -334,7 +330,7 @@ static size_t correct_deletion(const char *ident, char **array) {
     return itr;
 }
 
-static size_t correct_transposition(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_transposition(const char *ident, char **array) {
     size_t       itr = 0;
     const size_t len = strlen(ident);
 
@@ -351,7 +347,7 @@ static size_t correct_transposition(const char *ident, char **array) {
     return itr;
 }
 
-static size_t correct_alteration(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_alteration(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
     size_t       ktr = 0;
@@ -369,7 +365,7 @@ static size_t correct_alteration(const char *ident, char **array) {
     return ktr;
 }
 
-static size_t correct_insertion(const char *ident, char **array) {
+static GMQCC_INLINE size_t correct_insertion(const char *ident, char **array) {
     size_t       itr = 0;
     size_t       jtr = 0;
     const size_t len = strlen(ident);
@@ -399,11 +395,12 @@ static GMQCC_INLINE size_t correct_size(const char *ident) {
     return (len) + (len - 1) + (len * (sizeof(correct_alpha)-1)) + ((len + 1) * (sizeof(correct_alpha)-1));
 }
 
-static char **correct_edit(const char *ident) {
+static GMQCC_INLINE char **correct_edit(const char *ident, size_t **lens) {
     size_t next;
-    char **find = (char**)correct_pool_alloc(correct_size(ident) * sizeof(char*));
+    size_t size = correct_size(ident);
+    char **find = (char**)correct_pool_alloc(size * sizeof(char*));
 
-    if (!find)
+    if (!find || !(*lens = (size_t*)correct_pool_alloc(size * sizeof(size_t))))
         return NULL;
 
     next  = correct_deletion     (ident, find);
@@ -411,44 +408,21 @@ static char **correct_edit(const char *ident) {
     next += correct_alteration   (ident, find+next);
     /*****/ correct_insertion    (ident, find+next);
 
+    /* precompute lengths */
+    for (next = 0; next < size; next++)
+        (*lens)[next] = strlen(find[next]);
+
     return find;
 }
 
-/*
- * We could use a hashtable but the space complexity isn't worth it
- * since we're only going to determine the "did you mean?" identifier
- * on error.
- */
-static int correct_exist(char **array, size_t rows, char *ident) {
+static GMQCC_INLINE int correct_exist(char **array, register size_t *sizes, size_t rows, char *ident, register size_t len) {
     size_t itr;
-    /*
-     * As an experiment I tried the following assembly for memcmp here:
-     *
-     * correct_cmp_loop: 
-     * incl %eax            ; eax =  LHS
-     * incl %edx            ; edx =  LRS
-     * cmpl %eax, %ebx      ; ebx = &LHS[END_POS]
-     *
-     * jbe correct_cmp_eq
-     * movb (%edx), %cl     ; micro-optimized even on atoms :-)
-     * cmpb %cl, (%eax)     ; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     * jg  correct_cmp_gt
-     * jge correct_cmp_loop
-     * ...
-     *
-     * Despite how much optimization went in to this, the speed was
-     * being conflicted by the strlen(ident) used for &LHS[END_POS]
-     * If we could eliminate the strlen with what I suggested on line
-     * 311 ... we can accelerate this whole damn thing quite a bit.
-     *
-     * However there is still something we can do here that does give
-     * us a little more speed.  Although one more branch, we know for
-     * sure there is at least one byte to compare, if that one byte
-     * simply isn't the same we can skip the full check. Which means
-     * we skip a whole strlen call.
-     */
     for (itr = 0; itr < rows; itr++) {
-        if (!memcmp(array[itr], ident, strlen(ident)))
+        /*
+         * We can save tons of calls to memcmp if we simply ignore comparisions
+         * that we know cannot contain the same length.
+         */   
+        if (sizes[itr] == len && !memcmp(array[itr], ident, len))
             return 1;
     }
 
@@ -461,7 +435,7 @@ static GMQCC_INLINE char **correct_known_resize(char **res, size_t *allocated, s
     if (size < oldallocated)
         return res;
 
-    out = correct_pool_alloc(sizeof(*res) * oldallocated + 32);
+    out = (char**)correct_pool_alloc(sizeof(*res) * oldallocated + 32);
     memcpy(out, res, sizeof(*res) * oldallocated);
 
     *allocated += 32;
@@ -474,22 +448,25 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
     size_t len = 0;
     size_t row = 0;
     size_t nxt = 8;
-    char **res = correct_pool_alloc(sizeof(char *) * nxt);
-    char **end = NULL;
+    char   **res = (char**)correct_pool_alloc(sizeof(char *) * nxt);
+    char   **end = NULL;
+    size_t  *bit = NULL;
 
     for (; itr < rows; itr++) {
         if (!array[itr][0])
             continue;
-        if (vec_size(corr->edits) > itr+1)
+        if (vec_size(corr->edits) > itr+1) {
             end = corr->edits[itr+1];
-        else {
-            end = correct_edit(array[itr]);
+            bit = corr->lens [itr+1];
+        } else {
+            end = correct_edit(array[itr], &bit);
             vec_push(corr->edits, end);
+            vec_push(corr->lens,  bit);
         }
         row = correct_size(array[itr]);
 
         for (jtr = 0; jtr < row; jtr++) {
-            if (correct_find(table, end[jtr]) && !correct_exist(res, len, end[jtr])) {
+            if (correct_find(table, end[jtr]) && !correct_exist(res, bit, len, end[jtr], bit[jtr])) {
                 res        = correct_known_resize(res, &nxt, len+1);
                 res[len++] = end[jtr];
             }
@@ -500,7 +477,7 @@ static char **correct_known(correction_t *corr, correct_trie_t* table, char **ar
     return res;
 }
 
-static char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
+static GMQCC_INLINE char *correct_maximum(correct_trie_t* table, char **array, size_t rows) {
     char   *str = NULL;
     size_t *itm = NULL;
     size_t  itr = 0;
@@ -525,11 +502,13 @@ void correct_init(correction_t *c)
 {
     correct_pool_new();
     c->edits = NULL;
+    c->lens  = NULL;
 }
 
 void correct_free(correction_t *c)
 {
     vec_free(c->edits);
+    vec_free(c->lens);
     correct_pool_delete();
 }
 
@@ -540,6 +519,7 @@ char *correct_str(correction_t *corr, correct_trie_t* table, const char *ident) 
     char  *e2ident = NULL;
     size_t e1rows  = 0;
     size_t e2rows  = 0;
+    size_t *bits   = NULL;
 
     /* needs to be allocated for free later */
     if (correct_find(table, ident))
@@ -549,8 +529,9 @@ char *correct_str(correction_t *corr, correct_trie_t* table, const char *ident) 
         if (vec_size(corr->edits) > 0)
             e1 = corr->edits[0];
         else {
-            e1 = correct_edit(ident);
+            e1 = correct_edit(ident, &bits);
             vec_push(corr->edits, e1);
+            vec_push(corr->lens,  bits);
         }
 
         if ((e1ident = correct_maximum(table, e1, e1rows)))

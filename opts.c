@@ -27,7 +27,7 @@ opts_cmd_t   opts; /* command lien options */
 
 static void opts_setdefault() {
     memset(&opts, 0, sizeof(opts_cmd_t));
-    opts.correction = true;
+    OPTS_OPTION_BOOL(OPTION_CORRECTION) = true;
 
     /* warnings */
     opts_set(opts.warn,  WARN_UNUSED_VARIABLE,           true);
@@ -37,7 +37,6 @@ static void opts_setdefault() {
     opts_set(opts.warn,  WARN_FIELD_REDECLARED,          true);
     opts_set(opts.warn,  WARN_MISSING_RETURN_VALUES,     true);
     opts_set(opts.warn,  WARN_INVALID_PARAMETER_COUNT,   true);
-    opts_set(opts.warn,  WARN_LOCAL_SHADOWS,             false);
     opts_set(opts.warn,  WARN_LOCAL_CONSTANTS,           true);
     opts_set(opts.warn,  WARN_VOID_VARIABLES,            true);
     opts_set(opts.warn,  WARN_IMPLICIT_FUNCTION_POINTER, true);
@@ -46,24 +45,21 @@ static void opts_setdefault() {
     opts_set(opts.warn,  WARN_EFFECTLESS_STATEMENT,      true);
     opts_set(opts.warn,  WARN_END_SYS_FIELDS,            true);
     opts_set(opts.warn,  WARN_ASSIGN_FUNCTION_TYPES,     true);
-    opts_set(opts.warn,  WARN_PREPROCESSOR,              true);
+    opts_set(opts.warn,  WARN_CPP,                       true);
     opts_set(opts.warn,  WARN_MULTIFILE_IF,              true);
     opts_set(opts.warn,  WARN_DOUBLE_DECLARATION,        true);
     opts_set(opts.warn,  WARN_CONST_VAR,                 true);
     opts_set(opts.warn,  WARN_MULTIBYTE_CHARACTER,       true);
     opts_set(opts.warn,  WARN_UNKNOWN_PRAGMAS,           true);
     opts_set(opts.warn,  WARN_UNREACHABLE_CODE,          true);
-    opts_set(opts.warn,  WARN_CPP,                       true);
     opts_set(opts.warn,  WARN_UNKNOWN_ATTRIBUTE,         true);
     opts_set(opts.warn,  WARN_RESERVED_NAMES,            true);
     opts_set(opts.warn,  WARN_UNINITIALIZED_CONSTANT,    true);
-    opts_set(opts.warn,  WARN_UNINITIALIZED_GLOBAL,      false);
     opts_set(opts.warn,  WARN_DEPRECATED,                true);
     opts_set(opts.warn,  WARN_PARENTHESIS,               true);
+
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
-    opts_set(opts.flags, FTEPP,                          false);
-    opts_set(opts.flags, FTEPP_PREDEFS,                  false);
     opts_set(opts.flags, CORRECT_TERNARY,                true);
     opts_set(opts.flags, BAIL_ON_WERROR,                 true);
     opts_set(opts.flags, LEGACY_VECTOR_MATHS,            true);
@@ -96,9 +92,9 @@ void opts_restore_non_Werror_all() {
 void opts_init(const char *output, int standard, size_t arraysize) {
     opts_setdefault();
 
-    opts.output         = output;
-    opts.standard       = (opts_std_t)standard; /* C++ ... y u no like me? */
-    opts.max_array_size = arraysize;
+    OPTS_OPTION_STR(OPTION_OUTPUT)         = (char*)output;
+    OPTS_OPTION_U32(OPTION_STANDARD)       = standard;
+    OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE) = arraysize;
 }
 
 static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def *list, size_t listsize) {
@@ -107,17 +103,12 @@ static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const o
     for (i = 0; i < listsize; ++i) {
         if (!strcmp(name, list[i].name)) {
             longbit lb = list[i].bit;
-#if 1
+
             if (on)
                 flags[lb.idx] |= (1<<(lb.bit));
             else
                 flags[lb.idx] &= ~(1<<(lb.bit));
-#else
-            if (on)
-                flags[0] |= (1<<lb);
-            else
-                flags[0] &= ~(1<<(lb));
-#endif
+
             return true;
         }
     }
@@ -139,17 +130,11 @@ bool opts_setoptim (const char *name, bool on) {
 void opts_set(uint32_t *flags, size_t idx, bool on) {
     longbit lb;
     LONGBIT_SET(lb, idx);
-#if 1
+
     if (on)
         flags[lb.idx] |= (1<<(lb.bit));
     else
         flags[lb.idx] &= ~(1<<(lb.bit));
-#else
-    if (on)
-        flags[0] |= (1<<(lb));
-    else
-        flags[0] &= ~(1<<(lb));
-#endif
 }
 
 void opts_setoptimlevel(unsigned int level) {
@@ -285,7 +270,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* flags */
     #define GMQCC_TYPE_FLAGS
-    #define GMQCC_DEFINE_FLAG(X)                                       \
+    #define GMQCC_DEFINE_FLAG(X, Y)                                    \
     if (!strcmp(section, "flags") && !strcmp(name, #X)) {              \
         opts_set(opts.flags, X, opts_ini_bool(value));                 \
         found = true;                                                  \
@@ -294,7 +279,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* warnings */
     #define GMQCC_TYPE_WARNS
-    #define GMQCC_DEFINE_FLAG(X)                                       \
+    #define GMQCC_DEFINE_FLAG(X, Y)                                    \
     if (!strcmp(section, "warnings") && !strcmp(name, #X)) {           \
         opts_set(opts.warn, WARN_##X, opts_ini_bool(value));           \
         found = true;                                                  \
@@ -303,7 +288,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* Werror-individuals */
     #define GMQCC_TYPE_WARNS
-    #define GMQCC_DEFINE_FLAG(X)                                       \
+    #define GMQCC_DEFINE_FLAG(X, Y)                                    \
     if (!strcmp(section, "errors") && !strcmp(name, #X)) {             \
         opts_set(opts.werror, WARN_##X, opts_ini_bool(value));         \
         found = true;                                                  \
@@ -312,7 +297,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* optimizations */
     #define GMQCC_TYPE_OPTIMIZATIONS
-    #define GMQCC_DEFINE_FLAG(X,Y)                                     \
+    #define GMQCC_DEFINE_FLAG(X,Y,Z)                                   \
     if (!strcmp(section, "optimizations") && !strcmp(name, #X)) {      \
         opts_set(opts.optimization, OPTIM_##X, opts_ini_bool(value));  \
         found = true;                                                  \

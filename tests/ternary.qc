@@ -1,6 +1,3 @@
-void     print(...)   = #1;
-string   ftos (float) = #2;
-
 void test(float cond, float v1, float v2, float a) {
     print(ftos(cond ? v1 : v2), " ");
     print( (cond ? v1 : v2) ? ( (a == 1) ? "a=1"

@@ -172,13 +172,16 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, INITIALIZED_NONCONSTANTS,      true);
                     opts_set(opts.werror, WARN_INVALID_PARAMETER_COUNT, true);
                     opts_set(opts.werror, WARN_MISSING_RETURN_VALUES,   true);
-                    opts.standard = COMPILER_GMQCC;
+
+
+                    OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_GMQCC;
 
                 } else if (!strcmp(argarg, "qcc")) {
 
                     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,  false);
                     opts_set(opts.flags, ASSIGN_FUNCTION_TYPES, true);
-                    opts.standard = COMPILER_QCC;
+
+                    OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_QCC;
 
                 } else if (!strcmp(argarg, "fte") || !strcmp(argarg, "fteqcc")) {
 
@@ -188,12 +191,13 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, ASSIGN_FUNCTION_TYPES,    true);
                     opts_set(opts.flags, CORRECT_TERNARY,          false);
                     opts_set(opts.warn, WARN_TERNARY_PRECEDENCE,   true);
-                    opts.standard = COMPILER_FTEQCC;
+
+                    OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_FTEQCC;
 
                 } else if (!strcmp(argarg, "qccx")) {
 
                     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,  false);
-                    opts.standard = COMPILER_QCCX;
+                    OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_QCCX;
 
                 } else {
                     con_out("Unknown standard: %s\n", argarg);
@@ -202,8 +206,9 @@ static bool options_parse(int argc, char **argv) {
                 continue;
             }
             if (options_long_gcc("force-crc", &argc, &argv, &argarg)) {
-                opts.forcecrc   = true;
-                opts.forced_crc = strtol(argarg, NULL, 0);
+
+                OPTS_OPTION_BOOL(OPTION_FORCECRC)   = true;
+                OPTS_OPTION_U16 (OPTION_FORCED_CRC) = strtol(argarg, NULL, 0);
                 continue;
             }
             if (options_long_gcc("redirout", &argc, &argv, &redirout)) {
@@ -243,19 +248,19 @@ static bool options_parse(int argc, char **argv) {
             }
 
             if (!strcmp(argv[0]+1, "debug")) {
-                opts.debug = true;
+                OPTS_OPTION_BOOL(OPTION_DEBUG) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "dump")) {
-                opts.dump = true;
+                OPTS_OPTION_BOOL(OPTION_DUMP)  = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "dumpfin")) {
-                opts.dumpfin = true;
+                OPTS_OPTION_BOOL(OPTION_DUMPFIN) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "memchk")) {
-                opts.memchk = true;
+                OPTS_OPTION_BOOL(OPTION_MEMCHK) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "nocolor")) {
@@ -275,18 +280,18 @@ static bool options_parse(int argc, char **argv) {
                     exit(0);
 
                 case 'E':
-                    opts.pp_only = true;
+                    OPTS_OPTION_BOOL(OPTION_PP_ONLY) = true;
                     opts_set(opts.flags, FTEPP_PREDEFS, true); /* predefs on for -E */
                     break;
 
                 /* debug turns on -flno */
                 case 'g':
                     opts_setflag("LNO", true);
-                    opts.g = true;
+                    OPTS_OPTION_BOOL(OPTION_G) = true;
                     break;
 
                 case 'q':
-                    opts.quiet = true;
+                    OPTS_OPTION_BOOL(OPTION_QUIET) = true;
                     break;
 
                 case 'D':
@@ -310,10 +315,10 @@ static bool options_parse(int argc, char **argv) {
                 case 'f':
                     util_strtocmd(argv[0]+2, argv[0]+2, strlen(argv[0]+2)+1);
                     if (!strcmp(argv[0]+2, "HELP") || *(argv[0]+2) == '?') {
-                        con_out("Possible flags:\n");
+                        con_out("Possible flags:\n\n");
                         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
                             util_strtononcmd(opts_flag_list[itr].name, buffer, sizeof(buffer));
-                            con_out(" -f%s\n", buffer);
+                            con_out(" -f%s:\n%s\n\n", buffer, opts_flag_list[itr].description);
                         }
                         exit(0);
                     }
@@ -334,7 +339,7 @@ static bool options_parse(int argc, char **argv) {
                         con_out("Possible warnings:\n");
                         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
                             util_strtononcmd(opts_warn_list[itr].name, buffer, sizeof(buffer));
-                            con_out(" -W%s\n", buffer);
+                            con_out(" -W%s:\n%s\n\n\n", buffer, opts_warn_list[itr].description);
                         }
                         exit(0);
                     }
@@ -396,20 +401,21 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     if (isdigit(argarg[0])) {
-                        opts.O = atoi(argarg);
-                        opts_setoptimlevel(opts.O);
+                        uint32_t val = atoi(argarg);
+                        OPTS_OPTION_U32(OPTION_O) = val;
+                        opts_setoptimlevel(val);
                     } else {
                         util_strtocmd(argarg, argarg, strlen(argarg)+1);
                         if (!strcmp(argarg, "HELP")) {
                             con_out("Possible optimizations:\n");
                             for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
                                 util_strtononcmd(opts_opt_list[itr].name, buffer, sizeof(buffer));
-                                con_out(" -O%-20s (-O%u)\n", buffer, opts_opt_oflag[itr]);
+                                con_out(" -O%-20s (-O%u):\n%s\n\n", buffer, opts_opt_oflag[itr], opts_opt_list[itr].description);
                             }
                             exit(0);
                         }
                         else if (!strcmp(argarg, "ALL"))
-                            opts_setoptimlevel(opts.O = 9999);
+                            opts_setoptimlevel(OPTS_OPTION_U32(OPTION_O) = 9999);
                         else if (!strncmp(argarg, "NO_", 3)) {
                             if (!opts_setoptim(argarg+3, false)) {
                                 con_out("unknown optimization: %s\n", argarg+3);
@@ -430,7 +436,7 @@ static bool options_parse(int argc, char **argv) {
                         con_out("option -o requires an argument: the output file name\n");
                         return false;
                     }
-                    opts.output = argarg;
+                    OPTS_OPTION_STR(OPTION_OUTPUT) = argarg;
                     opts_output_wasset = true;
                     break;
 
@@ -454,7 +460,13 @@ static bool options_parse(int argc, char **argv) {
                     }
             /* All long options without arguments */
                     else if (!strcmp(argv[0]+2, "help")) {
-                        usage();
+                        /* TODO .. map name back .. prittery print of
+                         * options and their associations.
+                         */  
+                        for (itr = 0; itr < OPTION_COUNT; itr++) {
+                            con_out("%s\n\n", opts_options_descriptions[itr]);
+                        }
+
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "version")) {
@@ -462,25 +474,25 @@ static bool options_parse(int argc, char **argv) {
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "quiet")) {
-                        opts.quiet = true;
+                        OPTS_OPTION_BOOL(OPTION_QUIET) = true;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "correct")) {
-                        opts.correction = true;
+                        OPTS_OPTION_BOOL(OPTION_CORRECTION) = true;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "no-correct")) {
-                        opts.correction = false;
+                        OPTS_OPTION_BOOL(OPTION_CORRECTION) = false;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "add-info")) {
-                        opts.add_info = true;
+                        OPTS_OPTION_BOOL(OPTION_ADD_INFO) = true;
                         break;
                     }
                     else {
             /* All long options with arguments */
                         if (options_long_witharg("output", &argc, &argv, &argarg)) {
-                            opts.output = argarg;
+                            OPTS_OPTION_STR(OPTION_OUTPUT) = argarg;
                             opts_output_wasset = true;
                         } else {
                             con_out("Unknown parameter: %s\n", argv[0]);
@@ -556,10 +568,10 @@ int main(int argc, char **argv) {
     }
 
     /* the standard decides which set of operators to use */
-    if (opts.standard == COMPILER_GMQCC) {
+    if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         operators      = c_operators;
         operator_count = c_operator_count;
-    } else if (opts.standard == COMPILER_FTEQCC) {
+    } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC) {
         operators      = fte_operators;
         operator_count = fte_operator_count;
     } else {
@@ -587,22 +599,22 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (opts.dump) {
+    if (OPTS_OPTION_BOOL(OPTION_DUMP)) {
         for (itr = 0; itr < COUNT_FLAGS; ++itr)
             con_out("Flag %s = %i\n",    opts_flag_list[itr].name, OPTS_FLAG(itr));
         for (itr = 0; itr < COUNT_WARNINGS; ++itr)
             con_out("Warning %s = %i\n", opts_warn_list[itr].name, OPTS_WARN(itr));
 
-        con_out("output             = %s\n", opts.output);
-        con_out("optimization level = %d\n", opts.O);
-        con_out("standard           = %i\n", opts.standard);
+        con_out("output             = %s\n", OPTS_OPTION_STR(OPTION_OUTPUT));
+        con_out("optimization level = %u\n", OPTS_OPTION_U32(OPTION_O));
+        con_out("standard           = %u\n", OPTS_OPTION_U32(OPTION_STANDARD));
     }
 
-    if (opts.pp_only) {
+    if (OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
         if (opts_output_wasset) {
-            outfile = file_open(opts.output, "wb");
+            outfile = file_open(OPTS_OPTION_STR(OPTION_OUTPUT), "wb");
             if (!outfile) {
-                con_err("failed to open `%s` for writing\n", opts.output);
+                con_err("failed to open `%s` for writing\n", OPTS_OPTION_STR(OPTION_OUTPUT));
                 retval = 1;
                 goto cleanup;
             }
@@ -612,7 +624,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!opts.pp_only) {
+    if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
         if (!parser_init()) {
             con_err("failed to initialize parser\n");
             retval = 1;
@@ -620,7 +632,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (opts.pp_only || OPTS_FLAG(FTEPP)) {
+    if (OPTS_OPTION_BOOL(OPTION_PP_ONLY) || OPTS_FLAG(FTEPP)) {
         if (!ftepp_init()) {
             con_err("failed to initialize parser\n");
             retval = 1;
@@ -634,7 +646,7 @@ int main(int argc, char **argv) {
     util_debug("COM", "starting ...\n");
 
     /* add macros */
-    if (opts.pp_only || OPTS_FLAG(FTEPP)) {
+    if (OPTS_OPTION_BOOL(OPTION_PP_ONLY) || OPTS_FLAG(FTEPP)) {
         for (itr = 0; itr < vec_size(ppems); itr++) {
             ftepp_add_macro(ppems[itr].name, ppems[itr].value);
             mem_d(ppems[itr].name);
@@ -667,7 +679,7 @@ int main(int argc, char **argv) {
         }
 
         if (!opts_output_wasset) {
-            opts.output = util_strdup(line);
+            OPTS_OPTION_STR(OPTION_OUTPUT) = util_strdup(line);
             opts_output_free = true;
         }
 
@@ -689,12 +701,16 @@ srcdone:
         goto cleanup;
 
     if (vec_size(items)) {
-        if (!opts.quiet && !opts.pp_only) {
+        if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
+            !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
+        {
             con_out("Mode: %s\n", (progs_src ? "progs.src" : "manual"));
             con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
         }
         for (itr = 0; itr < vec_size(items); ++itr) {
-            if (!opts.quiet && !opts.pp_only) {
+            if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
+                !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
+            {
                 con_out("  item: %s (%s)\n",
                        items[itr].filename,
                        ( (items[itr].type == TYPE_QC ? "qc" :
@@ -703,7 +719,7 @@ srcdone:
                          ("unknown"))))));
             }
 
-            if (opts.pp_only) {
+            if (OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
                 const char *out;
                 if (!ftepp_preprocess_file(items[itr].filename)) {
                     retval = 1;
@@ -745,8 +761,8 @@ srcdone:
         }
 
         ftepp_finish();
-        if (!opts.pp_only) {
-            if (!parser_finish(opts.output)) {
+        if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
+            if (!parser_finish(OPTS_OPTION_STR(OPTION_OUTPUT))) {
                 retval = 1;
                 goto cleanup;
             }
@@ -754,7 +770,9 @@ srcdone:
     }
 
     /* stuff */
-    if (!opts.quiet && !opts.pp_only) {
+    if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
+        !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
+    {
         for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
             if (opts_optimizationcount[itr]) {
                 con_out("%s: %u\n", opts_opt_list[itr].name, (unsigned int)opts_optimizationcount[itr]);
@@ -769,10 +787,10 @@ cleanup:
     vec_free(items);
     vec_free(ppems);
 
-    if (!opts.pp_only)
+    if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY))
         parser_cleanup();
     if (opts_output_free)
-        mem_d((char*)opts.output);
+        mem_d(OPTS_OPTION_STR(OPTION_OUTPUT));
     if (operators_free)
         mem_d((void*)operators);
 

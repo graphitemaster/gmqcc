@@ -1,8 +1,3 @@
-void   print(...)    = #1;
-string ftos (float)  = #2;
-string vtos (vector) = #5;
-entity spawn()       = #3;
-
 .float mem;
 
 void main() {

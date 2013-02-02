@@ -1,6 +1,3 @@
-void print(string...) = #1;
-string vtos(vector)   = #5;
-
 void main(vector v) {
     print(vtos(v), "\n");
     v /= 2;

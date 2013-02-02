@@ -1,6 +1,3 @@
-void print(...) = #1;
-string ftos(float) = #2;
-
 void test(float param, float p2) {
     float i;
     float c80 = 80;

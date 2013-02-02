@@ -648,6 +648,7 @@ struct ast_function_s
 
     ast_value   *varargs;
     ast_value   *argc;
+    ast_value   *fixedparams;
 };
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype);
 /* This will NOT delete the underlying ast_value */

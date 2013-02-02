@@ -102,8 +102,10 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
  */
 #if defined(__GNUC__) || defined(__CLANG__)
 #   define GMQCC_WARN __attribute__((warn_unused_result))
+#   define GMQCC_USED __attribute__((used))
 #else
 #   define GMQCC_WARN
+#   define GMQCC_USED
 #endif
 /*
  * This is a hack to silent clang regarding empty
@@ -451,7 +453,8 @@ GMQCC_INLINE FILE   *file_open   (const char *, const char *);
 /*=========================== correct.c =============================*/
 /*===================================================================*/
 typedef struct {
-    char ***edits;
+    char   ***edits;
+    size_t  **lens;
 } correction_t;
 
 void  correct_del (correct_trie_t*, size_t **);
@@ -682,16 +685,10 @@ enum {
     INSTR_BITOR,
 
     /*
-     * Virtual instructions used by the assembler
-     * keep at the end but before virtual instructions
-     * for the IR below.
-     */
-    AINSTR_END,
-
-    /*
      * Virtual instructions used by the IR
      * Keep at the end!
      */
+    VINSTR_END,
     VINSTR_PHI,
     VINSTR_JUMP,
     VINSTR_COND,
@@ -975,7 +972,7 @@ typedef struct qc_program_s {
     int    argc; /* current arg count for debugging */
 } qc_program;
 
-qc_program* prog_load(const char *filename);
+qc_program* prog_load(const char *filename, bool ignoreversion);
 void        prog_delete(qc_program *prog);
 
 bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
@@ -1061,6 +1058,7 @@ int     u8_fromchar(uchar_t w,   char *to,     size_t maxlen);
 typedef struct {
     const char *name;
     longbit     bit;
+    const char *description;
 } opts_flag_def;
 
 bool opts_setflag  (const char *, bool);
@@ -1081,48 +1079,64 @@ void opts_restore_non_Werror_all();
 
 enum {
 # define GMQCC_TYPE_FLAGS
-# define GMQCC_DEFINE_FLAG(X) X,
+# define GMQCC_DEFINE_FLAG(X, Y) X,
 #  include "opts.def"
     COUNT_FLAGS
 };
 static const opts_flag_def opts_flag_list[] = {
 # define GMQCC_TYPE_FLAGS
-# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+# define GMQCC_DEFINE_FLAG(X, Y) { #X, LONGBIT(X), Y},
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { NULL, LONGBIT(0), "" }
 };
 
 enum {
 # define GMQCC_TYPE_WARNS
-# define GMQCC_DEFINE_FLAG(X) WARN_##X,
+# define GMQCC_DEFINE_FLAG(X, Y) WARN_##X,
 #  include "opts.def"
     COUNT_WARNINGS
 };
 static const opts_flag_def opts_warn_list[] = {
 # define GMQCC_TYPE_WARNS
-# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
+# define GMQCC_DEFINE_FLAG(X, Y) { #X, LONGBIT(WARN_##X), Y },
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { NULL, LONGBIT(0), "" }
 };
 
 enum {
 # define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O) OPTIM_##NAME,
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O, Y) OPTIM_##NAME,
 #  include "opts.def"
     COUNT_OPTIMIZATIONS
 };
 static const opts_flag_def opts_opt_list[] = {
 # define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O, Y) { #NAME, LONGBIT(OPTIM_##NAME), Y},
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { NULL, LONGBIT(0), "" }
 };
 static const unsigned int opts_opt_oflag[] = {
 # define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O) MIN_O,
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O, Y) MIN_O,
 #  include "opts.def"
     0
 };
+
+enum {
+#   define GMQCC_TYPE_OPTIONS
+#   define GMQCC_DEFINE_FLAG(X, Y) OPTION_##X,
+#   include "opts.def"
+    OPTION_COUNT
+};
+
+
+GMQCC_USED static const char *opts_options_descriptions[] = {
+#   define GMQCC_TYPE_OPTIONS
+#   define GMQCC_DEFINE_FLAG(X, Y) Y,
+#   include "opts.def"
+    ""
+};
+
 extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
 /* other options: */
@@ -1133,30 +1147,22 @@ typedef enum {
     COMPILER_GMQCC    /* this   QuakeC */
 } opts_std_t;
 
-/* TODO: cleanup this */
-typedef struct {
-    uint32_t    O;              /* -Ox           */
-    const char *output;         /* -o file       */
-    bool        quiet;          /* -q --quiet    */
-    bool        g;              /* -g            */
-    opts_std_t  standard;       /* -std=         */
-    bool        debug;          /* -debug        */
-    bool        memchk;         /* -memchk       */
-    bool        dumpfin;        /* -dumpfin      */
-    bool        dump;           /* -dump         */
-    bool        forcecrc;       /* --force-crc=  */
-    uint16_t    forced_crc;     /* --force-crc=  */
-    bool        pp_only;        /* -E            */
-    size_t      max_array_size; /* --max-array=  */
-    bool        add_info;       /* --add-info    */
-    bool        correction;     /* --correct     */
+typedef union {
+    bool     B;
+    uint16_t U16;
+    uint32_t U32;
+    char    *STR;
+} opt_value_t;
 
-    uint32_t flags        [1 + (COUNT_FLAGS         / 32)];
-    uint32_t warn         [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t werror       [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t warn_backup  [1 + (COUNT_WARNINGS      / 32)];
-    uint32_t werror_backup[1 + (COUNT_WARNINGS      / 32)];
-    uint32_t optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
+
+typedef struct {
+    opt_value_t  options      [OPTION_COUNT];
+    uint32_t     flags        [1 + (COUNT_FLAGS         / 32)];
+    uint32_t     warn         [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     werror       [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     warn_backup  [1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     werror_backup[1 + (COUNT_WARNINGS      / 32)];
+    uint32_t     optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
 } opts_cmd_t;
 
 extern opts_cmd_t opts;
@@ -1166,5 +1172,9 @@ extern opts_cmd_t opts;
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
 #define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))
 #define OPTS_OPTIMIZATION(i) OPTS_GENERIC(opts.optimization, (i))
+#define OPTS_OPTION_BOOL(X) (opts.options[X].B)
+#define OPTS_OPTION_U16(X)  (opts.options[X].U16)
+#define OPTS_OPTION_U32(X)  (opts.options[X].U32)
+#define OPTS_OPTION_STR(X)  (opts.options[X].STR)
 
 #endif

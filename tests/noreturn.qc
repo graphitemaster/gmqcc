@@ -2,8 +2,10 @@
 #define NORETURN [[noreturn]]
 #endif
 
-void          print(...)  = #1;
-string        ftos(float) = #2;
+void   (...)            print     = #1;
+string (float)          ftos      = #2;
+
+
 NORETURN void error(...)  = #6;
 
 #if TEST == 1

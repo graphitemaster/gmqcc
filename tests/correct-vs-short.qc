@@ -1,6 +1,3 @@
-void   print(...)   = #1;
-string ftos (float) = #2;
-
 void test(vector a, vector b) {
     print(ftos((a && b) + (a && b)), " ");
     print(ftos((a || b) + (a || b)), " ");

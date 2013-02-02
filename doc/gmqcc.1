@@ -1,355 +1,344 @@
-.\" Process with groff -man -Tascii file.3
-.TH GMQCC 1 2012-07-12 "" "gmqcc Manual"
-.SH NAME
-gmqcc \- A Quake C compiler built from the NIH realm of sarcastic wit
-.SH SYNOPSIS
-.B gmqcc
-[\fIOPTIONS\fR] [\fIfiles...\fR]
-.SH DESCRIPTION
-Traditionally, a QC compiler reads the file \fIprogs.src\fR which
-in its first line contains the output filename, and the rest is a
+.\"mdoc
+.Dd January 24, 2013
+.Dt GMQCC 1 PRM
+.Os
+.Sh NAME
+.Nm gmqcc
+.Nd A Quake C compiler built from the NIH realm of sarcastic wit
+.Sh SYNOPSIS
+.Nm gmqcc
+.Op Cm options
+.Op Ar files...
+.Sh DESCRIPTION
+Traditionally, a QC compiler reads the file
+.Pa progs.src
+which in its first line contains the output filename, and the rest is a
 list of QC source files that are to be compiled in order.
-\fBgmqcc\fR optionally takes options to specify the output and
+.Nm gmqcc
+optionally takes options to specify the output and
 input files on the commandline, and also accepts assembly files.
-.SH OPTIONS
-\fBgmqcc\fR mostly tries to mimic gcc's commandline handling, though
+.Sh OPTIONS
+.Nm gmqcc
+mostly tries to mimic gcc's commandline handling, though
 there are also traditional long-options available.
-.TP
-.B "-h, --help"
+.Bl -tag -width Ds
+.It Fl h , Fl -help
 Show a usage message and exit.
-.TP
-.B "-debug"
+.It Fl "debug"
 Turn on some compiler debugging mechanisms.
-.TP
-.B "-memchk"
+.It Fl memchk
 Turn on compiler mem-check. (Shows allocations and checks for leaks.)
-.TP
-.BI "-o, --output=" filename
+.It Fl o , Fl -output= Ns Ar filename
 Specify the output filename. Defaults to progs.dat. This will overwrite
-the output file listed in a \fIprogs.src\fR file in case such a file is used.
-.TP
-.BI "-O" number
+the output file listed in a
+.Pa progs.src
+file in case such a file is used.
+.Bl -tag -width indent
+.It Fl O Ns Ar number
 Specify the optimization level
-.RS
-.IP 3
+.It Ar 3
 Highest optimization level
-.IP 2
+.It Ar 2
 Default optimization level
-.IP 1
+.It Ar 1
 Minimal optimization level
-.IP 0
+.It Ar 0
 Disable optimization entirely
-.RE
-.TP
-.BI "-O" name "\fR, " "" -Ono- name
+.El
+.Pp
+.It Fl O Ns Ar name Fl Ono- Ns Ar name
 Enable or disable a specific optimization. Note that these options
 must be used after setting the optimization level, otherwise they'll
 be overwritten.
-.TP
-.B -Ohelp
+.It Fl O Ns Cm help
 List all possible optimizations and the optimization level they're
 activated at.
-.TP
-.BR -q ", " --quiet
+.It Fl q , Fl -quiet
 Be less verbose. In particular removes the messages about which files
 are being processed, and which compilation mode is being used, and
 some others. Warnings and errors will of course still be displayed.
-.TP
-.B "-E"
-Run only the preprocessor as if -fftepp was used and print the
-preprocessed code to stdout.
-.TP
-.BI -W warning "\fR, " "" -Wno- warning
+.It Fl E
+Run only the preprocessor as if
+.Fl f Ns Cm ftepp
+was used and print the preprocessed code to stdout.
+.It Fl W Ns Ar warning , Fl Wno- Ns Ar warning
 Enable or disable a warning.
-.TP
-.B -Wall
-Enable almost all warnings. Overrides preceding -W parameters.
-.sp
-The following warnings will \fBnot\fR be anbled:
-.in +4
-.nf
--Wuninitialized-global
-.fi
-.in
-.TP
-.BR -Werror ", " -Wno-error
+.It Fl W Ns Cm all
+Enable almost all warnings. Overrides preceding
+.Fl W
+parameters.
+.Pp
+The following warnings will
+.Em not
+be enabled:
+.Bl -tag -width indent -offset indent
+.It Fl W Ns Cm uninitialized-global
+.El
+.It Fl W Ns Cm error , Fl Wno- Ns Cm error
 Controls whether or not all warnings should be treated as errors.
-.TP
-.BI -Werror- warning "\fR, " "" -Wno-error- warning
+.It Fl Werror- Ns Ar warning , Fl Wno-error- Ns Ar warning
 Controls whether a specific warning should be an error.
-.TP
-.B -Whelp
+.It Fl W Ns Cm help
 List all possible warn flags.
-.TP
-.BI -f flag "\fR, " "" -fno- flag
+.It Fl f Ns Ar flag , Fl fno- Ns Ar flag
 Enable or disable a specific compile flag. See the list of flags
 below.
-.TP
-.B -fhelp
+.It Fl f Ns Cm help
 List all possible compile flags.
-.TP
-.B -nocolor
+.It Fl nocolor
 Disables colored output
-.TP
-.BI -config= file
-Use an ini file to read all the -O, -W and -f flag from. See the
-CONFIG section about the file format.
-.TP
-.BI "-redirout=" file
-Redirects standard output to a \fIfile\fR
-.TP
-.BI "-redirerr=" file
-Redirects standard error to a \fIfile\fR
-.TP
-.BI "-std=" standard
+.It Fl config= Ns Ar file
+Use an ini file to read all the
+.Fl O , Fl W
+and
+.Fl f
+flag from. See the
+.Sx CONFIG
+section about the file format.
+.It Fl redirout= Ns Ar file
+Redirects standard output to a
+.Ar file
+.It Fl redirerr= Ns Ar file
+Redirects standard error to a
+.Ar file
+.It Fl std= Ns Ar standard
 Use the specified standard for parsing QC code. The following standards
 are available:
-.IR gmqcc , qcc , fteqcc
-Selecting a standard also implies some -f options and behaves as if
-those options have been written right after the -std option, meaning
-if you changed them before the -std option, you're now overwriting
-them.
-.sp
-.BR -std=gmqcc " includes:"
-.in +4
-.nf
--fadjust-vector-fields
--fcorrect-logic
--ftrue-empty-strings
--floop-labels
--finitialized-nonconstants
--ftranslatable-strings
--f\fIno-\fRfalse-empty-strings
--Winvalid-parameter-count
--Wmissing-returnvalues
--fcorrect-ternary (cannot be turned off)
-.fi
-.in
-.sp
-.BR -std=qcc " includes:"
-.in +4
-.nf
--fassign-function-types
--f\fIno-\fRadjust-vector-fields
-.fi
-.in
-.sp
-.BR -std=fteqcc " includes:"
-.in +4
-.nf
--fftepp
--ftranslatable-strings
--fassign-function-types
--Wternary-precedence
--f\fIno-\fRadjust-vector-fields
--f\fIno-\fRcorrect-ternary
-.fi
-.in
-.TP
-.B "--add-info"
+.Ar gmqcc , Ar qcc , Ar fteqcc
+Selecting a standard also implies some
+.Fl f
+options and behaves as if
+those options have been written right after the
+.Fl std
+option, meaning
+if you changed them before the
+.Fl -std
+option, you're now overwriting them.
+.Pp
+.Fl std= Ns Cm gmqcc No includes:
+.Bl -tag -width indent -compact -offset Ds
+.It Fl f Ns Cm adjust-vector-fields
+.It Fl f Ns Cm correct-logic
+.It Fl f Ns Cm true-empty-strings
+.It Fl f Ns Cm loop-labels
+.It Fl f Ns Cm initialized-nonconstants
+.It Fl f Ns Cm translatable-strings
+.It Fl fno- Ns Cm false-empty-strings
+.It Fl W Ns Cm invalid-parameter-count
+.It Fl W Ns Cm missing-returnvalues
+.It Fl f Ns Cm correct-ternary Li (cannot be turned off)
+.El
+.Pp
+.Fl std= Ns Cm qcc No includes:
+.Bl -tag -width indent -compact -offset Ds
+.It Fl f Ns Cm assign-function-types
+.It Fl fIno- Ns Cm adjust-vector-fields
+.El
+.Pp
+.Fl std= Ns Cm fteqcc No includes:
+.Bl -tag -width indent -compact -offset Ds
+.It Fl f Ns Cm ftepp
+.It Fl f Ns Cm translatable-strings
+.It Fl f Ns Cm assign-function-types
+.It Fl W Ns Cm ternary-precedence
+.It Fl fno- Ns Cm adjust-vector-fields
+.It Fl fno- Ns Cm correct-ternary
+.El
+.It Fl -add-info
 Adds compiler information to the generated binary file. Currently
 this includes the following globals:
-.RS
-.IP "reserved:version"
+.Bl -tag -width indent -compact
+.It Li reserved:version
 String containing the compiler version as printed by the --version
 parameter.
-.RE
-.TP
-.BR "--correct" ", " "--no-correct"
+.El
+.It Fl -correct , Fl -no-correct
 When enabled, errors about undefined values try to suggest an existing
 value via spell checking.
-.TP
-.B "-dump"
+.It Fl dump
 DEBUG OPTION. Print the code's intermediate representation before the
 optimization and finalization passes to stdout before generating the
 binary.
-.TP
-.B "-dumpfin"
+.It Fl dumpfin
 DEBUG OPTION. Print the code's intermediate representation after the
 optimization and finalization passes to stdout before generating the
 binary. The instructions will be enumerated, and values will contain a
 list of liferanges.
-.SH COMPILE WARNINGS
-.TP
-.B -Wunused-variable
+.El
+.Sh COMPILE WARNINGS
+.Bl -tag -width Ds
+.It Fl W Ns Cm unused-variable
 Generate a warning about variables which are declared but never used.
-This can be avoided by adding the \fInoref\fR keyword in front of the
+This can be avoided by adding the
+.Ql noref
+keyword in front of the
 variable declaration. Additionally a complete section of unreferenced
-variables can be opened using \fI#pragma noref 1\fR, and closed via
-\fI#pragma noref 0\fR.
-.TP
-.B -Wused-uninitialized
+variables can be opened using
+.Ql #pragma noref 1
+and closed via
+.Ql #pragma noref 0 Ns .
+.It Fl W Ns Cm used-uninitialized
 Generate a warning if it is possible that a variable can be used
 without prior initialization. Note that this warning is not
 necessarily reliable if the initialization happens only under certain
-conditions. The other way is \fInot\fR possible: that the warning is
-\fInot\fR generated when uninitialized use \fIis possible\fR.
-.TP
-.B -Wunknown-control-sequence
+conditions. The other way is
+.Em not
+possible: that the warning is
+.Em not
+generated when uninitialized use
+.Em is
+possible.
+.It Fl W Ns Cm unknown-control-sequence
 Generate an error when an unrecognized control sequence in a string is
 used. Meaning: when there's a character after a backslash in a string
 which has no known meaning.
-.TP
-.B -Wextensions
+.It Fl W Ns Cm extensions
 Warn when using special extensions which are not part of the selected
 standard.
-.TP
-.B -Wfield-redeclared
+.It Fl W Ns Cm field-redeclared
 Generally QC compilers ignore redeclaration of fields. Here you can
 optionally enable a warning.
-.TP
-.B -Wmissing-return-values
-Functions which aren't of type \fIvoid\fR will warn if it possible to
+.It Fl W Ns Cm missing-return-values
+Functions which aren't of type
+.Ft void
+will warn if it possible to
 reach the end without returning an actual value.
-.TP
-.B -Winvalid-parameter-count
+.It Fl W Ns Cm invalid-parameter-count
 Warn about a function call with an invalid number of parameters.
-.TP
-.B -Wlocal-shadows
+.It Fl W Ns Cm local-shadows
 Warn when a locally declared variable shadows variable.
-.TP
-.B -Wlocal-constants
+.It Fl W Ns Cm local-constants
 Warn when the initialization of a local variable turns the variable
 into a constant. This is default behaviour unless
-\fI-finitialized-nonconstants\fR is used.
-.TP
-.B -Wvoid-variables
-There are only 2 known global variables of type void: end_sys_globals
-and end_sys_fields. Any other void-variable will warn.
-.TP
-.B -Wimplicit-function-pointer
-A global function which is not declared with the \fIvar\fR keyword is
+.Fl f Ns Cm initialized-nonconstants
+is used.
+.It Fl W Ns Cm void-variables
+There are only 2 known global variables of type void:
+.Ql end_sys_globals
+and
+.Ql end_sys_fields Ns .
+Any other void-variable will warn.
+.It Fl W Ns Cm implicit-function-pointer
+A global function which is not declared with the
+.Ql var
+keyword is
 expected to have an implementing body, or be a builtin. If neither is
 the case, it implicitly becomes a function pointer, and a warning is
 generated.
-.TP
-.B -Wvariadic-function
+.It Fl W Ns Cm variadic-function
 Currently there's no way for an in QC implemented function to access
 variadic parameters. If a function with variadic parameters has an
 implementing body, a warning will be generated.
-.TP
-.B -Wframe-macros
-Generate warnings about \fI$frame\fR commands, for instance about
+.It Fl W Ns Cm frame-macros
+Generate warnings about
+.Ql $frame
+commands, for instance about
 duplicate frame definitions.
-.TP
-.B -Weffectless-statement
+.It Fl W Ns Cm effectless-statement
 Warn about statements which have no effect. Any expression which does
 not call a function or assigns a variable.
-.TP
-.B -Wend-sys-fields
-The \fIend_sys_fields\fR variable is supposed to be a global variable
-of type \fIvoid\fR. It is also recognized as a \fIfield\fR but this
+.It Fl W Ns Cm end-sys-fields
+The
+.Ql end_sys_fields
+variable is supposed to be a global variable
+of type
+.Ft void Ns .
+It is also recognized as a \fIfield\fR but this
 will generate a warning.
-.TP
-.B -Wassign-function-types
+.It Fl W Ns Cm assign-function-types
 Warn when assigning to a function pointer with an unmatching
 signature. This usually happens in cases like assigning the null
 function to an entity's .think function pointer.
-.TP
-.B -Wpreprocessor
-Enable warnings coming from the preprocessor. Like duplicate macro
-declarations. This warning triggers when there's a problem with the
-way the preprocessor has been used, it will \fBnot\fR affect warnings
-generated with the '#warning' directive. See -Wcpp.
-.TP
-.B -Wcpp
+.It Fl W Ns Cm cpp
 Show warnings created using the preprocessor's '#warning' directive.
-.TP
-.B -Wmultifile-if
+.It Fl W Ns Cm multifile-if
 Warn if there's a preprocessor \fI#if\fR spanning across several
 files.
-.TP
-.B -Wdouble-declaration
+.It Fl W Ns Cm double-declaration
 Warn about multiple declarations of globals. This seems pretty common
 in QC code so you probably do not want this unless you want to clean
 up your code.
-.TP
-.B -Wconst-var
+.It Fl W Ns Cm const-var
 The combination of \fIconst\fR and \fIvar\fR is not illegal, however
 different compilers may handle them differently. We were told, the
 intention is to create a function-pointer which is not assignable.
 This is exactly how we interpret it. However for this interpretation
-the \fIvar\fR keyword is considered superfluous (and philosophically
+the
+.Ql var
+keyword is considered superfluous (and philosophically
 wrong), so it is possible to generate a warning about this.
-.TP
-.B -Wmultibyte-character
+.It Fl W Ns Cm multibyte-character
 Warn about multibyte character constants, they do not work right now.
-.TP
-.B -Wternary-precedence
+.It Fl W Ns Cm ternary-precedence
 Warn if a ternary expression which contains a comma operator is used
 without enclosing parenthesis, since this is most likely not what you
-actually want. We recommend the \fI-fcorrect-ternary\fR option.
-.TP
-.B -Wunknown-pragmas
-Warn when encountering an unrecognized \fI#pragma\fR line.
-.TP
-.B -Wunreachable-code
+actually want. We recommend the
+.Fl f Ns Cm correct-ternary
+option.
+.It Fl W Ns Cm unknown-pragmas
+Warn when encountering an unrecognized
+.Ql #pragma
+line.
+.It Fl W Ns Cm unreachable-code
 Warn about unreachable code. That is: code after a return statement,
 or code after a call to a function marked as 'noreturn'.
-.TP
-.B -Wdebug
+.It Fl W Ns Cm debug
 Enable some warnings added in order to help debugging in the compiler.
 You won't need this.
-.B -Wunknown-attribute
+.It Fl W Ns Cm unknown-attribute
 Warn on an unknown attribute. The warning will inlclude only the first
 token inside the enclosing attribute-brackets. This may change when
 the actual attribute syntax is better defined.
-.TP
-.B -Wreserved-names
-Warn when using reserved names such as 'nil'.
-.TP
-.B -Wuninitialized-constant
-Warn about global constants (using the 'const' keyword) with no
+.It Fl W Ns Cm reserved-names
+Warn when using reserved names such as
+.Ql nil Ns .
+.It Fl W Ns Cm uninitialized-constant
+Warn about global constants (using the
+.Ql const
+keyword) with no
 assigned value.
-.TP
-.B -Wuninitialized-global
+.It Fl W Ns Cm uninitialized-global
 Warn about global variables with no initializing value. This is off by
 default, and is added mostly to help find null-values which are
 supposed to be replaced by the untyped 'nil' constant.
-.TP
-.B -Wdifferent-qualifiers
+.It Fl W Ns Cm different-qualifiers
 Warn when a variables is redeclared with a different qualifier. For
 example when redeclaring a variable as \'var\' which was previously
 marked \'const\'.
-.TP
-.B -Wdifferent-attributes
-Similar to the above but for attributes like "[[noreturn]]".
-.TP
-.B -Wdeprecated
+.It Fl W Ns Cm different-attributes
+Similar to the above but for attributes like
+.Ql [[noreturn]] Ns .
+.It Fl W Ns Cm deprecated
 Warn when a function is marked with the attribute
 "[[deprecated]]". This flag enables a warning on calls to functions
 marked as such.
-.TP
-.B -Wparenthesis
+.It Fl W Ns Cm parenthesis
 Warn about possible mistakes caused by missing or wrong parenthesis,
 like an assignment in an 'if' condition when there's no additional set
 of parens around the assignment.
-.SH COMPILE FLAGS
-.TP
-.B -fdarkplaces-string-table-bug
+.El
+.Sh COMPILE FLAGS
+.Bl -tag -width Ds
+.It Fl f Ns Cm darkplaces-string-table-bug
 Add some additional characters to the string table in order to
 compensate for a wrong boundcheck in some specific version of the
 darkplaces engine.
-.TP
-.B -fadjust-vector-fields
+.It Fl f Ns Cm adjust-vector-fields
 When assigning to field pointers of type \fI.vector\fR the common
 behaviour in compilers like \fIfteqcc\fR is to only assign the
 x-component of the pointer. This means that you can use the vector as
 such, but you cannot use its y and z components directly. This flag
 fixes this behaviour. Before using it make sure your code does not
 depend on the buggy behaviour.
-.TP
-.B -fftepp
+.It Fl f Ns Cm ftepp
 Enable a partially fteqcc-compatible preprocessor. It supports all the
 features used in the Xonotic codebase. If you need more, write a
 ticket.
-.TP
-.B -fftepp-predefs
+.It Fl f Ns Cm ftepp-predefs
 Enable some predefined macros. This only works in combination with
 \'-fftepp' and is currently not included by '-std=fteqcc'. The
 following macros will be added:
-.in +4
-.nf
+.Bd -literal -offset indent
 __LINE__
 __FILE__
 __COUNTER__
@@ -358,97 +347,88 @@ __RANDOM__
 __RANDOM_LAST__
 __DATE__
 __TIME__
-.fi
-.in
-Note that fteqcc also defines __NULL__ which is not implemented yet.
-(See -funtyped-nil about gmqcc's alternative to __NULL__).
-.TP
-.B -frelaxed-switch
+.Ed
+.Pp
+Note that fteqcc also defines
+.Li __NULL__
+which is not implemented yet.
+(See
+.Fl f Ns Cm untyped-nil
+about gmqcc's alternative to
+.Li __NULL__ Ns ).
+.It Fl f Ns Cm relaxed-switch
 Allow switch cases to use non constant variables.
-.TP
-.B -fshort-logic
+.It Fl f Ns Cm short-logic
 Perform early out in logical AND and OR expressions. The final result
 will be either a 0 or a 1, see the next flag for more possibilities.
-.TP
-.B -fperl-logic
+.It Fl f Ns Cm perl-logic
 In many languages, logical expressions perform early out in a special
 way: If the left operand of an AND yeilds true, or the one of an OR
 yields false, the complete expression evaluates to the right side.
-Thus \fItrue && 5\fI evaluates to 5 rather than 1.
-.TP
-.B -ftranslatable-strings
-Enable the underscore intrinsic: Using \fI_("A string constant")\fR
+Thus
+.Ql true && 5
+evaluates to 5 rather than 1.
+.It Fl f Ns Cm translatable-strings
+Enable the underscore intrinsic: Using
+.Ql _("A string constant")
 will cause the string immediate to get a name with a "dotranslate_"
 prefix. The darkplaces engine recognizes these and translates them in
 a way similar to how gettext works.
-.TP
-.B -finitialized-nonconstants
+.It Fl f Ns Cm initialized-nonconstants
 Don't implicitly convert initialized variables to constants. With this
 flag, the \fIconst\fR keyword is required to make a constant.
-.TP
-.B -fassign-function-types
+.It Fl f Ns Cm assign-function-types
 If this flag is not set, (and it is set by default in the qcc and
 fteqcc standards), assigning function pointers of mismatching
 signatures will result in an error rather than a warning.
-.TP
-.B -flno
+.It Fl f Ns Cm lno
 Produce a linenumber file along with the output .dat file.
-.TP
-.B -fcorrect-ternary
+.It Fl f Ns Cm correct-ternary
 Use C's operator precedence for ternary expressions. Unless your code
 depends on fteqcc-compatible behaviour, you'll want to use thi
 soption.
-.TP
-.B -fsingle-vector-defs
+.It Fl f Ns Cm single-vector-defs
 Normally vectors generate 4 defs, once for the vector, and once for
 its components with _x, _y, _z suffixes. This option
 prevents components from being listed.
-.TP
-.B -fcorrect-logic
-Most QC compilers translate if(a_vector) directly as an IF on the
-vector, which means only the x-component is checked. This causes
+.It Fl f Ns Cm correct-logic
+Most QC compilers translate
+.Ql if(a_vector)
+directly as an IF on the
+vector, which means only the x-component is checked. This option causes
 vectors to be cast to actual booleans via a NOT_V and, if necessary, a
 NOT_F chained to it.
-.in +4
-.nf
+.Bd -literal -offset indent
 if (a_vector) // becomes
 if not(!a_vector)
 // likewise
 a = a_vector && a_float // becomes
 a = !!a_vector && a_float
-.fi
-.in
-.TP
-.B -ftrue-empty-strings
+.Ed
+.It Fl f Ns Cm true-empty-strings
 An empty string is considered to be true everywhere. The NOT_S
 instruction usually considers an empty string to be false, this option
 effectively causes the unary not in strings to use NOT_F instead.
-.TP
-.B -ffalse-empty-strings
+.It Fl f Ns Cm false-empty-strings
 An empty string is considered to be false everywhere. This means loops
 and if statements which depend on a string will perform a NOT_S
 instruction on the string before using it.
-.TP
-.B -futf8
+.It Fl f Ns Cm utf8
 Enable utf8 characters. This allows utf-8 encoded character constants,
 and escape sequence codepoints in the valid utf-8 range. Effectively
 enabling escape sequences like '\\{x2211}'.
-.TP
-.B -fbail-on-werror
+.It Fl f Ns Cm bail-on-werror
 When a warning is treated as an error, and this option is set (which
 it is by default), it is like any other error and will cause
 compilation to stop. When disabling this flag by using
 \-fno-bail-on-werror, compilation will continue until the end, but no
 output is generated. Instead the first such error message's context is
 shown.
-.TP
-.B -floop-labels
+.It Fl f Ns Cm loop-labels
 Allow loops to be labeled, and allow 'break' and 'continue' to take an
 optional label to decide which loop to actually jump out of or
 continue.
-.sp
-.in +4
-.nf
+.Bd -literal -offset indent
 for :outer (i = 0; i < n; ++i) {
     while (inner) {
         ...;
@@ -456,10 +436,8 @@ for :outer (i = 0; i < n; ++i) {
             continue outer;
     }
 }
-.fi
-.in
-.TP
-.B -funtyped-nil
+.Ed
+.It Fl f Ns Cm untyped-nil
 Adds a global named 'nil' which is of no type and can be assigned to
 anything. No typechecking will be performed on assignments. Assigning
 to it is forbidden, using it in any other kind of expression is also
@@ -477,47 +455,42 @@ components.
 In that gmqcc the nil global is an actual global filled with zeroes,
 and can be assigned to anything including fields, vectors or function
 pointers, and they end up becoming zeroed.
-.TP
-.B -fpermissive
+.It Fl f Ns Cm permissive
 Various effects, usually to weaken some conditions.
-.RS
-.IP "with -funtyped-nil"
-Allow local variables named 'nil'. (This will not allow declaring a
-global of that name.)
-.RE
-.TP
-.B -fvariadic-args
+.Bl -tag -width indent -offset indent
+.It with Fl f Ns Cm untyped-nil
+Allow local variables named
+.Ql nil Ns .
+(This will not allow declaring a global of that name.)
+.El
+.It Fl f Ns Cm variadic-args
 Allow variadic parameters to be accessed by QC code. This can be
 achieved via the '...' function, which takes a parameter index and a
 typename.
-
+.Pp
 Example:
-.sp
-.in +4
-.nf
+.Bd -literal -offset indent
 void vafunc(string...count) {
     float i;
     for (i = 0; i < count; ++i)
         print(...(i, string), "\\n");
 }
-.fi
-.in
-.TP -flegacy-vector-maths
+.Ed
+.It Fl f Ns Cm legacy-vector-maths
 Most Quake VMs, including the one from FTEQW or up till recently
 Darkplaces, do not cope well with vector instructions with overlapping
 input and output. This option will avoid producing such code.
-.SH OPTIMIZATIONS
-.TP
-.B -Opeephole
+.El
+.Sh OPTIMIZATIONS
+.Bl -tag -width Ds
+.It Fl O Ns Cm peephole
 Some general peephole optimizations. For instance the code `a = b + c`
 typically generates 2 instructions, an ADD and a STORE. This
 optimization removes the STORE and lets the ADD write directly into A.
-.TP
-.B -Otail-recursion
+.It Fl O Ns Cm tail-recursion
 Tail recursive function calls will be turned into loops to avoid the
 overhead of the CALL and RETURN instructions.
-.TP
-.B -Ooverlap-locals
+.It Fl O Ns Cm overlap-locals
 Make all functions which use neither local arrays nor have locals
 which are seen as possibly uninitialized use the same local section.
 This should be pretty safe compared to other compilers which do not
@@ -528,44 +501,37 @@ as long as the functions cannot be called in a recursive manner. Since
 it's hard to know whether or not an array is actually fully
 initialized, especially when initializing it via a loop, we assume
 functions with arrays to be too dangerous for this optimization.
-.TP
-.B -Olocal-temps
+.It Fl O Ns Cm local-temps
 This promotes locally declared variables to "temps". Meaning when a
 temporary result of an operation has to be stored somewhere, a local
 variable which is not 'alive' at that point can be used to keep the
 result. This can reduce the size of the global section.
 This will not have declared variables overlap, even if it was
 possible.
-.TP
-.B -Oglobal-temps
+.It Fl O Ns Cm global-temps
 Causes temporary values which do not need to be backed up on a CALL to
 not be stored in the function's locals-area. With this, a CALL to a
 function may need to back up fewer values and thus execute faster.
-.TP
-.B -Ostrip-constant-names
+.It Fl O Ns Cm strip-constant-names
 Don't generate defs for immediate values or even declared constants.
 Meaning variables which are implicitly constant or qualified as such
 using the 'const' keyword.
-.TP
-.B -Ooverlap-strings
+.It Fl O Ns Cm overlap-strings
 Aggressively reuse strings in the string section. When a string should
 be added which is the trailing substring of an already existing
 string, the existing string's tail will be returned instead of the new
 string being added.
-
+.Pp
 For example the following code will only generate 1 string:
-
-.in +4
-.nf
+.Bd -literal -offset indent
 print("Hell you!\\n");
 print("you!\\n"); // trailing substring of "Hello you!\\n"
-.fi
-.in
+.Ed
+.Pp
 There's however one limitation. Strings are still processed in order,
 so if the above print statements were reversed, this optimization
 would not happen.
-.TP
-.B -Ocall-stores
+.It Fl O Ns Cm call-stores
 By default, all parameters of a CALL are copied into the
 parameter-globals right before the CALL instructions. This is the
 easiest and safest way to translate calls, but also adds a lot of
@@ -573,39 +539,48 @@ unnecessary copying and unnecessary temporary values. This
 optimization makes operations which are used as a parameter evaluate
 directly into the parameter-global if that is possible, which is when
 there's no other CALL instruction in between.
-.TP
-.B -Ovoid-return
+.It Fl O Ns Cm void-return
 Usually an empty RETURN instruction is added to the end of a void
 typed function. However, additionally after every function a DONE
 instruction is added for several reasons. (For example the qcvm's
 disassemble switch uses it to know when the function ends.). This
 optimization replaces that last RETURN with DONE rather than adding
 the DONE additionally.
-.TP
-.B -Ovector-components
+.It Fl O Ns Cm vector-components
 Because traditional QC code doesn't allow you to access individual
 vector components of a computed vector without storing it in a local
-first, sometimes people multiply it by a constant like '0 1 0' to get,
+first, sometimes people multiply it by a constant like
+.Ql '0 1 0'
+to get,
 in this case, the y component of a vector. This optimization will turn
 such a multiplication into a direct component access. If the factor is
 anything other than 1, a float-multiplication will be added, which is
 still faster than a vector multiplication.
-.SH CONFIG
+.El
+.Sh CONFIG
 The configuration file is similar to regular .ini files. Comments
 start with hashtags or semicolons, sections are written in square
 brackets and in each section there can be arbitrary many key-value
 pairs.
-.sp
+.Pp
 There are 3 sections currently:
-.IR flags ", " warnings ", and " optimizations .
-They contain a list of boolean values of the form `VARNAME = true` or
-`VARNAME = false`. The variable names are the same as for the
-corresponding -W, -f or -O flag written with only capital letters and
+.Ql flags Ns ,
+.Ql warnings Ns ,
+.Ql optimizations Ns .
+They contain a list of boolean values of the form
+.Ql VARNAME = true
+or
+.Ql VARNAME = false Ns .
+The variable names are the same as for the
+corresponding
+.Fl W , Fl f
+or
+.Fl O
+flag written with only capital letters and
 dashes replaced by underscores.
-.sp
+.Pp
 Here's an example:
-.in +4
-.nf
+.Bd -literal -offset indent
 # a GMQCC configuration file
 [flags]
     FTEPP = true
@@ -619,20 +594,19 @@ Here's an example:
 [optimizations]
     PEEPHOLE = true
     TAIL_RECURSION = true
-.fi
-.in
-.SH BUGS
+.Ed
+.Sh FILES
+.Bl -tag -width Ds
+.It gmqcc.ini.example
+A documented example for a gmqcc.ini file.
+.El
+.Sh SEE ALSO
+.Xr qcvm 1
+.Sh AUTHOR
+See <http://graphitemaster.github.com/gmqcc>.
+.Sh BUGS
 Currently the '-fftepp-predefs' flag is not included by '-std=fteqcc',
 partially because it is not entirely conformant to fteqcc.
-.sp
-
+.Pp
 Please report bugs on <http://github.com/graphitemaster/gmqcc/issues>,
 or see <http://graphitemaster.github.com/gmqcc> on how to contact us.
-.SH FILES
-.TP 20
-.B gmqcc.ini.example
-A documented example for a gmqcc.ini file.
-.SH SEE ALSO
-.IR qcvm (1)
-.SH AUTHOR
-See <http://graphitemaster.github.com/gmqcc>.

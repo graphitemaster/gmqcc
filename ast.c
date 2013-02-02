@@ -348,7 +348,7 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->getter = NULL;
     self->desc   = NULL;
 
-    self->argcounter = NULL;
+    self->argcounter  = NULL;
 
     return self;
 }
@@ -1083,8 +1083,9 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     vtype->hasvalue = true;
     vtype->constval.vfunc = self;
 
-    self->varargs = NULL;
-    self->argc    = NULL;
+    self->varargs     = NULL;
+    self->argc        = NULL;
+    self->fixedparams = NULL;
 
     return self;
 }
@@ -1112,6 +1113,8 @@ void ast_function_delete(ast_function *self)
         ast_delete(self->varargs);
     if (self->argc)
         ast_delete(self->argc);
+    if (self->fixedparams)
+        ast_unref(self->fixedparams);
     mem_d(self);
 }
 
@@ -1121,8 +1124,12 @@ const char* ast_function_label(ast_function *self, const char *prefix)
     size_t len;
     char  *from;
 
-    if (!opts.dump && !opts.dumpfin && !opts.debug)
+    if (!OPTS_OPTION_BOOL(OPTION_DUMP)    &&
+        !OPTS_OPTION_BOOL(OPTION_DUMPFIN) &&
+        !OPTS_OPTION_BOOL(OPTION_DEBUG))
+    {
         return NULL;
+    }
 
     id  = (self->labelcount++);
     len = strlen(prefix);
@@ -1228,7 +1235,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
 
             /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-            if (!array->expression.count || array->expression.count > opts.max_array_size)
+            if (!array->expression.count || array->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
                 compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
 
             elemtype = &array->expression.next->expression;
@@ -1290,7 +1297,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         int vtype = elemtype->vtype;
 
         /* same as with field arrays */
-        if (!self->expression.count || self->expression.count > opts.max_array_size)
+        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
 
         v = ir_builder_create_global(ir, self->name, vtype);
@@ -1427,7 +1434,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         }
 
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-        if (!self->expression.count || self->expression.count > opts.max_array_size) {
+        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
         }
 
@@ -1612,13 +1619,23 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     if (self->argc) {
         ir_value *va_count;
+        ir_value *fixed;
+        ir_value *sub;
         if (!ast_local_codegen(self->argc, self->ir_func, true))
             return false;
         cgen = self->argc->expression.codegen;
         if (!(*cgen)((ast_expression*)(self->argc), self, false, &va_count))
             return false;
+        cgen = self->fixedparams->expression.codegen;
+        if (!(*cgen)((ast_expression*)(self->fixedparams), self, false, &fixed))
+            return false;
+        sub = ir_block_create_binop(self->curblock, ast_ctx(self),
+                                    ast_function_label(self, "va_count"), INSTR_SUB_F,
+                                    ir_builder_get_va_count(ir), fixed);
+        if (!sub)
+            return false;
         if (!ir_block_create_store_op(self->curblock, ast_ctx(self), INSTR_STORE_F,
-                                      va_count, ir_builder_get_va_count(ir)))
+                                      va_count, sub))
         {
             return false;
         }
@@ -1689,7 +1706,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     for (i = 0; i < vec_size(self->locals); ++i)
     {
         if (!ast_local_codegen(self->locals[i], func->ir_func, false)) {
-            if (opts.debug)
+            if (OPTS_OPTION_BOOL(OPTION_DEBUG))
                 compile_error(ast_ctx(self), "failed to generate local `%s`", self->locals[i]->name);
             return false;
         }
@@ -2817,7 +2834,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         return true;
 
     cmpinstr = type_eq_instr[irop->vtype];
-    if (cmpinstr >= AINSTR_END) {
+    if (cmpinstr >= VINSTR_END) {
         ast_type_to_string(self->operand, typestr, sizeof(typestr));
         compile_error(ast_ctx(self), "invalid type to perform a switch on: %s", typestr);
         return false;

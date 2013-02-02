@@ -82,7 +82,7 @@ static uint32_t ftepp_predef_randval  = 0;
 char *ftepp_predef_date(lex_file *context) {
     struct tm *itime;
     time_t     rtime;
-    char      *value = mem_a(82);
+    char      *value = (char*)mem_a(82);
     /* 82 is enough for strftime but we also have " " in our string */
 
     (void)context;
@@ -100,7 +100,7 @@ char *ftepp_predef_date(lex_file *context) {
 char *ftepp_predef_time(lex_file *context) {
     struct tm *itime;
     time_t     rtime;
-    char      *value = mem_a(82);
+    char      *value = (char*)mem_a(82);
     /* 82 is enough for strftime but we also have " " in our string */
 
     (void)context;
@@ -408,11 +408,55 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 {
     pptoken *ptok;
     while (ftepp->token != TOKEN_EOL && ftepp->token < TOKEN_EOF) {
-        if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__"))
-            ftepp->token = TOKEN_VA_ARGS;
-        ptok = pptoken_make(ftepp);
-        vec_push(macro->output, ptok);
-        ftepp_next(ftepp);
+        bool   subscript = false;
+        size_t index     = 0;
+        if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_ARGS__")) {
+            subscript = !!(ftepp_next(ftepp) == '#');
+
+            if (subscript && ftepp_next(ftepp) != '#') {
+                ftepp_error(ftepp, "expected `##` in __VA_ARGS__ for subscripting");
+                return false;
+            } else if (subscript) {
+                if (ftepp_next(ftepp) == '[') {
+                    if (ftepp_next(ftepp) != TOKEN_INTCONST) {
+                        ftepp_error(ftepp, "expected index for __VA_ARGS__ subscript");
+                        return false;
+                    }
+
+                    index = atoi(ftepp_tokval(ftepp));
+
+                    if (ftepp_next(ftepp) != ']') {
+                        ftepp_error(ftepp, "expected `]` in __VA_ARGS__ subscript");
+                        return false;
+                    }
+
+                    /*
+                     * mark it as an array to be handled later as such and not
+                     * as traditional __VA_ARGS__
+                     */
+                    ftepp->token = TOKEN_VA_ARGS_ARRAY;
+                    ptok = pptoken_make(ftepp);
+                    ptok->constval.i = index;
+                    vec_push(macro->output, ptok);
+                    ftepp_next(ftepp);
+                } else {
+                    ftepp_error(ftepp, "expected `[` for subscripting of __VA_ARGS__");
+                    return false;
+                }
+            } else {
+                int old = ftepp->token;
+                ftepp->token = TOKEN_VA_ARGS;
+                ptok = pptoken_make(ftepp);
+                vec_push(macro->output, ptok);
+                ftepp->token = old;
+            }
+        }
+        else
+        {
+            ptok = pptoken_make(ftepp);
+            vec_push(macro->output, ptok);
+            ftepp_next(ftepp);
+        }
     }
     /* recursive expansion can cause EOFs here */
     if (ftepp->token != TOKEN_EOL && ftepp->token != TOKEN_EOF) {
@@ -437,7 +481,7 @@ static bool ftepp_define(ftepp_t *ftepp)
         case TOKEN_KEYWORD:
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
             if (macro && ftepp->output_on) {
-                if (ftepp_warn(ftepp, WARN_PREPROCESSOR, "redefining `%s`", ftepp_tokval(ftepp)))
+                if (ftepp_warn(ftepp, WARN_CPP, "redefining `%s`", ftepp_tokval(ftepp)))
                     return false;
                 ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
             }
@@ -673,6 +717,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 }
                 if (!varargs)
                     break;
+
                 pi = 0;
                 ftepp_param_out(ftepp, &params[pi + vararg_start]);
                 for (++pi; pi < varargs; ++pi) {
@@ -680,6 +725,17 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                     ftepp_param_out(ftepp, &params[pi + vararg_start]);
                 }
                 break;
+
+            case TOKEN_VA_ARGS_ARRAY:
+                if ((size_t)out->constval.i >= varargs) {
+                    ftepp_error(ftepp, "subscript of `[%u]` is out of bounds for `__VA_ARGS__`", out->constval.i);
+                    vec_free(old_string);
+                    return false;
+                }
+
+                ftepp_param_out(ftepp, &params[out->constval.i + vararg_start]);
+                break;
+
             case TOKEN_IDENT:
             case TOKEN_TYPENAME:
             case TOKEN_KEYWORD:
@@ -955,7 +1011,7 @@ static bool ftepp_if_value(ftepp_t *ftepp, bool *out, double *value_out)
 
         default:
             ftepp_error(ftepp, "junk in #if: `%s` ...", ftepp_tokval(ftepp));
-            if (opts.debug)
+            if (OPTS_OPTION_BOOL(OPTION_DEBUG))
                 ftepp_error(ftepp, "internal: token %i\n", ftepp->token);
             return false;
     }
@@ -1262,6 +1318,30 @@ static void ftepp_directive_error(ftepp_t *ftepp) {
     ftepp_error(ftepp, "#error %s", ftepp_tokval(ftepp));
 }
 
+static void ftepp_directive_message(ftepp_t *ftepp) {
+    char *message = NULL;
+
+    if (!ftepp_skipspace(ftepp))
+        return;
+
+    /* handle the odd non string constant case so it works like C */
+    if (ftepp->token != TOKEN_STRINGCONST) {
+        vec_upload(message, "#message", 8);
+        ftepp_next(ftepp);
+        while (ftepp->token != TOKEN_EOL) {
+            vec_upload(message, ftepp_tokval(ftepp), strlen(ftepp_tokval(ftepp)));
+            ftepp_next(ftepp);
+        }
+        vec_push(message, '\0');
+        con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message", message);
+        vec_free(message);
+        return;
+    }
+
+    unescape     (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
+    con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message",  ftepp_tokval(ftepp));
+}
+
 /**
  * Include a file.
  * FIXME: do we need/want a -I option?
@@ -1463,6 +1543,10 @@ static bool ftepp_hash(ftepp_t *ftepp)
             }
             else if (!strcmp(ftepp_tokval(ftepp), "error")) {
                 ftepp_directive_error(ftepp);
+                break;
+            }
+            else if (!strcmp(ftepp_tokval(ftepp), "message")) {
+                ftepp_directive_message(ftepp);
                 break;
             }
             else {
@@ -1671,7 +1755,7 @@ bool ftepp_init()
 
     /* set the right macro based on the selected standard */
     ftepp_add_define(NULL, "GMQCC");
-    if (opts.standard == COMPILER_FTEQCC) {
+    if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC) {
         ftepp_add_define(NULL, "__STD_FTEQCC__");
         /* 1.00 */
         major[0] = '"';
@@ -1681,15 +1765,15 @@ bool ftepp_init()
         minor[0] = '"';
         minor[1] = '0';
         minor[2] = '"';
-    } else if (opts.standard == COMPILER_GMQCC) {
+    } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         ftepp_add_define(NULL, "__STD_GMQCC__");
         sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
         sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
-    } else if (opts.standard == COMPILER_QCCX) {
+    } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
         ftepp_add_define(NULL, "__STD_QCCX__");
         sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
         sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
-    } else if (opts.standard == COMPILER_QCC) {
+    } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
         /* 1.0 */
         major[0] = '"';

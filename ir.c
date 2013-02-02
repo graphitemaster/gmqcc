@@ -83,11 +83,11 @@ uint16_t type_store_instr[TYPE_COUNT] = {
 
     INSTR_STORE_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t field_store_instr[TYPE_COUNT] = {
@@ -107,11 +107,11 @@ uint16_t field_store_instr[TYPE_COUNT] = {
 
     INSTR_STORE_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_storep_instr[TYPE_COUNT] = {
@@ -131,11 +131,11 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
 
     INSTR_STOREP_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_eq_instr[TYPE_COUNT] = {
@@ -155,11 +155,11 @@ uint16_t type_eq_instr[TYPE_COUNT] = {
 
     INSTR_EQ_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_ne_instr[TYPE_COUNT] = {
@@ -179,11 +179,11 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
 
     INSTR_NE_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 uint16_t type_not_instr[TYPE_COUNT] = {
@@ -203,11 +203,11 @@ uint16_t type_not_instr[TYPE_COUNT] = {
 
     INSTR_NOT_V, /* variant, should never be accessed */
 
-    AINSTR_END, /* struct */
-    AINSTR_END, /* union  */
-    AINSTR_END, /* array  */
-    AINSTR_END, /* nil    */
-    AINSTR_END, /* noexpr */
+    VINSTR_END, /* struct */
+    VINSTR_END, /* union  */
+    VINSTR_END, /* array  */
+    VINSTR_END, /* nil    */
+    VINSTR_END, /* noexpr */
 };
 
 /* protos */
@@ -2257,18 +2257,22 @@ bool ir_function_allocate_locals(ir_function *self)
                     irerror(call->context, "internal error: unlocked parameter %s not found", v->name);
                     goto error;
                 }
-
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
                 v->callparam = true;
                 if (param < 8)
                     ir_value_code_setaddr(v, OFS_PARM0 + 3*param);
                 else {
+                    size_t nprotos = vec_size(self->owner->extparam_protos);
                     ir_value *ep;
                     param -= 8;
-                    if (vec_size(self->owner->extparam_protos) <= param)
-                        ep = ir_gen_extparam_proto(self->owner);
-                    else
+                    if (nprotos > param)
                         ep = self->owner->extparam_protos[param];
+                    else
+                    {
+                        ep = ir_gen_extparam_proto(self->owner);
+                        while (++nprotos <= param)
+                            ep = ir_gen_extparam_proto(self->owner);
+                    }
                     ir_instr_op(v->writes[0], 0, ep, true);
                     call->params[param+8] = ep;
                 }
@@ -3113,7 +3117,7 @@ static ir_value* ir_gen_extparam_proto(ir_builder *ir)
     ir_value *global;
     char      name[128];
 
-    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)+8));
+    snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)));
     global = ir_value_var(name, store_global, TYPE_VECTOR);
 
     vec_push(ir->extparam_protos, global);
@@ -3224,9 +3228,12 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
     irfun = global->constval.vfunc;
     def   = code_functions + irfun->code_function_def;
 
-    if (opts.g || !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS) || (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+    if (OPTS_OPTION_BOOL(OPTION_G) ||
+        !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS)        ||
+        (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+    {
         firstlocal = def->firstlocal = vec_size(code_globals);
-    else {
+    } else {
         firstlocal = def->firstlocal = ir->first_common_local;
         ++opts_optimizationcount[OPTIM_OVERLAP_LOCALS];
     }
@@ -3372,7 +3379,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     def.type   = global->vtype;
     def.offset = vec_size(code_globals);
     def.name   = 0;
-    if (opts.g || !islocal)
+    if (OPTS_OPTION_BOOL(OPTION_G) || !islocal)
     {
         pushdef = true;
 
@@ -3548,7 +3555,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     def.offset = (uint16_t)vec_size(code_globals);
 
     /* create a global named the same as the field */
-    if (opts.standard == COMPILER_GMQCC) {
+    if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         /* in our standard, the global gets a dot prefix */
         size_t len = strlen(field->name);
         char name[1024];
@@ -3686,7 +3693,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         code_push_statement(&stmt, vec_last(code_linenums));
     }
 
-    if (opts.pp_only)
+    if (OPTS_OPTION_BOOL(OPTION_PP_ONLY))
         return true;
 
     if (vec_size(code_statements) != vec_size(code_linenums)) {
@@ -3707,7 +3714,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (!opts.quiet) {
+    if (!OPTS_OPTION_BOOL(OPTION_QUIET)) {
         if (lnofile)
             con_out("writing '%s' and '%s'...\n", filename, lnofile);
         else

@@ -137,8 +137,8 @@ bool code_write(const char *filename, const char *lnofile) {
     code_header.strings.offset    = code_header.globals.offset    + (sizeof(int32_t)                * vec_size(code_globals));
     code_header.strings.length    = vec_size(code_chars);
     code_header.version           = 6;
-    if (opts.forcecrc)
-        code_header.crc16         = opts.forced_crc;
+    if (OPTS_OPTION_BOOL(OPTION_FORCECRC))
+        code_header.crc16         = OPTS_OPTION_U16(OPTION_FORCED_CRC);
     else
         code_header.crc16         = code_crc;
     code_header.entfield          = code_entfields;

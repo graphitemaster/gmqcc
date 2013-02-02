@@ -132,7 +132,7 @@ void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file
 void util_meminfo() {
     struct memblock_t *info;
 
-    if (!opts.memchk)
+    if (!OPTS_OPTION_BOOL(OPTION_MEMCHK))
         return;
 
     for (info = mem_start; info; info = info->next) {
@@ -175,10 +175,10 @@ char *util_strdup(const char *s) {
 
 void util_debug(const char *area, const char *ms, ...) {
     va_list  va;
-    if (!opts.debug)
+    if (!OPTS_OPTION_BOOL(OPTION_DEBUG))
         return;
 
-    if (!strcmp(area, "MEM") && !opts.memchk)
+    if (!strcmp(area, "MEM") && !OPTS_OPTION_BOOL(OPTION_MEMCHK))
         return;
 
     va_start(va, ms);
@@ -616,7 +616,7 @@ static void util_hsupdate(hash_set_t *set) {
         set->bits ++;
         set->capacity = (size_t)(1 << set->bits);
         set->mask     = set->capacity - 1;
-        set->items    = mem_a(set->capacity * sizeof(size_t));
+        set->items    = (size_t*)mem_a(set->capacity * sizeof(size_t));
         set->total    = 0;
 
         /*assert(set->items);*/
@@ -680,14 +680,14 @@ int util_hshas(hash_set_t *set, void *item) {
 hash_set_t *util_hsnew(void) {
     hash_set_t *set;
 
-    if (!(set = mem_a(sizeof(hash_set_t))))
+    if (!(set = (hash_set_t*)mem_a(sizeof(hash_set_t))))
         return NULL;
 
     set->bits     = 3;
     set->total    = 0;
     set->capacity = (size_t)(1 << set->bits);
     set->mask     = set->capacity - 1;
-    set->items    = mem_a(set->capacity * sizeof(size_t));
+    set->items    = (size_t*)mem_a(set->capacity * sizeof(size_t));
 
     if (!set->items) {
         util_hsdel(set);
@@ -760,7 +760,7 @@ int util_vasprintf(char **dat, const char *fmt, va_list args) {
         }
 
         /* not large enough ... */
-        tmp = mem_a(len + 1);
+        tmp = (char*)mem_a(len + 1);
         if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
             mem_d(tmp);
             *dat = NULL;

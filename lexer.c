@@ -1288,10 +1288,11 @@ int lex_do(lex_file *lex)
     }
 
     if (ch == '+' || ch == '-' || /* ++, --, +=, -=  and -> as well! */
-        ch == '>' || ch == '<' || /* <<, >>, <=, >= */
-        ch == '=' || ch == '!' || /* ==, != */
-        ch == '&' || ch == '|')   /* &&, ||, &=, |= */
-    {
+        ch == '>' || ch == '<' || /* <<, >>, <=, >=                  */
+        ch == '=' || ch == '!' || /* ==, !=                          */
+        ch == '&' || ch == '|' || /* &&, ||, &=, |=                  */
+        ch == '~'                 /* ~=, ~                           */
+    )  {
         lex_tokench(lex, ch);
 
         nextch = lex_getch(lex);
@@ -1387,7 +1388,7 @@ int lex_do(lex_file *lex)
                 if (!strcmp(v, keywords_qc[kw]))
                     return (lex->tok.ttype = TOKEN_KEYWORD);
             }
-            if (opts.standard != COMPILER_QCC) {
+            if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_QCC) {
                 for (kw = 0; kw < num_keywords_fg; ++kw) {
                     if (!strcmp(v, keywords_fg[kw]))
                         return (lex->tok.ttype = TOKEN_KEYWORD);
@@ -1484,6 +1485,6 @@ int lex_do(lex_file *lex)
         return (lex->tok.ttype = ch);
     }
 
-    lexerror(lex, "unknown token");
+    lexerror(lex, "unknown token: `%s`", lex->tok.value);
     return (lex->tok.ttype = TOKEN_ERROR);
 }

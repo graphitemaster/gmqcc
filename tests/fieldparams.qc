@@ -1,6 +1,3 @@
-void(string, string) print = #1;
-entity() spawn = #3;
-
 .string a;
 .string b;
 ..string ps;

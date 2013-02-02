@@ -75,6 +75,7 @@ enum {
     TOKEN_ATTRIBUTE_CLOSE, /* ]] */
 
     TOKEN_VA_ARGS, /* for the ftepp only */
+    TOKEN_VA_ARGS_ARRAY, /* for the ftepp only */
 
     TOKEN_STRINGCONST, /* not the typename but an actual "string" */
     TOKEN_CHARCONST,

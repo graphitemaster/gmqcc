@@ -22,90 +22,757 @@
  * SOFTWARE.
  */
 #ifndef GMQCC_DEFINE_FLAG
-#   define GMQCC_DEFINE_FLAG(x)
+#   ifdef GMQCC_TYPE_OPTIMIZATIONS
+#       define GMQCC_DEFINE_FLAG(X, Y, Z)
+#   else
+#       define GMQCC_DEFINE_FLAG(X, Y)
+#   endif /* !GMQCC_TYPE_OPTIMIZATIONS */
 #endif
 
 /* codegen flags */
 #ifdef GMQCC_TYPE_FLAGS
-    GMQCC_DEFINE_FLAG(DARKPLACES_STRING_TABLE_BUG)
-    GMQCC_DEFINE_FLAG(ADJUST_VECTOR_FIELDS)
-    GMQCC_DEFINE_FLAG(FTEPP)
-    GMQCC_DEFINE_FLAG(FTEPP_PREDEFS)
-    GMQCC_DEFINE_FLAG(RELAXED_SWITCH)
-    GMQCC_DEFINE_FLAG(SHORT_LOGIC)
-    GMQCC_DEFINE_FLAG(PERL_LOGIC)
-    GMQCC_DEFINE_FLAG(TRANSLATABLE_STRINGS)
-    GMQCC_DEFINE_FLAG(INITIALIZED_NONCONSTANTS)
-    GMQCC_DEFINE_FLAG(ASSIGN_FUNCTION_TYPES)
-    GMQCC_DEFINE_FLAG(LNO)
-    GMQCC_DEFINE_FLAG(CORRECT_TERNARY)
-    GMQCC_DEFINE_FLAG(SINGLE_VECTOR_DEFS)
-    GMQCC_DEFINE_FLAG(CORRECT_LOGIC)
-    GMQCC_DEFINE_FLAG(TRUE_EMPTY_STRINGS)
-    GMQCC_DEFINE_FLAG(FALSE_EMPTY_STRINGS)
-    GMQCC_DEFINE_FLAG(UTF8)
-    GMQCC_DEFINE_FLAG(BAIL_ON_WERROR)
-    GMQCC_DEFINE_FLAG(LOOP_LABELS)
-    GMQCC_DEFINE_FLAG(UNTYPED_NIL)
-    GMQCC_DEFINE_FLAG(PERMISSIVE)
-    GMQCC_DEFINE_FLAG(VARIADIC_ARGS)
-    GMQCC_DEFINE_FLAG(LEGACY_VECTOR_MATHS)
+    GMQCC_DEFINE_FLAG (
+        DARKPLACES_STRING_TABLE_BUG,
+
+        "Add some additional characters to the string table in order to\n"
+        "compensate for a wrong boundcheck in some specific version of the\n"
+        "darkplaces engine."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        ADJUST_VECTOR_FIELDS,
+
+        "When assigning to field pointers of type .vector the common be\n"
+        "haviour in compilers like fteqcc is to only assign the x-compo-\n"
+        "nent of the pointer. This means that you can use the vector as\n"
+        "such, but you cannot use its y and z components directly. This\n"
+        "flag fixes this behaviour. Before using it make sure your code\n"
+        "does not depend on the buggy behaviour."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FTEPP,
+
+        "Enable a partially fteqcc-compatible preprocessor. It supports\n"
+        "all the features used in the Xonotic codebase. If you need more,\n"
+        "write a ticket."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FTEPP_PREDEFS,
+
+        "Enable some predefined macros. This only works in combination\n"
+        "with '-fftepp' and is currently not included by '-std=fteqcc'.\n"
+        "The following macros will be added:\n\n"
+        "    __LINE__\n"
+        "    __FILE__\n"
+        "    __COUNTER__\n"
+        "    __COUNTER_LAST__\n"
+        "    __RANDOM__\n"
+        "    __RANDOM_LAST__\n"
+        "    __DATE__\n"
+        "    __TIME__\n\n"
+        "Note that fteqcc also defines __NULL__ which is not implemented\n"
+        "yet.  (See -funtyped-nil about gmqcc's alternative to __NULL__)."
+    )
+
+
+    GMQCC_DEFINE_FLAG (
+        RELAXED_SWITCH,
+
+        "Allow switch cases to use non constant variables."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        SHORT_LOGIC,
+
+        "Perform early out in logical AND and OR expressions. The final\n"
+        "result will be either a 0 or a 1, see the next flag for more pos-\n"
+        "sibilities."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        PERL_LOGIC,
+
+        "In many languages, logical expressions perform early out in a\n"
+        "special way: If the left operand of an AND yeilds true, or the\n"
+        "one of an OR yields false, the complete expression evaluates to\n"
+        "the right side.  Thus ‘true && 5’ evaluates to 5 rather than 1."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        TRANSLATABLE_STRINGS,
+
+        "Enable the underscore intrinsic: Using ‘_(\"A string constant\")’\n"
+        "will cause the string immediate to get a name with a \"dotrans-\n"
+        "late_\" prefix. The darkplaces engine recognizes these and trans-\n"
+        "lates them in a way similar to how gettext works."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        INITIALIZED_NONCONSTANTS,
+
+        "Don't implicitly convert initialized variables to constants. With\n"
+        "this flag, the const keyword is required to make a constant."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        ASSIGN_FUNCTION_TYPES,
+
+        "If this flag is not set, (and it is set by default in the qcc and\n"
+        "fteqcc standards), assigning function pointers of mismatching\n"
+        "signatures will result in an error rather than a warning."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        LNO,
+
+        "Produce a linenumber file along with the output .dat file."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        CORRECT_TERNARY,
+
+        "Use C's operator precedence for ternary expressions. Unless\n"
+        "code depends on fteqcc-compatible behaviour, you'll want to use\n"
+        "this option."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        SINGLE_VECTOR_DEFS,
+
+        "Normally vectors generate 4 defs, once for the vector, and once\n"
+        "for its components with _x, _y, _z suffixes. This option prevents\n"
+        "components from being listed."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        CORRECT_LOGIC,
+
+        "Most QC compilers translate ‘if(a_vector)’ directly as an IF on\n"
+        "the vector, which means only the x-component is checked. This\n"
+        "option causes vectors to be cast to actual booleans via a NOT_V\n"
+        "and, if necessary, a NOT_F chained to it."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        TRUE_EMPTY_STRINGS,
+
+        "An empty string is considered to be true everywhere. The NOT_S\n"
+        "instruction usually considers an empty string to be false, this\n"
+        "option effectively causes the unary not in strings to use NOT_F\n"
+        "instead."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FALSE_EMPTY_STRINGS,
+
+        "An empty string is considered to be false everywhere. This means\n"
+        "loops and if statements which depend on a string will perform a\n"
+        "NOT_S instruction on the string before using it."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UTF8,
+
+        "Enable utf8 characters. This allows utf-8 encoded character con-\n"
+        "stants, and escape sequence codepoints in the valid utf-8 range.\n"
+        "Effectively enabling escape sequences like '\\{x2211}'."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        BAIL_ON_WERROR,
+
+        "When a warning is treated as an error, and this option is set\n"
+        "(which it is by default), it is like any other error and will\n"
+        "cause compilation to stop. When disabling this flag by using\n"
+        "-fno-bail-on-werror, compilation will continue until the end, but\n"
+        "no output is generated. Instead the first such error message's\n"
+        "context is shown."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        LOOP_LABELS,
+
+        "Allow loops to be labeled, and allow 'break' and 'continue' to\n"
+        "take an optional label to decide which loop to actually jump out\n"
+        "of or continue.\n\n"
+        "   for :outer (i = 0; i < n; ++i) {\n"
+        "       while (inner) {\n"
+        "           ...;\n"
+        "           if (something)\n"
+        "               continue outer;\n"
+        "       }\n"
+        "   }"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNTYPED_NIL,
+
+        "Adds a global named 'nil' which is of no type and can be assigned\n"
+        "to anything. No typechecking will be performed on assignments.\n"
+        "Assigning to it is forbidden, using it in any other kind of\n"
+        "expression is also not allowed.\n\n"
+        "Note that this is different from fteqcc's __NULL__: In fteqcc,\n"
+        "__NULL__ maps to the integer written as '0i'. It's can be\n"
+        "assigned to function pointers and integers, but it'll error about\n"
+        "invalid instructions when assigning it to floats without enabling\n"
+        "the FTE instruction set. There's also a bug which allows it to be\n"
+        "assigned to vectors, for which the source will be the global at\n"
+        "offset 0, meaning the vector's y and z components will contain\n"
+        "the OFS_RETURN x and y components.\n\n"
+        "In that gmqcc the nil global is an actual global filled with\n"
+        "zeroes, and can be assigned to anything including fields, vectors\n"
+        "or function pointers, and they end up becoming zeroed."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        PERMISSIVE,
+
+        "Various effects, usually to weaken some conditions.\n\n"
+        "   with -funtyped-nil\n"
+        "       Allow local variables named ‘nil’.  (This will not\n"
+        "       allow declaring a global of that name.)"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        VARIADIC_ARGS,
+
+        "Allow variadic parameters to be accessed by QC code. This can be\n"
+        "achieved via the '...' function, which takes a parameter index\n"
+        "and a typename.\n\n"
+        "Example:\n"
+        "   void vafunc(string...count) {\n"
+        "       float i;\n"
+        "       for (i = 0; i < count; ++i)\n"
+        "           print(...(i, string), \"\\n\");\n"
+        "   }"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        LEGACY_VECTOR_MATHS,
+
+        "Most Quake VMs, including the one from FTEQW or up till recently\n"
+        "Darkplaces, do not cope well with vector instructions with over‐\n"
+        "lapping input and output. This option will avoid producing such\n"
+        "code."
+    )
 #endif
 
 /* warning flags */
 #ifdef GMQCC_TYPE_WARNS
-    GMQCC_DEFINE_FLAG(UNINITIALIZED_GLOBAL)
-    GMQCC_DEFINE_FLAG(DEBUG)
-    GMQCC_DEFINE_FLAG(UNUSED_VARIABLE)
-    GMQCC_DEFINE_FLAG(USED_UNINITIALIZED)
-    GMQCC_DEFINE_FLAG(UNKNOWN_CONTROL_SEQUENCE)
-    GMQCC_DEFINE_FLAG(EXTENSIONS)
-    GMQCC_DEFINE_FLAG(FIELD_REDECLARED)
-    GMQCC_DEFINE_FLAG(MISSING_RETURN_VALUES)
-    GMQCC_DEFINE_FLAG(INVALID_PARAMETER_COUNT)
-    GMQCC_DEFINE_FLAG(LOCAL_SHADOWS)
-    GMQCC_DEFINE_FLAG(LOCAL_CONSTANTS)
-    GMQCC_DEFINE_FLAG(VOID_VARIABLES)
-    GMQCC_DEFINE_FLAG(IMPLICIT_FUNCTION_POINTER)
-    GMQCC_DEFINE_FLAG(VARIADIC_FUNCTION)
-    GMQCC_DEFINE_FLAG(FRAME_MACROS)
-    GMQCC_DEFINE_FLAG(EFFECTLESS_STATEMENT)
-    GMQCC_DEFINE_FLAG(END_SYS_FIELDS)
-    GMQCC_DEFINE_FLAG(ASSIGN_FUNCTION_TYPES)
-    GMQCC_DEFINE_FLAG(PREPROCESSOR)
-    GMQCC_DEFINE_FLAG(MULTIFILE_IF)
-    GMQCC_DEFINE_FLAG(DOUBLE_DECLARATION)
-    GMQCC_DEFINE_FLAG(CONST_VAR)
-    GMQCC_DEFINE_FLAG(MULTIBYTE_CHARACTER)
-    GMQCC_DEFINE_FLAG(TERNARY_PRECEDENCE)
-    GMQCC_DEFINE_FLAG(UNKNOWN_PRAGMAS)
-    GMQCC_DEFINE_FLAG(UNREACHABLE_CODE)
-    GMQCC_DEFINE_FLAG(CPP)
-    GMQCC_DEFINE_FLAG(UNKNOWN_ATTRIBUTE)
-    GMQCC_DEFINE_FLAG(RESERVED_NAMES)
-    GMQCC_DEFINE_FLAG(UNINITIALIZED_CONSTANT)
-    GMQCC_DEFINE_FLAG(DIFFERENT_QUALIFIERS)
-    GMQCC_DEFINE_FLAG(DIFFERENT_ATTRIBUTES)
-    GMQCC_DEFINE_FLAG(DEPRECATED)
-    GMQCC_DEFINE_FLAG(PARENTHESIS)
+    GMQCC_DEFINE_FLAG (
+        UNUSED_VARIABLE,
+        
+        "Generate a warning about variables which are declared but never"
+        "used.  This can be avoided by adding the ‘noref’ keyword in front"
+        "of the variable declaration. Additionally a complete section of"
+        "unreferenced variables can be opened using ‘#pragma noref 1’ and"
+        "closed via ‘#pragma noref 0’."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        USED_UNINITIALIZED,
+
+        "Generate a warning if it is possible that a variable can be used"
+         "without prior initialization. Note that this warning is not nec"
+         "essarily reliable if the initialization happens only under cer"
+         "tain conditions. The other way is not possible: that the warning"
+         "is not generated when uninitialized use is possible."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNKNOWN_CONTROL_SEQUENCE,
+
+         "Generate an error when an unrecognized control sequence in a"
+         "string is used. Meaning: when there's a character after a back-"
+         "slash in a string which has no known meaning."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        EXTENSIONS,
+
+        "Warn when using special extensions which are not part of the"
+        "selected standard."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FIELD_REDECLARED,
+
+        "Generally QC compilers ignore redeclaration of fields. Here you"
+        "can optionally enable a warning."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MISSING_RETURN_VALUES,
+
+        "Functions which aren't of type void will warn if it possible to"
+        "reach the end without returning an actual value."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        INVALID_PARAMETER_COUNT,
+
+        "Warn about a function call with an invalid number of parameters."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        LOCAL_SHADOWS,
+
+        "Warn when a locally declared variable shadows variable."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        LOCAL_CONSTANTS,
+
+        " Warn when the initialization of a local variable turns the vari"
+        "able into a constant. This is default behaviour unless"
+        "-finitialized-nonconstants is used."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        VOID_VARIABLES,
+
+        "There are only 2 known global variables of type void:"
+        "‘end_sys_globals’ and ‘end_sys_fields’.  Any other void-variable"
+        "will warn."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        IMPLICIT_FUNCTION_POINTER,
+
+        "A global function which is not declared with the ‘var’ keyword is"
+        "expected to have an implementing body, or be a builtin. If nei"
+        "ther is the case, it implicitly becomes a function pointer, and a"
+        "warning is generated."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        VARIADIC_FUNCTION,
+
+        "Currently there's no way for an in QC implemented function to"
+        "access variadic parameters. If a function with variadic parame"
+        "ters has an implementing body, a warning will be generated."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FRAME_MACROS,
+
+        "Generate warnings about ‘$frame’ commands, for instance about"
+        "duplicate frame definitions."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        EFFECTLESS_STATEMENT,
+
+        "Warn about statements which have no effect. Any expression which"
+        "does not call a function or assigns a variable."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        END_SYS_FIELDS,
+
+        "The ‘end_sys_fields’ variable is supposed to be a global variable"
+        "of type void.  It is also recognized as a field but this will"
+        "generate a warning."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        ASSIGN_FUNCTION_TYPES,
+
+        "Warn when assigning to a function pointer with an unmatching sig"
+        "nature. This usually happens in cases like assigning the null"
+        "function to an entity's .think function pointer."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        CPP,
+
+        "Enable warnings coming from the preprocessor. Like duplicate"
+        "macro declarations. This warning triggers when there's a problem"
+        "with the way the preprocessor has been used."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MULTIFILE_IF,
+
+        "Warn if there's a preprocessor #if spanning across several files."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DOUBLE_DECLARATION,
+
+        "Warn about multiple declarations of globals. This seems pretty"
+        "common in QC code so you probably do not want this unless you"
+        "want to clean up your code."
+    )
+    GMQCC_DEFINE_FLAG (
+        CONST_VAR,
+
+        "The combination of const and var is not illegal, however differ"
+        "ent compilers may handle them differently. We were told, the"
+        "intention is to create a function-pointer which is not assigna"
+        "ble.  This is exactly how we interpret it. However for this"
+        "interpretation the ‘var’ keyword is considered superfluous (and"
+        "philosophically wrong), so it is possible to generate a warning"
+        "about this."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MULTIBYTE_CHARACTER,
+
+        "Warn about multibyte character constants, they do not work right"
+        "now."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        TERNARY_PRECEDENCE,
+
+        "Warn if a ternary expression which contains a comma operator is"
+        "used without enclosing parenthesis, since this is most likely not"
+        "what you actually want. We recommend the -fcorrect-ternary"
+        "option."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNKNOWN_PRAGMAS,
+
+        "Warn when encountering an unrecognized ‘#pragma’ line."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNREACHABLE_CODE,
+
+        "Warn about unreachable code. That is: code after a return state"
+        "ment, or code after a call to a function marked as 'noreturn'."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DEBUG,
+
+        "Enable some warnings added in order to help debugging in the com"
+        "piler.  You won't need this."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNKNOWN_ATTRIBUTE,
+
+        "Warn on an unknown attribute. The warning will inlclude only the"
+        "first token inside the enclosing attribute-brackets. This may"
+        "change when the actual attribute syntax is better defined."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        RESERVED_NAMES,
+
+        "Warn when using reserved names such as ‘nil’."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNINITIALIZED_CONSTANT,
+
+        "Warn about global constants (using the ‘const’ keyword) with no"
+        "assigned value."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        UNINITIALIZED_GLOBAL,
+
+        "Warn about global variables with no initializing value. This is"
+        "off by default, and is added mostly to help find null-values"
+        "which are supposed to be replaced by the untyped 'nil' constant."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DIFFERENT_QUALIFIERS,
+
+        "Warn when a variables is redeclared with a different qualifier."
+        "For example when redeclaring a variable as 'var' which was previ"
+        "ously marked 'const'."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DIFFERENT_ATTRIBUTES,
+
+        "Similar to qualifiers but for attributes like ‘[[noreturn]]’."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DEPRECATED,
+
+        "Warn when a function is marked with the attribute \"[[depre"
+        "cated]]\". This flag enables a warning on calls to functions"
+        "marked as such."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        PARENTHESIS,
+
+        "Warn about possible mistakes caused by missing or wrong parenthe"
+        "sis, like an assignment in an 'if' condition when there's no"
+        "additional set of parens around the assignment."
+    )
 #endif
 
 #ifdef GMQCC_TYPE_OPTIMIZATIONS
-    GMQCC_DEFINE_FLAG(PEEPHOLE,             1)
-    GMQCC_DEFINE_FLAG(LOCAL_TEMPS,          3)
-    GMQCC_DEFINE_FLAG(GLOBAL_TEMPS,         3)
-    GMQCC_DEFINE_FLAG(TAIL_RECURSION,       1)
-    GMQCC_DEFINE_FLAG(TAIL_CALLS,           2)
-    GMQCC_DEFINE_FLAG(OVERLAP_LOCALS,       3)
-    GMQCC_DEFINE_FLAG(STRIP_CONSTANT_NAMES, 1)
-    GMQCC_DEFINE_FLAG(OVERLAP_STRINGS,      2)
-    GMQCC_DEFINE_FLAG(CALL_STORES,          4)
-    GMQCC_DEFINE_FLAG(VOID_RETURN,          1)
-    GMQCC_DEFINE_FLAG(VECTOR_COMPONENTS,    1)
+    GMQCC_DEFINE_FLAG (
+        PEEPHOLE,             1,
+
+        "Some general peephole optimizations. For instance the code `a = b\n"
+        "+ c` typically generates 2 instructions, an ADD and a STORE. This\n"
+        "optimization removes the STORE and lets the ADD write directly\n"
+        "into A."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        TAIL_RECURSION,       1,
+
+        "Tail recursive function calls will be turned into loops to avoid\n"
+        "the overhead of the CALL and RETURN instructions."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        OVERLAP_LOCALS,       3,
+
+        "Make all functions which use neither local arrays nor have locals\n"
+        "which are seen as possibly uninitialized use the same local sec‐\n"
+        "tion.  This should be pretty safe compared to other compilers\n"
+        "which do not check for uninitialized values properly. The problem\n"
+        "is that there's QC code out there which really doesn't initialize\n"
+        "some values. This is fine as long as this kind of optimization\n"
+        "isn't used, but also, only as long as the functions cannot be\n"
+        "called in a recursive manner. Since it's hard to know whether or\n"
+        "not an array is actually fully initialized, especially when ini‐\n"
+        "tializing it via a loop, we assume functions with arrays to be\n"
+        "too dangerous for this optimization."
+    )
+
+
+    GMQCC_DEFINE_FLAG (
+        LOCAL_TEMPS,          3,
+
+        "This promotes locally declared variables to \"temps\". Meaning when\n"
+        "a temporary result of an operation has to be stored somewhere, a\n"
+        "local variable which is not 'alive' at that point can be used to\n"
+        "keep the result. This can reduce the size of the global section.\n"
+        "This will not have declared variables overlap, even if it was\n"
+        "possible."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        GLOBAL_TEMPS,         3,
+
+        "Causes temporary values which do not need to be backed up on a\n"
+        "CALL to not be stored in the function's locals-area. With this, a\n"
+        "CALL to a function may need to back up fewer values and thus exe‐\n"
+        "cute faster."
+    )
+
+
+    GMQCC_DEFINE_FLAG (
+        STRIP_CONSTANT_NAMES, 1,
+
+        "Don't generate defs for immediate values or even declared con‐\n"
+        "stants.  Meaning variables which are implicitly constant or qual‐\n"
+        "ified as such using the 'const' keyword."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        OVERLAP_STRINGS,      2,
+
+        "Aggressively reuse strings in the string section. When a string\n"
+        "should be added which is the trailing substring of an already\n"
+        "existing string, the existing string's tail will be returned\n"
+        "instead of the new string being added.\n\n"
+        "For example the following code will only generate 1 string:\n\n"
+        "   print(\"Hell you!\\n\");\n"
+        "   print(\"you!\n\"); // trailing substring of \"Hello you!\\n\"\n\n"
+        "There's however one limitation. Strings are still processed in\n"
+        "order, so if the above print statements were reversed, this opti‐\n"
+        "mization would not happen."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        CALL_STORES,          3,
+
+        "By default, all parameters of a CALL are copied into the parame‐\n"
+        "ter-globals right before the CALL instructions. This is the easi‐\n"
+        "est and safest way to translate calls, but also adds a lot of\n"
+        "unnecessary copying and unnecessary temporary values. This opti‐\n"
+        "mization makes operations which are used as a parameter evaluate\n"
+        "directly into the parameter-global if that is possible, which is\n"
+        "when there's no other CALL instruction in between."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        VOID_RETURN,          1,
+
+        "Usually an empty RETURN instruction is added to the end of a void\n"
+        "typed function. However, additionally after every function a DONE\n"
+        "instruction is added for several reasons. (For example the qcvm's\n"
+        "disassemble switch uses it to know when the function ends.). This\n"
+        "optimization replaces that last RETURN with DONE rather than\n"
+        "adding the DONE additionally."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        VECTOR_COMPONENTS,    1,
+
+        "Because traditional QC code doesn't allow you to access individ‐\n"
+        "ual vector components of a computed vector without storing it in\n"
+        "a local first, sometimes people multiply it by a constant like\n"
+        "‘'0 1 0'’ to get, in this case, the y component of a vector. This\n"
+        "optimization will turn such a multiplication into a direct compo‐\n"
+        "nent access. If the factor is anything other than 1, a float-mul‐\n"
+        "tiplication will be added, which is still faster than a vector"
+        "multiplication."
+    )
+#endif
+
+#ifdef GMQCC_TYPE_OPTIONS
+    GMQCC_DEFINE_FLAG (
+        O,
+
+        "Specify the optimization level\n"
+        "3        Highest optimization level\n"
+        "2        Default optimization level\n"
+        "1        Minimal optimization level\n"
+        "0        Disable optimization entirely"
+    )
+    GMQCC_DEFINE_FLAG (
+        OUTPUT,
+
+        "Specify the output file name. Defaults to progs.dat. This will\n"
+        "overwrite the output file listed in a progs.src file in case such\n"
+        "a file is used."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        QUIET,
+
+        "Be less verbose. In particular removes the messages about which\n"
+        "files are being processed, and which compilation mode is being\n"
+        "used, and some others. Warnings and errors will of course still\n"
+        "be displayed."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        G,
+
+        ""
+    )
+
+    GMQCC_DEFINE_FLAG (
+        STANDARD,
+
+        "Use the specified standard for parsing QC code. The following\n"
+        "standards are available: gmqcc, qcc, fteqcc Selecting a standard\n"
+        "also implies some -f options and behaves as if those options have\n"
+        "been written right after the -std option, meaning if you changed\n"
+        "them before the --std option, you're now overwriting them.\n\n"
+        "-std=gmqcc includes:\n"
+        "   -fadjust-vector-fields\n"
+        "   -fcorrect-logic\n"
+        "   -ftrue-empty-strings\n"
+        "   -floop-labels\n"
+        "   -finitialized-nonconstants\n"
+        "   -ftranslatable-strings\n"
+        "   -fno-false-empty-strings\n"
+        "   -Winvalid-parameter-count\n"
+        "   -Wmissing-returnvalues\n"
+        "   -fcorrect-ternary (cannot be turned off)\n\n"
+        "-std=qcc includes:\n"
+        "   -fassign-function-types\n"
+        "   -fIno-adjust-vector-fields\n\n"
+        "-std=fteqcc includes:\n"
+        "   -fftepp\n"
+        "   -ftranslatable-strings\n"
+        "   -fassign-function-types\n"
+        "   -Wternary-precedence\n"
+        "   -fno-adjust-vector-fields\n"
+        "   -fno-correct-ternary"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DEBUG,
+
+        "Turn on some compiler debuggin mechanisms"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MEMCHK,
+
+        "Turn on compiler mem-chk. (Shows allocations and checks for\n"
+        "leaks.)"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DUMPFIN,
+
+        "DEBUG OPTION. Print the code's intermediate representation after\n"
+        "the optimization and finalization passes to stdout before gener‐\n"
+        "ating the binary. The instructions will be enumerated, and values\n"
+        "will contain a list of liferanges."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        DUMP,
+
+        "DEBUG OPTION. Print the code's intermediate representation before\n"
+        "the optimization and finalization passes to stdout before gener‐\n"
+        "ating the binary."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FORCECRC,
+
+        "When enabled allows forcing a specific CRC16 for the generated\n"
+        "progs.dat"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        FORCED_CRC,
+
+        "Value which represents the CRC to force into the progs.dat"
+    )
+
+    GMQCC_DEFINE_FLAG (
+        PP_ONLY,
+
+        "Run only the preprocessor as if -fftepp was used and print the\n"
+        "preprocessed code to stdout."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        MAX_ARRAY_SIZE,
+
+        "Maximum allowed one-dimensional array size.  Arrays are expensive\n"
+        "since binary search trees are generated for each set/get of an array\n"
+        "the more elements in an array (the larger it is), the longer it will\n"
+        "take to set/get elements."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        ADD_INFO,
+
+        "Adds compiler information to the generated binary file. Currently\n"
+        "this includes the following globals:\n"
+        "   reserved:version\n"
+        "       String containing the compiler version as printed by the\n"
+        "       --version parameter."
+    )
+
+    GMQCC_DEFINE_FLAG (
+        CORRECTION,
+
+        "When enabled, errors about undefined values try to suggest an\n"
+        "existing value via spell checking."
+    )
 #endif
 
 /* some cleanup so we don't have to */
 #undef GMQCC_TYPE_FLAGS
 #undef GMQCC_TYPE_WARNS
+#undef GMQCC_TYPE_OPTIONS
 #undef GMQCC_TYPE_OPTIMIZATIONS
 #undef GMQCC_DEFINE_FLAG

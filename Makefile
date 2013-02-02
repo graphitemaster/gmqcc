@@ -9,22 +9,24 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char
+CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char -Wno-overlength-strings
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
-	CFLAGS +=                         \
-		-Weverything                  \
-		-Wno-padded                   \
-		-Wno-format-nonliteral        \
-		-Wno-disabled-macro-expansion \
-		-Wno-conversion               \
-		-Wno-missing-prototypes       \
-		-Wno-float-equal              \
-		-Wno-cast-align
+	CFLAGS +=                              	\
+		-Weverything                       \
+		-Wno-padded                        \
+		-Wno-format-nonliteral             \
+		-Wno-disabled-macro-expansion      \
+		-Wno-conversion                    \
+		-Wno-missing-prototypes            \
+		-Wno-float-equal                   \
+		-Wno-cast-align                    \
+		-Wno-missing-variable-declarations \
+		-Wno-unknown-warning-option
 else
 	#Tiny C Compiler doesn't know what -pedantic-errors is
 	# and instead of ignoring .. just errors.
@@ -179,8 +181,14 @@ install-qcvm: $(QCVM)
 	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/qcvm
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
-	install    -m755  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
-	install    -m755  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
+	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
+	install    -m644  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
+
+uninstall:
+	rm $(DESTDIR)$(BINDIR)/gmqcc
+	rm $(DESTDIR)$(BINDIR)/qcvm
+	rm $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
+	rm $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
 
 # DO NOT DELETE
 

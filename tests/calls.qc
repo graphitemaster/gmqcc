@@ -1,6 +1,3 @@
-void(string, ...) print = #1;
-string(float) ftos = #2;
-
 float(float x, float y, float z) sum = {
     return x + y + z;
 };

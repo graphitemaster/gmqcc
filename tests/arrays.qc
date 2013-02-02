@@ -1,7 +1,3 @@
-void     print(...)   = #1;
-string   ftos (float) = #2;
-entity() spawn = #3;
-
 float  glob[7];
 
 .float above;
