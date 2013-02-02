@@ -1485,6 +1485,6 @@ int lex_do(lex_file *lex)
         return (lex->tok.ttype = ch);
     }
 
-    lexerror(lex, "unknown token: `%d`", lex->tok.value);
+    lexerror(lex, "unknown token: `%s`", lex->tok.value);
     return (lex->tok.ttype = TOKEN_ERROR);
 }
