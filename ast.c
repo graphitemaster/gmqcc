@@ -660,8 +660,10 @@ ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_exp
 
 void ast_array_index_delete(ast_array_index *self)
 {
-    ast_unref(self->array);
-    ast_unref(self->index);
+    if (self->array)
+        ast_unref(self->array);
+    if (self->index)
+        ast_unref(self->index);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }

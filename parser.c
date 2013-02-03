@@ -449,7 +449,7 @@ static sy_elem syparen(lex_ctx ctx, size_t off) {
  */
 static bool rotate_entfield_array_index_nodes(ast_expression **out)
 {
-    ast_array_index *index;
+    ast_array_index *index, *oldindex;
     ast_entfield    *entfield;
 
     ast_value       *field;
@@ -473,11 +473,15 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     sub    = index->index;
     entity = entfield->entity;
 
-    ast_delete(index);
+    oldindex = index;
 
     index = ast_array_index_new(ctx, (ast_expression*)field, sub);
     entfield = ast_entfield_new(ctx, entity, (ast_expression*)index);
     *out = (ast_expression*)entfield;
+
+    oldindex->array = NULL;
+    oldindex->index = NULL;
+    ast_delete(oldindex);
 
     return true;
 }
