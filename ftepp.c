@@ -1285,10 +1285,16 @@ static bool ftepp_directive_warning(ftepp_t *ftepp) {
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
-        store = ftepp_warn(ftepp, WARN_CPP, message);
+        if (ftepp->output_on)
+            store = ftepp_warn(ftepp, WARN_CPP, message);
+        else
+            store = false;
         vec_free(message);
         return store;
     }
+
+    if (!ftepp->output_on)
+        return false;
 
     unescape  (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
     return ftepp_warn(ftepp, WARN_CPP, "#warning %s", ftepp_tokval(ftepp));
@@ -1309,10 +1315,14 @@ static void ftepp_directive_error(ftepp_t *ftepp) {
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
-        ftepp_error(ftepp, message);
+        if (ftepp->output_on)
+            ftepp_error(ftepp, message);
         vec_free(message);
         return;
     }
+
+    if (!ftepp->output_on)
+        return;
 
     unescape  (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
     ftepp_error(ftepp, "#error %s", ftepp_tokval(ftepp));
@@ -1333,10 +1343,14 @@ static void ftepp_directive_message(ftepp_t *ftepp) {
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
-        con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message", message);
+        if (ftepp->output_on)
+            con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message", message);
         vec_free(message);
         return;
     }
+
+    if (!ftepp->output_on)
+        return;
 
     unescape     (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
     con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message",  ftepp_tokval(ftepp));
