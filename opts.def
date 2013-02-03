@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 #ifndef GMQCC_DEFINE_FLAG
-#   ifdef GMQCC_TYPE_OPTIMIZATIONS
-#       define GMQCC_DEFINE_FLAG(X, Y, Z)
-#   else
-#       define GMQCC_DEFINE_FLAG(X, Y)
-#   endif /* !GMQCC_TYPE_OPTIMIZATIONS */
+#   error "bad opts.def usage"
 #endif
 
 /* codegen flags */
