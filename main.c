@@ -340,6 +340,8 @@ static bool options_parse(int argc, char **argv) {
                         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
                             util_strtononcmd(opts_warn_list[itr].name, buffer, sizeof(buffer));
                             con_out(" -W%s\n", buffer);
+                            if (itr == WARN_DEBUG)
+                                con_out("   Warnings included by -Wall:\n");
                         }
                         exit(0);
                     }
