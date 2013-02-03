@@ -67,6 +67,7 @@ static void opts_setdefault() {
     opts_set(opts.flags, CORRECT_TERNARY,                true);
     opts_set(opts.flags, BAIL_ON_WERROR,                 true);
     opts_set(opts.flags, LEGACY_VECTOR_MATHS,            true);
+    opts_set(opts.flags, DARKPLACES_STRING_TABLE_BUG,    true);
 }
 
 void opts_backup_non_Wall() {
