@@ -1058,7 +1058,6 @@ int     u8_fromchar(uchar_t w,   char *to,     size_t maxlen);
 typedef struct {
     const char *name;
     longbit     bit;
-    const char *description;
 } opts_flag_def;
 
 bool opts_setflag  (const char *, bool);
@@ -1079,62 +1078,54 @@ void opts_restore_non_Werror_all();
 
 enum {
 # define GMQCC_TYPE_FLAGS
-# define GMQCC_DEFINE_FLAG(X, Y) X,
+# define GMQCC_DEFINE_FLAG(X) X,
 #  include "opts.def"
     COUNT_FLAGS
 };
 static const opts_flag_def opts_flag_list[] = {
 # define GMQCC_TYPE_FLAGS
-# define GMQCC_DEFINE_FLAG(X, Y) { #X, LONGBIT(X), Y},
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
 #  include "opts.def"
-    { NULL, LONGBIT(0), "" }
+    { NULL, LONGBIT(0) }
 };
 
 enum {
 # define GMQCC_TYPE_WARNS
-# define GMQCC_DEFINE_FLAG(X, Y) WARN_##X,
+# define GMQCC_DEFINE_FLAG(X) WARN_##X,
 #  include "opts.def"
     COUNT_WARNINGS
 };
 static const opts_flag_def opts_warn_list[] = {
 # define GMQCC_TYPE_WARNS
-# define GMQCC_DEFINE_FLAG(X, Y) { #X, LONGBIT(WARN_##X), Y },
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
 #  include "opts.def"
-    { NULL, LONGBIT(0), "" }
+    { NULL, LONGBIT(0) }
 };
 
 enum {
 # define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O, Y) OPTIM_##NAME,
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) OPTIM_##NAME,
 #  include "opts.def"
     COUNT_OPTIMIZATIONS
 };
 static const opts_flag_def opts_opt_list[] = {
 # define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O, Y) { #NAME, LONGBIT(OPTIM_##NAME), Y},
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
 #  include "opts.def"
-    { NULL, LONGBIT(0), "" }
+    { NULL, LONGBIT(0) }
 };
 static const unsigned int opts_opt_oflag[] = {
 # define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O, Y) MIN_O,
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) MIN_O,
 #  include "opts.def"
     0
 };
 
 enum {
 #   define GMQCC_TYPE_OPTIONS
-#   define GMQCC_DEFINE_FLAG(X, Y) OPTION_##X,
+#   define GMQCC_DEFINE_FLAG(X) OPTION_##X,
 #   include "opts.def"
     OPTION_COUNT
-};
-
-
-GMQCC_USED static const char *opts_options_descriptions[] = {
-#   define GMQCC_TYPE_OPTIONS
-#   define GMQCC_DEFINE_FLAG(X, Y) Y,
-#   include "opts.def"
-    ""
 };
 
 extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];

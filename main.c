@@ -318,7 +318,7 @@ static bool options_parse(int argc, char **argv) {
                         con_out("Possible flags:\n\n");
                         for (itr = 0; itr < COUNT_FLAGS; ++itr) {
                             util_strtononcmd(opts_flag_list[itr].name, buffer, sizeof(buffer));
-                            con_out(" -f%s:\n%s\n\n", buffer, opts_flag_list[itr].description);
+                            con_out(" -f%s\n", buffer);
                         }
                         exit(0);
                     }
@@ -339,7 +339,7 @@ static bool options_parse(int argc, char **argv) {
                         con_out("Possible warnings:\n");
                         for (itr = 0; itr < COUNT_WARNINGS; ++itr) {
                             util_strtononcmd(opts_warn_list[itr].name, buffer, sizeof(buffer));
-                            con_out(" -W%s:\n%s\n\n\n", buffer, opts_warn_list[itr].description);
+                            con_out(" -W%s\n", buffer);
                         }
                         exit(0);
                     }
@@ -410,7 +410,7 @@ static bool options_parse(int argc, char **argv) {
                             con_out("Possible optimizations:\n");
                             for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
                                 util_strtononcmd(opts_opt_list[itr].name, buffer, sizeof(buffer));
-                                con_out(" -O%-20s (-O%u):\n%s\n\n", buffer, opts_opt_oflag[itr], opts_opt_list[itr].description);
+                                con_out(" -O%-20s (-O%u)\n", buffer, opts_opt_oflag[itr]);
                             }
                             exit(0);
                         }
@@ -460,13 +460,7 @@ static bool options_parse(int argc, char **argv) {
                     }
             /* All long options without arguments */
                     else if (!strcmp(argv[0]+2, "help")) {
-                        /* TODO .. map name back .. prittery print of
-                         * options and their associations.
-                         */  
-                        for (itr = 0; itr < OPTION_COUNT; itr++) {
-                            con_out("%s\n\n", opts_options_descriptions[itr]);
-                        }
-
+                        usage();
                         exit(0);
                     }
                     else if (!strcmp(argv[0]+2, "version")) {
