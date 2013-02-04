@@ -1,0 +1,347 @@
+\documentclass[11pt]{article}
+\makeindex
+\usepackage{graphicx}    % needed for including graphics e.g. EPS, PS
+\usepackage{listings}    % for C syntax highlighting
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+% set listings colors
+\lstset{ %
+  backgroundcolor=\color{white},  % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                % sets automatic line breaking
+  captionpos=b,                   % sets the caption-position to bottom
+  commentstyle=\color{dkgreen},   % comment style
+  deletekeywords={...},           % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},         % if you want to add LaTeX within your code
+  keywordstyle=\color{blue},      % keyword style
+  language=C,                % the language of the code
+  morekeywords={entity,local},           % if you want to add more keywords to the set
+  numbers=left,                   % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,                  % how far the line-numbers are from the code
+  numberstyle=\tiny\color{gray},  % the style that is used for the line-numbers
+  rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,               % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,         % underline spaces within strings only
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  stepnumber=1,                   % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mauve},      % string literal style
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  title=\lstname                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+\topmargin -1.5cm        % read Lamport p.163
+\oddsidemargin -0.04cm   % read Lamport p.163
+\evensidemargin -0.04cm
+
+\textwidth 16.59cm
+\textheight 21.94cm 
+\parskip 7.2pt                         % spacing between paragraphs
+\renewcommand{\baselinestretch}{1.5} 	% 1.5 spacing between lines
+\parindent 0pt		                    % leading space for paragraphs
+\title{The GMQCC Quake C Programming Language}
+\author{Dale Weiler, Wolfgang Bullimer}
+
+% subscript and superscript in text mode require
+% strange uses of math expression scripting, which
+% is unusable, these macros implement it using math
+% expressions, and reimplement ^ and _ to work in
+% text mode :-)
+\makeatletter
+\newcommand\textsubscript[1]{\@textsubscript{\selectfont#1}}
+\def\@textsubscript#1{{\m@th\ensuremath{_{\mbox{\fontsize\sf@size\z@#1}}}}}
+\newcommand\textbothscript[2]{%
+  \@textbothscript{\selectfont#1}{\selectfont#2}}
+\def\@textbothscript#1#2{%
+  {\m@th\ensuremath{%
+    ^{\mbox{\fontsize\sf@size\z@#1}}%
+    _{\mbox{\fontsize\sf@size\z@#2}}}}}
+\def\@super{^}\def\@sub{_}
+
+\catcode`^\active\catcode`_\active
+\def\@super@sub#1_#2{\textbothscript{#1}{#2}}
+\def\@sub@super#1^#2{\textbothscript{#2}{#1}}
+\def\@@super#1{\@ifnextchar_{\@super@sub{#1}}{\textsuperscript{#1}}}
+\def\@@sub#1{\@ifnextchar^{\@sub@super{#1}}{\textsubscript{#1}}}
+\def^{\let\@next\relax\ifmmode\@super\else\let\@next\@@super\fi\@next}
+\def_{\let\@next\relax\ifmmode\@sub\else\let\@next\@@sub\fi\@next}
+\makeatother
+
+% set standard paper sizes
+\setlength{\paperheight}{11in}
+\setlength{\paperwidth}{8.5in}
+ 
+\begin{document}
+\maketitle
+\pagebreak
+\tableofcontents
+\pagebreak
+\section {Terms and definitions}
+\subsection*{object}
+A region of data storage in the execution environment, the contents of which can represent values.
+\subsection*{implementation}
+A particular set of software, running in a particular translation environment under particular control options, that performs translations of programs for, and supports execution of functions, in a particular execution environment (typically a Quake engine).
+\subsection*{argument}
+Expression in the comma-separated list bounded by the parentheses in a function call expression, or a sequence of preprocessing tokens in the comma-separated list bounded by the parentheses in a function-like macro invocation.
+\subsection*{parameter}
+Object declared as part of a function declaration or definition that acquires a value on entry to the function, or an identifier from the comma-separated list bound by the parentheses immediately following the macro name in a function-like macro definition.
+\subsection*{value}
+Precise meaning of the contents of an object when interpreted as having a specific type.
+
+\section{Conceptual models}
+\subsection{Translation environment}
+\subsubsection{Program structure}
+A Quake C program need not all be translated at the same time.  The text of the program is kept in units called source files. All source files become concatenated, less any source lines skipped by any of the conditional inclusion preprocessing directives.  The final concatenation becomes the program structure.
+
+\subsubsection{Translation phases}
+\begin{enumerate}
+	\item Physical source file characters are mapped to the source character set (introducing new-line characters for end-of-line indicators) if necessary.  Trigraph and Digraph sequences are replaced by corresponding single-character internal representations.
+	\item The source file is decomposed into preprocessing tokens and sequences of white-space characters (including comments).
+	\item Preprocessing directives are executed and macro invocations expanded recursively.
+	\item Each escape sequence in character constants and string literals is converted to a member of the execution character set.
+	\item Adjacent character string literal tokens are concatenated.
+	\item White-space characters separating tokens are no longer sufficient. The resulting tokens are syntactically and semantically analyzed and translated.
+\end{enumerate}
+
+\subsection{Execution environment}
+\section{Environmental considerations}
+\subsection{Runtime considerations}
+TODO
+\pagebreak
+
+\section{Notation}
+\subsection{Document notation}
+In the syntax notation used in this clause, syntactic categories (non-terminals) are indicated by italic type, and literal words and character set members (terminals) by bold type.  A colon (:) following a non-terminal introduces its definition.  Alternative definitions are listed on corresponding separate lines, except when prefaced by words "one of".  An optional symbol is indicated by a subscript "opt", so that\\
+\{ expression _{opt} \}\\
+indicates an optional expression closed in braces. When syntactic categories are refereed to in the main text, they are not italicized and words are separated by spaces instead of hyphens.
+\subsection{Language notation}
+TODO
+
+\section{Concepts}
+\subsection{Scopes of identifiers}
+An identifier can denote an object; a function; a tag or member of an entity, or enumeration; a typedef name; a label name; a macro name; or a macro parameter.  The same identifier can denote different entities at different points in the program.  A member of an enumeration is called an enumeration constant.  Macro names and macro parameters are not considered further here, because prior to the semantic phase of program translation any occurrences of macro names in the source file are replaced by the preprocessing token sequences that constitute their macro definitions.
+
+For each different entity that an identifier designates, the identifier is visible (i.e., can be used) only within a region of program text called its scope.  Different entities designated by the same identifier either have different scopes, or are in different name spaces.  There are four kinds of scopes: function, global, block and function prototype. (A function prototype is a declaration of a function that declares the types of its parameters.)
+
+A label name is the only kind of identifier that has function scope.  It can be used (in a goto statement) anywhere in the function in which it appears, and is declared implicitly by it's syntactic appearance (prefixed by a : and a statement).
+
+Every other identifier has scoped determined by the placement of its declaration (in a declarator or type specifier).  If the declarator or type specifier that declares the identifier appears outside of any block or list of parameters, the identifier has global scope, which terminates at the end of the program structure.  If the declarator or type specifier that declares the identifier appears inside a block or within the list of parameter declarations in a function definition, the identifier has block scope, which terminates at the end of the associated block. If the declarator or type specifier that declares the identifier appears within the list of parameter declarations in a function prototype (not part of a function definition), the identifier has function prototype scope, which terminates at the end of the function declarator.  If an identifier designates two different entities in the same name space, the scopes might overlap.  If so, the scope of one entity (the inner scope) will be a strict subset of the scope of the other entity (the outer scope).  Within the inner scope, the identifier designates the entity declared in the inner scope; the entity declared in the outer scope is hidden (and is not visible) within the inner scope.
+
+Unless explicitly stated otherwise, where this specification uses the term "identifier" to refer to some entity (as opposed to the syntactic construct), it refers to the entity in the relevant name space whose declaration is visible at the point the identifier occurs.
+
+Unless explicitly stated otherwise, where this specification uses the term "entity", is not to be ambiguous with the entity type, but considered a semantic construct.
+
+Two identifiers have the same scope if and only if their scopes terminate at the same point.
+
+Enumeration tags have scope that begins just after the appearance of the tag in a type specifier that declares the tag.  Each enumeration constant has scope that begins just after the appearance of its defining enumerator in an enumeration list.  Any other identifier has scope that begins just after the completion of its declarator.
+
+\subsection{Name spaces of identifiers}
+If more than one declaration of a particular identifier is visible at any point in the program structure, the syntactic context disambiguates uses that refer to different entities.  Thus, there are separate name spaces for various categories of identifiers, as follows:
+\begin{enumerate}
+	\item label names (disambiguated by the syntax of the label declaration and use);
+	\item the tags of enumerations
+	\item all other identifiers, called ordinary identifiers (declared in ordinary declarators or as enumeration constants).
+\end{enumerate}
+
+\subsection{Types}
+The meaning of a value stored in an object or returned by a function is determined by the type of the expression used to access it.  (An identifier declared to be an object is the simplest such expression; the type is specified in the declaration of the identifier.)  Types are partitioned into object types(types that fully describe object) and function types(types that describe functions).
+
+An object declares as type bool is large enough to store the values 0 and 1.
+
+An object declared as type char is large enough to store any member of the basic execution character set.  If a member of the basic execution character set is stored in a char object, its value is guaranteed to be nonnegative.  If any other character is stored in a char, the resulting value is implemented-defined.
+
+An object declared as type string is large enough to store any length string-literal composed of any length chars, and as such follows the same rules as an object declared as type char.
+
+The void type comprises an empty set of values; it is an incomplete type that cannot be completed.
+
+The float and vector type .. TODO
+
+An enumeration comprises a set of named integer constant values.  Each enumeration constitutes a different enumerated type.
+
+\section{Lexical elements}
+\subsection{Keywords}
+\begin{tabular} { l l l l l }
+	for & do & while & if & else \\
+	local & return & const & switch & case \\
+	default & struct & union & break & continue \\
+	typedef & goto & namespace \\
+\end{tabular}
+
+\subsection{Identifiers}
+\subsubsection*{identifier}
+\begin{tabular} { l }
+	identifier-nondigit \\
+	identifier identifier-nondigit \\
+	identifier-digit \\
+\end{tabular}
+
+\subsubsection*{identifier-nondigit}
+\begin{tabular} { l }
+	nondigit \\
+	other implementation-defined characters \\
+\end{tabular}
+
+\subsubsection*{nondigit}
+\begin{tabular}{ c c c c c c c c c c c c c c c c c c c c }
+	\_ & a & b & c & d & e & f & g & h & i & j & k & l & m & n & o & p & q & r & s \\
+	t & u & v & w & y & z & A & B & C & D & E & F & G & H & I & J & K & L & M & N \\
+	O & P & Q & R & S & T & U & V & W & X & Y & Z \\
+\end{tabular}
+
+\subsubsection*{digit}
+\begin{tabular}{c c c c c c c c c c c }
+	0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+\end{tabular}
+
+\subsubsection*{hex-quad}
+\begin{tabular} { l }
+	hexadecimal-digit hexadecimal-digit \\
+\end{tabular}
+
+\subsection{Constants}
+\subsubsection*{constant}
+\begin{tabular} { l }
+	integer-constant \\
+	floating-constant \\
+	enumeration-constant \\
+	character-constant \\
+	vector-constant \\
+\end{tabular}
+
+\subsubsection*{integer-constant}
+\begin{tabular} { l }
+	decimal-constant \\
+	octal-constant \\
+	hexadecimal-constant \\
+\end{tabular}
+
+\subsubsection*{decimal-constant}
+\begin{tabular} { l }
+	nonzero-digit \\
+	decimal-constant digit \\
+\end{tabular}
+
+\subsubsection*{octal-constant}
+\begin{tabular} { l }
+	0 \\
+	octal-constant octal-digit
+\end{tabular}
+
+\subsubsection*{hexadecimal-constant}
+\begin{tabular} { l }
+	hexadecimal-prefix hexadecimal-digit \\
+	hexadecimal-constant hexadecimal-digit \\
+\end{tabular}
+
+\subsubsection*{hexadecimal-prefix}
+\begin{tabular} { c c }
+	0x & 0X \\
+\end{tabular}
+
+\subsubsection*{nonzero-digit}
+\begin{tabular} { c c c c c c c c c }
+	1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+\end{tabular}
+
+\subsubsection*{octal-digit}
+\begin{tabular}{ c c c c c c c c c }
+	0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\
+\end{tabular}
+
+\subsubsection*{hexadecimal-digit}
+\begin{tabular}{ c c c c c c c c c c c c c c c c }
+	0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F \\
+\end{tabular}
+
+\subsubsection*{floating-constant}
+\begin{tabular} { l }
+	decimal-floating-constant \\
+	hexadecimal-floating-constant \\
+\end{tabular}
+
+\subsection{String Literals}
+\subsubsection*{string-literal}
+\begin{tabular} { l }
+	" s-char-sequence _{opt} " \\
+	\_(" s-char-sequence _{opt} ") \\
+\end{tabular}
+
+\subsubsection*{s-char-sequence}
+\begin{tabular} { l }
+	s-char \\
+	s-char-sequence s-char \\
+\end{tabular}
+
+\subsubsection*{s-char}
+\begin{tabular} { l }
+	any member of the source character set except the double-quote, backslash, or new-line character \\
+	escape-sequence \\
+\end{tabular}
+
+\subsection{Header names}
+\subsubsection*{header-name}
+\begin{tabular} { l }
+	< h-char-sequence > \\
+	" q-char-sequence " \\
+\end{tabular}
+
+\subsubsection*{h-char-sequence}
+\begin{tabular} { l }
+	h-char \\
+	h-char-sequence h-char \\
+\end{tabular}
+
+\subsubsection*{h-char}
+\begin{tabular} { l }
+	any member of the source character set except the new-line and > character \\
+\end{tabular}
+
+\subsubsection*{q-char-sequence}
+\begin{tabular} { l }
+	q-char \\
+	q-char-sequence q-char \\
+\end{tabular}
+
+\subsubsection*{q-char}
+\begin{tabular} { l }
+	any member of the source character set except the new-line and " character \\
+\end{tabular}
+
+\pagebreak
+
+\subsection{Comments}
+Except within a character constant, a string literal, or a comment, the characters /* introduce a comment. The contents of such a comment are examined only to find the characters */ that terminate it. (Thus /* .. */ comments do not nest.)
+
+Expect within a character constant, a string literal, or a comment, the character // introduces a comment that includes all characters up to, but not including, the next new-line character.  The contents of such a comment are examined only to find the terminating new-line character.
+
+\begin{small}
+EXAMPLE
+\end{small}
+\begin{lstlisting}[language=C]
+"a//b"             // four-character string literal
+#include "//e"     // undefined behavior
+// */              // comment, not syntax error
+a = b/**//c;       // same as a = b / c;
+/*//*/ foo();      // same as foo();
+\end{lstlisting}
+
+\section{Expressions}
+TODO
+
+\section{Constant Expressions}
+TODO
+
+\section{Declarations}
+TODO
+
+\section{Statement and blocks}
+TODO
+
+\section{Preprocessing directives}
+TODO
+
+\end{document}
