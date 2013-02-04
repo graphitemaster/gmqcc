@@ -3,6 +3,7 @@
 \usepackage{graphicx}    % needed for including graphics e.g. EPS, PS
 \usepackage{listings}    % for C syntax highlighting
 \usepackage{color}
+\usepackage{tipa}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
@@ -143,12 +144,13 @@ A conforming program is one that is acceptable to a conforming implementation.
 
 An implementation shall be accompanied by a document that defines all implementation-defined characteristic and extensions.
 
-\section{Conceptual models}
-\subsection{Translation environment}
-\subsubsection{Program structure}
+\section{Enviroment}
+\subsection{Conceptual models}
+\subsubsection{Translation environment}
+\paragraph{Program structure}
 A Quake C program need not all be translated at the same time.  The text of the program is kept in units called source files. All source files become concatenated, less any source lines skipped by any of the conditional inclusion preprocessing directives.  The final concatenation becomes the program structure.
 
-\subsubsection{Translation phases}
+\paragraph{Translation phases}
 \begin{enumerate}
 	\item Physical source file characters are mapped to the source character set (introducing new-line characters for end-of-line indicators) if necessary.  Trigraph and Digraph sequences are replaced by corresponding single-character internal representations.
 	\item The source file is decomposed into preprocessing tokens and sequences of white-space characters (including comments).
@@ -158,22 +160,25 @@ A Quake C program need not all be translated at the same time.  The text of the 
 	\item White-space characters separating tokens are no longer sufficient. The resulting tokens are syntactically and semantically analyzed and translated.
 \end{enumerate}
 
-\subsection{Execution environment}
-\section{Environmental considerations}
-\subsection{Runtime considerations}
-TODO
-\pagebreak
+\paragraph{Diagnostics}
+A conforming implementation shall produce at least one diagnostic message (identified in an implementation-defined manner) if a program structure contains a violation of any syntax rule or constraint, even if the behavior is explicitly specifies as being undefined or implementation-defined.  diagnostic messages need not be produces in other circumstances.
+\begin{small}
+EXAMPLE
+\end{small}
+\begin{lstlisting}[language=C]
+	string i;
+	float  i;
+\end{lstlisting}
+The following example should produce a diagnostic for the program structure.
 
-\section{Notation}
-\subsection{Document notation}
+\section{Language}
+\subsection{Notation}
 In the syntax notation used in this clause, syntactic categories (non-terminals) are indicated by italic type, and literal words and character set members (terminals) by bold type.  A colon (:) following a non-terminal introduces its definition.  Alternative definitions are listed on corresponding separate lines, except when prefaced by words "one of".  An optional symbol is indicated by a subscript "opt", so that\\
 \{ expression _{opt} \}\\
 indicates an optional expression closed in braces. When syntactic categories are refereed to in the main text, they are not italicized and words are separated by spaces instead of hyphens.
-\subsection{Language notation}
-TODO
 
-\section{Concepts}
-\subsection{Scopes of identifiers}
+\subsection{Concepts}
+\subsubsection{Scopes of identifiers}
 An identifier can denote an object; a function; a tag or member of an entity, or enumeration; a typedef name; a label name; a macro name; or a macro parameter.  The same identifier can denote different entities at different points in the program.  A member of an enumeration is called an enumeration constant.  Macro names and macro parameters are not considered further here, because prior to the semantic phase of program translation any occurrences of macro names in the source file are replaced by the preprocessing token sequences that constitute their macro definitions.
 
 For each different entity that an identifier designates, the identifier is visible (i.e., can be used) only within a region of program text called its scope.  Different entities designated by the same identifier either have different scopes, or are in different name spaces.  There are four kinds of scopes: function, global, block and function prototype. (A function prototype is a declaration of a function that declares the types of its parameters.)
@@ -190,7 +195,7 @@ Two identifiers have the same scope if and only if their scopes terminate at the
 
 Enumeration tags have scope that begins just after the appearance of the tag in a type specifier that declares the tag.  Each enumeration constant has scope that begins just after the appearance of its defining enumerator in an enumeration list.  Any other identifier has scope that begins just after the completion of its declarator.
 
-\subsection{Name spaces of identifiers}
+\subsubsection{Name spaces of identifiers}
 If more than one declaration of a particular identifier is visible at any point in the program structure, the syntactic context disambiguates uses that refer to different entities.  Thus, there are separate name spaces for various categories of identifiers, as follows:
 \begin{enumerate}
 	\item label names (disambiguated by the syntax of the label declaration and use);
@@ -198,7 +203,7 @@ If more than one declaration of a particular identifier is visible at any point 
 	\item all other identifiers, called ordinary identifiers (declared in ordinary declarators or as enumeration constants).
 \end{enumerate}
 
-\subsection{Types}
+\subsubsection{Types}
 The meaning of a value stored in an object or returned by a function is determined by the type of the expression used to access it.  (An identifier declared to be an object is the simplest such expression; the type is specified in the declaration of the identifier.)  Types are partitioned into object types(types that fully describe object) and function types(types that describe functions).
 
 An object declares as type bool is large enough to store the values 0 and 1.
@@ -213,8 +218,29 @@ The float and vector type .. TODO
 
 An enumeration comprises a set of named integer constant values.  Each enumeration constitutes a different enumerated type.
 
-\section{Lexical elements}
-\subsection{Keywords}
+\subsubsection{Compatible type and composite type}
+Two types have compatibility if their types are the same.
+
+All declarations that refer to the same object or function shall have compatibility; otherwise, the behavior is undefined.
+
+A composite type can be constructed from two types that are compatible; it is a type that is compatible with both of the two types and satisfies the following conditions:
+\begin{enumerate}
+	\item If one type is a function type with a paramater type list (function prototype), the composite type is a function prototype with the parameter type list.
+	\item If both types are function types with parameter type lists, the type of each parameter in the composite parameter type list is the composite type of the corresponding parameters.
+\end{enumerate}
+
+\subsection{Conversions}
+\subsubsection{Other operands}
+\paragraph{Lvalues, arrays, and function designators}
+An lvalue is an expression with an object type or an incomplete type other than void; if an lvalue does not designate an object when it is evaluated, the behavior is undefined.  When an object is said to have a particular type, the type is specified by the lvalue used to designated said object.  A modifiable lvalue is an lvalue that does not have an array type, does not have a const-qualified type and does not have an incomplete type.
+
+A function designator is an expression that has function type. A function designator with type "function returning type" is converted to an expression that has type "pointer to function returning type".
+
+\paragraph{void}
+The (nonexistent) value of a void expression (an expression that has type void) shall not be used in any way, and implicit or explicit conversions (except to void) shall not be applied to any such expression.  If an expression of a type not void is evaluated as a void expression, its value or designator shall be discarded. (A void expression is evaluated only for its side effects.)
+
+\subsection{Lexical elements}
+\subsubsection{Keywords}
 \begin{tabular} { l l l l l }
 	for & do & while & if & else \\
 	local & return & const & switch & case \\
@@ -222,40 +248,40 @@ An enumeration comprises a set of named integer constant values.  Each enumerati
 	typedef & goto & namespace \\
 \end{tabular}
 
-\subsection{Identifiers}
-\subsubsection*{identifier}
+\subsubsection{Identifiers}
+\paragraph*{identifier}
 \begin{tabular} { l }
 	identifier-nondigit \\
 	identifier identifier-nondigit \\
 	identifier-digit \\
 \end{tabular}
 
-\subsubsection*{identifier-nondigit}
+\paragraph*{identifier-nondigit}
 \begin{tabular} { l }
 	nondigit \\
 	other implementation-defined characters \\
 \end{tabular}
 
-\subsubsection*{nondigit}
+\paragraph*{nondigit}
 \begin{tabular}{ c c c c c c c c c c c c c c c c c c c c }
 	\_ & a & b & c & d & e & f & g & h & i & j & k & l & m & n & o & p & q & r & s \\
 	t & u & v & w & y & z & A & B & C & D & E & F & G & H & I & J & K & L & M & N \\
 	O & P & Q & R & S & T & U & V & W & X & Y & Z \\
 \end{tabular}
 
-\subsubsection*{digit}
+\paragraph*{digit}
 \begin{tabular}{c c c c c c c c c c c }
 	0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
 \end{tabular}
 
-\subsubsection*{hex-quad}
+\paragraph*{hex-quad}
 \begin{tabular} { l }
 	hexadecimal-digit hexadecimal-digit \\
 \end{tabular}
 
-\subsection{Constants}
+\subsubsection{Constants}
 \label{sec:constants}
-\subsubsection*{constant}
+\paragraph*{constant}
 \begin{tabular} { l }
 	integer-constant \\
 	floating-constant \\
@@ -264,59 +290,59 @@ An enumeration comprises a set of named integer constant values.  Each enumerati
 	vector-constant \\
 \end{tabular}
 
-\subsubsection*{integer-constant}
+\paragraph*{integer-constant}
 \begin{tabular} { l }
 	decimal-constant \\
 	octal-constant \\
 	hexadecimal-constant \\
 \end{tabular}
 
-\subsubsection*{decimal-constant}
+\paragraph*{decimal-constant}
 \begin{tabular} { l }
 	nonzero-digit \\
 	decimal-constant digit \\
 \end{tabular}
 
-\subsubsection*{octal-constant}
+\paragraph*{octal-constant}
 \begin{tabular} { l }
 	0 \\
 	octal-constant octal-digit
 \end{tabular}
 
-\subsubsection*{hexadecimal-constant}
+\paragraph*{hexadecimal-constant}
 \begin{tabular} { l }
 	hexadecimal-prefix hexadecimal-digit \\
 	hexadecimal-constant hexadecimal-digit \\
 \end{tabular}
 
-\subsubsection*{hexadecimal-prefix}
+\paragraph*{hexadecimal-prefix}
 \begin{tabular} { c c }
 	0x & 0X \\
 \end{tabular}
 
-\subsubsection*{nonzero-digit}
+\paragraph*{nonzero-digit}
 \begin{tabular} { c c c c c c c c c }
 	1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
 \end{tabular}
 
-\subsubsection*{octal-digit}
+\paragraph*{octal-digit}
 \begin{tabular}{ c c c c c c c c c }
 	0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\
 \end{tabular}
 
-\subsubsection*{hexadecimal-digit}
+\paragraph*{hexadecimal-digit}
 \begin{tabular}{ c c c c c c c c c c c c c c c c }
 	0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F \\
 \end{tabular}
 
-\subsubsection*{floating-constant}
+\paragraph*{floating-constant}
 \begin{tabular} { l }
 	decimal-floating-constant \\
 	hexadecimal-floating-constant \\
 \end{tabular}
 
-\subsection{String Literals}
-\subsubsection*{string-literal}
+\subsubsection{String Literals}
+\paragraph*{string-literal}
 \begin{tabular} { l }
 	" s-char-sequence _{opt} " \\
 	\_(" s-char-sequence _{opt} ") \\
@@ -334,8 +360,8 @@ An enumeration comprises a set of named integer constant values.  Each enumerati
 	escape-sequence \\
 \end{tabular}
 
-\subsection{Header names}
-\subsubsection*{header-name}
+\subsubsection{Header names}
+\paragraph*{header-name}
 \begin{tabular} { l }
 	< h-char-sequence > \\
 	" q-char-sequence " \\
@@ -365,7 +391,7 @@ An enumeration comprises a set of named integer constant values.  Each enumerati
 
 \pagebreak
 
-\subsection{Comments}
+\subsubsection{Comments}
 Except within a character constant, a string literal, or a comment, the characters /* introduce a comment. The contents of such a comment are examined only to find the characters */ that terminate it. (Thus /* .. */ comments do not nest.)
 
 Expect within a character constant, a string literal, or a comment, the character // introduces a comment that includes all characters up to, but not including, the next new-line character.  The contents of such a comment are examined only to find the terminating new-line character.
@@ -381,28 +407,42 @@ a = b/**//c;       // same as a = b / c;
 /*//*/ foo();      // same as foo();
 \end{lstlisting}
 
-\section{Expressions}
-\subsection{Primary expressions}
-\subsubsection*{Syntax}
+\subsection{Expressions}
+An expression is a sequence of operators and operands that specifies computation of a value, or that designates an object or function, or that generates side effects, or that performs a combination thereof.
+
+Between the previous and next sequence point an object shall have its stored value modified at most once by the evaluation of an expression.  Furthermore, the prior value shall be read only to determine the value to be stored.
+
+The grouping of operators and operands is indicated by the syntax.  Except as specified later (for the function-call(), \&\&, \textpipe\textpipe, ?:, and comma operators), the order of evaluation of subexpressions and the order in which side effects take place are both unspecified.
+
+Some operators (the unary \~\space, and the binary operators \textless\textless, \textgreater\textgreater, \&, \^\space, and \textpipe, collectively describe as bitwise operators) are required to have operands that have integer type.
+
+An object shall have its stored value accessed only by an lvalue expression that has one of the following types:
+\begin{enumerate}
+	\item A type compatible with the effective type of the object,
+	\item A qualified version of a type compatible with the effective type of the object,
+\end{enumerate}
+
+\subsubsection{Primary expressions}
+\paragraph*{Syntax}
 \begin{tabular}{ l }
 	identifier \\
 	constant \\
 	string-literal \\
 	( expression )
 \end{tabular}
-\subsubsection*{Semantics}
+\paragraph*{Semantics}
 An identifier is a primary expression, provided it has been declares as a designating object (in which case it is an lvalue) or a function (in which case it is a function designator).
 
 A constant is a primary expression, with type as detailed in \ref{sec:constants}.
 
-\section{Constant Expressions}
-\subsection{Description}
+\subsection{Constant Expressions}
+\subsubsection{Description}
 A constant expression can be evaluated during translation rather than runtime, and accordingly can be used in any place that a constant may be.
-\subsection{Constraints}
+\subsubsection{Constraints}
 Constant expressions shall not contain assignment, increment, decrement, function-call, or comma operators, except when they're contained within a subexpression that is not evaluated.
 
 Each constant expression shall evaluate to a constant that is in the range of representable values for it's designated type.
-\subsection{Semantics}
+\subsubsection{Semantics}
 An expression that evaluates to a constant is required in several contexts.  If a floating expression is evaluated in the translation environment, the arithmetic precision and range shall be at least as great as if they expression were being evaluated in the execution environment.
 
 An integer constant expression shall have integral type, and shall only have operands that are integer constants, enumeration constants, character constants, and floating constants that are the immediate operands of casts.
@@ -410,12 +450,12 @@ An integer constant expression shall have integral type, and shall only have ope
 The semantic rules for the evaluation of a constant expression are the same as for nonconstant expressions.
 
 An implementation may accept other forms of constant expressions
-\section{Declarations}
-\subsection{Constraints}
+\subsection{Declarations}
+\subsubsection{Constraints}
 All declarations shall declare at least a declarator (other than the parameters of a function), a tag, or members of an enumeration.
 
 All declarations in the same scope that refer to the same object or function shall specify compatible types.
-\subsection{Semantics}
+\subsubsection{Semantics}
 A declaration specifies the interpretation and attributes of a set of identifiers.  A definition of an identifier is a declaration for that identifier that:
 \begin{enumerate}
 	\item for an object, causes storage to be reversed for that object;
@@ -424,10 +464,7 @@ A declaration specifies the interpretation and attributes of a set of identifier
 \end{enumerate}
 
 
-\section{Statement and blocks}
+\subsection{Statement and blocks}
 A statement specifies a specific action to be preformed.  Execpt as indicated, statements are executed in sequence.
-
-\section{Preprocessing directives}
-TODO
 
 \end{document}
