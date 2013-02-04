@@ -278,7 +278,7 @@ An enumeration comprises a set of named integer constant values.  Each enumerati
 
 \subsubsection*{s-char}
 \begin{tabular} { l }
-	any member of the source character set except the double-quote, backslash, or new-line character \\
+	any member of the source character set except double-quote, backslash, or new-line characters \\
 	escape-sequence \\
 \end{tabular}
 
@@ -333,13 +333,36 @@ a = b/**//c;       // same as a = b / c;
 TODO
 
 \section{Constant Expressions}
-TODO
+\subsection{Description}
+A constant expression can be evaluated during translation rather than runtime, and accordingly can be used in any place that a constant may be.
+\subsection{Constraints}
+Constant expressions shall not contain assignment, increment, decrement, function-call, or comma operators, except when they're contained within a subexpression that is not evaluated.
 
+Each constant expression shall evaluate to a constant that is in the range of representable values for it's designated type.
+\subsection{Semantics}
+An expression that evaluates to a constant is required in several contexts.  If a floating expression is evaluated in the translation environment, the arithmetic precision and range shall be at least as great as if they expression were being evaluated in the execution environment.
+
+An integer constant expression shall have integral type, and shall only have operands that are integer constants, enumeration constants, character constants, and floating constants that are the immediate operands of casts.
+
+The semantic rules for the evaluation of a constant expression are the same as for nonconstant expressions.
+
+An implementation may accept other forms of constant expressions
 \section{Declarations}
-TODO
+\subsection{Constraints}
+All declarations shall declare at least a declarator (other than the parameters of a function), a tag, or members of an enumeration.
+
+All declarations in the same scope that refer to the same object or function shall specify compatible types.
+\subsection{Semantics}
+A declaration specifies the interpretation and attributes of a set of identifiers.  A definition of an identifier is a declaration for that identifier that:
+\begin{enumerate}
+	\item for an object, causes storage to be reversed for that object;
+	\item for a function, includes the function body;
+	\item for an enumeration constant or typedef name, is the (only) declaration of the identifier.
+\end{enumerate}
+
 
 \section{Statement and blocks}
-TODO
+A statement specifies a specific action to be preformed.  Execpt as indicated, statements are executed in sequence.
 
 \section{Preprocessing directives}
 TODO
