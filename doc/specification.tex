@@ -80,17 +80,68 @@
 \pagebreak
 \tableofcontents
 \pagebreak
-\section {Terms and definitions}
-\subsection*{object}
-A region of data storage in the execution environment, the contents of which can represent values.
-\subsection*{implementation}
-A particular set of software, running in a particular translation environment under particular control options, that performs translations of programs for, and supports execution of functions, in a particular execution environment (typically a Quake engine).
+\section{Introduction}
+With the introduction of improvements of existing runtime environments, new features may be added to this specification.  Subclauses in the language warn implementors and programmers of usages which, though valid in themselfs, may conflict with future additions.
+
+This specification is divided into three major subjects:
+\begin{enumerate}
+	\item preliminary elements
+	\item the characteristics of environments that translate and execute QuakeC programs
+	\item the languages syntax, constraints, and semantics
+\end{enumerate}
+
+Examples are provided to illustrate possible forms of the constructions described, to better facilitate the reader.
+
+\section{Scope}
+This specification only specifies the form and establishes the interpretation of programs written in the GMQCC QuakeC programming language variant. It specifies:
+\begin{enumerate}
+	\item The representation of Quake C programs;
+	\item The syntax and constraints of the Quake C language;
+	\item The semantic rules for interpreting Quake C programs;
+	\item The representation of input data to be processed by Quake C programs;
+	\item The restrictions and limits imposed by a conforming implementation of Quake C.
+\end{enumerate}
+This specification does not specify
+\begin{enumerate}
+	\item The process in which Quake C programs are transformed for use by a data-processing system;
+	\item The process in which Quake C programs are invoked for use by a data-processing system;
+	\item The process in which input data is transformed for use by a Quake C program;
+	\item The process in which output data is transformed after being produces by a Quake C program;
+	\item The size of complexity involved with a Quake C program and its  data that will exceed the capacity of any specific data-processing system or the capacity of a particular processor;
+	\item The minimal requirements of a data-processing system which is capable of supporting a conforming implementation.
+\end{enumerate}
+These details are decided upon by the environment designer (usually the engine developer).  The details are as such subjected to implementation-defined behavior.
+
+\section{Terms and definitions}
 \subsection*{argument}
-Expression in the comma-separated list bounded by the parentheses in a function call expression, or a sequence of preprocessing tokens in the comma-separated list bounded by the parentheses in a function-like macro invocation.
+The expression in a comma-separated list bounded by parentheses in a function call expression, or a sequence of preprocessing tokens in a comma-separated list bounded by parentheses in a function-like macro invocation.
+\subsection*{behavior}
+The external appearance or action of an expression, statement, etc
+\subsection*{implementation-defined behavior}
+Unspecified behavior where each implementation decides how the choice is made.
+\subsection*{unspecified behavior}
+Use of an unspecified value, or other behavior where this specification provides two or more possibilities and imposes no further requirements on which is chosen in any instance (e.g. Thus any ambiguity is considered unspecified behavior).
+\subsection*{constraint}
+A restriction, either syntactically or semantically, by which the exposition of various language elements is to be interpreted.
+\subsection*{implementation}
+Particular set of software, running in a particular translation environment under particular control options, that performs translations of programs for, and supports execution of functions in, a particular execution environment.
+\subsection*{object}
+A region of data storage in the execution environment, the contents of which are capable of representing values.
 \subsection*{parameter}
-Object declared as part of a function declaration or definition that acquires a value on entry to the function, or an identifier from the comma-separated list bound by the parentheses immediately following the macro name in a function-like macro definition.
+An object declared as part of a function declaration that acquires a value on entry to the function, or an identifier from the comma-separated list bounded by parentheses immediately following the macro name in a function-like macro definition.
 \subsection*{value}
-Precise meaning of the contents of an object when interpreted as having a specific type.
+The precise meaning of the contents of an object when interpreted as having a specific type.
+\subsection*{implementation-defined value}
+An unspecified value where each implementation decides how the choice is made.
+\subsection*{unspecified value}
+A valid value of the relevant type where this specification imposes no requirements on which value is chosen in any instance.
+
+\section{Conformance}
+In this specification, "shall" is to be interpreted as a requirement on an implementation or on a program; conversely, "shall not" is to be interpreted as a prohibition on the implementation or on a program.
+
+A conforming program is one that is acceptable to a conforming implementation.
+
+An implementation shall be accompanied by a document that defines all implementation-defined characteristic and extensions.
 
 \section{Conceptual models}
 \subsection{Translation environment}
@@ -203,6 +254,7 @@ An enumeration comprises a set of named integer constant values.  Each enumerati
 \end{tabular}
 
 \subsection{Constants}
+\label{sec:constants}
 \subsubsection*{constant}
 \begin{tabular} { l }
 	integer-constant \\
@@ -330,7 +382,18 @@ a = b/**//c;       // same as a = b / c;
 \end{lstlisting}
 
 \section{Expressions}
-TODO
+\subsection{Primary expressions}
+\subsubsection*{Syntax}
+\begin{tabular}{ l }
+	identifier \\
+	constant \\
+	string-literal \\
+	( expression )
+\end{tabular}
+\subsubsection*{Semantics}
+An identifier is a primary expression, provided it has been declares as a designating object (in which case it is an lvalue) or a function (in which case it is a function designator).
+
+A constant is a primary expression, with type as detailed in \ref{sec:constants}.
 
 \section{Constant Expressions}
 \subsection{Description}
