@@ -1085,23 +1085,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 else if (ConstF(0) > ConstF(1))
                     out = (ast_expression*)parser_const_float_1(parser);
             } else {
+                ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
+
+                eq->refs = false; /* references nothing */
+
                     /* if (lt) { */
                 out = (ast_expression*)ast_ternary_new(ctx,
                         (ast_expression*)ast_binary_new(ctx, INSTR_LT, exprs[0], exprs[1]),
-
                         /* out = -1 */
                         (ast_expression*)parser_const_float_neg1(parser),
-
                     /* } else { */
                         /* if (eq) { */
-                        (ast_expression*)ast_ternary_new(ctx,
-                            (ast_expression*)ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]),
-
+                        (ast_expression*)ast_ternary_new(ctx, (ast_expression*)eq,
                             /* out = 0 */
                             (ast_expression*)parser_const_float_0(parser),
-
                         /* } else { */
-
                             /* out = 1 */
                             (ast_expression*)parser_const_float_1(parser)
                         /* } */

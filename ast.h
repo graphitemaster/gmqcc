@@ -218,6 +218,13 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
 void ast_type_adopt_impl(ast_expression *self, const ast_expression *other);
 void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize);
 
+typedef enum ast_binary_ref_s {
+    AST_REF_LEFT  = 1 << 1,
+    AST_REF_RIGHT = 1 << 2,
+    AST_REF_ALL   = (AST_REF_LEFT | AST_REF_RIGHT)
+} ast_binary_ref;
+
+
 /* Binary
  *
  * A value-returning binary expression.
@@ -229,6 +236,8 @@ struct ast_binary_s
     int             op;
     ast_expression *left;
     ast_expression *right;
+    ast_binary_ref  refs;
+    
 };
 ast_binary* ast_binary_new(lex_ctx    ctx,
                            int        op,

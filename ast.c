@@ -406,13 +406,17 @@ ast_binary* ast_binary_new(lex_ctx ctx, int op,
     else
         self->expression.vtype = left->expression.vtype;
 
+    /* references all */
+    self->refs = AST_REF_ALL;
+
     return self;
 }
 
 void ast_binary_delete(ast_binary *self)
 {
-    ast_unref(self->left);
-    ast_unref(self->right);
+    if (self->refs & AST_REF_LEFT)  ast_unref(self->left);
+    if (self->refs & AST_REF_RIGHT) ast_unref(self->right);
+
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
