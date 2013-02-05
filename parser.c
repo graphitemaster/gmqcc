@@ -1067,7 +1067,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
             break;
 
-        case opid3('<', '=', '>'): /* -1, 0, or 1 */
+        case opid3('<','=','>'): /* -1, 0, or 1 */
             if (NotSameType(TYPE_FLOAT)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
