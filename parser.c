@@ -3981,6 +3981,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
+    if (var->hasvalue) {
+        parseerror(parser, "function `%s` declared with multiple bodies", var->name);
+        ast_block_delete(block);
+        goto enderr;
+    }
+
     func = ast_function_new(ast_ctx(var), var->name, var);
     if (!func) {
         parseerror(parser, "failed to allocate function for `%s`", var->name);
