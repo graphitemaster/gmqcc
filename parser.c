@@ -1942,12 +1942,8 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
             }
             if (o == operator_count) {
-                /* no operator found... must be the end of the statement */
                 compile_error(parser_ctx(parser), "unknown operator: %s", parser_tokval(parser));
                 goto onerr;
-
-                /*Are there any expressions which actually end with an operator?*/
-                /*break;*/
             }
             /* found an operator */
             op = &operators[o];
