@@ -1289,15 +1289,22 @@ int lex_do(lex_file *lex)
 
     if (ch == '+' || ch == '-' || /* ++, --, +=, -=  and -> as well! */
         ch == '>' || ch == '<' || /* <<, >>, <=, >=                  */
-        ch == '=' || ch == '!' || /* ==, !=                          */
+        ch == '=' || ch == '!' || /* <=>, ==, !=                     */
         ch == '&' || ch == '|' || /* &&, ||, &=, |=                  */
         ch == '~'                 /* ~=, ~                           */
     )  {
         lex_tokench(lex, ch);
 
         nextch = lex_getch(lex);
-        if (nextch == '=' || (nextch == ch && ch != '!')) {
+        if ((nextch == '=' && ch != '<') || (nextch == ch && ch != '!')) {
             lex_tokench(lex, nextch);
+        } else if (ch == '<' && nextch == '=') {
+            lex_tokench(lex, nextch);
+            if ((thirdch = lex_getch(lex)) == '>')
+                lex_tokench(lex, thirdch);
+            else
+                lex_ungetch(lex, thirdch);
+
         } else if (ch == '-' && nextch == '>') {
             lex_tokench(lex, nextch);
         } else if (ch == '&' && nextch == '~') {
@@ -1321,8 +1328,9 @@ int lex_do(lex_file *lex)
                 lex->tok.constval.f = -lex->tok.constval.f;
             lex_endtoken(lex);
             return lex->tok.ttype;
-        } else
+        } else {
             lex_ungetch(lex, nextch);
+        }
 
         lex_endtoken(lex);
         return (lex->tok.ttype = TOKEN_OPERATOR);

@@ -1068,6 +1068,51 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
             break;
 
+        case opid3('<', '=', '>'): /* -1, 0, or 1 */
+            if (NotSameType(TYPE_FLOAT)) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                compile_error(ctx, "invalid types used in comparision: %s and %s",
+                    ty1, ty2);
+
+                return false;
+            }
+
+            if (CanConstFold(exprs[0], exprs[1])) {
+                if (ConstF(0) < ConstF(1))
+                    out = (ast_expression*)parser_const_float_neg1(parser);
+                else if (ConstF(0) == ConstF(1))
+                    out = (ast_expression*)parser_const_float_0(parser);
+                else if (ConstF(0) > ConstF(1))
+                    out = (ast_expression*)parser_const_float_1(parser);
+            } else {
+                    /* if (lt) { */
+                out = (ast_expression*)ast_ternary_new(ctx,
+                        (ast_expression*)ast_binary_new(ctx, INSTR_LT, exprs[0], exprs[1]),
+
+                        /* out = -1 */
+                        (ast_expression*)parser_const_float_neg1(parser),
+
+                    /* } else { */
+                        /* if (eq) { */
+                        (ast_expression*)ast_ternary_new(ctx,
+                            (ast_expression*)ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]),
+
+                            /* out = 0 */
+                            (ast_expression*)parser_const_float_0(parser),
+
+                        /* } else { */
+
+                            /* out = 1 */
+                            (ast_expression*)parser_const_float_1(parser)
+                        /* } */
+                        )
+                    /* } */
+                    );
+
+            }
+            break;
+
         case opid1('>'):
             generated_op += 1; /* INSTR_GT */
         case opid1('<'):
@@ -1372,7 +1417,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             else
                 out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
             break;
-            
     }
 #undef NotSameType
 
@@ -1899,7 +1943,11 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             }
             if (o == operator_count) {
                 /* no operator found... must be the end of the statement */
-                break;
+                compile_error(parser_ctx(parser), "unknown operator: %s", parser_tokval(parser));
+                goto onerr;
+
+                /*Are there any expressions which actually end with an operator?*/
+                /*break;*/
             }
             /* found an operator */
             op = &operators[o];

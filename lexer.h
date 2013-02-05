@@ -191,6 +191,7 @@ static const oper_info c_operators[] = {
 
     { "<",   2, opid1('<'),         ASSOC_LEFT,  10, 0 },
     { ">",   2, opid1('>'),         ASSOC_LEFT,  10, 0 },
+    { "<=>", 2, opid3('<','=','>'), ASSOC_LEFT,  10, 0 },
     { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0 },
     { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0 },
 
