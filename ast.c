@@ -2183,9 +2183,11 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
 
     if (!lvalue && self->expression.outr) {
         *out = self->expression.outr;
+        return true;
     }
     if (lvalue && self->expression.outl) {
         *out = self->expression.outl;
+        return true;
     }
 
     if (!ast_istype(self->array, ast_value)) {
