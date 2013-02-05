@@ -1901,7 +1901,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 compile_error(parser_ctx(parser), "unknown operator: %s", parser_tokval(parser));
                 goto onerr;
 #if 0
-Are there any expressions which actually end with an operator?
+/* Are there any expressions which actually end with an operator? */
                 /* no operator found... must be the end of the statement */
                 break;
 #endif
