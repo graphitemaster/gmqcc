@@ -103,10 +103,6 @@ ast_value* ast_value_copy(const ast_value *self)
     ast_value *cp = ast_value_new(self->expression.node.context, self->name, self->expression.vtype);
     if (self->expression.next) {
         cp->expression.next = ast_type_copy(self->expression.node.context, self->expression.next);
-        if (!cp->expression.next) {
-            ast_value_delete(cp);
-            return NULL;
-        }
     }
     fromex   = &self->expression;
     selfex = &cp->expression;
@@ -114,16 +110,12 @@ ast_value* ast_value_copy(const ast_value *self)
     selfex->flags    = fromex->flags;
     for (i = 0; i < vec_size(fromex->params); ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
-        if (!v) {
-            ast_value_delete(cp);
-            return NULL;
-        }
         vec_push(selfex->params, v);
     }
     return cp;
 }
 
-bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
+void ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
 {
     size_t i;
     const ast_expression_common *fromex;
@@ -131,8 +123,6 @@ bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     self->expression.vtype = other->expression.vtype;
     if (other->expression.next) {
         self->expression.next = (ast_expression*)ast_type_copy(ast_ctx(self), other->expression.next);
-        if (!self->expression.next)
-            return false;
     }
     fromex   = &other->expression;
     selfex = &self->expression;
@@ -140,11 +130,8 @@ bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     selfex->flags    = fromex->flags;
     for (i = 0; i < vec_size(fromex->params); ++i) {
         ast_value *v = ast_value_copy(fromex->params[i]);
-        if (!v)
-            return false;
         vec_push(selfex->params, v);
     }
-    return true;
 }
 
 static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
@@ -178,13 +165,7 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
 
         selfex->vtype = fromex->vtype;
         if (fromex->next)
-        {
             selfex->next = ast_type_copy(ctx, fromex->next);
-            if (!selfex->next) {
-                ast_expression_delete_full(self);
-                return NULL;
-            }
-        }
         else
             selfex->next = NULL;
 
@@ -192,10 +173,6 @@ ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
         selfex->flags    = fromex->flags;
         for (i = 0; i < vec_size(fromex->params); ++i) {
             ast_value *v = ast_value_copy(fromex->params[i]);
-            if (!v) {
-                ast_expression_delete_full(self);
-                return NULL;
-            }
             vec_push(selfex->params, v);
         }
 
@@ -455,11 +432,7 @@ ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
 
     self->keep_dest = false;
 
-    if (!ast_type_adopt(self, left)) {
-        ast_delete(self);
-        return NULL;
-    }
-
+    ast_type_adopt(self, left);
     return self;
 }
 
@@ -545,11 +518,7 @@ ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_ex
     ast_propagate_effects(self, entity);
     ast_propagate_effects(self, field);
 
-    if (!ast_type_adopt(self, outtype)) {
-        ast_entfield_delete(self);
-        return NULL;
-    }
-
+    ast_type_adopt(self, outtype);
     return self;
 }
 
@@ -641,10 +610,7 @@ ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_exp
     ast_propagate_effects(self, array);
     ast_propagate_effects(self, index);
 
-    if (!ast_type_adopt(self, outtype)) {
-        ast_array_index_delete(self);
-        return NULL;
-    }
+    ast_type_adopt(self, outtype);
     if (array->expression.vtype == TYPE_FIELD && outtype->expression.vtype == TYPE_ARRAY) {
         if (self->expression.vtype != TYPE_ARRAY) {
             compile_error(ast_ctx(self), "array_index node on type");
@@ -721,10 +687,7 @@ ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *
 
     if (ontrue->expression.vtype == TYPE_NIL)
         exprtype = onfalse;
-    if (!ast_type_adopt(self, exprtype)) {
-        ast_ternary_delete(self);
-        return NULL;
-    }
+    ast_type_adopt(self, exprtype);
 
     return self;
 }
@@ -978,10 +941,7 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
     self->dest = dest;
     self->source = source;
 
-    if (!ast_type_adopt(self, dest)) {
-        ast_delete(self);
-        return NULL;
-    }
+    ast_type_adopt(self, dest);
 
     return self;
 }
@@ -1015,10 +975,7 @@ bool ast_block_add_expr(ast_block *self, ast_expression *e)
         ast_delete(self->expression.next);
         self->expression.next = NULL;
     }
-    if (!ast_type_adopt(self, e)) {
-        compile_error(ast_ctx(self), "internal error: failed to adopt type");
-        return false;
-    }
+    ast_type_adopt(self, e);
     return true;
 }
 
@@ -1044,13 +1001,11 @@ void ast_block_delete(ast_block *self)
     mem_d(self);
 }
 
-bool ast_block_set_type(ast_block *self, ast_expression *from)
+void ast_block_set_type(ast_block *self, ast_expression *from)
 {
     if (self->expression.next)
         ast_delete(self->expression.next);
-    if (!ast_type_adopt(self, from))
-        return false;
-    return true;
+    ast_type_adopt(self, from);
 }
 
 ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)

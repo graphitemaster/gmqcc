@@ -671,8 +671,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     return false;
                 }
             }
-            if (!ast_block_set_type(blocks[0], exprs[1]))
-                return false;
+            ast_block_set_type(blocks[0], exprs[1]);
 
             vec_push(sy->out, syblock(ctx, blocks[0]));
             return true;
@@ -3856,11 +3855,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             ast_expression *functype = fld_think->expression.next;
 
             thinkfunc = ast_value_new(parser_ctx(parser), parser_tokval(parser), functype->expression.vtype);
-            if (!thinkfunc || !ast_type_adopt(thinkfunc, functype)) {
+            if (!thinkfunc) { /* || !ast_type_adopt(thinkfunc, functype)*/
                 ast_unref(framenum);
                 parseerror(parser, "failed to create implicit prototype for `%s`", parser_tokval(parser));
                 return false;
             }
+            ast_type_adopt(thinkfunc, functype);
 
             if (!parser_next(parser)) {
                 ast_unref(framenum);

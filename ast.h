@@ -215,7 +215,7 @@ void ast_value_params_add(ast_value*, ast_value*);
 bool ast_compare_type(ast_expression *a, ast_expression *b);
 ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex);
 #define ast_type_adopt(a, b) ast_type_adopt_impl((ast_expression*)(a), (ast_expression*)(b))
-bool ast_type_adopt_impl(ast_expression *self, const ast_expression *other);
+void ast_type_adopt_impl(ast_expression *self, const ast_expression *other);
 void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize);
 
 /* Binary
@@ -597,7 +597,7 @@ struct ast_block_s
 };
 ast_block* ast_block_new(lex_ctx ctx);
 void ast_block_delete(ast_block*);
-bool ast_block_set_type(ast_block*, ast_expression *from);
+void ast_block_set_type(ast_block*, ast_expression *from);
 
 bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
 void ast_block_collect(ast_block*, ast_expression*);
