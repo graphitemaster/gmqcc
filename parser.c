@@ -1827,9 +1827,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
             } else {
-                const char *alias = util_htget(parser->aliases, parser_tokval(parser));
-                if (alias)
-                    var = (ast_expression*)parser_find_var(parser, alias);
+                var = (ast_expression*)util_htget(parser->aliases, parser_tokval(parser));
             }
                 
             if (!var) {
@@ -5277,8 +5275,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             }
                         }
                     } else {
-                        void           *entry = (void*)var->desc;
-                        ast_expression *find  = parser_find_var(parser, var->desc);
+                        ast_expression *find  = parser_find_global(parser, var->desc);
 
                         if (!find) {
                             compile_error(parser_ctx(parser), "undeclared variable `%s` for alias `%s`", var->desc, var->name);
@@ -5302,7 +5299,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                          * add alias to aliases table and to corrector
                          * so corrections can apply for aliases as well.
                          */  
-                        util_htset(parser->aliases, var->name, entry);
+                        util_htset(parser->aliases, var->name, find);
 
                         /*
                          * add to corrector so corrections can work
@@ -5322,9 +5319,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             util_asprintf(&buffer[1], "%s_y", var->desc);
                             util_asprintf(&buffer[2], "%s_z", var->desc);
 
-                            util_htset(parser->aliases, me[0]->name, (void*)buffer[0]);
-                            util_htset(parser->aliases, me[1]->name, (void*)buffer[1]);
-                            util_htset(parser->aliases, me[2]->name, (void*)buffer[2]);
+                            util_htset(parser->aliases, me[0]->name, parser_find_global(parser, buffer[0]));
+                            util_htset(parser->aliases, me[1]->name, parser_find_global(parser, buffer[1]));
+                            util_htset(parser->aliases, me[2]->name, parser_find_global(parser, buffer[2]));
+
+                            mem_d(buffer[0]);
+                            mem_d(buffer[1]);
+                            mem_d(buffer[2]);
 
                             /*
                              * add to corrector so corrections can work
