@@ -5275,9 +5275,18 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             }
                         }
                     } else {
-                        ast_expression *find = parser_find_var(parser, var->desc);
+                        void           *entry = (void*)var->desc;
+                        ast_expression *find  = parser_find_var(parser, var->desc);
+
+                        /* aliases to aliases are also allowed */
                         if (!find) {
-                            compile_error(parser_ctx(parser), "undeclared variable `%s` for alias `%s", var->desc, var->name);
+                            char *name = NULL;
+                            if ((find = parser_find_var(parser, (const char *)(name = util_htget(parser->aliases, var->desc)))))
+                                entry = (void*)name;
+                        }
+
+                        if (!find) {
+                            compile_error(parser_ctx(parser), "undeclared variable `%s` for alias `%s`", var->desc, var->name);
                             return false;
                         }
 
@@ -5294,7 +5303,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        util_htset(parser->aliases, var->name, (void*)var->desc);
+                        util_htset(parser->aliases, var->name, entry);
                         /*
                          * TODO: vector, find . or _ (last of), and build
                          * [._]x, [._]y, [._]z  aliases too.
