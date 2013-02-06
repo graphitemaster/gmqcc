@@ -1827,7 +1827,9 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
             } else {
-                var = (ast_expression*)parser_find_var(parser, (const char *)util_htget(parser->aliases, parser_tokval(parser)));
+                const char *alias = util_htget(parser->aliases, parser_tokval(parser));
+                if (alias)
+                    var = (ast_expression*)parser_find_var(parser, alias);
             }
                 
             if (!var) {
@@ -5303,11 +5305,54 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        util_htset(parser->aliases, var->name, entry);
                         /*
-                         * TODO: vector, find . or _ (last of), and build
-                         * [._]x, [._]y, [._]z  aliases too.
+                         * add alias to aliases table and to corrector
+                         * so corrections can apply for aliases as well.
                          */  
+                        util_htset(parser->aliases, var->name, entry);
+
+                        /*
+                         * add to corrector so corrections can work
+                         * even for aliases too.
+                         */ 
+                        correct_add (
+                             vec_last(parser->correct_variables),
+                            &vec_last(parser->correct_variables_score),
+                            var->name
+                        );
+
+                        /* generate aliases for vector components */
+                        if (isvector) {
+                            char *buffer[3];
+
+                            util_asprintf(&buffer[0], "%s_x", var->desc);
+                            util_asprintf(&buffer[1], "%s_y", var->desc);
+                            util_asprintf(&buffer[2], "%s_z", var->desc);
+
+                            util_htset(parser->aliases, me[0]->name, (void*)buffer[0]);
+                            util_htset(parser->aliases, me[1]->name, (void*)buffer[1]);
+                            util_htset(parser->aliases, me[2]->name, (void*)buffer[2]);
+
+                            /*
+                             * add to corrector so corrections can work
+                             * even for aliases too.
+                             */  
+                            correct_add (
+                                 vec_last(parser->correct_variables),
+                                &vec_last(parser->correct_variables_score),
+                                me[0]->name
+                            );
+                            correct_add (
+                                 vec_last(parser->correct_variables),
+                                &vec_last(parser->correct_variables_score),
+                                me[1]->name
+                            );
+                            correct_add (
+                                 vec_last(parser->correct_variables),
+                                &vec_last(parser->correct_variables_score),
+                                me[2]->name
+                            );
+                        }
                     }
                 }
             } else {
