@@ -5276,6 +5276,10 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         }
                     } else {
                         util_htset(parser->aliases, var->name, (void*)var->desc);
+                        /*
+                         * TODO: vector, find . or _ (last of), and build
+                         * [._]x, [._]y, [._]z  aliases too.
+                         */  
                     }
                 }
             } else {
