@@ -62,6 +62,7 @@ typedef struct {
     size_t crc_fields;
 
     ast_function *function;
+    ht            aliases;
 
     /* All the labels the function defined...
      * Should they be in ast_function instead?
@@ -1825,9 +1826,11 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             /* intrinsics */
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
+            } else {
+                var = (ast_expression*)parser_find_var(parser, (const char *)util_htget(parser->aliases, parser_tokval(parser)));
             }
-            else
-            {
+                
+            if (!var) {
                 char *correct = NULL;
                 size_t i;
 
@@ -2932,8 +2935,44 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                     return false;
                 }
             }
+            else if (!strcmp(parser_tokval(parser), "alias") && !(flags & AST_FLAG_ALIAS)) {
+                flags   |= AST_FLAG_ALIAS;
+                *message = NULL;
 
+                if (!parser_next(parser)) {
+                    parseerror(parser, "parse error in attribute");
+                    goto argerr;
+                }
 
+                if (parser->tok == '(') {
+                    if (!parser_next(parser) || parser->tok != TOKEN_STRINGCONST) {
+                        parseerror(parser, "`alias` attribute missing parameter");
+                        goto argerr;
+                    }
+
+                    *message = util_strdup(parser_tokval(parser));
+
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "parse error in attribute");
+                        goto argerr;
+                    }
+
+                    if (parser->tok != ')') {
+                        parseerror(parser, "`alias` attribute expected `)` after parameter");
+                        goto argerr;
+                    }
+
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "parse error in attribute");
+                        goto argerr;
+                    }
+                }
+
+                if (parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`alias` attribute expected `]]`");
+                    goto argerr;
+                }
+            }
             else if (!strcmp(parser_tokval(parser), "deprecated") && !(flags & AST_FLAG_DEPRECATED)) {
                 flags   |= AST_FLAG_DEPRECATED;
                 *message = NULL;
@@ -3819,6 +3858,11 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     has_frame_think = false;
     old = parser->function;
+
+    if (var->expression.flags & AST_FLAG_ALIAS) {
+        parseerror(parser, "function aliases cannot have bodies");
+        return false;
+    }
 
     if (vec_size(parser->gotos) || vec_size(parser->labels)) {
         parseerror(parser, "gotos/labels leaking");
@@ -5012,7 +5056,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
         var->cvq = qualifier;
         var->expression.flags |= qflags;
-        if (var->expression.flags & AST_FLAG_DEPRECATED)
+
+        /*
+         * store the vstring back to var for alias and
+         * deprecation messages.
+         */   
+        if (var->expression.flags & AST_FLAG_DEPRECATED ||
+            var->expression.flags & AST_FLAG_ALIAS)
             var->desc = vstring;
 
         /* Part 1:
@@ -5217,11 +5267,15 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     }
                 }
                 else {
-                    parser_addglobal(parser, var->name, (ast_expression*)var);
-                    if (isvector) {
-                        for (i = 0; i < 3; ++i) {
-                            parser_addglobal(parser, me[i]->name, (ast_expression*)me[i]);
+                    if (!(var->expression.flags & AST_FLAG_ALIAS)) {
+                        parser_addglobal(parser, var->name, (ast_expression*)var);
+                        if (isvector) {
+                            for (i = 0; i < 3; ++i) {
+                                parser_addglobal(parser, me[i]->name, (ast_expression*)me[i]);
+                            }
                         }
+                    } else {
+                        util_htset(parser->aliases, var->name, (void*)var->desc);
                     }
                 }
             } else {
@@ -5718,6 +5772,8 @@ bool parser_init()
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, 0);
 
+    parser->aliases = util_htnew(PARSER_HT_SIZE);
+
     /* corrector */
     vec_push(parser->correct_variables, correct_trie_new());
     vec_push(parser->correct_variables_score, NULL);
@@ -5867,6 +5923,8 @@ void parser_cleanup()
     ast_value_delete(parser->const_vec[0]);
     ast_value_delete(parser->const_vec[1]);
     ast_value_delete(parser->const_vec[2]);
+
+    util_htdel(parser->aliases);
 
     mem_d(parser);
 }
