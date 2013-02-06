@@ -319,6 +319,9 @@ static ast_expression* parser_find_label(parser_t *parser, const char *name)
 
 static ast_expression* parser_find_global(parser_t *parser, const char *name)
 {
+    ast_expression *var = (ast_expression*)util_htget(parser->aliases, parser_tokval(parser));
+    if (var)
+        return var;
     return (ast_expression*)util_htget(parser->htglobals, name);
 }
 
@@ -1826,8 +1829,6 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             /* intrinsics */
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
-            } else {
-                var = (ast_expression*)util_htget(parser->aliases, parser_tokval(parser));
             }
                 
             if (!var) {
