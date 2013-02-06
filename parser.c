@@ -5275,6 +5275,25 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             }
                         }
                     } else {
+                        ast_expression *find = parser_find_var(parser, var->desc);
+                        if (!find) {
+                            compile_error(parser_ctx(parser), "undeclared variable `%s` for alias `%s", var->desc, var->name);
+                            return false;
+                        }
+
+                        if (var->expression.vtype != find->expression.vtype) {
+                            char ty1[1024];
+                            char ty2[1024];
+
+                            ast_type_to_string(find,                  ty1, sizeof(ty1));
+                            ast_type_to_string((ast_expression*)var,  ty2, sizeof(ty2));
+
+                            compile_error(parser_ctx(parser), "incompatible types `%s` and `%s` for alias `%s`",
+                                ty1, ty2, var->name
+                            );
+                            return false;
+                        }
+
                         util_htset(parser->aliases, var->name, (void*)var->desc);
                         /*
                          * TODO: vector, find . or _ (last of), and build
