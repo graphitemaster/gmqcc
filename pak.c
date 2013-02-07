@@ -90,11 +90,12 @@ static bool pak_tree_spawn(const char *path) {
  * this function will handle the creation of
  * the directory structure, included nested
  * directories.
- */    
+ */
 static void pak_tree_build(const char *entry) {
     char *directory;
     char *elements[28];
     char *pathsplit;
+    char *token;
 
     size_t itr;
     size_t jtr;
@@ -102,8 +103,14 @@ static void pak_tree_build(const char *entry) {
     pathsplit = mem_a(56);
     directory = mem_a(56);
 
+    memset(pathsplit, 0, 56);
+    memset(directory, 0, 56);
+
     strncpy(directory, entry, 56);
-    for (itr = 0; (elements[itr] = pak_tree_sep(&directory, "/")); itr++);
+    for (itr = 0; (token = strsep(&directory, "/")) != NULL; itr++) {
+        elements[itr] = token;
+    }
+
     for (jtr = 0; jtr < itr - 1; jtr++) {
         strcat(pathsplit, elements[jtr]);
         strcat(pathsplit, "/");
@@ -137,16 +144,16 @@ pak_file_t *pak_open_read(const char *file) {
     pak->directories = NULL;
     pak->insert      = false; /* read doesn't allow insert */
 
-    memset         (&(pak->header), 0, sizeof(pak_header_t));
-    file_read      (&(pak->header), 1, sizeof(pak_header_t), pak->handle);
-    util_endianswap(&(pak->header), 1, sizeof(pak_header_t));
+    memset         (&pak->header, 0, sizeof(pak_header_t));
+    file_read      (&pak->header,    sizeof(pak_header_t), 1, pak->handle);
+    util_endianswap(&pak->header, 1, sizeof(pak_header_t));
 
     /*
      * Every PAK file has "PACK" stored as little endian data in the
      * header.  If this data cannot compare (as checked here), it's
      * probably not a PAK file.
-     */    
-    if (!(memcmp(&(pak->header.magic), (const void*)"PACK", sizeof(uint32_t)))) {
+     */
+    if ((memcmp(&(pak->header.magic), (const void*)"PACK", sizeof(uint32_t)))) {
         file_close(pak->handle);
         mem_d     (pak);
         return NULL;
@@ -164,8 +171,8 @@ pak_file_t *pak_open_read(const char *file) {
      */   
     for (itr = 0; itr < pak->header.dirlen / 64; itr++) {
         pak_directory_t dir;
-        file_read      (&dir, 1, sizeof(pak_directory_t), pak->handle);
-        util_endianswap(&dir, 1, sizeof(pak_directory_t));
+        file_read      (&dir, sizeof(pak_directory_t), 1, pak->handle);
+        /*util_endianswap(&dir, 1, sizeof(pak_directory_t));*/
 
         vec_push(pak->directories, dir);
     }
@@ -409,3 +416,15 @@ bool pak_close(pak_file_t *pak) {
 
     return true;
 }
+
+/* test extraction */
+#if 0
+int main() {
+    pak_file_t *pak = pak_open_read("pak0.pak");
+    if (!pak) abort();
+
+    pak_extract_all(pak);
+
+    return 0;
+}
+#endif
