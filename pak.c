@@ -314,8 +314,15 @@ bool pak_extract_one(pak_file_t *pak, const char *file) {
     return true;
 }
 
-bool pak_extract_all(pak_file_t *pak) {
+bool pak_extract_all(pak_file_t *pak, const char *dir) {
     size_t itr;
+
+    if (!pak_tree_spawn(dir))
+        return false;
+
+    if (chdir(dir))
+        return false;
+
     for (itr = 0; itr < vec_size(pak->directories); itr++) {
         if (!pak_extract_one(pak, pak->directories[itr].name))
             return false;
@@ -446,15 +453,14 @@ bool pak_close(pak_file_t *pak) {
     return true;
 }
 
-#if 0
 /* test extraction */
 int main() {
     pak_file_t *pak = pak_open("pak0.pak", "r");
     if (!pak) abort();
 
-    pak_extract_all(pak);
+    pak_extract_all(pak, "foo/");
 
     pak_close(pak);
     return 0;
 }
-#endif
+
