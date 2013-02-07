@@ -129,7 +129,7 @@ typedef struct {
     bool             insert;
 } pak_file_t;
 
-pak_file_t *pak_open_read(const char *file) {
+static pak_file_t *pak_open_read(const char *file) {
     pak_file_t *pak;
     size_t      itr;
 
@@ -179,7 +179,7 @@ pak_file_t *pak_open_read(const char *file) {
     return pak;
 }
 
-pak_file_t *pak_open_write(const char *file) {
+static pak_file_t *pak_open_write(const char *file) {
     pak_file_t *pak;
 
     if (!(pak = mem_a(sizeof(pak_file_t))))
@@ -225,6 +225,18 @@ pak_file_t *pak_open_write(const char *file) {
     file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
 
     return pak;
+}
+
+pak_file_t *pak_open(const char *file, const char *mode) {
+    if (!file || !mode)
+        return NULL;
+
+    switch (*mode) {
+        case 'r': return pak_open_read (file);
+        case 'w': return pak_open_write(file);
+    }
+
+    return NULL;
 }
 
 bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
@@ -344,6 +356,17 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
     dir.pos = ftell(pak->handle);
 
     /*
+     * We're limited to 56 bytes for a file name string, that INCLUDES
+     * the directory and '/' seperators.
+     */   
+    if (strlen(file) >= 56) {
+        file_close(fp);
+        return false;
+    }
+
+    strcpy(dir.name, file);
+
+    /*
      * Allocate some memory for loading in the data that will be
      * redirected into the PAK file.
      */   
@@ -355,6 +378,12 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
     file_read (dat, dir.len, 1, fp);
     file_close(fp);
     file_write(dat, dir.len, 1, pak->handle);
+
+    /*
+     * Now add the directory to the directories vector, so pak_close
+     * can actually write it.
+     */
+    vec_push(pak->directories, dir);
 
     return true;
 }
@@ -417,14 +446,15 @@ bool pak_close(pak_file_t *pak) {
     return true;
 }
 
-/* test extraction */
 #if 0
+/* test extraction */
 int main() {
-    pak_file_t *pak = pak_open_read("pak0.pak");
+    pak_file_t *pak = pak_open("pak0.pak", "r");
     if (!pak) abort();
 
     pak_extract_all(pak);
 
+    pak_close(pak);
     return 0;
 }
 #endif
