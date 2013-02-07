@@ -453,6 +453,7 @@ bool pak_close(pak_file_t *pak) {
     return true;
 }
 
+#if 0
 /* test extraction */
 int main() {
     pak_file_t *pak = pak_open("pak0.pak", "r");
@@ -463,4 +464,5 @@ int main() {
     pak_close(pak);
     return 0;
 }
+#endif
 
