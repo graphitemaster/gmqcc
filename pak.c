@@ -210,6 +210,9 @@ static pak_file_t *pak_open_write(const char *file) {
     pak->insert       = true;
     pak->header.magic = PAK_FOURCC;
 
+    /* on BE systems we need to swap the byte order of the FOURCC */
+    util_endianswap(&pak->header.magic, 1, sizeof(uint32_t));
+
     /*
      * We need to write out the header since files will be wrote out to
      * this even with directory entries, and that not wrote.  The header
