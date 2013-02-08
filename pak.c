@@ -530,37 +530,41 @@ int main(int argc, char **argv) {
 
     if (!file) {
         con_err("-file must be specified for output/input PAK file\n");
+        vec_free(files);
         return EXIT_FAILURE;
     }
 
     if (extract) {
         if (!(pak = pak_open(file, "r"))) {
             con_err("failed to open PAK file %s\n", file);
+            vec_free(files);
             return EXIT_FAILURE;
         }
 
         if (!pak_extract_all(pak, (directory) ? directory : "./")) {
             con_err("failed to extract PAK %s (files may be missing)\n", file);
             pak_close(pak);
+            vec_free(files);
             return EXIT_FAILURE;
         }
 
         /* not possible */
-        if (!pak_close(pak))
-            abort();
-
+        pak_close(pak);
+        vec_free(files);
         util_meminfo();
         return EXIT_SUCCESS;
     }
 
     if (!(pak = pak_open(file, "w"))) {
         con_err("failed to open PAK %s for writing\n", file);
+        vec_free(files);
         return EXIT_FAILURE;
     }
 
     if (directory && !fs_dir_change(directory)) {
         con_err("failed to change directory %s\n", directory);
         pak_close(pak);
+        vec_free(files);
         return EXIT_FAILURE;
     }
 
@@ -568,13 +572,16 @@ int main(int argc, char **argv) {
         if (!(pak_insert_one(pak, files[iter]))) {
             con_err("failed inserting %s for PAK %s\n", files[iter], file);
             pak_close(pak);
+            vec_free(files);
             return EXIT_FAILURE;
         }
     }
 
     /* not possible */
-    if (!pak_close(pak))
-        abort();
+    pak_close(pak);
+    vec_free(files);
 
+
+    util_meminfo();
     return EXIT_SUCCESS;
 }
