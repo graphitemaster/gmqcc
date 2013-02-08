@@ -9,14 +9,14 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -I. -fno-strict-aliasing -fsigned-char
+CFLAGS += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
-	CFLAGS +=                              	\
+	CFLAGS +=                              \
 		-Weverything                       \
 		-Wno-padded                        \
 		-Wno-format-nonliteral             \
@@ -41,7 +41,8 @@ ifeq ($(track), no)
     CFLAGS += -DNOTRACK
 endif
 
-OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o fs.o utf8.o correct.o pak.o
+OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o fs.o utf8.o correct.o
+OBJ_P = util.o fs.o conout.o opts.o pak.o
 OBJ_T = test.o util.o conout.o fs.o
 OBJ_C = main.o lexer.o parser.o fs.o
 OBJ_X = exec-standalone.o util.o conout.o fs.o
@@ -56,6 +57,7 @@ ifneq ("$(CYGWIN)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
+	PAK       = pak.exe
 else
 ifneq ("$(MINGW)", "")
 	#nullify the common variables that
@@ -67,6 +69,7 @@ ifneq ("$(MINGW)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
+	PAK       = pak.exe
 else
 	#arm support for linux .. we need to allow unaligned accesses
 	#to memory otherwise we just segfault everywhere
@@ -77,6 +80,7 @@ else
 	QCVM      = qcvm
 	GMQCC     = gmqcc
 	TESTSUITE = testsuite
+	PAK       = pak
 endif
 endif
 
@@ -148,7 +152,10 @@ $(GMQCC): $(OBJ_C) $(OBJ_D)
 $(TESTSUITE): $(OBJ_T)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-all: $(GMQCC) $(QCVM) $(TESTSUITE)
+$(PAK): $(OBJ_P)
+	$(CC) -o $@ $^ $(CFLAGS)
+
+all: $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK)
 
 check: all
 	@ ./$(TESTSUITE)

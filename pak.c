@@ -28,7 +28,7 @@
  * The PAK format uses a FOURCC concept for storing the magic ident within
  * the header as a uint32_t.
  */  
-#define PAK_FOURCC ((uint32_t)(('P' << 24) | ('A' << 16) | ('C' << 8) | 'K'))
+#define PAK_FOURCC ((uint32_t)(('P' | ('A' << 8) | ('C' << 16) | ('K' << 24))))
 
 typedef struct {
     uint32_t magic;  /* "PACK" */
@@ -440,4 +440,141 @@ bool pak_close(pak_file_t *pak) {
     mem_d        (pak);
 
     return true;
+}
+
+/*
+ * Fancy GCC-like LONG parsing allows things like --opt=param with
+ * assignment operator.  This is used for redirecting stdout/stderr
+ * console to specific files of your choice.
+ */
+static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out, int ds, bool split) {
+    int  argc   = *argc_;
+    char **argv = *argv_;
+
+    size_t len = strlen(optname);
+
+    if (strncmp(argv[0]+ds, optname, len))
+        return false;
+
+    /* it's --optname, check how the parameter is supplied */
+    if (argv[0][ds+len] == '=') {
+        *out = argv[0]+ds+len+1;
+        return true;
+    }
+
+    if (!split || argc < ds) /* no parameter was provided, or only single-arg form accepted */
+        return false;
+
+    /* using --opt param */
+    *out = argv[1];
+    --*argc_;
+    ++*argv_;
+    return true;
+}
+
+int main(int argc, char **argv) {
+    bool          extract   = true;
+    char         *redirout  = (char*)stdout;
+    char         *redirerr  = (char*)stderr;
+    char         *directory = NULL;
+    char         *file      = NULL;
+    char        **files     = NULL;
+    pak_file_t   *pak       = NULL;
+    size_t        iter      = 0;
+
+    con_init();
+
+    /*
+     * Command line option parsing commences now We only need to support
+     * a few things in the test suite.
+     */
+    while (argc > 1) {
+        ++argv;
+        --argc;
+
+        if (argv[0][0] == '-') {
+            if (parsecmd("redirout",  &argc, &argv, &redirout,  1, false))
+                continue;
+            if (parsecmd("redirerr",  &argc, &argv, &redirerr,  1, false))
+                continue;
+            if (parsecmd("directory", &argc, &argv, &directory, 1, false))
+                continue;
+            if (parsecmd("file",      &argc, &argv, &file,      1, false))
+                continue;
+
+            con_change(redirout, redirerr);
+
+            switch (argv[0][1]) {
+                case 'e': extract = true;  continue;
+                case 'c': extract = false; continue;
+            }
+
+            if (!strcmp(argv[0]+1, "debug")) {
+                OPTS_OPTION_BOOL(OPTION_DEBUG) = true;
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "memchk")) {
+                OPTS_OPTION_BOOL(OPTION_MEMCHK) = true;
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "nocolor")) {
+                con_color(0);
+                continue;
+            }
+        }
+
+        vec_push(files, argv[0]);
+    }
+    con_change(redirout, redirerr);
+
+
+    if (!file) {
+        con_err("-file must be specified for output/input PAK file\n");
+        return EXIT_FAILURE;
+    }
+
+    if (extract) {
+        if (!(pak = pak_open(file, "r"))) {
+            con_err("failed to open PAK file %s\n", file);
+            return EXIT_FAILURE;
+        }
+
+        if (!pak_extract_all(pak, (directory) ? directory : "./")) {
+            con_err("failed to extract PAK %s (files may be missing)\n", file);
+            pak_close(pak);
+            return EXIT_FAILURE;
+        }
+
+        /* not possible */
+        if (!pak_close(pak))
+            abort();
+
+        util_meminfo();
+        return EXIT_SUCCESS;
+    }
+
+    if (!(pak = pak_open(file, "w"))) {
+        con_err("failed to open PAK %s for writing\n", file);
+        return EXIT_FAILURE;
+    }
+
+    if (directory && !fs_dir_change(directory)) {
+        con_err("failed to change directory %s\n", directory);
+        pak_close(pak);
+        return EXIT_FAILURE;
+    }
+
+    for (iter = 0; iter < vec_size(files); iter++) {
+        if (!(pak_insert_one(pak, files[iter]))) {
+            con_err("failed inserting %s for PAK %s\n", files[iter], file);
+            pak_close(pak);
+            return EXIT_FAILURE;
+        }
+    }
+
+    /* not possible */
+    if (!pak_close(pak))
+        abort();
+
+    return EXIT_SUCCESS;
 }
