@@ -159,7 +159,7 @@ all: $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK)
 
 check: all
 	@ ./$(TESTSUITE)
-test: check
+test: all
 	@ ./$(TESTSUITE)
 
 clean:
@@ -225,9 +225,3 @@ fs.o: gmqcc.h opts.def
 util.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
-
-util.o: gmqcc.h opts.def
-fs.o: gmqcc.h opts.def
-conout.o: gmqcc.h opts.def
-opts.o: gmqcc.h opts.def
-pak.o: gmqcc.h opts.def
