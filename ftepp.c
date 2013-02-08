@@ -451,8 +451,12 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
                 ftepp->token = old;
             }
         }
-        else
-        {
+        else if (macro->variadic && !strcmp(ftepp_tokval(ftepp), "__VA_COUNT__")) {
+            ftepp->token = TOKEN_VA_COUNT;
+            ptok         = pptoken_make(ftepp);
+            vec_push(macro->output, ptok);
+            ftepp_next(ftepp);
+        } else {
             ptok = pptoken_make(ftepp);
             vec_push(macro->output, ptok);
             ftepp_next(ftepp);
@@ -681,6 +685,7 @@ static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
 static bool ftepp_preprocess(ftepp_t *ftepp);
 static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params, bool resetline)
 {
+    char     *buffer       = NULL;
     char     *old_string   = ftepp->output_string;
     char     *inner_string;
     lex_file *old_lexer    = ftepp->lex;
@@ -734,6 +739,12 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 }
 
                 ftepp_param_out(ftepp, &params[out->constval.i + vararg_start]);
+                break;
+
+            case TOKEN_VA_COUNT:
+                util_asprintf(&buffer, "%d", varargs);
+                ftepp_out(ftepp, buffer, false);
+                mem_d(buffer);
                 break;
 
             case TOKEN_IDENT:

@@ -76,6 +76,7 @@ enum {
 
     TOKEN_VA_ARGS, /* for the ftepp only */
     TOKEN_VA_ARGS_ARRAY, /* for the ftepp only */
+    TOKEN_VA_COUNT,     /* to get the count of vaargs */
 
     TOKEN_STRINGCONST, /* not the typename but an actual "string" */
     TOKEN_CHARCONST,
