@@ -20,8 +20,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <sys/stat.h>
-#include <dirent.h>
 #include "gmqcc.h"
 
 /*
