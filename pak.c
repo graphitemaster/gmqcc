@@ -92,8 +92,8 @@ static void pak_tree_build(const char *entry) {
     size_t itr;
     size_t jtr;
 
-    pathsplit = mem_a(56);
-    directory = mem_a(56);
+    pathsplit = (char *)mem_a(56);
+    directory = (char *)mem_a(56);
 
     memset(pathsplit, 0, 56);
     memset(directory, 0, 56);
@@ -132,7 +132,7 @@ static pak_file_t *pak_open_read(const char *file) {
     pak_file_t *pak;
     size_t      itr;
 
-    if (!(pak = mem_a(sizeof(pak_file_t))))
+    if (!(pak = (pak_file_t*)mem_a(sizeof(pak_file_t))))
         return NULL;
 
     if (!(pak->handle = fs_file_open(file, "rb"))) {
@@ -181,7 +181,7 @@ static pak_file_t *pak_open_read(const char *file) {
 static pak_file_t *pak_open_write(const char *file) {
     pak_file_t *pak;
 
-    if (!(pak = mem_a(sizeof(pak_file_t))))
+    if (!(pak = (pak_file_t*)mem_a(sizeof(pak_file_t))))
         return NULL;
 
     /*
