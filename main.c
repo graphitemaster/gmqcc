@@ -522,7 +522,7 @@ static bool progs_nextline(char **out, size_t *alen,FILE *src) {
     char  *end;
 
     line = *out;
-    len  = file_getline(&line, alen, src);
+    len  = fs_file_getline(&line, alen, src);
     if (len == -1)
         return false;
 
@@ -608,7 +608,7 @@ int main(int argc, char **argv) {
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
         if (opts_output_wasset) {
-            outfile = file_open(OPTS_OPTION_STR(OPTION_OUTPUT), "wb");
+            outfile = fs_file_open(OPTS_OPTION_STR(OPTION_OUTPUT), "wb");
             if (!outfile) {
                 con_err("failed to open `%s` for writing\n", OPTS_OPTION_STR(OPTION_OUTPUT));
                 retval = 1;
@@ -660,7 +660,7 @@ int main(int argc, char **argv) {
 
         progs_src = true;
 
-        src = file_open("progs.src", "rb");
+        src = fs_file_open("progs.src", "rb");
         if (!src) {
             con_err("failed to open `progs.src` for reading\n");
             retval = 1;
@@ -689,7 +689,7 @@ int main(int argc, char **argv) {
         }
 
 srcdone:
-        file_close(src);
+        fs_file_close(src);
         mem_d(line);
     }
 
@@ -723,7 +723,7 @@ srcdone:
                 }
                 out = ftepp_get();
                 if (out)
-                    file_printf(outfile, "%s", out);
+                    fs_file_printf(outfile, "%s", out);
                 ftepp_flush();
             }
             else {

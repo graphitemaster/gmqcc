@@ -1250,9 +1250,9 @@ static char *ftepp_include_find_path(const char *file, const char *pathfile)
     memcpy(vec_add(filename, len+1), file, len);
     vec_last(filename) = 0;
 
-    fp = file_open(filename, "rb");
+    fp = fs_file_open(filename, "rb");
     if (fp) {
-        file_close(fp);
+        fs_file_close(fp);
         return filename;
     }
     vec_free(filename);

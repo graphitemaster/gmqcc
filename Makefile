@@ -41,10 +41,10 @@ ifeq ($(track), no)
     CFLAGS += -DNOTRACK
 endif
 
-OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o file.o utf8.o correct.o pak.o
-OBJ_T = test.o util.o conout.o file.o
-OBJ_C = main.o lexer.o parser.o file.o
-OBJ_X = exec-standalone.o util.o conout.o file.o
+OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o fs.o utf8.o correct.o pak.o
+OBJ_T = test.o util.o conout.o fs.o
+OBJ_C = main.o lexer.o parser.o fs.o
+OBJ_X = exec-standalone.o util.o conout.o fs.o
 
 ifneq ("$(CYGWIN)", "")
 	#nullify the common variables that
@@ -199,7 +199,7 @@ ir.o: gmqcc.h opts.def ir.h
 conout.o: gmqcc.h opts.def
 ftepp.o: gmqcc.h opts.def lexer.h
 opts.o: gmqcc.h opts.def
-file.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
 utf8.o: gmqcc.h opts.def
 correct.o: gmqcc.h opts.def
 pak.o: gmqcc.h opts.def
@@ -207,13 +207,13 @@ pak.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def
 util.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
-file.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
 
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
 parser.o: gmqcc.h opts.def lexer.h ast.h ir.h
-file.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
 
 util.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
-file.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def

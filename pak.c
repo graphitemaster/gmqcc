@@ -22,7 +22,13 @@
  */
 #include <sys/stat.h>
 #include <dirent.h>
-#include "gmqcc.h"  
+#include "gmqcc.h"
+
+/*
+ * The PAK format uses a FOURCC concept for storing the magic ident within
+ * the header as a uint32_t.
+ */  
+#define PAK_FOURCC ((uint32_t)(('P' << 24) | ('A' << 16) | ('C' << 8) | 'K'))
 
 typedef struct {
     uint32_t magic;  /* "PACK" */
@@ -72,20 +78,6 @@ static char *pak_tree_sep(char **str, const char *sep) {
 }
 
 /*
- * Used to spawn a directory when creating the pak directory structure/
- * tree.  Think of this as mkdir(path, 0700).  We just cargo cult our
- * own because _mkdir on windows is "illegal" for Windows8 Certification
- * do to the requirement of SECURITY_ATTRIBUTES on everything.
- */    
-static bool pak_tree_spawn(const char *path) {
-#ifdef _MSC_VER
-    return CreateDirectoryA(path, NULL); /* non-zero on success */
-#else
-    return !!(mkdir(path, 0700));        /* zero on success     */
-#endif
-}
-
-/*
  * When given a string like "a/b/c/d/e/file"
  * this function will handle the creation of
  * the directory structure, included nested
@@ -107,7 +99,7 @@ static void pak_tree_build(const char *entry) {
     memset(directory, 0, 56);
 
     strncpy(directory, entry, 56);
-    for (itr = 0; (token = strsep(&directory, "/")) != NULL; itr++) {
+    for (itr = 0; (token = pak_tree_sep(&directory, "/")) != NULL; itr++) {
         elements[itr] = token;
     }
 
@@ -115,7 +107,14 @@ static void pak_tree_build(const char *entry) {
         strcat(pathsplit, elements[jtr]);
         strcat(pathsplit, "/");
 
-        pak_tree_spawn(pathsplit);
+        if (fs_dir_make(pathsplit)) {
+            mem_d(pathsplit);
+            mem_d(directory);
+
+            /* TODO: undo on fail */
+
+            return;
+        }
     }
 
     mem_d(pathsplit);
@@ -136,7 +135,7 @@ static pak_file_t *pak_open_read(const char *file) {
     if (!(pak = mem_a(sizeof(pak_file_t))))
         return NULL;
 
-    if (!(pak->handle = file_open(file, "rb"))) {
+    if (!(pak->handle = fs_file_open(file, "rb"))) {
         mem_d(pak);
         return NULL;
     }
@@ -145,17 +144,17 @@ static pak_file_t *pak_open_read(const char *file) {
     pak->insert      = false; /* read doesn't allow insert */
 
     memset         (&pak->header, 0, sizeof(pak_header_t));
-    file_read      (&pak->header,    sizeof(pak_header_t), 1, pak->handle);
+    fs_file_read   (&pak->header,    sizeof(pak_header_t), 1, pak->handle);
     util_endianswap(&pak->header, 1, sizeof(pak_header_t));
 
     /*
-     * Every PAK file has "PACK" stored as little endian data in the
+     * Every PAK file has "PACK" stored as FOURCC data in the
      * header.  If this data cannot compare (as checked here), it's
      * probably not a PAK file.
      */
-    if ((memcmp(&(pak->header.magic), (const void*)"PACK", sizeof(uint32_t)))) {
-        file_close(pak->handle);
-        mem_d     (pak);
+    if (pak->header.magic != PAK_FOURCC) {
+        fs_file_close(pak->handle);
+        mem_d        (pak);
         return NULL;
     }
 
@@ -163,7 +162,7 @@ static pak_file_t *pak_open_read(const char *file) {
      * Time to read in the directory handles and prepare the directories
      * vector.  We're going to be reading some the file inwards soon.
      */      
-    file_seek(pak->handle, pak->header.diroff, SEEK_SET);
+    fs_file_seek(pak->handle, pak->header.diroff, SEEK_SET);
 
     /*
      * Read in all directories from the PAK file. These are considered
@@ -171,8 +170,8 @@ static pak_file_t *pak_open_read(const char *file) {
      */   
     for (itr = 0; itr < pak->header.dirlen / 64; itr++) {
         pak_directory_t dir;
-        file_read      (&dir, sizeof(pak_directory_t), 1, pak->handle);
-        /*util_endianswap(&dir, 1, sizeof(pak_directory_t));*/
+        fs_file_read   (&dir,    sizeof(pak_directory_t), 1, pak->handle);
+        util_endianswap(&dir, 1, sizeof(pak_directory_t));
 
         vec_push(pak->directories, dir);
     }
@@ -191,7 +190,7 @@ static pak_file_t *pak_open_write(const char *file) {
      */   
     pak_tree_build(file);
 
-    if (!(pak->handle = file_open(file, "wb"))) {
+    if (!(pak->handle = fs_file_open(file, "wb"))) {
         /*
          * The directory tree that was created, needs to be
          * removed entierly if we failed to open a file.
@@ -208,13 +207,8 @@ static pak_file_t *pak_open_write(const char *file) {
      * "patching" and writing the directories at the end of the
      * file.
      */
-    pak->insert = true;
-
-    /*
-     * A valid PAK file contains the magic "PACK" in it's header
-     * stored in little endian format.
-     */
-    memcpy(&(pak->header.magic), (const void*)"PACK", sizeof(uint32_t));
+    pak->insert       = true;
+    pak->header.magic = PAK_FOURCC;
 
     /*
      * We need to write out the header since files will be wrote out to
@@ -222,7 +216,7 @@ static pak_file_t *pak_open_write(const char *file) {
      * will need to be patched in later with a file_seek, and overwrite,
      * we could use offsets and other trickery.  This is just easier.
      */
-    file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
+    fs_file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
 
     return pak;
 }
@@ -244,12 +238,7 @@ bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
 
     if (!pak || !file)
         return false;
-
-    /*
-     * We could technically use a hashtable here.  But I don't think
-     * the lookup complexity is a performance concern.  This may be
-     * O(n) lookup.  But meh?
-     */    
+  
     for (itr = 0; itr < vec_size(pak->directories); itr++) {
         if (!strcmp(pak->directories[itr].name, file)) {
             /*
@@ -292,21 +281,21 @@ bool pak_extract_one(pak_file_t *pak, const char *file) {
      * Now create the file, if this operation fails.  Then abort
      * It shouldn't fail though.
      */   
-    if (!(out = file_open(file, "wb"))) {
+    if (!(out = fs_file_open(file, "wb"))) {
         mem_d(dat);
         return false;
     }
 
 
     /* read */
-    file_seek (pak->handle, dir->pos, SEEK_SET);
-    file_read (dat, 1, dir->len, pak->handle);
+    fs_file_seek (pak->handle, dir->pos, SEEK_SET);
+    fs_file_read (dat, 1, dir->len, pak->handle);
 
     /* write */
-    file_write(dat, 1, dir->len, out);
+    fs_file_write(dat, 1, dir->len, out);
 
     /* close */
-    file_close(out);
+    fs_file_close(out);
 
     /* free */
     mem_d(dat);
@@ -317,10 +306,10 @@ bool pak_extract_one(pak_file_t *pak, const char *file) {
 bool pak_extract_all(pak_file_t *pak, const char *dir) {
     size_t itr;
 
-    if (!pak_tree_spawn(dir))
+    if (!fs_dir_make(dir))
         return false;
 
-    if (chdir(dir))
+    if (fs_dir_change(dir))
         return false;
 
     for (itr = 0; itr < vec_size(pak->directories); itr++) {
@@ -348,7 +337,7 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
     if (!pak || !file || !pak->insert || pak_exists(pak, file, NULL))
         return false;
 
-    if (!(fp = fopen(file, "rb")))
+    if (!(fp = fs_file_open(file, "rb")))
         return false;
 
     /*
@@ -356,18 +345,18 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
      * the directory entry, and the actual contents of the file
      * to the PAK file itself.
      */
-    file_seek(fp, 0, SEEK_END);
-    dir.len = ftell(fp);
-    file_seek(fp, 0, SEEK_SET);
+    fs_file_seek(fp, 0, SEEK_END);
+    dir.len = fs_file_tell(fp);
+    fs_file_seek(fp, 0, SEEK_SET);
 
-    dir.pos = ftell(pak->handle);
+    dir.pos = fs_file_tell(pak->handle);
 
     /*
      * We're limited to 56 bytes for a file name string, that INCLUDES
      * the directory and '/' seperators.
      */   
     if (strlen(file) >= 56) {
-        file_close(fp);
+        fs_file_close(fp);
         return false;
     }
 
@@ -378,13 +367,13 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
      * redirected into the PAK file.
      */   
     if (!(dat = (unsigned char *)mem_a(dir.len))) {
-        file_close(fp);
+        fs_file_close(fp);
         return false;
     }
 
-    file_read (dat, dir.len, 1, fp);
-    file_close(fp);
-    file_write(dat, dir.len, 1, pak->handle);
+    fs_file_read (dat, dir.len, 1, fp);
+    fs_file_close(fp);
+    fs_file_write(dat, dir.len, 1, pak->handle);
 
     /*
      * Now add the directory to the directories vector, so pak_close
@@ -406,17 +395,17 @@ bool pak_insert_all(pak_file_t *pak, const char *dir) {
     if (!(pak->insert))
         return false;
 
-    if (!(dp = opendir(dir)))
+    if (!(dp = fs_dir_open(dir)))
         return false;
 
-    while ((dirp = readdir(dp))) {
+    while ((dirp = fs_dir_read(dp))) {
         if (!(pak_insert_one(pak, dirp->d_name))) {
-            closedir(dp);
+            fs_dir_close(dp);
             return false;
         }
     }
 
-    closedir(dp);
+    fs_dir_close(dp);
     return true;
 }
 
@@ -435,34 +424,20 @@ bool pak_close(pak_file_t *pak) {
         pak->header.diroff = ftell(pak->handle);
 
         /* patch header */ 
-        file_seek (pak->handle, 0, SEEK_SET);
-        file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
+        fs_file_seek (pak->handle, 0, SEEK_SET);
+        fs_file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
 
         /* write directories */
-        file_seek (pak->handle, pak->header.diroff, SEEK_SET);
+        fs_file_seek (pak->handle, pak->header.diroff, SEEK_SET);
 
         for (itr = 0; itr < vec_size(pak->directories); itr++) {
-            file_write(&(pak->directories[itr]), sizeof(pak_directory_t), 1, pak->handle);
+            fs_file_write(&(pak->directories[itr]), sizeof(pak_directory_t), 1, pak->handle);
         }
     }
 
-    vec_free  (pak->directories);
-    file_close(pak->handle);
-    mem_d     (pak);
+    vec_free     (pak->directories);
+    fs_file_close(pak->handle);
+    mem_d        (pak);
 
     return true;
 }
-
-#if 0
-/* test extraction */
-int main() {
-    pak_file_t *pak = pak_open("pak0.pak", "r");
-    if (!pak) abort();
-
-    pak_extract_all(pak, "foo/");
-
-    pak_close(pak);
-    return 0;
-}
-#endif
-

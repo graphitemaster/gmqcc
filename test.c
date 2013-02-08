@@ -152,17 +152,10 @@ int task_pclose(FILE **handles) {
     return status;
 }
 #else
-#    define _WIN32_LEAN_AND_MEAN
-#    define popen  _popen
-#    define pclose _pclose
-#    include <windows.h>
-#    include <io.h>
-#    include <fcntl.h>
     /*
      * Bidirectional piping implementation for windows using CreatePipe and DuplicateHandle +
      * other hacks.
      */
-
     typedef struct {
         int __dummy;
         /* TODO: implement */
@@ -181,96 +174,10 @@ int task_pclose(FILE **handles) {
         (void)files;
         return;
     }
-
-#    ifdef __MINGW32__
-        /* mingw32 has dirent.h */
-#        include <dirent.h>
-#    elif defined (_WIN32)
-        /* 
-         * visual studio lacks dirent.h it's a posix thing
-         * so we emulate it with the WinAPI.
-         */
-
-        struct dirent {
-            long           d_ino;
-            unsigned short d_reclen;
-            unsigned short d_namlen;
-            char           d_name[FILENAME_MAX];
-        };
-
-        typedef struct {
-            struct _finddata_t dd_dta;
-            struct dirent      dd_dir;
-            long               dd_handle;
-            int                dd_stat;
-            char               dd_name[1];
-        } DIR;
-
-        DIR *opendir(const char *name) {
-            DIR *dir = (DIR*)mem_a(sizeof(DIR) + strlen(name));
-            if (!dir)
-                return NULL;
-
-            strcpy(dir->dd_name, name);
-            return dir;
-        }
-            
-        int closedir(DIR *dir) {
-            FindClose((HANDLE)dir->dd_handle);
-            mem_d ((void*)dir);
-            return 0;
-        }
-
-        struct dirent *readdir(DIR *dir) {
-            WIN32_FIND_DATA info;
-            struct dirent  *data;
-            int             rets;
-
-            if (!dir->dd_handle) {
-                char *dirname;
-                if (*dir->dd_name) {
-                    size_t n = strlen(dir->dd_name);
-                    if ((dirname  = (char*)mem_a(n + 5) /* 4 + 1 */)) {
-                        strcpy(dirname,     dir->dd_name);
-                        strcpy(dirname + n, "\\*.*");   /* 4 + 1 */
-                    }
-                } else {
-                    if (!(dirname = util_strdup("\\*.*")))
-                        return NULL;
-                }
-
-                dir->dd_handle = (long)FindFirstFile(dirname, &info);
-                mem_d(dirname);
-                rets = !(!dir->dd_handle);
-            } else if (dir->dd_handle != -11) {
-                rets = FindNextFile ((HANDLE)dir->dd_handle, &info);
-            } else {
-                rets = 0;
-            }
-
-            if (!rets)
-                return NULL;
-            
-            if ((data = (struct dirent*)mem_a(sizeof(struct dirent)))) {
-                strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
-                data->d_name[FILENAME_MAX - 1] = '\0'; /* terminate */
-                data->d_namlen                 = strlen(data->d_name);
-            }
-            return data;
-        }
-
-        /*
-         * Visual studio also lacks S_ISDIR for sys/stat.h, so we emulate this as well
-         * which is not hard at all.
-         */
-#        undef  S_ISDIR /* undef just incase */
-#        define S_ISDIR(X) ((X)&_S_IFDIR)
-#    endif
-#endif
+#endif /*! _WIN32 */
 
 #define TASK_COMPILE 0
 #define TASK_EXECUTE 1
-
 /*
  * Task template system:
  *  templates are rules for a specific test, used to create a "task" that
@@ -439,7 +346,7 @@ bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size
         return false;
 
     /* top down parsing */
-    while (file_getline(&back, &size, fp) != EOF) {
+    while (fs_file_getline(&back, &size, fp) != EOF) {
         /* skip whitespace */
         data = back;
         if (*data && (*data == ' ' || *data == '\t'))
@@ -580,7 +487,7 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
     memset  (fullfile, 0, sizeof(fullfile));
     snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
 
-    tempfile = file_open(fullfile, "r");
+    tempfile = fs_file_open(fullfile, "r");
     tmpl     = (task_template_t*)mem_a(sizeof(task_template_t));
     task_template_nullify(tmpl);
 
@@ -664,7 +571,7 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
     }
 
 success:
-    file_close(tempfile);
+    fs_file_close(tempfile);
     return tmpl;
 
 failure:
@@ -673,7 +580,7 @@ failure:
      * so the check to see if it's not null here is required.
      */
     if (tempfile)
-        file_close(tempfile);
+        fs_file_close(tempfile);
     mem_d (tmpl);
 
     return NULL;
@@ -853,7 +760,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stdout", tmpl->tempfilename);
             task.stdoutlogfile = util_strdup(buf);
-            if (!(task.stdoutlog     = file_open(buf, "w"))) {
+            if (!(task.stdoutlog     = fs_file_open(buf, "w"))) {
                 con_err("error opening %s for stdout\n", buf);
                 continue;
             }
@@ -861,7 +768,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stderr", tmpl->tempfilename);
             task.stderrlogfile = util_strdup(buf);
-            if (!(task.stderrlog = file_open(buf, "w"))) {
+            if (!(task.stderrlog = fs_file_open(buf, "w"))) {
                 con_err("error opening %s for stderr\n", buf);
                 continue;
             }
@@ -920,8 +827,8 @@ void task_destroy(void) {
          * annoying to have to do all this cleanup work.
          */
         if (task_tasks[i].runhandles) task_pclose(task_tasks[i].runhandles);
-        if (task_tasks[i].stdoutlog)  file_close (task_tasks[i].stdoutlog);
-        if (task_tasks[i].stderrlog)  file_close (task_tasks[i].stderrlog);
+        if (task_tasks[i].stdoutlog)  fs_file_close (task_tasks[i].stdoutlog);
+        if (task_tasks[i].stderrlog)  fs_file_close (task_tasks[i].stderrlog);
 
         /*
          * Only remove the log files if the test actually compiled otherwise
@@ -995,7 +902,7 @@ bool task_execute(task_template_t *tmpl, char ***line) {
         char  *data    = NULL;
         size_t size    = 0;
         size_t compare = 0;
-        while (file_getline(&data, &size, execute) != EOF) {
+        while (fs_file_getline(&data, &size, execute) != EOF) {
             if (!strcmp(data, "No main function found\n")) {
                 con_err("test failure: `%s` (No main function found) [%s]\n",
                     tmpl->description,
@@ -1070,17 +977,17 @@ void task_schedualize(size_t *pad) {
          * Read data from stdout first and pipe that stuff into a log file
          * then we do the same for stderr.
          */
-        while (file_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
-            file_puts(task_tasks[i].stdoutlog, data);
+        while (fs_file_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
+            fs_file_puts(task_tasks[i].stdoutlog, data);
 
             if (strstr(data, "failed to open file")) {
                 task_tasks[i].compiled = false;
                 execute                = false;
             }
 
-            fflush(task_tasks[i].stdoutlog);
+            fs_file_flush(task_tasks[i].stdoutlog);
         }
-        while (file_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
+        while (fs_file_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
             /*
              * If a string contains an error we just dissalow execution
              * of it in the vm.
@@ -1094,8 +1001,8 @@ void task_schedualize(size_t *pad) {
                 task_tasks[i].compiled = false;
             }
 
-            file_puts(task_tasks[i].stderrlog, data);
-            fflush(task_tasks[i].stdoutlog);
+            fs_file_puts (task_tasks[i].stderrlog, data);
+            fs_file_flush(task_tasks[i].stdoutlog);
         }
 
         if (!task_tasks[i].compiled && strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {

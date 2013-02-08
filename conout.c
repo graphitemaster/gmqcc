@@ -231,9 +231,9 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
 
 void con_close() {
     if (!GMQCC_IS_DEFINE(console.handle_err))
-        file_close(console.handle_err);
+        fs_file_close(console.handle_err);
     if (!GMQCC_IS_DEFINE(console.handle_out))
-        file_close(console.handle_out);
+        fs_file_close(console.handle_out);
 }
 
 void con_color(int state) {
@@ -275,12 +275,12 @@ int con_change(const char *out, const char *err) {
     if (GMQCC_IS_DEFINE(out)) {
         console.handle_out = GMQCC_IS_STDOUT(out) ? stdout : stderr;
         con_enablecolor();
-    } else if (!(console.handle_out = file_open(out, "w"))) return 0;
+    } else if (!(console.handle_out = fs_file_open(out, "w"))) return 0;
 
     if (GMQCC_IS_DEFINE(err)) {
         console.handle_err = GMQCC_IS_STDOUT(err) ? stdout : stderr;
         con_enablecolor();
-    } else if (!(console.handle_err = file_open(err, "w"))) return 0;
+    } else if (!(console.handle_err = fs_file_open(err, "w"))) return 0;
 
     /* no buffering */
     setvbuf(console.handle_out, NULL, _IONBF, 0);

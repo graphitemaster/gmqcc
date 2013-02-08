@@ -184,7 +184,7 @@ static void lex_token_new(lex_file *lex)
 lex_file* lex_open(const char *file)
 {
     lex_file *lex;
-    FILE *in = file_open(file, "rb");
+    FILE *in = fs_file_open(file, "rb");
 
     if (!in) {
         lexerror(NULL, "open failed: '%s'\n", file);
@@ -193,7 +193,7 @@ lex_file* lex_open(const char *file)
 
     lex = (lex_file*)mem_a(sizeof(*lex));
     if (!lex) {
-        file_close(in);
+        fs_file_close(in);
         lexerror(NULL, "out of memory\n");
         return NULL;
     }
@@ -258,7 +258,7 @@ void lex_close(lex_file *lex)
         vec_free(lex->modelname);
 
     if (lex->file)
-        file_close(lex->file);
+        fs_file_close(lex->file);
 #if 0
     if (lex->tok)
         token_delete(lex->tok);

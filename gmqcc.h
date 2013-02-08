@@ -37,7 +37,7 @@
 #ifdef _MSC_VER
 #   pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
 #   pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
-#endif
+#endif /*! _MSC_VER */
 
 #define GMQCC_VERSION_MAJOR 0
 #define GMQCC_VERSION_MINOR 3
@@ -55,7 +55,7 @@
 #    define GMQCC_DEV_VERSION_STRING "development build\n"
 #else
 #    define GMQCC_DEV_VERSION_STRING
-#endif
+#endif /*! GMQCC_GITINGO */
 
 #define GMQCC_STRINGIFY(x) #x
 #define GMQCC_IND_STRING(x) GMQCC_STRINGIFY(x)
@@ -78,10 +78,10 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #ifndef __cplusplus
 #   ifdef  false
 #       undef  false
-#   endif /* !false */
+#   endif /*! false */
 #   ifdef  true
 #       undef true
-#   endif /* !true  */
+#   endif /*! true  */
 #   define false (0)
 #   define true  (1)
 #   ifdef __STDC_VERSION__
@@ -89,11 +89,11 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
             typedef int  bool;
 #       else
             typedef _Bool bool;
-#       endif
+#       endif /*! __STDC_VERSION__ < 199901L && __GNUC__ < 3 */
 #   else
         typedef int bool;
-#   endif /* !__STDC_VERSION__ */
-#endif    /* !__cplusplus      */
+#   endif /*! __STDC_VERSION__ */
+#endif /*! __cplusplus      */
 
 /*
  * Of some functions which are generated we want to make sure
@@ -106,7 +106,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #else
 #   define GMQCC_WARN
 #   define GMQCC_USED
-#endif
+#endif /*! defined(__GNUC__) || defined (__CLANG__) */
 /*
  * This is a hack to silent clang regarding empty
  * body if statements.
@@ -125,13 +125,13 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #               define GMQCC_INLINE
 #           else
 #               define GMQCC_INLINE __attribute__ ((always_inline))
-#           endif
+#           endif /*! __GNUC__ < 2 */
 #       else
 #           define GMQCC_INLINE
-#       endif
+#       endif /*! defined(__GNUC__) || defined (__CLANG__) */
 #    else
 #       define GMQCC_INLINE inline
-#    endif
+#    endif /*! __STDC_VERSION < 199901L */
 /*
  * Visual studio has __forcinline we can use.  So lets use that
  * I suspect it also has just __inline of some sort, but our use
@@ -141,7 +141,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #    define GMQCC_INLINE __forceinline
 #else
 #    define GMQCC_INLINE
-#endif /* !__STDC_VERSION__ */
+#endif /*! __STDC_VERSION__ */
 
 /*
  * noreturn is present in GCC and clang
@@ -153,7 +153,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #    define GMQCC_NORETURN __attribute__ ((noreturn))
 #else
 #    define GMQCC_NORETURN
-#endif
+#endif /*! (defined(__GNUC__) && __GNUC__ >= 2) || defined (__CLANG__) */
 
 #ifndef _MSC_VER
 #   include <stdint.h>
@@ -166,7 +166,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
     typedef __int16          int16_t;
     typedef __int32          int32_t;
     typedef __int64          int64_t;
-#endif
+#endif /*! _MSC_VER */
 
 /* 
  *windows makes these prefixed because they're C99
@@ -177,7 +177,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #    define snprintf(X, Y, Z, ...) _snprintf(X, Y, Z, __VA_ARGS__)
     /* strtof doesn't exist -> strtod does though :) */
 #    define strtof(X, Y)          (float)(strtod(X, Y))
-#endif
+#endif /*! _MSC_VER */
 
 /*
  * Very roboust way at determining endianess at compile time: this handles
@@ -197,14 +197,14 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #           define BIG_ENDIAN
 #       elif defined (__LITTLE_ENDIAN__) && !defined (LITTLE_ENDIAN)
 #           define LITTLE_ENDIAN
-#       endif
+#       endif /*! defined (__BIG_ENDIAN__) && !defined(BIG_ENDIAN) */
 #   elif !defined (__MINGW32__)
 #       include <endian.h>
 #       if !defined (__BEOS__)
 #           include <byteswap.h>
-#       endif
-#   endif
-#endif
+#       endif /*! !definde (__BEOS__) */
+#   endif /*! defined (__FreeBSD__) || defined (__OpenBSD__) */
+#endif /*! defined (__GNUC__) || defined (__GNU_LIBRARY__) */
 #if !defined(PLATFORM_BYTE_ORDER)
 #   if defined (LITTLE_ENDIAN) || defined (BIG_ENDIAN)
 #       if defined (LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
@@ -215,7 +215,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
 #       elif defined (BYTE_ORDER) && (BYTE_ORDER == BIG_ENDIAN)
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
-#       endif
+#       endif /*! defined (LITTLE_ENDIAN) && !defined(BIG_ENDIAN) */
 #   elif defined (_LITTLE_ENDIAN) || defined (_BIG_ENDIAN)
 #       if defined (_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
@@ -225,7 +225,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
 #       elif defined (_BYTE_ORDER) && (_BYTE_ORDER == _BIG_ENDIAN)
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
-#       endif
+#       endif /*! defined (_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN) */
 #   elif defined (__LITTLE_ENDIAN__) || defined (__BIG_ENDIAN__)
 #       if defined (__LITTLE_ENDIAN__) && !defined (__BIG_ENDIAN__)
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
@@ -235,9 +235,9 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_LITTLE
 #       elif defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __BIG_ENDIAN__)
 #           define PLATFORM_BYTE_ORDER GMQCC_BYTE_ORDER_BIG
-#       endif
-#   endif
-#endif
+#       endif /*! defined (__LITTLE_ENDIAN__) && !defined (__BIG_ENDIAN__) */
+#   endif /*! defined(LITTLE_ENDIAN) || defined (BIG_ENDIAN) */
+#endif /*! !defined(PLATFORM_BYTE_ORDER) */
 #if !defined (PLATFORM_BYTE_ORDER)
 #   if   defined (__alpha__) || defined (__alpha)    || defined (i386)       || \
          defined (__i386__)  || defined (_M_I86)     || defined (_M_IX86)    || \
@@ -257,8 +257,36 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   else
 #       define PLATFORM_BYTE_ORDER -1
 #   endif
-#endif
+#endif /*! !defined (PLATFORM_BYTE_ORDER) */
 
+/*
+ * On windows systems where we're not compiling with MING32 we need a
+ * little extra help on dependinces for implementing our own dirent.h
+ * in fs.c.
+ */   
+#if defined(_WIN32) && !defined(__MINGW32__)
+#   define _WIN32_LEAN_AND_MEAN
+#   include <windows.h>
+#   include <io.h>
+#   include <fcntl.h>
+
+    struct dirent {
+        long d_ino;
+        unsigned short     d_reclen;
+        unsigned short     d_namlen;
+        char               d_name[FILENAME_MAX];
+    }
+
+    typedef struct {
+        struct _finddata_t dd_dta;
+        struct dirent      dd_dir;
+        long               dd_handle;
+        int                dd_stat;
+        char               dd_name[1];
+    } DIR;
+#else
+#   include <dirent.h>
+#endif /*! _WIN32 && !defined(__MINGW32__) */
 
 
 /*===================================================================*/
@@ -296,7 +324,7 @@ int util_asprintf (char **ret, const char *fmt, ...);
 #    define mem_a(x)    util_memory_a((x), __LINE__, __FILE__)
 #    define mem_d(x)    util_memory_d((void*)(x))
 #    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
-#endif
+#endif /*! NOTRACK */
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -434,19 +462,29 @@ void        util_hsdel(hash_set_t *);
 /*===================================================================*/
 /*============================ file.c ===============================*/
 /*===================================================================*/
-GMQCC_INLINE void    file_close  (FILE *);
-GMQCC_INLINE int     file_error  (FILE *);
-GMQCC_INLINE int     file_getc   (FILE *);
-GMQCC_INLINE int     file_printf (FILE *, const char *, ...);
-GMQCC_INLINE int     file_puts   (FILE *, const char *);
-GMQCC_INLINE int     file_putc   (FILE *, int);
-GMQCC_INLINE int     file_seek   (FILE *, long int, int);
+/* file handling */
+void           fs_file_close  (FILE *);
+int            fs_file_error  (FILE *);
+int            fs_file_getc   (FILE *);
+int            fs_file_flush  (FILE *);
+int            fs_file_printf (FILE *, const char *, ...);
+int            fs_file_puts   (FILE *, const char *);
+int            fs_file_putc   (FILE *, int);
+int            fs_file_seek   (FILE *, long int, int);
+long int       fs_file_tell   (FILE *); 
 
-GMQCC_INLINE size_t  file_read   (void *,        size_t, size_t, FILE *);
-GMQCC_INLINE size_t  file_write  (const void *,  size_t, size_t, FILE *);
+size_t         fs_file_read   (void *,        size_t, size_t, FILE *);
+size_t         fs_file_write  (const void *,  size_t, size_t, FILE *);
 
-GMQCC_INLINE FILE   *file_open   (const char *, const char *);
-/*NOINLINE*/ int     file_getline(char  **, size_t *, FILE *);
+FILE          *fs_file_open   (const char *, const char *);
+int            fs_file_getline(char  **, size_t *, FILE *);
+
+/* directory handling */
+DIR           *fs_dir_open    (const char *);
+int            fs_dir_close   (DIR *);
+struct dirent *fs_dir_read    (DIR *);
+int            fs_dir_make    (const char *);
+int            fs_dir_change  (const char *);
 
 
 /*===================================================================*/
@@ -1168,4 +1206,4 @@ extern opts_cmd_t opts;
 #define OPTS_OPTION_U32(X)  (opts.options[X].U32)
 #define OPTS_OPTION_STR(X)  (opts.options[X].STR)
 
-#endif
+#endif /*! GMQCC_HDR */

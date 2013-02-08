@@ -55,26 +55,26 @@ qc_program* prog_load(const char *filename, bool skipversion)
 {
     qc_program   *prog;
     prog_header   header;
-    FILE         *file   = file_open(filename, "rb");
+    FILE         *file   = fs_file_open(filename, "rb");
 
     if (!file)
         return NULL;
 
-    if (file_read(&header, sizeof(header), 1, file) != 1) {
+    if (fs_file_read(&header, sizeof(header), 1, file) != 1) {
         loaderror("failed to read header from '%s'", filename);
-        file_close(file);
+        fs_file_close(file);
         return NULL;
     }
 
     if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
-        file_close(file);
+        fs_file_close(file);
         return NULL;
     }
 
     prog = (qc_program*)mem_a(sizeof(qc_program));
     if (!prog) {
-        file_close(file);
+        fs_file_close(file);
         fprintf(stderr, "failed to allocate program data\n");
         return NULL;
     }
@@ -90,11 +90,11 @@ qc_program* prog_load(const char *filename, bool skipversion)
     }
 
 #define read_data(hdrvar, progvar, reserved)                           \
-    if (file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {        \
+    if (fs_file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {        \
         loaderror("seek failed");                                      \
         goto error;                                                    \
     }                                                                  \
-    if (file_read (                                                    \
+    if (fs_file_read (                                                    \
             vec_add(prog->progvar, header.hdrvar.length + reserved),   \
             sizeof(*prog->progvar),                                    \
             header.hdrvar.length,                                      \
@@ -114,7 +114,7 @@ qc_program* prog_load(const char *filename, bool skipversion)
     read_data1(strings);
     read_data2(globals, 2); /* reserve more in case a RETURN using with the global at "the end" exists */
 
-    file_close(file);
+    fs_file_close(file);
 
     /* profile counters */
     memset(vec_add(prog->profile, vec_size(prog->code)), 0, sizeof(prog->profile[0]) * vec_size(prog->code));
@@ -354,7 +354,7 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
 done:
     if (len < (int)sizeof(spaces)-1) {
         spaces[sizeof(spaces)-1-len] = 0;
-        file_puts(stdout, spaces);
+        fs_file_puts(stdout, spaces);
         spaces[sizeof(spaces)-1-len] = ' ';
     }
 }
