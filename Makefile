@@ -163,7 +163,7 @@ test: check
 	@ ./$(TESTSUITE)
 
 clean:
-	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) *.dat
+	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat
 
 splint:
 	@  splint $(SPLINTFLAGS) *.c *.h
