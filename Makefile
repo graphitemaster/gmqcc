@@ -177,6 +177,8 @@ depend:
 		$(subst .o,.c,$(OBJ_C))
 	@makedepend -a -Y -w 65536 2> /dev/null \
 		$(subst .o,.c,$(OBJ_X))
+	@makedepend -a -Y -w 65536 2> /dev/null \
+		$(subst .o,.c,$(OBJ_P))
 
 #install rules
 install: install-gmqcc install-qcvm install-doc
@@ -209,7 +211,6 @@ opts.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
 utf8.o: gmqcc.h opts.def
 correct.o: gmqcc.h opts.def
-pak.o: gmqcc.h opts.def
 
 test.o: gmqcc.h opts.def
 util.o: gmqcc.h opts.def
@@ -224,3 +225,9 @@ fs.o: gmqcc.h opts.def
 util.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
+
+util.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+opts.o: gmqcc.h opts.def
+pak.o: gmqcc.h opts.def
