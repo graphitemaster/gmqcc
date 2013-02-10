@@ -124,7 +124,6 @@ char *ftepp_predef_line(lex_file *context) {
 char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    memset (value, 0, length);
     sprintf(value, "\"%s\"", context->name);
 
     return value;
