@@ -94,7 +94,6 @@ static void pak_tree_build(const char *entry) {
     directory = (char *)mem_a(56);
 
     memset(pathsplit, 0, 56);
-    memset(directory, 0, 56);
 
     strncpy(directory, entry, 56);
     for (itr = 0; (token = pak_tree_sep(&directory, "/")) != NULL; itr++) {
