@@ -1118,13 +1118,13 @@ enum {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) X,
 #  include "opts.def"
-    COUNT_FLAGS
+    COUNT_FLAGS,
 };
 static const opts_flag_def opts_flag_list[] = {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { NULL, LONGBIT(0)}
 };
 
 enum {

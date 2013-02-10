@@ -195,6 +195,7 @@ static pak_file_t *pak_open_write(const char *file) {
          */   
         /* TODO backup directory clean */
 
+        mem_d(pak);
         return NULL;
     }
 
