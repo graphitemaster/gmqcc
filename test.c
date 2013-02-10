@@ -484,7 +484,6 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
     FILE            *tempfile = NULL;
     task_template_t *tmpl     = NULL;
 
-    memset  (fullfile, 0, sizeof(fullfile));
     snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
 
     tempfile = fs_file_open(fullfile, "r");
@@ -648,7 +647,6 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     dir = opendir(curdir);
 
     while ((files = readdir(dir))) {
-        memset  (buffer, 0,sizeof(buffer));
         snprintf(buffer,   sizeof(buffer), "%s/%s", curdir, files->d_name);
 
         if (stat(buffer, &directory) == -1) {
@@ -695,7 +693,6 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
              * which will be refered to with a handle in the task for
              * reading the data from the pipe.
              */
-            memset (buf,0,sizeof(buf));
             if (qcflags) {
                 if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
                     snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
@@ -757,7 +754,6 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
              * Open up some file desciptors for logging the stdout/stderr
              * to our own.
              */
-            memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stdout", tmpl->tempfilename);
             task.stdoutlogfile = util_strdup(buf);
             if (!(task.stdoutlog     = fs_file_open(buf, "w"))) {
@@ -765,7 +761,6 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 continue;
             }
 
-            memset  (buf,0,sizeof(buf));
             snprintf(buf,  sizeof(buf), "%s.stderr", tmpl->tempfilename);
             task.stderrlogfile = util_strdup(buf);
             if (!(task.stderrlog = fs_file_open(buf, "w"))) {
@@ -798,7 +793,6 @@ void task_precleanup(const char *curdir) {
     dir = opendir(curdir);
 
     while ((files = readdir(dir))) {
-        memset(buffer, 0, sizeof(buffer));
         if (strstr(files->d_name, "TMP")     ||
             strstr(files->d_name, ".stdout") ||
             strstr(files->d_name, ".stderr"))
