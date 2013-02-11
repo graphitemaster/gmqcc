@@ -300,50 +300,34 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
      */
 #   undef  S_ISDIR
 #   define S_ISDIR(X) ((X)&_S_IFDIR)
-#elif !defined(__MINGW32__)
-    #include <sys/stat.h> /* mkdir */
-    #include <unistd.h>   /* chdir */
-
-    int fs_dir_make(const char *path) {
-        return mkdir(path, 0700);
-    }
-
-    DIR *fs_dir_open(const char *name) {
-        return opendir(name);
-    }
-
-    int fs_dir_close(DIR *dir) {
-        return closedir(dir);
-    }
-
-    struct dirent *fs_dir_read(DIR *dir) {
-        return readdir(dir);
-    }
-
-    int fs_dir_change(const char *path) {
-        return chdir(path);
-    }
 #else
-    int fs_dir_make(const char *path) {
-        return mkdir(path);
-    }
+#   if !defined(__MINGW32__)
+#       include <sys/stat.h> /* mkdir */
+#       include <unistd.h>   /* chdir */
 
-    DIR *fs_dir_open(const char *name) {
-        return opendir(name);
-    }
+        int fs_dir_make(const char *path) {
+            return mkdir(path, 0700);
+        }
+#   else
+        int fs_dir_make(const char *path) {
+            return mkdir(path);
+        }
+#   endif /*! !defined(__MINGW32__) */
 
-    int fs_dir_close(DIR *dir) {
-        return closedir(dir);
-    }
+DIR *fs_dir_open(const char *name) {
+    return opendir(name);
+}
 
-    struct dirent *fs_dir_read(DIR *dir) {
-        return readdir(dir);
-    }
+int fs_dir_close(DIR *dir) {
+    return closedir(dir);
+}
 
-    int fs_dir_change(const char *path) {
-        return chdir(path);
-    }
-#endif
+struct dirent *fs_dir_read(DIR *dir) {
+    return readdir(dir);
+}
 
+int fs_dir_change(const char *path) {
+    return chdir(path);
+}
 
-
+#endif /*! defined(_WIN32) && !defined(__MINGW32__) */
