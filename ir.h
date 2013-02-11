@@ -175,7 +175,6 @@ typedef struct ir_block_s
     size_t entry_id;
     size_t eid;
     bool   is_return;
-    size_t run_id;
 
     struct ir_function_s *owner;
 

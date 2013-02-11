@@ -880,7 +880,6 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
 
     self->eid = 0;
     self->is_return = false;
-    self->run_id = 0;
 
     self->living = NULL;
 
@@ -2021,87 +2020,8 @@ void ir_function_enumerate(ir_function *self)
         ++instruction_id;
 
         self->blocks[i]->eid = i;
-        self->blocks[i]->run_id = 0;
         ir_block_enumerate(self->blocks[i], &instruction_id);
     }
-}
-
-static bool ir_block_life_propagate(ir_block *b, ir_block *prev, bool *changed);
-bool ir_function_calculate_liferanges(ir_function *self)
-{
-    size_t i, s;
-    bool changed;
-
-    /* parameters live at 0 */
-    for (i = 0; i < vec_size(self->params); ++i)
-        ir_value_life_merge(self->locals[i], 0);
-
-    do {
-        self->run_id++;
-        changed = false;
-        for (i = 0; i != vec_size(self->blocks); ++i)
-        {
-            if (self->blocks[i]->is_return)
-            {
-                vec_free(self->blocks[i]->living);
-                if (!ir_block_life_propagate(self->blocks[i], NULL, &changed))
-                    return false;
-            }
-        }
-    } while (changed);
-    if (vec_size(self->blocks)) {
-        ir_block *block = self->blocks[0];
-        for (i = 0; i < vec_size(block->living); ++i) {
-            ir_value *v = block->living[i];
-            if (v->store != store_local)
-                continue;
-            if (v->vtype == TYPE_VECTOR)
-                continue;
-            self->flags |= IR_FLAG_HAS_UNINITIALIZED;
-            /* find the instruction reading from it */
-            for (s = 0; s < vec_size(v->reads); ++s) {
-                if (v->reads[s]->eid == v->life[0].end)
-                    break;
-            }
-            if (s < vec_size(v->reads)) {
-                if (irwarning(v->context, WARN_USED_UNINITIALIZED,
-                              "variable `%s` may be used uninitialized in this function\n"
-                              " -> %s:%i",
-                              v->name,
-                              v->reads[s]->context.file, v->reads[s]->context.line)
-                   )
-                {
-                    return false;
-                }
-                continue;
-            }
-            if (v->memberof) {
-                ir_value *vec = v->memberof;
-                for (s = 0; s < vec_size(vec->reads); ++s) {
-                    if (vec->reads[s]->eid == v->life[0].end)
-                        break;
-                }
-                if (s < vec_size(vec->reads)) {
-                    if (irwarning(v->context, WARN_USED_UNINITIALIZED,
-                                  "variable `%s` may be used uninitialized in this function\n"
-                                  " -> %s:%i",
-                                  v->name,
-                                  vec->reads[s]->context.file, vec->reads[s]->context.line)
-                       )
-                    {
-                        return false;
-                    }
-                    continue;
-                }
-            }
-            if (irwarning(v->context, WARN_USED_UNINITIALIZED,
-                          "variable `%s` may be used uninitialized in this function", v->name))
-            {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 /* Local-value allocator
@@ -2422,46 +2342,11 @@ static bool ir_block_living_lock(ir_block *self)
     return changed;
 }
 
-static bool ir_block_life_prop_previous(ir_block* self, ir_block *prev, bool *changed)
-{
-    size_t i;
-
-    (void)changed;
-
-    /* values which have been read in a previous iteration are now
-     * in the "living" array even if the previous block doesn't use them.
-     * So we have to remove whatever does not exist in the previous block.
-     * They will be re-added on-read, but the liferange merge won't cause
-     * a change.
-    for (i = 0; i < vec_size(self->living); ++i)
-    {
-        if (!vec_ir_value_find(prev->living, self->living[i], NULL)) {
-            vec_remove(self->living, i, 1);
-            --i;
-        }
-    }
-     */
-
-    /* Whatever the previous block still has in its living set
-     * must now be added to ours as well.
-     */
-    for (i = 0; i < vec_size(prev->living); ++i)
-    {
-        if (vec_ir_value_find(self->living, prev->living[i], NULL))
-            continue;
-        vec_push(self->living, prev->living[i]);
-        /*
-        irerror(self->contextt from prev: %s", self->label, prev->living[i]->_name);
-        */
-    }
-    return true;
-}
-
-static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *changed)
+static bool ir_block_life_propagate(ir_block *self, bool *changed)
 {
     ir_instr *instr;
     ir_value *value;
-    size_t i, o, p, mem;
+    size_t i, o, p, mem, cnt;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
     char dbg_ind[16];
@@ -2469,10 +2354,16 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     dbg_ind[1] = '0';
     (void)dbg_ind;
 
-    if (prev)
-    {
-        if (!ir_block_life_prop_previous(self, prev, changed))
-            return false;
+    vec_free(self->living);
+
+    p = vec_size(self->exits);
+    for (i = 0; i < p; ++i) {
+        ir_block *prev = self->exits[i];
+        cnt = vec_size(prev->living);
+        for (o = 0; o < cnt; ++o) {
+            if (!vec_ir_value_find(self->living, prev->living[o], NULL))
+                vec_push(self->living, prev->living[o]);
+        }
     }
 
     i = vec_size(self->instr);
@@ -2647,17 +2538,79 @@ static bool ir_block_life_propagate(ir_block *self, ir_block *prev, bool *change
     if (ir_block_living_add_instr(self, self->entry_id))
         *changed = true;
 
-    if (self->run_id == self->owner->run_id)
-        return true;
+    return true;
+}
 
-    self->run_id = self->owner->run_id;
+bool ir_function_calculate_liferanges(ir_function *self)
+{
+    size_t i, s;
+    bool changed;
 
-    for (i = 0; i < vec_size(self->entries); ++i)
-    {
-        ir_block *entry = self->entries[i];
-        ir_block_life_propagate(entry, self, changed);
+    /* parameters live at 0 */
+    for (i = 0; i < vec_size(self->params); ++i)
+        ir_value_life_merge(self->locals[i], 0);
+
+    do {
+        self->run_id++;
+        changed = false;
+        i = vec_size(self->blocks);
+        while (i--) {
+            ir_block_life_propagate(self->blocks[i], &changed);
+        }
+    } while (changed);
+
+    if (vec_size(self->blocks)) {
+        ir_block *block = self->blocks[0];
+        for (i = 0; i < vec_size(block->living); ++i) {
+            ir_value *v = block->living[i];
+            if (v->store != store_local)
+                continue;
+            if (v->vtype == TYPE_VECTOR)
+                continue;
+            self->flags |= IR_FLAG_HAS_UNINITIALIZED;
+            /* find the instruction reading from it */
+            for (s = 0; s < vec_size(v->reads); ++s) {
+                if (v->reads[s]->eid == v->life[0].end)
+                    break;
+            }
+            if (s < vec_size(v->reads)) {
+                if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                              "variable `%s` may be used uninitialized in this function\n"
+                              " -> %s:%i",
+                              v->name,
+                              v->reads[s]->context.file, v->reads[s]->context.line)
+                   )
+                {
+                    return false;
+                }
+                continue;
+            }
+            if (v->memberof) {
+                ir_value *vec = v->memberof;
+                for (s = 0; s < vec_size(vec->reads); ++s) {
+                    if (vec->reads[s]->eid == v->life[0].end)
+                        break;
+                }
+                if (s < vec_size(vec->reads)) {
+                    if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                                  "variable `%s` may be used uninitialized in this function\n"
+                                  " -> %s:%i",
+                                  v->name,
+                                  vec->reads[s]->context.file, vec->reads[s]->context.line)
+                       )
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+            }
+            if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                          "variable `%s` may be used uninitialized in this function", v->name))
+            {
+                return false;
+            }
+        }
     }
-
     return true;
 }
 
@@ -3866,11 +3819,8 @@ void ir_function_dump(ir_function *f, char *ind,
     }
     if (vec_size(f->blocks))
     {
-        oprintf("%slife passes (check): %i\n", ind, (int)f->run_id);
+        oprintf("%slife passes: %i\n", ind, (int)f->run_id); 
         for (i = 0; i < vec_size(f->blocks); ++i) {
-            if (f->blocks[i]->run_id != f->run_id) {
-                oprintf("%slife pass check fail! %i != %i\n", ind, (int)f->blocks[i]->run_id, (int)f->run_id);
-            }
             ir_block_dump(f->blocks[i], ind, oprintf);
         }
 
