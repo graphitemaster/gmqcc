@@ -168,7 +168,7 @@ static int win_fputs(FILE *h, const char *str) {
                 state    = -1;
             }
         } else {
-            file_putc(h, *str);
+            fs_file_putc(h, *str);
             length ++;
         }
         str++;
@@ -219,7 +219,7 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
         char data[4096];
         memset(data, 0, sizeof(data));
         vsnprintf(data, sizeof(data), fmt, va);
-        ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(handle, data) : file_puts(handle, data);
+        ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(handle, data) : fs_file_puts(handle, data);
     }
     #endif
     return ln;
