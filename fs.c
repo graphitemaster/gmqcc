@@ -232,7 +232,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
  * Now we implement some directory functionality.  Windows lacks dirent.h
  * this is such a pisss off, we implement it here.
  */  
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
     DIR *fs_dir_open(const char *name) {
         DIR *dir = (DIR*)mem_a(sizeof(DIR) + strlen(name));
         if (!dir)
@@ -300,9 +300,13 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
      */
 #   undef  S_ISDIR
 #   define S_ISDIR(X) ((X)&_S_IFDIR)
-#else
+#elif !defined(__MINGW32__)
     #include <sys/stat.h> /* mkdir */
     #include <unistd.h>   /* chdir */
+
+    int fs_dir_make(const char *path) {
+        return mkdir(path, 0700);
+    }
 
     DIR *fs_dir_open(const char *name) {
         return opendir(name);
@@ -319,8 +323,27 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
     int fs_dir_change(const char *path) {
         return chdir(path);
     }
-
+#else
     int fs_dir_make(const char *path) {
-        return mkdir(path, 0700);
+        return mkdir(path);
     }
-#endif /*! defined (_WIN32) */
+
+    DIR *fs_dir_open(const char *name) {
+        return opendir(name);
+    }
+
+    int fs_dir_close(DIR *dir) {
+        return closedir(dir);
+    }
+
+    struct dirent *fs_dir_read(DIR *dir) {
+        return readdir(dir);
+    }
+
+    int fs_dir_change(const char *path) {
+        return chdir(path);
+    }
+#endif
+
+
+
