@@ -1389,6 +1389,11 @@ static bool ftepp_include(ftepp_t *ftepp)
         return false;
     }
 
+    if (!ftepp->output_on) {
+        ftepp_next(ftepp);
+        return true;
+    }
+
     ctx = ftepp_ctx(ftepp);
 
     unescape(ftepp_tokval(ftepp), ftepp_tokval(ftepp));
