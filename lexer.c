@@ -992,6 +992,8 @@ int lex_do(lex_file *lex)
         if (!lex->flags.mergelines || ch != '\\')
             break;
         ch = lex_getch(lex);
+        if (ch == '\r')
+            ch = lex_getch(lex);
         if (ch != '\n') {
             lex_ungetch(lex, ch);
             ch = '\\';
