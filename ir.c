@@ -3327,7 +3327,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     size_t           i;
     int32_t         *iptr;
     prog_section_def def;
-    bool             pushdef = false;
+    bool             pushdef = opts.optimizeoff;
+
+    printf("STATUS: %s\n", (pushdef) ? "OFF" : "ON");
 
     def.type   = global->vtype;
     def.offset = vec_size(code_globals);

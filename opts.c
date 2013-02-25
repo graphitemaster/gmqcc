@@ -142,6 +142,9 @@ void opts_setoptimlevel(unsigned int level) {
     size_t i;
     for (i = 0; i < COUNT_OPTIMIZATIONS; ++i)
         opts_set(opts.optimization, i, level >= opts_opt_oflag[i]);
+
+    if (!level)
+        opts.optimizeoff = true;
 }
 
 /*

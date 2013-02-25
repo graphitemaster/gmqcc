@@ -1192,6 +1192,7 @@ typedef struct {
     uint32_t     warn_backup  [1 + (COUNT_WARNINGS      / 32)];
     uint32_t     werror_backup[1 + (COUNT_WARNINGS      / 32)];
     uint32_t     optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
+    bool         optimizeoff; /* True when -O0 */
 } opts_cmd_t;
 
 extern opts_cmd_t opts;
