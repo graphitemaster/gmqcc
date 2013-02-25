@@ -150,7 +150,7 @@ $(GMQCC): $(OBJ_C) $(OBJ_D)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 $(TESTSUITE): $(OBJ_T)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) -lm
 
 $(PAK): $(OBJ_P)
 	$(CC) -o $@ $^ $(CFLAGS)

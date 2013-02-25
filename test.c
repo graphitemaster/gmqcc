@@ -943,17 +943,18 @@ bool task_execute(task_template_t *tmpl, char ***line) {
  * execution this takes more work since a task needs to be generated
  * from thin air and executed INLINE.
  */
+#include <math.h>
 void task_schedualize(size_t *pad) {
     bool   execute  = false;
     char  *data     = NULL;
     char **match    = NULL;
     size_t size     = 0;
-    size_t i;
-    size_t j;
+    size_t i        = 0;
+    size_t j        = 0;
 
-    util_debug("TEST", "found %d tasks, preparing to execute\n", vec_size(task_tasks));
+    for (; i < vec_size(task_tasks); i++) {
+        con_out("test #%u %*s", i + 1, (int)log10(vec_size(task_tasks)) - (int)(log10(i + 1)), "");
 
-    for (i = 0; i < vec_size(task_tasks); i++) {
         util_debug("TEST", "executing task: %d: %s\n", i, task_tasks[i].tmpl->description);
         /*
          * Generate a task from thin air if it requires execution in
@@ -1000,7 +1001,7 @@ void task_schedualize(size_t *pad) {
         }
 
         if (!task_tasks[i].compiled && strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {
-            con_err("test failure: `%s` (failed to compile) see %s.stdout and %s.stderr [%s]\n",
+            con_err("failure: `%s` (failed to compile) see %s.stdout and %s.stderr [%s]\n",
                 task_tasks[i].tmpl->description,
                 task_tasks[i].tmpl->tempfilename,
                 task_tasks[i].tmpl->tempfilename,
@@ -1010,7 +1011,7 @@ void task_schedualize(size_t *pad) {
         }
 
         if (!execute) {
-            con_out("test succeeded: `%s` %*s\n",
+            con_out("succeeded: `%s` %*s\n",
                 task_tasks[i].tmpl->description,
                 (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) +
                 (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
@@ -1027,7 +1028,7 @@ void task_schedualize(size_t *pad) {
         if (!task_execute(task_tasks[i].tmpl, &match)) {
             size_t d = 0;
 
-            con_err("test failure: `%s` (invalid results from execution) [%s]\n",
+            con_err("failure: `%s` (invalid results from execution) [%s]\n",
                 task_tasks[i].tmpl->description,
                 task_tasks[i].tmpl->rulesfile
             );
@@ -1074,7 +1075,7 @@ void task_schedualize(size_t *pad) {
             mem_d(match[j]);
         vec_free(match);
 
-        con_out("test succeeded: `%s` %*s\n",
+        con_out("succeeded: `%s` %*s\n",
             task_tasks[i].tmpl->description,
             (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) +
             (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
