@@ -3151,14 +3151,14 @@ static bool gen_function_varargs_copy(ir_function *self)
     stmt.o3.s1 = 0;
     maxparams = numparams + self->max_varargs;
     for (i = numparams; i < maxparams; ++i) {
-        if (i <= 8) {
+        if (i < 8) {
             stmt.o1.u1 = OFS_PARM0 + 3*i;
             stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
             code_push_statement(&stmt, self->context.line);
             continue;
         }
-        ext = i - 9;
-        if (ext >= vec_size(ir->extparams))
+        ext = i - 8;
+        while (ext >= vec_size(ir->extparams))
             ir_gen_extparam(ir);
 
         ep = ir->extparams[ext];
