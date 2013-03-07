@@ -23,6 +23,7 @@
  */
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
@@ -119,6 +120,7 @@ static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool
 static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname);
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
+static ast_expression *parser_builtin_pow(parser_t *);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -1071,6 +1073,23 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
             break;
 
+        case opid2('*', '*'):
+            if (NotSameType(TYPE_FLOAT)) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                compile_error(ctx, "invalid types used in exponentiation: %s and %s",
+                    ty1, ty2);
+
+                return false;
+            }
+
+            if (CanConstFold(exprs[0], exprs[1])) {
+                out = (ast_expression*)parser_const_float(parser, powf(ConstF(0), ConstF(1)));
+            } else {
+                out = parser_builtin_pow(parser);
+            }
+            break;
+
         case opid3('<','=','>'): /* -1, 0, or 1 */
             if (NotSameType(TYPE_FLOAT)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
@@ -1830,6 +1849,8 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
             }
+            if (!strcmp(parser_tokval(parser), "__builtin_pow"))
+                var = parser_builtin_pow(parser);
                 
             if (!var) {
                 char *correct = NULL;
@@ -3292,6 +3313,145 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
     }
     *out = (ast_expression*)switchnode;
     return true;
+}
+
+ast_expression *parser_builtin_pow(parser_t *parser) {
+    /*
+     * float __builtin_pow(float x, float y) { 
+     *   float value = 1.0f;
+     *   while (y > 0) {
+     *     while (!(y&1)) {
+     *       y *= 2;
+     *       x *= x;
+     *     }
+     *     y = y - 1;
+     *     value = x * value;
+     *   }
+     *   return value;
+     * }      
+     */
+    static ast_function  *pow_func       = NULL;
+    static ast_value     *pow_func_val   = NULL; 
+    if (!pow_func) {
+        ast_value    *pow_arguments[2];
+        ast_value    *pow_value          = ast_value_new   (parser_ctx(parser), "value",         TYPE_FLOAT);
+        ast_block    *pow_body           = ast_block_new   (parser_ctx(parser));
+        ast_block    *pow_loop_body      = ast_block_new   (parser_ctx(parser));
+        ast_block    *pow_loop_nest_body = ast_block_new   (parser_ctx(parser));
+        ast_loop     *pow_loop           = NULL;
+        ast_loop     *pow_loop_nest      = NULL;
+
+        pow_arguments[0]                 = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
+        pow_arguments[1]                 = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
+        pow_func_val                     = ast_value_new   (parser_ctx(parser), "__builtin_pow", TYPE_FUNCTION);
+        pow_func_val->expression.next    = (ast_expression*)ast_value_new(parser_ctx(parser), "<float>", TYPE_FLOAT);
+
+        vec_push(pow_func_val->expression.params, pow_arguments[0]);
+        vec_push(pow_func_val->expression.params, pow_arguments[1]);
+
+        pow_func = ast_function_new(parser_ctx(parser), "__builtin_pow", pow_func_val);
+
+        /* float value; */
+        vec_push(pow_body->locals, pow_value);
+        /* value = 1.0f; */
+        vec_push(pow_body->exprs,
+            (ast_expression*)ast_store_new(
+                parser_ctx(parser),
+                INSTR_STORE_F,
+                (ast_expression*)pow_value,
+                (ast_expression*)parser_const_float_1(parser)
+            )
+        );
+
+        /* y >>= 2 */
+        vec_push(pow_loop_nest_body->exprs,
+            (ast_expression*)ast_binstore_new(
+                parser_ctx(parser),
+                INSTR_STORE_F,
+                INSTR_MUL_F,
+                (ast_expression*)pow_arguments[1],
+                (ast_expression*)parser_const_float(parser, 0.25f)
+            )
+        );
+        vec_push(pow_loop_nest_body->exprs,
+            (ast_expression*)ast_binstore_new(
+                parser_ctx(parser),
+                INSTR_STORE_F,
+                INSTR_MUL_F,
+                (ast_expression*)pow_arguments[0],
+                (ast_expression*)pow_arguments[0]
+            )
+        );
+
+        /* while (!(y&1)) */
+        pow_loop_nest = ast_loop_new (
+            parser_ctx(parser),
+            NULL,
+            (ast_expression*)ast_binary_new(
+                parser_ctx(parser),
+                INSTR_AND,
+                (ast_expression*)pow_arguments[1],
+                (ast_expression*)parser_const_float_1(parser)
+            ),
+            true,
+            NULL,
+            false,
+            NULL,
+            (ast_expression*)pow_loop_nest_body
+        );
+        
+        vec_push(pow_loop_body->exprs, (ast_expression*)pow_loop_nest);
+        vec_push(pow_loop_body->exprs,
+            (ast_expression*)ast_binstore_new(
+                parser_ctx(parser),
+                INSTR_STORE_F,
+                INSTR_SUB_F,
+                (ast_expression*)pow_arguments[1],
+                (ast_expression*)parser_const_float_1(parser)
+            )
+        );
+        vec_push(pow_loop_body->exprs,
+            (ast_expression*)ast_binstore_new(
+                parser_ctx(parser),
+                INSTR_STORE_F,
+                INSTR_MUL_F,
+                (ast_expression*)pow_value,
+                (ast_expression*)pow_arguments[0]
+            )
+        );
+
+        /* while (y > 0) { */
+        pow_loop = ast_loop_new(
+            parser_ctx(parser),
+            NULL,
+            (ast_expression*)ast_binary_new(
+                parser_ctx(parser),
+                INSTR_GT,
+                (ast_expression*)pow_arguments[1],
+                (ast_expression*)parser_const_float_0(parser)
+            ),
+            false,
+            NULL,
+            false,
+            NULL,
+            (ast_expression*)pow_loop_body
+        );
+        /* } */
+        vec_push(pow_body->exprs, (ast_expression*)pow_loop);
+        /* return value; */
+        vec_push(pow_body->exprs,
+            (ast_expression*)ast_return_new(
+                parser_ctx(parser),
+                (ast_expression*)pow_value
+            )
+        );
+
+        vec_push(pow_func->blocks, pow_body);
+        vec_push(parser->globals, (ast_expression*)pow_func_val);
+        vec_push(parser->functions, pow_func);
+    }
+
+    return (ast_expression*)pow_func_val;
 }
 
 /* parse computed goto sides */

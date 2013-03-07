@@ -147,7 +147,7 @@ $(QCVM): $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS) -lm
 
 $(GMQCC): $(OBJ_C) $(OBJ_D)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) -lm
 
 $(TESTSUITE): $(OBJ_T)
 	$(CC) -o $@ $^ $(CFLAGS) -lm

@@ -1232,7 +1232,7 @@ int lex_do(lex_file *lex)
             /*
             case '+':
             case '-':
-            */
+            */ 
             case '*':
             case '/':
             case '<':
@@ -1352,7 +1352,7 @@ int lex_do(lex_file *lex)
         lex_tokench(lex, ch);
 
         nextch = lex_getch(lex);
-        if (nextch == '=') {
+        if (nextch == '=' || nextch == '*') {
             lex_tokench(lex, nextch);
         } else
             lex_ungetch(lex, nextch);
