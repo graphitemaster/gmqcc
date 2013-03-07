@@ -1086,7 +1086,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (CanConstFold(exprs[0], exprs[1])) {
                 out = (ast_expression*)parser_const_float(parser, powf(ConstF(0), ConstF(1)));
             } else {
-                out = parser_builtin_pow(parser);
+                ast_call *gencall = ast_call_new(parser_ctx(parser), parser_builtin_pow(parser));
+                vec_push(gencall->params, exprs[0]);
+                vec_push(gencall->params, exprs[1]);
+                out = (ast_expression*)gencall;
             }
             break;
 
@@ -1435,7 +1438,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if(CanConstFold1(exprs[0]))
                 out = (ast_expression*)parser_const_float(parser, ~(qcint)ConstF(0));
             else
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
+                out = (ast_expression*)
+                    ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
             break;
     }
 #undef NotSameType
