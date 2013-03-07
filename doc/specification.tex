@@ -132,7 +132,7 @@ Region of data storage in the execution environment, the contents of which can r
 values.
 
 \subsection*{parameter}
-Object declare as part of a function declaration or definition that acquires a value on
+Object declared as part of a function declaration or definition that acquires a value on
 entry to the function, or an identifier from the comma-separated list bounded by the
 parentheses immediately following the macro name in a function-like macro definition.
 
@@ -189,7 +189,7 @@ The precedence among the syntax rules of translation is specified by the followi
 	      by one space character is implementation-defined.
 	\item Preprocessing directives are executed, macro invocations are expanded 
 	      recursively. A \#include preprocessing directive causes the named header or
-	      source file to be processes from step one through step three, recursively. All
+	      source file to be processed from step one through step three, recursively. All
 	      preprocessing directives are then deleted.
 	\item Each source character set member and escape sequence in character constants and
 	      string literals is converted to the corresponding member of the execution
@@ -201,7 +201,7 @@ The precedence among the syntax rules of translation is specified by the followi
 	      syntactically and semantically analyzed and translated.	    		      
 \end{enumerate}
 \subparagraph*{Footnotes}
-Implementations shall behave as if these separate steps occur, even though many are likely
+Implementations shall behave as if these steps occur separately, even though many are likely
 to be folded together in practice. Source files need not be stored as file, nor need there
 be any one-to-one correspondence between these items and any external representation. The
 description is conceptual only, and does not specify any particular implementation.
@@ -263,8 +263,8 @@ annex A.
 %% ->-> Scopes of identifiers %%
 \subsubsection{Scopes of identifiers}
 An identifier can denote an object; a function, or enumeration; a label name; a macro
-name; or a macro parameter. The same identifier can denote difference items at different
-point in the program. A member of an enumeration is called an enumeration constant.
+name; or a macro parameter. The same identifier can denote different items at different
+points in the program. A member of an enumeration is called an enumeration constant.
 Macro names and macro parameters are not considered further here, because prior to the
 semantic phase of program translation any occurrences of macro names in the source file
 are replaced by the preprocessing token sequences that constitute their macro definitions.
@@ -280,11 +280,12 @@ parameters.)
 
 A label name is the only kind of identifier that has function scope.  It can be used (in 
 a goto statement) anywhere in the function in which it appears, and is declared
-implicitly by its syntactic appearance (prefixed by a : and a statement).
+implicitly by its syntactic appearance (prefixed by a colon :, and suffixed with a 
+statement).
 \linebreak
 
 Every other identifier has scope determined by the placement of its declaration (in a 
-declarator or type specifier).  If the declarator or types specifier that declares the 
+declarator or type specifier).  If the declarator or type specifier that declares the 
 identifier appears outside any block or list of parameters, the identifier has file 
 scope,  which terminates at the end of the file.  If the declartor or type specifier that
 declares the identifier appears inside a block or within the list of parameter
@@ -305,7 +306,7 @@ refer to some item (as opposed to the syntactic construct), it refers to the ite
 relevant name space whose declaration is visible at the point the identifier occurs.
 \linebreak
 
-Two identifiers have the same scope it and only if their scopes terminate at the same 
+Two identifiers have the same scope if and only if their scopes terminate at the same 
 point.
 \linebreak
 
@@ -362,12 +363,12 @@ types, as follows:
 
 \begin{itemize}
 	\item An array type describes a contiguously allocated nonempty set of objects with a 
-	      particular object types, called the element type. Array types are characterized 
+	      particular object type, called the element type. Array types are characterized 
 	      by their element type and by the number of elements in the array.  An array type
 	      is said to be derived	from its element type, and if its element is type T, the 
 	      array type is sometimes called "array of T".  The construction of an array type
 		  from an element type is called "array type derivation".
-	\item A function type described a function with a specified return type. A function
+	\item A function type describes a function with a specified return type. A function
 		  type is characterized by its return type and the number and types of its
 		  parameters. A function type is said to be derived from its return type, and if 
 		  its return type is T, the function type is sometimes called "function returning
@@ -380,7 +381,7 @@ collectively called aggregate types.
 \linebreak
 
 An array of unknown size is an incomplete type.  It is completed, for an identifier of 
-that byte, by specifying the size in a later declaration.  Arrays are required to have 
+that type, by specifying the size in a later declaration.  Arrays are required to have 
 known constant size.
 \linebreak
 
@@ -390,7 +391,7 @@ itself if the type consists of no derived types.
 \linebreak
 
 Any type so far mentioned is an unqualified type.  Each unqualified type has several 
-qualified version of its type, corresponding to the combinations of one, two, or all 
+qualified versions of its type, corresponding to the combinations of one, two, or all 
 two of const and volatile qualifiers.  The qualified or unqualified versions of a type 
 are distinct types that belong to the same type category and have the same representation.
 A derived type is not qualified by the qualifiers (if any) of the type from which it 
@@ -417,18 +418,20 @@ is compatible with both of the two types and satisfies the following conditions:
 	      parameter in the composite parameter type list is the composite type of the 
 	      corresponding parameters.
 \end{itemize}
-These rules apply recursively to types from which the twp types are derived.
+These rules apply recursively to types from which the two types are derived.
 \linebreak
 
 %% ->Conversions %%
 \subsection{Conversions}
 Several operators convert operand values from one type to another automatically. This 
-sub-clause specified the result required from such an implicit conversion.
+sub-clause specifies the result required from such an implicit conversion.
 \linebreak
 
 Conversion from an operand value to a compatible type causes no change to the value or
 the representation.
 \linebreak
+
+TODO: Specify all implicit conversions.
 
 %% ->->Aritmetic operands %%
 \subsubsection{Arithmetic operands}
@@ -443,7 +446,7 @@ An lvalue is an expression with an object type or an incomplete type other than 
 if an lvalue does not designate an object when it is evaluated, the behavior is undefined.
 When an object is said to have a particular type, the type is specified by the lvalue 
 used to designate the object.  A modifiable lvalue is an lvalue that does not have an 
-array type, does not have an incomplete type, does not have a const-qualified type.
+array type, does not have an incomplete type, and does not have a const-qualified type.
 \linebreak
 
 Except when it is the operand of the unary \& operator, the ++ operator, the -- operator,
@@ -455,13 +458,12 @@ the lvalue has an incomplete type and does not have array type, the behavior is 
 \linebreak
 
 A function designator is an expression that has function type.
-\linebreak
 
 \paragraph*{void}
 The (nonexistent) value of a void expression (an expression that has type void) shall not 
 be used in any way, and implicit conversions (except to void) shall not be applied to 
-such an expression.  If an expression of any other type is evaluated as a void expression
-, its value or designator is discarded. (A void expression is only evaluated for its 
+such an expression.  If an expression of any other type is evaluated as a void expression,
+its value or designator is discarded. (A void expression is only evaluated for its 
 side effects.)
 \pagebreak
 
@@ -490,11 +492,11 @@ punctuators. A preprocessing token is the minimal lexical element of the languag
 translation steps three through five. The categories of preprocessing tokens are: header
 names, identifiers, preprocessing numbers, string literals, punctuators and other single
 non-white-space characters that do not lexically match the other preprocessing token
-categories. If a \' or a \" character matches the last category, the behavior is undefined.
+categories. If a ' or a " character matches the last category, the behavior is undefined.
 Preprocessing tokens can be separated by white space; this consists of comments (described
 later), or white-space characters (space, horizontal tab, new-line, vertical tab, and form
 -feed), or both. In certain circumstances during translation step four, white space (or
-the absence thereof) serves as more than preprocessing token separation. Whit space may 
+the absence thereof) serves as more than preprocessing token separation. White space may 
 appear within a preprocessing token only as part of a header name or between the quotation
 characters in a string literal.
 \linebreak
@@ -510,16 +512,11 @@ could be either a header name or string literal is recognized as the former.
 \subsubsection{Keywords}
 \paragraph*{Syntax}
 \begin{lstlisting}[language=bnf]
-keyword ::= enum     | break
-          | return   | void
-          | case     | float
-          | volatile | for
-          | while    | const
-          | goto     | bool
-          | continue | if
-          | static   | default
-          | inline   | do
-          | switch   | else
+keyword ::= enum     | break  | return   | void
+          | case     | float  | volatile | for
+          | while    | const  | goto     | bool
+          | continue | if     | static   | default
+          | inline   | do     | switch   | else
           | vector   | entity
 \end{lstlisting}
 \paragraph*{Semantics}
@@ -528,21 +525,34 @@ use as keywords, and shall not be used otherwise.
 
 %% ->->Identifiers %%
 \subsubsection{Identifiers}
-\paragraph*{Syntax}
 \begin{lstlisting}[language=bnf]
 identifier ::= nondigit
              | identifier nondigit
              | identifier digit
              
-nondigit  ::= _ | a | b | c | d | e | f | g | h | i 
-            | j | k | l | m | n | o | p | q | r | s
-            | t | u | v | w | x | y | z | A | B | C
-            | D | E | F | G | H | I | J | K | L | M
-            | N | P | Q | R | S | T | U | V | W | X
-            | Y | Z
+nondigit ::= _ | a | b | c | d | e | f | g | h | i 
+           | j | k | l | m | n | o | p | q | r | s
+           | t | u | v | w | x | y | z | A | B | C
+           | D | E | F | G | H | I | J | K | L | M
+           | N | P | Q | R | S | T | U | V | W | X
+           | Y | Z
 
-digit     ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 \end{lstlisting}
+\paragraph*{Semantics}
+An identifier is a sequence of nondigit characters (including the underscore \_, the lower
+case and upper case Latin letters, and other characters) and digits, which designates one
+or more items. Lowercase and uppercase letters are distinct. There is a specific limit of
+65535 characters for an identifier.
+\linebreak
+
+When preprocessing tokens are converted to tokens during translation step six, if a 
+preprocessing token could not be converted to either a keyword or an identifier, it is
+converted to a keyword.
+
+\paragraph*{Predefined identifiers}
+Any identifiers that begin with the prefix \_\_builtin, or are within the reserved name
+space are reserved by the implementation.
 
 %% ->->Constants %%
 \subsubsection{Constants}
@@ -634,13 +644,13 @@ TODO
 \subsubsection{Comments}
 Except within a character constant, a string literal, or a comment, the characters /* 
 introduce a comment.  The contents of such a comment are examined only to identify 
-characters and to find the characters /* that terminate it.
+characters and to find the characters */ that terminate it.
 \linebreak
 
 Except within a character constant, a string literal, or a comment, the characters // 
 introduce a comment that includes all characters up to, but not including, the next 
 new-line character.  The contents of such a comment are examined only to identify 
-characters and to find the terminating new-line characters.
+characters and to find the terminating new-line character.
 \linebreak
 
 %% -> Expressions %%
@@ -675,10 +685,10 @@ its type), the behavior is undefined.
 \subsubsection{Primary expressions}
 \paragraph*{Syntax}
 \begin{lstlisting}[language=bnf]
-primary-expression := identifier
-                    | constant
-                    | string-literal
-                    ( expression )
+primary-expression ::= identifier
+                     | constant
+                     | string-literal
+                     ( expression )
 \end{lstlisting}
 \paragraph*{Semantics}
 An identifier is a primary expression, provided it has been declared as designating an 
