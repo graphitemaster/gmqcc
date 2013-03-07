@@ -945,6 +945,7 @@ bool task_execute(task_template_t *tmpl, char ***line) {
  */
 #include <math.h>
 void task_schedualize(size_t *pad) {
+    char   space[2][64];
     bool   execute  = false;
     char  *data     = NULL;
     char **match    = NULL;
@@ -952,8 +953,13 @@ void task_schedualize(size_t *pad) {
     size_t i        = 0;
     size_t j        = 0;
 
+    snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
+
     for (; i < vec_size(task_tasks); i++) {
-        con_out("test #%u %*s", i + 1, (int)log10((double)vec_size(task_tasks)) - (int)(log10(i + 1)), "");
+        memset(space[1], 0, sizeof(space[1]));
+        snprintf(space[1], sizeof(space[1]), "%d", (int)(i + 1));
+        
+        con_out("test #%u %*s", i + 1, strlen(space[0]) - strlen(space[1]), "");
 
         util_debug("TEST", "executing task: %d: %s\n", i, task_tasks[i].tmpl->description);
         /*
