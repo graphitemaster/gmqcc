@@ -1407,7 +1407,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
         v = ir_function_create_local(func, self->name, vtype, param);
         if (!v) {
-            compile_error(ast_ctx(self), "ir_function_create_local failed");
+            compile_error(ast_ctx(self), "internal error: ir_function_create_local failed");
             return false;
         }
         v->context = ast_ctx(self);
@@ -1423,7 +1423,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
             self->ir_values[ai] = ir_function_create_local(func, name, vtype, param);
             if (!self->ir_values[ai]) {
-                compile_error(ast_ctx(self), "ir_builder_create_global failed on `%s`", name);
+                compile_error(ast_ctx(self), "internal_error: ir_builder_create_global failed on `%s`", name);
                 return false;
             }
             self->ir_values[ai]->context = ast_ctx(self);
@@ -1538,7 +1538,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     irf = self->ir_func;
     if (!irf) {
-        compile_error(ast_ctx(self), "ast_function's related ast_value was not generated yet");
+        compile_error(ast_ctx(self), "internal error: ast_function's related ast_value was not generated yet");
         return false;
     }
 
