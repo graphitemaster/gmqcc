@@ -953,7 +953,7 @@ void task_schedualize(size_t *pad) {
     size_t j        = 0;
 
     for (; i < vec_size(task_tasks); i++) {
-        con_out("test #%u %*s", i + 1, (int)log10(vec_size(task_tasks)) - (int)(log10(i + 1)), "");
+        con_out("test #%u %*s", i + 1, (int)log10((double)vec_size(task_tasks)) - (int)(log10(i + 1)), "");
 
         util_debug("TEST", "executing task: %d: %s\n", i, task_tasks[i].tmpl->description);
         /*
