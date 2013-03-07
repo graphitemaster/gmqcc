@@ -46,9 +46,6 @@
   otherkeywords={::=,|},
   morecomment=[s][\color{comment}]{(*}{*)},
   stringstyle=\color{string},
-  morestring=[b]",
-  morestring=[b]',
-  morestring=[b]/,
   showstringspaces=false,
   frame=none,
   rulecolor=\color{rule},
@@ -74,7 +71,7 @@ document). It specifies:
 	\item the representation of QuakeC programs;
 	\item the syntax and constraints of the QuakeC language;
 	\item the semantic rules for interpreting QuakeC programs;
-	\item the representation of input data to be processes by QuakeC programs;
+	\item the representation of input data to be processed by QuakeC programs;
 	\item the representation of output data produced by QuakeC programs;
 	\item the restrictions and limits imposed by a conforming implementation of QuakeC.
 \end{itemize}
@@ -146,6 +143,11 @@ document, but that may be impractical for some implementations.
 \subsection*{value}
 Precise meaning of the contents of an object when interpreted as having a specific type.
 
+\subsection*{implementation}
+Particular set of software, running in a particular translation environment under
+particular control options, that performs translation of programs for, and supports
+execution of functions in, a particular execution environment.
+
 \subsection*{implementation-defined value}
 Unspecified value where each implementation documents how the choice is made.
 
@@ -174,7 +176,7 @@ rules for conforming implementations.
 \subsubsection{Translation environment}
 \paragraph*{Translation steps}
 The precedence among the syntax rules of translation is specified by the following steps
-\begin{itemize}
+\begin{enumerate}
 	\item Physical source file characters are mapped, in an implementation-defined manner,
 	      to the source character set (introducing new-line characters for end-of-line
 	      indicators) if necessary.  Trigraph and digraph sequences are replaced by their
@@ -197,7 +199,7 @@ The precedence among the syntax rules of translation is specified by the followi
 	\item White-space characters seperating tokens are no longer significant. Each
 	      preprocessing token is converted into a token. The resulting tokens are then
 	      syntactically and semantically analyzed and translated.	    		      
-\end{itemize}
+\end{enumerate}
 \subparagraph*{Footnotes}
 Implementations shall behave as if these separate steps occur, even though many are likely
 to be folded together in practice. Source files need not be stored as file, nor need there
@@ -211,9 +213,33 @@ constraint, even if the behavior is also explicitly specified as undefined or
 implementation-defined. Diagnostic messages need not be produced in other circumstances.
 
 %% ->-> Execution environments %%
-\subsubsection{Execution environments}
-Two execution environments are defined
+\subsubsection{Execution environment}
+A conforming execution environment shall provide at minimal the following 15 definitions
+for built in functions, with an accompanying header or source file that defines them.
+\begin{enumerate}
+	\item entity ()                                spawn
+	\item void   (entity)                          remove
+	
+	\item string (float)                           ftos
+	\item string (vector)                          vtos
+	\item string (entity)                          etos
+	\item float  (string)                          stof
+	
+	\item void   (string, ...)                     dprint
+	\item void   (entity)                          eprint
+	
+	\item float  (float)                           rint
+	\item float  (float)                           floor
+	\item float  (float)                           ceil
+	\item float  (float)                           fabs
+	\item float  (float)                           sin
+	\item float  (float)                           cos
+	\item float  (float)                           sqrt
+\end{enumerate}
+The numbers of which these built-ins are assigned is implementation-defined;
+an implementation is allowed to use these built-ins however it sees fit.
 
+\pagebreak
 %% -> Language %%
 \section{Language}
 \subsection{Notation}
@@ -227,6 +253,7 @@ symbols; more sequences are separated by a vertical bar \textbar, indicating a c
 the whole being a possible substitution for the symbol on the left.  Symbols that never
 appear on the left side are terminals.
 \linebreak
+
 This document defines language syntax throughout it's way at defining language
 constructs If you're interested in a summary of the language syntax, one is given in 
 annex A.
@@ -293,7 +320,7 @@ source file, the syntactic context disambiguates uses that refer to different it
 Thus, there  are separate name spaces for various categories of identifiers, as follows:
 \linebreak
 \begin{itemize}
-	\item Label names (disambiguated by the syntax of the lbvel declaration and use);
+	\item Label names (disambiguated by the syntax of the label declaration and use);
 	\item Enumerations (disambiguated by following the keyword enum);
 	\item All other identifiers, called ordinary identifiers (declared in ordinary
 	      declarators or as enumeration constants).
@@ -347,8 +374,6 @@ types, as follows:
 		   T". The construction of a function type from a return type is called "function
 		   type derivation".
 \end{itemize}
-
-\
 
 Arithmetic types are collectively called scalar types. Arrays and vectors are 
 collectively called aggregate types.
@@ -443,20 +468,43 @@ side effects.)
 \subsection{Lexical elements}
 \paragraph*{Syntax}
 \begin{lstlisting}[language=bnf]
-token ::= keyword    | identifier
-        | constant   | string-literal
+token ::= keyword    
+        | identifier
+        | constant   
+        | string-literal
         | punctuator
-	
-preprocessing-token := header-name | identifier
-                     | pp-number   | string-literal
-                     | punctuator
+preprocessing-token ::= header-name 
+                      | identifier
+                      | pp-number   
+                      | string-literal
+                      | punctuator
 \end{lstlisting}
 \paragraph*{Constraints}
 Each preprocessing token that is converted to a token shall have the lexical form of a 
 keyword, an identifier, a constant, a string literal, or a punctuator.
 
 \paragraph*{Semantics}
-TODO
+A token is the minimal lexical element of the language in translation steps six and seven.
+The categories of tokens are: keywords, identifiers, constants, string literals, and
+punctuators. A preprocessing token is the minimal lexical element of the language in
+translation steps three through five. The categories of preprocessing tokens are: header
+names, identifiers, preprocessing numbers, string literals, punctuators and other single
+non-white-space characters that do not lexically match the other preprocessing token
+categories. If a \' or a \" character matches the last category, the behavior is undefined.
+Preprocessing tokens can be separated by white space; this consists of comments (described
+later), or white-space characters (space, horizontal tab, new-line, vertical tab, and form
+-feed), or both. In certain circumstances during translation step four, white space (or
+the absence thereof) serves as more than preprocessing token separation. Whit space may 
+appear within a preprocessing token only as part of a header name or between the quotation
+characters in a string literal.
+\linebreak
+
+If the input stream has been parsed into preprocessing tokens up to a given character, the
+next preprocessing token is the longest sequence of characters that could constitute a
+preprocessing token. There is one exception to this rule: header name preprocessing tokens
+are recognized only within \#include preprocessing directives and in implementation-defined
+locations within \#pragma directives. In such contexts, a sequence of characters that
+could be either a header name or string literal is recognized as the former.
 
 %% ->-> Keywords %%
 \subsubsection{Keywords}
@@ -634,7 +682,7 @@ primary-expression := identifier
 \end{lstlisting}
 \paragraph*{Semantics}
 An identifier is a primary expression, provided it has been declared as designating an 
-object(in which case it is an lvalye) or a function(in which case it is a function 
+object(in which case it is an lvalue) or a function(in which case it is a function 
 designator).
 \linebreak
 
