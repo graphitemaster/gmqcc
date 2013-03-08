@@ -8,4 +8,7 @@ void main() {
 
     hundy -= 90; // 100-90 = 10
     print(ftos(hundy ** 2), "\n"); // prints: 100
+
+    hundy = 10.0f;
+    print(ftos(__builtin_exp(hundy)), "\n"); // prints: 22026.5
 }

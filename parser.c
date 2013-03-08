@@ -121,6 +121,7 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 static ast_expression *parser_builtin_pow(parser_t *);
+static ast_expression *parser_builtin_exp(parser_t *);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -1855,6 +1856,8 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             }
             if (!strcmp(parser_tokval(parser), "__builtin_pow"))
                 var = parser_builtin_pow(parser);
+            if (!strcmp(parser_tokval(parser), "__builtin_exp"))
+                var = parser_builtin_exp(parser);
                 
             if (!var) {
                 char *correct = NULL;
@@ -3325,11 +3328,11 @@ ast_expression *parser_builtin_pow(parser_t *parser) {
      *   float value = 1.0f;
      *   while (y > 0) {
      *     while (!(y&1)) {
-     *       y *= 2;
+     *       y *= 0.25f;
      *       x *= x;
      *     }
-     *     y = y - 1;
-     *     value = x * value;
+     *     y--;
+     *     value *= x;
      *   }
      *   return value;
      * }      
@@ -3456,6 +3459,46 @@ ast_expression *parser_builtin_pow(parser_t *parser) {
     }
 
     return (ast_expression*)pow_func_val;
+}
+
+#ifndef M_E
+#define M_E 2.71828182845905
+#endif
+static ast_expression *parser_builtin_exp(parser_t *parser) {
+    /*
+     * float __builtin_exp(float x) {
+     *     return __builtin_exp(E, x);
+     * }
+     */ 
+    static ast_value *exp_func_val = NULL;
+
+    if (!exp_func_val) {
+        ast_function *exp_func         = NULL;
+        ast_value    *arg              = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
+        ast_block    *exp_body         = ast_block_new   (parser_ctx(parser));
+        ast_call     *exp_call         = ast_call_new    (parser_ctx(parser), parser_builtin_pow(parser));
+        exp_func_val                   = ast_value_new   (parser_ctx(parser), "__builtin_exp", TYPE_FUNCTION);
+        exp_func_val->expression.next  = (ast_expression*)ast_value_new(parser_ctx(parser), "<float>", TYPE_FLOAT);
+        exp_func                       = ast_function_new(parser_ctx(parser), "__builtin_exp", exp_func_val);
+
+        vec_push(exp_call->params, (ast_expression*)parser_const_float(parser, M_E));
+        vec_push(exp_call->params, (ast_expression*)arg);
+
+        vec_push(exp_body->exprs,
+            (ast_expression*)ast_return_new(
+                parser_ctx(parser),
+                (ast_expression*)exp_call
+            )
+        );
+
+        vec_push(exp_func_val->expression.params, arg);
+        vec_push(exp_func->blocks, exp_body);
+
+        vec_push(parser->functions, exp_func);
+        vec_push(parser->globals, (ast_expression*)exp_func_val);
+    }
+
+    return (ast_expression*)exp_func_val;
 }
 
 /* parse computed goto sides */
