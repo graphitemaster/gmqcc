@@ -3541,7 +3541,10 @@ static ast_expression *parser_builtin_mod(parser_t *parser) {
 
     if (!mod_floor) {
         if (!(mod_floor = parser_find_global(parser, "floor"))) {
-            parseerror(parser, "internal error: no suitable definition found for `floor` (required for % and __builtin_mod)");
+            parseerror(parser,
+                "internal error: no suitable definition found for `floor`"
+                "(required for `%%` operator and `__builtin_mod` intrinsic)"
+            );
             return NULL;
         }
     }
