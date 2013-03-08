@@ -1361,6 +1361,12 @@ int lex_do(lex_file *lex)
         return (lex->tok.ttype = TOKEN_OPERATOR);
     }
 
+    if (ch == '%') {
+        lex_tokench(lex, ch);
+        lex_endtoken(lex);
+        return (lex->tok.ttype = TOKEN_OPERATOR);
+    }
+
     if (isident_start(ch))
     {
         const char *v;

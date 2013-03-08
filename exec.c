@@ -825,6 +825,16 @@ static int qc_strcmp(qc_program *prog)
     return 0;
 }
 
+static int qc_floor(qc_program *prog)
+{
+    qcany *num, out;
+    CheckArgs(1);
+    num = GetArg(0);
+    out._float = floor(num->_float);
+    Return(out);
+    return 0;
+}
+
 static prog_builtin qc_builtins[] = {
     NULL,
     &qc_print,       /*   1   */
@@ -839,7 +849,8 @@ static prog_builtin qc_builtins[] = {
     &qc_strcat,      /*   10  */
     &qc_strcmp,      /*   11  */
     &qc_normalize,   /*   12  */
-    &qc_sqrt         /*   13  */
+    &qc_sqrt,        /*   13  */
+    &qc_floor        /*   14  */
 };
 static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 

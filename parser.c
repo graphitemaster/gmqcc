@@ -120,8 +120,10 @@ static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool
 static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname);
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
+
 static ast_expression *parser_builtin_pow(parser_t *);
 static ast_expression *parser_builtin_exp(parser_t *);
+static ast_expression *parser_builtin_mod(parser_t *);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -964,10 +966,35 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             break;
+
         case opid1('%'):
+            if (NotSameType(TYPE_FLOAT)) {
+                compile_error(ctx, "invalid types used in expression: cannot perform modulo operation between types %s and %s",
+                    type_name[exprs[0]->expression.vtype],
+                    type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            if (CanConstFold(exprs[0], exprs[1])) {
+                out = (ast_expression*)parser_const_float(parser,
+                            (float)(((qcint)ConstF(0)) % ((qcint)ConstF(1))));
+            } else {
+                /* generate a call to __builtin_mod */
+                ast_expression *mod  = parser_builtin_mod(parser);
+                ast_call       *call = NULL;
+                if (!mod) return false; /* can return null for missing floor */
+
+                call = ast_call_new(parser_ctx(parser), mod);
+                vec_push(call->params, exprs[0]);
+                vec_push(call->params, exprs[1]);
+
+                out = (ast_expression*)call;
+            }
+            break;
+
         case opid2('%','='):
-            compile_error(ctx, "qc does not have a modulo operator");
+            compile_error(ctx, "%= is unimplemented");
             return false;
+
         case opid1('|'):
         case opid1('&'):
             if (NotSameType(TYPE_FLOAT)) {
@@ -1858,6 +1885,8 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                 var = parser_builtin_pow(parser);
             if (!strcmp(parser_tokval(parser), "__builtin_exp"))
                 var = parser_builtin_exp(parser);
+            if (!strcmp(parser_tokval(parser), "__builtin_mod"))
+                var = parser_builtin_mod(parser);
                 
             if (!var) {
                 char *correct = NULL;
@@ -3499,6 +3528,72 @@ static ast_expression *parser_builtin_exp(parser_t *parser) {
     }
 
     return (ast_expression*)exp_func_val;
+}
+
+static ast_expression *parser_builtin_mod(parser_t *parser) {
+    /*
+     * float __builtin_mod(float x, float y) {
+     *     return x - y * floor(x / y);
+     * }
+     */ 
+    static ast_value      *mod_func_val = NULL;
+    static ast_expression *mod_floor    = NULL;
+
+    if (!mod_floor) {
+        if (!(mod_floor = parser_find_global(parser, "floor"))) {
+            parseerror(parser, "internal error: no suitable definition found for `floor` (required for % and __builtin_mod)");
+            return NULL;
+        }
+    }
+
+    if (!mod_func_val) {
+        ast_value    *mod_args[2];
+        ast_function *mod_func         = NULL;
+        ast_block    *mod_body         = ast_block_new   (parser_ctx(parser));
+        ast_call     *mod_call         = ast_call_new    (parser_ctx(parser), mod_floor);
+        mod_func_val                   = ast_value_new   (parser_ctx(parser), "__builtin_mod", TYPE_FUNCTION);
+        mod_func_val->expression.next  = (ast_expression*)ast_value_new(parser_ctx(parser), "<float>", TYPE_FLOAT);
+        mod_func                       = ast_function_new(parser_ctx(parser), "__builtin_mod", mod_func_val);
+        mod_args[0]                    = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
+        mod_args[1]                    = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
+
+        /* floor(x/y) */
+        vec_push(mod_call->params,
+            (ast_expression*)ast_binary_new(
+                parser_ctx(parser),
+                INSTR_DIV_F,
+                (ast_expression*)mod_args[0],
+                (ast_expression*)mod_args[1]
+            )
+        );
+
+        vec_push(mod_body->exprs,
+            (ast_expression*)ast_return_new(
+                parser_ctx(parser),
+                (ast_expression*)ast_binary_new(
+                    parser_ctx(parser),
+                    INSTR_SUB_F,
+                    (ast_expression*)mod_args[0],
+                    (ast_expression*)ast_binary_new(
+                        parser_ctx(parser),
+                        INSTR_MUL_F,
+                        (ast_expression*)mod_args[1],
+                        (ast_expression*)mod_call
+                    )
+                )
+            )
+        );
+
+        vec_push(mod_func_val->expression.params, mod_args[0]);
+        vec_push(mod_func_val->expression.params, mod_args[1]);
+
+        vec_push(mod_func->blocks, mod_body);
+
+        vec_push(parser->functions, mod_func);
+        vec_push(parser->globals, (ast_expression*)mod_func_val);
+    }
+
+    return (ast_expression*)mod_func_val;
 }
 
 /* parse computed goto sides */
