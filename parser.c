@@ -3861,6 +3861,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
 
 static bool parse_enum(parser_t *parser)
 {
+    bool        flag = false;
     qcfloat     num = 0;
     ast_value **values = NULL;
     ast_value  *var = NULL;
@@ -3868,9 +3869,26 @@ static bool parse_enum(parser_t *parser)
 
     ast_expression *old;
 
-    if (!parser_next(parser) || parser->tok != '{') {
-        parseerror(parser, "expected `{` after `enum` keyword");
+    if (!parser_next(parser) || (parser->tok != '{' && parser->tok != ':')) {
+        parseerror(parser, "expected `{` or `:` after `enum` keyword");
         return false;
+    }
+
+    /* enumeration attributes (can add more later) */
+    if (parser->tok == ':') {
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT || strcmp(parser_tokval(parser), "flag")) {
+            parseerror(parser, "expected `flag` after enumeration attribute ':'");
+            return false;
+        }
+
+        if (!parser_next(parser) || parser->tok != '{') {
+            parseerror(parser, "expected `{` after enum attribute `flag`");
+            return false;
+        }
+
+        /* flagged enumeration start from 1 */
+        num  = 1;
+        flag = true;
     }
 
     while (true) {
@@ -3896,7 +3914,9 @@ static bool parse_enum(parser_t *parser)
         vec_push(values, var);
         var->cvq             = CV_CONST;
         var->hasvalue        = true;
-        var->constval.vfloat = num++;
+
+        /* for flagged enumerations increment in POTs of TWO */
+        var->constval.vfloat = (flag) ? (num *= 2) : (num ++);
 
         parser_addglobal(parser, var->name, (ast_expression*)var);
 
