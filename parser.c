@@ -121,10 +121,6 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 
-static ast_expression *parser_builtin_pow(parser_t *);
-static ast_expression *parser_builtin_exp(parser_t *);
-static ast_expression *parser_builtin_mod(parser_t *);
-
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
     va_list ap;
@@ -383,6 +379,9 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
     }
     return NULL;
 }
+
+/* include intrinsics */
+#include "intrin.h"
 
 typedef struct
 {
@@ -979,7 +978,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             (float)(((qcint)ConstF(0)) % ((qcint)ConstF(1))));
             } else {
                 /* generate a call to __builtin_mod */
-                ast_expression *mod  = parser_builtin_mod(parser);
+                ast_expression *mod  = intrin_func(parser, "mod");
                 ast_call       *call = NULL;
                 if (!mod) return false; /* can return null for missing floor */
 
@@ -1114,7 +1113,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (CanConstFold(exprs[0], exprs[1])) {
                 out = (ast_expression*)parser_const_float(parser, powf(ConstF(0), ConstF(1)));
             } else {
-                ast_call *gencall = ast_call_new(parser_ctx(parser), parser_builtin_pow(parser));
+                ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser, "pow"));
                 vec_push(gencall->params, exprs[0]);
                 vec_push(gencall->params, exprs[1]);
                 out = (ast_expression*)gencall;
@@ -1881,12 +1880,15 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
             }
-            if (!strcmp(parser_tokval(parser), "__builtin_pow"))
-                var = parser_builtin_pow(parser);
-            if (!strcmp(parser_tokval(parser), "__builtin_exp"))
-                var = parser_builtin_exp(parser);
-            if (!strcmp(parser_tokval(parser), "__builtin_mod"))
-                var = parser_builtin_mod(parser);
+            /* now we try for the real intrinsic hashtable. If the string
+             * begins with __builtin, we simply skip past it, otherwise we
+             * use the identifier as is.
+             */
+            else if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
+                var = intrin_func(parser, parser_tokval(parser) + 10 /* skip __builtin */);
+            } else {
+                var = intrin_func(parser, parser_tokval(parser));
+            }
                 
             if (!var) {
                 char *correct = NULL;
@@ -3349,254 +3351,6 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
     }
     *out = (ast_expression*)switchnode;
     return true;
-}
-
-ast_expression *parser_builtin_pow(parser_t *parser) {
-    /*
-     * float __builtin_pow(float x, float y) { 
-     *   float value = 1.0f;
-     *   while (y > 0) {
-     *     while (!(y&1)) {
-     *       y *= 0.25f;
-     *       x *= x;
-     *     }
-     *     y--;
-     *     value *= x;
-     *   }
-     *   return value;
-     * }      
-     */
-    static ast_function  *pow_func       = NULL;
-    static ast_value     *pow_func_val   = NULL; 
-    if (!pow_func) {
-        ast_value    *pow_arguments[2];
-        ast_value    *pow_value          = ast_value_new   (parser_ctx(parser), "value",         TYPE_FLOAT);
-        ast_block    *pow_body           = ast_block_new   (parser_ctx(parser));
-        ast_block    *pow_loop_body      = ast_block_new   (parser_ctx(parser));
-        ast_block    *pow_loop_nest_body = ast_block_new   (parser_ctx(parser));
-        ast_loop     *pow_loop           = NULL;
-        ast_loop     *pow_loop_nest      = NULL;
-
-        pow_arguments[0]                 = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
-        pow_arguments[1]                 = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
-        pow_func_val                     = ast_value_new   (parser_ctx(parser), "__builtin_pow", TYPE_FUNCTION);
-        pow_func_val->expression.next    = (ast_expression*)ast_value_new(parser_ctx(parser), "<float>", TYPE_FLOAT);
-
-        vec_push(pow_func_val->expression.params, pow_arguments[0]);
-        vec_push(pow_func_val->expression.params, pow_arguments[1]);
-
-        pow_func = ast_function_new(parser_ctx(parser), "__builtin_pow", pow_func_val);
-
-        /* float value; */
-        vec_push(pow_body->locals, pow_value);
-        /* value = 1.0f; */
-        vec_push(pow_body->exprs,
-            (ast_expression*)ast_store_new(
-                parser_ctx(parser),
-                INSTR_STORE_F,
-                (ast_expression*)pow_value,
-                (ast_expression*)parser_const_float_1(parser)
-            )
-        );
-
-        /* y >>= 2 */
-        vec_push(pow_loop_nest_body->exprs,
-            (ast_expression*)ast_binstore_new(
-                parser_ctx(parser),
-                INSTR_STORE_F,
-                INSTR_MUL_F,
-                (ast_expression*)pow_arguments[1],
-                (ast_expression*)parser_const_float(parser, 0.25f)
-            )
-        );
-        vec_push(pow_loop_nest_body->exprs,
-            (ast_expression*)ast_binstore_new(
-                parser_ctx(parser),
-                INSTR_STORE_F,
-                INSTR_MUL_F,
-                (ast_expression*)pow_arguments[0],
-                (ast_expression*)pow_arguments[0]
-            )
-        );
-
-        /* while (!(y&1)) */
-        pow_loop_nest = ast_loop_new (
-            parser_ctx(parser),
-            NULL,
-            (ast_expression*)ast_binary_new(
-                parser_ctx(parser),
-                INSTR_AND,
-                (ast_expression*)pow_arguments[1],
-                (ast_expression*)parser_const_float_1(parser)
-            ),
-            true,
-            NULL,
-            false,
-            NULL,
-            (ast_expression*)pow_loop_nest_body
-        );
-        
-        vec_push(pow_loop_body->exprs, (ast_expression*)pow_loop_nest);
-        vec_push(pow_loop_body->exprs,
-            (ast_expression*)ast_binstore_new(
-                parser_ctx(parser),
-                INSTR_STORE_F,
-                INSTR_SUB_F,
-                (ast_expression*)pow_arguments[1],
-                (ast_expression*)parser_const_float_1(parser)
-            )
-        );
-        vec_push(pow_loop_body->exprs,
-            (ast_expression*)ast_binstore_new(
-                parser_ctx(parser),
-                INSTR_STORE_F,
-                INSTR_MUL_F,
-                (ast_expression*)pow_value,
-                (ast_expression*)pow_arguments[0]
-            )
-        );
-
-        /* while (y > 0) { */
-        pow_loop = ast_loop_new(
-            parser_ctx(parser),
-            NULL,
-            (ast_expression*)ast_binary_new(
-                parser_ctx(parser),
-                INSTR_GT,
-                (ast_expression*)pow_arguments[1],
-                (ast_expression*)parser_const_float_0(parser)
-            ),
-            false,
-            NULL,
-            false,
-            NULL,
-            (ast_expression*)pow_loop_body
-        );
-        /* } */
-        vec_push(pow_body->exprs, (ast_expression*)pow_loop);
-        /* return value; */
-        vec_push(pow_body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(parser),
-                (ast_expression*)pow_value
-            )
-        );
-
-        vec_push(pow_func->blocks, pow_body);
-        vec_push(parser->globals, (ast_expression*)pow_func_val);
-        vec_push(parser->functions, pow_func);
-    }
-
-    return (ast_expression*)pow_func_val;
-}
-
-#ifndef M_E
-#define M_E 2.71828182845905
-#endif
-static ast_expression *parser_builtin_exp(parser_t *parser) {
-    /*
-     * float __builtin_exp(float x) {
-     *     return __builtin_exp(E, x);
-     * }
-     */ 
-    static ast_value *exp_func_val = NULL;
-
-    if (!exp_func_val) {
-        ast_function *exp_func         = NULL;
-        ast_value    *arg              = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
-        ast_block    *exp_body         = ast_block_new   (parser_ctx(parser));
-        ast_call     *exp_call         = ast_call_new    (parser_ctx(parser), parser_builtin_pow(parser));
-        exp_func_val                   = ast_value_new   (parser_ctx(parser), "__builtin_exp", TYPE_FUNCTION);
-        exp_func_val->expression.next  = (ast_expression*)ast_value_new(parser_ctx(parser), "<float>", TYPE_FLOAT);
-        exp_func                       = ast_function_new(parser_ctx(parser), "__builtin_exp", exp_func_val);
-
-        vec_push(exp_call->params, (ast_expression*)parser_const_float(parser, M_E));
-        vec_push(exp_call->params, (ast_expression*)arg);
-
-        vec_push(exp_body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(parser),
-                (ast_expression*)exp_call
-            )
-        );
-
-        vec_push(exp_func_val->expression.params, arg);
-        vec_push(exp_func->blocks, exp_body);
-
-        vec_push(parser->functions, exp_func);
-        vec_push(parser->globals, (ast_expression*)exp_func_val);
-    }
-
-    return (ast_expression*)exp_func_val;
-}
-
-static ast_expression *parser_builtin_mod(parser_t *parser) {
-    /*
-     * float __builtin_mod(float x, float y) {
-     *     return x - y * floor(x / y);
-     * }
-     */ 
-    static ast_value      *mod_func_val = NULL;
-    static ast_expression *mod_floor    = NULL;
-
-    if (!mod_floor) {
-        if (!(mod_floor = parser_find_global(parser, "floor"))) {
-            parseerror(parser,
-                "internal error: no suitable definition found for `floor`"
-                "(required for `%%` operator and `__builtin_mod` intrinsic)"
-            );
-            return NULL;
-        }
-    }
-
-    if (!mod_func_val) {
-        ast_value    *mod_args[2];
-        ast_function *mod_func         = NULL;
-        ast_block    *mod_body         = ast_block_new   (parser_ctx(parser));
-        ast_call     *mod_call         = ast_call_new    (parser_ctx(parser), mod_floor);
-        mod_func_val                   = ast_value_new   (parser_ctx(parser), "__builtin_mod", TYPE_FUNCTION);
-        mod_func_val->expression.next  = (ast_expression*)ast_value_new(parser_ctx(parser), "<float>", TYPE_FLOAT);
-        mod_func                       = ast_function_new(parser_ctx(parser), "__builtin_mod", mod_func_val);
-        mod_args[0]                    = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
-        mod_args[1]                    = ast_value_new   (parser_ctx(parser), "x", TYPE_FLOAT);
-
-        /* floor(x/y) */
-        vec_push(mod_call->params,
-            (ast_expression*)ast_binary_new(
-                parser_ctx(parser),
-                INSTR_DIV_F,
-                (ast_expression*)mod_args[0],
-                (ast_expression*)mod_args[1]
-            )
-        );
-
-        vec_push(mod_body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(parser),
-                (ast_expression*)ast_binary_new(
-                    parser_ctx(parser),
-                    INSTR_SUB_F,
-                    (ast_expression*)mod_args[0],
-                    (ast_expression*)ast_binary_new(
-                        parser_ctx(parser),
-                        INSTR_MUL_F,
-                        (ast_expression*)mod_args[1],
-                        (ast_expression*)mod_call
-                    )
-                )
-            )
-        );
-
-        vec_push(mod_func_val->expression.params, mod_args[0]);
-        vec_push(mod_func_val->expression.params, mod_args[1]);
-
-        vec_push(mod_func->blocks, mod_body);
-
-        vec_push(parser->functions, mod_func);
-        vec_push(parser->globals, (ast_expression*)mod_func_val);
-    }
-
-    return (ast_expression*)mod_func_val;
 }
 
 /* parse computed goto sides */
@@ -6338,6 +6092,8 @@ void parser_cleanup()
     ast_value_delete(parser->const_vec[2]);
 
     util_htdel(parser->aliases);
+
+    intrin_intrinsics_destroy();
 
     mem_d(parser);
 }

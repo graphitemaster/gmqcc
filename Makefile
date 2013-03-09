@@ -219,9 +219,15 @@ fs.o: gmqcc.h opts.def
 
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
-parser.o: gmqcc.h opts.def lexer.h ast.h ir.h
+parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
 fs.o: gmqcc.h opts.def
 
 util.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
+
+util.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+opts.o: gmqcc.h opts.def
+pak.o: gmqcc.h opts.def
