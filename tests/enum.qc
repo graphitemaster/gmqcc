@@ -1,4 +1,4 @@
-void(string, ...)   print  = #1;enum {
+enum {
     // this behaviour is confusing, but I like that
     // we support it.
     __ = (__ - 1),
@@ -33,6 +33,14 @@ enum : flag {
     F3  /* = 1 << 3 */
 };
 
+/* reversed enumeration */
+enum : reverse {
+    R1, // 3
+    R2, // 2
+    R3, // 1
+    R4  // 0
+};
+
 void main() {
     print(ftos(A), "\n");
     print(ftos(B), "\n");
@@ -52,4 +60,9 @@ void main() {
     print(ftos(F1), "\n");
     print(ftos(F2), "\n");
     print(ftos(F3), "\n");
+
+    print(ftos(R1), "\n");
+    print(ftos(R2), "\n");
+    print(ftos(R3), "\n");
+    print(ftos(R4), "\n");
 };
