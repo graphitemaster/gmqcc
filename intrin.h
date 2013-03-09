@@ -79,6 +79,20 @@ ast_expression *intrin_func (parser_t *parser, const char *name);
 #define QC_M_E 2.71828182845905
 
 ast_expression *intrin_pow(parser_t *parser) {
+    /*
+     * float pow(float x, float y) {
+     *   float local = 1.0f;
+     *   while (y > 0) {
+     *     while (!(y & 1)) {
+     *       y >>= 2;
+     *       x *=  x;
+     *     }
+     *     y--;
+     *     local *= x;
+     *   }
+     *   return local;
+     * } 
+     */
     static ast_value *value = NULL;
 
     if (!value) {
@@ -212,6 +226,11 @@ ast_expression *intrin_pow(parser_t *parser) {
 }
 
 ast_expression *intrin_mod(parser_t *parser) {
+    /*
+     * float mod(float x, float y) {
+     *   return x - y * floor(x / y);
+     * }
+     */    
     static ast_value *value = NULL;
 
     if (!value) {
@@ -263,8 +282,8 @@ ast_expression *intrin_mod(parser_t *parser) {
 
 ast_expression *intrin_exp(parser_t *parser) {
     /*
-     * float __builtin_exp(float x) {
-     *     return __builtin_pow(QC_M_E, x);
+     * float exp(float x) {
+     *     return pow(QC_M_E, x);
      * }
      */
     static ast_value *value = NULL;
@@ -299,10 +318,62 @@ ast_expression *intrin_exp(parser_t *parser) {
     return (ast_expression*)value;
 }
 
+ast_expression *intrin_isnan(parser_t *parser) {
+    /*
+     * float isnan(float x) {
+     *   float local;
+     *   local = x;
+     *
+     *   return (x != local);
+     * } 
+     */      
+    static ast_value *value = NULL;
+
+    if (!value) {
+        ast_value    *arg1   = ast_value_new (parser_ctx(parser), "x", TYPE_FLOAT);
+        ast_value    *local  = ast_value_new (parser_ctx(parser), "local", TYPE_FLOAT);
+        ast_block    *body   = ast_block_new (parser_ctx(parser));
+        ast_function *func   = NULL;
+    
+        INTRIN_VAL(value, "isnan", func, "<float>", TYPE_FLOAT);
+
+        vec_push(body->locals, local);
+        vec_push(body->exprs,
+            (ast_expression*)ast_store_new(
+                parser_ctx(parser),
+                INSTR_STORE_F,
+                (ast_expression*)local,
+                (ast_expression*)arg1
+            )
+        );
+
+        vec_push(body->exprs,
+            (ast_expression*)ast_return_new(
+                parser_ctx(parser),
+                (ast_expression*)ast_binary_new(
+                    parser_ctx(parser),
+                    INSTR_NE_F,
+                    (ast_expression*)arg1,
+                    (ast_expression*)local
+                )
+            )
+        );
+
+        vec_push(value->expression.params, arg1);
+
+        vec_push(func->blocks, body);
+
+        INTRIN_REG(func, value);
+    }
+
+    return (ast_expression*)value;
+}
+
 static intrin_t intrinsics[] = {
-    {&intrin_exp, "__builtin_exp", "exp"},
-    {&intrin_mod, "__builtin_mod", "mod"},
-    {&intrin_pow, "__builtin_pow", "pow"}
+    {&intrin_exp,   "__builtin_exp",   "exp"},
+    {&intrin_mod,   "__builtin_mod",   "mod"},
+    {&intrin_pow,   "__builtin_pow",   "pow"},
+    {&intrin_isnan, "__builtin_isnan", "isnan"}
 };
 
 ast_expression *intrin_func(parser_t *parser, const char *name) {
