@@ -16,3 +16,4 @@ string (...)            strcat    = #10;
 float  (string, string) strcmp    = #11;
 vector (vector)         normalize = #12;
 float  (float)          sqrt      = #13;
+float  (float)          floor     = #14;
