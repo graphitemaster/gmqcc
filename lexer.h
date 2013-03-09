@@ -166,18 +166,21 @@ typedef struct {
 static const oper_info c_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
 
-    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  15, OP_SUFFIX},
-    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  15, OP_SUFFIX},
-    { ".",   2, opid1('.'),         ASSOC_LEFT,  15, 0 },
-    { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0 }, /* function call */
-    { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0 }, /* array subscript */
+    { "++",  1, opid3('S','+','+'), ASSOC_LEFT,  17, OP_SUFFIX},
+    { "--",  1, opid3('S','-','-'), ASSOC_LEFT,  17, OP_SUFFIX},
+    { ".",   2, opid1('.'),         ASSOC_LEFT,  17, 0 },
+    { "(",   0, opid1('('),         ASSOC_LEFT,  17, 0 }, /* function call */
+    { "[",   2, opid1('['),         ASSOC_LEFT,  17, 0 }, /* array subscript */
+
+    { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 16, OP_PREFIX },
+    { "--",  1, opid3('-','-','P'), ASSOC_RIGHT, 16, OP_PREFIX },
+
+    { "**",  2, opid2('*', '*'),    ASSOC_RIGHT, 15, 0 },
 
     { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
     { "~",   1, opid2('~', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX },
     { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
     { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX },
-    { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX },
-    { "--",  1, opid3('-','-','P'), ASSOC_RIGHT, 14, OP_PREFIX },
 /*  { "&",   1, opid2('&','P'),     ASSOC_RIGHT, 14, OP_PREFIX }, */
 
     { "*",   2, opid1('*'),         ASSOC_LEFT,  13, 0 },
@@ -185,7 +188,6 @@ static const oper_info c_operators[] = {
     { "%",   2, opid1('%'),         ASSOC_LEFT,  13, 0 },
 
     { "+",   2, opid1('+'),         ASSOC_LEFT,  12, 0 },
-    { "**",  2, opid2('*', '*'),    ASSOC_RIGHT, 12, 0 },
     { "-",   2, opid1('-'),         ASSOC_LEFT,  12, 0 },
 
     { "<<",  2, opid2('<','<'),     ASSOC_LEFT,  11, 0 },
