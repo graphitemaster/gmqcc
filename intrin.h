@@ -318,8 +318,10 @@ ast_expression *intrin_func(parser_t *parser, const char *name) {
         init = true; /* only once */
     }
 
-    /* jesus fucking christ all might Blub design something less fucking
-     * impossible to use.
+    /*
+     * jesus fucking christ, Blub design something less fucking
+     * impossible to use, like a ast_is_builtin(ast_expression *), also
+     * use a hashtable :P 
      */  
     if ((find = (void*)parser_find_global(parser, name)) && ((ast_value*)find)->expression.vtype == TYPE_FUNCTION)
         for (i = 0; i < vec_size(parser->functions); ++i)
