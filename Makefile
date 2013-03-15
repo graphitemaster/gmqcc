@@ -84,6 +84,26 @@ else
 endif
 endif
 
+#gource flags
+GOURCEFLAGS=                  \
+	--date-format "%d %B, %Y" \
+	--seconds-per-day 0.01    \
+	--auto-skip-seconds 1     \
+	--title "GMQCC"           \
+	-1280x720
+#ffmpeg flags for gource
+FFMPEGFLAGS=                  \
+	-y                        \
+	-r 60                     \
+	-f image2pipe             \
+	-vcodec ppm               \
+	-i -                      \
+	-vcodec libx264           \
+	-preset ultrafast         \
+	-crf 1                    \
+	-threads 0                \
+	-bf 0
+
 #splint flags
 SPLINTFLAGS =            \
     -redef               \
@@ -163,10 +183,13 @@ test: all
 	@ ./$(TESTSUITE)
 
 clean:
-	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat
+	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4
 
 splint:
 	@  splint $(SPLINTFLAGS) *.c *.h
+
+gource:
+	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
 	@makedepend    -Y -w 65536 2> /dev/null \
