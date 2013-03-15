@@ -86,7 +86,7 @@ endif
 
 #gource flags
 GOURCEFLAGS=                  \
-	--date-format "%d %B, %Y" \
+    --date-format "%d %B, %Y" \
     --seconds-per-day 0.01    \
     --auto-skip-seconds 1     \
     --title "GMQCC"           \
