@@ -87,22 +87,22 @@ endif
 #gource flags
 GOURCEFLAGS=                  \
 	--date-format "%d %B, %Y" \
-	--seconds-per-day 0.01    \
-	--auto-skip-seconds 1     \
-	--title "GMQCC"           \
-	-1280x720
+    --seconds-per-day 0.01    \
+    --auto-skip-seconds 1     \
+    --title "GMQCC"           \
+    -1280x720
 #ffmpeg flags for gource
 FFMPEGFLAGS=                  \
-	-y                        \
-	-r 60                     \
-	-f image2pipe             \
-	-vcodec ppm               \
-	-i -                      \
-	-vcodec libx264           \
-	-preset ultrafast         \
-	-crf 1                    \
-	-threads 0                \
-	-bf 0
+    -y                        \
+    -r 60                     \
+    -f image2pipe             \
+    -vcodec ppm               \
+    -i -                      \
+    -vcodec libx264           \
+    -preset ultrafast         \
+    -crf 1                    \
+    -threads 0                \
+    -bf 0
 
 #splint flags
 SPLINTFLAGS =            \
