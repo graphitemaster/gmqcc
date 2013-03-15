@@ -17,16 +17,16 @@ endif
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
 	CFLAGS +=                              \
-		-Weverything                       \
-		-Wno-padded                        \
-		-Wno-format-nonliteral             \
-		-Wno-disabled-macro-expansion      \
-		-Wno-conversion                    \
-		-Wno-missing-prototypes            \
-		-Wno-float-equal                   \
-		-Wno-cast-align                    \
-		-Wno-missing-variable-declarations \
-		-Wno-unknown-warning-option
+	    -Weverything                       \
+	    -Wno-padded                        \
+	    -Wno-format-nonliteral             \
+	    -Wno-disabled-macro-expansion      \
+	    -Wno-conversion                    \
+	    -Wno-missing-prototypes            \
+	    -Wno-float-equal                   \
+	    -Wno-cast-align                    \
+	    -Wno-missing-variable-declarations \
+	    -Wno-unknown-warning-option
 else
 	#Tiny C Compiler doesn't know what -pedantic-errors is
 	# and instead of ignoring .. just errors.
