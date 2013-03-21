@@ -1,4 +1,5 @@
 DESTDIR :=
+OPTIONAL:=
 PREFIX  := /usr/local
 BINDIR  := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
@@ -9,7 +10,7 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char
+CFLAGS += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
@@ -38,7 +39,7 @@ else
 endif
 
 ifeq ($(track), no)
-    CFLAGS += -DNOTRACK
+	CFLAGS += -DNOTRACK
 endif
 
 OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o fs.o utf8.o correct.o
