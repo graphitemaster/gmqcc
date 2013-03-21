@@ -9,6 +9,7 @@ CARCH   := $(shell uname -m)
 PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)-$(CARCH)
 PKG     := $(PKGDIR).pkg.tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
+DESTDIR := distro/archlinux/this/$(PKGDIR)
 CFLAGS  :=
 
 
@@ -18,7 +19,7 @@ endif
 
 base:
 	$(MAKE) -C $(BASEDIR) clean
-	$(MAKE) -C $(BASEDIR) OPTIONAL=$(CFLAGS) DESTDIR=distro/archlinux/this/$(PKGDIR) PREFIX=$(PREFIX) install
+	$(MAKE) -C $(BASEDIR) OPTIONAL=$(CFLAGS) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install
 	@echo "pkgname = gmqcc" > $(PKGINFO)
 	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)" >> $(PKGINFO)
 	@echo "pkgdesc = An Improved Quake C Compiler" >> $(PKGINFO)
