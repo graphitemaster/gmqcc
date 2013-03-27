@@ -190,6 +190,9 @@ splint:
 	@  splint $(SPLINTFLAGS) *.c *.h
 
 gource:
+	@ gource $(GOURCEFLAGS)
+
+gource-record:
 	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
