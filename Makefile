@@ -91,7 +91,17 @@ GOURCEFLAGS=                  \
     --seconds-per-day 0.01    \
     --auto-skip-seconds 1     \
     --title "GMQCC"           \
+    --key                     \
+    --camera-mode overview    \
+    --highlight-all-users     \
+    --file-idle-time 0        \
+    --hide progress,mouse     \
+    --stop-at-end             \
+    --max-files 99999999999   \
+    --max-file-lag 0.000001   \
+    --bloom-multiplier 1.3    \
     -1280x720
+
 #ffmpeg flags for gource
 FFMPEGFLAGS=                  \
     -y                        \
@@ -190,6 +200,9 @@ splint:
 	@  splint $(SPLINTFLAGS) *.c *.h
 
 gource:
+	@ gource $(GOURCEFLAGS)
+
+gource-record:
 	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
