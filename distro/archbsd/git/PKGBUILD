@@ -50,6 +50,6 @@ package() {
 	gmake install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."
 
-	install -dm755 ${pkgdir}/usr/local/share/licenses/gmqcc
-	install -m644 LICENSE ${pkgdir}/usr/local/share/licenses/gmqcc/LICENSE
+	install -dm755 ${pkgdir}/usr/share/licenses/gmqcc
+	install -m644 LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
 }
