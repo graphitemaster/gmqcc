@@ -47,7 +47,7 @@ check() {
 package() {
 	cd "$srcdir"/"$_gitname"
 	msg "Compiling and installing to pkgdir this time..."
-	gmake install DESTDIR=$pkgdir PREFIX=/usr/local MANDIR=/usr/local/man
+	gmake install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."
 
 	install -dm755 ${pkgdir}/usr/local/share/licenses/gmqcc
