@@ -707,6 +707,52 @@ those of the unparenthesized expression.  It is an lvalue, a function designator
 void expression if the unparenthesized expression is, respectively, an lvalue, a 
 function designator, or a void expression.
 
+%% ->-> Constant expressions %%
+\subsubsection{Constant expressions}
+\paragraph*{Syntax}
+\begin{lstlisting}[language=bnf]
+constant-expression ::= conditional-expression
+\end{lstlisting}
+\paragraph*{Description}
+A constant expression can be evaluated during translation rather than runtime, and
+accordingly may be used in any place that a constant may be.
+\paragraph*{Constraints}
+\begin{itemize}
+	\item Constant expressions shall not contain assignment, increment, decrement,
+		  function-call, or comma operators, except when contained within a subexpression
+		  that is not evaluated.
+	\item Each constant expression shall evaluate to a constant that is in range of
+		  representable values for its type.
+\end{itemize}
+\paragraph*{Semantics}
+An expression that evaluates to a constant is required in several contexts. If a floating
+point expression is evaluated in the translation environment, the arithmetic precision range
+shall be as great is if the expression were being evaluated in the execution environment.
+\linebreak
+
+An integer constant expression shall have integer type and shall only have operands that 
+are integer constants, enumeration constants, character constants, and floating constants
+that are the immediate operand of casts. Cast operators in an integer constant expression 
+shall only convert arithmetic types to integer types.
+\linebreak
+
+More latitude is permitted for constant expressions in initializers. Such a constant expression
+shall be, or evaluate to an arithmetic constant expression.
+\linebreak
+
+An arithmetic constant expression shall have arithmetic type and shall only have operands that
+are integer constants, floating constants, enumeration constants, and character constants. Cast
+operators in an arithmetic constant expression shall only convert arithmetic types to arithmetic
+types.
+\linebreak
+
+An implementation may accept other forms of constant expressions.
+\linebreak
+
+The semantic rules for the evaluation of a constant expression are the same as for nonconstant
+expressions.
+
+
 \bibliographystyle{abbrv}
 \bibliography{main}
 
