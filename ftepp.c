@@ -492,7 +492,7 @@ static bool ftepp_define(ftepp_t *ftepp)
             break;
         default:
             ftepp_error(ftepp, "expected macro name");
-            return false;
+            goto cleanup_false;
     }
 
     (void)ftepp_next(ftepp);
@@ -500,14 +500,14 @@ static bool ftepp_define(ftepp_t *ftepp)
     if (ftepp->token == '(') {
         macro->has_params = true;
         if (!ftepp_define_params(ftepp, macro))
-            return false;
+            goto cleanup_false;
     }
 
     if (!ftepp_skipspace(ftepp))
-        return false;
+        goto cleanup_false;
 
     if (!ftepp_define_body(ftepp, macro))
-        return false;
+        goto cleanup_false;
 
     if (ftepp->output_on)
         vec_push(ftepp->macros, macro);
@@ -518,6 +518,10 @@ static bool ftepp_define(ftepp_t *ftepp)
     for (; l < ftepp_ctx(ftepp).line; ++l)
         ftepp_out(ftepp, "\n", true);
     return true;
+
+cleanup_false:
+    ppmacro_delete(macro);
+    return false;
 }
 
 /**

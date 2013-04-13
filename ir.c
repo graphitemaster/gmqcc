@@ -3292,6 +3292,8 @@ static void gen_vector_defs(prog_section_def def, const char *name)
         def.offset++;
         component[len-1]++;
     }
+
+    mem_d(component);
 }
 
 static void gen_vector_fields(prog_section_field fld, const char *name)
@@ -3320,6 +3322,8 @@ static void gen_vector_fields(prog_section_field fld, const char *name)
         fld.offset++;
         component[len-1]++;
     }
+
+    mem_d(component);
 }
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
