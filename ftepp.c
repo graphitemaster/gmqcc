@@ -124,7 +124,7 @@ char *ftepp_predef_line(lex_file *context) {
 char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    sprintf(value, "\"%s\"", context->name);
+    snprintf(value, length, "\"%s\"", context->name);
 
     return value;
 }
@@ -834,7 +834,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
 
     if (resetline && !ftepp->in_macro) {
         char lineno[128];
-        sprintf(lineno, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
+        snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
 
@@ -1800,12 +1800,12 @@ bool ftepp_init()
         minor[2] = '"';
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         ftepp_add_define(NULL, "__STD_GMQCC__");
-        sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
-        sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
+        snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
         ftepp_add_define(NULL, "__STD_QCCX__");
-        sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
-        sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
+        snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
         ftepp_add_define(NULL, "__STD_QCC__");
         /* 1.0 */

@@ -150,7 +150,6 @@ SPLINTFLAGS =            \
     -kepttrans           \
     -unqualifiedtrans    \
     +matchanyintegral    \
-    -bufferoverflowhigh  \
     +voidabstract        \
     -nullassign          \
     -unrecog             \
