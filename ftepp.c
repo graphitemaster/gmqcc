@@ -471,7 +471,7 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 
 static bool ftepp_define(ftepp_t *ftepp)
 {
-    ppmacro *macro;
+    ppmacro *macro = NULL;
     size_t l = ftepp_ctx(ftepp).line;
 
     (void)ftepp_next(ftepp);
@@ -520,7 +520,7 @@ static bool ftepp_define(ftepp_t *ftepp)
     return true;
 
 cleanup_false:
-    ppmacro_delete(macro);
+    if (macro) ppmacro_delete(macro);
     return false;
 }
 
