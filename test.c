@@ -985,8 +985,6 @@ void task_schedualize(size_t *pad) {
                 task_tasks[i].compiled = false;
                 execute                = false;
             }
-
-            fs_file_flush(task_tasks[i].stdoutlog);
         }
         while (fs_file_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
             /*
@@ -1003,7 +1001,6 @@ void task_schedualize(size_t *pad) {
             }
 
             fs_file_puts (task_tasks[i].stderrlog, data);
-            fs_file_flush(task_tasks[i].stdoutlog);
         }
 
         if (!task_tasks[i].compiled && strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {

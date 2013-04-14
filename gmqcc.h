@@ -466,7 +466,6 @@ void        util_hsdel(hash_set_t *);
 void           fs_file_close  (FILE *);
 int            fs_file_error  (FILE *);
 int            fs_file_getc   (FILE *);
-int            fs_file_flush  (FILE *);
 int            fs_file_printf (FILE *, const char *, ...);
 int            fs_file_puts   (FILE *, const char *);
 int            fs_file_seek   (FILE *, long int, int);

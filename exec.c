@@ -455,7 +455,6 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
         else           printf("(none)");
         printf("\n");
     }
-    fflush(stdout);
 }
 
 static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
