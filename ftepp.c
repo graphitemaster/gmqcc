@@ -422,7 +422,7 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
                         return false;
                     }
 
-                    index = atoi(ftepp_tokval(ftepp));
+                    index = (int)strtol(ftepp_tokval(ftepp), NULL, 10);
 
                     if (ftepp_next(ftepp) != ']') {
                         ftepp_error(ftepp, "expected `]` in __VA_ARGS__ subscript");

@@ -165,11 +165,6 @@ int fs_file_seek(FILE *fp, long int off, int whence) {
     return fseek(fp, off, whence);
 }
 
-int fs_file_putc(FILE *fp, int ch) {
-    /* Invokes file_exception on windows if fp is null */
-    return fputc(ch, fp);
-}
-
 int fs_file_flush(FILE *fp) {
     /* Invokes file_exception on windows if fp is null */
     return fflush(fp);
