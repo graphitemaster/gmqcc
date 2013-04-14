@@ -6093,7 +6093,7 @@ void parser_cleanup()
 
     util_htdel(parser->aliases);
 
-    intrin_intrinsics_destroy();
+    intrin_intrinsics_destroy(parser);
 
     mem_d(parser);
 }

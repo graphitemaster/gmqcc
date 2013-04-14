@@ -300,7 +300,7 @@ void  util_meminfo       ();
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-char *util_strdup        (const char *);
+char *_util_Estrdup        (const char *, const char *, size_t);
 void  util_debug         (const char *, const char *, ...);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
@@ -325,6 +325,8 @@ int util_asprintf (char **ret, const char *fmt, ...);
 #    define mem_d(x)    util_memory_d((void*)(x))
 #    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
 #endif /*! NOTRACK */
+
+#define util_strdup(X)  _util_Estrdup((X), __FILE__, __LINE__)
 
 /*
  * A flexible vector implementation: all vector pointers contain some

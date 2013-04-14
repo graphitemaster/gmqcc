@@ -44,10 +44,6 @@ ht intrin_intrinsics() {
     return intrinsics;
 }
 
-void intrin_intrinsics_destroy() {
-    util_htdel(intrin_intrinsics());
-}
-
 #define INTRIN_VAL(VALUE, NAME, FUNC, STYPE, VTYPE)                   \
     do {                                                              \
         (VALUE) = ast_value_new (                                     \
@@ -375,6 +371,17 @@ static intrin_t intrinsics[] = {
     {&intrin_pow,   "__builtin_pow",   "pow"},
     {&intrin_isnan, "__builtin_isnan", "isnan"}
 };
+
+void intrin_intrinsics_destroy(parser_t *parser) {
+    /*size_t i;*/
+    (void)parser;
+    util_htdel(intrin_intrinsics());
+#if 0
+    for (i = 0; i < sizeof(intrinsics)/sizeof(intrin_t); i++)
+        ast_value_delete( (ast_value*) intrinsics[i].intrin(parser));
+#endif
+}
+
 
 ast_expression *intrin_func(parser_t *parser, const char *name) {
     static bool  init = false;

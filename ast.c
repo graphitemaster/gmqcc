@@ -584,6 +584,7 @@ void ast_member_delete(ast_member *self)
      * purpose that is not garbage-collected.
     */
     ast_expression_delete((ast_expression*)self);
+    mem_d(self->name);
     mem_d(self);
 }
 

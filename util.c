@@ -136,13 +136,13 @@ void util_meminfo() {
         return;
 
     for (info = mem_start; info; info = info->next) {
-        util_debug("MEM", "lost:       % 8u (bytes) at %s:%u\n",
+        con_out("lost:       % 8u (bytes) at %s:%u\n",
             info->byte,
             info->file,
             info->line);
     }
 
-    util_debug("MEM", "Memory information:\n\
+    con_out("Memory information:\n\
         Total allocations:   %llu\n\
         Total deallocations: %llu\n\
         Total allocated:     %llu (bytes)\n\
@@ -159,14 +159,14 @@ void util_meminfo() {
  * Some string utility functions, because strdup uses malloc, and we want
  * to track all memory (without replacing malloc).
  */
-char *util_strdup(const char *s) {
+char *_util_Estrdup(const char *s, const char *file, size_t line) {
     size_t  len = 0;
     char   *ptr = NULL;
 
     if (!s)
         return NULL;
 
-    if ((len = strlen(s)) && (ptr = (char*)mem_a(len+1))) {
+    if ((len = strlen(s)) && (ptr = (char*)util_memory_a(len+1, line, file))) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
