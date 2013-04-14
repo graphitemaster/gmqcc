@@ -259,9 +259,10 @@ bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
 /*
  * Extraction abilities.  These work as you expect them to.
  */ 
-bool pak_extract_one(pak_file_t *pak, const char *file) {
-    pak_directory_t *dir = NULL;
-    unsigned char   *dat = NULL;
+bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
+    pak_directory_t *dir   = NULL;
+    unsigned char   *dat   = NULL;
+    char            *local = NULL;
     FILE            *out;
 
     if (!pak_exists(pak, file, &dir)) {
@@ -278,15 +279,20 @@ bool pak_extract_one(pak_file_t *pak, const char *file) {
      */   
     pak_tree_build(file);
 
+    /* TODO portable path seperators */
+    util_asprintf(&local, "%s/%s", outdir, file);
+
     /*
      * Now create the file, if this operation fails.  Then abort
      * It shouldn't fail though.
      */   
-    if (!(out = fs_file_open(file, "wb"))) {
+    if (!(out = fs_file_open(local, "wb"))) {
         mem_d(dat);
         return false;
     }
 
+    /* free memory for directory string */
+    mem_d(local);
 
     /* read */
     fs_file_seek (pak->handle, dir->pos, SEEK_SET);
@@ -310,11 +316,8 @@ bool pak_extract_all(pak_file_t *pak, const char *dir) {
     if (!fs_dir_make(dir))
         return false;
 
-    if (fs_dir_change(dir))
-        return false;
-
     for (itr = 0; itr < vec_size(pak->directories); itr++) {
-        if (!pak_extract_one(pak, pak->directories[itr].name))
+        if (!pak_extract_one(pak, pak->directories[itr].name, dir))
             return false;
     }
 
@@ -477,7 +480,6 @@ int main(int argc, char **argv) {
     bool          extract   = true;
     char         *redirout  = (char*)stdout;
     char         *redirerr  = (char*)stderr;
-    char         *directory = NULL;
     char         *file      = NULL;
     char        **files     = NULL;
     pak_file_t   *pak       = NULL;
@@ -497,8 +499,6 @@ int main(int argc, char **argv) {
             if (parsecmd("redirout",  &argc, &argv, &redirout,  1, false))
                 continue;
             if (parsecmd("redirerr",  &argc, &argv, &redirerr,  1, false))
-                continue;
-            if (parsecmd("directory", &argc, &argv, &directory, 1, false))
                 continue;
             if (parsecmd("file",      &argc, &argv, &file,      1, false))
                 continue;
@@ -542,7 +542,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        if (!pak_extract_all(pak, (directory) ? directory : "./")) {
+        if (!pak_extract_all(pak, "./")) {
             con_err("failed to extract PAK %s (files may be missing)\n", file);
             pak_close(pak);
             vec_free(files);
@@ -558,13 +558,6 @@ int main(int argc, char **argv) {
 
     if (!(pak = pak_open(file, "w"))) {
         con_err("failed to open PAK %s for writing\n", file);
-        vec_free(files);
-        return EXIT_FAILURE;
-    }
-
-    if (directory && !fs_dir_change(directory)) {
-        con_err("failed to change directory %s\n", directory);
-        pak_close(pak);
         vec_free(files);
         return EXIT_FAILURE;
     }

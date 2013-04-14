@@ -298,7 +298,6 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
 #else
 #   if !defined(__MINGW32__)
 #       include <sys/stat.h> /* mkdir */
-#       include <unistd.h>   /* chdir */
 
         int fs_dir_make(const char *path) {
             return mkdir(path, 0700);
@@ -319,10 +318,6 @@ int fs_dir_close(DIR *dir) {
 
 struct dirent *fs_dir_read(DIR *dir) {
     return readdir(dir);
-}
-
-int fs_dir_change(const char *path) {
-    return chdir(path);
 }
 
 #endif /*! defined(_WIN32) && !defined(__MINGW32__) */

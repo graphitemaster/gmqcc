@@ -479,11 +479,10 @@ FILE          *fs_file_open   (const char *, const char *);
 int            fs_file_getline(char  **, size_t *, FILE *);
 
 /* directory handling */
+int            fs_dir_make    (const char *);
 DIR           *fs_dir_open    (const char *);
 int            fs_dir_close   (DIR *);
 struct dirent *fs_dir_read    (DIR *);
-int            fs_dir_make    (const char *);
-int            fs_dir_change  (const char *);
 
 
 /*===================================================================*/
