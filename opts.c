@@ -257,7 +257,7 @@ static size_t opts_ini_parse (
 static bool opts_ini_bool(const char *value) {
     if (!strcmp(value, "true"))  return true;
     if (!strcmp(value, "false")) return false;
-    return !!strtoul(value, NULL, 10);
+    return !!strtol(value, NULL, 10);
 }
 
 static char *opts_ini_load(const char *section, const char *name, const char *value) {
