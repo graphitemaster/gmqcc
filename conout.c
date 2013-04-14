@@ -282,10 +282,6 @@ int con_change(const char *out, const char *err) {
         con_enablecolor();
     } else if (!(console.handle_err = fs_file_open(err, "w"))) return 0;
 
-    /* no buffering */
-    setvbuf(console.handle_out, NULL, _IONBF, 0);
-    setvbuf(console.handle_err, NULL, _IONBF, 0);
-
     return 1;
 }
 
