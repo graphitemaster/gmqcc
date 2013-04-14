@@ -403,7 +403,7 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     if (isdigit(argarg[0])) {
-                        uint32_t val = atoi(argarg);
+                        uint32_t val = (uint32_t)strtol(argarg, NULL, 10);
                         OPTS_OPTION_U32(OPTION_O) = val;
                         opts_setoptimlevel(val);
                     } else {
