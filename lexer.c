@@ -272,7 +272,7 @@ void lex_close(lex_file *lex)
 static int lex_fgetc(lex_file *lex)
 {
     if (lex->file)
-        return fgetc(lex->file);
+        return fs_file_getc(lex->file);
     if (lex->open_string) {
         if (lex->open_string_pos >= lex->open_string_length)
             return EOF;

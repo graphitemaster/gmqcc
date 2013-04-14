@@ -644,9 +644,9 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     char             buffer[4096];
     size_t           found = 0;
 
-    dir = opendir(curdir);
+    dir = fs_dir_open(curdir);
 
-    while ((files = readdir(dir))) {
+    while ((files = fs_dir_read(dir))) {
         snprintf(buffer,   sizeof(buffer), "%s/%s", curdir, files->d_name);
 
         if (stat(buffer, &directory) == -1) {
@@ -777,7 +777,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
         found
     );
 
-    closedir(dir);
+    fs_dir_close(dir);
     return success;
 }
 
@@ -790,9 +790,9 @@ void task_precleanup(const char *curdir) {
     struct dirent   *files;
     char             buffer[4096];
 
-    dir = opendir(curdir);
+    dir = fs_dir_open(curdir);
 
-    while ((files = readdir(dir))) {
+    while ((files = fs_dir_read(dir))) {
         if (strstr(files->d_name, "TMP")     ||
             strstr(files->d_name, ".stdout") ||
             strstr(files->d_name, ".stderr"))
@@ -805,7 +805,7 @@ void task_precleanup(const char *curdir) {
         }
     }
 
-    closedir(dir);
+    fs_dir_close(dir);
 }
 
 void task_destroy(void) {
