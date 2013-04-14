@@ -238,7 +238,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
         if (!dir)
             return NULL;
 
-        strcpy(dir->dd_name, name);
+        strncpy(dir->dd_name, name, strlen(name));
         return dir;
     }
         
@@ -258,8 +258,8 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             if (*dir->dd_name) {
                 size_t n = strlen(dir->dd_name);
                 if ((dirname  = (char*)mem_a(n + 5) /* 4 + 1 */)) {
-                    strcpy(dirname,     dir->dd_name);
-                    strcpy(dirname + n, "\\*.*");   /* 4 + 1 */
+                    strncpy(dirname, dir->dd_name, n);
+                    strncpy(dirname + n, "\\*.*", 4);   /* 4 + 1 */
                 }
             } else {
                 if (!(dirname = util_strdup("\\*.*")))

@@ -361,7 +361,7 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
         return false;
     }
 
-    strcpy(dir.name, file);
+    strncpy(dir.name, file, strlen(file));
 
     /*
      * Allocate some memory for loading in the data that will be

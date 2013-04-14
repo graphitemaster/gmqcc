@@ -218,7 +218,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
     if (!e) {
         if (pos + 6 >= bufsize)
             goto full;
-        strcpy(buf + pos, "(null)");
+        strncpy(buf + pos, "(null)", 6);
         return pos + 6;
     }
 
@@ -227,7 +227,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
 
     switch (e->expression.vtype) {
         case TYPE_VARIANT:
-            strcpy(buf + pos, "(variant)");
+            strncpy(buf + pos, "(variant)", 9);
             return pos + 9;
 
         case TYPE_FIELD:
@@ -284,7 +284,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             typelen = strlen(typestr);
             if (pos + typelen >= bufsize)
                 goto full;
-            strcpy(buf + pos, typestr);
+            strncpy(buf + pos, typestr, typelen);
             return pos + typelen;
     }
 
@@ -1216,7 +1216,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
             namelen = strlen(self->name);
             name    = (char*)mem_a(namelen + 16);
-            strcpy(name, self->name);
+            strncpy(name, self->name, namelen);
 
             array->ir_values = (ir_value**)mem_a(sizeof(array->ir_values[0]) * array->expression.count);
             array->ir_values[0] = v;
@@ -1274,7 +1274,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
-        strcpy(name, self->name);
+        strncpy(name, self->name, namelen);
 
         self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
         self->ir_values[0] = v;
@@ -1416,7 +1416,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
-        strcpy(name, self->name);
+        strncpy(name, self->name, namelen);
 
         self->ir_values[0] = v;
         for (ai = 1; ai < self->expression.count; ++ai) {

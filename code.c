@@ -36,7 +36,7 @@ uint32_t                code_entfields;
 /* This is outrageous! */
 #define QCINT_ENTRY void*
 #define QCINT_TO_HASH_ENTRY(q) ((void*)(uintptr_t)(q))
-#define HASH_ENTRY_TO_QCINT(h) ((qcint)(uintptr_t)(h))
+#define HASH_ENTRY_TO_QCINT(h) /*@only@*/ ((qcint) *((uintptr_t*)(&(h))) )
 static ht     code_string_cache;
 static qcint  code_string_cached_empty;
 
