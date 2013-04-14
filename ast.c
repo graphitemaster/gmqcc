@@ -42,7 +42,7 @@ static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
     (void)self;
     con_err("ast node missing destroy()\n");
-    abort();
+    exit(EXIT_FAILURE);
 }
 
 /* Initialize main ast node aprts */

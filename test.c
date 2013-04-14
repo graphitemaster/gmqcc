@@ -315,7 +315,7 @@ bool task_template_generate(task_template_t *tmpl, char tag, const char *file, s
     if (strchr(value, '\n'))
         *strrchr(value, '\n')='\0';
     else /* cppcheck: possible nullpointer dereference */
-        abort();
+        exit(EXIT_FAILURE);
 
     /*
      * Now allocate and set the actual value for the specific tag. Which
@@ -428,7 +428,7 @@ bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size
                 if (strrchr(value, '\n'))
                     *strrchr(value, '\n')='\0';
                 else /* cppcheck: possible null pointer dereference */
-                    abort();
+                    exit(EXIT_FAILURE);
 
                 vec_push(tmpl->comparematch, util_strdup(value));
 

@@ -253,7 +253,7 @@ void util_endianswap(void *_data, size_t length, unsigned int typesize) {
                 util_swap64((uint32_t*)_data, length>>3);
                 return;
 
-            default: abort(); /* please blow the fuck up! */
+            default: exit(EXIT_FAILURE); /* please blow the fuck up! */
         }
 #   endif
 #endif

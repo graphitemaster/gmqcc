@@ -1651,7 +1651,7 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
          * is doing something wrong.
          */
         irerror(self->context, "Invalid entry block for PHI");
-        abort();
+        exit(EXIT_FAILURE);
     }
 
     pe.value = v;

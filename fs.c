@@ -53,7 +53,7 @@
     ) {
         wprintf(L"Invalid parameter dectected %s:%d %s [%s]\n", file, line, function, expression);
         wprintf(L"Aborting ...\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
 
     static void file_init() {
