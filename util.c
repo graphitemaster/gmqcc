@@ -163,10 +163,14 @@ char *_util_Estrdup(const char *s, const char *file, size_t line) {
     size_t  len = 0;
     char   *ptr = NULL;
 
+    /* in case of -DNOTRACK */
+    (void)file;
+    (void)line;
+
     if (!s)
         return NULL;
 
-    if ((len = strlen(s)) && (ptr = (char*)util_memory_a(len+1, line, file))) {
+    if ((len = strlen(s)) && (ptr = (char*)mem_af(len+1, line, file))) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
