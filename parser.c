@@ -4791,6 +4791,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 on_error:
     if (argcounter)
         mem_d(argcounter);
+    if (varparam)
+        ast_delete(varparam);
     ast_delete(var);
     for (i = 0; i < vec_size(params); ++i)
         ast_delete(params[i]);

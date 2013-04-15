@@ -87,6 +87,8 @@ static void ast_expression_delete(ast_expression *self)
         ast_delete(self->expression.params[i]);
     }
     vec_free(self->expression.params);
+    if (self->expression.varparam)
+        ast_delete(self->expression.varparam);
 }
 
 static void ast_expression_delete_full(ast_expression *self)
