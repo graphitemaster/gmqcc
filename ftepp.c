@@ -394,6 +394,7 @@ static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
             return false;
         }
     } while (ftepp->token == ',');
+
     if (ftepp->token != ')') {
         ftepp_error(ftepp, "expected closing paren after macro parameter list");
         return false;

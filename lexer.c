@@ -495,13 +495,13 @@ unroll:
         vec_free(command);
         lex_ungetch(lex, ' ');
     }
-    if (command) {
-        vec_pop(command);
-        while (vec_size(command)) {
-            lex_ungetch(lex, (unsigned char)vec_last(command));
-            vec_pop(command);
+    if (param) {
+        vec_pop(param);
+        while (vec_size(param)) {
+            lex_ungetch(lex, (unsigned char)vec_last(param));
+            vec_pop(param);
         }
-        vec_free(command);
+        vec_free(param);
         lex_ungetch(lex, ' ');
     }
     if (pragma) {
