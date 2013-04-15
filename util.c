@@ -30,6 +30,8 @@ uint64_t mem_ab = 0;
 uint64_t mem_db = 0;
 uint64_t mem_at = 0;
 uint64_t mem_dt = 0;
+uint64_t mem_pk = 0;
+uint64_t mem_hw = 0;
 
 struct memblock_t {
     const char  *file;
@@ -38,6 +40,12 @@ struct memblock_t {
     struct memblock_t *next;
     struct memblock_t *prev;
 };
+
+#define PEAK_MEM             \
+    do {                     \
+        if (mem_hw > mem_pk) \
+            mem_pk = mem_hw; \
+    } while (0)
 
 static struct memblock_t *mem_start = NULL;
 
@@ -56,6 +64,9 @@ void *util_memory_a(size_t byte, unsigned int line, const char *file) {
 
     mem_at++;
     mem_ab += info->byte;
+    mem_hw += info->byte;
+
+    PEAK_MEM;
 
     return data;
 }
@@ -67,6 +78,7 @@ void util_memory_d(void *ptrn) {
     info = ((struct memblock_t*)ptrn - 1);
 
     mem_db += info->byte;
+    mem_hw -= info->byte;
     mem_dt++;
 
     if (info->prev)
@@ -122,37 +134,74 @@ void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file
     mem_start = newinfo;
 
     mem_ab -= oldinfo->byte;
+    mem_hw -= oldinfo->byte;
     mem_ab += newinfo->byte;
+    mem_hw += newinfo->byte;
+
+    PEAK_MEM;
 
     free(oldinfo);
 
     return newinfo+1;
 }
 
+static void util_dumpmem(struct memblock_t *memory, uint16_t cols) {
+    uint32_t i, j;
+    for (i = 0; i < memory->byte + ((memory->byte % cols) ? (cols - memory->byte % cols) : 0); i++) {
+        if (i % cols == 0)    con_out("    0x%06X: ", i);
+        if (i < memory->byte) con_out("%02X "   , 0xFF & ((char*)(memory + 1))[i]);
+        else                  con_out("    ");
+
+        if ((uint16_t)(i % cols) == (cols - 1)) {
+            for (j = i - (cols - 1); j <= i; j++) {
+                con_out("%c",
+                    (j >= memory->byte)
+                        ? ' '
+                        : (isprint(((char*)(memory + 1))[j]))
+                            ? 0xFF & ((char*)(memory + 1)) [j]
+                            : '.'
+                );
+            }
+            con_out("\n");
+        }
+    }
+}
+
 void util_meminfo() {
     struct memblock_t *info;
 
-    if (!OPTS_OPTION_BOOL(OPTION_MEMCHK))
-        return;
 
-    for (info = mem_start; info; info = info->next) {
-        con_out("lost:       % 8u (bytes) at %s:%u\n",
-            info->byte,
-            info->file,
-            info->line);
+    if (OPTS_OPTION_BOOL(OPTION_DEBUG)) {
+        for (info = mem_start; info; info = info->next) {
+            con_out("lost: %u (bytes) at %s:%u\n",
+                info->byte,
+                info->file,
+                info->line);
+
+            util_dumpmem(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
+        }
     }
 
-    con_out("Memory information:\n\
-        Total allocations:   %llu\n\
-        Total deallocations: %llu\n\
-        Total allocated:     %llu (bytes)\n\
-        Total deallocated:   %llu (bytes)\n\
-        Leaks found:         lost %llu (bytes) in %d allocations\n",
-            mem_at,   mem_dt,
-            mem_ab,   mem_db,
-           (mem_ab -  mem_db),
-           (mem_at -  mem_dt)
-    );
+    if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
+        OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
+        con_out("Memory information:\n\
+            Total allocations:   %llu\n\
+            Total deallocations: %llu\n\
+            Total allocated:     %f (MB)\n\
+            Total deallocated:   %f (MB)\n\
+            Total peak memory:   %f (MB)\n\
+            Total leaked memory: %f (MB) in %llu allocations\n",
+                mem_at,
+                (float)(mem_dt)           / 1048576.0f,
+                mem_ab,
+                (float)(mem_db)           / 1048576.0f,
+                (float)(mem_pk)           / 1048576.0f,
+                (float)(mem_ab -  mem_db) / 1048576.0f,
+
+                /* could be more clever */
+                (mem_at -  mem_dt)
+        );
+    }
 }
 
 /*

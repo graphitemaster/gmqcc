@@ -146,9 +146,10 @@ static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
     char  buffer[1024];
-    char *redirout = NULL;
-    char *redirerr = NULL;
-    char *config   = NULL;
+    char *redirout    = NULL;
+    char *redirerr    = NULL;
+    char *config      = NULL;
+    char *memdumpcols = NULL;
 
     while (!argend && argc > 1) {
         char *argarg;
@@ -221,6 +222,10 @@ static bool options_parse(int argc, char **argv) {
             }
             if (options_long_gcc("config", &argc, &argv, &argarg)) {
                 config = argarg;
+                continue;
+            }
+            if (options_long_gcc("memdumpcols", &argc, &argv, &memdumpcols)) {
+                OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = (uint16_t)strtol(memdumpcols, NULL, 10);
                 continue;
             }
 
