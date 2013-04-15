@@ -1431,6 +1431,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
             self->ir_values[ai]->unique_life = true;
             self->ir_values[ai]->locked      = true;
         }
+        mem_d(name);
     }
     else
     {
