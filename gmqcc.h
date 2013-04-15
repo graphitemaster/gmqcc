@@ -325,7 +325,7 @@ int util_asprintf (char **ret, const char *fmt, ...);
 #    define mem_a(x)      util_memory_a((x), __LINE__, __FILE__)
 #    define mem_d(x)      util_memory_d((void*)(x))
 #    define mem_r(x, n)   util_memory_r((void*)(x), (n), __LINE__, __FILE__)
-#    define mem_af(x)     util_memory_a((x), __LINE__, __FILE__)
+#    define mem_af(x,f,l) util_memory_a((x), __LINE__, __FILE__)
 #endif /*! NOTRACK */
 
 #define util_strdup(X)  _util_Estrdup((X), __FILE__, __LINE__)
