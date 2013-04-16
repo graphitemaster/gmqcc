@@ -1,0 +1,18 @@
+Here exists some syntax highlighting configuration files for various
+text editors. Inside each directory exists some documentaiton on how
+you can install the configuration file correctly.
+
+Currently the supported text editors:
+    geany  - GTK  text editor (not gedit)
+    kate   - KDE  text editor (the default text editor that comes with KDE)
+    nano   - base text editor (comes with every base distribution of linux)
+
+
+Other text editors we plan to provide syntax highlighting configuration
+files for (but never got around to figuring out)
+    vim
+    emacs
+    gedit
+
+If your text editor is not supported and you'd like to create syntax
+highlighting support for it, don't hesitate to share it with us.
