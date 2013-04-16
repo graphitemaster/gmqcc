@@ -483,6 +483,9 @@ static bool lex_try_pragma(lex_file *lex)
     lex->line = line;
     while (ch != '\n' && ch != EOF)
         ch = lex_getch(lex);
+    vec_free(command);
+    vec_free(param);
+    vec_free(pragma);
     return true;
 
 unroll:
