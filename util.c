@@ -192,8 +192,8 @@ void util_meminfo() {
             Total peak memory:   %f (MB)\n\
             Total leaked memory: %f (MB) in %llu allocations\n",
                 mem_at,
-                (float)(mem_dt)           / 1048576.0f,
-                mem_ab,
+                mem_dt,
+                (float)(mem_ab)           / 1048576.0f,
                 (float)(mem_db)           / 1048576.0f,
                 (float)(mem_pk)           / 1048576.0f,
                 (float)(mem_ab -  mem_db) / 1048576.0f,
