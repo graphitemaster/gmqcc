@@ -25,6 +25,7 @@
 #include "gmqcc.h"
 #include "lexer.h"
 
+#define HT_MACROS 1024
 typedef struct {
     bool on;
     bool was_on;
@@ -62,7 +63,8 @@ typedef struct ftepp_s {
 
     bool         output_on;
     ppcondition *conditions;
-    ppmacro    **macros;
+    /*ppmacro    **macros;*/
+    ht           macros; /* hashtable<string, ppmacro*> */
 
     char        *output_string;
 
@@ -261,6 +263,7 @@ static ftepp_t* ftepp_new()
     ftepp = (ftepp_t*)mem_a(sizeof(*ftepp));
     memset(ftepp, 0, sizeof(*ftepp));
 
+    ftepp->macros    = util_htnew(HT_MACROS);
     ftepp->output_on = true;
 
     return ftepp;
@@ -273,15 +276,21 @@ static void ftepp_flush_do(ftepp_t *self)
 
 static void ftepp_delete(ftepp_t *self)
 {
-    size_t i;
     ftepp_flush_do(self);
     if (self->itemname)
         mem_d(self->itemname);
     if (self->includename)
         vec_free(self->includename);
+
+    /*
     for (i = 0; i < vec_size(self->macros); ++i)
         ppmacro_delete(self->macros[i]);
+
     vec_free(self->macros);
+*/
+
+    util_htrem(self->macros, (void (*)(void*))&ppmacro_delete);
+
     vec_free(self->conditions);
     if (self->lex)
         lex_close(self->lex);
@@ -310,23 +319,12 @@ static void ftepp_update_output_condition(ftepp_t *ftepp)
 
 static ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(ftepp->macros); ++i) {
-        if (!strcmp(name, ftepp->macros[i]->name))
-            return ftepp->macros[i];
-    }
-    return NULL;
+    return util_htget(ftepp->macros, name);
 }
 
 static void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(ftepp->macros); ++i) {
-        if (!strcmp(name, ftepp->macros[i]->name)) {
-            vec_remove(ftepp->macros, i, 1);
-            return;
-        }
-    }
+    util_htrm(ftepp->macros, name, NULL);
 }
 
 static GMQCC_INLINE int ftepp_next(ftepp_t *ftepp)
@@ -516,8 +514,12 @@ static bool ftepp_define(ftepp_t *ftepp)
         return false;
     }
 
+#if 0
     if (ftepp->output_on)
         vec_push(ftepp->macros, macro);
+#endif
+    if (ftepp->output_on)
+        util_htset(ftepp->macros, macro->name, (void*)macro);
     else {
         ppmacro_delete(macro);
     }
@@ -1832,7 +1834,8 @@ void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name)
     lex_ctx ctx = { "__builtin__", 0 };
     ctx.file = source;
     macro = ppmacro_new(ctx, name);
-    vec_push(ftepp->macros, macro);
+    /*vec_push(ftepp->macros, macro);*/
+    util_htset(ftepp->macros, name, macro);
 }
 
 const char *ftepp_get(ftepp_t *ftepp)

@@ -601,7 +601,7 @@ void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
  * Free all allocated data in a hashtable, this is quite the amount
  * of work.
  */
-void util_htdel(hash_table_t *ht) {
+void util_htrem(hash_table_t *ht, void (*callback)(void *data)) {
     size_t i = 0;
     for (; i < ht->size; i++) {
         hash_node_t *n = ht->table[i];
@@ -611,6 +611,8 @@ void util_htdel(hash_table_t *ht) {
         while (n) {
             if (n->key)
                 mem_d(n->key);
+            if (callback)
+                callback(n->value);
             p = n;
             n = n->next;
             mem_d(p);
@@ -620,6 +622,33 @@ void util_htdel(hash_table_t *ht) {
     /* free table */
     mem_d(ht->table);
     mem_d(ht);
+}
+
+void util_htrmh(hash_table_t *ht, const char *key, size_t bin, void (*cb)(void*)) {
+    hash_node_t **pair = &ht->table[bin];
+    hash_node_t *tmp;
+
+    while (*pair && (*pair)->key && strcmp(key, (*pair)->key) > 0)
+        pair = &(*pair)->next;
+
+    tmp = *pair;
+    if (!tmp || !tmp->key || strcmp(key, tmp->key) != 0)
+        return;
+
+    if (cb)
+        (*cb)(tmp->value);
+
+    *pair = tmp->next;
+    mem_d(tmp->key);
+    mem_d(tmp);
+}
+
+void util_htrm(hash_table_t *ht, const char *key, void (*cb)(void*)) {
+    util_htrmh(ht, key, util_hthash(ht, key), cb);
+}
+
+void util_htdel(hash_table_t *ht) {
+    util_htrem(ht, NULL);
 }
 
 /*
