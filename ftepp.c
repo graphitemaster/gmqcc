@@ -227,7 +227,7 @@ static pptoken *pptoken_make(ftepp_t *ftepp)
     return token;
 }
 
-static void pptoken_delete(pptoken *self)
+static GMQCC_INLINE void pptoken_delete(pptoken *self)
 {
     mem_d(self->value);
     mem_d(self);
@@ -269,7 +269,7 @@ static ftepp_t* ftepp_new()
     return ftepp;
 }
 
-static void ftepp_flush_do(ftepp_t *self)
+static GMQCC_INLINE void ftepp_flush_do(ftepp_t *self)
 {
     vec_free(self->output_string);
 }
@@ -281,13 +281,6 @@ static void ftepp_delete(ftepp_t *self)
         mem_d(self->itemname);
     if (self->includename)
         vec_free(self->includename);
-
-    /*
-    for (i = 0; i < vec_size(self->macros); ++i)
-        ppmacro_delete(self->macros[i]);
-
-    vec_free(self->macros);
-*/
 
     util_htrem(self->macros, (void (*)(void*))&ppmacro_delete);
 
@@ -309,7 +302,7 @@ static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
     }
 }
 
-static void ftepp_update_output_condition(ftepp_t *ftepp)
+static GMQCC_INLINE void ftepp_update_output_condition(ftepp_t *ftepp)
 {
     size_t i;
     ftepp->output_on = true;
@@ -317,12 +310,12 @@ static void ftepp_update_output_condition(ftepp_t *ftepp)
         ftepp->output_on = ftepp->output_on && ftepp->conditions[i].on;
 }
 
-static ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
+static GMQCC_INLINE ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
     return util_htget(ftepp->macros, name);
 }
 
-static void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
+static GMQCC_INLINE void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
 {
     util_htrm(ftepp->macros, name, NULL);
 }
