@@ -765,6 +765,7 @@ srcdone:
         }
 
         ftepp_finish(ftepp);
+        ftepp = NULL;
         if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
             if (!parser_finish(parser, OPTS_OPTION_STR(OPTION_OUTPUT))) {
                 retval = 1;
@@ -786,7 +787,8 @@ srcdone:
 
 cleanup:
     util_debug("COM", "cleaning ...\n");
-    ftepp_finish(ftepp);
+    if (ftepp)
+        ftepp_finish(ftepp);
     con_close();
     vec_free(items);
     vec_free(ppems);
