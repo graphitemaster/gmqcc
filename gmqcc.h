@@ -1038,6 +1038,8 @@ void             parser_cleanup       (struct parser_s *parser);
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
 struct lex_file_s;
+struct ftepp_s;
+
 typedef struct {
     const char  *name;
     char      *(*func)(struct lex_file_s *);
@@ -1049,14 +1051,14 @@ typedef struct {
  */
 #define FTEPP_PREDEF_COUNT 8
 
-bool        ftepp_init             ();
-bool        ftepp_preprocess_file  (const char *filename);
-bool        ftepp_preprocess_string(const char *name, const char *str);
-void        ftepp_finish           ();
-const char *ftepp_get              ();
-void        ftepp_flush            ();
-void        ftepp_add_define       (const char *source, const char *name);
-void        ftepp_add_macro        (const char *name,   const char *value);
+struct ftepp_s *ftepp_create           ();
+bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);
+bool            ftepp_preprocess_string(struct ftepp_s *ftepp, const char *name, const char *str);
+void            ftepp_finish           (struct ftepp_s *ftepp);
+const char     *ftepp_get              (struct ftepp_s *ftepp);
+void            ftepp_flush            (struct ftepp_s *ftepp);
+void            ftepp_add_define       (struct ftepp_s *ftepp, const char *source, const char *name);
+void            ftepp_add_macro        (struct ftepp_s *ftepp, const char *name,   const char *value);
 
 extern const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT];
 

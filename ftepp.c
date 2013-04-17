@@ -55,7 +55,7 @@ typedef struct {
     pptoken **output;
 } ppmacro;
 
-typedef struct {
+typedef struct ftepp_s {
     lex_file    *lex;
     int          token;
     unsigned int errors;
@@ -1713,9 +1713,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 /* Like in parser.c - files keep the previous state so we have one global
  * preprocessor. Except here we will want to warn about dangling #ifs.
  */
-static ftepp_t *ftepp;
-
-static bool ftepp_preprocess_done()
+static bool ftepp_preprocess_done(ftepp_t *ftepp)
 {
     bool retval = true;
     if (vec_size(ftepp->conditions)) {
@@ -1731,7 +1729,7 @@ static bool ftepp_preprocess_done()
     return retval;
 }
 
-bool ftepp_preprocess_file(const char *filename)
+bool ftepp_preprocess_file(ftepp_t *ftepp, const char *filename)
 {
     ftepp->lex = lex_open(filename);
     ftepp->itemname = util_strdup(filename);
@@ -1741,10 +1739,10 @@ bool ftepp_preprocess_file(const char *filename)
     }
     if (!ftepp_preprocess(ftepp))
         return false;
-    return ftepp_preprocess_done();
+    return ftepp_preprocess_done(ftepp);
 }
 
-bool ftepp_preprocess_string(const char *name, const char *str)
+bool ftepp_preprocess_string(ftepp_t *ftepp, const char *name, const char *str)
 {
     ftepp->lex = lex_open_string(str, strlen(str), name);
     ftepp->itemname = util_strdup(name);
@@ -1754,16 +1752,16 @@ bool ftepp_preprocess_string(const char *name, const char *str)
     }
     if (!ftepp_preprocess(ftepp))
         return false;
-    return ftepp_preprocess_done();
+    return ftepp_preprocess_done(ftepp);
 }
 
 
-void ftepp_add_macro(const char *name, const char *value) {
+void ftepp_add_macro(ftepp_t *ftepp, const char *name, const char *value) {
     char *create = NULL;
 
     /* use saner path for empty macros */
     if (!value) {
-        ftepp_add_define("__builtin__", name);
+        ftepp_add_define(ftepp, "__builtin__", name);
         return;
     }
 
@@ -1773,26 +1771,27 @@ void ftepp_add_macro(const char *name, const char *value) {
     vec_upload(create, value, strlen(value));
     vec_push  (create, 0);
 
-    ftepp_preprocess_string("__builtin__", create);
+    ftepp_preprocess_string(ftepp, "__builtin__", create);
     vec_free  (create);
 }
 
-bool ftepp_init()
+ftepp_t *ftepp_create()
 {
+    ftepp_t *ftepp;
     char minor[32];
     char major[32];
 
     ftepp = ftepp_new();
     if (!ftepp)
-        return false;
+        return NULL;
 
     memset(minor, 0, sizeof(minor));
     memset(major, 0, sizeof(major));
 
     /* set the right macro based on the selected standard */
-    ftepp_add_define(NULL, "GMQCC");
+    ftepp_add_define(ftepp, NULL, "GMQCC");
     if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC) {
-        ftepp_add_define(NULL, "__STD_FTEQCC__");
+        ftepp_add_define(ftepp, NULL, "__STD_FTEQCC__");
         /* 1.00 */
         major[0] = '"';
         major[1] = '1';
@@ -1802,15 +1801,15 @@ bool ftepp_init()
         minor[1] = '0';
         minor[2] = '"';
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
-        ftepp_add_define(NULL, "__STD_GMQCC__");
+        ftepp_add_define(ftepp, NULL, "__STD_GMQCC__");
         snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
         snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
-        ftepp_add_define(NULL, "__STD_QCCX__");
+        ftepp_add_define(ftepp, NULL, "__STD_QCCX__");
         snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
         snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
-        ftepp_add_define(NULL, "__STD_QCC__");
+        ftepp_add_define(ftepp, NULL, "__STD_QCC__");
         /* 1.0 */
         major[0] = '"';
         major[1] = '1';
@@ -1821,13 +1820,13 @@ bool ftepp_init()
         minor[2] = '"';
     }
 
-    ftepp_add_macro("__STD_VERSION_MINOR__", minor);
-    ftepp_add_macro("__STD_VERSION_MAJOR__", major);
+    ftepp_add_macro(ftepp, "__STD_VERSION_MINOR__", minor);
+    ftepp_add_macro(ftepp, "__STD_VERSION_MAJOR__", major);
 
-    return true;
+    return ftepp;
 }
 
-void ftepp_add_define(const char *source, const char *name)
+void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name)
 {
     ppmacro *macro;
     lex_ctx ctx = { "__builtin__", 0 };
@@ -1836,20 +1835,19 @@ void ftepp_add_define(const char *source, const char *name)
     vec_push(ftepp->macros, macro);
 }
 
-const char *ftepp_get()
+const char *ftepp_get(ftepp_t *ftepp)
 {
     return ftepp->output_string;
 }
 
-void ftepp_flush()
+void ftepp_flush(ftepp_t *ftepp)
 {
     ftepp_flush_do(ftepp);
 }
 
-void ftepp_finish()
+void ftepp_finish(ftepp_t *ftepp)
 {
     if (!ftepp)
         return;
     ftepp_delete(ftepp);
-    ftepp = NULL;
 }
