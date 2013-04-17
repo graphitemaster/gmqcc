@@ -168,7 +168,7 @@ static int win_fputs(FILE *h, const char *str) {
                 state    = -1;
             }
         } else {
-            fs_file_putc(h, *str);
+            fs_file_write(str, 1, 1, stdout);
             length ++;
         }
         str++;
