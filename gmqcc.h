@@ -1026,12 +1026,13 @@ qcint             prog_tempstring(qc_program *prog, const char *_str);
 /*===================================================================*/
 /*===================== parser.c commandline ========================*/
 /*===================================================================*/
+struct parser_s;
 
-bool parser_init          ();
-bool parser_compile_file  (const char *);
-bool parser_compile_string(const char *, const char *, size_t);
-bool parser_finish        (const char *);
-void parser_cleanup       ();
+struct parser_s *parser_create        ();
+bool             parser_compile_file  (struct parser_s *parser, const char *);
+bool             parser_compile_string(struct parser_s *parser, const char *, const char *, size_t);
+bool             parser_finish        (struct parser_s *parser, const char *);
+void             parser_cleanup       (struct parser_s *parser);
 
 /*===================================================================*/
 /*====================== ftepp.c commandline ========================*/

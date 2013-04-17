@@ -35,7 +35,7 @@
 #define PARSER_HT_SIZE    128
 #define TYPEDEF_HT_SIZE   16
 
-typedef struct {
+typedef struct parser_s {
     lex_file *lex;
     int      tok;
 
@@ -5911,16 +5911,15 @@ static void generate_checksum(parser_t *parser)
     code_crc = crc;
 }
 
-static parser_t *parser;
-
-bool parser_init()
+parser_t *parser_create()
 {
+    parser_t *parser;
     lex_ctx empty_ctx;
     size_t i;
 
     parser = (parser_t*)mem_a(sizeof(parser_t));
     if (!parser)
-        return false;
+        return NULL;
 
     memset(parser, 0, sizeof(*parser));
 
@@ -5933,7 +5932,7 @@ bool parser_init()
     if (!parser->assign_op) {
         printf("internal error: initializing parser: failed to find assign operator\n");
         mem_d(parser);
-        return false;
+        return NULL;
     }
 
     vec_push(parser->variables, parser->htfields  = util_htnew(PARSER_HT_SIZE));
@@ -5969,10 +5968,11 @@ bool parser_init()
     } else {
         parser->reserved_version = NULL;
     }
-    return true;
+
+    return parser;
 }
 
-bool parser_compile()
+bool parser_compile(parser_t *parser)
 {
     /* initial lexer/parser state */
     parser->lex->flags.noops = true;
@@ -6004,27 +6004,27 @@ bool parser_compile()
     return !compile_errors;
 }
 
-bool parser_compile_file(const char *filename)
+bool parser_compile_file(parser_t *parser, const char *filename)
 {
     parser->lex = lex_open(filename);
     if (!parser->lex) {
         con_err("failed to open file \"%s\"\n", filename);
         return false;
     }
-    return parser_compile();
+    return parser_compile(parser);
 }
 
-bool parser_compile_string(const char *name, const char *str, size_t len)
+bool parser_compile_string(parser_t *parser, const char *name, const char *str, size_t len)
 {
     parser->lex = lex_open_string(str, len, name);
     if (!parser->lex) {
         con_err("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
-    return parser_compile();
+    return parser_compile(parser);
 }
 
-void parser_cleanup()
+void parser_cleanup(parser_t *parser)
 {
     size_t i;
     for (i = 0; i < vec_size(parser->accessors); ++i) {
@@ -6100,7 +6100,7 @@ void parser_cleanup()
     mem_d(parser);
 }
 
-bool parser_finish(const char *output)
+bool parser_finish(parser_t *parser, const char *output)
 {
     size_t i;
     ir_builder *ir;

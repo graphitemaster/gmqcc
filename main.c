@@ -546,12 +546,13 @@ static bool progs_nextline(char **out, size_t *alen,FILE *src) {
 }
 
 int main(int argc, char **argv) {
-    size_t itr;
-    int    retval           = 0;
-    bool   opts_output_free = false;
-    bool   operators_free   = false;
-    bool   progs_src        = false;
-    FILE  *outfile          = NULL;
+    size_t          itr;
+    int             retval           = 0;
+    bool            opts_output_free = false;
+    bool            operators_free   = false;
+    bool            progs_src        = false;
+    FILE            *outfile         = NULL;
+    struct parser_s *parser          = NULL;
 
     app_name = argv[0];
     con_init ();
@@ -626,7 +627,7 @@ int main(int argc, char **argv) {
     }
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
-        if (!parser_init()) {
+        if (!(parser = parser_create())) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
@@ -740,7 +741,7 @@ srcdone:
                     }
                     data = ftepp_get();
                     if (vec_size(data)) {
-                        if (!parser_compile_string(items[itr].filename, data, vec_size(data))) {
+                        if (!parser_compile_string(parser, items[itr].filename, data, vec_size(data))) {
                             retval = 1;
                             goto cleanup;
                         }
@@ -748,7 +749,7 @@ srcdone:
                     ftepp_flush();
                 }
                 else {
-                    if (!parser_compile_file(items[itr].filename)) {
+                    if (!parser_compile_file(parser, items[itr].filename)) {
                         retval = 1;
                         goto cleanup;
                     }
@@ -763,7 +764,7 @@ srcdone:
 
         ftepp_finish();
         if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
-            if (!parser_finish(OPTS_OPTION_STR(OPTION_OUTPUT))) {
+            if (!parser_finish(parser, OPTS_OPTION_STR(OPTION_OUTPUT))) {
                 retval = 1;
                 goto cleanup;
             }
@@ -789,7 +790,7 @@ cleanup:
     vec_free(ppems);
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY))
-        parser_cleanup();
+        parser_cleanup(parser);
     if (opts_output_free)
         mem_d(OPTS_OPTION_STR(OPTION_OUTPUT));
     if (operators_free)
