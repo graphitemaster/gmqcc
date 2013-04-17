@@ -226,6 +226,25 @@ char *_util_Estrdup(const char *s, const char *file, size_t line) {
     return ptr;
 }
 
+char *_util_Estrdup_empty(const char *s, const char *file, size_t line) {
+    size_t  len = 0;
+    char   *ptr = NULL;
+
+    /* in case of -DNOTRACK */
+    (void)file;
+    (void)line;
+
+    if (!s)
+        return NULL;
+
+    len = strlen(s);
+    if ((ptr = (char*)mem_af(len+1, line, file))) {
+        memcpy(ptr, s, len);
+        ptr[len] = '\0';
+    }
+    return ptr;
+}
+
 void util_debug(const char *area, const char *ms, ...) {
     va_list  va;
     if (!OPTS_OPTION_BOOL(OPTION_DEBUG))
@@ -478,7 +497,7 @@ hash_node_t *_util_htnewpair(const char *key, void *value) {
     if (!(node = (hash_node_t*)mem_a(sizeof(hash_node_t))))
         return NULL;
 
-    if (!(node->key = util_strdup(key))) {
+    if (!(node->key = util_strdupe(key))) {
         mem_d(node);
         return NULL;
     }

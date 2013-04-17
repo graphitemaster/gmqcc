@@ -300,7 +300,8 @@ void  util_meminfo       ();
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-char *_util_Estrdup        (const char *, const char *, size_t);
+char *_util_Estrdup      (const char *, const char *, size_t);
+char *_util_Estrdup_empty(const char *, const char *, size_t);
 void  util_debug         (const char *, const char *, ...);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
@@ -329,6 +330,7 @@ int util_asprintf (char **ret, const char *fmt, ...);
 #endif /*! NOTRACK */
 
 #define util_strdup(X)  _util_Estrdup((X), __FILE__, __LINE__)
+#define util_strdupe(X) _util_Estrdup_empty((X), __FILE__, __LINE__)
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -336,7 +338,7 @@ int util_asprintf (char **ret, const char *fmt, ...);
  * this data is represented in the structure below.  Doing this allows
  * us to use the array [] to access individual elements from the vector
  * opposed to using set/get methods.
- */     
+ */
 typedef struct {
     size_t  allocated;
     size_t  used;

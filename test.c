@@ -679,7 +679,8 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
              * Generate a temportary file name for the output binary
              * so we don't trample over an existing one.
              */
-            tmpl->tempfilename = tempnam(curdir, "TMPDAT");
+            tmpl->tempfilename = NULL;
+            util_asprintf(&tmpl->tempfilename, "%s/TMPDAT.%s", curdir, files->d_name);
 
             /*
              * Additional QCFLAGS enviroment variable may be used
