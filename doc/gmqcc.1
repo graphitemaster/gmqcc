@@ -24,10 +24,6 @@ there are also traditional long-options available.
 .Bl -tag -width Ds
 .It Fl h , Fl -help
 Show a usage message and exit.
-.It Fl "debug"
-Turn on some compiler debugging mechanisms.
-.It Fl memchk
-Turn on compiler mem-check. (Shows allocations and checks for leaks.)
 .It Fl o , Fl -output= Ns Ar filename
 Specify the output filename. Defaults to progs.dat. This will overwrite
 the output file listed in a
@@ -46,7 +42,7 @@ Minimal optimization level
 Disable optimization entirely
 .El
 .Pp
-.It Fl O Ns Ar name Fl Ono- Ns Ar name
+.It Fl O Ns Ar name , Fl Ono- Ns Ar name
 Enable or disable a specific optimization. Note that these options
 must be used after setting the optimization level, otherwise they'll
 be overwritten.
@@ -57,6 +53,8 @@ activated at.
 Be less verbose. In particular removes the messages about which files
 are being processed, and which compilation mode is being used, and
 some others. Warnings and errors will of course still be displayed.
+.It Fl D Ns Ar macroname , Fl D Ns Ar macroname Ns = Ns Ar value
+Predefine a macro, optionally with a optional value.
 .It Fl E
 Run only the preprocessor as if
 .Fl f Ns Cm ftepp
@@ -93,6 +91,12 @@ Use an ini file to read all the
 and
 .Fl f
 flag from. See the
+.It Fl "debug"
+Turn on some compiler debugging mechanisms.
+.It Fl memchk
+Turn on compiler mem-check. (Shows allocations and checks for leaks.)
+.It Fl -memdumpcols Ns Ar columns
+Changes the number of columns to use for the debug memory dump, defaults to 16.
 .Sx CONFIG
 section about the file format.
 .It Fl redirout= Ns Ar file
