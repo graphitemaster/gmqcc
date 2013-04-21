@@ -3812,7 +3812,7 @@ void ir_function_dump(ir_function *f, char *ind,
     }
     if (vec_size(f->blocks))
     {
-        oprintf("%slife passes: %i\n", ind, (int)f->run_id); 
+        oprintf("%slife passes: %i\n", ind, (int)f->run_id);
         for (i = 0; i < vec_size(f->blocks); ++i) {
             ir_block_dump(f->blocks[i], ind, oprintf);
         }

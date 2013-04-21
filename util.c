@@ -262,7 +262,7 @@ void util_debug(const char *area, const char *ms, ...) {
 /*
  * only required if big endian .. otherwise no need to swap
  * data.
- */   
+ */
 #if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_BIG
     static GMQCC_INLINE void util_swap16(uint16_t *d, size_t l) {
         while (l--) {
@@ -402,7 +402,7 @@ static const uint16_t util_crc16_table[] = {
 /* Non - Reflected */
 uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
     register uint16_t h = current;
-    for (; len; --len, ++k) 
+    for (; len; --len, ++k)
         h = util_crc16_table[(h>>8)^((unsigned char)*k)]^(h<<8);
     return h;
 }
@@ -410,9 +410,9 @@ uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
 #if 0
 uint16_t util_crc16(const char *k, int len, const short clamp) {
     register uint16_t h= (uint16_t)0xFFFFFFFF;
-    for (; len; --len, ++k) 
+    for (; len; --len, ++k)
         h = util_crc16_table[(h^((unsigned char)*k))&0xFF]^(h>>8);
-    return (~h)%clamp; 
+    return (~h)%clamp;
 }
 #endif
 
@@ -674,7 +674,7 @@ void util_htdel(hash_table_t *ht) {
  * Portable implementation of vasprintf/asprintf. Assumes vsnprintf
  * exists, otherwise compiler error.
  *
- * TODO: fix for MSVC ....  
+ * TODO: fix for MSVC ....
  */
 int util_vasprintf(char **dat, const char *fmt, va_list args) {
     int   ret;
@@ -686,7 +686,7 @@ int util_vasprintf(char **dat, const char *fmt, va_list args) {
      * formatted string if it overflows. However there is a MSVC
      * intrinsic (which is documented wrong) called _vcsprintf which
      * will return the required amount to allocate.
-     */     
+     */
     #ifdef _MSC_VER
         char *str;
         if ((len = _vscprintf(fmt, args)) < 0) {
@@ -779,7 +779,7 @@ static GMQCC_INLINE void mt_generate() {
      * a branch that is executed every iteration from [0, MT_SIZE).
      *
      * Please see: http://www.quadibloc.com/crypto/co4814.htm for more
-     * information on how this clever trick works. 
+     * information on how this clever trick works.
      */
     static const uint32_t matrix[2] = {
         0x00000000,

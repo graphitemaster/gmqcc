@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012, 2013
  *     Wolfgang Bumiller
- *     Dale Weiler 
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -2131,7 +2131,7 @@ bool ast_entfield_codegen(ast_entfield *self, ast_function *func, bool lvalue, i
     } else {
         *out = ir_block_create_load_from_ent(func->curblock, ast_ctx(self), ast_function_label(func, "efv"),
                                              ent, field, self->expression.vtype);
-        /* Done AFTER error checking: 
+        /* Done AFTER error checking:
         codegen_output_type(self, *out);
         */
     }

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013
- *     Dale Weiler 
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 /*
  * The PAK format uses a FOURCC concept for storing the magic ident within
  * the header as a uint32_t.
- */  
+ */
 #define PAK_FOURCC ((uint32_t)(('P' | ('A' << 8) | ('C' << 16) | ('K' << 24))))
 
 typedef struct {
@@ -36,7 +36,7 @@ typedef struct {
      * best to store the directories at the end of the file opposed
      * to the front, since it allows easy insertion without having
      * to load the entire file into memory again.
-     */     
+     */
     uint32_t diroff;
     uint32_t dirlen;
 } pak_header_t;
@@ -47,7 +47,7 @@ typedef struct {
  * describes a file (with directories/nested ones too in it's
  * file name).  Hence it can be a file, file with directory, or
  * file with directories.
- */ 
+ */
 typedef struct {
     char     name[56];
     uint32_t pos;
@@ -58,7 +58,7 @@ typedef struct {
  * Used to get the next token from a string, where the
  * strings themselfs are seperated by chracters from
  * `sep`.  This is essentially strsep.
- */   
+ */
 static char *pak_tree_sep(char **str, const char *sep) {
     char *beg = *str;
     char *end;
@@ -158,13 +158,13 @@ static pak_file_t *pak_open_read(const char *file) {
     /*
      * Time to read in the directory handles and prepare the directories
      * vector.  We're going to be reading some the file inwards soon.
-     */      
+     */
     fs_file_seek(pak->handle, pak->header.diroff, SEEK_SET);
 
     /*
      * Read in all directories from the PAK file. These are considered
      * to be the "file entries".
-     */   
+     */
     for (itr = 0; itr < pak->header.dirlen / 64; itr++) {
         pak_directory_t dir;
         fs_file_read   (&dir,    sizeof(pak_directory_t), 1, pak->handle);
@@ -184,14 +184,14 @@ static pak_file_t *pak_open_write(const char *file) {
     /*
      * Generate the required directory structure / tree for
      * writing this PAK file too.
-     */   
+     */
     pak_tree_build(file);
 
     if (!(pak->handle = fs_file_open(file, "wb"))) {
         /*
          * The directory tree that was created, needs to be
          * removed entierly if we failed to open a file.
-         */   
+         */
         /* TODO backup directory clean */
 
         mem_d(pak);
@@ -239,13 +239,13 @@ bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
 
     if (!pak || !file)
         return false;
-  
+
     for (itr = 0; itr < vec_size(pak->directories); itr++) {
         if (!strcmp(pak->directories[itr].name, file)) {
             /*
              * Store back a pointer to the directory that matches
              * the request if requested (NULL is not allowed).
-             */   
+             */
             if (dir) {
                 *dir = &(pak->directories[itr]);
             }
@@ -258,7 +258,7 @@ bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
 
 /*
  * Extraction abilities.  These work as you expect them to.
- */ 
+ */
 bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
     pak_directory_t *dir   = NULL;
     unsigned char   *dat   = NULL;
@@ -276,7 +276,7 @@ bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
     /*
      * Generate the directory structure / tree that will be required
      * to store the extracted file.
-     */   
+     */
     pak_tree_build(file);
 
     /* TODO portable path seperators */
@@ -285,7 +285,7 @@ bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
     /*
      * Now create the file, if this operation fails.  Then abort
      * It shouldn't fail though.
-     */   
+     */
     if (!(out = fs_file_open(local, "wb"))) {
         mem_d(dat);
         return false;
@@ -336,8 +336,8 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
     /*
      * We don't allow insertion on files that already exist within the
      * pak file.  Weird shit can happen if we allow that ;). We also
-     * don't allow insertion if the pak isn't opened in write mode.  
-     */ 
+     * don't allow insertion if the pak isn't opened in write mode.
+     */
     if (!pak || !file || !pak->insert || pak_exists(pak, file, NULL))
         return false;
 
@@ -358,7 +358,7 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
     /*
      * We're limited to 56 bytes for a file name string, that INCLUDES
      * the directory and '/' seperators.
-     */   
+     */
     if (strlen(file) >= 56) {
         fs_file_close(fp);
         return false;
@@ -369,7 +369,7 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
     /*
      * Allocate some memory for loading in the data that will be
      * redirected into the PAK file.
-     */   
+     */
     if (!(dat = (unsigned char *)mem_a(dir.len))) {
         fs_file_close(fp);
         return false;
@@ -391,7 +391,7 @@ bool pak_insert_one(pak_file_t *pak, const char *file) {
 /*
  * Like pak_insert_one, except this collects files in all directories
  * from a root directory, and inserts them all.
- */  
+ */
 bool pak_insert_all(pak_file_t *pak, const char *dir) {
     DIR           *dp;
     struct dirent *dirp;
@@ -422,12 +422,12 @@ bool pak_close(pak_file_t *pak) {
     /*
      * In insert mode we need to patch the header, and write
      * our directory entries at the end of the file.
-     */  
+     */
     if (pak->insert) {
         pak->header.dirlen = vec_size(pak->directories) * 64;
         pak->header.diroff = ftell(pak->handle);
 
-        /* patch header */ 
+        /* patch header */
         fs_file_seek (pak->handle, 0, SEEK_SET);
         fs_file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
 

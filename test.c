@@ -210,7 +210,7 @@ int task_pclose(FILE **handles) {
  *                  This will perform compilation and execution
  *              -fail
  *                  This will perform compilation, but requires
- *                  the compilation to fail in order to succeed.   
+ *                  the compilation to fail in order to succeed.
  *
  *          This must be provided, this tag is NOT optional.
  *
@@ -329,7 +329,7 @@ bool task_template_generate(task_template_t *tmpl, char tag, const char *file, s
         /*
          * Create some padding for the description to align the
          * printing of the rules file.
-         */  
+         */
         if ((desclen = strlen(tmpl->description)) > pad[0])
             pad[0] = desclen;
     }
@@ -497,7 +497,7 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
     /*
      * Create some padding for the printing to align the
      * printing of the rules file to the console.
-     */  
+     */
     if ((filepadd = strlen(fullfile)) > pad[1])
         pad[1] = filepadd;
 
@@ -859,7 +859,7 @@ void task_destroy(void) {
         /*
          * Only remove the log files if the test actually compiled otherwise
          * forget about it (or if it didn't compile, and the procedure type
-         * was set to -fail (meaning it shouldn't compile) .. stil remove) 
+         * was set to -fail (meaning it shouldn't compile) .. stil remove)
          */
         if (task_tasks[i].compiled || !strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {
             if (remove(task_tasks[i].stdoutlogfile))
@@ -887,7 +887,7 @@ void task_destroy(void) {
  * This executes the QCVM task for a specificly compiled progs.dat
  * using the template passed into it for call-flags and user defined
  * messages IF the procedure type is -execute, otherwise it matches
- * the preprocessor output. 
+ * the preprocessor output.
  */
 bool task_trymatch(task_template_t *tmpl, char ***line) {
     bool     success = true;
@@ -972,7 +972,7 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
             /*
              * Copy to output vector for diagnostics if execution match
              * fails.
-             */  
+             */
             vec_push(*line, data);
 
             /* reset */
@@ -1022,7 +1022,7 @@ void task_schedualize(size_t *pad) {
     for (; i < vec_size(task_tasks); i++) {
         memset(space[1], 0, sizeof(space[1]));
         snprintf(space[1], sizeof(space[1]), "%d", (int)(i + 1));
-        
+
         con_out("test #%u %*s", i + 1, strlen(space[0]) - strlen(space[1]), "");
 
         util_debug("TEST", "executing task: %d: %s\n", i, task_tasks[i].tmpl->description);
@@ -1086,7 +1086,7 @@ void task_schedualize(size_t *pad) {
                 task_tasks[i].tmpl->rulesfile,
                 (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(task_type(task_tasks[i].tmpl)) - pad[2]),
                 task_type(task_tasks[i].tmpl)
-                
+
             );
             continue;
         }
@@ -1094,7 +1094,7 @@ void task_schedualize(size_t *pad) {
         /*
          * If we made it here that concludes the task is to be executed
          * in the virtual machine (or the preprocessor output needs to
-         * be matched). 
+         * be matched).
          */
         if (!task_trymatch(task_tasks[i].tmpl, &match)) {
             size_t d = 0;
@@ -1136,7 +1136,7 @@ void task_schedualize(size_t *pad) {
              * Print the non-expected out (since we are simply not expecting it)
              * This will help track down bugs in template files that fail to match
              * something.
-             */  
+             */
             if (vec_size(match) > vec_size(task_tasks[i].tmpl->comparematch)) {
                 for (d = 0; d < vec_size(match) - vec_size(task_tasks[i].tmpl->comparematch); d++) {
                     con_out("        Expected: Nothing                                   | Got: \"%s\"\n",
@@ -1144,7 +1144,7 @@ void task_schedualize(size_t *pad) {
                     );
                 }
             }
-                    
+
 
             for (j = 0; j < vec_size(match); j++)
                 mem_d(match[j]);
@@ -1161,7 +1161,7 @@ void task_schedualize(size_t *pad) {
             task_tasks[i].tmpl->rulesfile,
             (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(task_type(task_tasks[i].tmpl))- pad[2]),
             task_type(task_tasks[i].tmpl)
-            
+
         );
     }
     mem_d(data);
@@ -1192,11 +1192,11 @@ GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
     /*
      * If the default definition file isn't set to anything.  We will
      * use the default_defs here, which is "defs.qc"
-     */   
+     */
     if (!defs) {
         defs = default_defs;
     }
-        
+
 
     task_precleanup(curdir);
     if (!task_propagate(curdir, pad, defs)) {
