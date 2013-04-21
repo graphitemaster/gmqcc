@@ -12,6 +12,7 @@ Currently the supported text editors:
     gedit         - uses gtksourceview
     sandy         - uses gtksourceview
     nano
+    jedit
 
 
 Other text editors we plan to provide syntax highlighting configuration
