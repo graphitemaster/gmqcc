@@ -568,7 +568,7 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
         if (tmpl->comparematch)
             con_err("template compile warning: %s erroneous tag `M:` when only failing\n", file);
     } else if (!strcmp(tmpl->proceduretype, "-pp")) {
-        if (!tmpl->executeflags)
+        if (tmpl->executeflags)
             con_err("template compile warning: %s erroneous tag `E:` when only preprocessing\n", file);
         if (!tmpl->comparematch) {
             con_err("template compile error: %s missing `M:` tag (use `$null` for exclude)\n", file);
@@ -955,6 +955,13 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
             if  (strrchr(data, '\n'))
                 *strrchr(data, '\n') = '\0';
 
+            /*
+             * If data is just null now, that means the line was an empty
+             * one and for that, we just ignore it.
+             */
+            if (!*data)
+                continue;
+
             if (vec_size(tmpl->comparematch) > compare) {
                 if (strcmp(data, tmpl->comparematch[compare++]))
                     success = false;
@@ -986,12 +993,12 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
 
 const char *task_type(task_template_t *tmpl) {
     if (!strcmp(tmpl->proceduretype, "-pp"))
-        return "type: preprocessor test";
+        return "type: preprocessor";
     if (!strcmp(tmpl->proceduretype, "-execute"))
-        return "type: execution test";
+        return "type: execution";
     if (!strcmp(tmpl->proceduretype, "-compile"))
-        return "type: compile test";
-    return "type: fail test";
+        return "type: compile";
+    return "type: fail";
 }
 
 /*
@@ -1085,13 +1092,17 @@ void task_schedualize(size_t *pad) {
 
         /*
          * If we made it here that concludes the task is to be executed
-         * in the virtual machine.
+         * in the virtual machine (or the preprocessor output needs to
+         * be matched). 
          */
         if (!task_trymatch(task_tasks[i].tmpl, &match)) {
             size_t d = 0;
 
-            con_err("failure: `%s` (invalid results from execution) [%s]\n",
+            con_err("failure: `%s` (invalid results from %s) [%s]\n",
                 task_tasks[i].tmpl->description,
+                (strcmp(task_tasks[i].tmpl->proceduretype, "-pp"))
+                    ? "execution"
+                    : "preprocessing",
                 task_tasks[i].tmpl->rulesfile
             );
 
