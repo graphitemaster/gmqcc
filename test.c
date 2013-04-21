@@ -894,31 +894,40 @@ bool task_execute(task_template_t *tmpl, char ***line) {
     char     buffer[4096];
     memset  (buffer,0,sizeof(buffer));
 
-    /*
-     * Drop the execution flags for the QCVM if none where
-     * actually specified.
-     */
-    if (!strcmp(tmpl->executeflags, "$null")) {
-        snprintf(buffer,  sizeof(buffer), "%s %s",
-            task_bins[TASK_EXECUTE],
-            tmpl->tempfilename
+    if (strcmp(tmpl->proceduretype, "-pp")) {
+        /*
+         * Drop the execution flags for the QCVM if none where
+         * actually specified.
+         */
+        if (!strcmp(tmpl->executeflags, "$null")) {
+            snprintf(buffer,  sizeof(buffer), "%s %s",
+                task_bins[TASK_EXECUTE],
+                tmpl->tempfilename
+            );
+        } else {
+            snprintf(buffer,  sizeof(buffer), "%s %s %s",
+                task_bins[TASK_EXECUTE],
+                tmpl->executeflags,
+                tmpl->tempfilename
+            );
+        }
+
+        util_debug("TEST", "executing qcvm: `%s` [%s]\n",
+            tmpl->description,
+            buffer
         );
+
+        execute = popen(buffer, "r");
+        if (!execute)
+            return false;
     } else {
-        snprintf(buffer,  sizeof(buffer), "%s %s %s",
-            task_bins[TASK_EXECUTE],
-            tmpl->executeflags,
-            tmpl->tempfilename
-        );
+        /*
+         * we're preprocessing, which means we need to read int
+         * the produced file and do some really weird shit.
+         */
+        if (!(execute = fs_file_open(tmpl->tempfilename, "r")))
+            return false;
     }
-
-    util_debug("TEST", "executing qcvm: `%s` [%s]\n",
-        tmpl->description,
-        buffer
-    );
-
-    execute = popen(buffer, "r");
-    if (!execute)
-        return false;
 
     /*
      * Now lets read the lines and compare them to the matches we expect
@@ -965,7 +974,12 @@ bool task_execute(task_template_t *tmpl, char ***line) {
         mem_d(data);
         data = NULL;
     }
-    pclose(execute);
+
+    if (strcmp(tmpl->proceduretype, "-pp"))
+        pclose(execute);
+    else
+        fs_file_close(execute);
+
     return success;
 }
 
@@ -1053,6 +1067,10 @@ void task_schedualize(size_t *pad) {
                 task_tasks[i].tmpl->rulesfile
             );
             continue;
+        }
+
+        if (!strcmp(task_tasks[i].tmpl->proceduretype, "-pp")) {
+            /* this is a pain */
         }
 
         if (!execute) {
