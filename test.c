@@ -176,8 +176,9 @@ int task_pclose(FILE **handles) {
     }
 #endif /*! _WIN32 */
 
-#define TASK_COMPILE 0
-#define TASK_EXECUTE 1
+#define TASK_COMPILE    0
+#define TASK_EXECUTE    1
+#define TASK_PREPROCESS 2
 /*
  * Task template system:
  *  templates are rules for a specific test, used to create a "task" that
@@ -563,7 +564,13 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
             con_err("template compile warning: %s erroneous tag `E:` when only failing\n", file);
         if (tmpl->comparematch)
             con_err("template compile warning: %s erroneous tag `M:` when only failing\n", file);
-        goto success;
+    } else if (!strcmp(tmpl->proceduretype, "-pp")) {
+        if (!tmpl->executeflags)
+            con_err("template compile warning: %s erroneous tag `E:` when only preprocessing\n", file);
+        if (!tmpl->comparematch) {
+            con_err("template compile error: %s missing `M:` tag (use `$null` for exclude)\n", file);
+            goto failure;
+        }
     } else {
         con_err("template compile error: %s invalid procedure type: %s\n", file, tmpl->proceduretype);
         goto failure;
@@ -647,7 +654,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     dir = fs_dir_open(curdir);
 
     while ((files = fs_dir_read(dir))) {
-        snprintf(buffer,   sizeof(buffer), "%s/%s", curdir, files->d_name);
+        snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
 
         if (stat(buffer, &directory) == -1) {
             con_err("internal error: stat failed, aborting\n");
@@ -694,45 +701,66 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
              * which will be refered to with a handle in the task for
              * reading the data from the pipe.
              */
-            if (qcflags) {
-                if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                    snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
-                        task_bins[TASK_COMPILE],
-                        curdir,
-                        tmpl->sourcefile,
-                        qcflags,
-                        tmpl->compileflags,
-                        tmpl->tempfilename
-                    );
+            if (strcmp(tmpl->proceduretype, "-pp")) {
+                if (qcflags) {
+                    if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
+                        snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
+                            task_bins[TASK_COMPILE],
+                            curdir,
+                            tmpl->sourcefile,
+                            qcflags,
+                            tmpl->compileflags,
+                            tmpl->tempfilename
+                        );
+                    } else {
+                        snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
+                            task_bins[TASK_COMPILE],
+                            curdir,
+                            defs,
+                            curdir,
+                            tmpl->sourcefile,
+                            qcflags,
+                            tmpl->compileflags,
+                            tmpl->tempfilename
+                        );
+                    }
                 } else {
-                    snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
-                        task_bins[TASK_COMPILE],
-                        curdir,
-                        defs,
-                        curdir,
-                        tmpl->sourcefile,
-                        qcflags,
-                        tmpl->compileflags,
-                        tmpl->tempfilename
-                    );
+                    if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
+                        snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
+                            task_bins[TASK_COMPILE],
+                            curdir,
+                            tmpl->sourcefile,
+                            tmpl->compileflags,
+                            tmpl->tempfilename
+                        );
+                    } else {
+                        snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
+                            task_bins[TASK_COMPILE],
+                            curdir,
+                            defs,
+                            curdir,
+                            tmpl->sourcefile,
+                            tmpl->compileflags,
+                            tmpl->tempfilename
+                        );
+                    }
                 }
             } else {
+                /* Preprocessing (qcflags mean shit all here we don't allow them) */
                 if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                    snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
+                    snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
                         task_bins[TASK_COMPILE],
                         curdir,
                         tmpl->sourcefile,
-                        tmpl->compileflags,
                         tmpl->tempfilename
                     );
                 } else {
-                    snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
+                    snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
                         task_bins[TASK_COMPILE],
                         curdir,
                         defs,
                         curdir,
                         tmpl->sourcefile,
-                        tmpl->compileflags,
                         tmpl->tempfilename
                     );
                 }
@@ -938,6 +966,18 @@ bool task_execute(task_template_t *tmpl, char ***line) {
     return success;
 }
 
+const char *task_type(task_template_t *tmpl) {
+    if (!strcmp(tmpl->proceduretype, "-pp"))
+        return "preprocessor test";
+    if (!strcmp(tmpl->proceduretype, "-execute"))
+        return "execution test";
+    if (!strcmp(tmpl->proceduretype, "-compile"))
+        return "compile test";
+    if (!strcmp(tmpl->proceduretype, "-fail"))
+        return "fail test";
+    return "<undefined test>";
+}
+
 /*
  * This schedualizes all tasks and actually runs them individually
  * this is generally easy for just -compile variants.  For compile and
@@ -1015,11 +1055,12 @@ void task_schedualize(size_t *pad) {
         }
 
         if (!execute) {
-            con_out("succeeded: `%s` %*s\n",
+            con_out("succeeded: `%s` %*s (%*s)\n",
                 task_tasks[i].tmpl->description,
-                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) +
-                (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
-                task_tasks[i].tmpl->rulesfile
+                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
+                task_tasks[i].tmpl->rulesfile,
+                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(task_type(task_tasks[i].tmpl)) - pad[0]),
+                task_type(task_tasks[i].tmpl)
                 
             );
             continue;
@@ -1081,8 +1122,7 @@ void task_schedualize(size_t *pad) {
 
         con_out("succeeded: `%s` %*s\n",
             task_tasks[i].tmpl->description,
-            (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) +
-            (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
+            (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
             task_tasks[i].tmpl->rulesfile
             
         );
