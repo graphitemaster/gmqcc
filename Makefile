@@ -100,6 +100,7 @@ GOURCEFLAGS=                  \
     --max-files 99999999999   \
     --max-file-lag 0.000001   \
     --bloom-multiplier 1.3    \
+    --logo doc/html/gmqcc.png \
     -1280x720
 
 #ffmpeg flags for gource
