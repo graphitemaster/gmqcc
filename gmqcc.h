@@ -380,14 +380,6 @@ typedef struct hash_table_t {
     struct hash_node_t **table;
 } hash_table_t, *ht;
 
-typedef struct hash_set_t {
-    size_t  bits;
-    size_t  mask;
-    size_t  capacity;
-    size_t *items;
-    size_t  total;
-} hash_set_t, *hs;
-
 /*
  * hashtable implementation:
  *
@@ -429,44 +421,6 @@ void          util_htrm  (hash_table_t *ht, const char *key, void (*cb)(void*));
 
 void         *util_htget (hash_table_t *ht, const char *key);
 void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
-
-/*
- * hashset implementation:
- *      This was designed for pointers:  you manage the life of the object yourself
- *      if you do use this for non-pointers please be warned that the object may not
- *      be valid if the duration of it exceeds (i.e on stack).  So you need to allocate
- *      yourself, or put those in global scope to ensure duration is for the whole
- *      runtime.
- *
- * util_hsnew()                             -- to make a new hashset
- * util_hsadd(set, key)                     -- to add something in the set
- * util_hshas(set, key)                     -- to check if something is in the set
- * util_hsrem(set, key)                     -- to remove something in the set
- * util_hsdel(set)                          -- to delete the set
- *
- * example of use:
- * 
- * hs    foo = util_hsnew();
- * char *bar = "hello blub\n";
- * char *baz = "hello dale\n";
- *
- * util_hsadd(foo, bar);
- * util_hsadd(foo, baz);
- * util_hsrem(foo, baz);
- *
- * printf("bar %d | baz %d\n",
- *     util_hshas(foo, bar),
- *     util_hshad(foo, baz)
- * );
- *
- * util_hsdel(foo);  
- */
-
-hash_set_t *util_hsnew(void);
-int         util_hsadd(hash_set_t *, void *);
-int         util_hshas(hash_set_t *, void *);
-int         util_hsrem(hash_set_t *, void *);
-void        util_hsdel(hash_set_t *);
  
 /*===================================================================*/
 /*============================ file.c ===============================*/
