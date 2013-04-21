@@ -5,9 +5,12 @@ you can install the configuration file correctly.
 Currently the supported text editors:
     geany
     kate
-    kwrite    - uses kate syntax highlighting
-    kdevelop  - uses kate syntax highlighting
-    QtCreator - supports kate syntax highlighting
+    kwrite        - uses kate syntax highlighting
+    kdevelop      - uses kate syntax highlighting
+    QtCreator     - supports kate syntax highlighting
+    gtksourceview - main source viewer in GNOME
+    gedit         - uses gtksourceview
+    sandy         - uses gtksourceview
     nano
 
 
