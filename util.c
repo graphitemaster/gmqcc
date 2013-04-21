@@ -30,6 +30,8 @@ uint64_t mem_ab = 0;
 uint64_t mem_db = 0;
 uint64_t mem_at = 0;
 uint64_t mem_dt = 0;
+uint64_t mem_pk = 0;
+uint64_t mem_hw = 0;
 
 struct memblock_t {
     const char  *file;
@@ -38,6 +40,12 @@ struct memblock_t {
     struct memblock_t *next;
     struct memblock_t *prev;
 };
+
+#define PEAK_MEM             \
+    do {                     \
+        if (mem_hw > mem_pk) \
+            mem_pk = mem_hw; \
+    } while (0)
 
 static struct memblock_t *mem_start = NULL;
 
@@ -56,6 +64,9 @@ void *util_memory_a(size_t byte, unsigned int line, const char *file) {
 
     mem_at++;
     mem_ab += info->byte;
+    mem_hw += info->byte;
+
+    PEAK_MEM;
 
     return data;
 }
@@ -67,6 +78,7 @@ void util_memory_d(void *ptrn) {
     info = ((struct memblock_t*)ptrn - 1);
 
     mem_db += info->byte;
+    mem_hw -= info->byte;
     mem_dt++;
 
     if (info->prev)
@@ -122,51 +134,111 @@ void *util_memory_r(void *ptrn, size_t byte, unsigned int line, const char *file
     mem_start = newinfo;
 
     mem_ab -= oldinfo->byte;
+    mem_hw -= oldinfo->byte;
     mem_ab += newinfo->byte;
+    mem_hw += newinfo->byte;
+
+    PEAK_MEM;
 
     free(oldinfo);
 
     return newinfo+1;
 }
 
+static void util_dumpmem(struct memblock_t *memory, uint16_t cols) {
+    uint32_t i, j;
+    for (i = 0; i < memory->byte + ((memory->byte % cols) ? (cols - memory->byte % cols) : 0); i++) {
+        if (i % cols == 0)    con_out("    0x%06X: ", i);
+        if (i < memory->byte) con_out("%02X "   , 0xFF & ((char*)(memory + 1))[i]);
+        else                  con_out("    ");
+
+        if ((uint16_t)(i % cols) == (cols - 1)) {
+            for (j = i - (cols - 1); j <= i; j++) {
+                con_out("%c",
+                    (j >= memory->byte)
+                        ? ' '
+                        : (isprint(((char*)(memory + 1))[j]))
+                            ? 0xFF & ((char*)(memory + 1)) [j]
+                            : '.'
+                );
+            }
+            con_out("\n");
+        }
+    }
+}
+
 void util_meminfo() {
     struct memblock_t *info;
 
-    if (!OPTS_OPTION_BOOL(OPTION_MEMCHK))
-        return;
 
-    for (info = mem_start; info; info = info->next) {
-        util_debug("MEM", "lost:       % 8u (bytes) at %s:%u\n",
-            info->byte,
-            info->file,
-            info->line);
+    if (OPTS_OPTION_BOOL(OPTION_DEBUG)) {
+        for (info = mem_start; info; info = info->next) {
+            con_out("lost: %u (bytes) at %s:%u\n",
+                info->byte,
+                info->file,
+                info->line);
+
+            util_dumpmem(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
+        }
     }
 
-    util_debug("MEM", "Memory information:\n\
-        Total allocations:   %llu\n\
-        Total deallocations: %llu\n\
-        Total allocated:     %llu (bytes)\n\
-        Total deallocated:   %llu (bytes)\n\
-        Leaks found:         lost %llu (bytes) in %d allocations\n",
-            mem_at,   mem_dt,
-            mem_ab,   mem_db,
-           (mem_ab -  mem_db),
-           (mem_at -  mem_dt)
-    );
+    if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
+        OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
+        con_out("Memory information:\n\
+            Total allocations:   %llu\n\
+            Total deallocations: %llu\n\
+            Total allocated:     %f (MB)\n\
+            Total deallocated:   %f (MB)\n\
+            Total peak memory:   %f (MB)\n\
+            Total leaked memory: %f (MB) in %llu allocations\n",
+                mem_at,
+                mem_dt,
+                (float)(mem_ab)           / 1048576.0f,
+                (float)(mem_db)           / 1048576.0f,
+                (float)(mem_pk)           / 1048576.0f,
+                (float)(mem_ab -  mem_db) / 1048576.0f,
+
+                /* could be more clever */
+                (mem_at -  mem_dt)
+        );
+    }
 }
 
 /*
  * Some string utility functions, because strdup uses malloc, and we want
  * to track all memory (without replacing malloc).
  */
-char *util_strdup(const char *s) {
+char *_util_Estrdup(const char *s, const char *file, size_t line) {
     size_t  len = 0;
     char   *ptr = NULL;
+
+    /* in case of -DNOTRACK */
+    (void)file;
+    (void)line;
 
     if (!s)
         return NULL;
 
-    if ((len = strlen(s)) && (ptr = (char*)mem_a(len+1))) {
+    if ((len = strlen(s)) && (ptr = (char*)mem_af(len+1, line, file))) {
+        memcpy(ptr, s, len);
+        ptr[len] = '\0';
+    }
+    return ptr;
+}
+
+char *_util_Estrdup_empty(const char *s, const char *file, size_t line) {
+    size_t  len = 0;
+    char   *ptr = NULL;
+
+    /* in case of -DNOTRACK */
+    (void)file;
+    (void)line;
+
+    if (!s)
+        return NULL;
+
+    len = strlen(s);
+    if ((ptr = (char*)mem_af(len+1, line, file))) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
@@ -253,7 +325,7 @@ void util_endianswap(void *_data, size_t length, unsigned int typesize) {
                 util_swap64((uint32_t*)_data, length>>3);
                 return;
 
-            default: abort(); /* please blow the fuck up! */
+            default: exit(EXIT_FAILURE); /* please blow the fuck up! */
         }
 #   endif
 #endif
@@ -425,7 +497,7 @@ hash_node_t *_util_htnewpair(const char *key, void *value) {
     if (!(node = (hash_node_t*)mem_a(sizeof(hash_node_t))))
         return NULL;
 
-    if (!(node->key = util_strdup(key))) {
+    if (!(node->key = util_strdupe(key))) {
         mem_d(node);
         return NULL;
     }
@@ -548,7 +620,7 @@ void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
  * Free all allocated data in a hashtable, this is quite the amount
  * of work.
  */
-void util_htdel(hash_table_t *ht) {
+void util_htrem(hash_table_t *ht, void (*callback)(void *data)) {
     size_t i = 0;
     for (; i < ht->size; i++) {
         hash_node_t *n = ht->table[i];
@@ -558,6 +630,8 @@ void util_htdel(hash_table_t *ht) {
         while (n) {
             if (n->key)
                 mem_d(n->key);
+            if (callback)
+                callback(n->value);
             p = n;
             n = n->next;
             mem_d(p);
@@ -569,145 +643,32 @@ void util_htdel(hash_table_t *ht) {
     mem_d(ht);
 }
 
-/*
- * A basic implementation of a hash-set.  Unlike a hashtable, a hash
- * set doesn't maintain key-value pairs.  It simply maintains a key
- * that can be set, removed, and checked for.
- *
- * See EXPOSED interface comment below 
- */
-#define GMQCC_HASHSET_PRIME0 0x0049
-#define GMQCC_HASHSET_PRIME1 0x1391
+void util_htrmh(hash_table_t *ht, const char *key, size_t bin, void (*cb)(void*)) {
+    hash_node_t **pair = &ht->table[bin];
+    hash_node_t *tmp;
 
-static int util_hsput(hash_set_t *set, void *item) {
-    size_t hash = (size_t)item; /* shouldn't drop the bits */
-    size_t iter;
+    while (*pair && (*pair)->key && strcmp(key, (*pair)->key) > 0)
+        pair = &(*pair)->next;
 
-    /* a == 0 || a == 1 */
-    if (hash >> 1)
-        return -1;
+    tmp = *pair;
+    if (!tmp || !tmp->key || strcmp(key, tmp->key) != 0)
+        return;
 
-    iter = set->mask & (GMQCC_HASHSET_PRIME0 * hash);
+    if (cb)
+        (*cb)(tmp->value);
 
-    /* while (set->items[iter] != 0 && set->items[iter] != 1) */
-    while  (!(set->items[iter] >> 1)) {
-        if (set->items[iter] == hash)
-            return 0;
-
-        iter = set->mask & (iter + GMQCC_HASHSET_PRIME1);
-    }
-
-    set->total ++;
-    set->items[iter] = hash;
-
-    return 1;
+    *pair = tmp->next;
+    mem_d(tmp->key);
+    mem_d(tmp);
 }
 
-static void util_hsupdate(hash_set_t *set) {
-    size_t *old;
-    size_t  end;
-    size_t  itr;
-
-    /* time to rehash? */
-    if ((float)set->total >= (size_t)((double)set->capacity * 0.85)) {
-        old = set->items;
-        end = set->capacity;
-
-        set->bits ++;
-        set->capacity = (size_t)(1 << set->bits);
-        set->mask     = set->capacity - 1;
-        set->items    = (size_t*)mem_a(set->capacity * sizeof(size_t));
-        set->total    = 0;
-
-        /*assert(set->items);*/
-
-        /*
-         * this shouldn't be slow?  if so unroll it a little perhaps
-         * (shouldn't be though)
-         */
-        for (itr = 0; itr < end; itr++)
-            util_hsput(set, (void*)old[itr]);
-
-        mem_d(old);
-    }
+void util_htrm(hash_table_t *ht, const char *key, void (*cb)(void*)) {
+    util_htrmh(ht, key, util_hthash(ht, key), cb);
 }
 
-/*
- * EXPOSED interface: all of these functions are exposed to the outside
- * for use. The stuff above is static because it's the "internal" mechanics
- * for syncronizing the set for updating, and putting data into the set.
- */   
-int util_hsadd(hash_set_t *set, void *item) {
-    int run = util_hsput(set, item); /* inlined */
-    util_hsupdate(set);
-
-    return run;
+void util_htdel(hash_table_t *ht) {
+    util_htrem(ht, NULL);
 }
-
-/* remove item in set */
-int util_hsrem(hash_set_t *set, void *item) {
-    size_t hash = (size_t)item;
-    size_t iter = set->mask & (GMQCC_HASHSET_PRIME0 * hash);
-
-    while  (set->items[iter]) {
-        if (set->items[iter] == hash) {
-            set->items[iter] =  1;
-            set->total       --;
-
-            return 1;
-        }
-        iter = set->mask & (iter + GMQCC_HASHSET_PRIME1);
-    }
-
-    return 0;
-}
-
-/* check if item is set */
-int util_hshas(hash_set_t *set, void *item) {
-    size_t hash = (size_t)item;
-    size_t iter = set->mask & (GMQCC_HASHSET_PRIME0 * hash);
-
-    while  (set->items[iter]) {
-        if (set->items[iter] == hash)
-            return 1;
-
-        iter = set->mask & (iter + GMQCC_HASHSET_PRIME1);
-    }
-
-    return 0;
-}
-
-hash_set_t *util_hsnew(void) {
-    hash_set_t *set;
-
-    if (!(set = (hash_set_t*)mem_a(sizeof(hash_set_t))))
-        return NULL;
-
-    set->bits     = 3;
-    set->total    = 0;
-    set->capacity = (size_t)(1 << set->bits);
-    set->mask     = set->capacity - 1;
-    set->items    = (size_t*)mem_a(set->capacity * sizeof(size_t));
-
-    if (!set->items) {
-        util_hsdel(set);
-        return NULL;
-    }
-
-    return set;
-}
-
-void util_hsdel(hash_set_t *set) {
-    if (!set) return;
-
-    if (set->items)
-        mem_d(set->items);
-
-    mem_d(set);
-}
-#undef GMQCC_HASHSET_PRIME0
-#undef GMQCC_HASHSET_PRIME1
-
 
 /*
  * Portable implementation of vasprintf/asprintf. Assumes vsnprintf

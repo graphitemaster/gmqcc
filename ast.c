@@ -42,7 +42,7 @@ static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 {
     (void)self;
     con_err("ast node missing destroy()\n");
-    abort();
+    exit(EXIT_FAILURE);
 }
 
 /* Initialize main ast node aprts */
@@ -87,6 +87,8 @@ static void ast_expression_delete(ast_expression *self)
         ast_delete(self->expression.params[i]);
     }
     vec_free(self->expression.params);
+    if (self->expression.varparam)
+        ast_delete(self->expression.varparam);
 }
 
 static void ast_expression_delete_full(ast_expression *self)
@@ -218,7 +220,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
     if (!e) {
         if (pos + 6 >= bufsize)
             goto full;
-        strcpy(buf + pos, "(null)");
+        strncpy(buf + pos, "(null)", 6);
         return pos + 6;
     }
 
@@ -227,7 +229,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
 
     switch (e->expression.vtype) {
         case TYPE_VARIANT:
-            strcpy(buf + pos, "(variant)");
+            strncpy(buf + pos, "(variant)", 9);
             return pos + 9;
 
         case TYPE_FIELD:
@@ -284,7 +286,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             typelen = strlen(typestr);
             if (pos + typelen >= bufsize)
                 goto full;
-            strcpy(buf + pos, typestr);
+            strncpy(buf + pos, typestr, typelen);
             return pos + typelen;
     }
 
@@ -584,6 +586,7 @@ void ast_member_delete(ast_member *self)
      * purpose that is not garbage-collected.
     */
     ast_expression_delete((ast_expression*)self);
+    mem_d(self->name);
     mem_d(self);
 }
 
@@ -1216,7 +1219,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
             namelen = strlen(self->name);
             name    = (char*)mem_a(namelen + 16);
-            strcpy(name, self->name);
+            strncpy(name, self->name, namelen);
 
             array->ir_values = (ir_value**)mem_a(sizeof(array->ir_values[0]) * array->expression.count);
             array->ir_values[0] = v;
@@ -1274,7 +1277,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
-        strcpy(name, self->name);
+        strncpy(name, self->name, namelen);
 
         self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
         self->ir_values[0] = v;
@@ -1407,7 +1410,7 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
         v = ir_function_create_local(func, self->name, vtype, param);
         if (!v) {
-            compile_error(ast_ctx(self), "ir_function_create_local failed");
+            compile_error(ast_ctx(self), "internal error: ir_function_create_local failed");
             return false;
         }
         v->context = ast_ctx(self);
@@ -1416,20 +1419,21 @@ bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
-        strcpy(name, self->name);
+        strncpy(name, self->name, namelen);
 
         self->ir_values[0] = v;
         for (ai = 1; ai < self->expression.count; ++ai) {
             snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
             self->ir_values[ai] = ir_function_create_local(func, name, vtype, param);
             if (!self->ir_values[ai]) {
-                compile_error(ast_ctx(self), "ir_builder_create_global failed on `%s`", name);
+                compile_error(ast_ctx(self), "internal_error: ir_builder_create_global failed on `%s`", name);
                 return false;
             }
             self->ir_values[ai]->context = ast_ctx(self);
             self->ir_values[ai]->unique_life = true;
             self->ir_values[ai]->locked      = true;
         }
+        mem_d(name);
     }
     else
     {
@@ -1538,7 +1542,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     irf = self->ir_func;
     if (!irf) {
-        compile_error(ast_ctx(self), "ast_function's related ast_value was not generated yet");
+        compile_error(ast_ctx(self), "internal error: ast_function's related ast_value was not generated yet");
         return false;
     }
 

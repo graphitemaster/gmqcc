@@ -53,7 +53,7 @@
     ) {
         wprintf(L"Invalid parameter dectected %s:%d %s [%s]\n", file, line, function, expression);
         wprintf(L"Aborting ...\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
 
     static void file_init() {
@@ -165,16 +165,6 @@ int fs_file_seek(FILE *fp, long int off, int whence) {
     return fseek(fp, off, whence);
 }
 
-int fs_file_putc(FILE *fp, int ch) {
-    /* Invokes file_exception on windows if fp is null */
-    return fputc(ch, fp);
-}
-
-int fs_file_flush(FILE *fp) {
-    /* Invokes file_exception on windows if fp is null */
-    return fflush(fp);
-}
-
 long int fs_file_tell(FILE *fp) {
     /* Invokes file_exception on windows if fp is null */
     return ftell(fp);
@@ -238,7 +228,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
         if (!dir)
             return NULL;
 
-        strcpy(dir->dd_name, name);
+        strncpy(dir->dd_name, name, strlen(name));
         return dir;
     }
         
@@ -258,8 +248,8 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             if (*dir->dd_name) {
                 size_t n = strlen(dir->dd_name);
                 if ((dirname  = (char*)mem_a(n + 5) /* 4 + 1 */)) {
-                    strcpy(dirname,     dir->dd_name);
-                    strcpy(dirname + n, "\\*.*");   /* 4 + 1 */
+                    strncpy(dirname, dir->dd_name, n);
+                    strncpy(dirname + n, "\\*.*", 4);   /* 4 + 1 */
                 }
             } else {
                 if (!(dirname = util_strdup("\\*.*")))
@@ -303,7 +293,6 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
 #else
 #   if !defined(__MINGW32__)
 #       include <sys/stat.h> /* mkdir */
-#       include <unistd.h>   /* chdir */
 
         int fs_dir_make(const char *path) {
             return mkdir(path, 0700);
@@ -324,10 +313,6 @@ int fs_dir_close(DIR *dir) {
 
 struct dirent *fs_dir_read(DIR *dir) {
     return readdir(dir);
-}
-
-int fs_dir_change(const char *path) {
-    return chdir(path);
 }
 
 #endif /*! defined(_WIN32) && !defined(__MINGW32__) */

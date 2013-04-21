@@ -1,4 +1,5 @@
 DESTDIR :=
+OPTIONAL:=
 PREFIX  := /usr/local
 BINDIR  := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
@@ -9,7 +10,7 @@ CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC     ?= clang
-CFLAGS += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char
+CFLAGS += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
@@ -17,28 +18,28 @@ endif
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
 	CFLAGS +=                              \
-		-Weverything                       \
-		-Wno-padded                        \
-		-Wno-format-nonliteral             \
-		-Wno-disabled-macro-expansion      \
-		-Wno-conversion                    \
-		-Wno-missing-prototypes            \
-		-Wno-float-equal                   \
-		-Wno-cast-align                    \
-		-Wno-missing-variable-declarations \
-		-Wno-unknown-warning-option
+	    -Weverything                       \
+	    -Wno-padded                        \
+	    -Wno-format-nonliteral             \
+	    -Wno-disabled-macro-expansion      \
+	    -Wno-conversion                    \
+	    -Wno-missing-prototypes            \
+	    -Wno-float-equal                   \
+	    -Wno-cast-align                    \
+	    -Wno-missing-variable-declarations \
+	    -Wno-unknown-warning-option
 else
 	#Tiny C Compiler doesn't know what -pedantic-errors is
 	# and instead of ignoring .. just errors.
 	ifneq ($(CC), tcc)
-		CFLAGS +=-pedantic-errors
+		CFLAGS +=-pedantic-errors -ffunction-sections -fdata-sections -Wl,-gc-sections
 	else
 		CFLAGS += -Wno-pointer-sign -fno-common
 	endif
 endif
 
 ifeq ($(track), no)
-    CFLAGS += -DNOTRACK
+	CFLAGS += -DNOTRACK
 endif
 
 OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o fs.o utf8.o correct.o
@@ -84,6 +85,36 @@ else
 endif
 endif
 
+#gource flags
+GOURCEFLAGS=                  \
+    --date-format "%d %B, %Y" \
+    --seconds-per-day 0.01    \
+    --auto-skip-seconds 1     \
+    --title "GMQCC"           \
+    --key                     \
+    --camera-mode overview    \
+    --highlight-all-users     \
+    --file-idle-time 0        \
+    --hide progress,mouse     \
+    --stop-at-end             \
+    --max-files 99999999999   \
+    --max-file-lag 0.000001   \
+    --bloom-multiplier 1.3    \
+    -1280x720
+
+#ffmpeg flags for gource
+FFMPEGFLAGS=                  \
+    -y                        \
+    -r 60                     \
+    -f image2pipe             \
+    -vcodec ppm               \
+    -i -                      \
+    -vcodec libx264           \
+    -preset ultrafast         \
+    -crf 1                    \
+    -threads 0                \
+    -bf 0
+
 #splint flags
 SPLINTFLAGS =            \
     -redef               \
@@ -119,7 +150,6 @@ SPLINTFLAGS =            \
     -kepttrans           \
     -unqualifiedtrans    \
     +matchanyintegral    \
-    -bufferoverflowhigh  \
     +voidabstract        \
     -nullassign          \
     -unrecog             \
@@ -147,7 +177,7 @@ $(QCVM): $(OBJ_X)
 	$(CC) -o $@ $^ $(CFLAGS) -lm
 
 $(GMQCC): $(OBJ_C) $(OBJ_D)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) -lm
 
 $(TESTSUITE): $(OBJ_T)
 	$(CC) -o $@ $^ $(CFLAGS) -lm
@@ -163,10 +193,16 @@ test: all
 	@ ./$(TESTSUITE)
 
 clean:
-	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat
+	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4
 
 splint:
 	@  splint $(SPLINTFLAGS) *.c *.h
+
+gource:
+	@ gource $(GOURCEFLAGS)
+
+gource-record:
+	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
 	@makedepend    -Y -w 65536 2> /dev/null \
@@ -219,9 +255,15 @@ fs.o: gmqcc.h opts.def
 
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
-parser.o: gmqcc.h opts.def lexer.h ast.h ir.h
+parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
 fs.o: gmqcc.h opts.def
 
 util.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
+
+util.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+opts.o: gmqcc.h opts.def
+pak.o: gmqcc.h opts.def

@@ -1206,22 +1206,11 @@ bool ir_value_set_field(ir_value *self, ir_value *fld)
     return true;
 }
 
-static char *ir_strdup(const char *str)
-{
-    if (str && !*str) {
-        /* actually dup empty strings */
-        char *out = (char*)mem_a(1);
-        *out = 0;
-        return out;
-    }
-    return util_strdup(str);
-}
-
 bool ir_value_set_string(ir_value *self, const char *str)
 {
     if (self->vtype != TYPE_STRING)
         return false;
-    self->constval.vstring = ir_strdup(str);
+    self->constval.vstring = util_strdupe(str);
     self->hasvalue = true;
     return true;
 }
@@ -1651,7 +1640,7 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
          * is doing something wrong.
          */
         irerror(self->context, "Invalid entry block for PHI");
-        abort();
+        exit(EXIT_FAILURE);
     }
 
     pe.value = v;
@@ -3292,6 +3281,8 @@ static void gen_vector_defs(prog_section_def def, const char *name)
         def.offset++;
         component[len-1]++;
     }
+
+    mem_d(component);
 }
 
 static void gen_vector_fields(prog_section_field fld, const char *name)
@@ -3320,6 +3311,8 @@ static void gen_vector_fields(prog_section_field fld, const char *name)
         fld.offset++;
         component[len-1]++;
     }
+
+    mem_d(component);
 }
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)

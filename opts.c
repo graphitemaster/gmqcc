@@ -64,6 +64,7 @@ static void opts_setdefault() {
     opts_set(opts.flags, BAIL_ON_WERROR,                 true);
     opts_set(opts.flags, LEGACY_VECTOR_MATHS,            true);
     opts_set(opts.flags, DARKPLACES_STRING_TABLE_BUG,    true);
+
 }
 
 void opts_backup_non_Wall() {
@@ -96,6 +97,7 @@ void opts_init(const char *output, int standard, size_t arraysize) {
     OPTS_OPTION_STR(OPTION_OUTPUT)         = (char*)output;
     OPTS_OPTION_U32(OPTION_STANDARD)       = standard;
     OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE) = arraysize;
+    OPTS_OPTION_U16(OPTION_MEMDUMPCOLS)    = 16;
 }
 
 static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def *list, size_t listsize) {
@@ -257,7 +259,7 @@ static size_t opts_ini_parse (
 static bool opts_ini_bool(const char *value) {
     if (!strcmp(value, "true"))  return true;
     if (!strcmp(value, "false")) return false;
-    return !!atoi(value);
+    return !!strtol(value, NULL, 10);
 }
 
 static char *opts_ini_load(const char *section, const char *name, const char *value) {

@@ -146,9 +146,10 @@ static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
     char  buffer[1024];
-    char *redirout = NULL;
-    char *redirerr = NULL;
-    char *config   = NULL;
+    char *redirout    = NULL;
+    char *redirerr    = NULL;
+    char *config      = NULL;
+    char *memdumpcols = NULL;
 
     while (!argend && argc > 1) {
         char *argarg;
@@ -221,6 +222,10 @@ static bool options_parse(int argc, char **argv) {
             }
             if (options_long_gcc("config", &argc, &argv, &argarg)) {
                 config = argarg;
+                continue;
+            }
+            if (options_long_gcc("memdumpcols", &argc, &argv, &memdumpcols)) {
+                OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = (uint16_t)strtol(memdumpcols, NULL, 10);
                 continue;
             }
 
@@ -403,7 +408,7 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     if (isdigit(argarg[0])) {
-                        uint32_t val = atoi(argarg);
+                        uint32_t val = (uint32_t)strtol(argarg, NULL, 10);
                         OPTS_OPTION_U32(OPTION_O) = val;
                         opts_setoptimlevel(val);
                     } else {
@@ -541,12 +546,14 @@ static bool progs_nextline(char **out, size_t *alen,FILE *src) {
 }
 
 int main(int argc, char **argv) {
-    size_t itr;
-    int    retval           = 0;
-    bool   opts_output_free = false;
-    bool   operators_free   = false;
-    bool   progs_src        = false;
-    FILE  *outfile          = NULL;
+    size_t          itr;
+    int             retval           = 0;
+    bool            opts_output_free = false;
+    bool            operators_free   = false;
+    bool            progs_src        = false;
+    FILE            *outfile         = NULL;
+    struct parser_s *parser          = NULL;
+    struct ftepp_s  *ftepp           = NULL;
 
     app_name = argv[0];
     con_init ();
@@ -621,7 +628,7 @@ int main(int argc, char **argv) {
     }
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
-        if (!parser_init()) {
+        if (!(parser = parser_create())) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
@@ -629,7 +636,7 @@ int main(int argc, char **argv) {
     }
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY) || OPTS_FLAG(FTEPP)) {
-        if (!ftepp_init()) {
+        if (!(ftepp = ftepp_create())) {
             con_err("failed to initialize parser\n");
             retval = 1;
             goto cleanup;
@@ -644,7 +651,7 @@ int main(int argc, char **argv) {
     /* add macros */
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY) || OPTS_FLAG(FTEPP)) {
         for (itr = 0; itr < vec_size(ppems); itr++) {
-            ftepp_add_macro(ppems[itr].name, ppems[itr].value);
+            ftepp_add_macro(ftepp, ppems[itr].name, ppems[itr].value);
             mem_d(ppems[itr].name);
 
             /* can be null */
@@ -703,6 +710,7 @@ srcdone:
             con_out("Mode: %s\n", (progs_src ? "progs.src" : "manual"));
             con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
         }
+
         for (itr = 0; itr < vec_size(items); ++itr) {
             if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
                 !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
@@ -717,33 +725,33 @@ srcdone:
 
             if (OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
                 const char *out;
-                if (!ftepp_preprocess_file(items[itr].filename)) {
+                if (!ftepp_preprocess_file(ftepp, items[itr].filename)) {
                     retval = 1;
                     goto cleanup;
                 }
-                out = ftepp_get();
+                out = ftepp_get(ftepp);
                 if (out)
                     fs_file_printf(outfile, "%s", out);
-                ftepp_flush();
+                ftepp_flush(ftepp);
             }
             else {
                 if (OPTS_FLAG(FTEPP)) {
                     const char *data;
-                    if (!ftepp_preprocess_file(items[itr].filename)) {
+                    if (!ftepp_preprocess_file(ftepp, items[itr].filename)) {
                         retval = 1;
                         goto cleanup;
                     }
-                    data = ftepp_get();
+                    data = ftepp_get(ftepp);
                     if (vec_size(data)) {
-                        if (!parser_compile_string(items[itr].filename, data, vec_size(data))) {
+                        if (!parser_compile_string(parser, items[itr].filename, data, vec_size(data))) {
                             retval = 1;
                             goto cleanup;
                         }
                     }
-                    ftepp_flush();
+                    ftepp_flush(ftepp);
                 }
                 else {
-                    if (!parser_compile_file(items[itr].filename)) {
+                    if (!parser_compile_file(parser, items[itr].filename)) {
                         retval = 1;
                         goto cleanup;
                     }
@@ -756,9 +764,10 @@ srcdone:
             }
         }
 
-        ftepp_finish();
+        ftepp_finish(ftepp);
+        ftepp = NULL;
         if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
-            if (!parser_finish(OPTS_OPTION_STR(OPTION_OUTPUT))) {
+            if (!parser_finish(parser, OPTS_OPTION_STR(OPTION_OUTPUT))) {
                 retval = 1;
                 goto cleanup;
             }
@@ -778,13 +787,14 @@ srcdone:
 
 cleanup:
     util_debug("COM", "cleaning ...\n");
-    ftepp_finish();
+    if (ftepp)
+        ftepp_finish(ftepp);
     con_close();
     vec_free(items);
     vec_free(ppems);
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY))
-        parser_cleanup();
+        parser_cleanup(parser);
     if (opts_output_free)
         mem_d(OPTS_OPTION_STR(OPTION_OUTPUT));
     if (operators_free)

@@ -168,7 +168,7 @@ static int win_fputs(FILE *h, const char *str) {
                 state    = -1;
             }
         } else {
-            fs_file_putc(h, *str);
+            fs_file_write(str, 1, 1, stdout);
             length ++;
         }
         str++;
@@ -281,10 +281,6 @@ int con_change(const char *out, const char *err) {
         console.handle_err = GMQCC_IS_STDOUT(err) ? stdout : stderr;
         con_enablecolor();
     } else if (!(console.handle_err = fs_file_open(err, "w"))) return 0;
-
-    /* no buffering */
-    setvbuf(console.handle_out, NULL, _IONBF, 0);
-    setvbuf(console.handle_err, NULL, _IONBF, 0);
 
     return 1;
 }

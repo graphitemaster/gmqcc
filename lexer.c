@@ -272,7 +272,7 @@ void lex_close(lex_file *lex)
 static int lex_fgetc(lex_file *lex)
 {
     if (lex->file)
-        return fgetc(lex->file);
+        return fs_file_getc(lex->file);
     if (lex->open_string) {
         if (lex->open_string_pos >= lex->open_string_length)
             return EOF;
@@ -483,6 +483,9 @@ static bool lex_try_pragma(lex_file *lex)
     lex->line = line;
     while (ch != '\n' && ch != EOF)
         ch = lex_getch(lex);
+    vec_free(command);
+    vec_free(param);
+    vec_free(pragma);
     return true;
 
 unroll:
@@ -495,13 +498,13 @@ unroll:
         vec_free(command);
         lex_ungetch(lex, ' ');
     }
-    if (command) {
-        vec_pop(command);
-        while (vec_size(command)) {
-            lex_ungetch(lex, (unsigned char)vec_last(command));
-            vec_pop(command);
+    if (param) {
+        vec_pop(param);
+        while (vec_size(param)) {
+            lex_ungetch(lex, (unsigned char)vec_last(param));
+            vec_pop(param);
         }
-        vec_free(command);
+        vec_free(param);
         lex_ungetch(lex, ' ');
     }
     if (pragma) {
@@ -1232,7 +1235,7 @@ int lex_do(lex_file *lex)
             /*
             case '+':
             case '-':
-            */
+            */ 
             case '*':
             case '/':
             case '<':
@@ -1352,11 +1355,17 @@ int lex_do(lex_file *lex)
         lex_tokench(lex, ch);
 
         nextch = lex_getch(lex);
-        if (nextch == '=') {
+        if (nextch == '=' || nextch == '*') {
             lex_tokench(lex, nextch);
         } else
             lex_ungetch(lex, nextch);
 
+        lex_endtoken(lex);
+        return (lex->tok.ttype = TOKEN_OPERATOR);
+    }
+
+    if (ch == '%') {
+        lex_tokench(lex, ch);
         lex_endtoken(lex);
         return (lex->tok.ttype = TOKEN_OPERATOR);
     }

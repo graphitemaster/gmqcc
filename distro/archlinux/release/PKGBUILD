@@ -9,7 +9,7 @@ depends=('glibc')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')
 source=(gmqcc-$pkgver.zip::https://github.com/graphitemaster/gmqcc/zipball/$pkgver)
-sha1sums=('8cd91dc13f70cd9d3767602bf3eb47a1906d9353')
+sha1sums=('e0fe99af9a55d36cd9e0909a96d1b14f2db8b757')
 
 _gitname=graphitemaster-gmqcc-de24486/
 

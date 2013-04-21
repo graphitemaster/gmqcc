@@ -25,6 +25,7 @@
 #include "gmqcc.h"
 #include "lexer.h"
 
+#define HT_MACROS 1024
 typedef struct {
     bool on;
     bool was_on;
@@ -55,14 +56,15 @@ typedef struct {
     pptoken **output;
 } ppmacro;
 
-typedef struct {
+typedef struct ftepp_s {
     lex_file    *lex;
     int          token;
     unsigned int errors;
 
     bool         output_on;
     ppcondition *conditions;
-    ppmacro    **macros;
+    /*ppmacro    **macros;*/
+    ht           macros; /* hashtable<string, ppmacro*> */
 
     char        *output_string;
 
@@ -124,7 +126,7 @@ char *ftepp_predef_line(lex_file *context) {
 char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    sprintf(value, "\"%s\"", context->name);
+    snprintf(value, length, "\"%s\"", context->name);
 
     return value;
 }
@@ -225,7 +227,7 @@ static pptoken *pptoken_make(ftepp_t *ftepp)
     return token;
 }
 
-static void pptoken_delete(pptoken *self)
+static GMQCC_INLINE void pptoken_delete(pptoken *self)
 {
     mem_d(self->value);
     mem_d(self);
@@ -261,27 +263,27 @@ static ftepp_t* ftepp_new()
     ftepp = (ftepp_t*)mem_a(sizeof(*ftepp));
     memset(ftepp, 0, sizeof(*ftepp));
 
+    ftepp->macros    = util_htnew(HT_MACROS);
     ftepp->output_on = true;
 
     return ftepp;
 }
 
-static void ftepp_flush_do(ftepp_t *self)
+static GMQCC_INLINE void ftepp_flush_do(ftepp_t *self)
 {
     vec_free(self->output_string);
 }
 
 static void ftepp_delete(ftepp_t *self)
 {
-    size_t i;
     ftepp_flush_do(self);
     if (self->itemname)
         mem_d(self->itemname);
     if (self->includename)
         vec_free(self->includename);
-    for (i = 0; i < vec_size(self->macros); ++i)
-        ppmacro_delete(self->macros[i]);
-    vec_free(self->macros);
+
+    util_htrem(self->macros, (void (*)(void*))&ppmacro_delete);
+
     vec_free(self->conditions);
     if (self->lex)
         lex_close(self->lex);
@@ -300,7 +302,7 @@ static void ftepp_out(ftepp_t *ftepp, const char *str, bool ignore_cond)
     }
 }
 
-static void ftepp_update_output_condition(ftepp_t *ftepp)
+static GMQCC_INLINE void ftepp_update_output_condition(ftepp_t *ftepp)
 {
     size_t i;
     ftepp->output_on = true;
@@ -308,25 +310,14 @@ static void ftepp_update_output_condition(ftepp_t *ftepp)
         ftepp->output_on = ftepp->output_on && ftepp->conditions[i].on;
 }
 
-static ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
+static GMQCC_INLINE ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(ftepp->macros); ++i) {
-        if (!strcmp(name, ftepp->macros[i]->name))
-            return ftepp->macros[i];
-    }
-    return NULL;
+    return util_htget(ftepp->macros, name);
 }
 
-static void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
+static GMQCC_INLINE void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
 {
-    size_t i;
-    for (i = 0; i < vec_size(ftepp->macros); ++i) {
-        if (!strcmp(name, ftepp->macros[i]->name)) {
-            vec_remove(ftepp->macros, i, 1);
-            return;
-        }
-    }
+    util_htrm(ftepp->macros, name, NULL);
 }
 
 static GMQCC_INLINE int ftepp_next(ftepp_t *ftepp)
@@ -394,6 +385,7 @@ static bool ftepp_define_params(ftepp_t *ftepp, ppmacro *macro)
             return false;
         }
     } while (ftepp->token == ',');
+
     if (ftepp->token != ')') {
         ftepp_error(ftepp, "expected closing paren after macro parameter list");
         return false;
@@ -422,7 +414,7 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
                         return false;
                     }
 
-                    index = atoi(ftepp_tokval(ftepp));
+                    index = (int)strtol(ftepp_tokval(ftepp), NULL, 10);
 
                     if (ftepp_next(ftepp) != ']') {
                         ftepp_error(ftepp, "expected `]` in __VA_ARGS__ subscript");
@@ -471,7 +463,7 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 
 static bool ftepp_define(ftepp_t *ftepp)
 {
-    ppmacro *macro;
+    ppmacro *macro = NULL;
     size_t l = ftepp_ctx(ftepp).line;
 
     (void)ftepp_next(ftepp);
@@ -499,18 +491,28 @@ static bool ftepp_define(ftepp_t *ftepp)
 
     if (ftepp->token == '(') {
         macro->has_params = true;
-        if (!ftepp_define_params(ftepp, macro))
+        if (!ftepp_define_params(ftepp, macro)) {
+            ppmacro_delete(macro);
             return false;
+        }
     }
 
-    if (!ftepp_skipspace(ftepp))
+    if (!ftepp_skipspace(ftepp)) {
+        ppmacro_delete(macro);
         return false;
+    }
 
-    if (!ftepp_define_body(ftepp, macro))
+    if (!ftepp_define_body(ftepp, macro)) {
+        ppmacro_delete(macro);
         return false;
+    }
 
+#if 0
     if (ftepp->output_on)
         vec_push(ftepp->macros, macro);
+#endif
+    if (ftepp->output_on)
+        util_htset(ftepp->macros, macro->name, (void*)macro);
     else {
         ppmacro_delete(macro);
     }
@@ -830,7 +832,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
 
     if (resetline && !ftepp->in_macro) {
         char lineno[128];
-        sprintf(lineno, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
+        snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
 
@@ -1706,9 +1708,7 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 /* Like in parser.c - files keep the previous state so we have one global
  * preprocessor. Except here we will want to warn about dangling #ifs.
  */
-static ftepp_t *ftepp;
-
-static bool ftepp_preprocess_done()
+static bool ftepp_preprocess_done(ftepp_t *ftepp)
 {
     bool retval = true;
     if (vec_size(ftepp->conditions)) {
@@ -1724,7 +1724,7 @@ static bool ftepp_preprocess_done()
     return retval;
 }
 
-bool ftepp_preprocess_file(const char *filename)
+bool ftepp_preprocess_file(ftepp_t *ftepp, const char *filename)
 {
     ftepp->lex = lex_open(filename);
     ftepp->itemname = util_strdup(filename);
@@ -1734,10 +1734,10 @@ bool ftepp_preprocess_file(const char *filename)
     }
     if (!ftepp_preprocess(ftepp))
         return false;
-    return ftepp_preprocess_done();
+    return ftepp_preprocess_done(ftepp);
 }
 
-bool ftepp_preprocess_string(const char *name, const char *str)
+bool ftepp_preprocess_string(ftepp_t *ftepp, const char *name, const char *str)
 {
     ftepp->lex = lex_open_string(str, strlen(str), name);
     ftepp->itemname = util_strdup(name);
@@ -1747,16 +1747,16 @@ bool ftepp_preprocess_string(const char *name, const char *str)
     }
     if (!ftepp_preprocess(ftepp))
         return false;
-    return ftepp_preprocess_done();
+    return ftepp_preprocess_done(ftepp);
 }
 
 
-void ftepp_add_macro(const char *name, const char *value) {
+void ftepp_add_macro(ftepp_t *ftepp, const char *name, const char *value) {
     char *create = NULL;
 
     /* use saner path for empty macros */
     if (!value) {
-        ftepp_add_define("__builtin__", name);
+        ftepp_add_define(ftepp, "__builtin__", name);
         return;
     }
 
@@ -1766,26 +1766,27 @@ void ftepp_add_macro(const char *name, const char *value) {
     vec_upload(create, value, strlen(value));
     vec_push  (create, 0);
 
-    ftepp_preprocess_string("__builtin__", create);
+    ftepp_preprocess_string(ftepp, "__builtin__", create);
     vec_free  (create);
 }
 
-bool ftepp_init()
+ftepp_t *ftepp_create()
 {
+    ftepp_t *ftepp;
     char minor[32];
     char major[32];
 
     ftepp = ftepp_new();
     if (!ftepp)
-        return false;
+        return NULL;
 
     memset(minor, 0, sizeof(minor));
     memset(major, 0, sizeof(major));
 
     /* set the right macro based on the selected standard */
-    ftepp_add_define(NULL, "GMQCC");
+    ftepp_add_define(ftepp, NULL, "GMQCC");
     if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC) {
-        ftepp_add_define(NULL, "__STD_FTEQCC__");
+        ftepp_add_define(ftepp, NULL, "__STD_FTEQCC__");
         /* 1.00 */
         major[0] = '"';
         major[1] = '1';
@@ -1795,15 +1796,15 @@ bool ftepp_init()
         minor[1] = '0';
         minor[2] = '"';
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
-        ftepp_add_define(NULL, "__STD_GMQCC__");
-        sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
-        sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
+        ftepp_add_define(ftepp, NULL, "__STD_GMQCC__");
+        snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
-        ftepp_add_define(NULL, "__STD_QCCX__");
-        sprintf(major, "\"%d\"", GMQCC_VERSION_MAJOR);
-        sprintf(minor, "\"%d\"", GMQCC_VERSION_MINOR);
+        ftepp_add_define(ftepp, NULL, "__STD_QCCX__");
+        snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
-        ftepp_add_define(NULL, "__STD_QCC__");
+        ftepp_add_define(ftepp, NULL, "__STD_QCC__");
         /* 1.0 */
         major[0] = '"';
         major[1] = '1';
@@ -1814,35 +1815,35 @@ bool ftepp_init()
         minor[2] = '"';
     }
 
-    ftepp_add_macro("__STD_VERSION_MINOR__", minor);
-    ftepp_add_macro("__STD_VERSION_MAJOR__", major);
+    ftepp_add_macro(ftepp, "__STD_VERSION_MINOR__", minor);
+    ftepp_add_macro(ftepp, "__STD_VERSION_MAJOR__", major);
 
-    return true;
+    return ftepp;
 }
 
-void ftepp_add_define(const char *source, const char *name)
+void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name)
 {
     ppmacro *macro;
     lex_ctx ctx = { "__builtin__", 0 };
     ctx.file = source;
     macro = ppmacro_new(ctx, name);
-    vec_push(ftepp->macros, macro);
+    /*vec_push(ftepp->macros, macro);*/
+    util_htset(ftepp->macros, name, macro);
 }
 
-const char *ftepp_get()
+const char *ftepp_get(ftepp_t *ftepp)
 {
     return ftepp->output_string;
 }
 
-void ftepp_flush()
+void ftepp_flush(ftepp_t *ftepp)
 {
     ftepp_flush_do(ftepp);
 }
 
-void ftepp_finish()
+void ftepp_finish(ftepp_t *ftepp)
 {
     if (!ftepp)
         return;
     ftepp_delete(ftepp);
-    ftepp = NULL;
 }

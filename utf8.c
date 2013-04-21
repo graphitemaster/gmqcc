@@ -198,7 +198,7 @@ uchar_t u8_getchar(const char *_s, const char **_end)
 
     if (!u8_analyze(_s, &st, &ln, &ch, 0x10))
         ch = 0;
-    if (_end)
+    else if (_end)
         *_end = _s + st + ln;
     return ch;
 }
@@ -210,7 +210,7 @@ uchar_t u8_getnchar(const char *_s, const char **_end, size_t _maxlen)
 
     if (!u8_analyze(_s, &st, &ln, &ch, _maxlen))
         ch = 0;
-    if (_end)
+    else if (_end)
         *_end = _s + st + ln;
     return ch;
 }

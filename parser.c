@@ -23,6 +23,7 @@
  */
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
@@ -34,7 +35,7 @@
 #define PARSER_HT_SIZE    128
 #define TYPEDEF_HT_SIZE   16
 
-typedef struct {
+typedef struct parser_s {
     lex_file *lex;
     int      tok;
 
@@ -45,6 +46,8 @@ typedef struct {
     ast_value    **imm_string;
     ast_value    **imm_vector;
     size_t         translated;
+
+    ht ht_imm_string;
 
     /* must be deleted first, they reference immediates and values */
     ast_value    **accessors;
@@ -252,12 +255,22 @@ static char *parser_strdup(const char *str)
 
 static ast_value* parser_const_string(parser_t *parser, const char *str, bool dotranslate)
 {
-    size_t i;
+    size_t hash = util_hthash(parser->ht_imm_string, str);
     ast_value *out;
+    if ( (out = util_htgeth(parser->ht_imm_string, str, hash)) ) {
+        if (dotranslate && out->name[0] == '#') {
+            char name[32];
+            snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(parser->translated++));
+            ast_value_set_name(out, name);
+        }
+        return out;
+    }
+    /*
     for (i = 0; i < vec_size(parser->imm_string); ++i) {
         if (!strcmp(parser->imm_string[i]->constval.vstring, str))
             return parser->imm_string[i];
     }
+    */
     if (dotranslate) {
         char name[32];
         snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(parser->translated++));
@@ -268,6 +281,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
     out->hasvalue = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
+    util_htseth(parser->ht_imm_string, str, hash, out);
     return out;
 }
 
@@ -378,6 +392,9 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
     }
     return NULL;
 }
+
+/* include intrinsics */
+#include "intrin.h"
 
 typedef struct
 {
@@ -961,10 +978,35 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             break;
+
         case opid1('%'):
+            if (NotSameType(TYPE_FLOAT)) {
+                compile_error(ctx, "invalid types used in expression: cannot perform modulo operation between types %s and %s",
+                    type_name[exprs[0]->expression.vtype],
+                    type_name[exprs[1]->expression.vtype]);
+                return false;
+            }
+            if (CanConstFold(exprs[0], exprs[1])) {
+                out = (ast_expression*)parser_const_float(parser,
+                            (float)(((qcint)ConstF(0)) % ((qcint)ConstF(1))));
+            } else {
+                /* generate a call to __builtin_mod */
+                ast_expression *mod  = intrin_func(parser, "mod");
+                ast_call       *call = NULL;
+                if (!mod) return false; /* can return null for missing floor */
+
+                call = ast_call_new(parser_ctx(parser), mod);
+                vec_push(call->params, exprs[0]);
+                vec_push(call->params, exprs[1]);
+
+                out = (ast_expression*)call;
+            }
+            break;
+
         case opid2('%','='):
-            compile_error(ctx, "qc does not have a modulo operator");
+            compile_error(ctx, "%= is unimplemented");
             return false;
+
         case opid1('|'):
         case opid1('&'):
             if (NotSameType(TYPE_FLOAT)) {
@@ -1069,6 +1111,26 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (immediate_is_true(ctx, asvalue[0]) ? exprs[1] : exprs[2]);
             else
                 out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
+            break;
+
+        case opid2('*', '*'):
+            if (NotSameType(TYPE_FLOAT)) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                compile_error(ctx, "invalid types used in exponentiation: %s and %s",
+                    ty1, ty2);
+
+                return false;
+            }
+
+            if (CanConstFold(exprs[0], exprs[1])) {
+                out = (ast_expression*)parser_const_float(parser, powf(ConstF(0), ConstF(1)));
+            } else {
+                ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser, "pow"));
+                vec_push(gencall->params, exprs[0]);
+                vec_push(gencall->params, exprs[1]);
+                out = (ast_expression*)gencall;
+            }
             break;
 
         case opid3('<','=','>'): /* -1, 0, or 1 */
@@ -1416,7 +1478,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if(CanConstFold1(exprs[0]))
                 out = (ast_expression*)parser_const_float(parser, ~(qcint)ConstF(0));
             else
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
+                out = (ast_expression*)
+                    ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
             break;
     }
 #undef NotSameType
@@ -1829,6 +1892,15 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             /* intrinsics */
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
                 var = (ast_expression*)intrinsic_debug_typestring;
+            }
+            /* now we try for the real intrinsic hashtable. If the string
+             * begins with __builtin, we simply skip past it, otherwise we
+             * use the identifier as is.
+             */
+            else if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
+                var = intrin_func(parser, parser_tokval(parser) + 10 /* skip __builtin */);
+            } else {
+                var = intrin_func(parser, parser_tokval(parser));
             }
                 
             if (!var) {
@@ -3654,6 +3726,8 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
 
 static bool parse_enum(parser_t *parser)
 {
+    bool        flag = false;
+    bool        reverse = false;
     qcfloat     num = 0;
     ast_value **values = NULL;
     ast_value  *var = NULL;
@@ -3661,9 +3735,35 @@ static bool parse_enum(parser_t *parser)
 
     ast_expression *old;
 
-    if (!parser_next(parser) || parser->tok != '{') {
-        parseerror(parser, "expected `{` after `enum` keyword");
+    if (!parser_next(parser) || (parser->tok != '{' && parser->tok != ':')) {
+        parseerror(parser, "expected `{` or `:` after `enum` keyword");
         return false;
+    }
+
+    /* enumeration attributes (can add more later) */
+    if (parser->tok == ':') {
+        if (!parser_next(parser) || parser->tok != TOKEN_IDENT){
+            parseerror(parser, "expected `flag` or `reverse` for enumeration attribute");
+            return false;
+        }
+
+        /* attributes? */
+        if (!strcmp(parser_tokval(parser), "flag")) {
+            num  = 1;
+            flag = true;
+        }
+        else if (!strcmp(parser_tokval(parser), "reverse")) {
+            reverse = true;
+        }
+        else {
+            parseerror(parser, "invalid attribute `%s` for enumeration", parser_tokval(parser));
+            return false;
+        }
+
+        if (!parser_next(parser) || parser->tok != '{') {
+            parseerror(parser, "expected `{` after enum attribute ");
+            return false;
+        }
     }
 
     while (true) {
@@ -3689,8 +3789,9 @@ static bool parse_enum(parser_t *parser)
         vec_push(values, var);
         var->cvq             = CV_CONST;
         var->hasvalue        = true;
-        var->constval.vfloat = num++;
 
+        /* for flagged enumerations increment in POTs of TWO */
+        var->constval.vfloat = (flag) ? (num *= 2) : (num ++);
         parser_addglobal(parser, var->name, (ast_expression*)var);
 
         if (!parser_next(parser)) {
@@ -3727,6 +3828,13 @@ static bool parse_enum(parser_t *parser)
             parseerror(parser, "expected `}` or comma after expression");
             goto onerror;
         }
+    }
+
+    /* patch them all (for reversed attribute) */
+    if (reverse) {
+        size_t i;
+        for (i = 0; i < vec_size(values); i++)
+            values[i]->constval.vfloat = vec_size(values) - i - 1;
     }
 
     if (parser->tok != '}') {
@@ -4696,6 +4804,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 on_error:
     if (argcounter)
         mem_d(argcounter);
+    if (varparam)
+        ast_delete(varparam);
     ast_delete(var);
     for (i = 0; i < vec_size(params); ++i)
         ast_delete(params[i]);
@@ -5814,16 +5924,15 @@ static void generate_checksum(parser_t *parser)
     code_crc = crc;
 }
 
-static parser_t *parser;
-
-bool parser_init()
+parser_t *parser_create()
 {
+    parser_t *parser;
     lex_ctx empty_ctx;
     size_t i;
 
     parser = (parser_t*)mem_a(sizeof(parser_t));
     if (!parser)
-        return false;
+        return NULL;
 
     memset(parser, 0, sizeof(*parser));
 
@@ -5836,7 +5945,7 @@ bool parser_init()
     if (!parser->assign_op) {
         printf("internal error: initializing parser: failed to find assign operator\n");
         mem_d(parser);
-        return false;
+        return NULL;
     }
 
     vec_push(parser->variables, parser->htfields  = util_htnew(PARSER_HT_SIZE));
@@ -5845,6 +5954,8 @@ bool parser_init()
     vec_push(parser->_blocktypedefs, 0);
 
     parser->aliases = util_htnew(PARSER_HT_SIZE);
+
+    parser->ht_imm_string = util_htnew(512);
 
     /* corrector */
     vec_push(parser->correct_variables, correct_trie_new());
@@ -5872,10 +5983,11 @@ bool parser_init()
     } else {
         parser->reserved_version = NULL;
     }
-    return true;
+
+    return parser;
 }
 
-bool parser_compile()
+bool parser_compile(parser_t *parser)
 {
     /* initial lexer/parser state */
     parser->lex->flags.noops = true;
@@ -5907,27 +6019,27 @@ bool parser_compile()
     return !compile_errors;
 }
 
-bool parser_compile_file(const char *filename)
+bool parser_compile_file(parser_t *parser, const char *filename)
 {
     parser->lex = lex_open(filename);
     if (!parser->lex) {
         con_err("failed to open file \"%s\"\n", filename);
         return false;
     }
-    return parser_compile();
+    return parser_compile(parser);
 }
 
-bool parser_compile_string(const char *name, const char *str, size_t len)
+bool parser_compile_string(parser_t *parser, const char *name, const char *str, size_t len)
 {
     parser->lex = lex_open_string(str, len, name);
     if (!parser->lex) {
         con_err("failed to create lexer for string \"%s\"\n", name);
         return false;
     }
-    return parser_compile();
+    return parser_compile(parser);
 }
 
-void parser_cleanup()
+void parser_cleanup(parser_t *parser)
 {
     size_t i;
     for (i = 0; i < vec_size(parser->accessors); ++i) {
@@ -5957,6 +6069,7 @@ void parser_cleanup()
     vec_free(parser->functions);
     vec_free(parser->imm_vector);
     vec_free(parser->imm_string);
+    util_htdel(parser->ht_imm_string);
     vec_free(parser->imm_float);
     vec_free(parser->globals);
     vec_free(parser->fields);
@@ -5998,10 +6111,12 @@ void parser_cleanup()
 
     util_htdel(parser->aliases);
 
+    intrin_intrinsics_destroy(parser);
+
     mem_d(parser);
 }
 
-bool parser_finish(const char *output)
+bool parser_finish(parser_t *parser, const char *output)
 {
     size_t i;
     ir_builder *ir;

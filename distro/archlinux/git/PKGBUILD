@@ -1,7 +1,11 @@
 # Contributor: matthiaskrgr <matthiaskrgr _strange_curverd_character_ freedroid D0T org>
 
 pkgname=gmqcc-git
-pkgver=20130127
+pkgver=0.2.524.gc6bd5e6
+pkgver(){
+    cd gmqcc
+    git describe --tags | sed -e 's/^gmqcc\-//' -e 's/-/./g'
+}
 pkgrel=1
 pkgdesc="An Improved Quake C Compiler"
 arch=('i686' 'x86_64')
@@ -11,40 +15,25 @@ provides=('gmqcc=0.2.4')
 makedepends=('git')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')
+source=('gmqcc::git://github.com/graphitemaster/gmqcc.git')
+sha1sums=('SKIP')
 
-_gitroot="git://github.com/graphitemaster/gmqcc.git"
-_gitname="gmqcc"
 
 build() {
-	cd $srcdir
-	msg "Connecting to the GIT server..."
-	if [[ -d $srcdir/$_gitname ]] ; then
-		cd $_gitname
-		msg "Removing build files..."
-		git clean -dfx
-		msg "Updating..."
-		git pull --no-tags
-		msg "The local files are updated."
-	else
-		msg "Cloning..."
-		git clone $_gitroot $_gitname --depth 1
-		msg "Clone done."
-	fi
-
 	msg "Starting compilation..."
-	cd "$srcdir"/"$_gitname"
+	cd "$srcdir"/"gmqcc"
 
 	msg "Compiling..."
 	make
 }
 
 check() {
-	cd "$srcdir"/"$_gitname"
+	cd "$srcdir"/"gmqcc"
 	make check
 }
 
 package() {
-	cd "$srcdir"/"$_gitname"
+	cd "$srcdir"/"gmqcc"
 	msg "Compiling and installing to pkgdir this time..."
 	make install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."

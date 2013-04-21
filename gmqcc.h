@@ -300,7 +300,8 @@ void  util_meminfo       ();
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-char *util_strdup        (const char *);
+char *_util_Estrdup      (const char *, const char *, size_t);
+char *_util_Estrdup_empty(const char *, const char *, size_t);
 void  util_debug         (const char *, const char *, ...);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
@@ -317,14 +318,19 @@ int util_asprintf (char **ret, const char *fmt, ...);
 
 
 #ifdef NOTRACK
-#    define mem_a(x)    malloc (x)
-#    define mem_d(x)    free   ((void*)x)
-#    define mem_r(x, n) realloc((void*)x, n)
+#    define mem_a(x)      malloc (x)
+#    define mem_d(x)      free   ((void*)x)
+#    define mem_r(x, n)   realloc((void*)x, n)
+#    define mem_af(x,f,l) malloc (x)
 #else
-#    define mem_a(x)    util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x)    util_memory_d((void*)(x))
-#    define mem_r(x, n) util_memory_r((void*)(x), (n), __LINE__, __FILE__)
+#    define mem_a(x)      util_memory_a((x), __LINE__, __FILE__)
+#    define mem_d(x)      util_memory_d((void*)(x))
+#    define mem_r(x, n)   util_memory_r((void*)(x), (n), __LINE__, __FILE__)
+#    define mem_af(x,f,l) util_memory_a((x), __LINE__, __FILE__)
 #endif /*! NOTRACK */
+
+#define util_strdup(X)  _util_Estrdup((X), __FILE__, __LINE__)
+#define util_strdupe(X) _util_Estrdup_empty((X), __FILE__, __LINE__)
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -332,7 +338,7 @@ int util_asprintf (char **ret, const char *fmt, ...);
  * this data is represented in the structure below.  Doing this allows
  * us to use the array [] to access individual elements from the vector
  * opposed to using set/get methods.
- */     
+ */
 typedef struct {
     size_t  allocated;
     size_t  used;
@@ -374,14 +380,6 @@ typedef struct hash_table_t {
     struct hash_node_t **table;
 } hash_table_t, *ht;
 
-typedef struct hash_set_t {
-    size_t  bits;
-    size_t  mask;
-    size_t  capacity;
-    size_t *items;
-    size_t  total;
-} hash_set_t, *hs;
-
 /*
  * hashtable implementation:
  *
@@ -413,51 +411,16 @@ typedef struct hash_set_t {
  * util_htdel(foo);
  */
 hash_table_t *util_htnew (size_t size);
+void          util_htrem (hash_table_t *ht, void (*callback)(void *data));
 void          util_htset (hash_table_t *ht, const char *key, void *value);
 void          util_htdel (hash_table_t *ht);
 size_t        util_hthash(hash_table_t *ht, const char *key);
 void          util_htseth(hash_table_t *ht, const char *key, size_t hash, void *value);
+void          util_htrmh (hash_table_t *ht, const char *key, size_t bin, void (*cb)(void*));
+void          util_htrm  (hash_table_t *ht, const char *key, void (*cb)(void*));
 
 void         *util_htget (hash_table_t *ht, const char *key);
 void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
-
-/*
- * hashset implementation:
- *      This was designed for pointers:  you manage the life of the object yourself
- *      if you do use this for non-pointers please be warned that the object may not
- *      be valid if the duration of it exceeds (i.e on stack).  So you need to allocate
- *      yourself, or put those in global scope to ensure duration is for the whole
- *      runtime.
- *
- * util_hsnew()                             -- to make a new hashset
- * util_hsadd(set, key)                     -- to add something in the set
- * util_hshas(set, key)                     -- to check if something is in the set
- * util_hsrem(set, key)                     -- to remove something in the set
- * util_hsdel(set)                          -- to delete the set
- *
- * example of use:
- * 
- * hs    foo = util_hsnew();
- * char *bar = "hello blub\n";
- * char *baz = "hello dale\n";
- *
- * util_hsadd(foo, bar);
- * util_hsadd(foo, baz);
- * util_hsrem(foo, baz);
- *
- * printf("bar %d | baz %d\n",
- *     util_hshas(foo, bar),
- *     util_hshad(foo, baz)
- * );
- *
- * util_hsdel(foo);  
- */
-
-hash_set_t *util_hsnew(void);
-int         util_hsadd(hash_set_t *, void *);
-int         util_hshas(hash_set_t *, void *);
-int         util_hsrem(hash_set_t *, void *);
-void        util_hsdel(hash_set_t *);
  
 /*===================================================================*/
 /*============================ file.c ===============================*/
@@ -466,10 +429,8 @@ void        util_hsdel(hash_set_t *);
 void           fs_file_close  (FILE *);
 int            fs_file_error  (FILE *);
 int            fs_file_getc   (FILE *);
-int            fs_file_flush  (FILE *);
 int            fs_file_printf (FILE *, const char *, ...);
 int            fs_file_puts   (FILE *, const char *);
-int            fs_file_putc   (FILE *, int);
 int            fs_file_seek   (FILE *, long int, int);
 long int       fs_file_tell   (FILE *); 
 
@@ -480,11 +441,10 @@ FILE          *fs_file_open   (const char *, const char *);
 int            fs_file_getline(char  **, size_t *, FILE *);
 
 /* directory handling */
+int            fs_dir_make    (const char *);
 DIR           *fs_dir_open    (const char *);
 int            fs_dir_close   (DIR *);
 struct dirent *fs_dir_read    (DIR *);
-int            fs_dir_make    (const char *);
-int            fs_dir_change  (const char *);
 
 
 /*===================================================================*/
@@ -1025,17 +985,20 @@ qcint             prog_tempstring(qc_program *prog, const char *_str);
 /*===================================================================*/
 /*===================== parser.c commandline ========================*/
 /*===================================================================*/
+struct parser_s;
 
-bool parser_init          ();
-bool parser_compile_file  (const char *);
-bool parser_compile_string(const char *, const char *, size_t);
-bool parser_finish        (const char *);
-void parser_cleanup       ();
+struct parser_s *parser_create        ();
+bool             parser_compile_file  (struct parser_s *parser, const char *);
+bool             parser_compile_string(struct parser_s *parser, const char *, const char *, size_t);
+bool             parser_finish        (struct parser_s *parser, const char *);
+void             parser_cleanup       (struct parser_s *parser);
 
 /*===================================================================*/
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
 struct lex_file_s;
+struct ftepp_s;
+
 typedef struct {
     const char  *name;
     char      *(*func)(struct lex_file_s *);
@@ -1047,14 +1010,14 @@ typedef struct {
  */
 #define FTEPP_PREDEF_COUNT 8
 
-bool        ftepp_init             ();
-bool        ftepp_preprocess_file  (const char *filename);
-bool        ftepp_preprocess_string(const char *name, const char *str);
-void        ftepp_finish           ();
-const char *ftepp_get              ();
-void        ftepp_flush            ();
-void        ftepp_add_define       (const char *source, const char *name);
-void        ftepp_add_macro        (const char *name,   const char *value);
+struct ftepp_s *ftepp_create           ();
+bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);
+bool            ftepp_preprocess_string(struct ftepp_s *ftepp, const char *name, const char *str);
+void            ftepp_finish           (struct ftepp_s *ftepp);
+const char     *ftepp_get              (struct ftepp_s *ftepp);
+void            ftepp_flush            (struct ftepp_s *ftepp);
+void            ftepp_add_define       (struct ftepp_s *ftepp, const char *source, const char *name);
+void            ftepp_add_macro        (struct ftepp_s *ftepp, const char *name,   const char *value);
 
 extern const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT];
 
