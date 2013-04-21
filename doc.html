@@ -655,14 +655,10 @@ $ cd gmqcc
                     </tr>
                     <tr>
                         <td>F:</td>
-                         <td>Used to set a failure message, this message will be displayed
-                           if the test fails, this tag is optional.</td>
-                    </tr>
-                    <tr>
-                        <td>S:</td>
-                            <td>Used to set a success message, this message will be displayed
-                           if the test succeeds, this tag is optional.
-                           </td>
+                         <td>Used to set test-suite specific flags, currently
+                            the only supported flag is -no-defs which tells the
+                            testsuite to exclude defs.qh.
+                        </td>
                     </tr>
                     <tr>
                        <td>T:</td>
@@ -676,6 +672,8 @@ $ cd gmqcc
                                <li>-fail&nbsp;
                                    This will perform compilation on the requirement it fails, otherwise
                                    the test fails</li>
+                                <li>-pp&nbsp;
+                                    This will perform preprocessing only</li>
                             </ul>
                   
                            This tag must be provided, this tag is NOT optional.
@@ -697,7 +695,7 @@ $ cd gmqcc
                         <td>Used to describe a string of text that should be matched from
                            the output of executing the task.  If this doesn't match the
                            task fails.  This tag must be provided at least once if
-                           T == -execute, otherwise it's erroneous as compilation only
+                           T == -execute or T == -pp, otherwise it's erroneous as compilation only
                            takes place. Multiple M tags are required for multi-line comparision
                         </td>
                     </tr>
@@ -774,6 +772,10 @@ $ cd gmqcc
                             <td>What it does</td>
                         </tr>
                         <tr>
+                            <td>-h, --help</td>
+                            <td>Print help message</td>
+                        </tr>
+                        <tr>
                             <td>-trace</td>
                             <td>Trace the execution call hierarchy.</td>
                         </tr>
@@ -790,12 +792,32 @@ $ cd gmqcc
                             <td>Dissasemble the bytecode into assembly.</td>
                         </tr>
                         <tr>
+                            <td>-diasm-func</td>
+                            <td>Dissasmble function</td>
+                        </tr>
+                        <tr>
                             <td>-printdefs</td>
                             <td>Prints all definitions for the bytecode running.</td>
                         </tr>
                         <tr>
                             <td>-printfields</td>
                             <td>Prints all fields for the bytecode running.</td>
+                        </tr>
+                        <tr>
+                            <td>-printfuns</td>
+                            <td>Prints all functions for the bytecode running.</td>
+                        </tr>
+                        <tr>
+                            <td>-v</td>
+                            <td>Be verbose</td>
+                        </tr>
+                        <tr>
+                            <td>-v</td>
+                            <td>Be even more verbose</td>
+                        </tr>
+                        <tr>
+                            <td>-version, --version</td>
+                            <td>Print version information</td>
                         </tr>
                     </table>
                     
@@ -815,6 +837,11 @@ $ cd gmqcc
                             <tr><td>vlen</td><td>7</td></tr>
                             <tr><td>etos</td><td>8</td></tr>
                             <tr><td>stof</td><td>9</td></tr>
+                            <tr><td>strcat</td><td>10</td></tr>
+                            <tr><td>strcmp</td><td>11</td></tr>
+                            <tr><td>normalize</td><td>12</td></tr>
+                            <tr><td>sqrt</td><td>13</td></tr>
+                            <tr><td>floor</td><td>14</td></tr>
                     </table>
                 </p>
                 <h3>Support or Contact</h3>
