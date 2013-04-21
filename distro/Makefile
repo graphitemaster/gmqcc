@@ -12,8 +12,10 @@ base:
 	$(MAKE) -C deb/ CARCH=i686
 	$(MAKE) -C archlinux/this/
 	$(MAKE) -C archlinux/this/ CARCH=i686
+	$(MAKE) -C win32/
 	@mv deb/*.deb ./
 	@mv archlinux/this/*pkg.tar.xz ./
+	@mv win32/*.zip ./
 
 upload:
 	@echo "APPKEY:76vh3q42hnvmzm3" > dropbox_config
@@ -24,11 +26,12 @@ upload:
 	@wget -q "http://raw.github.com/andreafabrizi/Dropbox-Uploader/master/dropbox_uploader.sh"
 	@chmod +x dropbox_uploader.sh
 	@sed -i -e "s/~\/.dropbox_uploader/.\/dropbox_config/g" $$(basename $(DROPBOX))
-	@find . -type f -regex ".*/.*\.\(xz\|deb\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
+	@find . -type f -regex ".*/.*\.\(xz\|deb\|zip\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
 	@rm dropbox_config dropbox_uploader.sh
 
 clean:
 	@rm -f *.deb
 	@rm -f *.pkg.tar.xz
+	@rm -f *.zip
 
 all: base upload
