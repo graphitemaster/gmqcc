@@ -87,7 +87,7 @@ ast_expression *intrin_pow(parser_t *parser) {
      *     local *= x;
      *   }
      *   return local;
-     * } 
+     * }
      */
     static ast_value *value = NULL;
 
@@ -226,7 +226,7 @@ ast_expression *intrin_mod(parser_t *parser) {
      * float mod(float x, float y) {
      *   return x - y * floor(x / y);
      * }
-     */    
+     */
     static ast_value *value = NULL;
 
     if (!value) {
@@ -321,8 +321,8 @@ ast_expression *intrin_isnan(parser_t *parser) {
      *   local = x;
      *
      *   return (x != local);
-     * } 
-     */      
+     * }
+     */
     static ast_value *value = NULL;
 
     if (!value) {
@@ -330,7 +330,7 @@ ast_expression *intrin_isnan(parser_t *parser) {
         ast_value    *local  = ast_value_new (parser_ctx(parser), "local", TYPE_FLOAT);
         ast_block    *body   = ast_block_new (parser_ctx(parser));
         ast_function *func   = NULL;
-    
+
         INTRIN_VAL(value, "isnan", func, "<float>", TYPE_FLOAT);
 
         vec_push(body->locals, local);
@@ -399,8 +399,8 @@ ast_expression *intrin_func(parser_t *parser, const char *name) {
     /*
      * jesus fucking christ, Blub design something less fucking
      * impossible to use, like a ast_is_builtin(ast_expression *), also
-     * use a hashtable :P 
-     */  
+     * use a hashtable :P
+     */
     if ((find = (void*)parser_find_global(parser, name)) && ((ast_value*)find)->expression.vtype == TYPE_FUNCTION)
         for (i = 0; i < vec_size(parser->functions); ++i)
             if (((ast_value*)find)->name && !strcmp(parser->functions[i]->name, ((ast_value*)find)->name) && parser->functions[i]->builtin < 0)
@@ -409,7 +409,7 @@ ast_expression *intrin_func(parser_t *parser, const char *name) {
     if ((find = util_htget(intrin_intrinsics(), name))) {
         /* intrinsic is in table. This will "generate the function" so
          * to speak (if it's not already generated).
-         */  
+         */
         return ((intrin_t*)find)->intrin(parser);
     }
 

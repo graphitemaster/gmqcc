@@ -2,7 +2,7 @@
  * Copyright (C) 2012, 2013
  *     Dale Weiler
  *     Wolfgang Bumiller
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -51,11 +51,11 @@
  *  Bayesian interpretation. You can read more about it from here:
  *  http://www.celiagreen.com/charlesmccreery/statistics/bayestutorial.pdf
  *  (which is probably the only good online documentation for bayes theroy
- *  no lie.  Everything else just sucks ..)  
- * 
+ *  no lie.  Everything else just sucks ..)
+ *
  *  Bayes' Thereom suggests something like the following:
  *      AC P(I|C) P(C) / P(I)
- * 
+ *
  *  However since P(I) is the same for every possibility of I, we can
  *  completley ignore it giving just:
  *      AC P(I|C) P(C)
@@ -72,7 +72,7 @@
  *  3: AC, the control mechanisim, an enumerator if you will, one that
  *     enumerates all feasible values of C, to determine the one that
  *     gives the greatest probability score.
- * 
+ *
  *  In reality the requirement for a more complex expression involving
  *  two seperate models is considerably a waste.  But one must recognize
  *  that P(C|I) is already conflating two factors.  It's just much simpler
@@ -85,8 +85,8 @@
  *  distance no greater than one.  Knowing this we can optimize for most
  *  cases of mistakes without taking a performance hit.  Which is what we
  *  base longer edit distances off of.  Opposed to the original method of
- *  I had concieved of checking everything.     
- *  
+ *  I had concieved of checking everything.
+ *
  * A little information on additional algorithms used:
  *
  *   Initially when I implemented this corrector, it was very slow.
@@ -117,8 +117,8 @@
  *   char-to-index map into the branches. We've complelty made the trie
  *   accesses entierly constant in lookup time.  No really, a lookup is
  *   literally trie[str[0]] [str[1]] [2] .... .value.
- * 
- * 
+ *
+ *
  * Future Work (If we really need it)
  *
  *   Currently we can only distinguish one source of error in the
@@ -128,7 +128,7 @@
  *   Currently the error model has been fairly trivial, the smaller the
  *   edit distance the smaller the error.  This usually causes some un-
  *   expected problems. e.g reciet->recite yields recipt.  For QuakeC
- *   this could become a problem when lots of identifiers are involved. 
+ *   this could become a problem when lots of identifiers are involved.
  */
 
 
@@ -314,7 +314,7 @@ void correct_del(correct_trie_t* dictonary, size_t **data) {
  * not in the mood to figure out that logic.  This is a reminder to
  * do it, or for someone else to :-) correct_edit however would also
  * need to take a size_t ** to carry it along (would all the argument
- * overhead be worth it?)  
+ * overhead be worth it?)
  */
 static GMQCC_INLINE size_t correct_deletion(const char *ident, char **array) {
     size_t       itr = 0;
@@ -421,7 +421,7 @@ static GMQCC_INLINE int correct_exist(char **array, register size_t *sizes, size
         /*
          * We can save tons of calls to memcmp if we simply ignore comparisions
          * that we know cannot contain the same length.
-         */   
+         */
         if (sizes[itr] == len && !memcmp(array[itr], ident, len))
             return 1;
     }

@@ -2,7 +2,7 @@
  * Copyright (C) 2012, 2013
  *     Wolfgang Bumiller
  *     Dale Weiler
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -1902,7 +1902,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             } else {
                 var = intrin_func(parser, parser_tokval(parser));
             }
-                
+
             if (!var) {
                 char *correct = NULL;
                 size_t i;
@@ -5171,7 +5171,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         /*
          * store the vstring back to var for alias and
          * deprecation messages.
-         */   
+         */
         if (var->expression.flags & AST_FLAG_DEPRECATED ||
             var->expression.flags & AST_FLAG_ALIAS)
             var->desc = vstring;
@@ -5268,7 +5268,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         ast_value_set_name(proto->expression.params[i], var->expression.params[i]->name);
                     if (!parser_check_qualifiers(parser, var, proto)) {
                         retval = false;
-                        if (proto->desc) 
+                        if (proto->desc)
                             mem_d(proto->desc);
                         proto = NULL;
                         goto cleanup;
@@ -5409,13 +5409,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         /*
                          * add alias to aliases table and to corrector
                          * so corrections can apply for aliases as well.
-                         */  
+                         */
                         util_htset(parser->aliases, var->name, find);
 
                         /*
                          * add to corrector so corrections can work
                          * even for aliases too.
-                         */ 
+                         */
                         correct_add (
                              vec_last(parser->correct_variables),
                             &vec_last(parser->correct_variables_score),
@@ -5441,7 +5441,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             /*
                              * add to corrector so corrections can work
                              * even for aliases too.
-                             */  
+                             */
                             correct_add (
                                  vec_last(parser->correct_variables),
                                 &vec_last(parser->correct_variables_score),

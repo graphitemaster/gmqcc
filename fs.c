@@ -33,7 +33,7 @@
  * to adding support for some other larger IO tasks (in the test-suite,
  * or even the QCVM we'll need it). There is also a third possibility of
  * building .dat files directly from zip files (which would be very cool
- * at least I think so).  
+ * at least I think so).
  */
 #ifdef _MSC_VER
 /* {{{ */
@@ -41,7 +41,7 @@
      * Visual Studio has security CRT features which I actually want to support
      * if we ever port to Windows 8, and want GMQCC to be API safe.
      *
-     * We handle them here, for all file-operations. 
+     * We handle them here, for all file-operations.
      */
 
     static void file_exception (
@@ -128,7 +128,7 @@
 
 /*
  * These are implemented as just generic wrappers to keep consistency in
- * the API.  Not as macros though  
+ * the API.  Not as macros though
  */
 void fs_file_close(FILE *fp) {
     /* Invokes file_exception on windows if fp is null */
@@ -221,7 +221,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
 /*
  * Now we implement some directory functionality.  Windows lacks dirent.h
  * this is such a pisss off, we implement it here.
- */  
+ */
 #if defined(_WIN32) && !defined(__MINGW32__)
     DIR *fs_dir_open(const char *name) {
         DIR *dir = (DIR*)mem_a(sizeof(DIR) + strlen(name));
@@ -231,7 +231,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
         strncpy(dir->dd_name, name, strlen(name));
         return dir;
     }
-        
+
     int fs_dir_close(DIR *dir) {
         FindClose((HANDLE)dir->dd_handle);
         mem_d ((void*)dir);
@@ -267,7 +267,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
 
         if (!rets)
             return NULL;
-        
+
         if ((data = (struct dirent*)mem_a(sizeof(struct dirent)))) {
             strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
             data->d_name[FILENAME_MAX - 1] = '\0'; /* terminate */

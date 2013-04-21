@@ -288,7 +288,7 @@ int con_change(const char *out, const char *err) {
 /*
  * Defaultizer because stdio.h shouldn't be used anywhere except here
  * and inside file.c To prevent mis-match of wrapper-interfaces.
- */ 
+ */
 FILE *con_default_out() {
     return (console.handle_out = stdout);
 }

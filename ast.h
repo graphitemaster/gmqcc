@@ -238,7 +238,7 @@ struct ast_binary_s
     ast_expression *left;
     ast_expression *right;
     ast_binary_ref  refs;
-    
+
 };
 ast_binary* ast_binary_new(lex_ctx    ctx,
                            int        op,

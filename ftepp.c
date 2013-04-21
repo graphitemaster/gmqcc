@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012, 2013
  *     Wolfgang Bumiller
- *     Dale Weiler 
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -76,7 +76,7 @@ typedef struct ftepp_s {
 /*
  * Implement the predef subsystem now.  We can do this safely with the
  * help of lexer contexts.
- */  
+ */
 static uint32_t ftepp_predef_countval = 0;
 static uint32_t ftepp_predef_randval  = 0;
 

@@ -168,7 +168,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
     typedef __int64          int64_t;
 #endif /*! _MSC_VER */
 
-/* 
+/*
  *windows makes these prefixed because they're C99
  * TODO: utility versions that are type-safe and not
  * just plain textual subsitution.
@@ -263,7 +263,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
  * On windows systems where we're not compiling with MING32 we need a
  * little extra help on dependinces for implementing our own dirent.h
  * in fs.c.
- */   
+ */
 #if defined(_WIN32) && !defined(__MINGW32__)
 #   define _WIN32_LEAN_AND_MEAN
 #   include <windows.h>
@@ -421,7 +421,7 @@ void          util_htrm  (hash_table_t *ht, const char *key, void (*cb)(void*));
 
 void         *util_htget (hash_table_t *ht, const char *key);
 void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
- 
+
 /*===================================================================*/
 /*============================ file.c ===============================*/
 /*===================================================================*/
@@ -432,7 +432,7 @@ int            fs_file_getc   (FILE *);
 int            fs_file_printf (FILE *, const char *, ...);
 int            fs_file_puts   (FILE *, const char *);
 int            fs_file_seek   (FILE *, long int, int);
-long int       fs_file_tell   (FILE *); 
+long int       fs_file_tell   (FILE *);
 
 size_t         fs_file_read   (void *,        size_t, size_t, FILE *);
 size_t         fs_file_write  (const void *,  size_t, size_t, FILE *);
