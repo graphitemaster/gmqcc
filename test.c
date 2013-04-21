@@ -886,9 +886,10 @@ void task_destroy(void) {
 /*
  * This executes the QCVM task for a specificly compiled progs.dat
  * using the template passed into it for call-flags and user defined
- * messages.
+ * messages IF the procedure type is -execute, otherwise it matches
+ * the preprocessor output. 
  */
-bool task_execute(task_template_t *tmpl, char ***line) {
+bool task_trymatch(task_template_t *tmpl, char ***line) {
     bool     success = true;
     FILE    *execute;
     char     buffer[4096];
@@ -1022,7 +1023,8 @@ void task_schedualize(size_t *pad) {
          * Generate a task from thin air if it requires execution in
          * the QCVM.
          */
-        execute = !!(!strcmp(task_tasks[i].tmpl->proceduretype, "-execute"));
+        execute = !! (!strcmp(task_tasks[i].tmpl->proceduretype, "-execute")) ||
+                     (!strcmp(task_tasks[i].tmpl->proceduretype, "-pp"));
 
         /*
          * We assume it compiled before we actually compiled :).  On error
@@ -1069,10 +1071,6 @@ void task_schedualize(size_t *pad) {
             continue;
         }
 
-        if (!strcmp(task_tasks[i].tmpl->proceduretype, "-pp")) {
-            /* this is a pain */
-        }
-
         if (!execute) {
             con_out("succeeded: `%s` %*s %*s\n",
                 task_tasks[i].tmpl->description,
@@ -1089,7 +1087,7 @@ void task_schedualize(size_t *pad) {
          * If we made it here that concludes the task is to be executed
          * in the virtual machine.
          */
-        if (!task_execute(task_tasks[i].tmpl, &match)) {
+        if (!task_trymatch(task_tasks[i].tmpl, &match)) {
             size_t d = 0;
 
             con_err("failure: `%s` (invalid results from execution) [%s]\n",
