@@ -18,7 +18,6 @@ Other text editors we plan to provide syntax highlighting configuration
 files for (but never got around to figuring out)
     vim
     emacs
-    gedit
 
 If your text editor is not supported and you'd like to create syntax
 highlighting support for it, don't hesitate to share it with us.
