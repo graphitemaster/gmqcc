@@ -1069,11 +1069,12 @@ void task_schedualize(size_t *pad) {
         }
 
         if (!task_tasks[i].compiled && strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {
-            con_err("failure: `%s` (failed to compile) see %s.stdout and %s.stderr [%s]\n",
+            con_out("failure:   `%s` %*s %*s\n",
                 task_tasks[i].tmpl->description,
-                task_tasks[i].tmpl->tempfilename,
-                task_tasks[i].tmpl->tempfilename,
-                task_tasks[i].tmpl->rulesfile
+                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
+                task_tasks[i].tmpl->rulesfile,
+                (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen("(failed to compile)") - pad[2]),
+                "(failed to compile)"
             );
             continue;
         }
@@ -1098,12 +1099,18 @@ void task_schedualize(size_t *pad) {
         if (!task_trymatch(task_tasks[i].tmpl, &match)) {
             size_t d = 0;
 
-            con_err("failure: `%s` (invalid results from %s) [%s]\n",
+            con_out("failure:   `%s` %*s %*s\n",
                 task_tasks[i].tmpl->description,
+                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
+                task_tasks[i].tmpl->rulesfile,
+                (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(
+                    (strcmp(task_tasks[i].tmpl->proceduretype, "-pp"))
+                        ? "(invalid results from execution)"
+                        : "(invalid results from preprocessing)"
+                ) - pad[2]),
                 (strcmp(task_tasks[i].tmpl->proceduretype, "-pp"))
-                    ? "execution"
-                    : "preprocessing",
-                task_tasks[i].tmpl->rulesfile
+                    ? "(invalid results from execution)"
+                    : "(invalid results from preprocessing)"
             );
 
             /*
@@ -1111,7 +1118,7 @@ void task_schedualize(size_t *pad) {
              * handler for the all the given matches in the template file and
              * what was actually returned from executing.
              */
-            con_err("    Expected From %u Matches: (got %u Matches)\n",
+            con_out("    Expected From %u Matches: (got %u Matches)\n",
                 vec_size(task_tasks[i].tmpl->comparematch),
                 vec_size(match)
             );
@@ -1119,10 +1126,10 @@ void task_schedualize(size_t *pad) {
                 char  *select = task_tasks[i].tmpl->comparematch[d];
                 size_t length = 40 - strlen(select);
 
-                con_err("        Expected: \"%s\"", select);
+                con_out("        Expected: \"%s\"", select);
                 while (length --)
-                    con_err(" ");
-                con_err("| Got: \"%s\"\n", (d >= vec_size(match)) ? "<<nothing else to compare>>" : match[d]);
+                    con_out(" ");
+                con_out("| Got: \"%s\"\n", (d >= vec_size(match)) ? "<<nothing else to compare>>" : match[d]);
             }
 
             /*
@@ -1132,7 +1139,7 @@ void task_schedualize(size_t *pad) {
              */  
             if (vec_size(match) > vec_size(task_tasks[i].tmpl->comparematch)) {
                 for (d = 0; d < vec_size(match) - vec_size(task_tasks[i].tmpl->comparematch); d++) {
-                    con_err("        Expected: Nothing                                   | Got: \"%s\"\n",
+                    con_out("        Expected: Nothing                                   | Got: \"%s\"\n",
                         match[d + vec_size(task_tasks[i].tmpl->comparematch)]
                     );
                 }
