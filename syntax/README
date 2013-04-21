@@ -5,7 +5,7 @@ you can install the configuration file correctly.
 Currently the supported text editors:
     geany
     kate
-    kwrite    - uses kate syntax highlightin)
+    kwrite    - uses kate syntax highlighting
     kdevelop  - uses kate syntax highlighting
     QtCreator - supports kate syntax highlighting
     nano
