@@ -34,12 +34,12 @@ Release v0.2.9
           compatbility option (enabled by default) has been added for
           now: -flegacy-vector-maths
         - Compiler intrinsics: __builtin_floor, __builtin_mod,
-        __builtin_exp, __builtin_isnan
+          __builtin_exp, __builtin_isnan
         - Improved memory tracing
         - Speed improvements
     * QCVM:
         - Improved commandline argument handling.
-        - More builtins: sqrt(), normalize()
+        - More builtins: sqrt(), normalize(), floor()
     * Commandline:
         - Nicer memory dumps
         - Support for making individual warnings an error
