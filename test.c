@@ -178,7 +178,6 @@ int task_pclose(FILE **handles) {
 
 #define TASK_COMPILE    0
 #define TASK_EXECUTE    1
-#define TASK_PREPROCESS 2
 /*
  * Task template system:
  *  templates are rules for a specific test, used to create a "task" that
@@ -270,6 +269,7 @@ typedef struct {
  */
 bool task_template_generate(task_template_t *tmpl, char tag, const char *file, size_t line, char *value, size_t *pad) {
     size_t desclen = 0;
+    size_t filelen = 0;
     char **destval = NULL;
 
     if (!tmpl)
@@ -333,6 +333,9 @@ bool task_template_generate(task_template_t *tmpl, char tag, const char *file, s
         if ((desclen = strlen(tmpl->description)) > pad[0])
             pad[0] = desclen;
     }
+
+    if ((filelen = strlen(file)) > pad[2])
+        pad[2] = filelen;
 
     return true;
 }
@@ -968,14 +971,12 @@ bool task_execute(task_template_t *tmpl, char ***line) {
 
 const char *task_type(task_template_t *tmpl) {
     if (!strcmp(tmpl->proceduretype, "-pp"))
-        return "preprocessor test";
+        return "type: preprocessor test";
     if (!strcmp(tmpl->proceduretype, "-execute"))
-        return "execution test";
+        return "type: execution test";
     if (!strcmp(tmpl->proceduretype, "-compile"))
-        return "compile test";
-    if (!strcmp(tmpl->proceduretype, "-fail"))
-        return "fail test";
-    return "<undefined test>";
+        return "type: compile test";
+    return "type: fail test";
 }
 
 /*
@@ -1055,11 +1056,11 @@ void task_schedualize(size_t *pad) {
         }
 
         if (!execute) {
-            con_out("succeeded: `%s` %*s (%*s)\n",
+            con_out("succeeded: `%s` %*s %*s\n",
                 task_tasks[i].tmpl->description,
                 (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
                 task_tasks[i].tmpl->rulesfile,
-                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(task_type(task_tasks[i].tmpl)) - pad[0]),
+                (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(task_type(task_tasks[i].tmpl)) - pad[2]),
                 task_type(task_tasks[i].tmpl)
                 
             );
@@ -1120,10 +1121,12 @@ void task_schedualize(size_t *pad) {
             mem_d(match[j]);
         vec_free(match);
 
-        con_out("succeeded: `%s` %*s\n",
+        con_out("succeeded: `%s` %*s %*s\n",
             task_tasks[i].tmpl->description,
             (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
-            task_tasks[i].tmpl->rulesfile
+            task_tasks[i].tmpl->rulesfile,
+            (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen(task_type(task_tasks[i].tmpl))- pad[2]),
+            task_type(task_tasks[i].tmpl)
             
         );
     }
@@ -1148,7 +1151,8 @@ GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
     static const char *default_defs = "defs.qh";
 
     size_t pad[] = {
-        0, 0
+        /* test ### [succeed/fail]: `description`      [tests/template.tmpl]     [type] */
+                    0,                                 0,                        0
     };
 
     /*
