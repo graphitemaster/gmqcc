@@ -1,7 +1,7 @@
 # Contributor: matthiaskrgr <matthiaskrgr _strange_curverd_character_ freedroid D0T org>
 
 pkgname=gmqcc-git
-pkgver=0.2.524.gc6bd5e6
+pkgver=0.2.612.g160e7cf
 pkgver(){
     cd gmqcc
     git describe --tags | sed -e 's/^gmqcc\-//' -e 's/-/./g'
@@ -38,5 +38,11 @@ package() {
 	make install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."
 
-	install -D LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
+	install -Dm644 syntax/geany/filetypes.qc    ${pkgdir}/usr/share/geany/filetypes.qc
+	install -Dm644 syntax/gtksourceview/qc.lang ${pkgdir}/usr/share/gtksourceview-3.0/language-specs/qc.lang
+	# jedit
+	install -Dm644 syntax/kate/qc.xml ${pkgdir}/usr/share/apps/katepart/syntax/qc.xml
+	install -Dm644 syntax/nano/qc.nanorc ${pkgdir}/usr/share/nano/qc.nanorc
+
+	install -Dm644 LICENSE 					 ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
 }
