@@ -1,5 +1,7 @@
 DROPBOX := dropbox_uploader.sh
 UNAME   := $(shell uname -m)
+DOWNLOAD:= ../doc/html/download.c
+BRANCH  := $(shell git branch | sed -n -e 's/^\* \(.*\)/\1/p')
 ifneq ($(shell uname -m), x86_64)
     $(error Cannot build packages without an x86_64 capable CPU)
 endif
@@ -29,9 +31,23 @@ upload:
 	@find . -type f -regex ".*/.*\.\(xz\|deb\|zip\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
 	@rm dropbox_config dropbox_uploader.sh
 
+website:
+	$(CC) $(DOWNLOAD) -o html.gen
+	@./html.gen ../
+	@rm html.gen
+	@git stash
+	@git checkout gh-pages
+	@rm -f ../download.html
+	@mv -f download.html ../download.html
+	@cd ..; git add download.html; git commit -m 'update download page'; git push origin gh-pages;
+	@git checkout $(BRANCH)
+	@git stash apply
+
 clean:
 	@rm -f *.deb
 	@rm -f *.pkg.tar.xz
 	@rm -f *.zip
+	@rm -f *.gen
+	@rm -f *.html
 
 all: base upload
