@@ -221,10 +221,10 @@ depend:
 install: install-gmqcc install-qcvm install-doc
 install-gmqcc: $(GMQCC)
 	install -d -m755               $(DESTDIR)$(BINDIR)
-	install    -m755  $(GMQCC)     $(DESTDIR)$(BINDIR)/gmqcc
+	install    -m755  $(GMQCC)     $(DESTDIR)$(BINDIR)/$(GMQCC)
 install-qcvm: $(QCVM)
 	install -d -m755               $(DESTDIR)$(BINDIR)
-	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/qcvm
+	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/$(QCVM)
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
