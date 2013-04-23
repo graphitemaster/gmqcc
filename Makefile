@@ -9,8 +9,12 @@ UNAME  ?= $(shell uname)
 CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
-CC     ?= clang
-CFLAGS += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char $(OPTIONAL)
+CC      ?= clang
+# linker flags and optional additional libraries if required
+LDFLAGS :=
+LIBS    :=
+
+CFLAGS  += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
@@ -169,22 +173,22 @@ SPLINTFLAGS =            \
 #standard rules
 default: all
 %.o: %.c
-	$(CC) -c $< -o $@ $(CFLAGS)
+	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
 
 exec-standalone.o: exec.c
-	$(CC) -c $< -o $@ $(CFLAGS) -DQCVM_EXECUTOR=1
+	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS) -DQCVM_EXECUTOR=1
 
 $(QCVM): $(OBJ_X)
-	$(CC) -o $@ $^ $(CFLAGS) -lm
+	$(CC) -o $@ $^ $(LDFLAGS) -lm $(LIBS)
 
 $(GMQCC): $(OBJ_C) $(OBJ_D)
-	$(CC) -o $@ $^ $(CFLAGS) -lm
+	$(CC) -o $@ $^ $(LDFLAGS) -lm $(LIBS)
 
 $(TESTSUITE): $(OBJ_T)
-	$(CC) -o $@ $^ $(CFLAGS) -lm
+	$(CC) -o $@ $^ $(LDFLAGS) -lm $(LIBS)
 
 $(PAK): $(OBJ_P)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 all: $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK)
 
