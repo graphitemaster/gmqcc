@@ -257,7 +257,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
 {
     size_t hash = util_hthash(parser->ht_imm_string, str);
     ast_value *out;
-    if ( (out = util_htgeth(parser->ht_imm_string, str, hash)) ) {
+    if ( (out = (ast_value*)util_htgeth(parser->ht_imm_string, str, hash)) ) {
         if (dotranslate && out->name[0] == '#') {
             char name[32];
             snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(parser->translated++));

@@ -312,7 +312,7 @@ static GMQCC_INLINE void ftepp_update_output_condition(ftepp_t *ftepp)
 
 static GMQCC_INLINE ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
-    return util_htget(ftepp->macros, name);
+    return (ppmacro*)util_htget(ftepp->macros, name);
 }
 
 static GMQCC_INLINE void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
