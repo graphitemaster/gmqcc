@@ -5114,7 +5114,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     bool      cleanvar  = true;
     bool      wasarray  = false;
 
-    ast_member *me[3];
+    ast_member *me[3] = { NULL, NULL, NULL };
 
     if (!localblock && is_static)
         parseerror(parser, "`static` qualifier is not supported in global scope");
