@@ -488,7 +488,7 @@ task_template_t *task_template_compile(const char *file, const char *dir, size_t
     FILE            *tempfile = NULL;
     task_template_t *tmpl     = NULL;
 
-    snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
+    util_snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
 
     tempfile = fs_file_open(fullfile, "r");
     tmpl     = (task_template_t*)mem_a(sizeof(task_template_t));
@@ -657,7 +657,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     dir = fs_dir_open(curdir);
 
     while ((files = fs_dir_read(dir))) {
-        snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
+        util_snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
 
         if (stat(buffer, &directory) == -1) {
             con_err("internal error: stat failed, aborting\n");
@@ -697,7 +697,16 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
              * to test compile flags for all tests.  This needs to be
              * BEFORE other flags (so that the .tmpl can override them)
              */
+            #ifdef _MSC_VER
+            {
+                char   buffer[4096];
+                size_t size;
+                getenv_s(&size, buffer, sizeof(buffer), "QCFLAGS");
+                qcflags = buffer;
+            }
+            #else
             qcflags = getenv("QCFLAGS");
+            #endif
 
             /*
              * Generate the command required to open a pipe to a process
@@ -707,7 +716,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             if (strcmp(tmpl->proceduretype, "-pp")) {
                 if (qcflags) {
                     if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                        snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             tmpl->sourcefile,
@@ -716,7 +725,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                             tmpl->tempfilename
                         );
                     } else {
-                        snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             defs,
@@ -729,7 +738,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                     }
                 } else {
                     if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                        snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             tmpl->sourcefile,
@@ -737,7 +746,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                             tmpl->tempfilename
                         );
                     } else {
-                        snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             defs,
@@ -751,14 +760,14 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             } else {
                 /* Preprocessing (qcflags mean shit all here we don't allow them) */
                 if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                    snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
+                    util_snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
                         task_bins[TASK_COMPILE],
                         curdir,
                         tmpl->sourcefile,
                         tmpl->tempfilename
                     );
                 } else {
-                    snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
+                    util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
                         task_bins[TASK_COMPILE],
                         curdir,
                         defs,
@@ -786,14 +795,14 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
              * Open up some file desciptors for logging the stdout/stderr
              * to our own.
              */
-            snprintf(buf,  sizeof(buf), "%s.stdout", tmpl->tempfilename);
+            util_snprintf(buf,  sizeof(buf), "%s.stdout", tmpl->tempfilename);
             task.stdoutlogfile = util_strdup(buf);
             if (!(task.stdoutlog     = fs_file_open(buf, "w"))) {
                 con_err("error opening %s for stdout\n", buf);
                 continue;
             }
 
-            snprintf(buf,  sizeof(buf), "%s.stderr", tmpl->tempfilename);
+            util_snprintf(buf,  sizeof(buf), "%s.stderr", tmpl->tempfilename);
             task.stderrlogfile = util_strdup(buf);
             if (!(task.stderrlog = fs_file_open(buf, "w"))) {
                 con_err("error opening %s for stderr\n", buf);
@@ -829,7 +838,7 @@ void task_precleanup(const char *curdir) {
             strstr(files->d_name, ".stdout") ||
             strstr(files->d_name, ".stderr"))
         {
-            snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
+            util_snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
             if (remove(buffer))
                 con_err("error removing temporary file: %s\n", buffer);
             else
@@ -891,6 +900,7 @@ void task_destroy(void) {
  */
 bool task_trymatch(task_template_t *tmpl, char ***line) {
     bool     success = true;
+    bool     preprocessing = false;
     FILE    *execute;
     char     buffer[4096];
     memset  (buffer,0,sizeof(buffer));
@@ -901,12 +911,12 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
          * actually specified.
          */
         if (!strcmp(tmpl->executeflags, "$null")) {
-            snprintf(buffer,  sizeof(buffer), "%s %s",
+            util_snprintf(buffer,  sizeof(buffer), "%s %s",
                 task_bins[TASK_EXECUTE],
                 tmpl->tempfilename
             );
         } else {
-            snprintf(buffer,  sizeof(buffer), "%s %s %s",
+            util_snprintf(buffer,  sizeof(buffer), "%s %s %s",
                 task_bins[TASK_EXECUTE],
                 tmpl->executeflags,
                 tmpl->tempfilename
@@ -928,6 +938,8 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
          */
         if (!(execute = fs_file_open(tmpl->tempfilename, "r")))
             return false;
+
+        preprocessing = true;
     }
 
     /*
@@ -944,7 +956,10 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
                     tmpl->description,
                     tmpl->rulesfile
                 );
-                pclose(execute);
+                if (preprocessing)
+                    fs_file_close(execute);
+                else
+                    pclose(execute);
                 return false;
             }
 
@@ -983,7 +998,7 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
         data = NULL;
     }
 
-    if (strcmp(tmpl->proceduretype, "-pp"))
+    if (!preprocessing)
         pclose(execute);
     else
         fs_file_close(execute);
@@ -1017,11 +1032,11 @@ void task_schedualize(size_t *pad) {
     size_t i        = 0;
     size_t j        = 0;
 
-    snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
+    util_snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
 
     for (; i < vec_size(task_tasks); i++) {
         memset(space[1], 0, sizeof(space[1]));
-        snprintf(space[1], sizeof(space[1]), "%d", (int)(i + 1));
+        util_snprintf(space[1], sizeof(space[1]), "%d", (int)(i + 1));
 
         con_out("test #%u %*s", i + 1, strlen(space[0]) - strlen(space[1]), "");
 

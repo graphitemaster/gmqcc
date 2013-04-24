@@ -1,23 +1,36 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qcvm", "qcvm.vcxproj", "{8DC505A6-6047-4683-BA81-BC4B7A839352}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gmqcc", "gmqcc\gmqcc.vcxproj", "{A6BD74E1-31BB-4D00-A9E0-09FF1BC76ED6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gmqcc", "gmqcc.vcxproj", "{0F0B0779-1A2F-43E9-B833-18C443F7229E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qcvm", "qcvm\qcvm.vcxproj", "{DC980E20-C7A8-4112-A517-631DBDA788E7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testsuite", "testsuite.vcxproj", "{3F8F0021-66B8-43ED-906C-1CFE204E5673}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pak", "pak\pak.vcxproj", "{A6F66BE9-57EF-4E93-AA9D-6E0C8B0990AD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testsuite", "testsuite\testsuite.vcxproj", "{7E2839D9-9C1A-4489-9FF9-FDC854EBED3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8DC505A6-6047-4683-BA81-BC4B7A839352}.Release|Win32.ActiveCfg = Release|Win32
-		{8DC505A6-6047-4683-BA81-BC4B7A839352}.Release|Win32.Build.0 = Release|Win32
-		{0F0B0779-1A2F-43E9-B833-18C443F7229E}.Release|Win32.ActiveCfg = Release|Win32
-		{0F0B0779-1A2F-43E9-B833-18C443F7229E}.Release|Win32.Build.0 = Release|Win32
-		{3F8F0021-66B8-43ED-906C-1CFE204E5673}.Release|Win32.ActiveCfg = Release|Win32
-		{3F8F0021-66B8-43ED-906C-1CFE204E5673}.Release|Win32.Build.0 = Release|Win32
+		{A6BD74E1-31BB-4D00-A9E0-09FF1BC76ED6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A6BD74E1-31BB-4D00-A9E0-09FF1BC76ED6}.Debug|Win32.Build.0 = Debug|Win32
+		{A6BD74E1-31BB-4D00-A9E0-09FF1BC76ED6}.Release|Win32.ActiveCfg = Release|Win32
+		{A6BD74E1-31BB-4D00-A9E0-09FF1BC76ED6}.Release|Win32.Build.0 = Release|Win32
+		{DC980E20-C7A8-4112-A517-631DBDA788E7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DC980E20-C7A8-4112-A517-631DBDA788E7}.Debug|Win32.Build.0 = Debug|Win32
+		{DC980E20-C7A8-4112-A517-631DBDA788E7}.Release|Win32.ActiveCfg = Release|Win32
+		{DC980E20-C7A8-4112-A517-631DBDA788E7}.Release|Win32.Build.0 = Release|Win32
+		{A6F66BE9-57EF-4E93-AA9D-6E0C8B0990AD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A6F66BE9-57EF-4E93-AA9D-6E0C8B0990AD}.Debug|Win32.Build.0 = Debug|Win32
+		{A6F66BE9-57EF-4E93-AA9D-6E0C8B0990AD}.Release|Win32.ActiveCfg = Release|Win32
+		{A6F66BE9-57EF-4E93-AA9D-6E0C8B0990AD}.Release|Win32.Build.0 = Release|Win32
+		{7E2839D9-9C1A-4489-9FF9-FDC854EBED3D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7E2839D9-9C1A-4489-9FF9-FDC854EBED3D}.Debug|Win32.Build.0 = Debug|Win32
+		{7E2839D9-9C1A-4489-9FF9-FDC854EBED3D}.Release|Win32.ActiveCfg = Release|Win32
+		{7E2839D9-9C1A-4489-9FF9-FDC854EBED3D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

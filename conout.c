@@ -110,7 +110,7 @@ static int win_fputs(FILE *h, const char *str) {
     int wcolor;
     int icolor;
 
-    int state;
+    int state = 0;
 
     /* attributes */
     int intense  =  -1;
@@ -218,7 +218,11 @@ static int con_write(FILE *handle, const char *fmt, va_list va) {
     {
         char data[4096];
         memset(data, 0, sizeof(data));
+#ifdef _MSC_VER
+        vsnprintf_s(data, sizeof(data), sizeof(data), fmt, va);
+#else
         vsnprintf(data, sizeof(data), fmt, va);
+#endif
         ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(handle, data) : fs_file_puts(handle, data);
     }
     #endif
