@@ -177,6 +177,7 @@ struct ast_value_s
 
     int  cvq;     /* const/var qualifier */
     bool isfield; /* this declares a field */
+    bool isimm;   /* an immediate, not just const */
     bool hasvalue;
     union {
         double        vfloat;

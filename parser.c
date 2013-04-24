@@ -217,6 +217,7 @@ static ast_value* parser_const_float(parser_t *parser, double d)
     out = ast_value_new(ctx, "#IMMEDIATE", TYPE_FLOAT);
     out->cvq      = CV_CONST;
     out->hasvalue = true;
+    out->isimm    = true;
     out->constval.vfloat = d;
     vec_push(parser->imm_float, out);
     return out;
@@ -279,6 +280,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
         out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
     out->cvq      = CV_CONST;
     out->hasvalue = true;
+    out->isimm    = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
     util_htseth(parser->ht_imm_string, str, hash, out);
@@ -296,6 +298,7 @@ static ast_value* parser_const_vector(parser_t *parser, vector v)
     out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_VECTOR);
     out->cvq      = CV_CONST;
     out->hasvalue = true;
+    out->isimm    = true;
     out->constval.vvec = v;
     vec_push(parser->imm_vector, out);
     return out;
@@ -2182,8 +2185,27 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             wantop = true;
         }
         else {
-            parseerror(parser, "expected operator or end of statement");
-            goto onerr;
+            /* in this case we might want to allow constant string concatenation */
+            bool concatenated = false;
+            if (parser->tok == TOKEN_STRINGCONST && vec_size(sy.out)) {
+                ast_expression *lexpr = vec_last(sy.out).out;
+                if (ast_istype(lexpr, ast_value)) {
+                    ast_value *last = (ast_value*)lexpr;
+                    if (last->isimm == true && last->cvq == CV_CONST &&
+                        last->hasvalue && last->expression.vtype == TYPE_STRING)
+                    {
+                        char *newstr = NULL;
+                        util_asprintf(&newstr, "%s%s", last->constval.vstring, parser_tokval(parser));
+                        vec_last(sy.out).out = (ast_expression*)parser_const_string(parser, newstr, false);
+                        mem_d(newstr);
+                        concatenated = true;
+                    }
+                }
+            }
+            if (!concatenated) {
+                parseerror(parser, "expected operator or end of statement");
+                goto onerr;
+            }
         }
 
         if (!parser_next(parser)) {
