@@ -351,15 +351,28 @@ __RANDOM__
 __RANDOM_LAST__
 __DATE__
 __TIME__
+__FUNC__
 .Ed
+.Pp
+Note that
+.Li __FUNC__
+is not actually a preprocessor macro, but is recognized by the parser
+even with the preprocessor disabled.
 .Pp
 Note that fteqcc also defines
 .Li __NULL__
-which is not implemented yet.
+which becomes the first global. Assigning it to a vector does not
+yield the same result as in gmqcc where
+.Li __NULL__
+is defined to
+.Li nil
 (See
 .Fl f Ns Cm untyped-nil
-about gmqcc's alternative to
-.Li __NULL__ Ns ).
+), which will cause the vector to be zero in all components. With fteqcc
+only the first component will be 0, while the other two will become
+the first to of the global return value. This behavior is odd and
+relying on it should be discouraged, and thus is not supported by
+gmqcc.
 .It Fl f Ns Cm relaxed-switch
 Allow switch cases to use non constant variables.
 .It Fl f Ns Cm short-logic
