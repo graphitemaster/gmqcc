@@ -36,7 +36,6 @@
  */
 #ifdef _MSC_VER
 #   pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
-#   pragma warning(disable : 4018 ) /* signed/unsigned mismatch                                */
 #endif /*! _MSC_VER */
 
 #define GMQCC_VERSION_MAJOR 0
@@ -169,17 +168,6 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #endif /*! _MSC_VER */
 
 /*
- *windows makes these prefixed because they're C99
- * TODO: utility versions that are type-safe and not
- * just plain textual subsitution.
- */
-#ifdef _MSC_VER
-#    define snprintf(X, Y, Z, ...) _snprintf(X, Y, Z, __VA_ARGS__)
-    /* strtof doesn't exist -> strtod does though :) */
-#    define strtof(X, Y)          (float)(strtod(X, Y))
-#endif /*! _MSC_VER */
-
-/*
  * Very roboust way at determining endianess at compile time: this handles
  * almost every possible situation.  Otherwise a runtime check has to be
  * performed.
@@ -275,7 +263,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
         unsigned short     d_reclen;
         unsigned short     d_namlen;
         char               d_name[FILENAME_MAX];
-    }
+    };
 
     typedef struct {
         struct _finddata_t dd_dta;
@@ -284,6 +272,14 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
         int                dd_stat;
         char               dd_name[1];
     } DIR;
+    /*
+     * Visual studio also lacks S_ISDIR for sys/stat.h, so we emulate this as well
+     * which is not hard at all.
+     */
+#    ifdef S_ISDIR
+#        undef  S_ISDIR
+#    endif /*! S_ISDIR */
+#   define S_ISDIR(X) ((X)&_S_IFDIR)
 #else
 #   include <dirent.h>
 #endif /*! _WIN32 && !defined(__MINGW32__) */
@@ -313,8 +309,18 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 void     util_seed(uint32_t);
 uint32_t util_rand();
 
-int util_vasprintf(char **ret, const char *fmt, va_list);
-int util_asprintf (char **ret, const char *fmt, ...);
+/*
+ * String functions (formatting, copying, concatenating, errors). These are wrapped
+ * to use the MSVC _safe_ versions when using MSVC, plus some implementations of
+ * these are non-conformant or don't exist such as asprintf and snprintf, which are
+ * not supported in C90, but do exist in C99.
+ */
+int         util_vasprintf(char **ret, const char *fmt, va_list);
+int         util_asprintf (char **ret, const char *fmt, ...);
+int         util_snprintf (char *src,  size_t bytes, const char *format, ...);
+char       *util_strcat   (char *dest, const char *src);
+char       *util_strncpy  (char *dest, const char *src, size_t num);
+const char *util_strerror (int num);
 
 
 #ifdef NOTRACK

@@ -82,7 +82,7 @@ static uint32_t ftepp_predef_randval  = 0;
 
 /* __DATE__ */
 char *ftepp_predef_date(lex_file *context) {
-    struct tm *itime;
+    struct tm *itime = NULL;
     time_t     rtime;
     char      *value = (char*)mem_a(82);
     /* 82 is enough for strftime but we also have " " in our string */
@@ -91,7 +91,12 @@ char *ftepp_predef_date(lex_file *context) {
 
     /* get time */
     time (&rtime);
+
+#ifdef _MSC_VER
+    localtime_s(itime, &rtime);
+#else
     itime = localtime(&rtime);
+#endif
 
     strftime(value, 82, "\"%b %d %Y\"", itime);
 
@@ -100,7 +105,7 @@ char *ftepp_predef_date(lex_file *context) {
 
 /* __TIME__ */
 char *ftepp_predef_time(lex_file *context) {
-    struct tm *itime;
+    struct tm *itime = NULL;
     time_t     rtime;
     char      *value = (char*)mem_a(82);
     /* 82 is enough for strftime but we also have " " in our string */
@@ -109,7 +114,12 @@ char *ftepp_predef_time(lex_file *context) {
 
     /* get time */
     time (&rtime);
+
+#ifdef _MSC_VER
+    localtime_s(itime, &rtime);
+#else
     itime = localtime(&rtime);
+#endif
 
     strftime(value, 82, "\"%X\"", itime);
 
@@ -126,7 +136,7 @@ char *ftepp_predef_line(lex_file *context) {
 char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    snprintf(value, length, "\"%s\"", context->name);
+    util_snprintf(value, length, "\"%s\"", context->name);
 
     return value;
 }
@@ -312,7 +322,7 @@ static GMQCC_INLINE void ftepp_update_output_condition(ftepp_t *ftepp)
 
 static GMQCC_INLINE ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 {
-    return util_htget(ftepp->macros, name);
+    return (ppmacro*)util_htget(ftepp->macros, name);
 }
 
 static GMQCC_INLINE void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
@@ -832,7 +842,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
 
     if (resetline && !ftepp->in_macro) {
         char lineno[128];
-        snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
+        util_snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
 
@@ -1432,7 +1442,7 @@ static bool ftepp_include(ftepp_t *ftepp)
 
     ftepp_out(ftepp, "\n#pragma file(", false);
     ftepp_out(ftepp, ctx.file, false);
-    snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
+    util_snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
     ftepp_out(ftepp, lineno, false);
 
     /* skip the line */
@@ -1797,12 +1807,12 @@ ftepp_t *ftepp_create()
         minor[2] = '"';
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         ftepp_add_define(ftepp, NULL, "__STD_GMQCC__");
-        snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
-        snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
+        util_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        util_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
         ftepp_add_define(ftepp, NULL, "__STD_QCCX__");
-        snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
-        snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
+        util_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        util_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
         ftepp_add_define(ftepp, NULL, "__STD_QCC__");
         /* 1.0 */

@@ -688,14 +688,13 @@ int util_vasprintf(char **dat, const char *fmt, va_list args) {
      * will return the required amount to allocate.
      */
     #ifdef _MSC_VER
-        char *str;
         if ((len = _vscprintf(fmt, args)) < 0) {
             *dat = NULL;
             return -1;
         }
 
-        tmp = mem_a(len + 1);
-        if ((ret = _vsnprintf(tmp, len+1, fmt, args)) != len) {
+        tmp = (char*)mem_a(len + 1);
+        if ((ret = _vsnprintf_s(tmp, len+1, len+1, fmt, args)) != len) {
             mem_d(tmp);
             *dat = NULL;
             return -1;
@@ -741,6 +740,92 @@ int util_asprintf(char **ret, const char *fmt, ...) {
 
     return read;
 }
+
+/*
+ * These are various re-implementations (wrapping the real ones) of
+ * string functions that MSVC consideres unsafe. We wrap these up and
+ * use the safe varations on MSVC.
+ */
+#ifdef _MSC_VER
+    static char **util_strerror_allocated() {
+        static char **data = NULL;
+        return data;
+    }
+
+    static void util_strerror_cleanup(void) {
+        size_t i;
+        char  **data = util_strerror_allocated();
+        for (i = 0; i < vec_size(data); i++)
+            mem_d(data[i]);
+        vec_free(data);
+    }
+
+    const char *util_strerror(int num) {
+        char         *allocated = NULL;
+        static bool   install   = false;
+        static size_t tries     = 0;
+        char        **vector    = util_strerror_allocated();
+
+        /* try installing cleanup handler */
+        while (!install) {
+            if (tries == 32)
+                return "(unknown)";
+
+            install = !atexit(&util_strerror_cleanup);
+            tries ++;
+        }
+
+        allocated = (char*)mem_a(4096); /* A page must be enough */
+        strerror_s(allocated, 4096, num);
+    
+        vec_push(vector, allocated);
+        return (const char *)allocated;
+    }
+
+    int util_snprintf(char *src, size_t bytes, const char *format, ...) {
+        int      rt;
+        va_list  va;
+        va_start(va, format);
+
+        rt = vsprintf_s(src, bytes, format, va);
+        va_end  (va);
+
+        return rt;
+    }
+
+    char *util_strcat(char *dest, const char *src) {
+        strcat_s(dest, strlen(src), src);
+        return dest;
+    }
+
+    char *util_strncpy(char *dest, const char *src, size_t num) {
+        strncpy_s(dest, num, src, num);
+        return dest;
+    }
+#else
+    const char *util_strerror(int num) {
+        return strerror(num);
+    }
+
+    int util_snprintf(char *src, size_t bytes, const char *format, ...) {
+        int      rt;
+        va_list  va;
+        va_start(va, format);
+        rt = vsnprintf(src, bytes, format, va);
+        va_end  (va);
+
+        return rt;
+    }
+
+    char *util_strcat(char *dest, const char *src) {
+        return strcat(dest, src);
+    }
+
+    char *util_strncpy(char *dest, const char *src, size_t num) {
+        return strncpy(dest, src, num);
+    }
+
+#endif /*! _MSC_VER */
 
 /*
  * Implementation of the Mersenne twister PRNG (pseudo random numer

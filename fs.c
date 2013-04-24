@@ -36,6 +36,7 @@
  * at least I think so).
  */
 #ifdef _MSC_VER
+#include <crtdbg.h> /* _CrtSetReportMode, _CRT_ASSERT */
 /* {{{ */
     /*
      * Visual Studio has security CRT features which I actually want to support
@@ -228,7 +229,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
         if (!dir)
             return NULL;
 
-        strncpy(dir->dd_name, name, strlen(name));
+        util_strncpy(dir->dd_name, name, strlen(name));
         return dir;
     }
 
@@ -248,8 +249,8 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             if (*dir->dd_name) {
                 size_t n = strlen(dir->dd_name);
                 if ((dirname  = (char*)mem_a(n + 5) /* 4 + 1 */)) {
-                    strncpy(dirname, dir->dd_name, n);
-                    strncpy(dirname + n, "\\*.*", 4);   /* 4 + 1 */
+                    util_strncpy(dirname, dir->dd_name, n);
+                    util_strncpy(dirname + n, "\\*.*", 4);   /* 4 + 1 */
                 }
             } else {
                 if (!(dirname = util_strdup("\\*.*")))
@@ -269,7 +270,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             return NULL;
 
         if ((data = (struct dirent*)mem_a(sizeof(struct dirent)))) {
-            strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
+            util_strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
             data->d_name[FILENAME_MAX - 1] = '\0'; /* terminate */
             data->d_namlen                 = strlen(data->d_name);
         }
@@ -283,13 +284,6 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
     int fs_dir_make(const char *path) {
         return !CreateDirectory(path, NULL);
     }
-
-    /*
-     * Visual studio also lacks S_ISDIR for sys/stat.h, so we emulate this as well
-     * which is not hard at all.
-     */
-#   undef  S_ISDIR
-#   define S_ISDIR(X) ((X)&_S_IFDIR)
 #else
 #   if !defined(__MINGW32__)
 #       include <sys/stat.h> /* mkdir */

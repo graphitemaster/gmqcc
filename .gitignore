@@ -3,11 +3,7 @@
 *.rej
 *.patch
 *.diff
-
-testsuite
-qcvm
-gmqcc
-pak
+*.exe
 
 distro/archlinux/*
 distro/archbsd/*

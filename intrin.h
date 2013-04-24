@@ -404,7 +404,7 @@ ast_expression *intrin_func(parser_t *parser, const char *name) {
     if ((find = (void*)parser_find_global(parser, name)) && ((ast_value*)find)->expression.vtype == TYPE_FUNCTION)
         for (i = 0; i < vec_size(parser->functions); ++i)
             if (((ast_value*)find)->name && !strcmp(parser->functions[i]->name, ((ast_value*)find)->name) && parser->functions[i]->builtin < 0)
-                return find;
+                return (ast_expression*)find;
 
     if ((find = util_htget(intrin_intrinsics(), name))) {
         /* intrinsic is in table. This will "generate the function" so

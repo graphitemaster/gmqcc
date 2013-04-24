@@ -36,7 +36,7 @@ static void loaderror(const char *fmt, ...)
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
-    printf(": %s\n", strerror(err));
+    printf(": %s\n", util_strerror(err));
 }
 
 static void qcvmerror(qc_program *prog, const char *fmt, ...)
@@ -672,7 +672,7 @@ static int qc_ftos(qc_program *prog)
     qcany str;
     CheckArgs(1);
     num = GetArg(0);
-    snprintf(buffer, sizeof(buffer), "%g", num->_float);
+    util_snprintf(buffer, sizeof(buffer), "%g", num->_float);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -684,7 +684,7 @@ static int qc_stof(qc_program *prog)
     qcany num;
     CheckArgs(1);
     str = GetArg(0);
-    num._float = strtof(prog_getstring(prog, str->string), NULL);
+    num._float = (float)strtod(prog_getstring(prog, str->string), NULL);
     Return(num);
     return 0;
 }
@@ -696,7 +696,7 @@ static int qc_vtos(qc_program *prog)
     qcany str;
     CheckArgs(1);
     num = GetArg(0);
-    snprintf(buffer, sizeof(buffer), "'%g %g %g'", num->vector[0], num->vector[1], num->vector[2]);
+    util_snprintf(buffer, sizeof(buffer), "'%g %g %g'", num->vector[0], num->vector[1], num->vector[2]);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -709,7 +709,7 @@ static int qc_etos(qc_program *prog)
     qcany str;
     CheckArgs(1);
     num = GetArg(0);
-    snprintf(buffer, sizeof(buffer), "%i", num->_int);
+    util_snprintf(buffer, sizeof(buffer), "%i", num->_int);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
