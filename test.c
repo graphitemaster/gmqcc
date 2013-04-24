@@ -179,6 +179,8 @@ int task_pclose(FILE **handles) {
         handles[1] = fs_file_open(open->name_out, "r");
         handles[2] = fs_file_open(open->name_err, "r");
 
+        mem_d(cmd);
+
         return handles;
     }
 
