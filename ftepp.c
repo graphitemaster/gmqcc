@@ -1828,6 +1828,12 @@ ftepp_t *ftepp_create()
     ftepp_add_macro(ftepp, "__STD_VERSION_MINOR__", minor);
     ftepp_add_macro(ftepp, "__STD_VERSION_MAJOR__", major);
 
+    /*
+     * We're going to just make __NULL__ nil, which works for 60% of the
+     * cases of __NULL_ for fteqcc.
+     */
+    ftepp_add_macro(ftepp, "__NULL__", "nil");
+
     return ftepp;
 }
 
