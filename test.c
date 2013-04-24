@@ -152,10 +152,6 @@ int task_pclose(FILE **handles) {
     return status;
 }
 #else
-    /*
-     * Bidirectional piping implementation for windows using CreatePipe and DuplicateHandle +
-     * other hacks.
-     */
     typedef struct {
         char name_err[L_tmpnam];
         char name_out[L_tmpnam];
