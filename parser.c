@@ -1888,6 +1888,8 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                 vec_push(parser->labels, lbl);
             }
         }
+        if (!var && !strcmp(parser_tokval(parser), "__FUNC__"))
+            var = (ast_expression*)parser_const_string(parser, parser->function->name, false);
         if (!var) {
             /* intrinsics */
             if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
