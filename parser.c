@@ -1899,8 +1899,6 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
              */
             else if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
                 var = intrin_func(parser, parser_tokval(parser) + 10 /* skip __builtin */);
-            } else {
-                var = intrin_func(parser, parser_tokval(parser));
             }
 
             if (!var) {
