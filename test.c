@@ -157,22 +157,39 @@ int task_pclose(FILE **handles) {
      * other hacks.
      */
     typedef struct {
-        int __dummy;
-        /* TODO: implement */
+        char name_err[L_tmpnam];
+        char name_out[L_tmpnam];
     } popen_t;
 
     FILE **task_popen(const char *command, const char *mode) {
-        (void)command;
-        (void)mode;
+        FILE   **handles = NULL;
+        char    *cmd     = NULL;
+        popen_t *open    = (popen_t*)mem_a(sizeof(popen_t) * 3);
 
-        /* TODO: implement */
-        return NULL;
+        tmpnam(open->name_err);
+        tmpnam(open->name_out);
+
+        (void)mode; /* excluded */
+
+        util_asprintf(&cmd, "%s -redirout=%s -redirerr=%s", command, open->name_out, open->name_err);
+
+        system(cmd); /* HACK */
+        handles    = (FILE**)(open + 1);
+        handles[0] = NULL;
+        handles[1] = fs_file_open(open->name_out, "r");
+        handles[2] = fs_file_open(open->name_err, "r");
+
+        return handles;
     }
 
     void task_pclose(FILE **files) {
-        /* TODO: implement */
-        (void)files;
-        return;
+        popen_t *open = ((popen_t*)files) - 1;
+        fs_file_close(files[1]);
+        fs_file_close(files[2]);
+        remove(open->name_err);
+        remove(open->name_out);
+
+        mem_d(open);
     }
 #endif /*! _WIN32 */
 
