@@ -153,14 +153,14 @@ int task_pclose(FILE **handles) {
 }
 #else
     typedef struct {
-        char name_err[L_tmpnam];
-        char name_out[L_tmpnam];
+        FILE *handles[3];
+        char  name_err[L_tmpnam];
+        char  name_out[L_tmpnam];
     } popen_t;
 
     FILE **task_popen(const char *command, const char *mode) {
-        FILE   **handles = NULL;
-        char    *cmd     = NULL;
-        popen_t *open    = (popen_t*)mem_a(sizeof(popen_t) * 3);
+        char    *cmd  = NULL;
+        popen_t *open = (popen_t*)mem_a(sizeof(popen_t));
 
         tmpnam(open->name_err);
         tmpnam(open->name_out);
@@ -170,18 +170,17 @@ int task_pclose(FILE **handles) {
         util_asprintf(&cmd, "%s -redirout=%s -redirerr=%s", command, open->name_out, open->name_err);
 
         system(cmd); /* HACK */
-        handles    = (FILE**)(open + 1);
-        handles[0] = NULL;
-        handles[1] = fs_file_open(open->name_out, "r");
-        handles[2] = fs_file_open(open->name_err, "r");
+        open->handles[0] = NULL;
+        open->handles[1] = fs_file_open(open->name_out, "r");
+        open->handles[2] = fs_file_open(open->name_err, "r");
 
         mem_d(cmd);
 
-        return handles;
+        return open->handles;
     }
 
     void task_pclose(FILE **files) {
-        popen_t *open = ((popen_t*)files) - 1;
+        popen_t *open = ((popen_t*)files);
         fs_file_close(files[1]);
         fs_file_close(files[2]);
         remove(open->name_err);
