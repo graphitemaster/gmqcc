@@ -1012,9 +1012,11 @@ typedef struct {
 
 /*
  * line, file, counter, counter_last, random, random_last, date, time
+ * time_stamp.
+ * 
  * increment when items are added
  */
-#define FTEPP_PREDEF_COUNT 8
+#define FTEPP_PREDEF_COUNT 9
 
 struct ftepp_s *ftepp_create           ();
 bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);

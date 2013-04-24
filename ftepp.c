@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 #include <time.h>
+#include <sys/stat.h>
 #include "gmqcc.h"
 #include "lexer.h"
 
@@ -174,6 +175,28 @@ char *ftepp_predef_randomlast(lex_file *context) {
     (void)context;
     return value;
 }
+/* __TIMESTAMP__ */
+char *ftepp_predef_timestamp(lex_file *context) {
+    struct stat finfo;
+    char       *find;
+    char       *value;
+    size_t      size;
+    if (stat(context->name, &finfo))
+        return util_strdup("\"<failed to determine timestamp>\"");
+
+    /*
+     * ctime and it's fucking annoying newline char, no worries, we're
+     * professionals here.
+     */   
+    find  = ctime(&finfo.st_mtime);
+    value = (char*)mem_a(strlen(find) + 1);
+    memcpy(&value[1], find, (size = strlen(find)) - 1);
+
+    value[0]    = '"';
+    value[size] = '"';
+
+    return value;
+}
 
 const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT] = {
     { "__LINE__",         &ftepp_predef_line        },
@@ -183,7 +206,8 @@ const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT] = {
     { "__RANDOM__",       &ftepp_predef_random      },
     { "__RANDOM_LAST__",  &ftepp_predef_randomlast  },
     { "__DATE__",         &ftepp_predef_date        },
-    { "__TIME__",         &ftepp_predef_time        }
+    { "__TIME__",         &ftepp_predef_time        },
+    { "__TIME_STAMP__",   &ftepp_predef_timestamp   }
 };
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
