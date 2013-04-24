@@ -185,7 +185,7 @@ char *ftepp_predef_timestamp(lex_file *context) {
         return util_strdup("\"<failed to determine timestamp>\"");
 
     /*
-     * ctime and it's fucking annoying newline char, no worries, we're
+     * ctime and its fucking annoying newline char, no worries, we're
      * professionals here.
      */   
     find  = ctime(&finfo.st_mtime);
