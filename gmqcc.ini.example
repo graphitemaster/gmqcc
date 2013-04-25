@@ -107,6 +107,11 @@
     # input and output. This option will avoid producing such code.
     LEGACY_VECTOR_MATHS          = true
 
+    # Builtin-numbers are usually just immediate constants.
+    # The following allows whole expressions to be used, as long as they
+    # are compile-time constant.
+    EXPRESSIONS_FOR_BUILTINS     = false
+
 # These are all the warnings, usually present via the -W prefix from
 # the command line.
 [warnings]

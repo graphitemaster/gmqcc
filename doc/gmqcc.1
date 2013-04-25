@@ -497,6 +497,15 @@ void vafunc(string...count) {
 Most Quake VMs, including the one from FTEQW or up till recently
 Darkplaces, do not cope well with vector instructions with overlapping
 input and output. This option will avoid producing such code.
+.It Fl f Ns Cm expressions-for-builtins
+Usually builtin-numbers are just immediate constants. With this flag
+expressions can be used, as long as they are compile-time constant.
+.Pp
+Example:
+.Bd -literal -offset indent
+void printA() = #1; // the usual way
+void printB() = #2-1; // with a constant expression
+.Ed
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds
