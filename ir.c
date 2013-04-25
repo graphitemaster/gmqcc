@@ -66,7 +66,7 @@ static size_t type_sizeof_[TYPE_COUNT] = {
     0, /* TYPE_NOESPR   */
 };
 
-uint16_t type_store_instr[TYPE_COUNT] = {
+const uint16_t type_store_instr[TYPE_COUNT] = {
     INSTR_STORE_F, /* should use I when having integer support */
     INSTR_STORE_S,
     INSTR_STORE_F,
@@ -90,7 +90,7 @@ uint16_t type_store_instr[TYPE_COUNT] = {
     VINSTR_END, /* noexpr */
 };
 
-uint16_t field_store_instr[TYPE_COUNT] = {
+const uint16_t field_store_instr[TYPE_COUNT] = {
     INSTR_STORE_FLD,
     INSTR_STORE_FLD,
     INSTR_STORE_FLD,
@@ -114,7 +114,7 @@ uint16_t field_store_instr[TYPE_COUNT] = {
     VINSTR_END, /* noexpr */
 };
 
-uint16_t type_storep_instr[TYPE_COUNT] = {
+const uint16_t type_storep_instr[TYPE_COUNT] = {
     INSTR_STOREP_F, /* should use I when having integer support */
     INSTR_STOREP_S,
     INSTR_STOREP_F,
@@ -138,7 +138,7 @@ uint16_t type_storep_instr[TYPE_COUNT] = {
     VINSTR_END, /* noexpr */
 };
 
-uint16_t type_eq_instr[TYPE_COUNT] = {
+const uint16_t type_eq_instr[TYPE_COUNT] = {
     INSTR_EQ_F, /* should use I when having integer support */
     INSTR_EQ_S,
     INSTR_EQ_F,
@@ -162,7 +162,7 @@ uint16_t type_eq_instr[TYPE_COUNT] = {
     VINSTR_END, /* noexpr */
 };
 
-uint16_t type_ne_instr[TYPE_COUNT] = {
+const uint16_t type_ne_instr[TYPE_COUNT] = {
     INSTR_NE_F, /* should use I when having integer support */
     INSTR_NE_S,
     INSTR_NE_F,
@@ -186,9 +186,9 @@ uint16_t type_ne_instr[TYPE_COUNT] = {
     VINSTR_END, /* noexpr */
 };
 
-uint16_t type_not_instr[TYPE_COUNT] = {
+const uint16_t type_not_instr[TYPE_COUNT] = {
     INSTR_NOT_F, /* should use I when having integer support */
-    INSTR_NOT_S,
+    VINSTR_END,  /* not to be used, depends on string related -f flags */
     INSTR_NOT_F,
     INSTR_NOT_V,
     INSTR_NOT_ENT,

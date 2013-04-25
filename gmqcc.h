@@ -500,9 +500,9 @@ enum {
 #define CV_VAR   -1
 #define CV_WRONG  0x8000 /* magic number to help parsing */
 
-extern const char *type_name        [TYPE_COUNT];
-extern uint16_t    type_store_instr [TYPE_COUNT];
-extern uint16_t    field_store_instr[TYPE_COUNT];
+extern const char    *type_name        [TYPE_COUNT];
+extern const uint16_t type_store_instr [TYPE_COUNT];
+extern const uint16_t field_store_instr[TYPE_COUNT];
 
 /*
  * could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
@@ -510,10 +510,10 @@ extern uint16_t    field_store_instr[TYPE_COUNT];
  * instruction set, the old ones are left untouched, thus the _I instructions
  * are at a seperate place.
  */
-extern uint16_t type_storep_instr[TYPE_COUNT];
-extern uint16_t type_eq_instr    [TYPE_COUNT];
-extern uint16_t type_ne_instr    [TYPE_COUNT];
-extern uint16_t type_not_instr   [TYPE_COUNT];
+extern const uint16_t type_storep_instr[TYPE_COUNT];
+extern const uint16_t type_eq_instr    [TYPE_COUNT];
+extern const uint16_t type_ne_instr    [TYPE_COUNT];
+extern const uint16_t type_not_instr   [TYPE_COUNT];
 
 typedef struct {
     uint32_t offset;      /* Offset in file of where data begins  */

@@ -643,9 +643,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
-        type_not_instr[TYPE_STRING] = INSTR_NOT_F;
-
     util_debug("COM", "starting ...\n");
 
     /* add macros */
