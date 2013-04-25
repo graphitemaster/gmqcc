@@ -74,12 +74,6 @@ ifneq ("$(MINGW)", "")
 	TESTSUITE = testsuite.exe
 	PAK       = pak.exe
 else
-	#arm support for linux .. we need to allow unaligned accesses
-	#to memory otherwise we just segfault everywhere
-	ifneq (, $(findstring arm, $(shell uname -m)))
-		CFLAGS += -munaligned-access
-	endif
-
 	QCVM      = qcvm
 	GMQCC     = gmqcc
 	TESTSUITE = testsuite
