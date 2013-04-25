@@ -26,12 +26,12 @@
 #include "gmqcc.h"
 
 /* TODO: remove globals ... */
-uint64_t mem_ab = 0;
-uint64_t mem_db = 0;
-uint64_t mem_at = 0;
-uint64_t mem_dt = 0;
-uint64_t mem_pk = 0;
-uint64_t mem_hw = 0;
+static uint64_t mem_ab = 0;
+static uint64_t mem_db = 0;
+static uint64_t mem_at = 0;
+static uint64_t mem_dt = 0;
+static uint64_t mem_pk = 0;
+static uint64_t mem_hw = 0;
 
 struct memblock_t {
     const char  *file;

@@ -26,7 +26,7 @@
 
 opts_cmd_t opts;
 
-const char *task_bins[] = {
+static const char *task_bins[] = {
     "./gmqcc",
     "./qcvm"
 };
@@ -654,7 +654,7 @@ typedef struct {
     bool             compiled;
 } task_t;
 
-task_t *task_tasks = NULL;
+static task_t *task_tasks = NULL;
 
 /*
  * Read a directory and searches for all template files in it

@@ -625,7 +625,7 @@ typedef struct {
     const char *value;
 } qcvm_parameter;
 
-qcvm_parameter *main_params = NULL;
+static qcvm_parameter *main_params = NULL;
 
 #define CheckArgs(num) do {                                                    \
     if (prog->argc != (num)) {                                                 \

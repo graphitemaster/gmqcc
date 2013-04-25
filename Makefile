@@ -29,7 +29,6 @@ ifeq ($(CC), clang)
 	    -Wno-conversion                    \
 	    -Wno-missing-prototypes            \
 	    -Wno-float-equal                   \
-	    -Wno-missing-variable-declarations \
 	    -Wno-unknown-warning-option
 else
 	#Tiny C Compiler doesn't know what -pedantic-errors is

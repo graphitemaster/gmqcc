@@ -48,7 +48,7 @@ const char *type_name[TYPE_COUNT] = {
     "<no-expression>"
 };
 
-size_t type_sizeof_[TYPE_COUNT] = {
+static size_t type_sizeof_[TYPE_COUNT] = {
     1, /* TYPE_VOID     */
     1, /* TYPE_STRING   */
     1, /* TYPE_FLOAT    */

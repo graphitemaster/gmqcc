@@ -31,7 +31,7 @@ prog_section_function  *code_functions;
 int                    *code_globals;
 char                   *code_chars;
 uint16_t                code_crc;
-uint32_t                code_entfields;
+static uint32_t         code_entfields;
 
 /* This is outrageous! */
 #define QCINT_ENTRY void*
