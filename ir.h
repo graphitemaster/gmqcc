@@ -353,8 +353,13 @@ bool ir_builder_generate(code_t *, ir_builder *self, const char *filename);
 
 void ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));
 
-/* This code assumes 32 bit floats while generating binary */
-extern int check_int_and_float_size
-[ (sizeof(int32_t) == sizeof(qcfloat)) ? 1 : -1 ];
+
+/*
+ * This code assumes 32 bit floats while generating binary
+ * Blub: don't use extern here, it's annoying and shows up in nm
+ * for some reason :P  
+ */
+typedef int static_assert_is_32bit_float  [(sizeof(int32_t) == 4)?1:-1];
+typedef int static_assert_is_32bit_integer[(sizeof(qcfloat) == 4)?1:-1];
 
 #endif
