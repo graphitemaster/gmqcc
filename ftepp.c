@@ -65,8 +65,7 @@ typedef struct ftepp_s {
     bool         output_on;
     ppcondition *conditions;
     /*ppmacro    **macros;*/
-    ht           macros; /* hashtable<string, ppmacro*> */
-
+    ht           macros;  /* hashtable<string, ppmacro*> */
     char        *output_string;
 
     char        *itemname;
@@ -198,7 +197,12 @@ char *ftepp_predef_timestamp(lex_file *context) {
     return value;
 }
 
-const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT] = {
+typedef struct {
+    const char   *name;
+    char       *(*func)(lex_file *);
+} ftepp_predef_t;
+
+static const ftepp_predef_t ftepp_predefs[] = {
     { "__LINE__",         &ftepp_predef_line        },
     { "__FILE__",         &ftepp_predef_file        },
     { "__COUNTER__",      &ftepp_predef_counter     },
@@ -209,6 +213,25 @@ const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT] = {
     { "__TIME__",         &ftepp_predef_time        },
     { "__TIME_STAMP__",   &ftepp_predef_timestamp   }
 };
+
+static GMQCC_INLINE int ftepp_predef_index(const char *name) {
+    /* no hashtable here, we simply check for one to exist the naive way */
+    int i;
+    for(i = 0; i < (int)(sizeof(ftepp_predefs)/sizeof(*ftepp_predefs)); i++)
+        if (!strcmp(ftepp_predefs[i].name, name))
+            return i;
+    return -1;
+}
+
+bool ftepp_predef_exists(const char *name) {
+    return ftepp_predef_index(name) != -1;
+}
+
+/* singleton because we're allowed */
+static GMQCC_INLINE char *(*ftepp_predef(const char *name))(lex_file *context) {
+    int i = ftepp_predef_index(name);
+    return (i != -1) ? ftepp_predefs[i].func : NULL;
+}
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)
 #define ftepp_ctx(f)    ((f)->lex->tok.ctx)
@@ -1652,7 +1675,6 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
 
     /* predef stuff */
     char    *expand  = NULL;
-    size_t   i;
 
     ftepp->lex->flags.preprocessing = true;
     ftepp->lex->flags.mergelines    = false;
@@ -1673,15 +1695,14 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
             case TOKEN_TYPENAME:
                 /* is it a predef? */
                 if (OPTS_FLAG(FTEPP_PREDEFS)) {
-                    for (i = 0; i < sizeof(ftepp_predefs) / sizeof (*ftepp_predefs); i++) {
-                        if (!strcmp(ftepp_predefs[i].name, ftepp_tokval(ftepp))) {
-                            expand = ftepp_predefs[i].func(ftepp->lex);
-                            ftepp_out(ftepp, expand, false);
-                            ftepp_next(ftepp); /* skip */
+                    char *(*predef)(lex_file*) = ftepp_predef(ftepp_tokval(ftepp));
+                    if (predef) {
+                        expand = predef(ftepp->lex);
+                        ftepp_out (ftepp, expand, false);
+                        ftepp_next(ftepp);
 
-                            mem_d(expand); /* free memory */
-                            break;
-                        }
+                        mem_d(expand);
+                        break;
                     }
                 }
 

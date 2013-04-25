@@ -1788,6 +1788,9 @@ static ast_expression* parse_vararg(parser_t *parser)
     return out;
 }
 
+/* not to be exposed */
+extern bool ftepp_predef_exists(const char *name);
+
 static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
 {
     if (OPTS_FLAG(TRANSLATABLE_STRINGS) &&
@@ -1918,13 +1921,9 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                  * i've done this thousands of times already myself.  Lets check for
                  * it in the predef table.  And diagnose it better :)
                  */
-                if (!OPTS_FLAG(FTEPP_PREDEFS)) {
-                    for (i = 0; i < sizeof(ftepp_predefs)/sizeof(*ftepp_predefs); i++) {
-                        if (!strcmp(ftepp_predefs[i].name, parser_tokval(parser))) {
-                            parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
-                            return false;
-                        }
-                    }
+                if (!OPTS_FLAG(FTEPP_PREDEFS) && ftepp_predef_exists(parser_tokval(parser))) {
+                    parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
+                    return false;
                 }
 
                 /*

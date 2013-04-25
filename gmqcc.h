@@ -1011,11 +1011,6 @@ void             parser_cleanup       (struct parser_s *parser);
 struct lex_file_s;
 struct ftepp_s;
 
-typedef struct {
-    const char  *name;
-    char      *(*func)(struct lex_file_s *);
-} ftepp_predef_t;
-
 /*
  * line, file, counter, counter_last, random, random_last, date, time
  * time_stamp.
@@ -1032,8 +1027,6 @@ const char     *ftepp_get              (struct ftepp_s *ftepp);
 void            ftepp_flush            (struct ftepp_s *ftepp);
 void            ftepp_add_define       (struct ftepp_s *ftepp, const char *source, const char *name);
 void            ftepp_add_macro        (struct ftepp_s *ftepp, const char *name,   const char *value);
-
-extern const ftepp_predef_t ftepp_predefs[FTEPP_PREDEF_COUNT];
 
 /*===================================================================*/
 /*======================= main.c commandline ========================*/
