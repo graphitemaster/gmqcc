@@ -703,32 +703,38 @@ enum {
     VINSTR_NRCALL
 };
 
-/* TODO: cleanup this mess */
-extern prog_section_statement *code_statements;
-extern int                    *code_linenums;
-extern prog_section_def       *code_defs;
-extern prog_section_field     *code_fields;
-extern prog_section_function  *code_functions;
-extern int                    *code_globals;
-extern char                   *code_chars;
-extern uint16_t code_crc;
-
 /* uhh? */
 typedef float   qcfloat;
 typedef int32_t qcint;
 
-/*
- * code_write -- writes out the compiled file
- * code_init  -- prepares the code file
- */
-bool     code_write       (const char *filename, const char *lno);
-void     code_init        ();
-uint32_t code_genstring   (const char *string);
-qcint    code_alloc_field (size_t qcsize);
+typedef struct {
+    prog_section_statement *statements;
+    int                    *linenums;
+    prog_section_def       *defs;
+    prog_section_field     *fields;
+    prog_section_function  *functions;
+    int                    *globals;
+    char                   *chars;
+    uint16_t                crc;
+    uint32_t                entfields;
+    ht                      string_cache;
+    qcint                   string_cached_empty;
+} code_t;
 
-/* this function is used to keep statements and linenumbers together */
-void     code_push_statement(prog_section_statement *stmt, int linenum);
-void     code_pop_statement();
+/*
+ * code_write          -- writes out the compiled file
+ * code_init           -- prepares the code file
+ * code_genstrin       -- generates string for code
+ * code_alloc_field    -- allocated a field
+ * code_push_statement -- keeps statements and linenumbers together
+ * code_pop_statement  -- keeps statements and linenumbers together 
+ */
+bool      code_write         (code_t *, const char *filename, const char *lno);
+code_t   *code_init          (void);
+uint32_t  code_genstring     (code_t *, const char *string);
+qcint     code_alloc_field   (code_t *, size_t qcsize);
+void      code_push_statement(code_t *, prog_section_statement *stmt, int linenum);
+void      code_pop_statement (code_t *);
 
 /*
  * A shallow copy of a lex_file to remember where which ast node

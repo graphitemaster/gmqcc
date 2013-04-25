@@ -103,6 +103,9 @@ typedef struct parser_s {
 
     /* collected information */
     size_t     max_param_count;
+
+    /* code generator */
+    code_t     *code;
 } parser_t;
 
 static ast_expression * const intrinsic_debug_typestring = (ast_expression*)0x1;
@@ -5943,7 +5946,7 @@ static void generate_checksum(parser_t *parser)
     }
     crc = progdefs_crc_both(crc, "} entvars_t;\n\n");
 
-    code_crc = crc;
+    parser->code->crc = crc;
 }
 
 parser_t *parser_create()
@@ -5957,6 +5960,12 @@ parser_t *parser_create()
         return NULL;
 
     memset(parser, 0, sizeof(*parser));
+
+    if (!(parser->code = code_init())) {
+        mem_d(parser);
+        return NULL;
+    }
+    
 
     for (i = 0; i < operator_count; ++i) {
         if (operators[i].id == opid1('=')) {
@@ -6313,7 +6322,7 @@ bool parser_finish(parser_t *parser, const char *output)
 
         generate_checksum(parser);
 
-        if (!ir_builder_generate(ir, output)) {
+        if (!ir_builder_generate(parser->code, ir, output)) {
             con_out("*** failed to generate output file\n");
             ir_builder_delete(ir);
             return false;
