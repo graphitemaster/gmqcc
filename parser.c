@@ -5639,11 +5639,11 @@ skipvar:
         }
 
         if (parser->tok == '#') {
-            ast_function *func   = NULL;
-            ast_value    *number = NULL;
-            float         fractional;
-            float         integral;
-            int           builtin_num;
+            ast_function *func        = NULL;
+            ast_value    *number      = NULL;
+            float         fractional  = 0;
+            float         integral    = 0;
+            int           builtin_num = 0;
 
             if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
