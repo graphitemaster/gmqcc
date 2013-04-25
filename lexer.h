@@ -87,7 +87,11 @@ enum {
     TOKEN_WHITE,
     TOKEN_EOL,
 
-    TOKEN_EOF,
+    /* if we add additional tokens before this, the exposed API
+     * should not be broken anyway, but EOF/ERROR/... should
+     * still be at the bottom
+     */
+    TOKEN_EOF = 1024,
 
     /* We use '< TOKEN_ERROR', so TOKEN_FATAL must come after it and any
      * other error related tokens as well
