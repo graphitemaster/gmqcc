@@ -14,7 +14,7 @@ CC      ?= clang
 LDFLAGS :=
 LIBS    := -lm
 
-CFLAGS  += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char $(OPTIONAL)
+CFLAGS  += -Wall -Wextra -Werror -I. -fno-strict-aliasing $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
