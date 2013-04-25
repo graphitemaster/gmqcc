@@ -5689,7 +5689,9 @@ skipvar:
 
                 /* we only want the integral part anyways */
                 builtin_num = integral;
-            } else if (parser->tok != TOKEN_INTCONST) {
+            } else if (parser->tok == TOKEN_INTCONST) {
+                builtin_num = parser_token(parser)->constval.i;
+            } else {
                 parseerror(parser, "builtin number must be a compile time constant");
                 break;
             }
@@ -5709,9 +5711,7 @@ skipvar:
                 }
                 vec_push(parser->functions, func);
 
-                func->builtin = -((OPTS_FLAG(EXPRESSIONS_FOR_BUILTINS))
-                                    ? builtin_num
-                                    : parser_token(parser)->constval.i) - 1;
+                func->builtin = -builtin_num-1;
             }
 
             if (OPTS_FLAG(EXPRESSIONS_FOR_BUILTINS)
