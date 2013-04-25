@@ -5639,9 +5639,11 @@ skipvar:
         }
 
         if (parser->tok == '#') {
-            ast_function *func = NULL;
-            ast_value *number;
-            int        builtin_num;
+            ast_function *func   = NULL;
+            ast_value    *number = NULL;
+            float         fractional;
+            float         integral;
+            int           builtin_num;
 
             if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
@@ -5656,30 +5658,39 @@ skipvar:
                 break;
             }
 
-            number = (ast_value*)parse_expression_leave(parser, true, false, false);
-            if (!number) {
-                parseerror(parser, "builtin number expected");
-                break;
-            }
-            if (!ast_istype(number, ast_value) || !number->hasvalue || number->cvq != CV_CONST)
-            {
+            if (OPTS_FLAG(EXPRESSIONS_FOR_BUILTINS)) {
+                number = (ast_value*)parse_expression_leave(parser, true, false, false);
+                if (!number) {
+                    parseerror(parser, "builtin number expected");
+                    break;
+                }
+                if (!ast_istype(number, ast_value) || !number->hasvalue || number->cvq != CV_CONST)
+                {
+                    ast_unref(number);
+                    parseerror(parser, "builtin number must be a compile time constant");
+                    break;
+                }
+                if (number->expression.vtype == TYPE_INTEGER)
+                    builtin_num = number->constval.vint;
+                else if (number->expression.vtype == TYPE_FLOAT)
+                    builtin_num = number->constval.vfloat;
+                else {
+                    ast_unref(number);
+                    parseerror(parser, "builtin number must be an integer constant");
+                    break;
+                }
                 ast_unref(number);
-                parseerror(parser, "builtin number must be a compile time constant");
-                break;
-            }
-            if (number->expression.vtype == TYPE_INTEGER)
-                builtin_num = number->constval.vint;
-            else if (number->expression.vtype == TYPE_FLOAT)
-                builtin_num = number->constval.vfloat;
-            else {
-                ast_unref(number);
-                parseerror(parser, "builtin number must be an integer constant");
-                break;
-            }
-            ast_unref(number);
 
-            if (builtin_num < 0) {
-                parseerror(parser, "builtin number must be an integer greater than zero");
+                fractional = modff(builtin_num, &integral);
+                if (builtin_num < 0 || fractional != 0) {
+                    parseerror(parser, "builtin number must be an integer greater than zero");
+                    break;
+                }
+
+                /* we only want the integral part anyways */
+                builtin_num = integral;
+            } else if (parser->tok != TOKEN_INTCONST) {
+                parseerror(parser, "builtin number must be a compile time constant");
                 break;
             }
 
@@ -5698,10 +5709,15 @@ skipvar:
                 }
                 vec_push(parser->functions, func);
 
-                func->builtin = -builtin_num-1;
+                func->builtin = -((OPTS_FLAG(EXPRESSIONS_FOR_BUILTINS))
+                                    ? builtin_num
+                                    : parser_token(parser)->constval.i) - 1;
             }
 
-            if (parser->tok != ',' && parser->tok != ';') {
+            if (OPTS_FLAG(EXPRESSIONS_FOR_BUILTINS)
+                    ? (parser->tok != ',' && parser->tok != ';')
+                    : (!parser_next(parser)))
+            {
                 parseerror(parser, "expected comma or semicolon");
                 if (func)
                     ast_function_delete(func);

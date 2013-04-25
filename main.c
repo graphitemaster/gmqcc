@@ -173,6 +173,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, INITIALIZED_NONCONSTANTS,      true);
                     opts_set(opts.werror, WARN_INVALID_PARAMETER_COUNT, true);
                     opts_set(opts.werror, WARN_MISSING_RETURN_VALUES,   true);
+                    opts_set(opts.flags,  EXPRESSIONS_FOR_BUILTINS,     true);
 
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_GMQCC;
