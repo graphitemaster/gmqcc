@@ -29,7 +29,6 @@ ifeq ($(CC), clang)
 	    -Wno-conversion                    \
 	    -Wno-missing-prototypes            \
 	    -Wno-float-equal                   \
-	    -Wno-cast-align                    \
 	    -Wno-missing-variable-declarations \
 	    -Wno-unknown-warning-option
 else

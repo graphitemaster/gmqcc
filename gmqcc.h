@@ -361,7 +361,7 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 )
 
 /* exposed interface */
-#define vec_meta(A)       (((vector_t*)(A)) - 1)
+#define vec_meta(A)       (((vector_t*)((void*)A)) - 1)
 #define vec_free(A)       ((void)((A) ? (mem_d((void*)vec_meta(A)), (A) = NULL) : 0))
 #define vec_push(A,V)     (GMQCC_VEC_WILLGROW((A),1), (A)[vec_meta(A)->used++] = (V))
 #define vec_size(A)       ((A) ? vec_meta(A)->used : 0)

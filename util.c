@@ -465,8 +465,7 @@ GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
     const unsigned char *data  = (const unsigned char*)key;
 
     while (size >= 4) {
-        alias = *(uint32_t*)data;
-
+        alias  = (data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24));
         alias *= mix;
         alias ^= alias >> rot;
         alias *= mix;
