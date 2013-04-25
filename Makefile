@@ -12,7 +12,7 @@ MINGW   = $(findstring MINGW32, $(UNAME))
 CC      ?= clang
 # linker flags and optional additional libraries if required
 LDFLAGS :=
-LIBS    :=
+LIBS    := -lm
 
 CFLAGS  += -Wall -Wextra -Werror -I. -fno-strict-aliasing -fsigned-char $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
@@ -179,13 +179,13 @@ exec-standalone.o: exec.c
 	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS) -DQCVM_EXECUTOR=1
 
 $(QCVM): $(OBJ_X)
-	$(CC) -o $@ $^ $(LDFLAGS) -lm $(LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 $(GMQCC): $(OBJ_C) $(OBJ_D)
-	$(CC) -o $@ $^ $(LDFLAGS) -lm $(LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 $(TESTSUITE): $(OBJ_T)
-	$(CC) -o $@ $^ $(LDFLAGS) -lm $(LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 $(PAK): $(OBJ_P)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -198,7 +198,7 @@ test: all
 	@ ./$(TESTSUITE)
 
 clean:
-	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4
+	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe
 
 splint:
 	@  splint $(SPLINTFLAGS) *.c *.h
