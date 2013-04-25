@@ -5640,6 +5640,8 @@ skipvar:
 
         if (parser->tok == '#') {
             ast_function *func = NULL;
+            ast_value *number;
+            int        builtin_num;
 
             if (localblock) {
                 parseerror(parser, "cannot declare builtins within functions");
@@ -5653,11 +5655,30 @@ skipvar:
                 parseerror(parser, "expected builtin number");
                 break;
             }
-            if (parser->tok != TOKEN_INTCONST) {
+
+            number = (ast_value*)parse_expression_leave(parser, true, false, false);
+            if (!number) {
+                parseerror(parser, "builtin number expected");
+                break;
+            }
+            if (!ast_istype(number, ast_value) || !number->hasvalue || number->cvq != CV_CONST)
+            {
+                ast_unref(number);
+                parseerror(parser, "builtin number must be a compile time constant");
+                break;
+            }
+            if (number->expression.vtype == TYPE_INTEGER)
+                builtin_num = number->constval.vint;
+            else if (number->expression.vtype == TYPE_FLOAT)
+                builtin_num = number->constval.vfloat;
+            else {
+                ast_unref(number);
                 parseerror(parser, "builtin number must be an integer constant");
                 break;
             }
-            if (parser_token(parser)->constval.i < 0) {
+            ast_unref(number);
+
+            if (builtin_num < 0) {
                 parseerror(parser, "builtin number must be an integer greater than zero");
                 break;
             }
@@ -5677,10 +5698,10 @@ skipvar:
                 }
                 vec_push(parser->functions, func);
 
-                func->builtin = -parser_token(parser)->constval.i-1;
+                func->builtin = -builtin_num-1;
             }
 
-            if (!parser_next(parser)) {
+            if (parser->tok != ',' && parser->tok != ';') {
                 parseerror(parser, "expected comma or semicolon");
                 if (func)
                     ast_function_delete(func);
