@@ -5623,7 +5623,7 @@ skipvar:
             }
         }
 
-        if (parser->tok != '{') {
+        if (parser->tok != '{' || var->expression.vtype != TYPE_FUNCTION) {
             if (parser->tok != '=') {
                 parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
                 break;
