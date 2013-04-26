@@ -11,8 +11,8 @@ MINGW   = $(findstring MINGW32, $(UNAME))
 
 CC      ?= clang
 # linker flags and optional additional libraries if required
-LDFLAGS :=
-LIBS    := -lm
+LDFLAGS +=
+LIBS    += -lm
 
 CFLAGS  += -Wall -Wextra -Werror -fno-strict-aliasing $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
