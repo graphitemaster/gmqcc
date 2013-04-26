@@ -161,6 +161,15 @@ typedef struct
  * typedef float foo;
  * is like creating a 'float foo', foo serving as the type's name.
  */
+typedef union {
+    double        vfloat;
+    int           vint;
+    vector        vvec;
+    const char   *vstring;
+    int           ventity;
+    ast_function *vfunc;
+    ast_value    *vfield;
+} basic_value_t;
 struct ast_value_s
 {
     ast_expression_common expression;
@@ -179,15 +188,12 @@ struct ast_value_s
     bool isfield; /* this declares a field */
     bool isimm;   /* an immediate, not just const */
     bool hasvalue;
-    union {
-        double        vfloat;
-        int           vint;
-        vector        vvec;
-        const char   *vstring;
-        int           ventity;
-        ast_function *vfunc;
-        ast_value    *vfield;
-    } constval;
+    basic_value_t constval;
+    /* for TYPE_ARRAY we have an optional vector
+     * of constants when an initializer list
+     * was provided.
+     */
+    basic_value_t *initlist;
 
     /* usecount for the parser */
     size_t uses;
