@@ -1,4 +1,7 @@
-Release v0.2.9
+Release v0.3.0
+    * to fill
+
+2012-04-27 v0.2.9
     * Preprocessor:
         - __VA_ARGS__ support
         _ __VA_ARGS__ indexing

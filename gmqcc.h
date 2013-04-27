@@ -39,8 +39,8 @@
 #endif /*! _MSC_VER */
 
 #define GMQCC_VERSION_MAJOR 0
-#define GMQCC_VERSION_MINOR 2
-#define GMQCC_VERSION_PATCH 9
+#define GMQCC_VERSION_MINOR 3
+#define GMQCC_VERSION_PATCH 0
 #define GMQCC_VERSION_BUILD(J,N,P) (((J)<<16)|((N)<<8)|(P))
 #define GMQCC_VERSION \
     GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
@@ -48,13 +48,17 @@
 #define GMQCC_VERSION_TYPE_DEVEL
 
 /* Full version string in case we need it */
-#ifdef GMQCC_GITINFO
-#    define GMQCC_DEV_VERSION_STRING "git build: " GMQCC_GITINFO "\n"
-#elif defined(GMQCC_VERSION_TYPE_DEVEL)
-#    define GMQCC_DEV_VERSION_STRING "development build\n"
+#ifdef GMQCC_VERSION_TYPE_DEVEL
+#    ifdef GMQCC_GITINFO
+#        define GMQCC_DEV_VERSION_STRING "git build: " GMQCC_GITINFO "\n"
+#    elif defined(GMQCC_VERSION_TYPE_DEVEL)
+#        define GMQCC_DEV_VERSION_STRING "development build\n"
+#    else
+#        define GMQCC_DEV_VERSION_STRING
+#    endif /*! GMQCC_GITINGO */
 #else
 #    define GMQCC_DEV_VERSION_STRING
-#endif /*! GMQCC_GITINGO */
+#endif
 
 #define GMQCC_STRINGIFY(x) #x
 #define GMQCC_IND_STRING(x) GMQCC_STRINGIFY(x)

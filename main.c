@@ -44,18 +44,13 @@ static ppitem  *ppems = NULL;
 static const char *app_name;
 
 static void version() {
-    con_out("GMQCC %d.%d.%d Built %s %s\n",
+    con_out("GMQCC %d.%d.%d Built %s %s\n" GMQCC_DEV_VERSION_STRING,
         GMQCC_VERSION_MAJOR,
         GMQCC_VERSION_MINOR,
         GMQCC_VERSION_PATCH,
         __DATE__,
         __TIME__
     );
-#ifdef GMQCC_GITINFO
-    con_out("git build: %s\n", GMQCC_GITINFO);
-#elif defined(GMQCC_VERION_TYPE_DEVEL)
-    con_out("development build\n");
-#endif
 }
 
 static int usage() {

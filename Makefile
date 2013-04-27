@@ -14,7 +14,7 @@ CC      ?= clang
 LDFLAGS +=
 LIBS    += -lm
 
-CFLAGS  += -Wall -Wextra -Werror -I. -fno-strict-aliasing $(OPTIONAL)
+CFLAGS  += -Wall -Wextra -Werror -fno-strict-aliasing $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif
@@ -34,7 +34,7 @@ else
 	#Tiny C Compiler doesn't know what -pedantic-errors is
 	# and instead of ignoring .. just errors.
 	ifneq ($(CC), tcc)
-		CFLAGS +=-pedantic-errors -ffunction-sections -fdata-sections -Wl,-gc-sections
+		CFLAGS += -pedantic-errors
 	else
 		CFLAGS += -Wno-pointer-sign -fno-common
 	endif
