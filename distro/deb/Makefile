@@ -10,12 +10,14 @@ DEB     := $(DEBDIR)-$(CARCH).deb
 CONTROL := $(DEBDIR)/DEBIAN/control
 
 ifneq (, $(findstring i686, $(CARCH)))
-	CFLAGS := -m32
+	CFLAGS += -m32
+	LDFLAGS += -m32
 endif
 
 base:
 	$(MAKE) -C $(BASEDIR) clean
-	$(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR) PREFIX=$(PREFIX) install
+	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
+	  $(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR) PREFIX=$(PREFIX) install
 	@install -d -m755 $(DEBDIR)/DEBIAN
 	@echo "Package: gmqcc" > $(CONTROL)
 	@echo "Version: $(MAJOR).$(MINOR).$(PATCH)" >> $(CONTROL)
