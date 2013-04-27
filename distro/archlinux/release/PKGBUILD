@@ -9,10 +9,18 @@ arch=('i686' 'x86_64')
 depends=('glibc')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')
-source=(gmqcc-$pkgver.zip::https://github.com/graphitemaster/gmqcc/zipball/$pkgver)
-sha1sums=('adf972360c0b3d2f032a688952f6fb4715e4d45b')
+source=(gmqcc-$pkgver.zip::https://github.com/graphitemaster/gmqcc/zipball/$pkgver
+	    build_fix.patch) # commit 4c4aa5534c34
+
+sha1sums=('adf972360c0b3d2f032a688952f6fb4715e4d45b'
+		 '0b69dc8b786c7617fe17e6a5fd70407d1c4153d6')
 
 _gitname=graphitemaster-gmqcc-219508e/
+
+prepare() {
+	cd "$srcdir"/"$_gitname"
+	patch -p1 <../build_fix.patch
+}
 
 build() {
 	msg "Starting compilation..."
