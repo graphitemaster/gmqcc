@@ -72,12 +72,12 @@ ifneq ("$(MINGW)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
-	PAK       = pak.exe
+	PAK       = gmqpak.exe
 else
 	QCVM      = qcvm
 	GMQCC     = gmqcc
 	TESTSUITE = testsuite
-	PAK       = pak
+	PAK       = gmqpak
 endif
 endif
 
@@ -214,23 +214,29 @@ depend:
 		$(subst .o,.c,$(OBJ_P))
 
 #install rules
-install: install-gmqcc install-qcvm install-doc
+install: install-gmqcc install-qcvm install-gmqpak install-doc
 install-gmqcc: $(GMQCC)
 	install -d -m755               $(DESTDIR)$(BINDIR)
 	install    -m755  $(GMQCC)     $(DESTDIR)$(BINDIR)/$(GMQCC)
 install-qcvm: $(QCVM)
 	install -d -m755               $(DESTDIR)$(BINDIR)
 	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/$(QCVM)
+install-gmqpak: $(PAK)
+	install -d -m755               $(DESTDIR)$(BINDIR)
+	install    -m755  $(PAK)       $(DESTDIR)$(BINDIR)/$(PAK)
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
 	install    -m644  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
+	install    -m644  doc/gmqpak.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall:
-	rm $(DESTDIR)$(BINDIR)/gmqcc
-	rm $(DESTDIR)$(BINDIR)/qcvm
-	rm $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
-	rm $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
+	rm -f $(DESTDIR)$(BINDIR)/gmqcc
+	rm -f $(DESTDIR)$(BINDIR)/qcvm
+	rm -f $(DESTDIR)$(BINDIR)/gmqpak
+	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
 
 # DO NOT DELETE
 
