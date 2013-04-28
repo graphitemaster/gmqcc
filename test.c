@@ -116,9 +116,9 @@ FILE ** task_popen(const char *command, const char *mode) {
         close(errhandle[0]);
 
         /* see piping documentation for this sillyness :P */
-        close(0), dup(inhandle [0]);
-        close(1), dup(outhandle[1]);
-        close(2), dup(errhandle[1]);
+        close(0); (void)!dup(inhandle [0]);
+        close(1); (void)!dup(outhandle[1]);
+        close(2); (void)!dup(errhandle[1]);
 
         execvp(*argv, argv);
         exit(EXIT_FAILURE);
