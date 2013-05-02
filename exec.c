@@ -923,6 +923,32 @@ static void prog_main_setparams(qc_program *prog)
     }
 }
 
+void escapestring(char* dest, const char* src)  {
+  char c;
+  while ((c = *(src++))) {
+    switch(c) {
+      case '\t': 
+        *(dest++) = '\\', *(dest++) = 't';
+        break;
+      case '\n': 
+        *(dest++) = '\\', *(dest++) = 'n';
+        break;
+      case '\r': 
+        *(dest++) = '\\', *(dest++) = 'r';
+        break;
+      case '\\': 
+        *(dest++) = '\\', *(dest++) = '\\';
+        break;
+      case '\"': 
+        *(dest++) = '\\', *(dest++) = '\"';
+        break;
+      default:
+        *(dest++) = c;
+     }
+  }
+  *dest = '\0';
+}
+
 void prog_disasm_function(qc_program *prog, size_t id);
 int main(int argc, char **argv)
 {
@@ -1137,6 +1163,9 @@ int main(int argc, char **argv)
         return 0;
     }
     if (opts_printdefs) {
+        char       *escape    = NULL;
+        const char *getstring = NULL;
+
         for (i = 0; i < vec_size(prog->defs); ++i) {
             printf("Global: %8s %-16s at %u%s",
                    type_name[prog->defs[i].type & DEF_TYPEMASK],
@@ -1158,7 +1187,12 @@ int main(int argc, char **argv)
                         printf(" [init: %u]", (unsigned)( ((qcany*)(prog->globals + prog->defs[i].offset))->_int ));
                         break;
                     case TYPE_STRING:
-                        printf(" [init: `%s`]", prog_getstring(prog, ((qcany*)(prog->globals + prog->defs[i].offset))->string ));
+                        getstring = prog_getstring(prog, ((qcany*)(prog->globals + prog->defs[i].offset))->string);
+                        escape    = (char*)mem_a(strlen(getstring) * 2 + 1); /* will be enough */
+                        escapestring(escape, getstring);
+                        printf(" [init: `%s`]", escape);
+
+                        mem_d(escape); /* free */
                         break;
                     default:
                         break;
