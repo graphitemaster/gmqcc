@@ -50,6 +50,12 @@ OBJ_T = test.o util.o conout.o fs.o
 OBJ_C = main.o lexer.o parser.o fs.o
 OBJ_X = exec-standalone.o util.o conout.o fs.o
 
+#we have duplicate object files when dealing with creating a simple list
+#for dependinces. To combat this we use some clever recrusive-make to
+#filter the list and remove duplicates which we use for make depend
+RMDUP = $(if $1,$(firstword $1) $(call RMDUP,$(filter-out $(firstword $1),$1)))
+DEPS := $(call RMDUP, $(OBJ_D) $(OBJ_P) $(OBJ_T) $(OBJ_C) $(OBJ_X))
+
 ifneq ("$(CYGWIN)", "")
 	#nullify the common variables that
 	#most *nix systems have (for windows)
@@ -72,12 +78,12 @@ ifneq ("$(MINGW)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
-	PAK       = pak.exe
+	PAK       = gmqpak.exe
 else
 	QCVM      = qcvm
 	GMQCC     = gmqcc
 	TESTSUITE = testsuite
-	PAK       = pak
+	PAK       = gmqpak
 endif
 endif
 
@@ -203,34 +209,32 @@ gource-record:
 
 depend:
 	@makedepend    -Y -w 65536 2> /dev/null \
-		$(subst .o,.c,$(OBJ_D))
-	@makedepend -a -Y -w 65536 2> /dev/null \
-		$(subst .o,.c,$(OBJ_T))
-	@makedepend -a -Y -w 65536 2> /dev/null \
-		$(subst .o,.c,$(OBJ_C))
-	@makedepend -a -Y -w 65536 2> /dev/null \
-		$(subst .o,.c,$(OBJ_X))
-	@makedepend -a -Y -w 65536 2> /dev/null \
-		$(subst .o,.c,$(OBJ_P))
+		$(subst .o,.c,$(DEPS))
 
 #install rules
-install: install-gmqcc install-qcvm install-doc
+install: install-gmqcc install-qcvm install-gmqpak install-doc
 install-gmqcc: $(GMQCC)
 	install -d -m755               $(DESTDIR)$(BINDIR)
 	install    -m755  $(GMQCC)     $(DESTDIR)$(BINDIR)/$(GMQCC)
 install-qcvm: $(QCVM)
 	install -d -m755               $(DESTDIR)$(BINDIR)
 	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/$(QCVM)
+install-gmqpak: $(PAK)
+	install -d -m755               $(DESTDIR)$(BINDIR)
+	install    -m755  $(PAK)       $(DESTDIR)$(BINDIR)/$(PAK)
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
 	install    -m644  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
+	install    -m644  doc/gmqpak.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall:
-	rm $(DESTDIR)$(BINDIR)/gmqcc
-	rm $(DESTDIR)$(BINDIR)/qcvm
-	rm $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
-	rm $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
+	rm -f $(DESTDIR)$(BINDIR)/gmqcc
+	rm -f $(DESTDIR)$(BINDIR)/qcvm
+	rm -f $(DESTDIR)$(BINDIR)/gmqpak
+	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
 
 # DO NOT DELETE
 
@@ -244,23 +248,8 @@ opts.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
 utf8.o: gmqcc.h opts.def
 correct.o: gmqcc.h opts.def
-
+pak.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def
-util.o: gmqcc.h opts.def
-conout.o: gmqcc.h opts.def
-fs.o: gmqcc.h opts.def
-
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
 parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
-fs.o: gmqcc.h opts.def
-
-util.o: gmqcc.h opts.def
-conout.o: gmqcc.h opts.def
-fs.o: gmqcc.h opts.def
-
-util.o: gmqcc.h opts.def
-fs.o: gmqcc.h opts.def
-conout.o: gmqcc.h opts.def
-opts.o: gmqcc.h opts.def
-pak.o: gmqcc.h opts.def

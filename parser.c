@@ -5623,7 +5623,7 @@ skipvar:
             }
         }
 
-        if (parser->tok != '{') {
+        if (parser->tok != '{' || var->expression.vtype != TYPE_FUNCTION) {
             if (parser->tok != '=') {
                 parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
                 break;
@@ -5725,7 +5725,22 @@ skipvar:
                 break;
             }
         }
-        else if (parser->tok == '{' || parser->tok == '[')
+        else if (var->expression.vtype == TYPE_ARRAY && parser->tok == '{')
+        {
+            if (localblock) {
+                /* Note that fteqcc and most others don't even *have*
+                 * local arrays, so this is not a high priority.
+                 */
+                parseerror(parser, "TODO: initializers for local arrays");
+                break;
+            }
+            /*
+static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels);
+*/
+            parseerror(parser, "TODO: initializing global arrays is not supported yet!");
+            break;
+        }
+        else if (var->expression.vtype == TYPE_FUNCTION && (parser->tok == '{' || parser->tok == '['))
         {
             if (localblock) {
                 parseerror(parser, "cannot declare functions within functions");

@@ -12,3 +12,8 @@ distro/archbsd/*
 !distro/archbsd/release/PKGBUILD
 !distro/archbsd/git/PKGBUILD
 !distro/archlinux/this/Makefile
+
+gmqcc
+gmqpak
+qcvm
+testsuite

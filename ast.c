@@ -317,8 +317,9 @@ ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
     self->cvq      = CV_NONE;
     self->hasvalue = false;
     self->isimm    = false;
-    self->uses    = 0;
+    self->uses     = 0;
     memset(&self->constval, 0, sizeof(self->constval));
+    self->initlist = NULL;
 
     self->ir_v           = NULL;
     self->ir_values      = NULL;
@@ -361,6 +362,20 @@ void ast_value_delete(ast_value* self)
 
     if (self->desc)
         mem_d(self->desc);
+
+    if (self->initlist) {
+        if (self->expression.next->expression.vtype == TYPE_STRING) {
+            /* strings are allocated, free them */
+            size_t i, len = vec_size(self->initlist);
+            /* in theory, len should be expression.count
+             * but let's not take any chances */
+            for (i = 0; i < len; ++i) {
+                if (self->initlist[i].vstring)
+                    mem_d(self->initlist[i].vstring);
+            }
+        }
+        vec_free(self->initlist);
+    }
 
     ast_expression_delete((ast_expression*)self);
     mem_d(self);

@@ -3418,7 +3418,8 @@ static bool ir_builder_gen_global(code_t *code, ir_builder *self, ir_value *glob
     {
         ir_value_code_setaddr(global, vec_size(code->globals));
         if (global->hasvalue) {
-            vec_push(code->globals, code_genstring(code, global->constval.vstring));
+            uint32_t load = code_genstring(code, global->constval.vstring);
+            vec_push(code->globals, load);
         } else {
             vec_push(code->globals, 0);
         }
