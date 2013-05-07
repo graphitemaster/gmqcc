@@ -354,6 +354,11 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
         }
     }
 
+    fs_file_close(fp);
+    return true;
+}
+
+void code_cleanup(code_t *code) {
     vec_free(code->statements);
     vec_free(code->linenums);
     vec_free(code->defs);
@@ -364,7 +369,5 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
 
     util_htdel(code->string_cache);
 
-    fs_file_close(fp);
     mem_d(code);
-    return true;
 }

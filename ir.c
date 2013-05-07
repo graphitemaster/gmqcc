@@ -340,6 +340,7 @@ void ir_builder_delete(ir_builder* self)
         ir_value_delete(self->extparams[i]);
     }
     vec_free(self->extparams);
+    vec_free(self->extparam_protos);
     for (i = 0; i != vec_size(self->globals); ++i) {
         ir_value_delete(self->globals[i]);
     }

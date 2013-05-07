@@ -735,6 +735,7 @@ typedef struct {
  */
 bool      code_write         (code_t *, const char *filename, const char *lno);
 code_t   *code_init          (void);
+void      code_cleanup       (code_t *);
 uint32_t  code_genstring     (code_t *, const char *string);
 qcint     code_alloc_field   (code_t *, size_t qcsize);
 void      code_push_statement(code_t *, prog_section_statement *stmt, int linenum);

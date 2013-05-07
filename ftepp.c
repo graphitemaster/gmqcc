@@ -374,7 +374,7 @@ static GMQCC_INLINE ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 
 static GMQCC_INLINE void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
 {
-    util_htrm(ftepp->macros, name, NULL);
+    util_htrm(ftepp->macros, name, (void (*)(void*))&ppmacro_delete);
 }
 
 static GMQCC_INLINE int ftepp_next(ftepp_t *ftepp)
@@ -564,10 +564,6 @@ static bool ftepp_define(ftepp_t *ftepp)
         return false;
     }
 
-#if 0
-    if (ftepp->output_on)
-        vec_push(ftepp->macros, macro);
-#endif
     if (ftepp->output_on)
         util_htset(ftepp->macros, macro->name, (void*)macro);
     else {

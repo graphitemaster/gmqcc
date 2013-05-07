@@ -6016,7 +6016,6 @@ parser_t *parser_create()
         mem_d(parser);
         return NULL;
     }
-    
 
     for (i = 0; i < operator_count; ++i) {
         if (operators[i].id == opid1('=')) {
@@ -6194,6 +6193,8 @@ void parser_cleanup(parser_t *parser)
     util_htdel(parser->aliases);
 
     intrin_intrinsics_destroy(parser);
+
+    code_cleanup(parser->code);
 
     mem_d(parser);
 }
