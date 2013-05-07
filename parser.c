@@ -2227,8 +2227,8 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     }
 
     parser->lex->flags.noops = true;
-    if (!vec_size(sy.out)) {
-        parseerror(parser, "empty expression");
+    if (vec_size(sy.out) != 1) {
+        parseerror(parser, "expression with not 1 but %lu output values...", (unsigned long) vec_size(sy.out));
         expr = NULL;
     } else
         expr = sy.out[0].out;
