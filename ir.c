@@ -3570,8 +3570,6 @@ bool ir_builder_generate(code_t *code, ir_builder *self, const char *filename)
     size_t i;
     char  *lnofile = NULL;
 
-    code_init();
-
     for (i = 0; i < vec_size(self->fields); ++i)
     {
         ir_builder_prepare_field(code, self->fields[i]);

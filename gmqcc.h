@@ -734,6 +734,7 @@ typedef struct {
  * code_pop_statement  -- keeps statements and linenumbers together 
  */
 bool      code_write         (code_t *, const char *filename, const char *lno);
+GMQCC_WARN
 code_t   *code_init          (void);
 void      code_cleanup       (code_t *);
 uint32_t  code_genstring     (code_t *, const char *string);
