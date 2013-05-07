@@ -2453,17 +2453,17 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
     /* closing paren */
     if (parser->tok != ')') {
         parseerror(parser, "expected closing paren after 'if' condition");
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
     /* parse into the 'then' branch */
     if (!parser_next(parser)) {
         parseerror(parser, "expected statement for on-true branch of 'if'");
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
     if (!parse_statement_or_block(parser, &ontrue)) {
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
     if (!ontrue)
@@ -2474,12 +2474,12 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         if (!parser_next(parser)) {
             parseerror(parser, "expected on-false branch after 'else'");
             ast_delete(ontrue);
-            ast_delete(cond);
+            ast_unref(cond);
             return false;
         }
         if (!parse_statement_or_block(parser, &onfalse)) {
             ast_delete(ontrue);
-            ast_delete(cond);
+            ast_unref(cond);
             return false;
         }
     }
@@ -2576,23 +2576,23 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
     /* closing paren */
     if (parser->tok != ')') {
         parseerror(parser, "expected closing paren after 'while' condition");
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
     /* parse into the 'then' branch */
     if (!parser_next(parser)) {
         parseerror(parser, "expected while-loop body");
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
     if (!parse_statement_or_block(parser, &ontrue)) {
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
 
     cond = process_condition(parser, cond, &ifnot);
     if (!cond) {
-        ast_delete(ontrue);
+        ast_unref(ontrue);
         return false;
     }
     aloop = ast_loop_new(ctx, NULL, cond, ifnot, NULL, false, NULL, ontrue);
@@ -2692,21 +2692,21 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
     if (parser->tok != ')') {
         parseerror(parser, "expected closing paren after 'while' condition");
         ast_delete(ontrue);
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
     /* parse on */
     if (!parser_next(parser) || parser->tok != ';') {
         parseerror(parser, "expected semicolon after condition");
         ast_delete(ontrue);
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
 
     if (!parser_next(parser)) {
         parseerror(parser, "parse error");
         ast_delete(ontrue);
-        ast_delete(cond);
+        ast_unref(cond);
         return false;
     }
 
@@ -2883,9 +2883,9 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         retval = false;
     return retval;
 onerr:
-    if (initexpr)  ast_delete(initexpr);
-    if (cond)      ast_delete(cond);
-    if (increment) ast_delete(increment);
+    if (initexpr)  ast_unref(initexpr);
+    if (cond)      ast_unref(cond);
+    if (increment) ast_unref(increment);
     (void)!parser_leaveblock(parser);
     return false;
 }
@@ -2918,7 +2918,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
         ret = ast_return_new(ctx, exp);
         if (!ret) {
-            ast_delete(exp);
+            ast_unref(exp);
             return false;
         }
     } else {
