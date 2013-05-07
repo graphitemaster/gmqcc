@@ -2779,7 +2779,6 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
     ast_expression *initexpr, *cond, *increment, *ontrue;
     ast_value      *typevar;
 
-    bool retval = true;
     bool ifnot  = false;
 
     lex_ctx ctx = parser_ctx(parser);
@@ -2879,9 +2878,11 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
     aloop = ast_loop_new(ctx, initexpr, cond, ifnot, NULL, false, increment, ontrue);
     *out = (ast_expression*)aloop;
 
-    if (!parser_leaveblock(parser))
-        retval = false;
-    return retval;
+    if (!parser_leaveblock(parser)) {
+        ast_delete(aloop);
+        return false;
+    }
+    return true;
 onerr:
     if (initexpr)  ast_unref(initexpr);
     if (cond)      ast_unref(cond);
