@@ -683,14 +683,6 @@ bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir);
 union ast_expression_u
 {
     ast_expression_common expression;
-
-    ast_value    value;
-    ast_binary   binary;
-    ast_block    block;
-    ast_ternary  ternary;
-    ast_ifthen   ifthen;
-    ast_store    store;
-    ast_entfield entfield;
 };
 
 /* Node union
@@ -698,7 +690,6 @@ union ast_expression_u
 union ast_node_u
 {
     ast_node_common node;
-    ast_expression  expression;
 };
 
 #endif
