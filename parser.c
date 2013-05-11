@@ -585,7 +585,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         blocks[i] = sy->out[vec_size(sy->out)+i].block;
         asvalue[i] = (ast_value*)exprs[i];
 
-        if (exprs[i]->expression.vtype == TYPE_NOEXPR &&
+        if (exprs[i]->vtype == TYPE_NOEXPR &&
             !(i != 0 && op->id == opid2('?',':')) &&
             !(i == 1 && op->id == opid1('.')))
         {
@@ -603,11 +603,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     }
 
 #define NotSameType(T) \
-             (exprs[0]->expression.vtype != exprs[1]->expression.vtype || \
-              exprs[0]->expression.vtype != T)
+             (exprs[0]->vtype != exprs[1]->vtype || \
+              exprs[0]->vtype != T)
 #define CanConstFold1(A) \
              (ast_istype((A), ast_value) && ((ast_value*)(A))->hasvalue && (((ast_value*)(A))->cvq == CV_CONST) &&\
-              (A)->expression.vtype != TYPE_FUNCTION)
+              (A)->vtype != TYPE_FUNCTION)
 #define CanConstFold(A, B) \
              (CanConstFold1(A) && CanConstFold1(B))
 #define ConstV(i) (asvalue[(i)]->constval.vvec)
@@ -620,8 +620,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             return false;
 
         case opid1('.'):
-            if (exprs[0]->expression.vtype == TYPE_VECTOR &&
-                exprs[1]->expression.vtype == TYPE_NOEXPR)
+            if (exprs[0]->vtype == TYPE_VECTOR &&
+                exprs[1]->vtype == TYPE_NOEXPR)
             {
                 if      (exprs[1] == (ast_expression*)parser->const_vec[0])
                     out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, NULL);
@@ -634,14 +634,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     return false;
                 }
             }
-            else if (exprs[0]->expression.vtype == TYPE_ENTITY) {
-                if (exprs[1]->expression.vtype != TYPE_FIELD) {
+            else if (exprs[0]->vtype == TYPE_ENTITY) {
+                if (exprs[1]->vtype != TYPE_FIELD) {
                     compile_error(ast_ctx(exprs[1]), "type error: right hand of member-operand should be an entity-field");
                     return false;
                 }
                 out = (ast_expression*)ast_entfield_new(ctx, exprs[0], exprs[1]);
             }
-            else if (exprs[0]->expression.vtype == TYPE_VECTOR) {
+            else if (exprs[0]->vtype == TYPE_VECTOR) {
                 compile_error(ast_ctx(exprs[1]), "vectors cannot be accessed this way");
                 return false;
             }
@@ -652,15 +652,15 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
 
         case opid1('['):
-            if (exprs[0]->expression.vtype != TYPE_ARRAY &&
-                !(exprs[0]->expression.vtype == TYPE_FIELD &&
-                  exprs[0]->expression.next->expression.vtype == TYPE_ARRAY))
+            if (exprs[0]->vtype != TYPE_ARRAY &&
+                !(exprs[0]->vtype == TYPE_FIELD &&
+                  exprs[0]->next->vtype == TYPE_ARRAY))
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 compile_error(ast_ctx(exprs[0]), "cannot index value of type %s", ty1);
                 return false;
             }
-            if (exprs[1]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[1]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 compile_error(ast_ctx(exprs[1]), "index must be of type float, not %s", ty1);
                 return false;
@@ -707,7 +707,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             out = exprs[0];
             break;
         case opid2('-','P'):
-            switch (exprs[0]->expression.vtype) {
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
                     if (CanConstFold1(exprs[0]))
                         out = (ast_expression*)parser_const_float(parser, -ConstF(0));
@@ -727,13 +727,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                 compile_error(ctx, "invalid types used in expression: cannot negate type %s",
-                              type_name[exprs[0]->expression.vtype]);
+                              type_name[exprs[0]->vtype]);
                 return false;
             }
             break;
 
         case opid2('!','P'):
-            switch (exprs[0]->expression.vtype) {
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
                     if (CanConstFold1(exprs[0]))
                         out = (ast_expression*)parser_const_float(parser, !ConstF(0));
@@ -769,21 +769,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                 compile_error(ctx, "invalid types used in expression: cannot logically negate type %s",
-                              type_name[exprs[0]->expression.vtype]);
+                              type_name[exprs[0]->vtype]);
                 return false;
             }
             break;
 
         case opid1('+'):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
-                (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
+            if (exprs[0]->vtype != exprs[1]->vtype ||
+                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
             {
                 compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
-                              type_name[exprs[0]->expression.vtype],
-                              type_name[exprs[1]->expression.vtype]);
+                              type_name[exprs[0]->vtype],
+                              type_name[exprs[1]->vtype]);
                 return false;
             }
-            switch (exprs[0]->expression.vtype) {
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
                     if (CanConstFold(exprs[0], exprs[1]))
                     {
@@ -800,21 +800,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                     compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
-                                  type_name[exprs[0]->expression.vtype],
-                                  type_name[exprs[1]->expression.vtype]);
+                                  type_name[exprs[0]->vtype],
+                                  type_name[exprs[1]->vtype]);
                     return false;
             };
             break;
         case opid1('-'):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
-                (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
+            if (exprs[0]->vtype != exprs[1]->vtype ||
+                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
             {
                 compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
-                              type_name[exprs[1]->expression.vtype],
-                              type_name[exprs[0]->expression.vtype]);
+                              type_name[exprs[1]->vtype],
+                              type_name[exprs[0]->vtype]);
                 return false;
             }
-            switch (exprs[0]->expression.vtype) {
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
                     if (CanConstFold(exprs[0], exprs[1]))
                         out = (ast_expression*)parser_const_float(parser, ConstF(0) - ConstF(1));
@@ -829,27 +829,27 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                     compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
-                                  type_name[exprs[1]->expression.vtype],
-                                  type_name[exprs[0]->expression.vtype]);
+                                  type_name[exprs[1]->vtype],
+                                  type_name[exprs[0]->vtype]);
                     return false;
             };
             break;
         case opid1('*'):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype &&
-                !(exprs[0]->expression.vtype == TYPE_VECTOR &&
-                  exprs[1]->expression.vtype == TYPE_FLOAT) &&
-                !(exprs[1]->expression.vtype == TYPE_VECTOR &&
-                  exprs[0]->expression.vtype == TYPE_FLOAT)
+            if (exprs[0]->vtype != exprs[1]->vtype &&
+                !(exprs[0]->vtype == TYPE_VECTOR &&
+                  exprs[1]->vtype == TYPE_FLOAT) &&
+                !(exprs[1]->vtype == TYPE_VECTOR &&
+                  exprs[0]->vtype == TYPE_FLOAT)
                 )
             {
                 compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
-                              type_name[exprs[1]->expression.vtype],
-                              type_name[exprs[0]->expression.vtype]);
+                              type_name[exprs[1]->vtype],
+                              type_name[exprs[0]->vtype]);
                 return false;
             }
-            switch (exprs[0]->expression.vtype) {
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
-                    if (exprs[1]->expression.vtype == TYPE_VECTOR)
+                    if (exprs[1]->vtype == TYPE_VECTOR)
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
                             out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(1), ConstF(0)));
@@ -865,7 +865,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     }
                     break;
                 case TYPE_VECTOR:
-                    if (exprs[1]->expression.vtype == TYPE_FLOAT)
+                    if (exprs[1]->vtype == TYPE_FLOAT)
                     {
                         if (CanConstFold(exprs[0], exprs[1]))
                             out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(0), ConstF(1)));
@@ -881,7 +881,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             if (!vec.y && !vec.z) { /* 'n 0 0' * v */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 0, NULL);
-                                out->expression.node.keep = false;
+                                out->node.keep = false;
                                 ((ast_member*)out)->rvalue = true;
                                 if (vec.x != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.x), out);
@@ -889,7 +889,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             else if (!vec.x && !vec.z) { /* '0 n 0' * v */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 1, NULL);
-                                out->expression.node.keep = false;
+                                out->node.keep = false;
                                 ((ast_member*)out)->rvalue = true;
                                 if (vec.y != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.y), out);
@@ -897,7 +897,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             else if (!vec.x && !vec.y) { /* '0 n 0' * v */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 2, NULL);
-                                out->expression.node.keep = false;
+                                out->node.keep = false;
                                 ((ast_member*)out)->rvalue = true;
                                 if (vec.z != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, (ast_expression*)parser_const_float(parser, vec.z), out);
@@ -910,7 +910,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             if (!vec.y && !vec.z) { /* v * 'n 0 0' */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, NULL);
-                                out->expression.node.keep = false;
+                                out->node.keep = false;
                                 ((ast_member*)out)->rvalue = true;
                                 if (vec.x != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.x));
@@ -918,7 +918,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             else if (!vec.x && !vec.z) { /* v * '0 n 0' */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 1, NULL);
-                                out->expression.node.keep = false;
+                                out->node.keep = false;
                                 ((ast_member*)out)->rvalue = true;
                                 if (vec.y != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.y));
@@ -926,7 +926,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             else if (!vec.x && !vec.y) { /* v * '0 n 0' */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 2, NULL);
-                                out->expression.node.keep = false;
+                                out->node.keep = false;
                                 ((ast_member*)out)->rvalue = true;
                                 if (vec.z != 1)
                                     out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, out, (ast_expression*)parser_const_float(parser, vec.z));
@@ -940,25 +940,25 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                     compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
-                                  type_name[exprs[1]->expression.vtype],
-                                  type_name[exprs[0]->expression.vtype]);
+                                  type_name[exprs[1]->vtype],
+                                  type_name[exprs[0]->vtype]);
                     return false;
             };
             break;
         case opid1('/'):
-            if (exprs[1]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[1]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                 compile_error(ctx, "invalid types used in expression: cannot divide tyeps %s and %s", ty1, ty2);
                 return false;
             }
-            if (exprs[0]->expression.vtype == TYPE_FLOAT) {
+            if (exprs[0]->vtype == TYPE_FLOAT) {
                 if (CanConstFold(exprs[0], exprs[1]))
                     out = (ast_expression*)parser_const_float(parser, ConstF(0) / ConstF(1));
                 else
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
             }
-            else if (exprs[0]->expression.vtype == TYPE_VECTOR) {
+            else if (exprs[0]->vtype == TYPE_VECTOR) {
                 if (CanConstFold(exprs[0], exprs[1]))
                     out = (ast_expression*)parser_const_vector(parser, vec3_mulvf(ConstV(0), 1.0/ConstF(1)));
                 else {
@@ -988,8 +988,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid1('%'):
             if (NotSameType(TYPE_FLOAT)) {
                 compile_error(ctx, "invalid types used in expression: cannot perform modulo operation between types %s and %s",
-                    type_name[exprs[0]->expression.vtype],
-                    type_name[exprs[1]->expression.vtype]);
+                    type_name[exprs[0]->vtype],
+                    type_name[exprs[1]->vtype]);
                 return false;
             }
             if (CanConstFold(exprs[0], exprs[1])) {
@@ -1017,8 +1017,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid1('&'):
             if (NotSameType(TYPE_FLOAT)) {
                 compile_error(ctx, "invalid types used in expression: cannot perform bit operations between types %s and %s",
-                              type_name[exprs[0]->expression.vtype],
-                              type_name[exprs[1]->expression.vtype]);
+                              type_name[exprs[0]->vtype],
+                              type_name[exprs[1]->vtype]);
                 return false;
             }
             if (CanConstFold(exprs[0], exprs[1]))
@@ -1074,7 +1074,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     return false;
                 }
                 for (i = 0; i < 2; ++i) {
-                    if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->expression.vtype == TYPE_VECTOR) {
+                    if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->vtype == TYPE_VECTOR) {
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
                         if (!out) break;
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
@@ -1085,7 +1085,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             break;
                         }
                     }
-                    else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->expression.vtype == TYPE_STRING) {
+                    else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->vtype == TYPE_STRING) {
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[i]);
                         if (!out) break;
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
@@ -1192,49 +1192,49 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             generated_op += INSTR_LE;
             if (NotSameType(TYPE_FLOAT)) {
                 compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
-                              type_name[exprs[0]->expression.vtype],
-                              type_name[exprs[1]->expression.vtype]);
+                              type_name[exprs[0]->vtype],
+                              type_name[exprs[1]->vtype]);
                 return false;
             }
             out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             break;
         case opid2('!', '='):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
+            if (exprs[0]->vtype != exprs[1]->vtype) {
                 compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
-                              type_name[exprs[0]->expression.vtype],
-                              type_name[exprs[1]->expression.vtype]);
+                              type_name[exprs[0]->vtype],
+                              type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->expression.vtype], exprs[0], exprs[1]);
+            out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype) {
+            if (exprs[0]->vtype != exprs[1]->vtype) {
                 compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
-                              type_name[exprs[0]->expression.vtype],
-                              type_name[exprs[1]->expression.vtype]);
+                              type_name[exprs[0]->vtype],
+                              type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->expression.vtype], exprs[0], exprs[1]);
+            out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
 
         case opid1('='):
             if (ast_istype(exprs[0], ast_entfield)) {
                 ast_expression *field = ((ast_entfield*)exprs[0])->field;
                 if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) &&
-                    exprs[0]->expression.vtype == TYPE_FIELD &&
-                    exprs[0]->expression.next->expression.vtype == TYPE_VECTOR)
+                    exprs[0]->vtype == TYPE_FIELD &&
+                    exprs[0]->next->vtype == TYPE_VECTOR)
                 {
                     assignop = type_storep_instr[TYPE_VECTOR];
                 }
                 else
-                    assignop = type_storep_instr[exprs[0]->expression.vtype];
-                if (assignop == VINSTR_END || !ast_compare_type(field->expression.next, exprs[1]))
+                    assignop = type_storep_instr[exprs[0]->vtype];
+                if (assignop == VINSTR_END || !ast_compare_type(field->next, exprs[1]))
                 {
-                    ast_type_to_string(field->expression.next, ty1, sizeof(ty1));
+                    ast_type_to_string(field->next, ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (OPTS_FLAG(ASSIGN_FUNCTION_TYPES) &&
-                        field->expression.next->expression.vtype == TYPE_FUNCTION &&
-                        exprs[1]->expression.vtype == TYPE_FUNCTION)
+                        field->next->vtype == TYPE_FUNCTION &&
+                        exprs[1]->vtype == TYPE_FUNCTION)
                     {
                         (void)!compile_warning(ctx, WARN_ASSIGN_FUNCTION_TYPES,
                                                "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
@@ -1246,13 +1246,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             else
             {
                 if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) &&
-                    exprs[0]->expression.vtype == TYPE_FIELD &&
-                    exprs[0]->expression.next->expression.vtype == TYPE_VECTOR)
+                    exprs[0]->vtype == TYPE_FIELD &&
+                    exprs[0]->next->vtype == TYPE_VECTOR)
                 {
                     assignop = type_store_instr[TYPE_VECTOR];
                 }
                 else {
-                    assignop = type_store_instr[exprs[0]->expression.vtype];
+                    assignop = type_store_instr[exprs[0]->vtype];
                 }
 
                 if (assignop == VINSTR_END) {
@@ -1265,8 +1265,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     if (OPTS_FLAG(ASSIGN_FUNCTION_TYPES) &&
-                        exprs[0]->expression.vtype == TYPE_FUNCTION &&
-                        exprs[1]->expression.vtype == TYPE_FUNCTION)
+                        exprs[0]->vtype == TYPE_FUNCTION &&
+                        exprs[1]->vtype == TYPE_FUNCTION)
                     {
                         (void)!compile_warning(ctx, WARN_ASSIGN_FUNCTION_TYPES,
                                                "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
@@ -1283,7 +1283,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid3('+','+','P'):
         case opid3('-','-','P'):
             /* prefix ++ */
-            if (exprs[0]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[0]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 compile_error(ast_ctx(exprs[0]), "invalid type for prefix increment: %s", ty1);
                 return false;
@@ -1308,7 +1308,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid3('S','+','+'):
         case opid3('S','-','-'):
             /* prefix ++ */
-            if (exprs[0]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[0]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 compile_error(ast_ctx(exprs[0]), "invalid type for suffix increment: %s", ty1);
                 return false;
@@ -1340,8 +1340,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid2('+','='):
         case opid2('-','='):
-            if (exprs[0]->expression.vtype != exprs[1]->expression.vtype ||
-                (exprs[0]->expression.vtype != TYPE_VECTOR && exprs[0]->expression.vtype != TYPE_FLOAT) )
+            if (exprs[0]->vtype != exprs[1]->vtype ||
+                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -1353,10 +1353,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->expression.vtype];
+                assignop = type_storep_instr[exprs[0]->vtype];
             else
-                assignop = type_store_instr[exprs[0]->expression.vtype];
-            switch (exprs[0]->expression.vtype) {
+                assignop = type_store_instr[exprs[0]->vtype];
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
                     out = (ast_expression*)ast_binstore_new(ctx, assignop,
                                                             (op->id == opid2('+','=') ? INSTR_ADD_F : INSTR_SUB_F),
@@ -1369,16 +1369,16 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                     compile_error(ctx, "invalid types used in expression: cannot add or subtract type %s and %s",
-                                  type_name[exprs[0]->expression.vtype],
-                                  type_name[exprs[1]->expression.vtype]);
+                                  type_name[exprs[0]->vtype],
+                                  type_name[exprs[1]->vtype]);
                     return false;
             };
             break;
         case opid2('*','='):
         case opid2('/','='):
-            if (exprs[1]->expression.vtype != TYPE_FLOAT ||
-                !(exprs[0]->expression.vtype == TYPE_FLOAT ||
-                  exprs[0]->expression.vtype == TYPE_VECTOR))
+            if (exprs[1]->vtype != TYPE_FLOAT ||
+                !(exprs[0]->vtype == TYPE_FLOAT ||
+                  exprs[0]->vtype == TYPE_VECTOR))
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -1390,10 +1390,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->expression.vtype];
+                assignop = type_storep_instr[exprs[0]->vtype];
             else
-                assignop = type_store_instr[exprs[0]->expression.vtype];
-            switch (exprs[0]->expression.vtype) {
+                assignop = type_store_instr[exprs[0]->vtype];
+            switch (exprs[0]->vtype) {
                 case TYPE_FLOAT:
                     out = (ast_expression*)ast_binstore_new(ctx, assignop,
                                                             (op->id == opid2('*','=') ? INSTR_MUL_F : INSTR_DIV_F),
@@ -1422,8 +1422,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     break;
                 default:
                     compile_error(ctx, "invalid types used in expression: cannot add or subtract type %s and %s",
-                                  type_name[exprs[0]->expression.vtype],
-                                  type_name[exprs[1]->expression.vtype]);
+                                  type_name[exprs[0]->vtype],
+                                  type_name[exprs[1]->vtype]);
                     return false;
             };
             break;
@@ -1440,9 +1440,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
             if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->expression.vtype];
+                assignop = type_storep_instr[exprs[0]->vtype];
             else
-                assignop = type_store_instr[exprs[0]->expression.vtype];
+                assignop = type_store_instr[exprs[0]->vtype];
             out = (ast_expression*)ast_binstore_new(ctx, assignop,
                                                     (op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
                                                     exprs[0], exprs[1]);
@@ -1460,9 +1460,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->expression.vtype];
+                assignop = type_storep_instr[exprs[0]->vtype];
             else
-                assignop = type_store_instr[exprs[0]->expression.vtype];
+                assignop = type_store_instr[exprs[0]->vtype];
             out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
             if (!out)
                 return false;
@@ -1475,7 +1475,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
 
         case opid2('~', 'P'):
-            if (exprs[0]->expression.vtype != TYPE_FLOAT) {
+            if (exprs[0]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 compile_error(ast_ctx(exprs[0]), "invalid type for bit not: %s", ty1);
                 return false;
@@ -1571,7 +1571,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 
     if (ast_istype(fun, ast_value)) {
         funval = (ast_value*)fun;
-        if ((fun->expression.flags & AST_FLAG_VARIADIC) &&
+        if ((fun->flags & AST_FLAG_VARIADIC) &&
             !(/*funval->cvq == CV_CONST && */ funval->hasvalue && funval->constval.vfunc->builtin))
         {
             call->va_count = (ast_expression*)parser_const_float(parser, (double)paramcount);
@@ -1581,18 +1581,18 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     /* overwrite fid, the function, with a call */
     sy->out[fid] = syexp(call->expression.node.context, (ast_expression*)call);
 
-    if (fun->expression.vtype != TYPE_FUNCTION) {
-        parseerror(parser, "not a function (%s)", type_name[fun->expression.vtype]);
+    if (fun->vtype != TYPE_FUNCTION) {
+        parseerror(parser, "not a function (%s)", type_name[fun->vtype]);
         return false;
     }
 
-    if (!fun->expression.next) {
+    if (!fun->next) {
         parseerror(parser, "could not determine function return type");
         return false;
     } else {
         ast_value *fval = (ast_istype(fun, ast_value) ? ((ast_value*)fun) : NULL);
 
-        if (fun->expression.flags & AST_FLAG_DEPRECATED) {
+        if (fun->flags & AST_FLAG_DEPRECATED) {
             if (!fval) {
                 return !parsewarning(parser, WARN_DEPRECATED,
                         "call to function (which is marked deprecated)\n",
@@ -1612,22 +1612,22 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                     ast_ctx(fun).line);
         }
 
-        if (vec_size(fun->expression.params) != paramcount &&
-            !((fun->expression.flags & AST_FLAG_VARIADIC) &&
-              vec_size(fun->expression.params) < paramcount))
+        if (vec_size(fun->params) != paramcount &&
+            !((fun->flags & AST_FLAG_VARIADIC) &&
+              vec_size(fun->params) < paramcount))
         {
-            const char *fewmany = (vec_size(fun->expression.params) > paramcount) ? "few" : "many";
+            const char *fewmany = (vec_size(fun->params) > paramcount) ? "few" : "many";
             if (fval)
                 return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
                                      "too %s parameters for call to %s: expected %i, got %i\n"
                                      " -> `%s` has been declared here: %s:%i",
-                                     fewmany, fval->name, (int)vec_size(fun->expression.params), (int)paramcount,
+                                     fewmany, fval->name, (int)vec_size(fun->params), (int)paramcount,
                                      fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
             else
                 return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
                                      "too %s parameters for function call: expected %i, got %i\n"
                                      " -> it has been declared here: %s:%i",
-                                     fewmany, (int)vec_size(fun->expression.params), (int)paramcount,
+                                     fewmany, (int)vec_size(fun->params), (int)paramcount,
                                      ast_ctx(fun).file, (int)ast_ctx(fun).line);
         }
     }
@@ -1881,7 +1881,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             /* When adding more intrinsics, fix the above condition */
             prev = NULL;
         }
-        if (prev && prev->expression.vtype == TYPE_VECTOR && ctoken[0] >= 'x' && ctoken[0] <= 'z' && !ctoken[1])
+        if (prev && prev->vtype == TYPE_VECTOR && ctoken[0] >= 'x' && ctoken[0] <= 'z' && !ctoken[1])
         {
             var = (ast_expression*)parser->const_vec[ctoken[0]-'x'];
         } else {
@@ -2363,13 +2363,13 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     ast_unary *unary;
     ast_expression *prev;
 
-    if (cond->expression.vtype == TYPE_VOID || cond->expression.vtype >= TYPE_VARIANT) {
+    if (cond->vtype == TYPE_VOID || cond->vtype >= TYPE_VARIANT) {
         char ty[1024];
         ast_type_to_string(cond, ty, sizeof(ty));
         compile_error(ast_ctx(cond), "invalid type for if() condition: %s", ty);
     }
 
-    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->expression.vtype == TYPE_STRING)
+    if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->vtype == TYPE_STRING)
     {
         prev = cond;
         cond = (ast_expression*)ast_unary_new(ast_ctx(cond), INSTR_NOT_S, cond);
@@ -2380,7 +2380,7 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
         }
         ifnot = !ifnot;
     }
-    else if (OPTS_FLAG(CORRECT_LOGIC) && cond->expression.vtype == TYPE_VECTOR)
+    else if (OPTS_FLAG(CORRECT_LOGIC) && cond->vtype == TYPE_VECTOR)
     {
         /* vector types need to be cast to true booleans */
         ast_binary *bin = (ast_binary*)cond;
@@ -2911,8 +2911,8 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
         if (!exp)
             return false;
 
-        if (exp->expression.vtype != TYPE_NIL &&
-            exp->expression.vtype != expected->expression.next->expression.vtype)
+        if (exp->vtype != TYPE_NIL &&
+            exp->vtype != ((ast_expression*)expected)->next->vtype)
         {
             parseerror(parser, "return with invalid expression");
         }
@@ -2925,7 +2925,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     } else {
         if (!parser_next(parser))
             parseerror(parser, "parse error");
-        if (expected->expression.next->expression.vtype != TYPE_VOID) {
+        if (expected->expression.next->vtype != TYPE_VOID) {
             (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
         }
         ret = ast_return_new(ctx, NULL);
@@ -4067,9 +4067,9 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             /* qc allows the use of not-yet-declared functions here
              * - this automatically creates a prototype */
             ast_value      *thinkfunc;
-            ast_expression *functype = fld_think->expression.next;
+            ast_expression *functype = fld_think->next;
 
-            thinkfunc = ast_value_new(parser_ctx(parser), parser_tokval(parser), functype->expression.vtype);
+            thinkfunc = ast_value_new(parser_ctx(parser), parser_tokval(parser), functype->vtype);
             if (!thinkfunc) { /* || !ast_type_adopt(thinkfunc, functype)*/
                 ast_unref(framenum);
                 parseerror(parser, "failed to create implicit prototype for `%s`", parser_tokval(parser));
@@ -4224,7 +4224,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
         if (param->expression.vtype != TYPE_VECTOR &&
             (param->expression.vtype != TYPE_FIELD ||
-             param->expression.next->expression.vtype != TYPE_VECTOR))
+             param->expression.next->vtype != TYPE_VECTOR))
         {
             continue;
         }
@@ -4354,7 +4354,7 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
         ast_store       *st;
         int assignop = type_store_instr[value->expression.vtype];
 
-        if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
+        if (value->expression.vtype == TYPE_FIELD && value->expression.next->vtype == TYPE_VECTOR)
             assignop = INSTR_STORE_V;
 
         subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser_const_float(parser, from));
@@ -4420,7 +4420,7 @@ static ast_expression *array_field_setter_node(
         ast_store       *st;
         int assignop = type_storep_instr[value->expression.vtype];
 
-        if (value->expression.vtype == TYPE_FIELD && value->expression.next->expression.vtype == TYPE_VECTOR)
+        if (value->expression.vtype == TYPE_FIELD && value->expression.next->vtype == TYPE_VECTOR)
             assignop = INSTR_STOREP_V;
 
         subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser_const_float(parser, from));
@@ -5271,7 +5271,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             {
                 /* deal with other globals */
                 old = parser_find_global(parser, var->name);
-                if (old && var->expression.vtype == TYPE_FUNCTION && old->expression.vtype == TYPE_FUNCTION)
+                if (old && var->expression.vtype == TYPE_FUNCTION && old->vtype == TYPE_FUNCTION)
                 {
                     /* This is a function which had a prototype */
                     if (!ast_istype(old, ast_value)) {
@@ -5379,7 +5379,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             if (var->expression.vtype == TYPE_VECTOR)
                 isvector = true;
             else if (var->expression.vtype == TYPE_FIELD &&
-                     var->expression.next->expression.vtype == TYPE_VECTOR)
+                     var->expression.next->vtype == TYPE_VECTOR)
                 isvector = true;
 
             if (isvector) {
@@ -5418,7 +5418,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        if (var->expression.vtype != find->expression.vtype) {
+                        if (var->expression.vtype != find->vtype) {
                             char ty1[1024];
                             char ty2[1024];
 
@@ -5567,7 +5567,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
         else if (!localblock && !nofields &&
                  var->expression.vtype == TYPE_FIELD &&
-                 var->expression.next->expression.vtype == TYPE_ARRAY)
+                 var->expression.next->vtype == TYPE_ARRAY)
         {
             char name[1024];
             ast_expression *telem;
@@ -5984,7 +5984,7 @@ static void generate_checksum(parser_t *parser)
         if (!ast_istype(parser->fields[i], ast_value))
             continue;
         value = (ast_value*)(parser->fields[i]);
-        switch (value->expression.next->expression.vtype) {
+        switch (value->expression.next->vtype) {
             case TYPE_FLOAT:    crc = progdefs_crc_both(crc, "\tfloat\t"); break;
             case TYPE_VECTOR:   crc = progdefs_crc_both(crc, "\tvec3_t\t"); break;
             case TYPE_STRING:   crc = progdefs_crc_both(crc, "\tstring_t\t"); break;
@@ -6235,11 +6235,11 @@ bool parser_finish(parser_t *parser, const char *output)
             ast_expression *subtype;
             field->hasvalue = true;
             subtype = field->expression.next;
-            ifld = ir_builder_create_field(ir, field->name, subtype->expression.vtype);
-            if (subtype->expression.vtype == TYPE_FIELD)
-                ifld->fieldtype = subtype->expression.next->expression.vtype;
-            else if (subtype->expression.vtype == TYPE_FUNCTION)
-                ifld->outtype = subtype->expression.next->expression.vtype;
+            ifld = ir_builder_create_field(ir, field->name, subtype->vtype);
+            if (subtype->vtype == TYPE_FIELD)
+                ifld->fieldtype = subtype->next->vtype;
+            else if (subtype->vtype == TYPE_FUNCTION)
+                ifld->outtype = subtype->next->vtype;
             (void)!ir_value_set_field(field->ir_v, ifld);
         }
     }
@@ -6327,7 +6327,7 @@ bool parser_finish(parser_t *parser, const char *output)
     }
     for (i = 0; i < vec_size(parser->fields); ++i) {
         ast_value *asvalue;
-        asvalue = (ast_value*)(parser->fields[i]->expression.next);
+        asvalue = (ast_value*)(parser->fields[i]->next);
 
         if (!ast_istype((ast_expression*)asvalue, ast_value))
             continue;
