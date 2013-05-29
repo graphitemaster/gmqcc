@@ -148,7 +148,6 @@ SPLINTFLAGS =            \
     -temptrans           \
     -usereleased         \
     -warnposix           \
-    -shiftimplementation \
     +charindex           \
     -kepttrans           \
     -unqualifiedtrans    \

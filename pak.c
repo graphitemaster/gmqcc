@@ -26,7 +26,7 @@
  * The PAK format uses a FOURCC concept for storing the magic ident within
  * the header as a uint32_t.
  */
-#define PAK_FOURCC ((uint32_t)(('P' | ('A' << 8) | ('C' << 16) | ('K' << 24))))
+#define PAK_FOURCC ((uint32_t)(((uint8_t)'P'|((uint8_t)'A'<<8)|((uint8_t)'C'<<16)|((uint8_t)'K'<<24))))
 
 typedef struct {
     uint32_t magic;  /* "PACK" */
