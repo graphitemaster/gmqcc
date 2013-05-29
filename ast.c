@@ -1419,7 +1419,7 @@ error: /* clean up */
     return false;
 }
 
-bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
+static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
 
