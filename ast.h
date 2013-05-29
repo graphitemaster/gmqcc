@@ -29,8 +29,8 @@
  * "main" ast node types for now.
  */
 
-typedef union ast_node_u ast_node;
-typedef union ast_expression_u ast_expression;
+typedef struct ast_node_common       ast_node;
+typedef struct ast_expression_common ast_expression;
 
 typedef struct ast_value_s       ast_value;
 typedef struct ast_function_s    ast_function;
@@ -76,14 +76,14 @@ enum {
     TYPE_ast_goto         /* 20 */
 };
 
-#define ast_istype(x, t) ( ((ast_node_common*)x)->nodetype == (TYPE_##t) )
-#define ast_ctx(node) (((ast_node_common*)(node))->context)
-#define ast_side_effects(node) (((ast_node_common*)(node))->side_effects)
+#define ast_istype(x, t) ( ((ast_node*)x)->nodetype == (TYPE_##t) )
+#define ast_ctx(node) (((ast_node*)(node))->context)
+#define ast_side_effects(node) (((ast_node*)(node))->side_effects)
 
 /* Node interface with common components
  */
 typedef void ast_node_delete(ast_node*);
-typedef struct
+struct ast_node_common
 {
     lex_ctx          context;
     /* I don't feel comfortable using keywords like 'delete' as names... */
@@ -94,14 +94,14 @@ typedef struct
      */
     bool             keep;
     bool             side_effects;
-} ast_node_common;
+};
 
-#define ast_delete(x) (*( ((ast_node*)(x))->node.destroy ))((ast_node*)(x))
-#define ast_unref(x) do                     \
-{                                           \
-    if (! (((ast_node*)(x))->node.keep) ) { \
-        ast_delete(x);                      \
-    }                                       \
+#define ast_delete(x) (*( ((ast_node*)(x))->destroy ))((ast_node*)(x))
+#define ast_unref(x) do                \
+{                                      \
+    if (! (((ast_node*)(x))->keep) ) { \
+        ast_delete(x);                 \
+    }                                  \
 } while(0)
 
 /* Expression interface
@@ -123,9 +123,9 @@ typedef bool ast_expression_codegen(ast_expression*,
  * type `expression`, so the ast_ident's codegen would search for
  * variables through the environment (or functions, constants...).
  */
-typedef struct
+struct ast_expression_common
 {
-    ast_node_common         node;
+    ast_node                node;
     ast_expression_codegen *codegen;
     int                     vtype;
     ast_expression         *next;
@@ -144,7 +144,7 @@ typedef struct
      */
     ir_value               *outl;
     ir_value               *outr;
-} ast_expression_common;
+};
 #define AST_FLAG_VARIADIC     (1<<0)
 #define AST_FLAG_NORETURN     (1<<1)
 #define AST_FLAG_INLINE       (1<<2)
@@ -173,7 +173,7 @@ typedef union {
 } basic_value_t;
 struct ast_value_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
 
     const char *name;
     const char *desc;
@@ -243,7 +243,7 @@ typedef enum ast_binary_ref_s {
  */
 struct ast_binary_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
 
     int             op;
     ast_expression *left;
@@ -263,7 +263,7 @@ ast_binary* ast_binary_new(lex_ctx    ctx,
  */
 struct ast_binstore_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
 
     int             opstore;
     int             opbin;
@@ -284,7 +284,7 @@ ast_binstore* ast_binstore_new(lex_ctx    ctx,
  */
 struct ast_unary_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
 
     int             op;
     ast_expression *operand;
@@ -301,7 +301,7 @@ ast_unary* ast_unary_new(lex_ctx    ctx,
  */
 struct ast_return_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *operand;
 };
 ast_return* ast_return_new(lex_ctx    ctx,
@@ -322,7 +322,7 @@ ast_return* ast_return_new(lex_ctx    ctx,
  */
 struct ast_entfield_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     /* The entity can come from an expression of course. */
     ast_expression *entity;
     /* As can the field, it just must result in a value of TYPE_FIELD */
@@ -338,7 +338,7 @@ ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_ex
  */
 struct ast_member_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *owner;
     unsigned int    field;
     const char     *name;
@@ -361,7 +361,7 @@ bool ast_member_set_name(ast_member*, const char *name);
  */
 struct ast_array_index_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *array;
     ast_expression *index;
 };
@@ -374,7 +374,7 @@ ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_exp
  */
 struct ast_store_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     int             op;
     ast_expression *dest;
     ast_expression *source;
@@ -395,7 +395,7 @@ ast_store* ast_store_new(lex_ctx ctx, int op,
  */
 struct ast_ifthen_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
@@ -418,7 +418,7 @@ ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *on
  */
 struct ast_ternary_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
@@ -451,7 +451,7 @@ continue:      // a 'continue' will jump here
  */
 struct ast_loop_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *initexpr;
     ast_expression *precond;
     ast_expression *postcond;
@@ -477,7 +477,7 @@ ast_loop* ast_loop_new(lex_ctx ctx,
  */
 struct ast_breakcont_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     bool         is_continue;
     unsigned int levels;
 };
@@ -499,7 +499,7 @@ typedef struct {
 } ast_switch_case;
 struct ast_switch_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
 
     ast_expression  *operand;
     ast_switch_case *cases;
@@ -513,7 +513,7 @@ ast_switch* ast_switch_new(lex_ctx ctx, ast_expression *op);
  */
 struct ast_label_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     const char *name;
     ir_block   *irblock;
     ast_goto  **gotos;
@@ -529,7 +529,7 @@ ast_label* ast_label_new(lex_ctx ctx, const char *name, bool undefined);
  */
 struct ast_goto_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     const char *name;
     ast_label  *target;
     ir_block   *irblock_from;
@@ -550,7 +550,7 @@ void ast_goto_set_label(ast_goto*, ast_label*);
  */
 struct ast_call_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
     ast_expression *func;
     ast_expression* *params;
     ast_expression *va_count;
@@ -564,7 +564,7 @@ bool ast_call_check_types(ast_call*);
  */
 struct ast_block_s
 {
-    ast_expression_common expression;
+    ast_expression        expression;
 
     ast_value*      *locals;
     ast_expression* *exprs;
@@ -589,7 +589,7 @@ bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
  */
 struct ast_function_s
 {
-    ast_node_common node;
+    ast_node        node;
 
     ast_value  *vtype;
     const char *name;
@@ -633,19 +633,5 @@ void ast_function_delete(ast_function*);
 
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
 bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir);
-
-/* Expression union
- */
-union ast_expression_u
-{
-    ast_expression_common expression;
-};
-
-/* Node union
- */
-union ast_node_u
-{
-    ast_node_common node;
-};
 
 #endif
