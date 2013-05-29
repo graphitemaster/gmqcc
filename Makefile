@@ -129,7 +129,6 @@ SPLINTFLAGS =            \
     -nullstate           \
     -varuse              \
     -mustfreefresh       \
-    -compdestroy         \
     -compmempass         \
     -nullpass            \
     -onlytrans           \

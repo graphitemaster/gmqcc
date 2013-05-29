@@ -5814,6 +5814,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
                 vec_free(sy.out);
                 vec_free(sy.ops);
+                vec_free(sy.argc);
                 var->cvq = cvq;
             }
         }
