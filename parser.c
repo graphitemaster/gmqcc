@@ -3731,7 +3731,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             }
             return parse_typedef(parser);
         }
-        parseerror(parser, "Unexpected keyword");
+        parseerror(parser, "Unexpected keyword: `%s'", parser_tokval(parser));
         return false;
     }
     else if (parser->tok == '{')

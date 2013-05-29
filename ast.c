@@ -1628,7 +1628,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         return true;
     }
 
-    // have a local return value variable?
+    /* have a local return value variable? */
     if (self->return_value) {
         if (!ast_local_codegen(self->return_value, self->ir_func, false))
             return false;
