@@ -1685,8 +1685,13 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         }
         else if (vec_size(self->curblock->entries) || self->curblock == irf->first)
         {
-            /* error("missing return"); */
-            if (compile_warning(ast_ctx(self), WARN_MISSING_RETURN_VALUES,
+            if (self->return_value) {
+                cgen = self->return_value->expression.codegen;
+                if (!(*cgen)((ast_expression*)(self->return_value), self, false, &dummy))
+                    return false;
+                return ir_block_create_return(self->curblock, ast_ctx(self), dummy);
+            }
+            else if (compile_warning(ast_ctx(self), WARN_MISSING_RETURN_VALUES,
                                 "control reaches end of non-void function (`%s`) via %s",
                                 self->name, self->curblock->label))
             {
