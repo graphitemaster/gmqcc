@@ -2955,6 +2955,11 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
             return false;
         }
 
+        if (parser->tok != ';')
+            parseerror(parser, "missing semicolon after return assignment");
+        else if (!parser_next(parser))
+            parseerror(parser, "parse error after return assignment");
+
         *out = var;
         return true;
     }

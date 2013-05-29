@@ -9,7 +9,7 @@ vector f_vector() {
     foo.x = f_float();
     foo.y = f_float();
     foo.z = f_float();
-    
+
     return = foo;
     return;
 }
@@ -20,8 +20,16 @@ string f_string() {
     return;
 }
 
+float factorial(float n) {
+    if (n == 0) return = 1;
+    else        return = n * factorial(n - 1);
+
+    return;
+}
+
 void main() {
     print(ftos(f_float()), "\n");  // 200.0f
     print(vtos(f_vector()), "\n"); // '1 2 3'
     print(f_string(), "\n");       // world
+    print(ftos(factorial(4)), "\n"); // 24
 }
