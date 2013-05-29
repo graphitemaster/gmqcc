@@ -15,8 +15,10 @@ vector f_vector() {
 }
 
 string f_string() {
+#ifndef FAIL_TEST
     return = "hello";
     return = "world";
+#endif
     return;
 }
 
