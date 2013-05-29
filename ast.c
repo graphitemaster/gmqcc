@@ -1104,6 +1104,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->varargs          = NULL;
     self->argc             = NULL;
     self->fixedparams      = NULL;
+    self->return_value     = NULL;
 
     return self;
 }
@@ -1133,6 +1134,8 @@ void ast_function_delete(ast_function *self)
         ast_delete(self->argc);
     if (self->fixedparams)
         ast_unref(self->fixedparams);
+    if (self->return_value)
+        ast_unref(self->return_value);
     mem_d(self);
 }
 
@@ -1623,6 +1626,12 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     if (self->builtin) {
         irf->builtin = self->builtin;
         return true;
+    }
+
+    // have a local return value variable?
+    if (self->return_value) {
+        if (!ast_local_codegen(self->return_value, self->ir_func, false))
+            return false;
     }
 
     if (!vec_size(self->blocks)) {
