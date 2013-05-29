@@ -506,6 +506,18 @@ Example:
 void printA() = #1; // the usual way
 void printB() = #2-1; // with a constant expression
 .Ed
+.It Fl f Ns Cm return-assignments
+Enabiling this option will allow assigning values or expressions to the
+return keyword as if it were a local variable of the same type as the
+function's signature's return type.
+.Pp
+Example:
+.Bd -literal -offset indent
+float bar() { return 1024; }
+float fun() {
+    return = bar();
+    return; // returns value of bar
+}
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds

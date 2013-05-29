@@ -5,8 +5,12 @@ float f_float() {
 }
 
 vector f_vector() {
-    return = '1 2 3';
-    return = '2 3 4';
+    vector foo;
+    foo.x = f_float();
+    foo.y = f_float();
+    foo.z = f_float();
+    
+    return = foo;
     return;
 }
 
