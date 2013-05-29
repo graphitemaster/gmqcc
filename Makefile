@@ -163,7 +163,6 @@ SPLINTFLAGS =            \
     -realcompare         \
     -observertrans       \
     -shiftnegative       \
-    -freshtrans          \
     -abstract            \
     -statictrans         \
     -castfcnptr

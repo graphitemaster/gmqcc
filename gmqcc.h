@@ -993,7 +993,7 @@ void        prog_delete(qc_program *prog);
 
 bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
 
-char*             prog_getstring (qc_program *prog, qcint str);
+const char*       prog_getstring (qc_program *prog, qcint str);
 prog_section_def* prog_entfield  (qc_program *prog, qcint off);
 prog_section_def* prog_getdef    (qc_program *prog, qcint off);
 qcany*            prog_getedict  (qc_program *prog, qcint e);

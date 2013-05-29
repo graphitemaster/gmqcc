@@ -575,7 +575,6 @@ int main(int argc, char **argv) {
     pak_close(pak);
     vec_free(files);
 
-
     util_meminfo();
     return EXIT_SUCCESS;
 }

@@ -23,10 +23,25 @@
  */
 #include "gmqcc.h"
 
-/* This is outrageous! */
-#define QCINT_ENTRY void*
-#define QCINT_TO_HASH_ENTRY(q) ((void*)(uintptr_t)(q))
-#define HASH_ENTRY_TO_QCINT(h) ((qcint)(uintptr_t)(h))
+/*
+ * We could use the old method of casting to uintptr_t then to void*
+ * or qcint; however, it's incredibly unsafe for two reasons.
+ * 1) The compilers aliasing optimization can legally make it unstable
+ *    (it's undefined behaviour).
+ * 
+ * 2) The cast itself depends on fresh storage (newly allocated in which
+ *    ever function is using the cast macros), the contents of which are
+ *    transferred in a way that the obligation to release storage is not
+ *    propagated.
+ */
+typedef union {
+    void   *enter;
+    qcint   leave;
+} code_hash_entry_t;
+
+/* Some sanity macros */
+#define CODE_HASH_ENTER(ENTRY) ((ENTRY).enter)
+#define CODE_HASH_LEAVE(ENTRY) ((ENTRY).leave)
 
 void code_push_statement(code_t *code, prog_section_statement *stmt, int linenum)
 {
@@ -72,11 +87,9 @@ code_t *code_init() {
 
 void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin);
 
-uint32_t code_genstring(code_t *code, const char *str)
-{
-    uint32_t off;
-    size_t   hash;
-    QCINT_ENTRY existing;
+uint32_t code_genstring(code_t *code, const char *str) {
+    size_t            hash;
+    code_hash_entry_t existing;
 
     if (!str)
         return 0;
@@ -90,21 +103,21 @@ uint32_t code_genstring(code_t *code, const char *str)
     }
 
     if (OPTS_OPTIMIZATION(OPTIM_OVERLAP_STRINGS)) {
-        hash     = ((unsigned char*)str)[strlen(str)-1];
-        existing = code_util_str_htgeth(code->string_cache, str, hash);
+        hash                      = ((unsigned char*)str)[strlen(str)-1];
+        CODE_HASH_ENTER(existing) = code_util_str_htgeth(code->string_cache, str, hash);
     } else {
-        hash     = util_hthash(code->string_cache, str);
-        existing = util_htgeth(code->string_cache, str, hash);
+        hash                      = util_hthash(code->string_cache, str);
+        CODE_HASH_ENTER(existing) = util_htgeth(code->string_cache, str, hash);
     }
 
-    if (existing)
-        return HASH_ENTRY_TO_QCINT(existing);
+    if (CODE_HASH_ENTER(existing))
+        return CODE_HASH_LEAVE(existing);
 
-    off = vec_size(code->chars);
+    CODE_HASH_LEAVE(existing) = vec_size(code->chars);
     vec_upload(code->chars, str, strlen(str)+1);
 
-    util_htseth(code->string_cache, str, hash, QCINT_TO_HASH_ENTRY(off));
-    return off;
+    util_htseth(code->string_cache, str, hash, CODE_HASH_ENTER(existing));
+    return CODE_HASH_LEAVE(existing);
 }
 
 qcint code_alloc_field (code_t *code, size_t qcsize)
