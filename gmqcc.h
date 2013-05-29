@@ -1163,7 +1163,7 @@ typedef struct {
 
 extern opts_cmd_t opts;
 
-#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< ((i)%32))))
+#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< (unsigned)((i)%32))))
 #define OPTS_FLAG(i)         OPTS_GENERIC(opts.flags,        (i))
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
 #define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))

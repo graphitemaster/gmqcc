@@ -1038,9 +1038,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid2('>','>'):
             if (CanConstFold(exprs[0], exprs[1]) && ! NotSameType(TYPE_FLOAT)) {
                 if (op->id == opid2('<','<'))
-                    out = (ast_expression*)parser_const_float(parser, (double)((int)(ConstF(0)) << (int)(ConstF(1))));
+                    out = (ast_expression*)parser_const_float(parser, (double)((unsigned int)(ConstF(0)) << (unsigned int)(ConstF(1))));
                 else
-                    out = (ast_expression*)parser_const_float(parser, (double)((int)(ConstF(0)) >> (int)(ConstF(1))));
+                    out = (ast_expression*)parser_const_float(parser, (double)((unsigned int)(ConstF(0)) >> (unsigned int)(ConstF(1))));
                 break;
             }
         case opid3('<','<','='):

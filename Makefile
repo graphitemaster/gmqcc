@@ -162,7 +162,6 @@ SPLINTFLAGS =            \
     -mayaliasunique      \
     -realcompare         \
     -observertrans       \
-    -shiftnegative       \
     -abstract            \
     -statictrans         \
     -castfcnptr
