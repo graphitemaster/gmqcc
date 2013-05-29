@@ -135,7 +135,6 @@ SPLINTFLAGS =            \
     -onlytrans           \
     -predboolint         \
     -boolops             \
-    -exportlocal         \
     -incondefs           \
     -macroredef          \
     -retvalint           \

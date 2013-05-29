@@ -81,7 +81,7 @@ static uint32_t ftepp_predef_countval = 0;
 static uint32_t ftepp_predef_randval  = 0;
 
 /* __DATE__ */
-char *ftepp_predef_date(lex_file *context) {
+static char *ftepp_predef_date(lex_file *context) {
     struct tm *itime = NULL;
     time_t     rtime;
     char      *value = (char*)mem_a(82);
@@ -104,7 +104,7 @@ char *ftepp_predef_date(lex_file *context) {
 }
 
 /* __TIME__ */
-char *ftepp_predef_time(lex_file *context) {
+static char *ftepp_predef_time(lex_file *context) {
     struct tm *itime = NULL;
     time_t     rtime;
     char      *value = (char*)mem_a(82);
@@ -127,13 +127,13 @@ char *ftepp_predef_time(lex_file *context) {
 }
 
 /* __LINE__ */
-char *ftepp_predef_line(lex_file *context) {
+static char *ftepp_predef_line(lex_file *context) {
     char   *value;
     util_asprintf(&value, "%d", (int)context->line);
     return value;
 }
 /* __FILE__ */
-char *ftepp_predef_file(lex_file *context) {
+static char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
     util_snprintf(value, length, "\"%s\"", context->name);
@@ -141,7 +141,7 @@ char *ftepp_predef_file(lex_file *context) {
     return value;
 }
 /* __COUNTER_LAST__ */
-char *ftepp_predef_counterlast(lex_file *context) {
+static char *ftepp_predef_counterlast(lex_file *context) {
     char   *value;
     util_asprintf(&value, "%u", ftepp_predef_countval);
 
@@ -149,7 +149,7 @@ char *ftepp_predef_counterlast(lex_file *context) {
     return value;
 }
 /* __COUNTER__ */
-char *ftepp_predef_counter(lex_file *context) {
+static char *ftepp_predef_counter(lex_file *context) {
     char   *value;
     ftepp_predef_countval ++;
     util_asprintf(&value, "%u", ftepp_predef_countval);
@@ -158,7 +158,7 @@ char *ftepp_predef_counter(lex_file *context) {
     return value;
 }
 /* __RANDOM__ */
-char *ftepp_predef_random(lex_file *context) {
+static char *ftepp_predef_random(lex_file *context) {
     char  *value;
     ftepp_predef_randval = (util_rand() % 0xFF) + 1;
     util_asprintf(&value, "%u", ftepp_predef_randval);
@@ -167,7 +167,7 @@ char *ftepp_predef_random(lex_file *context) {
     return value;
 }
 /* __RANDOM_LAST__ */
-char *ftepp_predef_randomlast(lex_file *context) {
+static char *ftepp_predef_randomlast(lex_file *context) {
     char   *value;
     util_asprintf(&value, "%u", ftepp_predef_randval);
 
@@ -175,7 +175,7 @@ char *ftepp_predef_randomlast(lex_file *context) {
     return value;
 }
 /* __TIMESTAMP__ */
-char *ftepp_predef_timestamp(lex_file *context) {
+static char *ftepp_predef_timestamp(lex_file *context) {
     struct stat finfo;
     char       *find;
     char       *value;

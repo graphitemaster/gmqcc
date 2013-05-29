@@ -491,7 +491,7 @@ GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
     return (size_t) (hash % ht->size);
 }
 
-hash_node_t *_util_htnewpair(const char *key, void *value) {
+static hash_node_t *_util_htnewpair(const char *key, void *value) {
     hash_node_t *node;
     if (!(node = (hash_node_t*)mem_a(sizeof(hash_node_t))))
         return NULL;

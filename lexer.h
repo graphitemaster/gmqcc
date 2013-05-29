@@ -340,6 +340,6 @@ static const size_t qcc_operator_count = (sizeof(qcc_operators) / sizeof(qcc_ope
 
 extern const oper_info *operators;
 extern size_t           operator_count;
-void lexerror(lex_file*, const char *fmt, ...);
+/*void lexerror(lex_file*, const char *fmt, ...);*/
 
 #endif

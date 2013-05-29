@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012, 2013
  *     Wolfgang Bumiller
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -214,8 +215,11 @@ void ast_value_delete(ast_value*);
 
 bool ast_value_set_name(ast_value*, const char *name);
 
+/*
 bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
 bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
+*/
+
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield);
 
 void ast_value_params_add(ast_value*, ast_value*);
@@ -251,9 +255,6 @@ ast_binary* ast_binary_new(lex_ctx    ctx,
                            int        op,
                            ast_expression *left,
                            ast_expression *right);
-void ast_binary_delete(ast_binary*);
-
-bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
 
 /* Binstore
  *
@@ -276,9 +277,6 @@ ast_binstore* ast_binstore_new(lex_ctx    ctx,
                                int        op,
                                ast_expression *left,
                                ast_expression *right);
-void ast_binstore_delete(ast_binstore*);
-
-bool ast_binstore_codegen(ast_binstore*, ast_function*, bool lvalue, ir_value**);
 
 /* Unary
  *
@@ -294,9 +292,6 @@ struct ast_unary_s
 ast_unary* ast_unary_new(lex_ctx    ctx,
                          int        op,
                          ast_expression *expr);
-void ast_unary_delete(ast_unary*);
-
-bool ast_unary_codegen(ast_unary*, ast_function*, bool lvalue, ir_value**);
 
 /* Return
  *
@@ -311,9 +306,6 @@ struct ast_return_s
 };
 ast_return* ast_return_new(lex_ctx    ctx,
                            ast_expression *expr);
-void ast_return_delete(ast_return*);
-
-bool ast_return_codegen(ast_return*, ast_function*, bool lvalue, ir_value**);
 
 /* Entity-field
  *
@@ -338,9 +330,6 @@ struct ast_entfield_s
 };
 ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field);
 ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype);
-void ast_entfield_delete(ast_entfield*);
-
-bool ast_entfield_codegen(ast_entfield*, ast_function*, bool lvalue, ir_value**);
 
 /* Member access:
  *
@@ -359,7 +348,6 @@ ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int fiel
 void ast_member_delete(ast_member*);
 bool ast_member_set_name(ast_member*, const char *name);
 
-bool ast_member_codegen(ast_member*, ast_function*, bool lvalue, ir_value**);
 
 /* Array index access:
  *
@@ -378,9 +366,6 @@ struct ast_array_index_s
     ast_expression *index;
 };
 ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index);
-void ast_array_index_delete(ast_array_index*);
-
-bool ast_array_index_codegen(ast_array_index*, ast_function*, bool lvalue, ir_value**);
 
 /* Store
  *
@@ -396,9 +381,6 @@ struct ast_store_s
 };
 ast_store* ast_store_new(lex_ctx ctx, int op,
                          ast_expression *d, ast_expression *s);
-void ast_store_delete(ast_store*);
-
-bool ast_store_codegen(ast_store*, ast_function*, bool lvalue, ir_value**);
 
 /* If
  *
@@ -420,9 +402,6 @@ struct ast_ifthen_s
     ast_expression *on_false;
 };
 ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
-void ast_ifthen_delete(ast_ifthen*);
-
-bool ast_ifthen_codegen(ast_ifthen*, ast_function*, bool lvalue, ir_value**);
 
 /* Ternary expressions...
  *
@@ -446,9 +425,6 @@ struct ast_ternary_s
     ast_expression *on_false;
 };
 ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
-void ast_ternary_delete(ast_ternary*);
-
-bool ast_ternary_codegen(ast_ternary*, ast_function*, bool lvalue, ir_value**);
 
 /* A general loop node
  *
@@ -496,9 +472,6 @@ ast_loop* ast_loop_new(lex_ctx ctx,
                        ast_expression *postcond, bool post_not,
                        ast_expression *increment,
                        ast_expression *body);
-void ast_loop_delete(ast_loop*);
-
-bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
 
 /* Break/Continue
  */
@@ -509,9 +482,6 @@ struct ast_breakcont_s
     unsigned int levels;
 };
 ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont, unsigned int levels);
-void ast_breakcont_delete(ast_breakcont*);
-
-bool ast_breakcont_codegen(ast_breakcont*, ast_function*, bool lvalue, ir_value**);
 
 /* Switch Statements
  *
@@ -536,9 +506,6 @@ struct ast_switch_s
 };
 
 ast_switch* ast_switch_new(lex_ctx ctx, ast_expression *op);
-void ast_switch_delete(ast_switch*);
-
-bool ast_switch_codegen(ast_switch*, ast_function*, bool lvalue, ir_value**);
 
 /* Label nodes
  *
@@ -555,10 +522,6 @@ struct ast_label_s
 };
 
 ast_label* ast_label_new(lex_ctx ctx, const char *name, bool undefined);
-void ast_label_delete(ast_label*);
-void ast_label_register_goto(ast_label*, ast_goto*);
-
-bool ast_label_codegen(ast_label*, ast_function*, bool lvalue, ir_value**);
 
 /* GOTO nodes
  *
@@ -573,10 +536,7 @@ struct ast_goto_s
 };
 
 ast_goto* ast_goto_new(lex_ctx ctx, const char *name);
-void ast_goto_delete(ast_goto*);
 void ast_goto_set_label(ast_goto*, ast_label*);
-
-bool ast_goto_codegen(ast_goto*, ast_function*, bool lvalue, ir_value**);
 
 /* CALL node
  *
@@ -597,8 +557,6 @@ struct ast_call_s
 };
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr);
-void ast_call_delete(ast_call*);
-bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
 bool ast_call_check_types(ast_call*);
 
 /* Blocks
@@ -615,8 +573,6 @@ struct ast_block_s
 ast_block* ast_block_new(lex_ctx ctx);
 void ast_block_delete(ast_block*);
 void ast_block_set_type(ast_block*, ast_expression *from);
-
-bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
 void ast_block_collect(ast_block*, ast_expression*);
 
 bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
@@ -673,7 +629,7 @@ void ast_function_delete(ast_function*);
 /* For "optimized" builds this can just keep returning "foo"...
  * or whatever...
  */
-const char* ast_function_label(ast_function*, const char *prefix);
+/*const char* ast_function_label(ast_function*, const char *prefix);*/
 
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
 bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir);

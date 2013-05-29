@@ -36,6 +36,43 @@
     ast_node_init((ast_node*)self, ctx, TYPE_##T);                  \
     ( (ast_node*)self )->node.destroy = (ast_node_delete*)destroyfn
 
+/*
+ * forward declarations, these need not be in ast.h for obvious
+ * static reasons.
+ */
+static bool ast_member_codegen(ast_member*, ast_function*, bool lvalue, ir_value**);
+static void ast_array_index_delete(ast_array_index*);
+static bool ast_array_index_codegen(ast_array_index*, ast_function*, bool lvalue, ir_value**);
+static void ast_store_delete(ast_store*);
+static bool ast_store_codegen(ast_store*, ast_function*, bool lvalue, ir_value**);
+static void ast_ifthen_delete(ast_ifthen*);
+static bool ast_ifthen_codegen(ast_ifthen*, ast_function*, bool lvalue, ir_value**);
+static void ast_ternary_delete(ast_ternary*);
+static bool ast_ternary_codegen(ast_ternary*, ast_function*, bool lvalue, ir_value**);
+static void ast_loop_delete(ast_loop*);
+static bool ast_loop_codegen(ast_loop*, ast_function*, bool lvalue, ir_value**);
+static void ast_breakcont_delete(ast_breakcont*);
+static bool ast_breakcont_codegen(ast_breakcont*, ast_function*, bool lvalue, ir_value**);
+static void ast_switch_delete(ast_switch*);
+static bool ast_switch_codegen(ast_switch*, ast_function*, bool lvalue, ir_value**);
+static void ast_label_delete(ast_label*);
+static void ast_label_register_goto(ast_label*, ast_goto*);
+static bool ast_label_codegen(ast_label*, ast_function*, bool lvalue, ir_value**);
+static bool ast_goto_codegen(ast_goto*, ast_function*, bool lvalue, ir_value**);
+static void ast_goto_delete(ast_goto*);
+static void ast_call_delete(ast_call*);
+static bool ast_call_codegen(ast_call*, ast_function*, bool lvalue, ir_value**);
+static bool ast_block_codegen(ast_block*, ast_function*, bool lvalue, ir_value**);
+static void ast_unary_delete(ast_unary*);
+static bool ast_unary_codegen(ast_unary*, ast_function*, bool lvalue, ir_value**);
+static void ast_entfield_delete(ast_entfield*);
+static bool ast_entfield_codegen(ast_entfield*, ast_function*, bool lvalue, ir_value**);
+static void ast_return_delete(ast_return*);
+static bool ast_return_codegen(ast_return*, ast_function*, bool lvalue, ir_value**);
+static void ast_binstore_delete(ast_binstore*);
+static bool ast_binstore_codegen(ast_binstore*, ast_function*, bool lvalue, ir_value**);
+static void ast_binary_delete(ast_binary*);
+static bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
 
 /* It must not be possible to get here. */
 static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
@@ -303,6 +340,7 @@ void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize)
     buf[pos] = 0;
 }
 
+static bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out);
 ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
@@ -845,7 +883,7 @@ void ast_label_delete(ast_label *self)
     mem_d(self);
 }
 
-void ast_label_register_goto(ast_label *self, ast_goto *g)
+static void ast_label_register_goto(ast_label *self, ast_goto *g)
 {
     vec_push(self->gotos, g);
 }
@@ -1098,7 +1136,7 @@ void ast_function_delete(ast_function *self)
     mem_d(self);
 }
 
-const char* ast_function_label(ast_function *self, const char *prefix)
+static const char* ast_function_label(ast_function *self, const char *prefix)
 {
     size_t id;
     size_t len;
@@ -1132,7 +1170,7 @@ const char* ast_function_label(ast_function *self, const char *prefix)
  * But I can't imagine a pituation where the output is truly unnecessary.
  */
 
-void _ast_codegen_output_type(ast_expression_common *self, ir_value *out)
+static void _ast_codegen_output_type(ast_expression_common *self, ir_value *out)
 {
     if (out->vtype == TYPE_FIELD)
         out->fieldtype = self->next->expression.vtype;
@@ -1381,7 +1419,7 @@ error: /* clean up */
     return false;
 }
 
-bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
+static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
 

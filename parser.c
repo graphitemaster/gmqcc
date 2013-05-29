@@ -185,7 +185,7 @@ vector vec3_mulvf(vector a, float b)
  * parsing
  */
 
-bool parser_next(parser_t *parser)
+static bool parser_next(parser_t *parser)
 {
     /* lex_do kills the previous token */
     parser->tok = lex_do(parser->lex);
@@ -6069,7 +6069,7 @@ parser_t *parser_create()
     return parser;
 }
 
-bool parser_compile(parser_t *parser)
+static bool parser_compile(parser_t *parser)
 {
     /* initial lexer/parser state */
     parser->lex->flags.noops = true;

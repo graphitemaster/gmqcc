@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012, 2013
  *     Wolfgang Bumiller
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -211,9 +212,31 @@ const uint16_t type_not_instr[TYPE_COUNT] = {
 };
 
 /* protos */
-static ir_value* ir_gen_extparam_proto(ir_builder *ir);
-static void      ir_gen_extparam      (code_t *, ir_builder *ir);
+static ir_value*       ir_value_var(const char *name, int st, int vtype);
+static bool            ir_value_set_name(ir_value*, const char *name);
+static void            ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 
+static ir_value*       ir_gen_extparam_proto(ir_builder *ir);
+static void            ir_gen_extparam      (code_t *, ir_builder *ir);
+
+static bool            ir_builder_set_name(ir_builder *self, const char *name);
+
+static ir_function*    ir_function_new(struct ir_builder_s *owner, int returntype);
+static bool            ir_function_set_name(ir_function*, const char *name);
+static void            ir_function_delete(ir_function*);
+static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
+
+static ir_value*       ir_block_create_general_instr(ir_block *self, lex_ctx, const char *label,
+                                        int op, ir_value *a, ir_value *b, int outype);
+static void            ir_block_delete(ir_block*);
+static ir_block*       ir_block_new(struct ir_function_s *owner, const char *label);
+static bool GMQCC_WARN ir_block_create_store(ir_block*, lex_ctx, ir_value *target, ir_value *what);
+static bool            ir_block_set_label(ir_block*, const char *label);
+static void            ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
+
+static bool            ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
+static void            ir_instr_delete(ir_instr*);
+static void            ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 /* error functions */
 
 static void irerror(lex_ctx ctx, const char *msg, ...)
@@ -238,7 +261,7 @@ static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
  * Vector utility functions
  */
 
-bool GMQCC_WARN vec_ir_value_find(ir_value **vec, const ir_value *what, size_t *idx)
+static bool GMQCC_WARN vec_ir_value_find(ir_value **vec, const ir_value *what, size_t *idx)
 {
     size_t i;
     size_t len = vec_size(vec);
@@ -251,7 +274,7 @@ bool GMQCC_WARN vec_ir_value_find(ir_value **vec, const ir_value *what, size_t *
     return false;
 }
 
-bool GMQCC_WARN vec_ir_block_find(ir_block **vec, ir_block *what, size_t *idx)
+static bool GMQCC_WARN vec_ir_block_find(ir_block **vec, ir_block *what, size_t *idx)
 {
     size_t i;
     size_t len = vec_size(vec);
@@ -264,7 +287,7 @@ bool GMQCC_WARN vec_ir_block_find(ir_block **vec, ir_block *what, size_t *idx)
     return false;
 }
 
-bool GMQCC_WARN vec_ir_instr_find(ir_instr **vec, ir_instr *what, size_t *idx)
+static bool GMQCC_WARN vec_ir_instr_find(ir_instr **vec, ir_instr *what, size_t *idx)
 {
     size_t i;
     size_t len = vec_size(vec);
@@ -363,7 +386,7 @@ bool ir_builder_set_name(ir_builder *self, const char *name)
     return !!self->name;
 }
 
-ir_function* ir_builder_get_function(ir_builder *self, const char *name)
+static ir_function* ir_builder_get_function(ir_builder *self, const char *name)
 {
     return (ir_function*)util_htget(self->htfunctions, name);
 }
@@ -398,7 +421,7 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
     return fn;
 }
 
-ir_value* ir_builder_get_global(ir_builder *self, const char *name)
+static ir_value* ir_builder_get_global(ir_builder *self, const char *name)
 {
     return (ir_value*)util_htget(self->htglobals, name);
 }
@@ -428,7 +451,7 @@ ir_value* ir_builder_get_va_count(ir_builder *self)
     return (self->reserved_va_count = ir_builder_create_global(self, "reserved:va_count", TYPE_FLOAT));
 }
 
-ir_value* ir_builder_get_field(ir_builder *self, const char *name)
+static ir_value* ir_builder_get_field(ir_builder *self, const char *name)
 {
     return (ir_value*)util_htget(self->htfields, name);
 }
@@ -452,10 +475,10 @@ ir_value* ir_builder_create_field(ir_builder *self, const char *name, int vtype)
  *IR Function
  */
 
-bool ir_function_naive_phi(ir_function*);
-void ir_function_enumerate(ir_function*);
-bool ir_function_calculate_liferanges(ir_function*);
-bool ir_function_allocate_locals(ir_function*);
+static bool ir_function_naive_phi(ir_function*);
+static void ir_function_enumerate(ir_function*);
+static bool ir_function_calculate_liferanges(ir_function*);
+static bool ir_function_allocate_locals(ir_function*);
 
 ir_function* ir_function_new(ir_builder* owner, int outtype)
 {
@@ -552,7 +575,7 @@ void ir_function_delete(ir_function *self)
     mem_d(self);
 }
 
-void ir_function_collect_value(ir_function *self, ir_value *v)
+static void ir_function_collect_value(ir_function *self, ir_value *v)
 {
     vec_push(self->values, v);
 }
@@ -575,7 +598,7 @@ static bool instr_is_operation(uint16_t op)
              (op >= INSTR_CALL0  && op <= INSTR_CALL8) );
 }
 
-bool ir_function_pass_peephole(ir_function *self)
+static bool ir_function_pass_peephole(ir_function *self)
 {
     size_t b;
 
@@ -691,7 +714,7 @@ bool ir_function_pass_peephole(ir_function *self)
     return true;
 }
 
-bool ir_function_pass_tailrecursion(ir_function *self)
+static bool ir_function_pass_tailrecursion(ir_function *self)
 {
     size_t b, p;
 
@@ -927,7 +950,7 @@ bool ir_block_set_label(ir_block *self, const char *name)
  *IR Instructions
  */
 
-ir_instr* ir_instr_new(lex_ctx ctx, ir_block* owner, int op)
+static ir_instr* ir_instr_new(lex_ctx ctx, ir_block* owner, int op)
 {
     ir_instr *self;
     self = (ir_instr*)mem_a(sizeof(*self));
@@ -959,7 +982,7 @@ static void ir_instr_delete_quick(ir_instr *self)
     mem_d(self);
 }
 
-void ir_instr_delete(ir_instr *self)
+static void ir_instr_delete(ir_instr *self)
 {
     size_t i;
     /* The following calls can only delete from
@@ -990,7 +1013,7 @@ void ir_instr_delete(ir_instr *self)
     mem_d(self);
 }
 
-bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
+static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
 {
     if (self->_ops[op]) {
         size_t idx;
@@ -1013,7 +1036,7 @@ bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
  *IR Value
  */
 
-void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
+static void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
 {
     self->code.globaladdr = gaddr;
     if (self->members[0]) self->members[0]->code.globaladdr = gaddr;
@@ -1021,7 +1044,7 @@ void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
     if (self->members[2]) self->members[2]->code.globaladdr = gaddr;
 }
 
-int32_t ir_value_code_addr(const ir_value *self)
+static int32_t ir_value_code_addr(const ir_value *self)
 {
     if (self->store == store_return)
         return OFS_RETURN + self->code.addroffset;
@@ -1134,7 +1157,7 @@ static GMQCC_INLINE size_t ir_value_sizeof(const ir_value *self)
     return type_sizeof_[self->vtype];
 }
 
-ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int vtype)
+static ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int vtype)
 {
     ir_value *v = ir_value_var(name, storetype, vtype);
     if (!v)
@@ -1241,7 +1264,7 @@ bool ir_value_lives(ir_value *self, size_t at)
     return false;
 }
 
-bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
+static bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
 {
     size_t k;
     vec_push(self->life, e);
@@ -1251,7 +1274,7 @@ bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
     return true;
 }
 
-bool ir_value_life_merge(ir_value *self, size_t s)
+static bool ir_value_life_merge(ir_value *self, size_t s)
 {
     size_t i;
     const size_t vs = vec_size(self->life);
@@ -1314,7 +1337,7 @@ bool ir_value_life_merge(ir_value *self, size_t s)
     return ir_value_life_insert(self, i, new_entry);
 }
 
-bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
+static bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
 {
     size_t i, myi;
 
@@ -1388,7 +1411,7 @@ bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
     return true;
 }
 
-bool ir_values_overlap(const ir_value *a, const ir_value *b)
+static bool ir_values_overlap(const ir_value *a, const ir_value *b)
 {
     /* For any life entry in A see if it overlaps with
      * any life entry in B.
@@ -1484,7 +1507,7 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *tar
     return true;
 }
 
-bool ir_block_create_store(ir_block *self, lex_ctx ctx, ir_value *target, ir_value *what)
+static bool ir_block_create_store(ir_block *self, lex_ctx ctx, ir_value *target, ir_value *what)
 {
     int op = 0;
     int vtype;
@@ -1827,7 +1850,7 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx ctx,
     return ir_block_create_general_instr(self, ctx, label, opcode, operand, NULL, ot);
 }
 
-ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx ctx, const char *label,
+static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx ctx, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype)
 {
     ir_instr *instr;
@@ -3686,7 +3709,7 @@ bool ir_builder_generate(code_t *code, ir_builder *self, const char *filename)
 #   define strncat(dst, src, sz) strncat_s(dst, sz, src, _TRUNCATE)
 #endif
 
-const char *qc_opname(int op)
+static const char *qc_opname(int op)
 {
     if (op < 0) return "<INVALID>";
     if (op < (int)( sizeof(asm_instr) / sizeof(asm_instr[0]) ))
@@ -3838,7 +3861,7 @@ void ir_block_dump(ir_block* b, char *ind,
     ind[strlen(ind)-1] = 0;
 }
 
-void dump_phi(ir_instr *in, int (*oprintf)(const char*, ...))
+static void dump_phi(ir_instr *in, int (*oprintf)(const char*, ...))
 {
     size_t i;
     oprintf("%s <- phi ", in->_ops[0]->name);
@@ -3908,7 +3931,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
     ind[strlen(ind)-1] = 0;
 }
 
-void ir_value_dump_string(const char *str, int (*oprintf)(const char*, ...))
+static void ir_value_dump_string(const char *str, int (*oprintf)(const char*, ...))
 {
     oprintf("\"");
     for (; *str; ++str) {

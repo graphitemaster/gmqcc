@@ -60,7 +60,7 @@ static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
 
 static char* *lex_filenames;
 
-void lexerror(lex_file *lex, const char *fmt, ...)
+static void lexerror(lex_file *lex, const char *fmt, ...)
 {
     va_list ap;
 
@@ -72,7 +72,7 @@ void lexerror(lex_file *lex, const char *fmt, ...)
     va_end(ap);
 }
 
-bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
+static bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
     bool    r;
     lex_ctx ctx;

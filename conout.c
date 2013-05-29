@@ -333,7 +333,7 @@ int con_out(const char *fmt, ...) {
  * for reporting of file:line based on lexer context, These are used
  * heavily in the parser/ir/ast.
  */
-void con_vprintmsg_c(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap, const char *condname) {
+static void con_vprintmsg_c(int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap, const char *condname) {
     /* color selection table */
     static int sel[] = {
         CON_WHITE,

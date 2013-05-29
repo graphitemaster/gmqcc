@@ -222,7 +222,7 @@ static pak_file_t *pak_open_write(const char *file) {
     return pak;
 }
 
-pak_file_t *pak_open(const char *file, const char *mode) {
+static pak_file_t *pak_open(const char *file, const char *mode) {
     if (!file || !mode)
         return NULL;
 
@@ -234,7 +234,7 @@ pak_file_t *pak_open(const char *file, const char *mode) {
     return NULL;
 }
 
-bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
+static bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
     size_t itr;
 
     if (!pak || !file)
@@ -259,7 +259,7 @@ bool pak_exists(pak_file_t *pak, const char *file, pak_directory_t **dir) {
 /*
  * Extraction abilities.  These work as you expect them to.
  */
-bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
+static bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
     pak_directory_t *dir   = NULL;
     unsigned char   *dat   = NULL;
     char            *local = NULL;
@@ -310,7 +310,7 @@ bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdir) {
     return true;
 }
 
-bool pak_extract_all(pak_file_t *pak, const char *dir) {
+static bool pak_extract_all(pak_file_t *pak, const char *dir) {
     size_t itr;
 
     if (!fs_dir_make(dir))
@@ -328,7 +328,7 @@ bool pak_extract_all(pak_file_t *pak, const char *dir) {
  * Insertion functions (the opposite of extraction).  Yes for generating
  * PAKs.
  */
-bool pak_insert_one(pak_file_t *pak, const char *file) {
+static bool pak_insert_one(pak_file_t *pak, const char *file) {
     pak_directory_t dir;
     unsigned char  *dat;
     FILE           *fp;
@@ -413,7 +413,7 @@ bool pak_insert_all(pak_file_t *pak, const char *dir) {
     return true;
 }
 
-bool pak_close(pak_file_t *pak) {
+static bool pak_close(pak_file_t *pak) {
     size_t itr;
 
     if (!pak)
