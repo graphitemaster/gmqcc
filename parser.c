@@ -106,6 +106,13 @@ typedef struct parser_s {
 
     /* code generator */
     code_t     *code;
+    
+    /* vector of global return vars.
+     * for example, you can return string, float, vector, or other
+     * things, hese will be created as globals here instead of
+     * locals in a function (saves space).
+     */
+    ast_value     **returns;
 } parser_t;
 
 static ast_expression * const intrinsic_debug_typestring = (ast_expression*)0x1;
@@ -343,6 +350,29 @@ static ast_expression* parser_find_global(parser_t *parser, const char *name)
     if (var)
         return var;
     return (ast_expression*)util_htget(parser->htglobals, name);
+}
+
+static ast_value* parser_find_returnvalue(parser_t *parser, int vtype)
+{
+    ast_value *out;
+    size_t     i;
+    char      *name = NULL;
+    
+    /* find existing global for the job */
+    for (i = 0; i < vec_size(parser->returns); i++)
+        if (parser->returns[i]->expression.vtype == vtype)
+            return parser->returns[i];
+            
+    util_asprintf(&name, "#ret_%s", type_name[vtype]);
+            
+    out           = ast_value_new(parser_ctx(parser), name, vtype);
+    out->hasvalue = false;
+    out->isimm    = false;
+    
+    vec_push(parser->returns, out);
+    
+    mem_d(name);
+    return out;
 }
 
 static ast_expression* parser_find_param(parser_t *parser, const char *name)
@@ -2893,8 +2923,10 @@ onerr:
 
 static bool parse_return(parser_t *parser, ast_block *block, ast_expression **out)
 {
-    ast_expression *exp = NULL;
-    ast_return     *ret = NULL;
+    ast_expression *exp      = NULL;
+    ast_expression *var      = NULL;
+    ast_return     *ret      = NULL;
+    ast_expression *find     = NULL;
     ast_value      *expected = parser->function->vtype;
 
     lex_ctx ctx = parser_ctx(parser);
@@ -2904,6 +2936,44 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     if (!parser_next(parser)) {
         parseerror(parser, "expected return expression");
         return false;
+    }
+
+    /* return assignments */
+    if (parser->tok == '=') {
+        if (!OPTS_FLAG(RETURN_ASSIGNMENTS)) {
+            parseerror(parser, "return assignments not activated, try using -freturn-assigments");
+            return false;
+        }
+            
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected return assignment expression");
+            return false;
+        }
+        
+        if (!(exp = parse_expression_leave(parser, false, false, false)))
+            return false;
+            
+        if (exp->vtype != TYPE_NIL &&
+            exp->vtype != ((ast_expression*)expected)->next->vtype)
+        {
+            parseerror(parser, "return assignment with invalid expression");
+        }
+        
+        /* store to 'return' local variable */
+        var = (ast_expression*)ast_store_new(
+            ctx,
+            type_store_instr[exp->vtype],
+            (ast_expression*)parser_find_returnvalue(parser, exp->vtype),
+            (ast_expression*)exp
+        );
+        
+        if (!var) {
+            ast_unref(exp);
+            return false;
+        }
+        
+        *out = var;
+        return true;
     }
 
     if (parser->tok != ';') {
@@ -2925,10 +2995,16 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     } else {
         if (!parser_next(parser))
             parseerror(parser, "parse error");
-        if (expected->expression.next->vtype != TYPE_VOID) {
+            
+        /* build expression to return */
+        if ((find = (ast_expression*)parser_find_returnvalue(parser, expected->expression.next->vtype)) && OPTS_FLAG(RETURN_ASSIGNMENTS))
+            ret = ast_return_new(ctx, find);
+            
+        else if (expected->expression.next->vtype != TYPE_VOID)
+        {
             (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
+            ret = ast_return_new(ctx, NULL);
         }
-        ret = ast_return_new(ctx, NULL);
     }
     *out = (ast_expression*)ret;
     return true;
@@ -4276,6 +4352,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     vec_push(func->blocks, block);
+    
 
     parser->function = old;
     if (!parser_leaveblock(parser))
@@ -6067,6 +6144,7 @@ parser_t *parser_create()
         parser->reserved_version = NULL;
     }
 
+    parser->returns = NULL;
     return parser;
 }
 
@@ -6147,6 +6225,9 @@ void parser_cleanup(parser_t *parser)
     }
     for (i = 0; i < vec_size(parser->globals); ++i) {
         ast_delete(parser->globals[i]);
+    }
+    for (i = 0; i < vec_size(parser->returns); ++i) {
+        ast_delete(parser->returns[i]);
     }
     vec_free(parser->accessors);
     vec_free(parser->functions);
@@ -6335,6 +6416,13 @@ bool parser_finish(parser_t *parser, const char *output)
         if (asvalue->expression.vtype != TYPE_ARRAY)
             continue;
         if (!ast_generate_accessors(asvalue, ir)) {
+            ir_builder_delete(ir);
+            return false;
+        }
+    }
+    for (i = 0; i < vec_size(parser->returns); ++i) {
+        if (!ast_global_codegen(parser->returns[i], ir, false)) {
+            con_out("internal error: failed to generate return assignment %s\n", parser->returns[i]->name);
             ir_builder_delete(ir);
             return false;
         }

@@ -1101,9 +1101,9 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     vtype->hasvalue = true;
     vtype->constval.vfunc = self;
 
-    self->varargs     = NULL;
-    self->argc        = NULL;
-    self->fixedparams = NULL;
+    self->varargs          = NULL;
+    self->argc             = NULL;
+    self->fixedparams      = NULL;
 
     return self;
 }
@@ -1419,7 +1419,7 @@ error: /* clean up */
     return false;
 }
 
-static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
+bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 {
     ir_value *v = NULL;
 
