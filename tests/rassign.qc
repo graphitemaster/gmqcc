@@ -25,8 +25,6 @@ string f_string() {
 float factorial(float n) {
     if (n == 0) return = 1;
     else        return = n * factorial(n - 1);
-
-    return;
 }
 
 void main() {
