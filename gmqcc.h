@@ -749,6 +749,7 @@ void      code_pop_statement (code_t *);
 typedef struct {
     const char *file;
     size_t      line;
+    size_t      column;
 } lex_ctx;
 
 /*===================================================================*/
@@ -775,8 +776,8 @@ enum {
 FILE *con_default_out();
 FILE *con_default_err();
 
-void con_vprintmsg (int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
-void con_printmsg  (int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
+void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
+void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);
 void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
 void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...);
 

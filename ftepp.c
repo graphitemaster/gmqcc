@@ -1881,7 +1881,7 @@ ftepp_t *ftepp_create()
 void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name)
 {
     ppmacro *macro;
-    lex_ctx ctx = { "__builtin__", 0 };
+    lex_ctx ctx = { "__builtin__", 0, 0 };
     ctx.file = source;
     macro = ppmacro_new(ctx, name);
     /*vec_push(ftepp->macros, macro);*/

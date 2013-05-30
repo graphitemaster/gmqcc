@@ -297,7 +297,7 @@ static bool task_template_generate(task_template_t *tmpl, char tag, const char *
         case 'I': destval = &tmpl->sourcefile;     break;
         case 'F': destval = &tmpl->testflags;      break;
         default:
-            con_printmsg(LVL_ERROR, __FILE__, __LINE__, "internal error",
+            con_printmsg(LVL_ERROR, __FILE__, __LINE__, 0, "internal error",
                 "invalid tag `%c:` during code generation\n",
                 tag
             );
@@ -309,7 +309,7 @@ static bool task_template_generate(task_template_t *tmpl, char tag, const char *
      * assigned value.
      */
     if (*destval) {
-        con_printmsg(LVL_ERROR, file, line, "compile error",
+        con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "compile error",
             "tag `%c:` already assigned value: %s\n",
             tag, *destval
         );
@@ -377,7 +377,7 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
              */
             case '/':
                 if (data[1] != '/') {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                         "invalid character `/`, perhaps you meant `//` ?");
 
                     mem_d(back);
@@ -407,14 +407,14 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
             case 'I':
             case 'F':
                 if (data[1] != ':') {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                         "expected `:` after `%c`",
                         *data
                     );
                     goto failure;
                 }
                 if (!task_template_generate(tmpl, *data, file, line, &data[3], pad)) {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl compile error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl compile error",
                         "failed to generate for given task\n"
                     );
                     goto failure;
@@ -429,7 +429,7 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
             {
                 char *value = &data[3];
                 if (data[1] != ':') {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                         "expected `:` after `%c`",
                         *data
                     );
@@ -454,7 +454,7 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
             }
 
             default:
-                con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                     "invalid tag `%c`", *data
                 );
                 goto failure;

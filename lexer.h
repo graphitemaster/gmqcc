@@ -114,6 +114,7 @@ typedef struct lex_file_s {
     char   *name;
     size_t  line;
     size_t  sline; /* line at the start of a token */
+    size_t  column;
 
     int     peek[256];
     size_t  peekpos;

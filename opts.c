@@ -361,7 +361,7 @@ void opts_ini_init(const char *file) {
 
     if ((line = opts_ini_parse(ini, &opts_ini_load, &error)) != 0) {
         /* there was a parse error with the ini file */
-        con_printmsg(LVL_ERROR, file, line, "error", error);
+        con_printmsg(LVL_ERROR, file, line, 0 /*TODO: column for ini error*/, "error", error);
         vec_free(error);
     }
 
