@@ -4793,6 +4793,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 
     /* for the sake of less code we parse-in in this function */
     if (!parser_next(parser)) {
+        ast_delete(var);
         parseerror(parser, "expected parameter list");
         return NULL;
     }
