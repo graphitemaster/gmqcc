@@ -266,6 +266,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
             char name[32];
             util_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(parser->translated++));
             ast_value_set_name(out, name);
+            out->expression.flags |= AST_FLAG_INCLUDE_DEF;
         }
         return out;
     }
@@ -284,6 +285,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
     out->cvq      = CV_CONST;
     out->hasvalue = true;
     out->isimm    = true;
+    out->expression.flags |= AST_FLAG_INCLUDE_DEF;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
     util_htseth(parser->ht_imm_string, str, hash, out);
