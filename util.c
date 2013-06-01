@@ -177,7 +177,7 @@ void util_meminfo() {
                 info->file,
                 info->line);
 
-            util_dumpmem(info + 1, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
+            util_dumpmem(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
         }
     }
 
