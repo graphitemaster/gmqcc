@@ -5060,6 +5060,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
         /* parse on */
         if (!parser_next(parser)) {
             ast_delete(var);
+            mem_d(name);
             parseerror(parser, "error after variable or field declaration");
             return NULL;
         }
@@ -5069,8 +5070,10 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     if (parser->tok == '[') {
         wasarray = true;
         var = parse_arraysize(parser, var);
-        if (!var)
+        if (!var) {
+            if (name) mem_d(name);
             return NULL;
+        }
     }
 
     /* This is the point where we can turn it into a field */
@@ -5089,8 +5092,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     while (parser->tok == '(') {
         var = parse_parameter_list(parser, var);
         if (!var) {
-            if (name)
-                mem_d((void*)name);
+            if (name) mem_d(name);
             return NULL;
         }
     }
@@ -5099,11 +5101,12 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     if (name) {
         if (!ast_value_set_name(var, name)) {
             ast_delete(var);
+            mem_d(name);
             parseerror(parser, "internal error: failed to set name");
             return NULL;
         }
         /* free the name, ast_value_set_name duplicates */
-        mem_d((void*)name);
+        mem_d(name);
     }
 
     return var;

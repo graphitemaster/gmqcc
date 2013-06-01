@@ -170,7 +170,6 @@ static void util_dumpmem(struct memblock_t *memory, uint16_t cols) {
 void util_meminfo() {
     struct memblock_t *info;
 
-
     if (OPTS_OPTION_BOOL(OPTION_DEBUG)) {
         for (info = mem_start; info; info = info->next) {
             con_out("lost: %u (bytes) at %s:%u\n",
@@ -178,7 +177,7 @@ void util_meminfo() {
                 info->file,
                 info->line);
 
-            util_dumpmem(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
+            util_dumpmem(info + 1, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
         }
     }
 
