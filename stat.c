@@ -530,6 +530,9 @@ static void stat_dump_mem_info() {
 static void stat_dump_stats_table(stat_size_table_t table, const char *string, uint64_t *size) {
     size_t i,j;
     
+    if (!table)
+        return;
+    
     for (i = 0, j = 0; i < ST_SIZE; i++) {
         stat_size_entry_t *entry;
 
@@ -554,7 +557,7 @@ void stat_info() {
 
     if (OPTS_OPTION_BOOL(OPTION_MEMCHK) ||
         OPTS_OPTION_BOOL(OPTION_STATISTICS)) {
-        uint64_t mem;
+        uint64_t mem = 0;
         
         con_out("\nAdditional Statistics:\n\
     Total vectors allocated:    %llu\n\
