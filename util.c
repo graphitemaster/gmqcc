@@ -208,11 +208,13 @@ void util_st_put(size_table_t table, size_t key, size_t value) {
     table[hash]->value = value;
 }
 
-static uint64_t      strdups      = 0;
-static uint64_t      vectors      = 0;
-static uint64_t      vector_sizes = 0;
-static uint64_t      hashtables   = 0;
-static size_table_t  vector_usage = NULL;
+static uint64_t      strdups           = 0;
+static uint64_t      vectors           = 0;
+static uint64_t      vector_sizes      = 0;
+static uint64_t      hashtables        = 0;
+static uint64_t      hashtable_sizes   = 0;
+static size_table_t  vector_usage      = NULL;
+static size_table_t  hashtable_usage   = NULL;
 
 void util_meminfo() {
     struct memblock_t *info;
@@ -251,14 +253,15 @@ void util_meminfo() {
     
     if (OPTS_OPTION_BOOL(OPTION_STATISTICS) ||
         OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
-        size_t i=0;
-        size_t e=1;
+        size_t   i         = 0;
+        size_t   e         = 1;
+        uint64_t vectormem = 0;
         
-        con_out("Additional Statistics:\n\
-            Total vectors allocated:    %llu\n\
-            Total string duplicates:    %llu\n\
-            Total hashtables allocated: %llu\n\
-            Total unique vector sizes:  %llu\n",
+        con_out("\nAdditional Statistics:\n\
+            Total vectors allocated:      %llu\n\
+            Total string duplicates:      %llu\n\
+            Total hashtables allocated:   %llu\n\
+            Total unique vector sizes:    %llu\n",
             vectors,
             strdups,
             hashtables,
@@ -271,17 +274,44 @@ void util_meminfo() {
             if (!(entry = vector_usage[i]))
                 continue;
             
-            con_out("               %u| # of %3u (bytes) vectors: %u\n",
+            con_out("                %2u| # of %4u byte vectors: %u\n",
+                (unsigned)e,
+                (unsigned)entry->key,
+                (unsigned)entry->value
+            );
+            e++;
+            
+            vectormem += entry->key * entry->value;
+        }
+
+        con_out("\
+            Total unique hashtable sizes: %llu\n",
+            hashtable_sizes
+        );
+        
+        for (i = 0, e = 1; i < ST_SIZE; i++) {
+            size_entry_t *entry;
+            
+            if (!(entry = hashtable_usage[i]))
+                continue;
+                
+            con_out("                %2u| # of %4u element hashtables: %u\n",
                 (unsigned)e,
                 (unsigned)entry->key,
                 (unsigned)entry->value
             );
             e++;
         }
+        
+        con_out("            Total vector memory:          %f (MB)\n",
+            (float)(vectormem) / 1048576.0f
+        );
     }
-    
+
     if (vector_usage)
         util_st_del(vector_usage);
+    if (hashtable_usage)
+        util_st_del(hashtable_usage);
 }
 
 /*
@@ -616,8 +646,13 @@ static hash_node_t *_util_htnewpair(const char *key, void *value) {
  */
 hash_table_t *util_htnew(size_t size) {
     hash_table_t *hashtable = NULL;
+    size_entry_t *find;
+    
     if (size < 1)
         return NULL;
+        
+    if (!hashtable_usage)
+        hashtable_usage = util_st_new();
 
     if (!(hashtable = (hash_table_t*)mem_a(sizeof(hash_table_t))))
         return NULL;
@@ -625,6 +660,13 @@ hash_table_t *util_htnew(size_t size) {
     if (!(hashtable->table = (hash_node_t**)mem_a(sizeof(hash_node_t*) * size))) {
         mem_d(hashtable);
         return NULL;
+    }
+    
+    if ((find = util_st_get(hashtable_usage, size)))
+        find->value++;
+    else {
+        hashtable_sizes++;
+        util_st_put(hashtable_usage, size, 1);
     }
 
     hashtable->size = size;
