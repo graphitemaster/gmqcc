@@ -796,8 +796,7 @@ cleanup:
         mem_d((void*)operators);
 
     lex_cleanup();
-    util_meminfo();
-    /*util_vecstats_destroy();*/
-    
+    stat_info();
+
     return retval;
 }

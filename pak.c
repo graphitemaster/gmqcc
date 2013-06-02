@@ -552,7 +552,8 @@ int main(int argc, char **argv) {
         /* not possible */
         pak_close(pak);
         vec_free(files);
-        util_meminfo();
+        stat_info();
+        
         return EXIT_SUCCESS;
     }
 
@@ -575,6 +576,6 @@ int main(int argc, char **argv) {
     pak_close(pak);
     vec_free(files);
 
-    util_meminfo();
+    stat_info();
     return EXIT_SUCCESS;
 }

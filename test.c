@@ -1321,7 +1321,7 @@ int main(int argc, char **argv) {
     }
     con_change(redirout, redirerr);
     succeed = test_perform("tests", defs);
-    util_meminfo();
+    stat_info();
 
 
     return (succeed) ? EXIT_SUCCESS : EXIT_FAILURE;
