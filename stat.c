@@ -515,7 +515,7 @@ static void stat_dump_mem_info() {
         stat_mem_deallocated_total,
         (float)(stat_mem_allocated)                        / 1048576.0f,
         (float)(stat_mem_deallocated)                      / 1048576.0f,
-        (float)(stat_mem_high)                             / 1048576.0f,
+        (float)(stat_mem_peak)                             / 1048576.0f,
         (float)(stat_mem_allocated - stat_mem_deallocated) / 1048576.0f,
         stat_mem_allocated_total - stat_mem_deallocated_total
     );
