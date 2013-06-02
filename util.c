@@ -732,28 +732,6 @@ void util_htrem(hash_table_t *ht, void (*callback)(void *data)) {
     mem_d(ht);
 }
 
-void util_htremkey(hash_table_t *ht, void (*callback)(void *data, const char *key)) {
-    size_t i = 0;
-    for (; i < ht->size; i++) {
-        hash_node_t *n = ht->table[i];
-        hash_node_t *p;
-
-        /* free in list */
-        while (n) {
-            if (callback)
-                callback(n->value, n->key);
-            mem_d(n->key);
-            p = n;
-            n = n->next;
-            mem_d(p);
-        }
-
-    }
-    /* free table */
-    mem_d(ht->table);
-    mem_d(ht);
-}
-
 void util_htrmh(hash_table_t *ht, const char *key, size_t bin, void (*cb)(void*)) {
     hash_node_t **pair = &ht->table[bin];
     hash_node_t *tmp;
