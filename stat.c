@@ -82,6 +82,8 @@ void stat_mem_deallocate(void *ptr) {
     /* move ahead */
     if (info == stat_mem_block_root)
         stat_mem_block_root = info->next;
+        
+    free(info);
 }
 
 void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file) {
