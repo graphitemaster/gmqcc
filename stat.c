@@ -323,14 +323,14 @@ hash_table_t *util_htnew(size_t size) {
     if ((find = stat_size_get(stat_size_hashtables, size)))
         find->value++;
     else {
-        stat_used_hashtables++;
+        stat_type_hashtables++;
         stat_size_put(stat_size_hashtables, size, 1);
     }
 
     hashtable->size = size;
     memset(hashtable->table, 0, sizeof(hash_node_t*) * size);
 
-    stat_type_hashtables++;
+    stat_used_hashtables++;
     return hashtable;
 }
 
