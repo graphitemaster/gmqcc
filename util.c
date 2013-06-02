@@ -182,24 +182,24 @@ typedef struct {
 
 typedef size_entry_t **size_table_t;
 
-size_table_t util_st_new() {
+static size_table_t util_st_new() {
     return (size_table_t)memset(
         mem_a(sizeof(size_entry_t*) * ST_SIZE),
         0, ST_SIZE * sizeof(size_entry_t*)
     );
 }
-void util_st_del(size_table_t table) {
+static void util_st_del(size_table_t table) {
     size_t i = 0;
     for (; i < ST_SIZE; i++) if(table[i]) mem_d(table[i]);
     mem_d(table);
 }
-size_entry_t *util_st_get(size_table_t table, size_t key) {
+static size_entry_t *util_st_get(size_table_t table, size_t key) {
     size_t hash = (key % ST_SIZE);
     while (table[hash] && table[hash]->key != key)
         hash = (hash + 1) % ST_SIZE;
     return table[hash];
 }
-void util_st_put(size_table_t table, size_t key, size_t value) {
+static void util_st_put(size_table_t table, size_t key, size_t value) {
     size_t hash = (key % ST_SIZE);
     while (table[hash] && table[hash]->key != key)
         hash = (hash + 1) % ST_SIZE;
