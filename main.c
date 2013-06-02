@@ -173,6 +173,7 @@ static bool options_parse(int argc, char **argv) {
 
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_GMQCC;
+                    OPTS_OPTION_BOOL(OPTION_STATISTICS) = true;
 
                 } else if (!strcmp(argarg, "qcc")) {
 

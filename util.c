@@ -181,9 +181,11 @@ void util_meminfo() {
         }
     }
     
-    con_out("Additional Statistics:\n    Total vectors used: %lu\n",
-        vectors
-    );
+    if (OPTS_OPTION_BOOL(OPTION_STATISTICS)) {
+        con_out("Additional Statistics:\n    Total vectors used: %lu\n",
+            vectors
+        );
+    }
 
     if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
         OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
