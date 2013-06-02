@@ -211,6 +211,7 @@ void util_st_put(size_table_t table, size_t key, size_t value) {
 static uint64_t      strdups      = 0;
 static uint64_t      vectors      = 0;
 static uint64_t      vector_sizes = 0;
+static uint64_t      hashtables   = 0;
 static size_table_t  vector_usage = NULL;
 
 void util_meminfo() {
@@ -254,12 +255,14 @@ void util_meminfo() {
         size_t e=1;
         
         con_out("Additional Statistics:\n\
-            Total vectors allocated:    %u\n\
-            Total string duplicates:    %u\n\
-            Total unique vector sizes:  %u\n",
-            (unsigned)vectors,
-            (unsigned)strdups,
-            (unsigned)vector_sizes
+            Total vectors allocated:    %llu\n\
+            Total string duplicates:    %llu\n\
+            Total hashtables allocated: %llu\n\
+            Total unique vector sizes:  %llu\n",
+            vectors,
+            strdups,
+            hashtables,
+            vector_sizes
         );
         
         for (; i < ST_SIZE; i++) {
@@ -627,6 +630,7 @@ hash_table_t *util_htnew(size_t size) {
     hashtable->size = size;
     memset(hashtable->table, 0, sizeof(hash_node_t*) * size);
 
+    hashtables++;
     return hashtable;
 }
 
