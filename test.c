@@ -1283,6 +1283,7 @@ int main(int argc, char **argv) {
     char         *defs     = NULL;
 
     con_init();
+    OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = 16;
 
     /*
      * Command line option parsing commences now We only need to support
