@@ -208,6 +208,7 @@ void util_st_put(size_table_t table, size_t key, size_t value) {
     table[hash]->value = value;
 }
 
+static uint64_t      strdups      = 0;
 static uint64_t      vectors      = 0;
 static uint64_t      vector_sizes = 0;
 static size_table_t  vector_usage = NULL;
@@ -249,26 +250,30 @@ void util_meminfo() {
     
     if (OPTS_OPTION_BOOL(OPTION_STATISTICS) ||
         OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
-        size_t i;
+        size_t i=0;
+        size_t e=1;
         
         con_out("Additional Statistics:\n\
-            Total vectors used:         %u\n\
+            Total vectors allocated:    %u\n\
+            Total string duplicates:    %u\n\
             Total unique vector sizes:  %u\n",
             (unsigned)vectors,
+            (unsigned)strdups,
             (unsigned)vector_sizes
         );
         
-        /* TODO: */
-        for (i = 0; i < ST_SIZE; i++) {
+        for (; i < ST_SIZE; i++) {
             size_entry_t *entry;
             
             if (!(entry = vector_usage[i]))
                 continue;
             
-            con_out("               # of %3u (bytes) vectors: %u\n",
+            con_out("               %u| # of %3u (bytes) vectors: %u\n",
+                (unsigned)e,
                 (unsigned)entry->key,
                 (unsigned)entry->value
             );
+            e++;
         }
     }
     
@@ -295,6 +300,7 @@ char *_util_Estrdup(const char *s, const char *file, size_t line) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
+    strdups++;
     return ptr;
 }
 
@@ -314,6 +320,7 @@ char *_util_Estrdup_empty(const char *s, const char *file, size_t line) {
         memcpy(ptr, s, len);
         ptr[len] = '\0';
     }
+    strdups++;
     return ptr;
 }
 
