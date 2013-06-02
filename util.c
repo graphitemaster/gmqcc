@@ -166,7 +166,7 @@ static void util_dumpmem(struct memblock_t *memory, uint16_t cols) {
         }
     }
 }
-
+static uint64_t vectors = 0;
 void util_meminfo() {
     struct memblock_t *info;
 
@@ -180,6 +180,10 @@ void util_meminfo() {
             util_dumpmem(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
         }
     }
+    
+    con_out("Additional Statistics:\n    Total vectors used: %lu\n",
+        vectors
+    );
 
     if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
         OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
@@ -434,13 +438,20 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
 /* TODO: rewrite ... when I redo the ve cleanup */
 void _util_vec_grow(void **a, size_t i, size_t s) {
     vector_t *d = vec_meta(*a);
-    size_t    m = *a ? 2 * d->allocated +i : i+1;
-    void     *p = mem_r((*a ? d : NULL), s * m + sizeof(vector_t));
+    size_t    m = 0; 
+    void     *p = NULL;
 
-    if (!*a)
+    if (*a) {
+        m = 2 * d->allocated + i;
+        p = mem_r(d, s * m + sizeof(vector_t));
+    } else {
+        m = i + 1;
+        p = mem_a(s * m + sizeof(vector_t));
         ((vector_t*)p)->used = 0;
-    *a = (vector_t*)p + 1;
+        vectors++;
+    }
 
+    *a = (vector_t*)p + 1;
     vec_meta(*a)->allocated = m;
 }
 
