@@ -166,7 +166,52 @@ static void util_dumpmem(struct memblock_t *memory, uint16_t cols) {
         }
     }
 }
-static uint64_t vectors = 0;
+
+/*
+ * The following is a VERY tight, efficent, hashtable for integer
+ * values and keys, and for nothing more. We could make our existing
+ * hashtable support type-genericness through a void * pointer but,
+ * ideally that would make things more complicated. We also don't need
+ * that much of a bloat for something as basic as this.
+ */
+typedef struct {
+    size_t key;
+    size_t value;
+} size_entry_t;
+#define ST_SIZE 1024
+
+typedef size_entry_t **size_table_t;
+
+size_table_t util_st_new() {
+    return (size_table_t)memset(
+        mem_a(sizeof(size_entry_t*) * ST_SIZE),
+        0, ST_SIZE * sizeof(size_entry_t*)
+    );
+}
+void util_st_del(size_table_t table) {
+    size_t i = 0;
+    for (; i < ST_SIZE; i++) if(table[i]) mem_d(table[i]);
+    mem_d(table);
+}
+size_entry_t *util_st_get(size_table_t table, size_t key) {
+    size_t hash = (key % ST_SIZE);
+    while (table[hash] && table[hash]->key != key)
+        hash = (hash + 1) % ST_SIZE;
+    return table[hash];
+}
+void util_st_put(size_table_t table, size_t key, size_t value) {
+    size_t hash = (key % ST_SIZE);
+    while (table[hash] && table[hash]->key != key)
+        hash = (hash + 1) % ST_SIZE;
+    table[hash]        = (size_entry_t*)mem_a(sizeof(size_entry_t));
+    table[hash]->key   = key;
+    table[hash]->value = value;
+}
+
+static uint64_t      vectors      = 0;
+static uint64_t      vector_sizes = 0;
+static size_table_t  vector_usage = NULL;
+
 void util_meminfo() {
     struct memblock_t *info;
 
@@ -179,12 +224,6 @@ void util_meminfo() {
 
             util_dumpmem(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
         }
-    }
-    
-    if (OPTS_OPTION_BOOL(OPTION_STATISTICS)) {
-        con_out("Additional Statistics:\n    Total vectors used: %lu\n",
-            vectors
-        );
     }
 
     if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
@@ -207,6 +246,34 @@ void util_meminfo() {
                 (mem_at -  mem_dt)
         );
     }
+    
+    if (OPTS_OPTION_BOOL(OPTION_STATISTICS) ||
+        OPTS_OPTION_BOOL(OPTION_MEMCHK)) {
+        size_t i;
+        
+        con_out("Additional Statistics:\n\
+            Total vectors used:         %u\n\
+            Total unique vector sizes:  %u\n",
+            (unsigned)vectors,
+            (unsigned)vector_sizes
+        );
+        
+        /* TODO: */
+        for (i = 0; i < ST_SIZE; i++) {
+            size_entry_t *entry;
+            
+            if (!(entry = vector_usage[i]))
+                continue;
+            
+            con_out("               # of %3u (bytes) vectors: %u\n",
+                (unsigned)entry->key,
+                (unsigned)entry->value
+            );
+        }
+    }
+    
+    if (vector_usage)
+        util_st_del(vector_usage);
 }
 
 /*
@@ -439,10 +506,11 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
 
 /* TODO: rewrite ... when I redo the ve cleanup */
 void _util_vec_grow(void **a, size_t i, size_t s) {
-    vector_t *d = vec_meta(*a);
-    size_t    m = 0; 
-    void     *p = NULL;
-
+    vector_t     *d = vec_meta(*a);
+    size_t        m = 0;
+    size_entry_t *e = NULL;
+    void         *p = NULL;
+    
     if (*a) {
         m = 2 * d->allocated + i;
         p = mem_r(d, s * m + sizeof(vector_t));
@@ -451,6 +519,16 @@ void _util_vec_grow(void **a, size_t i, size_t s) {
         p = mem_a(s * m + sizeof(vector_t));
         ((vector_t*)p)->used = 0;
         vectors++;
+    }
+    
+    if (!vector_usage)
+        vector_usage = util_st_new();
+
+    if ((e = util_st_get(vector_usage, s))) {
+        e->value ++;
+    } else {
+        util_st_put(vector_usage, s, 1); /* start off with 1 */
+        vector_sizes++;
     }
 
     *a = (vector_t*)p + 1;
@@ -643,6 +721,28 @@ void util_htrem(hash_table_t *ht, void (*callback)(void *data)) {
                 mem_d(n->key);
             if (callback)
                 callback(n->value);
+            p = n;
+            n = n->next;
+            mem_d(p);
+        }
+
+    }
+    /* free table */
+    mem_d(ht->table);
+    mem_d(ht);
+}
+
+void util_htremkey(hash_table_t *ht, void (*callback)(void *data, const char *key)) {
+    size_t i = 0;
+    for (; i < ht->size; i++) {
+        hash_node_t *n = ht->table[i];
+        hash_node_t *p;
+
+        /* free in list */
+        while (n) {
+            if (callback)
+                callback(n->value, n->key);
+            mem_d(n->key);
             p = n;
             n = n->next;
             mem_d(p);

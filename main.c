@@ -797,5 +797,7 @@ cleanup:
 
     lex_cleanup();
     util_meminfo();
+    /*util_vecstats_destroy();*/
+    
     return retval;
 }
