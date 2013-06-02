@@ -291,28 +291,11 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 /*===================================================================*/
 /*=========================== stat.c ================================*/
 /*===================================================================*/
-typedef struct {
-    size_t key;
-    size_t value;
-} stat_size_entry_t, **stat_size_table_t;
-
 void  stat_info();
-
 char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
 void *stat_mem_reallocate(void *,       size_t, size_t, const char *);
 void  stat_mem_deallocate(void *);
 void *stat_mem_allocate  (size_t, size_t, const char *);
-
-stat_size_table_t  stat_size_new();
-stat_size_entry_t *stat_size_get(stat_size_table_t, size_t);
-void               stat_size_del(stat_size_table_t);
-void               stat_size_put(stat_size_table_t, size_t, size_t);
-
-/* getters for hashtable: */
-stat_size_table_t *stat_size_hashtables_get();
-uint64_t          *stat_type_hashtables_get();
-uint64_t          *stat_used_hashtables_get();
-stat_size_table_t *stat_hashtables_init();
 
 #define mem_a(SIZE)              stat_mem_allocate  ((SIZE), __LINE__, __FILE__)
 #define mem_d(PTRN)              stat_mem_deallocate((void*)(PTRN))

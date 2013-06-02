@@ -17,6 +17,11 @@ typedef struct stat_mem_block_s {
     struct stat_mem_block_s *prev;
 } stat_mem_block_t;
 
+typedef struct {
+    size_t key;
+    size_t value;
+} stat_size_entry_t, **stat_size_table_t;
+
 static uint64_t          stat_mem_allocated         = 0;
 static uint64_t          stat_mem_deallocated       = 0;
 static uint64_t          stat_mem_allocated_total   = 0;
@@ -31,6 +36,40 @@ static uint64_t          stat_type_hashtables       = 0;
 static stat_size_table_t stat_size_vectors          = NULL;
 static stat_size_table_t stat_size_hashtables       = NULL;
 static stat_mem_block_t *stat_mem_block_root        = NULL;
+
+
+/*
+ * A tiny size_t key-value hashtbale for tracking vector and hashtable
+ * sizes. We can use it for other things too, if we need to. This is
+ * very TIGHT, and efficent in terms of space though.
+ */
+static stat_size_table_t stat_size_new() {
+    return (stat_size_table_t)memset(
+        mem_a(sizeof(stat_size_entry_t*) * ST_SIZE),
+        0, ST_SIZE * sizeof(stat_size_entry_t*)
+    );
+}
+
+static void stat_size_del(stat_size_table_t table) {
+    size_t i = 0;
+    for (; i < ST_SIZE; i++) if(table[i]) mem_d(table[i]);
+    mem_d(table);
+}
+
+static stat_size_entry_t *stat_size_get(stat_size_table_t table, size_t key) {
+    size_t hash = (key % ST_SIZE);
+    while (table[hash] && table[hash]->key != key)
+        hash = (hash + 1) % ST_SIZE;
+    return table[hash];
+}
+static void stat_size_put(stat_size_table_t table, size_t key, size_t value) {
+    size_t hash = (key % ST_SIZE);
+    while (table[hash] && table[hash]->key != key)
+        hash = (hash + 1) % ST_SIZE;
+    table[hash] = (stat_size_entry_t*)mem_a(sizeof(stat_size_entry_t));
+    table[hash]->key = key;
+    table[hash]->value = value;
+}
 
 /*
  * A basic header of information wrapper allocator. Simply stores
@@ -429,39 +468,6 @@ void util_htrm(hash_table_t *ht, const char *key, void (*cb)(void*)) {
 
 void util_htdel(hash_table_t *ht) {
     util_htrem(ht, NULL);
-}
-
-/*
- * A tiny size_t key-value hashtbale for tracking vector and hashtable
- * sizes. We can use it for other things too, if we need to. This is
- * very TIGHT, and efficent in terms of space though.
- */
-stat_size_table_t stat_size_new() {
-    return (stat_size_table_t)memset(
-        mem_a(sizeof(stat_size_entry_t*) * ST_SIZE),
-        0, ST_SIZE * sizeof(stat_size_entry_t*)
-    );
-}
-
-void stat_size_del(stat_size_table_t table) {
-    size_t i = 0;
-    for (; i < ST_SIZE; i++) if(table[i]) mem_d(table[i]);
-    mem_d(table);
-}
-
-stat_size_entry_t *stat_size_get(stat_size_table_t table, size_t key) {
-    size_t hash = (key % ST_SIZE);
-    while (table[hash] && table[hash]->key != key)
-        hash = (hash + 1) % ST_SIZE;
-    return table[hash];
-}
-void stat_size_put(stat_size_table_t table, size_t key, size_t value) {
-    size_t hash = (key % ST_SIZE);
-    while (table[hash] && table[hash]->key != key)
-        hash = (hash + 1) % ST_SIZE;
-    table[hash] = (stat_size_entry_t*)mem_a(sizeof(stat_size_entry_t));
-    table[hash]->key = key;
-    table[hash]->value = value;
 }
 
 /*
