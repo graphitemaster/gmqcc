@@ -23,12 +23,8 @@
  */
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <ctype.h>
+#include <stdio.h> /* TODO: remove this */
 
 /*
  * Disable some over protective warnings in visual studio because fixing them is a waste

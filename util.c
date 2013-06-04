@@ -21,8 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdarg.h>
-#include <errno.h>
+#include <string.h>
+#include <ctype.h>
+
 #include "gmqcc.h"
 
 void util_debug(const char *area, const char *ms, ...) {

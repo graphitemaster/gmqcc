@@ -21,7 +21,6 @@
  * SOFTWARE.
  */
 #include "gmqcc.h"
-#include <stdio.h>
 
 /*
  * isatty/STDERR_FILENO/STDOUT_FILNO

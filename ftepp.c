@@ -22,7 +22,10 @@
  * SOFTWARE.
  */
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
+
 #include "gmqcc.h"
 #include "lexer.h"
 
