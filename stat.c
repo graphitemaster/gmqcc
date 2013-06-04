@@ -26,12 +26,6 @@ typedef struct {
     size_t value;
 } stat_size_entry_t, **stat_size_table_t;
 
-typedef struct {
-    uint64_t used;
-    uint64_t type;
-    uint64_t size;
-} stat_entry_t;
-
 static uint64_t          stat_mem_allocated         = 0;
 static uint64_t          stat_mem_deallocated       = 0;
 static uint64_t          stat_mem_allocated_total   = 0;
