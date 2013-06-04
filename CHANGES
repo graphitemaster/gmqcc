@@ -19,6 +19,7 @@ Release v0.3.0
     * Build:
         - Added gentoo ebuilds.
         - Added win32 Makefile for building win32 packages.
+        - Added slackware pkg build files
 
 2012-04-27 v0.2.9
     * Preprocessor:
