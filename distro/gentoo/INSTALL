@@ -9,10 +9,10 @@ if you don't already, you can create one as such.
 # mkdir -p /usr/local/portage
 # vim /etc/make.conf
 	Set PORTDIR_OVERLAY=/usr/local/portage
-	The save and exit
+	Then save and exit
 
 Once that is completed, or you skiped that step, you need to create a
-directory in your overlay tree for gmqcc, this can be done with. It should
+directory in your overlay tree for gmqcc, this can be done as such:
 (subsitute [[PORTDIR_OVERLAY]] with the one set in /etc/make.conf)
 
 # mkdir -p [[PORTDIR_OVERLAY]]/gmqcc
