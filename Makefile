@@ -29,12 +29,13 @@ ifeq ($(CC), clang)
 	    -Wno-conversion                    \
 	    -Wno-missing-prototypes            \
 	    -Wno-float-equal                   \
-	    -Wno-unknown-warning-option
+	    -Wno-unknown-warning-option        \
+	    -Wstrict-prototypes
 else
 	#Tiny C Compiler doesn't know what -pedantic-errors is
 	# and instead of ignoring .. just errors.
 	ifneq ($(CC), tcc)
-		CFLAGS += -pedantic-errors
+		CFLAGS += -Wstrict-prototypes -pedantic-errors
 	else
 		CFLAGS += -Wno-pointer-sign -fno-common
 	endif

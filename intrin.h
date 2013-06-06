@@ -36,7 +36,7 @@ typedef struct {
     const char       *alias;
 } intrin_t;
 
-static ht intrin_intrinsics() {
+static ht intrin_intrinsics(void) {
     static ht intrinsics = NULL;
     if (!intrinsics)
         intrinsics = util_htnew(PARSER_HT_SIZE);

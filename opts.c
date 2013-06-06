@@ -30,7 +30,7 @@
 unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 opts_cmd_t   opts; /* command lien options */
 
-static void opts_setdefault() {
+static void opts_setdefault(void) {
     memset(&opts, 0, sizeof(opts_cmd_t));
     OPTS_OPTION_BOOL(OPTION_CORRECTION) = true;
 

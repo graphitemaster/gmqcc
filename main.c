@@ -50,7 +50,7 @@ static ppitem  *ppems = NULL;
 
 static const char *app_name;
 
-static void version() {
+static void version(void) {
     con_out("GMQCC %d.%d.%d Built %s %s\n" GMQCC_DEV_VERSION_STRING,
         GMQCC_VERSION_MAJOR,
         GMQCC_VERSION_MINOR,
@@ -60,7 +60,7 @@ static void version() {
     );
 }
 
-static int usage() {
+static int usage(void) {
     con_out("usage: %s [options] [files...]", app_name);
     con_out("options:\n"
             "  -h, --help             show this help message\n"

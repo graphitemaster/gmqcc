@@ -197,7 +197,7 @@ static con_t console;
  * NOTE: This prevents colored output to piped stdout/err via isatty
  * checks.
  */
-static void con_enablecolor() {
+static void con_enablecolor(void) {
     if (console.handle_err == stderr || console.handle_err == stdout)
         console.color_err = !!(isatty(STDERR_FILENO));
     if (console.handle_out == stderr || console.handle_out == stdout)

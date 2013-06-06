@@ -70,7 +70,7 @@ static stat_mem_block_t *stat_mem_block_root        = NULL;
  * sizes. We can use it for other things too, if we need to. This is
  * very TIGHT, and efficent in terms of space though.
  */
-static stat_size_table_t stat_size_new() {
+static stat_size_table_t stat_size_new(void) {
     return (stat_size_table_t)memset(
         mem_a(sizeof(stat_size_entry_t*) * ST_SIZE),
         0, ST_SIZE * sizeof(stat_size_entry_t*)
@@ -523,7 +523,7 @@ static void stat_dump_mem_contents(stat_mem_block_t *memory, uint16_t cols) {
     }
 }
 
-static void stat_dump_mem_leaks() {
+static void stat_dump_mem_leaks(void) {
     stat_mem_block_t *info;
     for (info = stat_mem_block_root; info; info = info->next) {
         con_out("lost: %u (bytes) at %s:%u\n",
@@ -536,7 +536,7 @@ static void stat_dump_mem_leaks() {
     }
 }
 
-static void stat_dump_mem_info() {
+static void stat_dump_mem_info(void) {
     con_out("Memory information:\n\
     Total allocations:   %llu\n\
     Total deallocations: %llu\n\

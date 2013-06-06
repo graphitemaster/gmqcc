@@ -287,7 +287,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 /*===================================================================*/
 /*=========================== stat.c ================================*/
 /*===================================================================*/
-void  stat_info();
+void  stat_info          (void);
 char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
 void *stat_mem_reallocate(void *,       size_t, size_t, const char *);
 void  stat_mem_deallocate(void *);
@@ -317,7 +317,7 @@ size_t util_strtononcmd (const char *, char *, size_t);
 uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 
 void     util_seed(uint32_t);
-uint32_t util_rand();
+uint32_t util_rand(void);
 
 /*
  * String functions (formatting, copying, concatenating, errors). These are wrapped
@@ -373,7 +373,7 @@ typedef struct trie_s {
     struct trie_s *entries;
 } correct_trie_t;
 
-correct_trie_t* correct_trie_new();
+correct_trie_t* correct_trie_new(void);
 
 typedef struct hash_table_t {
     size_t                size;
@@ -763,17 +763,17 @@ enum {
     LVL_ERROR
 };
 
-FILE *con_default_out();
-FILE *con_default_err();
+FILE *con_default_out(void);
+FILE *con_default_err(void);
 
 void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
 void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);
 void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
 void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...);
 
-void con_close ();
-void con_init  ();
-void con_reset ();
+void con_close (void);
+void con_init  (void);
+void con_reset (void);
 void con_color (int);
 int  con_change(const char *, const char *);
 int  con_verr  (const char *, va_list);
@@ -790,7 +790,7 @@ void /********/ compile_error   (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...
 void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
 bool GMQCC_WARN compile_warning (lex_ctx ctx, int warntype, const char *fmt, ...);
 bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap);
-void            compile_show_werrors();
+void            compile_show_werrors(void);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/
@@ -995,8 +995,7 @@ qcint             prog_tempstring(qc_program *prog, const char *_str);
 /*===================== parser.c commandline ========================*/
 /*===================================================================*/
 struct parser_s;
-
-struct parser_s *parser_create        ();
+struct parser_s *parser_create        (void);
 bool             parser_compile_file  (struct parser_s *parser, const char *);
 bool             parser_compile_string(struct parser_s *parser, const char *, const char *, size_t);
 bool             parser_finish        (struct parser_s *parser, const char *);
@@ -1006,7 +1005,7 @@ void             parser_cleanup       (struct parser_s *parser);
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
 struct ftepp_s;
-struct ftepp_s *ftepp_create           ();
+struct ftepp_s *ftepp_create           (void);
 bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);
 bool            ftepp_preprocess_string(struct ftepp_s *ftepp, const char *name, const char *str);
 void            ftepp_finish           (struct ftepp_s *ftepp);
@@ -1066,10 +1065,10 @@ void opts_setoptimlevel(unsigned int);
 void opts_ini_init     (const char *);
 
 /* Saner flag handling */
-void opts_backup_non_Wall();
-void opts_restore_non_Wall();
-void opts_backup_non_Werror_all();
-void opts_restore_non_Werror_all();
+void opts_backup_non_Wall(void);
+void opts_restore_non_Wall(void);
+void opts_backup_non_Werror_all(void);
+void opts_restore_non_Werror_all(void);
 
 enum {
 # define GMQCC_TYPE_FLAGS
