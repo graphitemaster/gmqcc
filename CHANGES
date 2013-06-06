@@ -1,5 +1,25 @@
 Release v0.3.0
-    * to fill
+    * Language:
+        - Return assignments, the ability to assign to the return keyword
+          as if it were a local variable.
+    * Compilation:
+        - Optimized memory usage (now uses on average %3 less memory for
+          compilation).
+        - Fixed dotranslate (translatable strings)
+    * QCVM:
+        - Escape strings for -printdefs
+    * Commandline:
+        - Added statistic dumps, gives information about the number of used
+          hashtables, vectors, and number of unique sizes of vectors and
+          hashtables. The amount of memory used for vectors. As well as the
+          number of strdups used in total for compilation.
+    * Testsuite:
+        - Fixed a floating point exception rasied by modulo operation in
+          -memchk.
+    * Build:
+        - Added gentoo ebuilds.
+        - Added win32 Makefile for building win32 packages.
+        - Added slackware pkg build files
 
 2012-04-27 v0.2.9
     * Preprocessor:
@@ -56,12 +76,12 @@ Release v0.3.0
         - Added defs.qh (auto included) for qcvm definitions
     * Syntax Highlighting:
         - Added various syntax highlighting description files for
-        various text editors / integrated development envirorments,
-        including support for: geany, kate, kwrite, kdevelop, QtCreator,
-        gtksourceview, gedit, sany, nano, jedit
+          various text editors / integrated development envirorments,
+          including support for: geany, kate, kwrite, kdevelop, QtCreator,
+          gtksourceview, gedit, sany, nano, jedit
     * Build:
         - Build scripts for building debian, archlinux and archbsd
-        packages for x86, and x86_64.
+          packages for x86, and x86_64.
         - Makefile targets for gource visualization, and render of
           gource visualization.
 

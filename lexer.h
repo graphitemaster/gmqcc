@@ -22,7 +22,6 @@
  */
 #ifndef GMQCC_LEXER_HDR
 #define GMQCC_LEXER_HDR
-
 typedef struct token_s token;
 
 struct token_s {
@@ -114,6 +113,7 @@ typedef struct lex_file_s {
     char   *name;
     size_t  line;
     size_t  sline; /* line at the start of a token */
+    size_t  column;
 
     int     peek[256];
     size_t  peekpos;
@@ -163,9 +163,14 @@ typedef struct {
     unsigned int flags;
 } oper_info;
 
-#define opid1(a) (a)
-#define opid2(a,b) ((a<<8)|b)
-#define opid3(a,b,c) ((a<<16)|(b<<8)|c)
+/*
+ * Explicit uint8_t casts since the left operand of shift operator cannot
+ * be negative, even though it won't happen, this supresses the future
+ * possibility.
+ */
+#define opid1(a)     ((uint8_t)a)
+#define opid2(a,b)   (((uint8_t)a<<8) |(uint8_t)b)
+#define opid3(a,b,c) (((uint8_t)a<<16)|((uint8_t)b<<8)|(uint8_t)c)
 
 static const oper_info c_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX}, /* paren expression - non function call */
@@ -335,6 +340,6 @@ static const size_t qcc_operator_count = (sizeof(qcc_operators) / sizeof(qcc_ope
 
 extern const oper_info *operators;
 extern size_t           operator_count;
-void lexerror(lex_file*, const char *fmt, ...);
+/*void lexerror(lex_file*, const char *fmt, ...);*/
 
 #endif

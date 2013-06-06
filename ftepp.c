@@ -22,7 +22,10 @@
  * SOFTWARE.
  */
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
+
 #include "gmqcc.h"
 #include "lexer.h"
 
@@ -81,7 +84,7 @@ static uint32_t ftepp_predef_countval = 0;
 static uint32_t ftepp_predef_randval  = 0;
 
 /* __DATE__ */
-char *ftepp_predef_date(lex_file *context) {
+static char *ftepp_predef_date(lex_file *context) {
     struct tm *itime = NULL;
     time_t     rtime;
     char      *value = (char*)mem_a(82);
@@ -104,7 +107,7 @@ char *ftepp_predef_date(lex_file *context) {
 }
 
 /* __TIME__ */
-char *ftepp_predef_time(lex_file *context) {
+static char *ftepp_predef_time(lex_file *context) {
     struct tm *itime = NULL;
     time_t     rtime;
     char      *value = (char*)mem_a(82);
@@ -127,13 +130,13 @@ char *ftepp_predef_time(lex_file *context) {
 }
 
 /* __LINE__ */
-char *ftepp_predef_line(lex_file *context) {
+static char *ftepp_predef_line(lex_file *context) {
     char   *value;
     util_asprintf(&value, "%d", (int)context->line);
     return value;
 }
 /* __FILE__ */
-char *ftepp_predef_file(lex_file *context) {
+static char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
     util_snprintf(value, length, "\"%s\"", context->name);
@@ -141,7 +144,7 @@ char *ftepp_predef_file(lex_file *context) {
     return value;
 }
 /* __COUNTER_LAST__ */
-char *ftepp_predef_counterlast(lex_file *context) {
+static char *ftepp_predef_counterlast(lex_file *context) {
     char   *value;
     util_asprintf(&value, "%u", ftepp_predef_countval);
 
@@ -149,7 +152,7 @@ char *ftepp_predef_counterlast(lex_file *context) {
     return value;
 }
 /* __COUNTER__ */
-char *ftepp_predef_counter(lex_file *context) {
+static char *ftepp_predef_counter(lex_file *context) {
     char   *value;
     ftepp_predef_countval ++;
     util_asprintf(&value, "%u", ftepp_predef_countval);
@@ -158,7 +161,7 @@ char *ftepp_predef_counter(lex_file *context) {
     return value;
 }
 /* __RANDOM__ */
-char *ftepp_predef_random(lex_file *context) {
+static char *ftepp_predef_random(lex_file *context) {
     char  *value;
     ftepp_predef_randval = (util_rand() % 0xFF) + 1;
     util_asprintf(&value, "%u", ftepp_predef_randval);
@@ -167,7 +170,7 @@ char *ftepp_predef_random(lex_file *context) {
     return value;
 }
 /* __RANDOM_LAST__ */
-char *ftepp_predef_randomlast(lex_file *context) {
+static char *ftepp_predef_randomlast(lex_file *context) {
     char   *value;
     util_asprintf(&value, "%u", ftepp_predef_randval);
 
@@ -175,7 +178,7 @@ char *ftepp_predef_randomlast(lex_file *context) {
     return value;
 }
 /* __TIMESTAMP__ */
-char *ftepp_predef_timestamp(lex_file *context) {
+static char *ftepp_predef_timestamp(lex_file *context) {
     struct stat finfo;
     char       *find;
     char       *value;
@@ -313,7 +316,7 @@ static void ppmacro_delete(ppmacro *self)
     mem_d(self);
 }
 
-static ftepp_t* ftepp_new()
+static ftepp_t* ftepp_new(void)
 {
     ftepp_t *ftepp;
 
@@ -374,7 +377,7 @@ static GMQCC_INLINE ppmacro* ftepp_macro_find(ftepp_t *ftepp, const char *name)
 
 static GMQCC_INLINE void ftepp_macro_delete(ftepp_t *ftepp, const char *name)
 {
-    util_htrm(ftepp->macros, name, NULL);
+    util_htrm(ftepp->macros, name, (void (*)(void*))&ppmacro_delete);
 }
 
 static GMQCC_INLINE int ftepp_next(ftepp_t *ftepp)
@@ -564,10 +567,6 @@ static bool ftepp_define(ftepp_t *ftepp)
         return false;
     }
 
-#if 0
-    if (ftepp->output_on)
-        vec_push(ftepp->macros, macro);
-#endif
     if (ftepp->output_on)
         util_htset(ftepp->macros, macro->name, (void*)macro);
     else {
@@ -1885,7 +1884,7 @@ ftepp_t *ftepp_create()
 void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name)
 {
     ppmacro *macro;
-    lex_ctx ctx = { "__builtin__", 0 };
+    lex_ctx ctx = { "__builtin__", 0, 0 };
     ctx.file = source;
     macro = ppmacro_new(ctx, name);
     /*vec_push(ftepp->macros, macro);*/

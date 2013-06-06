@@ -20,14 +20,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
-#include <stdarg.h>
+#include <stdlib.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
-
 /*
  * List of Keywords
  */
@@ -60,19 +58,19 @@ static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
 
 static char* *lex_filenames;
 
-void lexerror(lex_file *lex, const char *fmt, ...)
+static void lexerror(lex_file *lex, const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
     if (lex)
-        con_vprintmsg(LVL_ERROR, lex->name, lex->sline, "parse error", fmt, ap);
+        con_vprintmsg(LVL_ERROR, lex->name, lex->sline, lex->column, "parse error", fmt, ap);
     else
-        con_vprintmsg(LVL_ERROR, "", 0, "parse error", fmt, ap);
+        con_vprintmsg(LVL_ERROR, "", 0, 0, "parse error", fmt, ap);
     va_end(ap);
 }
 
-bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
+static bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
     bool    r;
     lex_ctx ctx;
@@ -174,9 +172,11 @@ static void lex_token_new(lex_file *lex)
 #else
     if (lex->tok.value)
         vec_shrinkto(lex->tok.value, 0);
+        
     lex->tok.constval.t  = 0;
-    lex->tok.ctx.line = lex->sline;
-    lex->tok.ctx.file = lex->name;
+    lex->tok.ctx.line    = lex->sline;
+    lex->tok.ctx.file    = lex->name;
+    lex->tok.ctx.column  = lex->column;
 #endif
 }
 #endif
@@ -200,12 +200,12 @@ lex_file* lex_open(const char *file)
 
     memset(lex, 0, sizeof(*lex));
 
-    lex->file = in;
-    lex->name = util_strdup(file);
-    lex->line = 1; /* we start counting at 1 */
-
+    lex->file    = in;
+    lex->name    = util_strdup(file);
+    lex->line    = 1; /* we start counting at 1 */
+    lex->column  = 0;
     lex->peekpos = 0;
-    lex->eof = false;
+    lex->eof     = false;
 
     vec_push(lex_filenames, lex->name);
     return lex;
@@ -228,11 +228,11 @@ lex_file* lex_open_string(const char *str, size_t len, const char *name)
     lex->open_string_length = len;
     lex->open_string_pos    = 0;
 
-    lex->name = util_strdup(name ? name : "<string-source>");
-    lex->line = 1; /* we start counting at 1 */
-
+    lex->name    = util_strdup(name ? name : "<string-source>");
+    lex->line    = 1; /* we start counting at 1 */
     lex->peekpos = 0;
-    lex->eof = false;
+    lex->eof     = false;
+    lex->column  = 0;
 
     vec_push(lex_filenames, lex->name);
 
@@ -271,11 +271,14 @@ void lex_close(lex_file *lex)
 
 static int lex_fgetc(lex_file *lex)
 {
-    if (lex->file)
+    if (lex->file) {
+        lex->column++;
         return fs_file_getc(lex->file);
+    }
     if (lex->open_string) {
         if (lex->open_string_pos >= lex->open_string_length)
             return EOF;
+        lex->column++;
         return lex->open_string[lex->open_string_pos++];
     }
     return EOF;
@@ -291,16 +294,22 @@ static int lex_try_trigraph(lex_file *lex, int old)
 {
     int c2, c3;
     c2 = lex_fgetc(lex);
-    if (!lex->push_line && c2 == '\n')
+    if (!lex->push_line && c2 == '\n') {
         lex->line++;
+        lex->column = 0;
+    }
+    
     if (c2 != '?') {
         lex_ungetch(lex, c2);
         return old;
     }
 
     c3 = lex_fgetc(lex);
-    if (!lex->push_line && c3 == '\n')
+    if (!lex->push_line && c3 == '\n') {
         lex->line++;
+        lex->column = 0;
+    }
+    
     switch (c3) {
         case '=': return '#';
         case '/': return '\\';
@@ -365,8 +374,11 @@ static int lex_getch(lex_file *lex)
 static void lex_ungetch(lex_file *lex, int ch)
 {
     lex->peek[lex->peekpos++] = ch;
-    if (!lex->push_line && ch == '\n')
+    lex->column--;
+    if (!lex->push_line && ch == '\n') {
         lex->line--;
+        lex->column = 0;
+    }
 }
 
 /* classify characters
@@ -872,6 +884,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                         ch = 0;
                     else {
                         --u8len;
+                        lex->column += u8len;
                         for (uc = 0; uc < u8len; ++uc)
                             lex_tokench(lex, u8buf[uc]);
                         /* the last character will be inserted with the tokench() call

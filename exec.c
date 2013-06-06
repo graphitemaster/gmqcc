@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "gmqcc.h"
 
@@ -167,16 +168,15 @@ void prog_delete(qc_program *prog)
  * VM code
  */
 
-char* prog_getstring(qc_program *prog, qcint str)
-{
+const char* prog_getstring(qc_program *prog, qcint str) {
     /* cast for return required for C++ */
     if (str < 0 || str >= (qcint)vec_size(prog->strings))
-        return (char*)"<<<invalid string>>>";
+        return  "<<<invalid string>>>";
+        
     return prog->strings + str;
 }
 
-prog_section_def* prog_entfield(qc_program *prog, qcint off)
-{
+prog_section_def* prog_entfield(qc_program *prog, qcint off) {
     size_t i;
     for (i = 0; i < vec_size(prog->fields); ++i) {
         if (prog->fields[i].offset == off)
@@ -195,8 +195,7 @@ prog_section_def* prog_getdef(qc_program *prog, qcint off)
     return NULL;
 }
 
-qcany* prog_getedict(qc_program *prog, qcint e)
-{
+qcany* prog_getedict(qc_program *prog, qcint e) {
     if (e >= (qcint)vec_size(prog->entitypool)) {
         prog->vmerror++;
         fprintf(stderr, "Accessing out of bounds edict %i\n", (int)e);
@@ -205,8 +204,7 @@ qcany* prog_getedict(qc_program *prog, qcint e)
     return (qcany*)(prog->entitydata + (prog->entityfields * e));
 }
 
-qcint prog_spawn_entity(qc_program *prog)
-{
+qcint prog_spawn_entity(qc_program *prog) {
     char  *data;
     qcint  e;
     for (e = 0; e < (qcint)vec_size(prog->entitypool); ++e) {
@@ -223,8 +221,7 @@ qcint prog_spawn_entity(qc_program *prog)
     return e;
 }
 
-void prog_free_entity(qc_program *prog, qcint e)
-{
+void prog_free_entity(qc_program *prog, qcint e) {
     if (!e) {
         prog->vmerror++;
         fprintf(stderr, "Trying to free world entity\n");
@@ -243,8 +240,7 @@ void prog_free_entity(qc_program *prog, qcint e)
     prog->entitypool[e] = false;
 }
 
-qcint prog_tempstring(qc_program *prog, const char *str)
-{
+qcint prog_tempstring(qc_program *prog, const char *str) {
     size_t len = strlen(str);
     size_t at = prog->tempstring_at;
 
@@ -266,8 +262,7 @@ qcint prog_tempstring(qc_program *prog, const char *str)
     return at;
 }
 
-static size_t print_escaped_string(const char *str, size_t maxlen)
-{
+static size_t print_escaped_string(const char *str, size_t maxlen) {
     size_t len = 2;
     putchar('"');
     --maxlen; /* because we're lazy and have escape sequences */
@@ -300,8 +295,7 @@ static size_t print_escaped_string(const char *str, size_t maxlen)
     return len;
 }
 
-static void trace_print_global(qc_program *prog, unsigned int glob, int vtype)
-{
+static void trace_print_global(qc_program *prog, unsigned int glob, int vtype) {
     static char spaces[28+1] = "                            ";
     prog_section_def *def;
     qcany    *value;
@@ -359,8 +353,7 @@ done:
     }
 }
 
-static void prog_print_statement(qc_program *prog, prog_section_statement *st)
-{
+static void prog_print_statement(qc_program *prog, prog_section_statement *st) {
     if (st->opcode >= (sizeof(asm_instr)/sizeof(asm_instr[0]))) {
         printf("<illegal instruction %d>\n", st->opcode);
         return;
@@ -457,8 +450,7 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st)
     }
 }
 
-static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
-{
+static qcint prog_enterfunction(qc_program *prog, prog_section_function *func) {
     qc_exec_stack st;
     size_t  parampos;
     int32_t p;
@@ -507,8 +499,7 @@ static qcint prog_enterfunction(qc_program *prog, prog_section_function *func)
     return func->entry;
 }
 
-static qcint prog_leavefunction(qc_program *prog)
-{
+static qcint prog_leavefunction(qc_program *prog) {
     prog_section_function *prev = NULL;
     size_t oldsp;
 
@@ -540,8 +531,7 @@ static qcint prog_leavefunction(qc_program *prog)
     return st.stmt - 1; /* offset the ++st */
 }
 
-bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps)
-{
+bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps) {
     long jumpcount = 0;
     size_t oldxflags = prog->xflags;
     prog_section_statement *st;
@@ -640,8 +630,7 @@ static qcvm_parameter *main_params = NULL;
 #define GetArg(num) GetGlobal(OFS_PARM0 + 3*(num))
 #define Return(any) *(GetGlobal(OFS_RETURN)) = (any)
 
-static int qc_print(qc_program *prog)
-{
+static int qc_print(qc_program *prog) {
     size_t i;
     const char *laststr = NULL;
     for (i = 0; i < (size_t)prog->argc; ++i) {
@@ -657,16 +646,14 @@ static int qc_print(qc_program *prog)
     return 0;
 }
 
-static int qc_error(qc_program *prog)
-{
+static int qc_error(qc_program *prog) {
     fprintf(stderr, "*** VM raised an error:\n");
     qc_print(prog);
     prog->vmerror++;
     return -1;
 }
 
-static int qc_ftos(qc_program *prog)
-{
+static int qc_ftos(qc_program *prog) {
     char buffer[512];
     qcany *num;
     qcany str;
@@ -678,8 +665,7 @@ static int qc_ftos(qc_program *prog)
     return 0;
 }
 
-static int qc_stof(qc_program *prog)
-{
+static int qc_stof(qc_program *prog) {
     qcany *str;
     qcany num;
     CheckArgs(1);
@@ -689,8 +675,7 @@ static int qc_stof(qc_program *prog)
     return 0;
 }
 
-static int qc_vtos(qc_program *prog)
-{
+static int qc_vtos(qc_program *prog) {
     char buffer[512];
     qcany *num;
     qcany str;
@@ -702,8 +687,7 @@ static int qc_vtos(qc_program *prog)
     return 0;
 }
 
-static int qc_etos(qc_program *prog)
-{
+static int qc_etos(qc_program *prog) {
     char buffer[512];
     qcany *num;
     qcany str;
@@ -715,8 +699,7 @@ static int qc_etos(qc_program *prog)
     return 0;
 }
 
-static int qc_spawn(qc_program *prog)
-{
+static int qc_spawn(qc_program *prog) {
     qcany ent;
     CheckArgs(0);
     ent.edict = prog_spawn_entity(prog);
@@ -724,8 +707,7 @@ static int qc_spawn(qc_program *prog)
     return (ent.edict ? 0 : -1);
 }
 
-static int qc_kill(qc_program *prog)
-{
+static int qc_kill(qc_program *prog) {
     qcany *ent;
     CheckArgs(1);
     ent = GetArg(0);
@@ -733,8 +715,7 @@ static int qc_kill(qc_program *prog)
     return 0;
 }
 
-static int qc_sqrt(qc_program *prog)
-{
+static int qc_sqrt(qc_program *prog) {
     qcany *num, out;
     CheckArgs(1);
     num = GetArg(0);
@@ -743,8 +724,7 @@ static int qc_sqrt(qc_program *prog)
     return 0;
 }
 
-static int qc_vlen(qc_program *prog)
-{
+static int qc_vlen(qc_program *prog) {
     qcany *vec, len;
     CheckArgs(1);
     vec = GetArg(0);
@@ -755,8 +735,7 @@ static int qc_vlen(qc_program *prog)
     return 0;
 }
 
-static int qc_normalize(qc_program *prog)
-{
+static int qc_normalize(qc_program *prog) {
     double len;
     qcany *vec;
     qcany out;
@@ -776,13 +755,14 @@ static int qc_normalize(qc_program *prog)
     return 0;
 }
 
-static int qc_strcat(qc_program *prog)
-{
+static int qc_strcat(qc_program *prog) {
     char  *buffer;
     size_t len1,   len2;
-    char  *cstr1, *cstr2;
     qcany *str1,  *str2;
     qcany  out;
+    
+    const char *cstr1;
+    const char *cstr2;
 
     CheckArgs(2);
     str1 = GetArg(0);
@@ -800,12 +780,13 @@ static int qc_strcat(qc_program *prog)
     return 0;
 }
 
-static int qc_strcmp(qc_program *prog)
-{
-    char  *cstr1, *cstr2;
+static int qc_strcmp(qc_program *prog) {
     qcany *str1,  *str2;
     qcany out;
 
+    const char *cstr1;
+    const char *cstr2;
+    
     if (prog->argc != 2 && prog->argc != 3) {
         fprintf(stderr, "ERROR: invalid number of arguments for strcmp/strncmp: %i, expected 2 or 3\n",
                prog->argc);
@@ -824,8 +805,7 @@ static int qc_strcmp(qc_program *prog)
     return 0;
 }
 
-static int qc_floor(qc_program *prog)
-{
+static int qc_floor(qc_program *prog) {
     qcany *num, out;
     CheckArgs(1);
     num = GetArg(0);
@@ -855,7 +835,7 @@ static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
 static const char *arg0 = NULL;
 
-static void version() {
+static void version(void) {
     printf("GMQCC-QCVM %d.%d.%d Built %s %s\n",
            GMQCC_VERSION_MAJOR,
            GMQCC_VERSION_MINOR,
@@ -865,8 +845,7 @@ static void version() {
     );
 }
 
-static void usage()
-{
+static void usage(void) {
     printf("usage: %s [options] [parameters] file\n", arg0);
     printf("options:\n");
     printf("  -h, --help         print this message\n"
@@ -886,8 +865,7 @@ static void usage()
            "  -string <s>   pass a string parameter to main() \n");
 }
 
-static void prog_main_setparams(qc_program *prog)
-{
+static void prog_main_setparams(qc_program *prog) {
     size_t i;
     qcany *arg;
 
@@ -923,9 +901,35 @@ static void prog_main_setparams(qc_program *prog)
     }
 }
 
+void escapestring(char* dest, const char* src)  {
+  char c;
+  while ((c = *(src++))) {
+    switch(c) {
+      case '\t': 
+        *(dest++) = '\\', *(dest++) = 't';
+        break;
+      case '\n': 
+        *(dest++) = '\\', *(dest++) = 'n';
+        break;
+      case '\r': 
+        *(dest++) = '\\', *(dest++) = 'r';
+        break;
+      case '\\': 
+        *(dest++) = '\\', *(dest++) = '\\';
+        break;
+      case '\"': 
+        *(dest++) = '\\', *(dest++) = '\"';
+        break;
+      default:
+        *(dest++) = c;
+     }
+  }
+  *dest = '\0';
+}
+
 void prog_disasm_function(qc_program *prog, size_t id);
-int main(int argc, char **argv)
-{
+
+int main(int argc, char **argv) {
     size_t      i;
     qcint       fnmain = -1;
     qc_program *prog;
@@ -1137,6 +1141,9 @@ int main(int argc, char **argv)
         return 0;
     }
     if (opts_printdefs) {
+        char       *escape    = NULL;
+        const char *getstring = NULL;
+
         for (i = 0; i < vec_size(prog->defs); ++i) {
             printf("Global: %8s %-16s at %u%s",
                    type_name[prog->defs[i].type & DEF_TYPEMASK],
@@ -1158,7 +1165,12 @@ int main(int argc, char **argv)
                         printf(" [init: %u]", (unsigned)( ((qcany*)(prog->globals + prog->defs[i].offset))->_int ));
                         break;
                     case TYPE_STRING:
-                        printf(" [init: `%s`]", prog_getstring(prog, ((qcany*)(prog->globals + prog->defs[i].offset))->string ));
+                        getstring = prog_getstring(prog, ((qcany*)(prog->globals + prog->defs[i].offset))->string);
+                        escape    = (char*)mem_a(strlen(getstring) * 2 + 1); /* will be enough */
+                        escapestring(escape, getstring);
+                        printf(" [init: `%s`]", escape);
+
+                        mem_d(escape); /* free */
                         break;
                     default:
                         break;
@@ -1232,8 +1244,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void prog_disasm_function(qc_program *prog, size_t id)
-{
+void prog_disasm_function(qc_program *prog, size_t id) {
     prog_section_function *fdef = prog->functions + id;
     prog_section_statement *st;
 

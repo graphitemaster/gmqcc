@@ -21,9 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+
 #include "gmqcc.h"
 #include "lexer.h"
-#include <time.h>
 
 /* TODO: cleanup this whole file .. it's a fuckign mess */
 
@@ -41,9 +47,10 @@ static ppitem  *ppems = NULL;
 #define TYPE_ASM 1
 #define TYPE_SRC 2
 
+
 static const char *app_name;
 
-static void version() {
+static void version(void) {
     con_out("GMQCC %d.%d.%d Built %s %s\n" GMQCC_DEV_VERSION_STRING,
         GMQCC_VERSION_MAJOR,
         GMQCC_VERSION_MINOR,
@@ -53,7 +60,7 @@ static void version() {
     );
 }
 
-static int usage() {
+static int usage(void) {
     con_out("usage: %s [options] [files...]", app_name);
     con_out("options:\n"
             "  -h, --help             show this help message\n"
@@ -172,6 +179,7 @@ static bool options_parse(int argc, char **argv) {
 
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_GMQCC;
+                    OPTS_OPTION_BOOL(OPTION_STATISTICS) = true;
 
                 } else if (!strcmp(argarg, "qcc")) {
 
@@ -794,6 +802,7 @@ cleanup:
         mem_d((void*)operators);
 
     lex_cleanup();
-    util_meminfo();
+    stat_info();
+
     return retval;
 }

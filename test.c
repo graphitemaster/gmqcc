@@ -20,9 +20,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "gmqcc.h"
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include "gmqcc.h"
 
 opts_cmd_t opts;
 
@@ -60,7 +63,7 @@ typedef struct {
     int pid;
 } popen_t;
 
-FILE ** task_popen(const char *command, const char *mode) {
+static FILE ** task_popen(const char *command, const char *mode) {
     int     inhandle  [2];
     int     outhandle [2];
     int     errhandle [2];
@@ -137,7 +140,7 @@ task_popen_error_0:
     return NULL;
 }
 
-int task_pclose(FILE **handles) {
+static int task_pclose(FILE **handles) {
     popen_t *data   = (popen_t*)handles;
     int      status = 0;
 
@@ -158,7 +161,7 @@ int task_pclose(FILE **handles) {
         char  name_out[L_tmpnam];
     } popen_t;
 
-    FILE **task_popen(const char *command, const char *mode) {
+    static FILE **task_popen(const char *command, const char *mode) {
         char    *cmd  = NULL;
         popen_t *open = (popen_t*)mem_a(sizeof(popen_t));
 
@@ -179,7 +182,7 @@ int task_pclose(FILE **handles) {
         return open->handles;
     }
 
-    void task_pclose(FILE **files) {
+    static void task_pclose(FILE **files) {
         popen_t *open = ((popen_t*)files);
         fs_file_close(files[1]);
         fs_file_close(files[2]);
@@ -281,7 +284,7 @@ typedef struct {
  * This is very much like a compiler code generator :-).  This generates
  * a value from some data observed from the compiler.
  */
-bool task_template_generate(task_template_t *tmpl, char tag, const char *file, size_t line, char *value, size_t *pad) {
+static bool task_template_generate(task_template_t *tmpl, char tag, const char *file, size_t line, char *value, size_t *pad) {
     size_t desclen = 0;
     size_t filelen = 0;
     char **destval = NULL;
@@ -297,7 +300,7 @@ bool task_template_generate(task_template_t *tmpl, char tag, const char *file, s
         case 'I': destval = &tmpl->sourcefile;     break;
         case 'F': destval = &tmpl->testflags;      break;
         default:
-            con_printmsg(LVL_ERROR, __FILE__, __LINE__, "internal error",
+            con_printmsg(LVL_ERROR, __FILE__, __LINE__, 0, "internal error",
                 "invalid tag `%c:` during code generation\n",
                 tag
             );
@@ -309,7 +312,7 @@ bool task_template_generate(task_template_t *tmpl, char tag, const char *file, s
      * assigned value.
      */
     if (*destval) {
-        con_printmsg(LVL_ERROR, file, line, "compile error",
+        con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "compile error",
             "tag `%c:` already assigned value: %s\n",
             tag, *destval
         );
@@ -354,7 +357,7 @@ bool task_template_generate(task_template_t *tmpl, char tag, const char *file, s
     return true;
 }
 
-bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size_t *pad) {
+static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size_t *pad) {
     char  *data = NULL;
     char  *back = NULL;
     size_t size = 0;
@@ -377,7 +380,7 @@ bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size
              */
             case '/':
                 if (data[1] != '/') {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                         "invalid character `/`, perhaps you meant `//` ?");
 
                     mem_d(back);
@@ -407,14 +410,14 @@ bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size
             case 'I':
             case 'F':
                 if (data[1] != ':') {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                         "expected `:` after `%c`",
                         *data
                     );
                     goto failure;
                 }
                 if (!task_template_generate(tmpl, *data, file, line, &data[3], pad)) {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl compile error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl compile error",
                         "failed to generate for given task\n"
                     );
                     goto failure;
@@ -429,7 +432,7 @@ bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size
             {
                 char *value = &data[3];
                 if (data[1] != ':') {
-                    con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                    con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                         "expected `:` after `%c`",
                         *data
                     );
@@ -454,7 +457,7 @@ bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size
             }
 
             default:
-                con_printmsg(LVL_ERROR, file, line, "tmpl parse error",
+                con_printmsg(LVL_ERROR, file, line, 0, /*TODO: column for match*/ "tmpl parse error",
                     "invalid tag `%c`", *data
                 );
                 goto failure;
@@ -480,7 +483,7 @@ failure:
  * Nullifies the template data: used during initialization of a new
  * template and free.
  */
-void task_template_nullify(task_template_t *tmpl) {
+static void task_template_nullify(task_template_t *tmpl) {
     if (!tmpl)
         return;
 
@@ -495,7 +498,7 @@ void task_template_nullify(task_template_t *tmpl) {
     tmpl->testflags      = NULL;
 }
 
-task_template_t *task_template_compile(const char *file, const char *dir, size_t *pad) {
+static task_template_t *task_template_compile(const char *file, const char *dir, size_t *pad) {
     /* a page should be enough */
     char             fullfile[4096];
     size_t           filepadd = 0;
@@ -609,7 +612,7 @@ failure:
     return NULL;
 }
 
-void task_template_destroy(task_template_t **tmpl) {
+static void task_template_destroy(task_template_t **tmpl) {
     if (!tmpl)
         return;
 
@@ -660,7 +663,7 @@ static task_t *task_tasks = NULL;
  * Read a directory and searches for all template files in it
  * which is later used to run all tests.
  */
-bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
+static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     bool             success = true;
     DIR             *dir;
     struct dirent   *files;
@@ -840,7 +843,7 @@ bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
  * Task precleanup removes any existing temporary files or log files
  * left behind from a previous invoke of the test-suite.
  */
-void task_precleanup(const char *curdir) {
+static void task_precleanup(const char *curdir) {
     DIR             *dir;
     struct dirent   *files;
     char             buffer[4096];
@@ -863,7 +866,7 @@ void task_precleanup(const char *curdir) {
     fs_dir_close(dir);
 }
 
-void task_destroy(void) {
+static void task_destroy(void) {
     /*
      * Free all the data in the task list and finally the list itself
      * then proceed to cleanup anything else outside the program like
@@ -912,7 +915,7 @@ void task_destroy(void) {
  * messages IF the procedure type is -execute, otherwise it matches
  * the preprocessor output.
  */
-bool task_trymatch(task_template_t *tmpl, char ***line) {
+static bool task_trymatch(task_template_t *tmpl, char ***line) {
     bool     success = true;
     bool     preprocessing = false;
     FILE    *execute;
@@ -1020,7 +1023,7 @@ bool task_trymatch(task_template_t *tmpl, char ***line) {
     return success;
 }
 
-const char *task_type(task_template_t *tmpl) {
+static const char *task_type(task_template_t *tmpl) {
     if (!strcmp(tmpl->proceduretype, "-pp"))
         return "type: preprocessor";
     if (!strcmp(tmpl->proceduretype, "-execute"))
@@ -1037,7 +1040,7 @@ const char *task_type(task_template_t *tmpl) {
  * from thin air and executed INLINE.
  */
 #include <math.h>
-void task_schedualize(size_t *pad) {
+static void task_schedualize(size_t *pad) {
     char   space[2][64];
     bool   execute  = false;
     char  *data     = NULL;
@@ -1210,7 +1213,7 @@ void task_schedualize(size_t *pad) {
  *
  * It expects con_init() was called before hand.
  */
-GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
+static GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
     static const char *default_defs = "defs.qh";
 
     size_t pad[] = {
@@ -1283,6 +1286,7 @@ int main(int argc, char **argv) {
     char         *defs     = NULL;
 
     con_init();
+    OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = 16;
 
     /*
      * Command line option parsing commences now We only need to support
@@ -1321,7 +1325,7 @@ int main(int argc, char **argv) {
     }
     con_change(redirout, redirerr);
     succeed = test_perform("tests", defs);
-    util_meminfo();
+    stat_info();
 
 
     return (succeed) ? EXIT_SUCCESS : EXIT_FAILURE;

@@ -23,12 +23,8 @@
  */
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <ctype.h>
+#include <stdio.h> /* TODO: remove this */
 
 /*
  * Disable some over protective warnings in visual studio because fixing them is a waste
@@ -288,20 +284,30 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   include <dirent.h>
 #endif /*! _WIN32 && !defined(__MINGW32__) */
 
+/*===================================================================*/
+/*=========================== stat.c ================================*/
+/*===================================================================*/
+void  stat_info          (void);
+char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
+void *stat_mem_reallocate(void *,       size_t, size_t, const char *);
+void  stat_mem_deallocate(void *);
+void *stat_mem_allocate  (size_t, size_t, const char *);
+
+#define mem_a(SIZE)              stat_mem_allocate  ((SIZE), __LINE__, __FILE__)
+#define mem_d(PTRN)              stat_mem_deallocate((void*)(PTRN))
+#define mem_r(PTRN, SIZE)        stat_mem_reallocate((void*)(PTRN), (SIZE), __LINE__, __FILE__)
+#define mem_af(SIZE, FILE, LINE) stat_mem_allocate  ((SIZE), (LINE), (FILE))
+
+/* TODO: rename to mem variations */
+#define util_strdup(SRC)         stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, false)
+#define util_strdupe(SRC)        stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, true)
 
 /*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
-void *util_memory_a      (size_t, /*****/ unsigned int, const char *);
-void *util_memory_r      (void *, size_t, unsigned int, const char *);
-void  util_memory_d      (void *);
-void  util_meminfo       ();
-
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-char *_util_Estrdup      (const char *, const char *, size_t);
-char *_util_Estrdup_empty(const char *, const char *, size_t);
 void  util_debug         (const char *, const char *, ...);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
@@ -311,7 +317,7 @@ size_t util_strtononcmd (const char *, char *, size_t);
 uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 
 void     util_seed(uint32_t);
-uint32_t util_rand();
+uint32_t util_rand(void);
 
 /*
  * String functions (formatting, copying, concatenating, errors). These are wrapped
@@ -325,22 +331,6 @@ int         util_snprintf (char *src,  size_t bytes, const char *format, ...);
 char       *util_strcat   (char *dest, const char *src);
 char       *util_strncpy  (char *dest, const char *src, size_t num);
 const char *util_strerror (int num);
-
-
-#ifdef NOTRACK
-#    define mem_a(x)      malloc (x)
-#    define mem_d(x)      free   ((void*)x)
-#    define mem_r(x, n)   realloc((void*)x, n)
-#    define mem_af(x,f,l) malloc (x)
-#else
-#    define mem_a(x)      util_memory_a((x), __LINE__, __FILE__)
-#    define mem_d(x)      util_memory_d((void*)(x))
-#    define mem_r(x, n)   util_memory_r((void*)(x), (n), __LINE__, __FILE__)
-#    define mem_af(x,f,l) util_memory_a((x), __LINE__, __FILE__)
-#endif /*! NOTRACK */
-
-#define util_strdup(X)  _util_Estrdup((X), __FILE__, __LINE__)
-#define util_strdupe(X) _util_Estrdup_empty((X), __FILE__, __LINE__)
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -383,7 +373,7 @@ typedef struct trie_s {
     struct trie_s *entries;
 } correct_trie_t;
 
-correct_trie_t* correct_trie_new();
+correct_trie_t* correct_trie_new(void);
 
 typedef struct hash_table_t {
     size_t                size;
@@ -734,7 +724,9 @@ typedef struct {
  * code_pop_statement  -- keeps statements and linenumbers together 
  */
 bool      code_write         (code_t *, const char *filename, const char *lno);
+GMQCC_WARN
 code_t   *code_init          (void);
+void      code_cleanup       (code_t *);
 uint32_t  code_genstring     (code_t *, const char *string);
 qcint     code_alloc_field   (code_t *, size_t qcsize);
 void      code_push_statement(code_t *, prog_section_statement *stmt, int linenum);
@@ -747,6 +739,7 @@ void      code_pop_statement (code_t *);
 typedef struct {
     const char *file;
     size_t      line;
+    size_t      column;
 } lex_ctx;
 
 /*===================================================================*/
@@ -770,17 +763,17 @@ enum {
     LVL_ERROR
 };
 
-FILE *con_default_out();
-FILE *con_default_err();
+FILE *con_default_out(void);
+FILE *con_default_err(void);
 
-void con_vprintmsg (int level, const char *name, size_t line, const char *msgtype, const char *msg, va_list ap);
-void con_printmsg  (int level, const char *name, size_t line, const char *msgtype, const char *msg, ...);
+void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
+void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);
 void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
 void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...);
 
-void con_close ();
-void con_init  ();
-void con_reset ();
+void con_close (void);
+void con_init  (void);
+void con_reset (void);
 void con_color (int);
 int  con_change(const char *, const char *);
 int  con_verr  (const char *, va_list);
@@ -797,7 +790,7 @@ void /********/ compile_error   (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...
 void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
 bool GMQCC_WARN compile_warning (lex_ctx ctx, int warntype, const char *fmt, ...);
 bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap);
-void            compile_show_werrors();
+void            compile_show_werrors(void);
 
 /*===================================================================*/
 /*========================= assembler.c =============================*/
@@ -991,7 +984,7 @@ void        prog_delete(qc_program *prog);
 
 bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
 
-char*             prog_getstring (qc_program *prog, qcint str);
+const char*       prog_getstring (qc_program *prog, qcint str);
 prog_section_def* prog_entfield  (qc_program *prog, qcint off);
 prog_section_def* prog_getdef    (qc_program *prog, qcint off);
 qcany*            prog_getedict  (qc_program *prog, qcint e);
@@ -1002,8 +995,7 @@ qcint             prog_tempstring(qc_program *prog, const char *_str);
 /*===================== parser.c commandline ========================*/
 /*===================================================================*/
 struct parser_s;
-
-struct parser_s *parser_create        ();
+struct parser_s *parser_create        (void);
 bool             parser_compile_file  (struct parser_s *parser, const char *);
 bool             parser_compile_string(struct parser_s *parser, const char *, const char *, size_t);
 bool             parser_finish        (struct parser_s *parser, const char *);
@@ -1013,7 +1005,7 @@ void             parser_cleanup       (struct parser_s *parser);
 /*====================== ftepp.c commandline ========================*/
 /*===================================================================*/
 struct ftepp_s;
-struct ftepp_s *ftepp_create           ();
+struct ftepp_s *ftepp_create           (void);
 bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);
 bool            ftepp_preprocess_string(struct ftepp_s *ftepp, const char *name, const char *str);
 void            ftepp_finish           (struct ftepp_s *ftepp);
@@ -1073,10 +1065,10 @@ void opts_setoptimlevel(unsigned int);
 void opts_ini_init     (const char *);
 
 /* Saner flag handling */
-void opts_backup_non_Wall();
-void opts_restore_non_Wall();
-void opts_backup_non_Werror_all();
-void opts_restore_non_Werror_all();
+void opts_backup_non_Wall(void);
+void opts_restore_non_Wall(void);
+void opts_backup_non_Werror_all(void);
+void opts_restore_non_Werror_all(void);
 
 enum {
 # define GMQCC_TYPE_FLAGS
@@ -1161,7 +1153,7 @@ typedef struct {
 
 extern opts_cmd_t opts;
 
-#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< ((i)%32))))
+#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< (unsigned)((i)%32))))
 #define OPTS_FLAG(i)         OPTS_GENERIC(opts.flags,        (i))
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
 #define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))
