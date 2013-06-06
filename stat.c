@@ -560,7 +560,7 @@ static void stat_dump_stats_table(stat_size_table_t table, const char *string, u
     if (!table)
         return;
     
-    for (i = 0, j = 0; i < ST_SIZE; i++) {
+    for (i = 0, j = 1; i < ST_SIZE; i++) {
         stat_size_entry_t *entry;
 
         if (!(entry = table[i]))
