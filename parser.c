@@ -5218,10 +5218,15 @@ static bool create_array_accessors(parser_t *parser, ast_value *var)
 
 static bool parse_array(parser_t *parser, ast_value *array)
 {
+    if (array->initlist) {
+        parseerror(parser, "array already initialized elsewhere");
+        return false;
+    }
     if (!parser_next(parser)) {
         parseerror(parser, "parse error in array initializer");
         return false;
     }
+    size_t i = 0;
     while (parser->tok != '}') {
         ast_value *v = (ast_value*)parse_expression_leave(parser, true, false, false);
         if (!v)
@@ -5232,6 +5237,10 @@ static bool parse_array(parser_t *parser, ast_value *array)
             return false;
         }
         vec_push(array->initlist, v->constval);
+        if (v->expression.vtype == TYPE_STRING) {
+            array->initlist[i].vstring = util_strdupe(array->initlist[i].vstring);
+            ++i;
+        }
         ast_unref(v);
         if (parser->tok == '}')
             break;
