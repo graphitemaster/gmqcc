@@ -1212,6 +1212,16 @@ static bool ast_global_array_set(ast_value *self)
     size_t count = vec_size(self->initlist);
     size_t i;
 
+    if (count > self->expression.count) {
+        compile_error(ast_ctx(self), "too many elements in initializer");
+        count = self->expression.count;
+    }
+    else if (count < self->expression.count) {
+        /* add this?
+        compile_warning(ast_ctx(self), "not all elements are initialized");
+        */
+    }
+
     for (i = 0; i != count; ++i) {
         switch (self->expression.next->vtype) {
             case TYPE_FLOAT:
