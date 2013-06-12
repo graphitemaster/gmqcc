@@ -42,6 +42,8 @@
 static bool ast_member_codegen(ast_member*, ast_function*, bool lvalue, ir_value**);
 static void ast_array_index_delete(ast_array_index*);
 static bool ast_array_index_codegen(ast_array_index*, ast_function*, bool lvalue, ir_value**);
+static void ast_argpipe_delete(ast_argpipe*);
+static bool ast_argpipe_codegen(ast_argpipe*, ast_function*, bool lvalue, ir_value**);
 static void ast_store_delete(ast_store*);
 static bool ast_store_codegen(ast_store*, ast_function*, bool lvalue, ir_value**);
 static void ast_ifthen_delete(ast_ifthen*);
@@ -694,6 +696,23 @@ void ast_array_index_delete(ast_array_index *self)
     mem_d(self);
 }
 
+ast_argpipe* ast_argpipe_new(lex_ctx ctx, ast_expression *index)
+{
+    ast_instantiate(ast_argpipe, ctx, ast_argpipe_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_argpipe_codegen);
+    self->index = index;
+    self->expression.vtype = TYPE_NOEXPR;
+    return self;
+}
+
+void ast_argpipe_delete(ast_argpipe *self)
+{
+    if (self->index)
+        ast_unref(self->index);
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
+}
+
 ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
 {
     ast_instantiate(ast_ifthen, ctx, ast_ifthen_delete);
@@ -950,7 +969,50 @@ void ast_call_delete(ast_call *self)
     mem_d(self);
 }
 
-bool ast_call_check_types(ast_call *self)
+static bool ast_call_check_vararg(ast_call *self, ast_expression *va_type, ast_expression *exp_type)
+{
+    char texp[1024];
+    char tgot[1024];
+    if (!exp_type)
+        return true;
+    if (!va_type || !ast_compare_type(va_type, exp_type))
+    {
+        if (va_type && exp_type)
+        {
+            ast_type_to_string(va_type,  tgot, sizeof(tgot));
+            ast_type_to_string(exp_type, texp, sizeof(texp));
+            if (OPTS_FLAG(UNSAFE_VARARGS)) {
+                if (compile_warning(ast_ctx(self), WARN_UNSAFE_TYPES,
+                                    "piped variadic argument differs in type: constrained to type %s, expected type %s",
+                                    tgot, texp))
+                    return false;
+            } else {
+                compile_error(ast_ctx(self),
+                              "piped variadic argument differs in type: constrained to type %s, expected type %s",
+                              tgot, texp);
+                return false;
+            }
+        }
+        else
+        {
+            ast_type_to_string(exp_type, texp, sizeof(texp));
+            if (OPTS_FLAG(UNSAFE_VARARGS)) {
+                if (compile_warning(ast_ctx(self), WARN_UNSAFE_TYPES,
+                                    "piped variadic argument may differ in type: expected type %s",
+                                    texp))
+                    return false;
+            } else {
+                compile_error(ast_ctx(self),
+                              "piped variadic argument may differ in type: expected type %s",
+                              texp);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool ast_call_check_types(ast_call *self, ast_expression *va_type)
 {
     char texp[1024];
     char tgot[1024];
@@ -962,7 +1024,16 @@ bool ast_call_check_types(ast_call *self)
         count = vec_size(func->params);
 
     for (i = 0; i < count; ++i) {
-        if (!ast_compare_type(self->params[i], (ast_expression*)(func->params[i])))
+        if (ast_istype(self->params[i], ast_argpipe)) {
+            // warn about type safety instead
+            if (i+1 != count) {
+                compile_error(ast_ctx(self), "argpipe must be the last parameter to a function call");
+                return false;
+            }
+            if (!ast_call_check_vararg(self, va_type, (ast_expression*)func->params[i]))
+                retval = false;
+        }
+        else if (!ast_compare_type(self->params[i], (ast_expression*)(func->params[i])))
         {
             ast_type_to_string(self->params[i], tgot, sizeof(tgot));
             ast_type_to_string((ast_expression*)func->params[i], texp, sizeof(texp));
@@ -975,6 +1046,15 @@ bool ast_call_check_types(ast_call *self)
     count = vec_size(self->params);
     if (count > vec_size(func->params) && func->varparam) {
         for (; i < count; ++i) {
+            if (ast_istype(self->params[i], ast_argpipe)) {
+                // warn about type safety instead
+                if (i+1 != count) {
+                    compile_error(ast_ctx(self), "argpipe must be the last parameter to a function call");
+                    return false;
+                }
+                if (!ast_call_check_vararg(self, va_type, func->varparam))
+                    retval = false;
+            }
             if (!ast_compare_type(self->params[i], func->varparam))
             {
                 ast_type_to_string(self->params[i], tgot, sizeof(tgot));
@@ -2402,6 +2482,19 @@ bool ast_array_index_codegen(ast_array_index *self, ast_function *func, bool lva
     (*out)->vtype = self->expression.vtype;
     codegen_output_type(self, *out);
     return true;
+}
+
+bool ast_argpipe_codegen(ast_argpipe *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    *out = NULL;
+    if (lvalue) {
+        compile_error(ast_ctx(self), "argpipe node: not an lvalue");
+        return false;
+    }
+    (void)func;
+    (void)out;
+    compile_error(ast_ctx(self), "TODO: argpipe codegen not implemented");
+    return false;
 }
 
 bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_value **out)

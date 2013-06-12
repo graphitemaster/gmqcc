@@ -1568,7 +1568,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     for (i = 0; i < paramcount; ++i)
         vec_push(call->params, sy->out[fid+1 + i].out);
     vec_shrinkby(sy->out, paramcount);
-    (void)!ast_call_check_types(call);
+    (void)!ast_call_check_types(call, parser->function->vtype->expression.varparam);
     if (parser->max_param_count < paramcount)
         parser->max_param_count = paramcount;
 
@@ -1704,6 +1704,11 @@ static ast_expression* parse_vararg_do(parser_t *parser)
     ast_value      *typevar;
     ast_value      *funtype = parser->function->vtype;
 
+    if (!parser->function->varargs) {
+        parseerror(parser, "function has no variable argument list");
+        return NULL;
+    }
+
     lex_ctx ctx = parser_ctx(parser);
 
     if (!parser_next(parser) || parser->tok != '(') {
@@ -1720,9 +1725,14 @@ static ast_expression* parse_vararg_do(parser_t *parser)
         return NULL;
 
     if (parser->tok != ',') {
-        ast_unref(idx);
-        parseerror(parser, "expected comma after parameter index");
-        return NULL;
+        if (parser->tok != ')') {
+            ast_unref(idx);
+            parseerror(parser, "expected comma after parameter index");
+            return NULL;
+        }
+        /* vararg piping: ...(start) */
+        out = (ast_expression*)ast_argpipe_new(ctx, idx);
+        return out;
     }
 
     if (!parser_next(parser) || (parser->tok != TOKEN_IDENT && parser->tok != TOKEN_TYPENAME)) {
@@ -1741,22 +1751,6 @@ static ast_expression* parse_vararg_do(parser_t *parser)
         ast_unref(idx);
         ast_delete(typevar);
         parseerror(parser, "expected closing paren");
-        return NULL;
-    }
-
-#if 0
-    if (!parser_next(parser)) {
-        ast_unref(idx);
-        ast_delete(typevar);
-        parseerror(parser, "parse error after vararg");
-        return NULL;
-    }
-#endif
-
-    if (!parser->function->varargs) {
-        ast_unref(idx);
-        ast_delete(typevar);
-        parseerror(parser, "function has no variable argument list");
         return NULL;
     }
 

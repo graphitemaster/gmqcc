@@ -51,6 +51,7 @@ typedef struct ast_breakcont_s   ast_breakcont;
 typedef struct ast_switch_s      ast_switch;
 typedef struct ast_label_s       ast_label;
 typedef struct ast_goto_s        ast_goto;
+typedef struct ast_argpipe_s     ast_argpipe;
 
 enum {
     TYPE_ast_node,        /*  0 */
@@ -73,7 +74,8 @@ enum {
     TYPE_ast_breakcont,   /* 17 */
     TYPE_ast_switch,      /* 18 */
     TYPE_ast_label,       /* 19 */
-    TYPE_ast_goto         /* 20 */
+    TYPE_ast_goto,        /* 20 */
+    TYPE_ast_argpipe      /* 21 */
 };
 
 #define ast_istype(x, t) ( ((ast_node*)x)->nodetype == (TYPE_##t) )
@@ -365,6 +367,17 @@ struct ast_array_index_s
 };
 ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index);
 
+/* Vararg pipe node:
+ *
+ * copy all varargs starting from a specific index
+ */
+struct ast_argpipe_s
+{
+    ast_expression        expression;
+    ast_expression *index;
+};
+ast_argpipe* ast_argpipe_new(lex_ctx ctx, ast_expression *index);
+
 /* Store
  *
  * Stores left<-right and returns left.
@@ -555,7 +568,7 @@ struct ast_call_s
 };
 ast_call* ast_call_new(lex_ctx ctx,
                        ast_expression *funcexpr);
-bool ast_call_check_types(ast_call*);
+bool ast_call_check_types(ast_call*, ast_expression *this_func_va_type);
 
 /* Blocks
  *
