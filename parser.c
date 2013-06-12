@@ -4917,32 +4917,44 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
         return NULL;
     }
 
-    cexp = parse_expression_leave(parser, true, false, false);
+    if (parser->tok != ']') {
+        cexp = parse_expression_leave(parser, true, false, false);
 
-    if (!cexp || !ast_istype(cexp, ast_value)) {
-        if (cexp)
-            ast_unref(cexp);
-        ast_delete(var);
-        parseerror(parser, "expected array-size as constant positive integer");
-        return NULL;
+        if (!cexp || !ast_istype(cexp, ast_value)) {
+            if (cexp)
+                ast_unref(cexp);
+            ast_delete(var);
+            parseerror(parser, "expected array-size as constant positive integer");
+            return NULL;
+        }
+        cval = (ast_value*)cexp;
     }
-    cval = (ast_value*)cexp;
+    else {
+        cexp = NULL;
+        cval = NULL;
+    }
 
     tmp = ast_value_new(ctx, "<type[]>", TYPE_ARRAY);
     tmp->expression.next = (ast_expression*)var;
     var = tmp;
 
-    if (cval->expression.vtype == TYPE_INTEGER)
-        tmp->expression.count = cval->constval.vint;
-    else if (cval->expression.vtype == TYPE_FLOAT)
-        tmp->expression.count = cval->constval.vfloat;
-    else {
+    if (cval) {
+        if (cval->expression.vtype == TYPE_INTEGER)
+            tmp->expression.count = cval->constval.vint;
+        else if (cval->expression.vtype == TYPE_FLOAT)
+            tmp->expression.count = cval->constval.vfloat;
+        else {
+            ast_unref(cexp);
+            ast_delete(var);
+            parseerror(parser, "array-size must be a positive integer constant");
+            return NULL;
+        }
+
         ast_unref(cexp);
-        ast_delete(var);
-        parseerror(parser, "array-size must be a positive integer constant");
-        return NULL;
+    } else {
+        var->expression.count = -1;
+        var->expression.flags |= AST_FLAG_ARRAY_INIT;
     }
-    ast_unref(cexp);
 
     if (parser->tok != ']') {
         ast_delete(var);
@@ -5192,6 +5204,18 @@ static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, cons
     return true;
 }
 
+static bool create_array_accessors(parser_t *parser, ast_value *var)
+{
+    char name[1024];
+    util_snprintf(name, sizeof(name), "%s##SET", var->name);
+    if (!parser_create_array_setter(parser, var, name))
+        return false;
+    util_snprintf(name, sizeof(name), "%s##GET", var->name);
+    if (!parser_create_array_getter(parser, var, var->expression.next, name))
+        return false;
+    return true;
+}
+
 static bool parse_array(parser_t *parser, ast_value *array)
 {
     if (!parser_next(parser)) {
@@ -5226,6 +5250,16 @@ static bool parse_array(parser_t *parser, ast_value *array)
         return false;
     }
     */
+
+    if (array->expression.flags & AST_FLAG_ARRAY_INIT) {
+        if (array->expression.count != (size_t)-1) {
+            parseerror(parser, "array `%s' has already been initialized with %u elements",
+                       array->name, (unsigned)array->expression.count);
+        }
+        array->expression.count = vec_size(array->initlist);
+        if (!create_array_accessors(parser, array))
+            return false;
+    }
     return true;
 }
 
@@ -5662,13 +5696,10 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
          * deal with arrays
          */
         if (var->expression.vtype == TYPE_ARRAY) {
-            char name[1024];
-            util_snprintf(name, sizeof(name), "%s##SET", var->name);
-            if (!parser_create_array_setter(parser, var, name))
-                goto cleanup;
-            util_snprintf(name, sizeof(name), "%s##GET", var->name);
-            if (!parser_create_array_getter(parser, var, var->expression.next, name))
-                goto cleanup;
+            if (var->expression.count != (size_t)-1) {
+                if (!create_array_accessors(parser, var))
+                    goto cleanup;
+            }
         }
         else if (!localblock && !nofields &&
                  var->expression.vtype == TYPE_FIELD &&

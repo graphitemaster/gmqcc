@@ -153,6 +153,9 @@ struct ast_expression_common
 #define AST_FLAG_INCLUDE_DEF  (1<<5)
 #define AST_FLAG_IS_VARARG    (1<<6)
 #define AST_FLAG_ALIAS        (1<<7)
+/* An array declared as []
+ * so that the size is taken from the initializer */
+#define AST_FLAG_ARRAY_INIT   (1<<8)
 #define AST_FLAG_TYPE_MASK (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value

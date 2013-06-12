@@ -1373,6 +1373,11 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         ast_expression *elemtype = self->expression.next;
         int vtype = elemtype->vtype;
 
+        if (self->expression.flags & AST_FLAG_ARRAY_INIT && !self->expression.count) {
+            compile_error(ast_ctx(self), "array `%s' has no size", self->name);
+            return false;
+        }
+
         /* same as with field arrays */
         if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
