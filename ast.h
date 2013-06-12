@@ -180,11 +180,6 @@ struct ast_value_s
 
     const char *argcounter;
 
-    /*
-    int         vtype;
-    ast_value  *next;
-    */
-
     int  cvq;     /* const/var qualifier */
     bool isfield; /* this declares a field */
     bool isimm;   /* an immediate, not just const */

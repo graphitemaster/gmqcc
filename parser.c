@@ -5192,6 +5192,43 @@ static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, cons
     return true;
 }
 
+static bool parse_array(parser_t *parser, ast_value *array)
+{
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error in array initializer");
+        return false;
+    }
+    while (parser->tok != '}') {
+        ast_value *v = (ast_value*)parse_expression_leave(parser, true, false, false);
+        if (!v)
+            return false;
+        if (!ast_istype(v, ast_value) || !v->hasvalue || v->cvq != CV_CONST) {
+            ast_unref(v);
+            parseerror(parser, "initializing element must be a compile time constant");
+            return false;
+        }
+        vec_push(array->initlist, v->constval);
+        ast_unref(v);
+        if (parser->tok == '}')
+            break;
+        if (parser->tok != ',' || !parser_next(parser)) {
+            parseerror(parser, "expected comma or '}' in element list");
+            return false;
+        }
+    }
+    if (!parser_next(parser) || parser->tok != ';') {
+        parseerror(parser, "expected semicolon after initializer, got %s");
+        return false;
+    }
+    /*
+    if (!parser_next(parser)) {
+        parseerror(parser, "parse error after initializer");
+        return false;
+    }
+    */
+    return true;
+}
+
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring)
 {
     ast_value *var;
@@ -5803,11 +5840,9 @@ skipvar:
                 parseerror(parser, "TODO: initializers for local arrays");
                 break;
             }
-            /*
-static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels);
-*/
-            parseerror(parser, "TODO: initializing global arrays is not supported yet!");
-            break;
+
+            if (!parse_array(parser, var))
+                break;
         }
         else if (var->expression.vtype == TYPE_FUNCTION && (parser->tok == '{' || parser->tok == '['))
         {
