@@ -1055,11 +1055,11 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
                 if (!ast_call_check_vararg(self, va_type, func->varparam))
                     retval = false;
             }
-            if (!ast_compare_type(self->params[i], func->varparam))
+            else if (!ast_compare_type(self->params[i], func->varparam))
             {
                 ast_type_to_string(self->params[i], tgot, sizeof(tgot));
                 ast_type_to_string(func->varparam, texp, sizeof(texp));
-                compile_error(ast_ctx(self), "invalid type for parameter %u in function call: expected %s, got %s",
+                compile_error(ast_ctx(self), "invalid type for variadic parameter %u in function call: expected %s, got %s",
                          (unsigned int)(i+1), texp, tgot);
                 /* we don't immediately return */
                 retval = false;
