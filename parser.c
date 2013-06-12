@@ -5841,6 +5841,7 @@ skipvar:
                 break;
             }
 
+            var->hasvalue = true;
             if (!parse_array(parser, var))
                 break;
         }
