@@ -1207,6 +1207,53 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
     return true;
 }
 
+static bool ast_global_array_set(ast_value *self)
+{
+    size_t count = vec_size(self->initlist);
+    size_t i;
+
+    for (i = 0; i != count; ++i) {
+        switch (self->expression.next->vtype) {
+            case TYPE_FLOAT:
+                if (!ir_value_set_float(self->ir_values[i], self->initlist[i].vfloat))
+                    return false;
+                break;
+            case TYPE_VECTOR:
+                if (!ir_value_set_vector(self->ir_values[i], self->initlist[i].vvec))
+                    return false;
+                break;
+            case TYPE_STRING:
+                if (!ir_value_set_string(self->ir_values[i], self->initlist[i].vstring))
+                    return false;
+                break;
+            case TYPE_ARRAY:
+                /* we don't support them in any other place yet either */
+                compile_error(ast_ctx(self), "TODO: nested arrays");
+                return false;
+            case TYPE_FUNCTION:
+                /* this requiers a bit more work - similar to the fields I suppose */
+                compile_error(ast_ctx(self), "global of type function not properly generated");
+                return false;
+            case TYPE_FIELD:
+                if (!self->initlist[i].vfield) {
+                    compile_error(ast_ctx(self), "field constant without vfield set");
+                    return false;
+                }
+                if (!self->initlist[i].vfield->ir_v) {
+                    compile_error(ast_ctx(self), "field constant generated before its field");
+                    return false;
+                }
+                if (!ir_value_set_field(self->ir_values[i], self->initlist[i].vfield->ir_v))
+                    return false;
+                break;
+            default:
+                compile_error(ast_ctx(self), "TODO: global constant type %i", self->expression.vtype);
+                break;
+        }
+    }
+    return true;
+}
+
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
@@ -1367,6 +1414,13 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         v->context = ast_ctx(self);
     }
 
+    /* link us to the ir_value */
+    v->cvq = self->cvq;
+    self->ir_v = v;
+    if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
+        self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
+
+    /* initialize */
     if (self->hasvalue) {
         switch (self->expression.vtype)
         {
@@ -1383,7 +1437,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                     goto error;
                 break;
             case TYPE_ARRAY:
-                compile_error(ast_ctx(self), "TODO: global constant array");
+                ast_global_array_set(self);
                 break;
             case TYPE_FUNCTION:
                 compile_error(ast_ctx(self), "global of type function not properly generated");
@@ -1408,12 +1462,6 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 break;
         }
     }
-
-    /* link us to the ir_value */
-    v->cvq = self->cvq;
-    self->ir_v = v;
-    if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
-        self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
     return true;
 
 error: /* clean up */
