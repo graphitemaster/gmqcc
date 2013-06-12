@@ -320,6 +320,12 @@ marked as such.
 Warn about possible mistakes caused by missing or wrong parenthesis,
 like an assignment in an 'if' condition when there's no additional set
 of parens around the assignment.
+.It Fl W Ns Cm unsafe-types
+When passing variadic parameters via
+.Li ...(N)
+it can happen that incompatible types are passed to functions. This
+enables several warnings when static typechecking cannot guarantee
+consistent behavior.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds
@@ -518,6 +524,12 @@ float fun() {
     return = bar();
     return; // returns value of bar
 }
+.Ed
+.It Fl f Ns Cm unsafe-varargs
+When passing on varargs to a different functions, this turns some
+static error cases into warnings. Like when the caller's varargs are
+restricted to a different type than the callee's parameter. Or a list
+of unrestricted varargs is passed into restricted varargs.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds
