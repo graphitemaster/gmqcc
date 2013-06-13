@@ -5770,29 +5770,22 @@ skipvar:
             }
         }
 
-        if ((OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_HCODE)
-                ? parser->tok != ':'
-                : true
-        ){
-            if (parser->tok != '{' || var->expression.vtype != TYPE_FUNCTION) {
-                if (parser->tok != '=') {
-                    parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
-                    break;
-                }
-
-                if (!parser_next(parser)) {
-                    parseerror(parser, "error parsing initializer");
-                    break;
-                }
+        if (parser->tok != '{' || var->expression.vtype != TYPE_FUNCTION) {
+            if (parser->tok != '=') {
+                parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
+                break;
             }
-            else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
-                parseerror(parser, "expected '=' before function body in this standard");
+
+            if (!parser_next(parser)) {
+                parseerror(parser, "error parsing initializer");
+                break;
             }
         }
+        else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
+            parseerror(parser, "expected '=' before function body in this standard");
+        }
 
-        if (parser->tok == '#' ||
-            (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_HCODE && parser->tok == ':'))
-        {
+        if (parser->tok == '#') {
             ast_function *func   = NULL;
             ast_value    *number = NULL;
             float         fractional;

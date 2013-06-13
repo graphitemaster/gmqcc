@@ -74,7 +74,6 @@ static int usage(void) {
     con_out("  -std=standard          select one of the following standards\n"
             "       -std=qcc          original QuakeC\n"
             "       -std=fteqcc       fteqcc QuakeC\n"
-            "       -std=hcode        hexgen2 QuakeC\n"
             "       -std=gmqcc        this compiler (default)\n");
     con_out("  -f<flag>               enable a flag\n"
             "  -fno-<flag>            disable a flag\n"
@@ -205,12 +204,6 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,  false);
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_QCCX;
 
-                } else if (!strcmp(argarg, "hcode")) {
-
-                    opts_set(opts.flags, ADJUST_VECTOR_FIELDS,  false);
-                    opts_set(opts.flags, ASSIGN_FUNCTION_TYPES, true);
-
-                    OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_HCODE;
                 } else {
                     con_out("Unknown standard: %s\n", argarg);
                     return false;
