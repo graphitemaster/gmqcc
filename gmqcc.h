@@ -1129,6 +1129,7 @@ typedef enum {
     COMPILER_QCC,     /* circa  QuakeC */
     COMPILER_FTEQCC,  /* fteqcc QuakeC */
     COMPILER_QCCX,    /* qccx   QuakeC */
+    COMPILER_HCODE,   /* hcode  QuakeC */
     COMPILER_GMQCC    /* this   QuakeC */
 } opts_std_t;
 
