@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- 
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -106,24 +106,24 @@ static void stat_size_put(stat_size_table_t table, size_t key, size_t value) {
 void *stat_mem_allocate(size_t size, size_t line, const char *file) {
     stat_mem_block_t *info = (stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size);
     void             *data = (void*)(info + 1);
-    
+
     if(!info)
         return NULL;
-        
+
     info->line = line;
     info->size = size;
     info->file = file;
     info->prev = NULL;
     info->next = stat_mem_block_root;
-    
+
     if (stat_mem_block_root)
         stat_mem_block_root->prev = info;
-        
+
     stat_mem_block_root       = info;
     stat_mem_allocated       += size;
     stat_mem_high            += size;
     stat_mem_allocated_total ++;
-    
+
     if (stat_mem_high > stat_mem_peak)
         stat_mem_peak = stat_mem_high;
 
@@ -132,76 +132,76 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
 
 void stat_mem_deallocate(void *ptr) {
     stat_mem_block_t *info = NULL;
-    
+
     if (!ptr)
         return;
-        
+
     info = ((stat_mem_block_t*)ptr - 1);
-    
+
     stat_mem_deallocated       += info->size;
     stat_mem_high              -= info->size;
     stat_mem_deallocated_total ++;
-    
+
     if (info->prev) info->prev->next = info->next;
     if (info->next) info->next->prev = info->prev;
-    
+
     /* move ahead */
     if (info == stat_mem_block_root)
         stat_mem_block_root = info->next;
-        
+
     free(info);
 }
 
 void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file) {
     stat_mem_block_t *oldinfo = NULL;
     stat_mem_block_t *newinfo;
-    
+
     if (!ptr)
         return stat_mem_allocate(size, line, file);
-    
+
     /* stay consistent with glic */
     if (!size) {
         stat_mem_deallocate(ptr);
         return NULL;
     }
-    
+
     oldinfo = ((stat_mem_block_t*)ptr - 1);
     newinfo = ((stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size));
-    
+
     if (!newinfo) {
         stat_mem_deallocate(ptr);
         return NULL;
     }
-    
+
     memcpy(newinfo+1, oldinfo+1, oldinfo->size);
-    
+
     if (oldinfo->prev) oldinfo->prev->next = oldinfo->next;
     if (oldinfo->next) oldinfo->next->prev = oldinfo->prev;
-    
+
     /* move ahead */
     if (oldinfo == stat_mem_block_root)
         stat_mem_block_root = oldinfo->next;
-        
+
     newinfo->line = line;
     newinfo->size = size;
     newinfo->file = file;
     newinfo->prev = NULL;
     newinfo->next = stat_mem_block_root;
-    
+
     if (stat_mem_block_root)
         stat_mem_block_root->prev = newinfo;
-    
+
     stat_mem_block_root = newinfo;
     stat_mem_allocated -= oldinfo->size;
     stat_mem_high      -= oldinfo->size;
     stat_mem_allocated += newinfo->size;
     stat_mem_high      += newinfo->size;
-    
+
     if (stat_mem_high > stat_mem_peak)
         stat_mem_peak = stat_mem_high;
-        
+
     free(oldinfo);
-    
+
     return newinfo + 1;
 }
 
@@ -213,16 +213,16 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
 char *stat_mem_strdup(const char *src, size_t line, const char *file, bool empty) {
     size_t len = 0;
     char  *ptr = NULL;
-    
+
     if (!src)
         return NULL;
-    
+
     len = strlen(src);
     if (((!empty) ? len : true) && (ptr = (char*)stat_mem_allocate(len + 1, line, file))) {
         memcpy(ptr, src, len);
         ptr[len] = '\0';
     }
-    
+
     stat_used_strdups ++;
     return ptr;
 }
@@ -235,7 +235,7 @@ void _util_vec_grow(void **a, size_t i, size_t s) {
     size_t             m = 0;
     stat_size_entry_t *e = NULL;
     void              *p = NULL;
-    
+
     if (*a) {
         m = 2 * d->allocated + i;
         p = mem_r(d, s * m + sizeof(vector_t));
@@ -245,7 +245,7 @@ void _util_vec_grow(void **a, size_t i, size_t s) {
         ((vector_t*)p)->used = 0;
         stat_used_vectors++;
     }
-    
+
     if (!stat_size_vectors)
         stat_size_vectors = stat_size_new();
 
@@ -332,10 +332,10 @@ static hash_node_t *_util_htnewpair(const char *key, void *value) {
 hash_table_t *util_htnew(size_t size) {
     hash_table_t      *hashtable = NULL;
     stat_size_entry_t *find      = NULL;
-    
+
     if (size < 1)
         return NULL;
-        
+
     if (!stat_size_hashtables)
         stat_size_hashtables = stat_size_new();
 
@@ -346,7 +346,7 @@ hash_table_t *util_htnew(size_t size) {
         mem_d(hashtable);
         return NULL;
     }
-    
+
     if ((find = stat_size_get(stat_size_hashtables, size)))
         find->value++;
     else {
@@ -531,7 +531,7 @@ static void stat_dump_mem_leaks(void) {
             info->file,
             info->line
         );
-        
+
         stat_dump_mem_contents(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
     }
 }
@@ -556,10 +556,10 @@ static void stat_dump_mem_info(void) {
 
 static void stat_dump_stats_table(stat_size_table_t table, const char *string, uint64_t *size) {
     size_t i,j;
-    
+
     if (!table)
         return;
-    
+
     for (i = 0, j = 1; i < ST_SIZE; i++) {
         stat_size_entry_t *entry;
 
@@ -568,7 +568,7 @@ static void stat_dump_stats_table(stat_size_table_t table, const char *string, u
 
         con_out(string, (unsigned)j, (unsigned)entry->key, (unsigned)entry->value);
         j++;
-        
+
         if (size)
             *size += entry->key * entry->value;
     }
@@ -585,7 +585,7 @@ void stat_info() {
     if (OPTS_OPTION_BOOL(OPTION_MEMCHK) ||
         OPTS_OPTION_BOOL(OPTION_STATISTICS)) {
         uint64_t mem = 0;
-        
+
         con_out("\nAdditional Statistics:\n\
     Total vectors allocated:    %llu\n\
     Total string duplicates:    %llu\n\
@@ -596,24 +596,24 @@ void stat_info() {
             stat_used_hashtables,
             stat_type_vectors
         );
-        
+
         stat_dump_stats_table (
             stat_size_vectors,
             "        %2u| # of %4u byte vectors: %u\n",
             &mem
         );
-        
+
         con_out (
             "    Total unique hashtable sizes: %llu\n",
             stat_type_hashtables
         );
-        
+
         stat_dump_stats_table (
             stat_size_hashtables,
             "        %2u| # of %4u element hashtables: %u\n",
             NULL
         );
-        
+
         con_out (
             "    Total vector memory:          %f (MB)\n",
             (float)(mem) / 1048576.0f
