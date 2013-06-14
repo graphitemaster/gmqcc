@@ -721,7 +721,7 @@ typedef struct {
  * code_genstrin       -- generates string for code
  * code_alloc_field    -- allocated a field
  * code_push_statement -- keeps statements and linenumbers together
- * code_pop_statement  -- keeps statements and linenumbers together 
+ * code_pop_statement  -- keeps statements and linenumbers together
  */
 bool      code_write         (code_t *, const char *filename, const char *lno);
 GMQCC_WARN

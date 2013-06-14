@@ -29,7 +29,7 @@
  * or qcint; however, it's incredibly unsafe for two reasons.
  * 1) The compilers aliasing optimization can legally make it unstable
  *    (it's undefined behaviour).
- * 
+ *
  * 2) The cast itself depends on fresh storage (newly allocated in which
  *    ever function is using the cast macros), the contents of which are
  *    transferred in a way that the obligation to release storage is not
@@ -172,7 +172,7 @@ static void code_create_header(code_t *code, prog_header *code_header) {
     /*
      * These are not part of the header but we ensure LE format here to save on duplicated
      * code.
-     */  
+     */
     util_endianswap(code->statements, vec_size(code->statements), sizeof(prog_section_statement));
     util_endianswap(code->defs,       vec_size(code->defs),       sizeof(prog_section_def));
     util_endianswap(code->fields,     vec_size(code->fields),     sizeof(prog_section_field));
@@ -184,7 +184,7 @@ static void code_create_header(code_t *code, prog_header *code_header) {
  * Same principle except this one allocates memory and writes the lno(optional) and the dat file
  * directly out to allocated memory. Which is actually very useful for the future library support
  * we're going to add.
- */   
+ */
 bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t **lnomem, size_t *sizelno) {
     prog_header code_header;
     uint32_t    offset  = 0;

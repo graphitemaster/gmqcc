@@ -28,7 +28,7 @@ char value(char c) {
 int security_decode(unsigned char *dest, const unsigned char *src, int srclen) {
     unsigned char *p;
 
-    if(!*src) 
+    if(!*src)
         return 0;
 
     *dest = 0;
@@ -42,11 +42,11 @@ int security_decode(unsigned char *dest, const unsigned char *src, int srclen) {
         if(!isbase64(src[1])) {
             p -= 2;
             break;
-        } 
+        }
         else if(!isbase64(src[2])) {
             p -= 2;
             break;
-        } 
+        }
         else if(!isbase64(src[3])) {
             p--;
             break;
@@ -67,7 +67,7 @@ int security_decode(unsigned char *dest, const unsigned char *src, int srclen) {
  * If more platforms are supported add the entries between the start
  * tag here, and the end tag below. Nothing else needs to be done
  * <tag> (the table needs to match the HTML too)
- */   
+ */
 #define ARCHLINUX_32_REF "%sgmqcc-%c.%c.%c-1-i686.pkg.tar.xz%s"
 #define ARCHLINUX_64_REF "%sgmqcc-%c.%c.%c-1-x86_64.pkg.tar.xz%s"
 #define DEBIAN_32_REF    "%sgmqcc-%c.%c.%c-i686.deb%s"
@@ -155,7 +155,7 @@ void escape(url_t *str) {
     char hexstr[3];
     unsigned int  i=0;
     unsigned long l=0;
- 
+
     p = str->data;
     for(i=0; i < str->len; i++) {
         if((p - str->data) >= str->len)
@@ -235,7 +235,7 @@ void genhtml() {
 /*
  * Builds a list of download links with the right version and handles the
  * rest of the magic.
- */  
+ */
 void build(const char *directory) {
     /* Figure out version number */
     char   find[3];

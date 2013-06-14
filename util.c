@@ -321,7 +321,7 @@ int util_asprintf(char **ret, const char *fmt, ...) {
 
         allocated = (char*)mem_a(4096); /* A page must be enough */
         strerror_s(allocated, 4096, num);
-    
+
         vec_push(vector, allocated);
         return (const char *)allocated;
     }

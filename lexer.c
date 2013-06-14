@@ -172,7 +172,7 @@ static void lex_token_new(lex_file *lex)
 #else
     if (lex->tok.value)
         vec_shrinkto(lex->tok.value, 0);
-        
+
     lex->tok.constval.t  = 0;
     lex->tok.ctx.line    = lex->sline;
     lex->tok.ctx.file    = lex->name;
@@ -298,7 +298,7 @@ static int lex_try_trigraph(lex_file *lex, int old)
         lex->line++;
         lex->column = 0;
     }
-    
+
     if (c2 != '?') {
         lex_ungetch(lex, c2);
         return old;
@@ -309,7 +309,7 @@ static int lex_try_trigraph(lex_file *lex, int old)
         lex->line++;
         lex->column = 0;
     }
-    
+
     switch (c3) {
         case '=': return '#';
         case '/': return '\\';

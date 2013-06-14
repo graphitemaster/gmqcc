@@ -556,7 +556,7 @@ int main(int argc, char **argv) {
         pak_close(pak);
         vec_free(files);
         stat_info();
-        
+
         return EXIT_SUCCESS;
     }
 

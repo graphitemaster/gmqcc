@@ -189,7 +189,7 @@ static char *ftepp_predef_timestamp(lex_file *context) {
     /*
      * ctime and its fucking annoying newline char, no worries, we're
      * professionals here.
-     */   
+     */
     find  = ctime(&finfo.st_mtime);
     value = (char*)mem_a(strlen(find) + 1);
     memcpy(&value[1], find, (size = strlen(find)) - 1);

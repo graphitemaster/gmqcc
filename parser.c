@@ -4339,7 +4339,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     vec_push(func->blocks, block);
-    
+
 
     parser->function = old;
     if (!parser_leaveblock(parser))

@@ -172,7 +172,7 @@ const char* prog_getstring(qc_program *prog, qcint str) {
     /* cast for return required for C++ */
     if (str < 0 || str >= (qcint)vec_size(prog->strings))
         return  "<<<invalid string>>>";
-        
+
     return prog->strings + str;
 }
 
@@ -760,7 +760,7 @@ static int qc_strcat(qc_program *prog) {
     size_t len1,   len2;
     qcany *str1,  *str2;
     qcany  out;
-    
+
     const char *cstr1;
     const char *cstr2;
 
@@ -786,7 +786,7 @@ static int qc_strcmp(qc_program *prog) {
 
     const char *cstr1;
     const char *cstr2;
-    
+
     if (prog->argc != 2 && prog->argc != 3) {
         fprintf(stderr, "ERROR: invalid number of arguments for strcmp/strncmp: %i, expected 2 or 3\n",
                prog->argc);
@@ -905,19 +905,19 @@ void escapestring(char* dest, const char* src)  {
   char c;
   while ((c = *(src++))) {
     switch(c) {
-      case '\t': 
+      case '\t':
         *(dest++) = '\\', *(dest++) = 't';
         break;
-      case '\n': 
+      case '\n':
         *(dest++) = '\\', *(dest++) = 'n';
         break;
-      case '\r': 
+      case '\r':
         *(dest++) = '\\', *(dest++) = 'r';
         break;
-      case '\\': 
+      case '\\':
         *(dest++) = '\\', *(dest++) = '\\';
         break;
-      case '\"': 
+      case '\"':
         *(dest++) = '\\', *(dest++) = '\"';
         break;
       default:
