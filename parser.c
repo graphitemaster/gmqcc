@@ -1936,7 +1936,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                  * We should also consider adding correction tables for
                  * other things as well.
                  */
-                if (OPTS_OPTION_BOOL(OPTION_CORRECTION)) {
+                if (OPTS_OPTION_BOOL(OPTION_CORRECTION) && parser_tokval(parser) <= 16) {
                     correction_t corr;
                     correct_init(&corr);
 
