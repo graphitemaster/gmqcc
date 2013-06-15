@@ -1703,13 +1703,12 @@ static ast_expression* parse_vararg_do(parser_t *parser)
     ast_expression *idx, *out;
     ast_value      *typevar;
     ast_value      *funtype = parser->function->vtype;
+    lex_ctx         ctx     = parser_ctx(parser);
 
     if (!parser->function->varargs) {
         parseerror(parser, "function has no variable argument list");
         return NULL;
     }
-
-    lex_ctx ctx = parser_ctx(parser);
 
     if (!parser_next(parser) || parser->tok != '(') {
         parseerror(parser, "expected parameter index and type in parenthesis");

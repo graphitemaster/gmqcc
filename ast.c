@@ -1025,7 +1025,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
 
     for (i = 0; i < count; ++i) {
         if (ast_istype(self->params[i], ast_argpipe)) {
-            // warn about type safety instead
+            /* warn about type safety instead */
             if (i+1 != count) {
                 compile_error(ast_ctx(self), "argpipe must be the last parameter to a function call");
                 return false;
@@ -1047,7 +1047,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
     if (count > vec_size(func->params) && func->varparam) {
         for (; i < count; ++i) {
             if (ast_istype(self->params[i], ast_argpipe)) {
-                // warn about type safety instead
+                /* warn about type safety instead */
                 if (i+1 != count) {
                     compile_error(ast_ctx(self), "argpipe must be the last parameter to a function call");
                     return false;
