@@ -9,4 +9,16 @@ void main() {
     
     print(ftos(z), "\n");
     print(ftos(c), "\n");
+    
+    // commutative?
+    if (x ^ y == y ^ x)
+        print("commutative\n");
+    
+    // assocative?
+    if (x ^ (y ^ z) == (x ^ y) ^ z)
+        print("assocative\n");
+        
+    // elements are their own inverse?
+    if (x ^ 0 == x)
+        print("inverse\n");
 }
