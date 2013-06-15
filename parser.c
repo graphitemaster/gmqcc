@@ -1034,8 +1034,57 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     exprs[0], exprs[1]);
             break;
         case opid1('^'):
-            compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor via ^");
-            return false;
+            /*
+             * ^ can be implemented as:
+             * (LHS | RHS) & ~(LHS & RHS)
+             * to implement ~ we need to use -1-X, as you can see the
+             * whole process ends up becoming:
+             * (LHS | RHS) & (-1 - (LHS & RHS))
+             */
+            #define TRY_TYPE(I)                                     \
+                if (exprs[0]->vtype != TYPE_FLOAT) {                \
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1)); \
+                    compile_error (                                 \
+                        ast_ctx(exprs[(I)]),                        \
+                        "invalid type for bit-xor in %s: %s",       \
+                        ty1,                                        \
+                        ((I) == 0)                                  \
+                            ? "left-hand-side of expression"        \
+                            : "right-hand-side of expression"       \
+                    );                                              \
+                    return false;                                   \
+                }
+            TRY_TYPE(0)
+            TRY_TYPE(1)
+            #undef TRY_TYPE
+
+            if(CanConstFold(exprs[0], exprs[1])) {
+                out = (ast_expression*)parser_const_float(parser, (float)((qcint)(ConstF(0)) ^ ((qcint)(ConstF(1)))));
+            } else {
+                out = (ast_expression*)
+                    ast_binary_new(
+                        ctx,
+                        INSTR_BITAND,
+                        (ast_expression*)ast_binary_new(
+                            ctx,
+                            INSTR_BITOR,
+                            exprs[0],
+                            exprs[1]
+                        ),
+                        (ast_expression*)ast_binary_new(
+                            ctx,
+                            INSTR_SUB_F,
+                            (ast_expression*)parser_const_float_neg1(parser),
+                            (ast_expression*)ast_binary_new(
+                                ctx,
+                                INSTR_BITAND,
+                                exprs[0],
+                                exprs[1]
+                            )
+                        )
+                    );
+            }
+            break;
 
         case opid2('<','<'):
         case opid2('>','>'):
