@@ -72,8 +72,8 @@ static stat_mem_block_t *stat_mem_block_root        = NULL;
  */
 static stat_size_table_t stat_size_new(void) {
     return (stat_size_table_t)memset(
-        mem_a(sizeof(stat_size_entry_t*) * ST_SIZE),
-        0, ST_SIZE * sizeof(stat_size_entry_t*)
+        mem_a(sizeof(stat_size_entry_t) * ST_SIZE),
+        0, ST_SIZE * sizeof(stat_size_entry_t)
     );
 }
 
@@ -93,8 +93,8 @@ static void stat_size_put(stat_size_table_t table, size_t key, size_t value) {
     size_t hash = (key % ST_SIZE);
     while (table[hash] && table[hash]->key != key)
         hash = (hash + 1) % ST_SIZE;
-    table[hash] = (stat_size_entry_t*)mem_a(sizeof(stat_size_entry_t));
-    table[hash]->key = key;
+    table[hash]        = (stat_size_entry_t*)mem_a(sizeof(stat_size_entry_t));
+    table[hash]->key   = key;
     table[hash]->value = value;
 }
 
@@ -449,7 +449,8 @@ void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
  */
 void util_htrem(hash_table_t *ht, void (*callback)(void *data)) {
     size_t i = 0;
-    for (; i < ht->size; i++) {
+
+    for (; i < ht->size; ++i) {
         hash_node_t *n = ht->table[i];
         hash_node_t *p;
 
@@ -460,7 +461,7 @@ void util_htrem(hash_table_t *ht, void (*callback)(void *data)) {
             if (callback)
                 callback(n->value);
             p = n;
-            n = n->next;
+            n = p->next;
             mem_d(p);
         }
 
@@ -537,7 +538,7 @@ static void stat_dump_mem_leaks(void) {
 }
 
 static void stat_dump_mem_info(void) {
-    con_out("Memory information:\n\
+    con_out("Memory Information:\n\
     Total allocations:   %llu\n\
     Total deallocations: %llu\n\
     Total allocated:     %f (MB)\n\
@@ -575,18 +576,11 @@ static void stat_dump_stats_table(stat_size_table_t table, const char *string, u
 }
 
 void stat_info() {
-    if (OPTS_OPTION_BOOL(OPTION_DEBUG))
-        stat_dump_mem_leaks();
-
-    if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
-        OPTS_OPTION_BOOL(OPTION_MEMCHK))
-        stat_dump_mem_info();
-
     if (OPTS_OPTION_BOOL(OPTION_MEMCHK) ||
         OPTS_OPTION_BOOL(OPTION_STATISTICS)) {
         uint64_t mem = 0;
 
-        con_out("\nAdditional Statistics:\n\
+        con_out("Memory Statistics:\n\
     Total vectors allocated:    %llu\n\
     Total string duplicates:    %llu\n\
     Total hashtables allocated: %llu\n\
@@ -615,7 +609,7 @@ void stat_info() {
         );
 
         con_out (
-            "    Total vector memory:          %f (MB)\n",
+            "    Total vector memory:          %f (MB)\n\n",
             (float)(mem) / 1048576.0f
         );
     }
@@ -624,5 +618,12 @@ void stat_info() {
         stat_size_del(stat_size_vectors);
     if (stat_size_hashtables)
         stat_size_del(stat_size_hashtables);
+
+    if (OPTS_OPTION_BOOL(OPTION_DEBUG) ||
+        OPTS_OPTION_BOOL(OPTION_MEMCHK))
+        stat_dump_mem_info();
+
+    if (OPTS_OPTION_BOOL(OPTION_DEBUG))
+        stat_dump_mem_leaks();
 }
 #undef ST_SIZE
