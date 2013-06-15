@@ -1051,6 +1051,19 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if(CanConstFold(exprs[0], exprs[1])) {
                 out = (ast_expression*)parser_const_float(parser, (float)((qcint)(ConstF(0)) ^ ((qcint)(ConstF(1)))));
             } else {
+                ast_binary *expr = ast_binary_new(
+                    ctx,
+                    INSTR_SUB_F,
+                    (ast_expression*)parser_const_float_neg1(parser),
+                    (ast_expression*)ast_binary_new(
+                        ctx,
+                        INSTR_BITAND,
+                        exprs[0],
+                        exprs[1]
+                    )
+                );
+                expr->refs = AST_REF_NONE;
+                
                 out = (ast_expression*)
                     ast_binary_new(
                         ctx,
@@ -1061,17 +1074,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             exprs[0],
                             exprs[1]
                         ),
-                        (ast_expression*)ast_binary_new(
-                            ctx,
-                            INSTR_SUB_F,
-                            (ast_expression*)parser_const_float_neg1(parser),
-                            (ast_expression*)ast_binary_new(
-                                ctx,
-                                INSTR_BITAND,
-                                exprs[0],
-                                exprs[1]
-                            )
-                        )
+                        (ast_expression*)expr
                     );
             }
             break;
@@ -1201,7 +1204,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             } else {
                 ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
 
-                eq->refs = (ast_binary_ref)false; /* references nothing */
+                eq->refs = AST_REF_NONE;
 
                     /* if (lt) { */
                 out = (ast_expression*)ast_ternary_new(ctx,
