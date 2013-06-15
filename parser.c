@@ -1046,7 +1046,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[(I)], ty1, sizeof(ty1)); \
                     compile_error (                                   \
                         ast_ctx(exprs[(I)]),                          \
-                        "invalid type for bit-xor in %s: %s",         \
+                        "invalid type `%s` for bit-xor in %s",        \
                         ty1,                                          \
                         ((I) == 0)                                    \
                             ? "left-hand-side of expression"          \
