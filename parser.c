@@ -1041,18 +1041,18 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
              * whole process ends up becoming:
              * (LHS | RHS) & (-1 - (LHS & RHS))
              */
-            #define TRY_TYPE(I)                                     \
-                if (exprs[0]->vtype != TYPE_FLOAT) {                \
-                    ast_type_to_string(exprs[0], ty1, sizeof(ty1)); \
-                    compile_error (                                 \
-                        ast_ctx(exprs[(I)]),                        \
-                        "invalid type for bit-xor in %s: %s",       \
-                        ty1,                                        \
-                        ((I) == 0)                                  \
-                            ? "left-hand-side of expression"        \
-                            : "right-hand-side of expression"       \
-                    );                                              \
-                    return false;                                   \
+            #define TRY_TYPE(I)                                       \
+                if (exprs[(I)]->vtype != TYPE_FLOAT) {                \
+                    ast_type_to_string(exprs[(I)], ty1, sizeof(ty1)); \
+                    compile_error (                                   \
+                        ast_ctx(exprs[(I)]),                          \
+                        "invalid type for bit-xor in %s: %s",         \
+                        ty1,                                          \
+                        ((I) == 0)                                    \
+                            ? "left-hand-side of expression"          \
+                            : "right-hand-side of expression"         \
+                    );                                                \
+                    return false;                                     \
                 }
             TRY_TYPE(0)
             TRY_TYPE(1)
