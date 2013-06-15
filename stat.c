@@ -593,7 +593,7 @@ void stat_info() {
 
         stat_dump_stats_table (
             stat_size_vectors,
-            "        %2u| # of %4u byte vectors: %u\n",
+            "        %2u| # of %5u byte vectors: %u\n",
             &mem
         );
 
@@ -604,7 +604,7 @@ void stat_info() {
 
         stat_dump_stats_table (
             stat_size_hashtables,
-            "        %2u| # of %4u element hashtables: %u\n",
+            "        %2u| # of %5u element hashtables: %u\n",
             NULL
         );
 
