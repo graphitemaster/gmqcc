@@ -1918,7 +1918,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                  * it in the predef table.  And diagnose it better :)
                  */
                 if (!OPTS_FLAG(FTEPP_PREDEFS) && ftepp_predef_exists(parser_tokval(parser))) {
-                    parseerror(parser, "unexpected ident: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
+                    parseerror(parser, "unexpected identifier: %s (use -fftepp-predef to enable pre-defined macros)", parser_tokval(parser));
                     return false;
                 }
 
@@ -1945,12 +1945,12 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                     correct_free(&corr);
 
                     if (correct) {
-                        parseerror(parser, "unexpected ident: %s (did you mean %s?)", parser_tokval(parser), correct);
+                        parseerror(parser, "unexpected identifier: %s (did you mean %s?)", parser_tokval(parser), correct);
                         mem_d(correct);
                         return false;
                     }
                 }
-                parseerror(parser, "unexpected ident: %s", parser_tokval(parser));
+                parseerror(parser, "unexpected identifier: %s", parser_tokval(parser));
                 return false;
             }
         }
@@ -1997,7 +1997,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     while (true)
     {
         if (parser->tok == TOKEN_TYPENAME) {
-            parseerror(parser, "unexpected typename");
+            parseerror(parser, "unexpected typename `%s`", parser_tokval(parser));
             goto onerr;
         }
 
@@ -6219,7 +6219,7 @@ static bool parser_compile(parser_t *parser)
         {
             if (!parser_global_statement(parser)) {
                 if (parser->tok == TOKEN_EOF)
-                    parseerror(parser, "unexpected eof");
+                    parseerror(parser, "unexpected end of file");
                 else if (compile_errors)
                     parseerror(parser, "there have been errors, bailing out");
                 lex_close(parser->lex);
