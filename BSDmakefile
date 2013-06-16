@@ -38,7 +38,7 @@ TESTSUITE = testsuite
 PAK       = gmqpak
 
 #standard rules
-c.o:
+c.o: ${.IMPSRC} 
 	$(CC) -c ${.IMPSRC} -o ${.TARGET} $(CPPFLAGS) $(CFLAGS)
 
 exec-standalone.o: exec.c
