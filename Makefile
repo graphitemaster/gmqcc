@@ -35,9 +35,14 @@ else
 	#Tiny C Compiler doesn't know what -pedantic-errors is
 	# and instead of ignoring .. just errors.
 	ifneq ($(CC), tcc)
-		CFLAGS += -Wstrict-prototypes -pedantic-errors
+		CFLAGS += -pedantic-errors
 	else
 		CFLAGS += -Wno-pointer-sign -fno-common
+	endif
+	
+	#-Wstrict-prototypes is not valid in g++
+	ifneq ($(CC), g++)
+		CFLAGS += -Wstrict-prototypes
 	endif
 endif
 
