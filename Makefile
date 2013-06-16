@@ -50,17 +50,16 @@ ifeq ($(track), no)
 	CFLAGS += -DNOTRACK
 endif
 
-OBJ_D = util.o code.o ast.o ir.o conout.o ftepp.o opts.o fs.o utf8.o correct.o stat.o
+OBJ_C = main.o lexer.o parser.o fs.o stat.o util.o code.o ast.o ir.o conout.o ftepp.o opts.o utf8.o correct.o
 OBJ_P = util.o fs.o conout.o opts.o pak.o stat.o
 OBJ_T = test.o util.o conout.o fs.o stat.o
-OBJ_C = main.o lexer.o parser.o fs.o stat.o
 OBJ_X = exec-standalone.o util.o conout.o fs.o stat.o
 
 #we have duplicate object files when dealing with creating a simple list
 #for dependinces. To combat this we use some clever recrusive-make to
 #filter the list and remove duplicates which we use for make depend
 RMDUP = $(if $1,$(firstword $1) $(call RMDUP,$(filter-out $(firstword $1),$1)))
-DEPS := $(call RMDUP, $(OBJ_D) $(OBJ_P) $(OBJ_T) $(OBJ_C) $(OBJ_X))
+DEPS := $(call RMDUP, $(OBJ_P) $(OBJ_T) $(OBJ_C) $(OBJ_X))
 
 ifneq ("$(CYGWIN)", "")
 	#nullify the common variables that
@@ -241,18 +240,18 @@ uninstall:
 # DO NOT DELETE
 
 util.o: gmqcc.h opts.def
-code.o: gmqcc.h opts.def
-ast.o: gmqcc.h opts.def ast.h ir.h
-ir.o: gmqcc.h opts.def ir.h
-conout.o: gmqcc.h opts.def
-ftepp.o: gmqcc.h opts.def lexer.h
-opts.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
-utf8.o: gmqcc.h opts.def
-correct.o: gmqcc.h opts.def
-stat.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+opts.o: gmqcc.h opts.def
 pak.o: gmqcc.h opts.def
+stat.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
 parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
+code.o: gmqcc.h opts.def
+ast.o: gmqcc.h opts.def ast.h ir.h
+ir.o: gmqcc.h opts.def ir.h
+ftepp.o: gmqcc.h opts.def lexer.h
+utf8.o: gmqcc.h opts.def
+correct.o: gmqcc.h opts.def
