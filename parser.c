@@ -1114,7 +1114,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             ),
                             (ast_expression*)expr
                         );
-                    out->refs = AST_REF_LEFT;
                 }
             } else {
                 /*
