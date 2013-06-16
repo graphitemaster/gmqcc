@@ -1,3 +1,16 @@
+vector swap(float x, float y) {
+    vector ret = '0 0 0';
+    // everyone knows this trick
+    ret.x = x;
+    ret.y = y;
+    
+    ret.x = ret.x ^ ret.y;
+    ret.y = ret.y ^ ret.x;
+    ret.x = ret.x ^ ret.y;
+    
+    return ret;
+}
+
 void main() {
     float x = 5;
     float y = 3;
@@ -30,4 +43,10 @@ void main() {
     
     print("vv: ", vtos(v3), "\n");
     print("vf: ", vtos(v4), "\n");
+    
+    // good olde xor swap test too
+    float swap_x = 100;
+    float swap_y = 200;
+    vector swaps = swap(swap_x, swap_y);
+    print("100:200 swapped is: ", ftos(swaps.x), ":", ftos(swaps.y), "\n");
 }
