@@ -2,6 +2,7 @@ Release v0.3.0
     * Language:
         - Return assignments, the ability to assign to the return keyword
           as if it were a local variable.
+        - Added bitwise XOR operator (^)
     * Compilation:
         - Optimized memory usage (now uses on average %3 less memory for
           compilation).
