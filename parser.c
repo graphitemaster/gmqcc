@@ -1114,6 +1114,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                             ),
                             (ast_expression*)expr
                         );
+                    out->refs = AST_REF_LEFT;
                 }
             } else {
                 /*
@@ -6431,7 +6432,6 @@ static void parser_remove_ast(parser_t *parser)
     vec_free(parser->correct_variables);
     vec_free(parser->correct_variables_score);
 
-
     for (i = 0; i < vec_size(parser->_typedefs); ++i)
         ast_delete(parser->_typedefs[i]);
     vec_free(parser->_typedefs);
@@ -6452,6 +6452,9 @@ static void parser_remove_ast(parser_t *parser)
     ast_value_delete(parser->const_vec[0]);
     ast_value_delete(parser->const_vec[1]);
     ast_value_delete(parser->const_vec[2]);
+    
+    if (parser->reserved_version)
+        ast_value_delete(parser->reserved_version);
 
     util_htdel(parser->aliases);
     intrin_intrinsics_destroy(parser);
