@@ -50,7 +50,7 @@ OBJ_X = exec-standalone.o util.o conout.o fs.o stat.o
 QCVM      = qcvm
 GMQCC     = gmqcc
 TESTSUITE = testsuite
-PAK       = pak
+PAK       = gmqpak
 
 #gource flags
 GOURCEFLAGS =                 \

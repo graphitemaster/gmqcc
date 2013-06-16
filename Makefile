@@ -72,7 +72,7 @@ ifneq ("$(CYGWIN)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
-	PAK       = pak.exe
+	PAK       = gmqpak.exe
 else
 ifneq ("$(MINGW)", "")
 	#nullify the common variables that
