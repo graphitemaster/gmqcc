@@ -1,13 +1,7 @@
 #
 # This is the Makefile for the BSD flavor
 #
-
-DESTDIR  :=
-OPTIONAL :=
-PREFIX   := /usr/local
-BINDIR   := $(PREFRIX)/bin
-DATADIR  := $(PREFIX)/share
-MANDIR   := $(DATADIR)/man
+.include "include.mk"
 
 GITTEST  != git describe --always 2>/dev/null
 GITINFO  :=
@@ -15,12 +9,6 @@ GITINFO  :=
 .if $(GITTEST)
     GITINFO != git describe --always
 .endif
-
-CC       ?= clang
-
-# linker flags and optional additional libraries if required
-LDFLAGS  +=
-LIBS     += -lm
 
 CFLAGS   +=  -Wall -Wextra -Werror -fno-strict-aliasing -DGMQCC_GITINFO=\"$(GITINFO)\"$(OPTIONAL)
 
@@ -42,96 +30,14 @@ CFLAGS   +=  -Wall -Wextra -Werror -fno-strict-aliasing -DGMQCC_GITINFO=\"$(GITI
 .    endif
 .endif
 
-OBJ_C = main.o lexer.o parser.o fs.o stat.o util.o code.o ast.o ir.o conout.o ftepp.o opts.o utf8.o correct.o
-OBJ_P = util.o fs.o conout.o opts.o pak.o stat.o
-OBJ_T = test.o util.o conout.o fs.o stat.o
-OBJ_X = exec-standalone.o util.o conout.o fs.o stat.o
+DEPS != for i in $(OBJ_C) $(OBJ_P) $(OBJ_T) $(OBJ_X); do echo $$i; done | sort | uniq
 
 QCVM      = qcvm
 GMQCC     = gmqcc
 TESTSUITE = testsuite
 PAK       = gmqpak
 
-#gource flags
-GOURCEFLAGS =                 \
-    --date-format "%d %B, %Y" \
-    --seconds-per-day 0.01    \
-    --auto-skip-seconds 1     \
-    --title "GMQCC"           \
-    --key                     \
-    --camera-mode overview    \
-    --highlight-all-users     \
-    --file-idle-time 0        \
-    --hide progress,mouse     \
-    --stop-at-end             \
-    --max-files 99999999999   \
-    --max-file-lag 0.000001   \
-    --bloom-multiplier 1.3    \
-    --logo doc/html/gmqcc.png \
-    -1280x720
-
-#ffmpeg flags for gource
-FFMPEGFLAGS=                  \
-    -y                        \
-    -r 60                     \
-    -f image2pipe             \
-    -vcodec ppm               \
-    -i -                      \
-    -vcodec libx264           \
-    -preset ultrafast         \
-    -crf 1                    \
-    -threads 0                \
-    -bf 0
-
-#splint flags
-SPLINTFLAGS =                 \
-    -redef                    \
-    -noeffect                 \
-    -nullderef                \
-    -usedef                   \
-    -type                     \
-    -mustfreeonly             \
-    -nullstate                \
-    -varuse                   \
-    -mustfreefresh            \
-    -compdestroy              \
-    -compmempass              \
-    -nullpass                 \
-    -onlytrans                \
-    -predboolint              \
-    -boolops                  \
-    -incondefs                \
-    -macroredef               \
-    -retvalint                \
-    -nullret                  \
-    -predboolothers           \
-    -globstate                \
-    -dependenttrans           \
-    -branchstate              \
-    -compdef                  \
-    -temptrans                \
-    -usereleased              \
-    -warnposix                \
-    +charindex                \
-    -kepttrans                \
-    -unqualifiedtrans         \
-    +matchanyintegral         \
-    +voidabstract             \
-    -nullassign               \
-    -unrecog                  \
-    -casebreak                \
-    -retvalbool               \
-    -retvalother              \
-    -mayaliasunique           \
-    -realcompare              \
-    -observertrans            \
-    -abstract                 \
-    -statictrans              \
-    -castfcnptr
-
 #standard rules
-default: all
-
 c.o:
 	$(CC) -c ${.IMPSRC} -o ${.TARGET} $(CPPFLAGS) $(CFLAGS)
 
@@ -169,7 +75,9 @@ gource:
 gource-record:
 	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
-#install rules
+depend:
+	@makedepend -Y -f BSDmakefile -w 65536 2> /dev/null ${DEPS:C/\.o/.c/g}
+
 install: install-gmqcc install-qcvm install-gmqpak install-doc
 install-gmqcc: $(GMQCC)
 	install -d -m755              $(DESTDIR)$(BINDIR)
@@ -186,29 +94,21 @@ install-doc:
 	install    -m644 doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
 	install    -m644 doc/gmqpak.1 $(DESTDIR)$(MANDIR)/man1/
 
-uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/gmqcc
-	rm -f $(DESTDIR)$(BINDIR)/qcvm
-	rm -f $(DESTDIR)$(BINDIR)/gmqpak
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
-
 # DO NOT DELETE
 
-util.o: gmqcc.h opts.def
-fs.o: gmqcc.h opts.def
+ast.o: gmqcc.h opts.def ast.h ir.h
+code.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
+correct.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
+ftepp.o: gmqcc.h opts.def lexer.h
+ir.o: gmqcc.h opts.def ir.h
+lexer.o: gmqcc.h opts.def lexer.h
+main.o: gmqcc.h opts.def lexer.h
 opts.o: gmqcc.h opts.def
 pak.o: gmqcc.h opts.def
+parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
 stat.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def
-main.o: gmqcc.h opts.def lexer.h
-lexer.o: gmqcc.h opts.def lexer.h
-parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
-code.o: gmqcc.h opts.def
-ast.o: gmqcc.h opts.def ast.h ir.h
-ir.o: gmqcc.h opts.def ir.h
-ftepp.o: gmqcc.h opts.def lexer.h
 utf8.o: gmqcc.h opts.def
-correct.o: gmqcc.h opts.def
+util.o: gmqcc.h opts.def

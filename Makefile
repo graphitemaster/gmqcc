@@ -1,18 +1,8 @@
-DESTDIR :=
-OPTIONAL:=
-PREFIX  := /usr/local
-BINDIR  := $(PREFIX)/bin
-DATADIR := $(PREFIX)/share
-MANDIR  := $(DATADIR)/man
+include include.mk
 
 UNAME  ?= $(shell uname)
 CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
-
-CC      ?= clang
-# linker flags and optional additional libraries if required
-LDFLAGS +=
-LIBS    += -lm
 
 CFLAGS  += -Wall -Wextra -Werror -fno-strict-aliasing $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
@@ -45,15 +35,6 @@ else
 		CFLAGS += -Wstrict-prototypes
 	endif
 endif
-
-ifeq ($(track), no)
-	CFLAGS += -DNOTRACK
-endif
-
-OBJ_C = main.o lexer.o parser.o fs.o stat.o util.o code.o ast.o ir.o conout.o ftepp.o opts.o utf8.o correct.o
-OBJ_P = util.o fs.o conout.o opts.o pak.o stat.o
-OBJ_T = test.o util.o conout.o fs.o stat.o
-OBJ_X = exec-standalone.o util.o conout.o fs.o stat.o
 
 #we have duplicate object files when dealing with creating a simple list
 #for dependinces. To combat this we use some clever recrusive-make to
@@ -92,85 +73,7 @@ else
 endif
 endif
 
-#gource flags
-GOURCEFLAGS=                  \
-    --date-format "%d %B, %Y" \
-    --seconds-per-day 0.01    \
-    --auto-skip-seconds 1     \
-    --title "GMQCC"           \
-    --key                     \
-    --camera-mode overview    \
-    --highlight-all-users     \
-    --file-idle-time 0        \
-    --hide progress,mouse     \
-    --stop-at-end             \
-    --max-files 99999999999   \
-    --max-file-lag 0.000001   \
-    --bloom-multiplier 1.3    \
-    --logo doc/html/gmqcc.png \
-    -1280x720
-
-#ffmpeg flags for gource
-FFMPEGFLAGS=                  \
-    -y                        \
-    -r 60                     \
-    -f image2pipe             \
-    -vcodec ppm               \
-    -i -                      \
-    -vcodec libx264           \
-    -preset ultrafast         \
-    -crf 1                    \
-    -threads 0                \
-    -bf 0
-
-#splint flags
-SPLINTFLAGS =            \
-    -redef               \
-    -noeffect            \
-    -nullderef           \
-    -usedef              \
-    -type                \
-    -mustfreeonly        \
-    -nullstate           \
-    -varuse              \
-    -mustfreefresh       \
-    -compdestroy         \
-    -compmempass         \
-    -nullpass            \
-    -onlytrans           \
-    -predboolint         \
-    -boolops             \
-    -incondefs           \
-    -macroredef          \
-    -retvalint           \
-    -nullret             \
-    -predboolothers      \
-    -globstate           \
-    -dependenttrans      \
-    -branchstate         \
-    -compdef             \
-    -temptrans           \
-    -usereleased         \
-    -warnposix           \
-    +charindex           \
-    -kepttrans           \
-    -unqualifiedtrans    \
-    +matchanyintegral    \
-    +voidabstract        \
-    -nullassign          \
-    -unrecog             \
-    -casebreak           \
-    -retvalbool          \
-    -retvalother         \
-    -mayaliasunique      \
-    -realcompare         \
-    -observertrans       \
-    -abstract            \
-    -statictrans         \
-    -castfcnptr
-
 #standard rules
-default: all
 %.o: %.c
 	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
 
@@ -209,8 +112,7 @@ gource-record:
 	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
-	@makedepend    -Y -w 65536 2> /dev/null \
-		$(subst .o,.c,$(DEPS))
+	@ makedepend -Y -w 65536 2> /dev/null $(subst .o,.c,$(DEPS))
 
 #install rules
 install: install-gmqcc install-qcvm install-gmqpak install-doc
@@ -229,29 +131,4 @@ install-doc:
 	install    -m644  doc/qcvm.1   $(DESTDIR)$(MANDIR)/man1/
 	install    -m644  doc/gmqpak.1 $(DESTDIR)$(MANDIR)/man1/
 
-uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/gmqcc
-	rm -f $(DESTDIR)$(BINDIR)/qcvm
-	rm -f $(DESTDIR)$(BINDIR)/gmqpak
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
-
 # DO NOT DELETE
-
-util.o: gmqcc.h opts.def
-fs.o: gmqcc.h opts.def
-conout.o: gmqcc.h opts.def
-opts.o: gmqcc.h opts.def
-pak.o: gmqcc.h opts.def
-stat.o: gmqcc.h opts.def
-test.o: gmqcc.h opts.def
-main.o: gmqcc.h opts.def lexer.h
-lexer.o: gmqcc.h opts.def lexer.h
-parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
-code.o: gmqcc.h opts.def
-ast.o: gmqcc.h opts.def ast.h ir.h
-ir.o: gmqcc.h opts.def ir.h
-ftepp.o: gmqcc.h opts.def lexer.h
-utf8.o: gmqcc.h opts.def
-correct.o: gmqcc.h opts.def
