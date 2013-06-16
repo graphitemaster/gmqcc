@@ -132,3 +132,20 @@ install-doc:
 	install    -m644  doc/gmqpak.1 $(DESTDIR)$(MANDIR)/man1/
 
 # DO NOT DELETE
+
+util.o: gmqcc.h opts.def
+fs.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+opts.o: gmqcc.h opts.def
+pak.o: gmqcc.h opts.def
+stat.o: gmqcc.h opts.def
+test.o: gmqcc.h opts.def
+main.o: gmqcc.h opts.def lexer.h
+lexer.o: gmqcc.h opts.def lexer.h
+parser.o: gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
+code.o: gmqcc.h opts.def
+ast.o: gmqcc.h opts.def ast.h ir.h
+ir.o: gmqcc.h opts.def ir.h
+ftepp.o: gmqcc.h opts.def lexer.h
+utf8.o: gmqcc.h opts.def
+correct.o: gmqcc.h opts.def
