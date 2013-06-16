@@ -8,15 +8,17 @@
     If using GNU make program
         make
 
-    If using BSD make program use Makefile.bsd instead
-        make -f Makefile.bsd
+    If using BSD make program, the BSDmakefile should be
+    used instead when you invoke make, if however it ignores BSDmakefile
+    you can supply it with -f.
 
+        make -f BSDmakefile
 
     If no error appears, the following binary files will have been
     created:
         - gmqcc
         - qcvm
-        - pak
+        - gmqpak
 
 3. Installation
     The `install' target will install the 2 binaries to /usr/local/bin
