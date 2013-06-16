@@ -1035,48 +1035,126 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid1('^'):
             /*
-             * ^ can be implemented as:
-             * (LHS | RHS) & ~(LHS & RHS)
-             * to implement ~ we need to use -1-X, as you can see the
-             * whole process ends up becoming:
-             * (LHS | RHS) & (-1 - (LHS & RHS))
+             * Okay lets designate what the hell is an acceptable use
+             * of the ^ operator. In many vector processing units, XOR
+             * is allowed to be used on vectors, but only if the first
+             * operand is a vector, the second operand can be a float
+             * or vector. It's never legal for the first operand to be
+             * a float, and then the following operand to be a vector.
+             * Further more, the only time it is legal to do XOR otherwise
+             * is when both operand are floats. This nicely crafted if
+             * statement catches them all.
+             * 
+             * In the event that the first operand is a vector, two
+             * possible situations can arise, thus, each element of
+             * vector A (operand A) is exclusive-ORed with the corresponding
+             * element of vector B (operand B), If B is scalar, the
+             * scalar value is first replicated for each element.
+             * 
+             * The QCVM itself lacks a BITXOR instruction. Thus emulating
+             * the mathematics of it is required. The following equation
+             * is used: (LHS | RHS) & ~(LHS & RHS). However, due to the
+             * QCVM also lacking a BITNEG instruction, we need to emulate
+             * ~FOO with -1 - FOO, the whole process becoming this nicely
+             * crafted expression: (LHS | RHS) & (-1 - (LHS & RHS)).
+             * 
+             * When A is not scalar, this process is repeated for all
+             * components of vector A with the value in operand B,
+             * only if operand B is scalar. When A is not scalar, and B
+             * is also not scalar, this process is repeated for all
+             * components of the vector A with the components of vector B.
+             * Finally when A is scalar and B is scalar, this process is
+             * simply used once for A and B being LHS and RHS respectfully.
+             * 
+             * Yes the semantics are a bit strange (no pun intended).
+             * But then again BITXOR is strange itself, consdering it's
+             * commutative, assocative, and elements of the BITXOR operation
+             * are their own inverse.
              */
-            if (NotSameType(TYPE_FLOAT)) {
+            if ( !(exprs[0]->vtype == TYPE_FLOAT  && exprs[1]->vtype == TYPE_FLOAT) &&
+                 !(exprs[0]->vtype == TYPE_VECTOR && exprs[1]->vtype == TYPE_FLOAT) &&
+                 !(exprs[0]->vtype == TYPE_VECTOR && exprs[1]->vtype == TYPE_VECTOR))
+            {
                 compile_error(ctx, "invalid types used in expression: cannot perform bit operations between types %s and %s",
                               type_name[exprs[0]->vtype],
                               type_name[exprs[1]->vtype]);
                 return false;
             }
 
-            if(CanConstFold(exprs[0], exprs[1])) {
-                out = (ast_expression*)parser_const_float(parser, (float)((qcint)(ConstF(0)) ^ ((qcint)(ConstF(1)))));
-            } else {
-                ast_binary *expr = ast_binary_new(
-                    ctx,
-                    INSTR_SUB_F,
-                    (ast_expression*)parser_const_float_neg1(parser),
-                    (ast_expression*)ast_binary_new(
+            /*
+             * IF the first expression is float, the following will be too
+             * since scalar ^ vector is not allowed.
+             */
+            if (exprs[0]->vtype == TYPE_FLOAT) {
+                if(CanConstFold(exprs[0], exprs[1])) {
+                    out = (ast_expression*)parser_const_float(parser, (float)((qcint)(ConstF(0)) ^ ((qcint)(ConstF(1)))));
+                } else {
+                    ast_binary *expr = ast_binary_new(
                         ctx,
-                        INSTR_BITAND,
-                        exprs[0],
-                        exprs[1]
-                    )
-                );
-                expr->refs = AST_REF_NONE;
-                
-                out = (ast_expression*)
-                    ast_binary_new(
-                        ctx,
-                        INSTR_BITAND,
+                        INSTR_SUB_F,
+                        (ast_expression*)parser_const_float_neg1(parser),
                         (ast_expression*)ast_binary_new(
                             ctx,
-                            INSTR_BITOR,
+                            INSTR_BITAND,
                             exprs[0],
                             exprs[1]
-                        ),
-                        (ast_expression*)expr
+                        )
                     );
+                    expr->refs = AST_REF_NONE;
+                    
+                    out = (ast_expression*)
+                        ast_binary_new(
+                            ctx,
+                            INSTR_BITAND,
+                            (ast_expression*)ast_binary_new(
+                                ctx,
+                                INSTR_BITOR,
+                                exprs[0],
+                                exprs[1]
+                            ),
+                            (ast_expression*)expr
+                        );
+                }
+            } else {
+                /*
+                 * The first is a vector: vector is allowed to xor with vector and
+                 * with scalar, branch here for the second operand.
+                 */
+                if (exprs[1]->vtype == TYPE_VECTOR) {
+                    /*
+                     * Xor all the values of the vector components against the
+                     * vectors components in question.
+                     */
+                    if (CanConstFold(exprs[0], exprs[1])) {
+                        out = (ast_expression*)parser_const_vector_f(
+                            parser,
+                            (float)(((qcint)(ConstV(0).x)) ^ ((qcint)(ConstV(1).x))),
+                            (float)(((qcint)(ConstV(0).y)) ^ ((qcint)(ConstV(1).y))),
+                            (float)(((qcint)(ConstV(0).z)) ^ ((qcint)(ConstV(1).z)))
+                        );
+                    } else {
+                        compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against vector");
+                        return false;
+                    }
+                } else {
+                    /*
+                     * Xor all the values of the vector components against the
+                     * scalar in question.
+                     */
+                    if (CanConstFold(exprs[0], exprs[1])) {
+                        out = (ast_expression*)parser_const_vector_f(
+                            parser,
+                            (float)(((qcint)(ConstV(0).x)) ^ ((qcint)(ConstF(1)))),
+                            (float)(((qcint)(ConstV(0).y)) ^ ((qcint)(ConstF(1)))),
+                            (float)(((qcint)(ConstV(0).z)) ^ ((qcint)(ConstF(1))))
+                        );
+                    } else {
+                        compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against float");
+                        return false;
+                    }
+                }
             }
+                
             break;
 
         case opid2('<','<'):

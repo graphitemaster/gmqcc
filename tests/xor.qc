@@ -21,4 +21,13 @@ void main() {
     // elements are their own inverse?
     if (x ^ 0 == x)
         print("inverse\n");
+        
+    // vector ^ vector
+    // vector ^ float
+    // are legal in constant expressions (currently)
+    const vector v3 = '5 2 5' ^ '3 10 3';
+    const vector v4 = '5 2 5' ^ 10;
+    
+    print("vv: ", vtos(v3), "\n");
+    print("vf: ", vtos(v4), "\n");
 }
