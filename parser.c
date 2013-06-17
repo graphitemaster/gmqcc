@@ -1690,6 +1690,8 @@ static bool parser_close_paren(parser_t *parser, shunt *sy)
 static void parser_reclassify_token(parser_t *parser)
 {
     size_t i;
+    if (parser->tok >= TOKEN_START)
+        return;
     for (i = 0; i < operator_count; ++i) {
         if (!strcmp(parser_tokval(parser), operators[i].op)) {
             parser->tok = TOKEN_OPERATOR;
