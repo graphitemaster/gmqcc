@@ -176,6 +176,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.werror, WARN_INVALID_PARAMETER_COUNT, true);
                     opts_set(opts.werror, WARN_MISSING_RETURN_VALUES,   true);
                     opts_set(opts.flags,  EXPRESSIONS_FOR_BUILTINS,     true);
+                    opts_set(opts.warn,   WARN_BREAKDEF,                true);
 
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_GMQCC;
@@ -196,6 +197,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.flags, ASSIGN_FUNCTION_TYPES,    true);
                     opts_set(opts.flags, CORRECT_TERNARY,          false);
                     opts_set(opts.warn, WARN_TERNARY_PRECEDENCE,   true);
+                    opts_set(opts.warn, WARN_BREAKDEF,             true);
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_FTEQCC;
 
