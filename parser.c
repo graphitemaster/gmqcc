@@ -5887,8 +5887,16 @@ skipvar:
 
         if (parser->tok != '{' || var->expression.vtype != TYPE_FUNCTION) {
             if (parser->tok != '=') {
-                parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
-                break;
+                if (!strcmp(parser_tokval(parser), "break")) {
+                    if (!parser_next(parser)) {
+                        parseerror(parser, "error parsing break definition");
+                        break;
+                    }
+                    (void)!!parsewarning(parser, WARN_BREAKDEF, "break definition ignored (suggest removing it)");
+                } else {
+                    parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
+                    break;
+                }
             }
 
             if (!parser_next(parser)) {
