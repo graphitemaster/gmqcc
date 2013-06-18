@@ -290,7 +290,7 @@ typedef struct hash_node_t {
  * }
  * 
  * The two u32s that form the key are the same value x (pulled from data)
- * this premix stage will be perform the same results for both. Unrolled
+ * this premix stage will perform the same results for both values. Unrolled
  * this produces just:
  *  x *= m;
  *  x ^= x >> r;
@@ -301,7 +301,7 @@ typedef struct hash_node_t {
  *  h *= m;
  *  h ^= x;
  * 
- * This appears to be fine, except what happens when m == 1, well x
+ * This appears to be fine, except what happens when m == 1? well x
  * cancels out entierly, leaving just:
  *  x ^= x >> r;
  *  h ^= x;
