@@ -271,6 +271,104 @@ typedef struct hash_node_t {
     struct hash_node_t *next;  /* next node (linked list)        */
 } hash_node_t;
 
+/*
+ * This is a patched version of the Murmur2 hashing function to use
+ * a proper pre-mix and post-mix setup. Infact this is Murmur3 for
+ * the most part just reinvented.
+ * 
+ * Murmur 2 contains an inner loop such as:
+ * while (l >= 4) {
+ *      u32 k = *(u32*)d;
+ *      k *= m;
+ *      k ^= k >> r;
+ *      k *= m;
+ * 
+ *      h *= m;
+ *      h ^= k;
+ *      d += 4;
+ *      l -= 4;
+ * }
+ * 
+ * The two u32s that form the key are the same value x (pulled from data)
+ * this premix stage will be perform the same results for both. Unrolled
+ * this produces just:
+ *  x *= m;
+ *  x ^= x >> r;
+ *  x *= m;
+ *
+ *  h *= m;
+ *  h ^= x;
+ *  h *= m;
+ *  h ^= x;
+ * 
+ * This appears to be fine, except what happens when m == 1, well x
+ * cancels out entierly, leaving just:
+ *  x ^= x >> r;
+ *  h ^= x;
+ *  h ^= x;
+ * 
+ * So all keys hash to the same value, but how often does m == 1?
+ * well, it turns out testing x for all possible values yeilds only
+ * 172,013,942 unique results instead of 2^32. So nearly ~4.6 bits
+ * are cancelled out on average!
+ * 
+ * This means we have a 14.5% (rounded) chance of colliding more, which
+ * results in another bucket/chain for the hashtable.
+ *
+ * We fix it buy upgrading the pre and post mix ssystems to align with murmur
+ * hash 3.
+ */
+#if 1
+#define GMQCC_ROTL32(X, R) (((X) << (R)) | ((X) >> (32 - (R))))
+GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
+    const unsigned char *data   = (const unsigned char *)key;
+    const size_t         len    = strlen(key);
+    const size_t         block  = len / 4;
+    const uint32_t       mask1  = 0xCC9E2D51;
+    const uint32_t       mask2  = 0x1B873593;
+    const uint32_t      *blocks = (const uint32_t*)(data + block * 4);
+    const unsigned char *tail   = (const unsigned char *)(data + block * 4);
+
+    size_t   i;
+    uint32_t k;
+    uint32_t h = 0x1EF0 ^ len;
+
+    for (i = -block; i; i++) {
+        k  = blocks[i];
+        k *= mask1;
+        k  = GMQCC_ROTL32(k, 15);
+        k *= mask2;
+        h ^= k;
+        h  = GMQCC_ROTL32(h, 13);
+        h  = h * 5 + 0xE6546B64;
+    }
+
+    k = 0;
+    switch (len & 3) {
+        case 3:
+            k ^= tail[2] << 16;
+        case 2:
+            k ^= tail[1] << 8;
+        case 1:
+            k ^= tail[0];
+            k *= mask1;
+            k  = GMQCC_ROTL32(k, 15);
+            k *= mask2;
+            h ^= k;
+    }
+
+    h ^= len;
+    h ^= h >> 16;
+    h *= 0x85EBCA6B;
+    h ^= h >> 13;
+    h *= 0xC2B2AE35;
+    h ^= h >> 16;
+
+    return (size_t) (h % ht->size);
+}
+#undef GMQCC_ROTL32
+#else
+/* We keep the old for reference */
 GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
     const uint32_t       mix   = 0x5BD1E995;
     const uint32_t       rot   = 24;
@@ -305,6 +403,7 @@ GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
 
     return (size_t) (hash % ht->size);
 }
+#endif
 
 static hash_node_t *_util_htnewpair(const char *key, void *value) {
     hash_node_t *node;
