@@ -20,6 +20,7 @@ ifeq ($(CC), clang)
 	    -Wno-missing-prototypes            \
 	    -Wno-float-equal                   \
 	    -Wno-unknown-warning-option        \
+	    -Wno-cast-align                    \
 	    -Wstrict-prototypes
 else
 	#Tiny C Compiler doesn't know what -pedantic-errors is

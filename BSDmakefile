@@ -21,6 +21,7 @@ CFLAGS   +=  -Wall -Wextra -Werror -fno-strict-aliasing -DGMQCC_GITINFO=\"$(GITI
                 -Wno-missing-prototypes\
                 -Wno-float-equal\
                 -Wno-unknown-warning-option\
+                -Wno-cast-align\
                 -Wstrict-prototypes
 .else
 .    if $(CC) == tcc
