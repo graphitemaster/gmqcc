@@ -25,8 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-
 
 #include "gmqcc.h"
 #include "lexer.h"
@@ -413,7 +411,7 @@ static bool options_parse(int argc, char **argv) {
                         con_out("option -O requires a numerical argument, or optimization name with an optional 'no-' prefix\n");
                         return false;
                     }
-                    if (isdigit(argarg[0])) {
+                    if (util_isdigit(argarg[0])) {
                         uint32_t val = (uint32_t)strtol(argarg, NULL, 10);
                         OPTS_OPTION_U32(OPTION_O) = val;
                         opts_setoptimlevel(val);
@@ -538,9 +536,9 @@ static bool progs_nextline(char **out, size_t *alen,FILE *src) {
         return false;
 
     /* start at first non-blank */
-    for (start = line; isspace(*start); ++start) {}
+    for (start = line; util_isspace(*start); ++start) {}
     /* end at the first non-blank */
-    for (end = start;  *end && !isspace(*end);  ++end)   {}
+    for (end = start; *end && !util_isspace(*end);  ++end)   {}
 
     *out = line;
     /* move the actual filename to the beginning */

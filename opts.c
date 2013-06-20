@@ -23,7 +23,6 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 #include "gmqcc.h"
 
@@ -163,13 +162,13 @@ void opts_setoptimlevel(unsigned int level) {
  */
 static char *opts_ini_rstrip(char *s) {
     char *p = s + strlen(s);
-    while(p > s && isspace(*--p))
+    while(p > s && util_isspace(*--p))
         *p = '\0';
     return s;
 }
 
 static char *opts_ini_lskip(const char *s) {
-    while (*s && isspace(*s))
+    while (*s && util_isspace(*s))
         s++;
     return (char*)s;
 }
@@ -177,7 +176,7 @@ static char *opts_ini_lskip(const char *s) {
 static char *opts_ini_next(const char *s, char c) {
     bool last = false;
     while (*s && *s != c && !(last && *s == ';'))
-        last = !!isspace(*s), s++;
+        last = !!util_isspace(*s), s++;
 
     return (char*)s;
 }

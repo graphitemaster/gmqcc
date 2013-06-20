@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 #include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
 
 #include "gmqcc.h"
@@ -201,7 +200,7 @@ uint16_t util_crc16(const char *k, int len, const short clamp) {
 size_t util_strtocmd(const char *in, char *out, size_t outsz) {
     size_t sz = 1;
     for (; *in && sz < outsz; ++in, ++out, ++sz)
-        *out = (*in == '-') ? '_' : (isalpha(*in) && !isupper(*in)) ? *in + 'A' - 'a': *in;
+        *out = (*in == '-') ? '_' : (util_isalpha(*in) && !util_isupper(*in)) ? *in + 'A' - 'a': *in;
     *out = 0;
     return sz-1;
 }
@@ -209,7 +208,7 @@ size_t util_strtocmd(const char *in, char *out, size_t outsz) {
 size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
     size_t sz = 1;
     for (; *in && sz < outsz; ++in, ++out, ++sz)
-        *out = (*in == '_') ? '-' : (isalpha(*in) && isupper(*in)) ? *in + 'a' - 'A' : *in;
+        *out = (*in == '_') ? '-' : (util_isalpha(*in) && util_isupper(*in)) ? *in + 'a' - 'A' : *in;
     *out = 0;
     return sz-1;
 }

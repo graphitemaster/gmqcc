@@ -24,7 +24,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 #include "gmqcc.h"
 
@@ -613,7 +612,7 @@ static void stat_dump_mem_contents(stat_mem_block_t *memory, uint16_t cols) {
                 con_out("%c",
                     (j >= memory->size)
                         ? ' '
-                        : (isprint(((unsigned char*)(memory + 1))[j]))
+                        : (util_isprint(((unsigned char*)(memory + 1))[j]))
                             ? 0xFF & ((unsigned char*)(memory + 1)) [j]
                             : '.'
                 );

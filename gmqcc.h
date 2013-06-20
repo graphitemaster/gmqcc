@@ -305,6 +305,28 @@ void *stat_mem_allocate  (size_t, size_t, const char *);
 /*===================================================================*/
 /*=========================== util.c ================================*/
 /*===================================================================*/
+
+/*
+ * Microsoft implements against the spec versions of ctype.h. Which
+ * means what ever the current set locale is will render the actual
+ * results of say isalpha('A') wrong for what ever retarded locale
+ * is used. Simalerly these are also implemented inefficently on
+ * some toolchains and end up becoming actual library calls. Perhaps
+ * this is why tools like yacc provide their own? Regardless implementing
+ * these as functions is equally as silly, the call overhead is not
+ * justified when this could happen on every character from an input
+ * stream. We provide our own as macros for absolute inlinability.
+ */
+#define util_isupper(C) ((C) >= 'A' && (C) <= 'Z')
+#define util_islower(C) ((C) >= 'a' && (C) <= 'z')
+#define util_isdigit(C) ((C) >= '0' && (C) <= '9')
+#define util_isprint(C) ((C) >= 32  && (C) <= 126)
+#define util_isspace(C) ((C) == ' ' || (C) == '\f' || \
+                         (C) == '\n'|| (C) == '\r' || \
+                         (C) == '\t'|| (C) == '\v')
+
+#define util_isalpha(C) (util_islower(C) || util_isupper(C))
+
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
