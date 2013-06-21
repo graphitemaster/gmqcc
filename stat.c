@@ -71,8 +71,8 @@ static stat_mem_block_t *stat_mem_block_root        = NULL;
  */
 static stat_size_table_t stat_size_new(void) {
     return (stat_size_table_t)memset(
-        mem_a(sizeof(stat_size_entry_t) * ST_SIZE),
-        0, ST_SIZE * sizeof(stat_size_entry_t)
+        mem_a(sizeof(stat_size_entry_t*) * ST_SIZE),
+        0, ST_SIZE * sizeof(stat_size_entry_t*)
     );
 }
 
