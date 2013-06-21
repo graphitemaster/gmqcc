@@ -56,7 +56,7 @@ qc_program* prog_load(const char *filename, bool skipversion)
 {
     qc_program   *prog;
     prog_header   header;
-    FILE         *file   = fs_file_open(filename, "rb");
+    FILE         *file  = fs_file_open(filename, "rb");
 
     if (!file)
         return NULL;
@@ -144,6 +144,8 @@ error:
     vec_free(prog->entitydata);
     vec_free(prog->entitypool);
     mem_d(prog);
+
+    fs_file_close(file);
     return NULL;
 }
 

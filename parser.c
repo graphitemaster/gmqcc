@@ -6303,8 +6303,9 @@ parser_t *parser_create()
     vec_push(parser->correct_variables, correct_trie_new());
     vec_push(parser->correct_variables_score, NULL);
 
-    empty_ctx.file = "<internal>";
-    empty_ctx.line = 0;
+    empty_ctx.file   = "<internal>";
+    empty_ctx.line   = 0;
+    empty_ctx.column = 0;
     parser->nil = ast_value_new(empty_ctx, "nil", TYPE_NIL);
     parser->nil->cvq = CV_CONST;
     if (OPTS_FLAG(UNTYPED_NIL))
