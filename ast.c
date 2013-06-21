@@ -1152,16 +1152,15 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
 
-    if (!vtype ||
-        vtype->hasvalue ||
-        vtype->expression.vtype != TYPE_FUNCTION)
-    {
+    if (!vtype) {
+        compile_error(ast_ctx(self), "internal error: ast_function_new condition 0");
+        goto cleanup;
+    } else if (vtype->hasvalue || vtype->expression.vtype != TYPE_FUNCTION) {
         compile_error(ast_ctx(self), "internal error: ast_function_new condition %i %i type=%i (probably 2 bodies?)",
                  (int)!vtype,
                  (int)vtype->hasvalue,
                  vtype->expression.vtype);
-        mem_d(self);
-        return NULL;
+        goto cleanup;
     }
 
     self->vtype  = vtype;
@@ -1186,6 +1185,10 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->return_value     = NULL;
 
     return self;
+    
+cleanup:
+    mem_d(self);
+    return NULL;
 }
 
 void ast_function_delete(ast_function *self)
