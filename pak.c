@@ -334,6 +334,7 @@ static bool pak_extract_all(pak_file_t *pak, const char *dir) {
 static bool pak_insert_one(pak_file_t *pak, const char *file) {
     pak_directory_t dir;
     unsigned char  *dat;
+    long            len;
     FILE           *fp;
 
     /*
@@ -353,9 +354,13 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
      * to the PAK file itself.
      */
     fs_file_seek(fp, 0, SEEK_END);
-    dir.len = fs_file_tell(fp);
+    if ((len = fs_file_tell(fp)) < 0) {
+        fs_file_close(fp);
+        return false;
+    }
     fs_file_seek(fp, 0, SEEK_SET);
 
+    dir.len = len;
     dir.pos = fs_file_tell(pak->handle);
 
     /*
