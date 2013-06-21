@@ -697,9 +697,6 @@ int main(int argc, char **argv) {
         mem_d(line);
     }
 
-    if (retval)
-        goto cleanup;
-
     if (vec_size(items)) {
         if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
             !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
