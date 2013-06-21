@@ -325,6 +325,8 @@ static bool task_template_generate(task_template_t *tmpl, char tag, const char *
      */
     if (value && *value && (*value == ' ' || *value == '\t'))
         value++;
+    else if (!value)
+        exit(EXIT_FAILURE);
 
     /*
      * Value will contain a newline character at the end, we need to strip
@@ -332,8 +334,6 @@ static bool task_template_generate(task_template_t *tmpl, char tag, const char *
      */
     if (strchr(value, '\n'))
         *strrchr(value, '\n')='\0';
-    else /* cppcheck: possible nullpointer dereference */
-        exit(EXIT_FAILURE);
 
     /*
      * Now allocate and set the actual value for the specific tag. Which
