@@ -2624,7 +2624,7 @@ bool ir_function_calculate_liferanges(ir_function *self)
             if (v->memberof) {
                 ir_value *vec = v->memberof;
                 for (s = 0; s < vec_size(vec->reads); ++s) {
-                    if (vec->reads[s]->eid == v->life[0].end)
+                    if (vec->reads[s]->eid == vec->life[0].end)
                         break;
                 }
                 if (s < vec_size(vec->reads)) {
