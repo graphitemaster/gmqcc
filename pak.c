@@ -427,8 +427,16 @@ static bool pak_close(pak_file_t *pak) {
      * our directory entries at the end of the file.
      */
     if (pak->insert) {
+        int tell = fs_file_tell(pak->handle);
+        if (tell < 0) {
+            vec_free     (pak->directories);
+            fs_file_close(pak->handle);
+            mem_d        (pak);
+
+            return false;
+        }
         pak->header.dirlen = vec_size(pak->directories) * 64;
-        pak->header.diroff = ftell(pak->handle);
+        pak->header.diroff = tell;
 
         /* patch header */
         fs_file_seek (pak->handle, 0, SEEK_SET);
