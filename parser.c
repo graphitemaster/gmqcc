@@ -3622,7 +3622,8 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         if (!(expression = parse_expression(parser, false, true)) ||
             !(*out = parse_goto_computed(parser, &expression))) {
             parseerror(parser, "invalid goto expression");
-            ast_unref(expression);
+            if(expression)
+                ast_unref(expression);
             return false;
         }
 

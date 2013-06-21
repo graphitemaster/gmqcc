@@ -791,7 +791,7 @@ cleanup:
     vec_free(ppems);
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY))
-        parser_cleanup(parser);
+        if(parser) parser_cleanup(parser);
     if (opts_output_free)
         mem_d(OPTS_OPTION_STR(OPTION_OUTPUT));
     if (operators_free)

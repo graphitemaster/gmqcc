@@ -1563,7 +1563,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     return true;
 
 error: /* clean up */
-    ir_value_delete(v);
+    if(v) ir_value_delete(v);
     return false;
 }
 
