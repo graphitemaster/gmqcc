@@ -896,7 +896,7 @@ static void task_destroy(void) {
             else
                 util_debug("TEST", "removed stderr log file: %s\n", task_tasks[i].stderrlogfile);
 
-            remove(task_tasks[i].tmpl->tempfilename);
+            (void)!remove(task_tasks[i].tmpl->tempfilename);
         }
 
         /* free util_strdup data for log files */

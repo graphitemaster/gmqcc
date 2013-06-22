@@ -2755,7 +2755,12 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
     if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
-        ast_delete(*out);
+        /*
+         * Test for NULL otherwise ast_delete dereferences null pointer
+         * and boom.
+         */
+        if (*out)
+            ast_delete(*out);
         *out = NULL;
     }
     else {

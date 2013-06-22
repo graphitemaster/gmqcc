@@ -2893,10 +2893,13 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     if (bprecond)
     {
         ir_block *ontrue, *onfalse;
-        if      (bbody)      ontrue = bbody;
+        ontrue = bbody; /* can never be null */
+
+        /* all of this is dead code 
         else if (bincrement) ontrue = bincrement;
-        else if (bpostcond)  ontrue = bpostcond;
-        else                 ontrue = bprecond;
+        else                 ontrue = bpostcond;
+        */
+
         onfalse = bout;
         if (self->pre_not) {
             tmpblock = ontrue;
