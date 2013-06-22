@@ -65,7 +65,7 @@ test: all
 	@ ./$(TESTSUITE)
 
 clean:
-	rm -f *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe
+	rm -rf *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
 
 splint:
 	@ splint $(SPLINTFLAGS) *.c *.h
