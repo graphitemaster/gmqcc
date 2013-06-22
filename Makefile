@@ -115,6 +115,13 @@ gource-record:
 depend:
 	@ makedepend -Y -w 65536 2> /dev/null $(subst .o,.c,$(DEPS))
 
+
+coverity:
+	@cov-build --dir cov-int $(MAKE)
+	@tar czf gm-qcc.tgz cov-int
+	@rm -rf cov-int
+	@echo gm-qcc.tgz generated, submit for analysis
+
 #install rules
 install: install-gmqcc install-qcvm install-gmqpak install-doc
 install-gmqcc: $(GMQCC)

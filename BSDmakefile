@@ -79,6 +79,12 @@ gource-record:
 depend:
 	@makedepend -Y -f BSDmakefile -w 65536 2> /dev/null ${DEPS:C/\.o/.c/g}
 
+coverity:
+	@cov-build --dir cov-int $(MAKE) -f BSDmakefile
+	@tar czf gm-qcc.tgz cov-int
+	@rm -rf cov-int
+	@echo gm-qcc.tgz generated, submit for analysis
+
 install: install-gmqcc install-qcvm install-gmqpak install-doc
 install-gmqcc: $(GMQCC)
 	install -d -m755              $(DESTDIR)$(BINDIR)

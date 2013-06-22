@@ -304,7 +304,9 @@ static void trace_print_global(qc_program *prog, unsigned int glob, int vtype) {
     int       len;
 
     if (!glob) {
-        len = printf("<null>,");
+        if ((len = printf("<null>,")) == -1)
+            len = 0;
+
         goto done;
     }
 
