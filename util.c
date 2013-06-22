@@ -440,7 +440,7 @@ static GMQCC_INLINE void mt_generate(void) {
      * = 2*2*3*3*11])
      */
     i = MT_SPACE;
-    while (i < MT_SIZE - 1) {
+    while (i < MT_SIZE-2) {
         /*
          * We expand this 11 times .. manually, no macros are required
          * here. This all fits in the CPU cache.

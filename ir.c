@@ -3910,7 +3910,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
         return;
     }
 
-    strncat(ind, "\t", IND_BUFSZ);
+    strncat(ind, "\t", IND_BUFSZ-1);
 
     if (in->_ops[0] && (in->_ops[1] || in->_ops[2])) {
         ir_value_dump(in->_ops[0], oprintf);
