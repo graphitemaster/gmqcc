@@ -142,6 +142,7 @@ static void code_create_header(code_t *code, prog_header *code_header) {
     code_header->strings.offset    = code_header->globals.offset    + (sizeof(int32_t)                * vec_size(code->globals));
     code_header->strings.length    = vec_size(code->chars);
     code_header->version           = 6;
+    code_header->skip              = 0;
 
     if (OPTS_OPTION_BOOL(OPTION_FORCECRC))
         code_header->crc16         = OPTS_OPTION_U16(OPTION_FORCED_CRC);
