@@ -2056,7 +2056,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                         correct = correct_str(&corr, parser->correct_variables[i], parser_tokval(parser));
                         if (strcmp(correct, parser_tokval(parser))) {
                             break;
-                        } else if (correct) {
+                        } else  {
                             mem_d(correct);
                             correct = NULL;
                         }
@@ -2514,7 +2514,8 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     }
 
     unary = (ast_unary*)cond;
-    while (ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F)
+    /* ast_istype dereferences cond, should test here for safety */
+    while (cond && ast_istype(cond, ast_unary) && unary->op == INSTR_NOT_F)
     {
         cond = unary->operand;
         unary->operand = NULL;

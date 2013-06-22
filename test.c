@@ -104,6 +104,7 @@ static FILE ** task_popen(const char *command, const char *mode) {
         data->pipes  [0] = inhandle [1];
         data->pipes  [1] = outhandle[0];
         data->pipes  [2] = errhandle[0];
+
         data->handles[0] = fdopen(inhandle [1], "w");
         data->handles[1] = fdopen(outhandle[0], mode);
         data->handles[2] = fdopen(errhandle[0], mode);
@@ -119,9 +120,9 @@ static FILE ** task_popen(const char *command, const char *mode) {
         close(errhandle[0]);
 
         /* see piping documentation for this sillyness :P */
-        close(0); (void)!dup(inhandle [0]);
-        close(1); (void)!dup(outhandle[1]);
-        close(2); (void)!dup(errhandle[1]);
+        dup2(inhandle [0], 0);
+        dup2(outhandle[1], 1);
+        dup2(errhandle[1], 2);
 
         execvp(*argv, argv);
         exit(EXIT_FAILURE);
@@ -135,8 +136,7 @@ task_popen_error_2: close(outhandle[0]), close(outhandle[1]);
 task_popen_error_1: close(inhandle [0]), close(inhandle [1]);
 task_popen_error_0:
 
-    if (argv)
-        vec_free(argv);
+    vec_free(argv);
     return NULL;
 }
 
@@ -474,8 +474,7 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
     return true;
 
 failure:
-    if (back)
-        mem_d (back);
+    mem_d (back);
     return false;
 }
 
