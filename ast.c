@@ -2883,9 +2883,13 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     /* Now all blocks are in place */
     /* From 'bin' we jump to whatever comes first */
     if      (bprecond)   tmpblock = bprecond;
-    else if (bbody)      tmpblock = bbody;
+    else                 tmpblock = bbody;    /* can never be null */
+    
+    /* DEAD CODE
     else if (bpostcond)  tmpblock = bpostcond;
     else                 tmpblock = bout;
+    */
+    
     if (!ir_block_create_jump(bin, ast_ctx(self), tmpblock))
         return false;
 

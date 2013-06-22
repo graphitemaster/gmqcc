@@ -2584,7 +2584,8 @@ bool ir_function_calculate_liferanges(ir_function *self)
 
     /* parameters live at 0 */
     for (i = 0; i < vec_size(self->params); ++i)
-        ir_value_life_merge(self->locals[i], 0);
+        if (!ir_value_life_merge(self->locals[i], 0))
+            compile_error(self->context, "internal error: failed value-life merging");
 
     do {
         self->run_id++;
@@ -3875,7 +3876,7 @@ void ir_block_dump(ir_block* b, char *ind,
 {
     size_t i;
     oprintf("%s:%s\n", ind, b->label);
-    strncat(ind, "\t", IND_BUFSZ);
+    strncat(ind, "\t", IND_BUFSZ-1);
 
     if (b->instr && b->instr[0])
         oprintf("%s (%i) [entry]\n", ind, (int)(b->instr[0]->eid-1));

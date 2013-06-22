@@ -110,8 +110,7 @@ static FILE ** task_popen(const char *command, const char *mode) {
         data->handles[2] = fdopen(errhandle[0], mode);
 
         /* sigh */
-        if (argv)
-            vec_free(argv);
+        vec_free(argv);
         return data->handles;
     } else if (data->pid == 0) {
         /* child */
@@ -639,6 +638,7 @@ static void task_template_destroy(task_template_t **tmpl) {
      * Nullify all the template members otherwise NULL comparision
      * checks will fail if tmpl pointer is reused.
      */
+    mem_d((*tmpl)->tempfilename);
     mem_d(*tmpl);
 }
 
