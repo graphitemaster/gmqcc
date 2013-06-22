@@ -425,7 +425,7 @@ static GMQCC_INLINE void mt_generate(void) {
      * Said loop has been unrolled for MT_SPACE (226 iterations), opposed
      * to [0, MT_SIZE)  (634 iterations).
      */
-    for (i = 0; i < MT_SPACE; ++i) {
+    for (i = 0; i < MT_SPACE-1; ++i) {
         y           = (0x80000000 & mt_state[i]) | (0x7FFFFFF & mt_state[i + 1]);
         mt_state[i] = mt_state[i + MT_PERIOD] ^ (y >> 1) ^ matrix[y & 1];
 
