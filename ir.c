@@ -3779,7 +3779,7 @@ void ir_function_dump(ir_function *f, char *ind,
         return;
     }
     oprintf("%sfunction %s\n", ind, f->name);
-    strncat(ind, "\t", IND_BUFSZ);
+    strncat(ind, "\t", IND_BUFSZ-1);
     if (vec_size(f->locals))
     {
         oprintf("%s%i locals:\n", ind, (int)vec_size(f->locals));
