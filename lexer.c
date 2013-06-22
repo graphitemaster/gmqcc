@@ -75,8 +75,9 @@ static bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
     lex_ctx ctx;
     va_list ap;
 
-    ctx.file = lex->name;
-    ctx.line = lex->sline;
+    ctx.file   = lex->name;
+    ctx.line   = lex->sline;
+    ctx.column = lex->column;
 
     va_start(ap, fmt);
     r = vcompile_warning(ctx, warntype, fmt, ap);
