@@ -949,7 +949,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (exprs[1]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                compile_error(ctx, "invalid types used in expression: cannot divide tyeps %s and %s", ty1, ty2);
+                compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
                 return false;
             }
             if (exprs[0]->vtype == TYPE_FLOAT) {
@@ -980,7 +980,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                compile_error(ctx, "invalid types used in expression: cannot divide tyeps %s and %s", ty1, ty2);
+                compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
                 return false;
             }
             break;
