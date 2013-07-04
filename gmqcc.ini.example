@@ -1,5 +1,5 @@
 # This is an example INI file that can be used to set compiler options
-# without the rquirement for supplying them as arguments on the command
+# without the requirement for supplying them as arguments on the command
 # line, this can be coupled with progs.src.  To utilize this file there
 # are two options availble, if it's named "gmqcc.ini" or "gmqcc.cfg" and
 # the file exists in the directory that GMQCC is invoked from, the compiler
@@ -11,7 +11,7 @@
 # These are common compiler flags usually represented via the -f prefix
 # from the command line.
 [flags]
-    # Enabling this can potentially reduces code size by overlapping
+    # Enabling this can potentially reduce code size by overlapping
     # locals where possible.
     OVERLAP_LOCALS               = false
 
