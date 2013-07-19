@@ -49,6 +49,7 @@ typedef struct parser_s {
     size_t         translated;
 
     ht ht_imm_string;
+    ht ht_imm_string_dotranslate;
 
     /* must be deleted first, they reference immediates and values */
     ast_value    **accessors;
@@ -257,17 +258,15 @@ static char *parser_strdup(const char *str)
 
 static ast_value* parser_const_string(parser_t *parser, const char *str, bool dotranslate)
 {
-    size_t hash = util_hthash(parser->ht_imm_string, str);
+    ht ht_string = (dotranslate)
+        ? parser->ht_imm_string_dotranslate
+        : parser->ht_imm_string;
+
     ast_value *out;
-    if ( (out = (ast_value*)util_htgeth(parser->ht_imm_string, str, hash)) ) {
-        if (dotranslate && out->name[0] == '#') {
-            char name[32];
-            util_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(parser->translated++));
-            ast_value_set_name(out, name);
-            out->expression.flags |= AST_FLAG_INCLUDE_DEF;
-        }
+    size_t     hash = util_hthash(ht_string, str);
+
+    if ((out = (ast_value*)util_htgeth(ht_string, str, hash)))
         return out;
-    }
     /*
     for (i = 0; i < vec_size(parser->imm_string); ++i) {
         if (!strcmp(parser->imm_string[i]->constval.vstring, str))
@@ -281,12 +280,14 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
         out->expression.flags |= AST_FLAG_INCLUDE_DEF;
     } else
         out = ast_value_new(parser_ctx(parser), "#IMMEDIATE", TYPE_STRING);
+
     out->cvq      = CV_CONST;
     out->hasvalue = true;
     out->isimm    = true;
     out->constval.vstring = parser_strdup(str);
     vec_push(parser->imm_string, out);
-    util_htseth(parser->ht_imm_string, str, hash, out);
+    util_htseth(ht_string, str, hash, out);
+
     return out;
 }
 
@@ -6305,6 +6306,7 @@ parser_t *parser_create()
     parser->aliases = util_htnew(PARSER_HT_SIZE);
 
     parser->ht_imm_string = util_htnew(512);
+    parser->ht_imm_string_dotranslate = util_htnew(512);
 
     /* corrector */
     vec_push(parser->correct_variables, correct_trie_new());
@@ -6422,6 +6424,7 @@ static void parser_remove_ast(parser_t *parser)
     vec_free(parser->functions);
     vec_free(parser->imm_vector);
     vec_free(parser->imm_string);
+    util_htdel(parser->ht_imm_string_dotranslate);
     util_htdel(parser->ht_imm_string);
     vec_free(parser->imm_float);
     vec_free(parser->globals);
