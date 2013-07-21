@@ -1050,6 +1050,8 @@ int main(int argc, char **argv) {
                 p.vtype = TYPE_STRING;
             else if (argv[1][1] == 'v')
                 p.vtype = TYPE_VECTOR;
+            else
+                p.vtype = TYPE_VOID;
 
             --argc;
             ++argv;
