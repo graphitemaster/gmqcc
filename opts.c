@@ -347,7 +347,7 @@ void opts_ini_init(const char *file) {
      *  gmqcc.ini
      *  gmqcc.cfg
      */
-    char       *error;
+    char       *error = NULL;
     size_t     line;
     FILE       *ini;
 
