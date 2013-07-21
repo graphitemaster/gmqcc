@@ -694,6 +694,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             char            *qcflags = NULL;
             task_t           task;
 
+            task.compiled = false;
             util_debug("TEST", "compiling task template: %s/%s\n", curdir, files->d_name);
             found ++;
             if (!tmpl) {
