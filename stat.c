@@ -55,6 +55,7 @@ static uint64_t          stat_mem_allocated_total   = 0;
 static uint64_t          stat_mem_deallocated_total = 0;
 static uint64_t          stat_mem_high              = 0;
 static uint64_t          stat_mem_peak              = 0;
+static uint64_t          stat_mem_strdups           = 0;
 static uint64_t          stat_used_strdups          = 0;
 static uint64_t          stat_used_vectors          = 0;
 static uint64_t          stat_used_hashtables       = 0;
@@ -223,6 +224,7 @@ char *stat_mem_strdup(const char *src, size_t line, const char *file, bool empty
     }
 
     stat_used_strdups ++;
+    stat_mem_strdups  += len;
     return ptr;
 }
 
@@ -679,12 +681,14 @@ void stat_info() {
         uint64_t mem = 0;
 
         con_out("Memory Statistics:\n\
-    Total vectors allocated:    %llu\n\
-    Total string duplicates:    %llu\n\
-    Total hashtables allocated: %llu\n\
-    Total unique vector sizes:  %llu\n",
+    Total vectors allocated:       %llu\n\
+    Total string duplicates:       %llu\n\
+    Total string duplicate memory: %f (MB)\n\
+    Total hashtables allocated:    %llu\n\
+    Total unique vector sizes:     %llu\n",
             stat_used_vectors,
             stat_used_strdups,
+            (float)(stat_mem_strdups) / 1048576.0f,
             stat_used_hashtables,
             stat_type_vectors
         );
