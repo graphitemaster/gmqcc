@@ -106,11 +106,6 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   define GMQCC_WARN
 #   define GMQCC_USED
 #endif /*! defined(__GNUC__) || defined (__CLANG__) */
-/*
- * This is a hack to silent clang regarding empty
- * body if statements.
- */
-#define GMQCC_SUPPRESS_EMPTY_BODY do { } while (0)
 
 /*
  * Inline is not supported in < C90, however some compilers
@@ -259,7 +254,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   include <fcntl.h>
 
     struct dirent {
-        long d_ino;
+        long               d_ino;
         unsigned short     d_reclen;
         unsigned short     d_namlen;
         char               d_name[FILENAME_MAX];
@@ -317,15 +312,12 @@ void *stat_mem_allocate  (size_t, size_t, const char *);
  * justified when this could happen on every character from an input
  * stream. We provide our own as macros for absolute inlinability.
  */
-#define util_isupper(C) ((C) >= 'A' && (C) <= 'Z')
-#define util_islower(C) ((C) >= 'a' && (C) <= 'z')
-#define util_isdigit(C) ((C) >= '0' && (C) <= '9')
-#define util_isprint(C) ((C) >= 32  && (C) <= 126)
-#define util_isspace(C) ((C) == ' ' || (C) == '\f' || \
-                         (C) == '\n'|| (C) == '\r' || \
-                         (C) == '\t'|| (C) == '\v')
-
-#define util_isalpha(C) (util_islower(C) || util_isupper(C))
+#define util_isalpha(a) ((((unsigned)(a)|32)-'a') < 26)
+#define util_isdigit(a) (((unsigned)(a)-'0') < 10)
+#define util_islower(a) (((unsigned)(a)-'a') < 26)
+#define util_isupper(a) (((unsigned)(a)-'A') < 26)
+#define util_isprint(a) (((unsigned)(a)-0x20) < 0x5F)
+#define util_isspace(a) (((a) >= 9 && (a) <= 13) || (a) == ' ')
 
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
