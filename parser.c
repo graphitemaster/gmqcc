@@ -31,8 +31,8 @@
 /* beginning of locals */
 #define PARSER_HT_LOCALS  2
 
-#define PARSER_HT_SIZE    128
-#define TYPEDEF_HT_SIZE   16
+#define PARSER_HT_SIZE    512
+#define TYPEDEF_HT_SIZE   512
 
 typedef struct parser_s {
     lex_file *lex;

@@ -198,6 +198,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.warn, WARN_BREAKDEF,             true);
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_FTEQCC;
+                    OPTS_OPTION_BOOL(OPTION_STATISTICS) = true;
 
                 } else if (!strcmp(argarg, "qccx")) {
 
