@@ -132,14 +132,14 @@ static char *ftepp_predef_time(lex_file *context) {
 /* __LINE__ */
 static char *ftepp_predef_line(lex_file *context) {
     char   *value;
-    util_asprintf(&value, "%d", (int)context->ctx.line);
+    util_asprintf(&value, "%d", (int)context->line);
     return value;
 }
 /* __FILE__ */
 static char *ftepp_predef_file(lex_file *context) {
-    size_t  length = strlen(context->ctx.file) + 3; /* two quotes and a terminator */
+    size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    util_snprintf(value, length, "\"%s\"", context->ctx.file);
+    util_snprintf(value, length, "\"%s\"", context->name);
 
     return value;
 }
@@ -183,7 +183,7 @@ static char *ftepp_predef_timestamp(lex_file *context) {
     char       *find;
     char       *value;
     size_t      size;
-    if (stat(context->ctx.file, &finfo))
+    if (stat(context->name, &finfo))
         return util_strdup("\"<failed to determine timestamp>\"");
 
     /*
@@ -239,14 +239,14 @@ static GMQCC_INLINE char *(*ftepp_predef(const char *name))(lex_file *context) {
 #define ftepp_tokval(f) ((f)->lex->tok.value)
 #define ftepp_ctx(f)    ((f)->lex->tok.ctx)
 
-static void ftepp_errorat(ftepp_t *ftepp, lex_ctx *ctx, const char *fmt, ...)
+static void ftepp_errorat(ftepp_t *ftepp, lex_ctx ctx, const char *fmt, ...)
 {
     va_list ap;
 
     ftepp->errors++;
 
     va_start(ap, fmt);
-    con_cvprintmsg((void*)ctx, LVL_ERROR, "error", fmt, ap);
+    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", fmt, ap);
     va_end(ap);
 }
 
@@ -267,7 +267,7 @@ static bool GMQCC_WARN ftepp_warn(ftepp_t *ftepp, int warntype, const char *fmt,
     va_list ap;
 
     va_start(ap, fmt);
-    r = vcompile_warning(*(ftepp->lex->tok.ctx), warntype, fmt, ap);
+    r = vcompile_warning(ftepp->lex->tok.ctx, warntype, fmt, ap);
     va_end(ap);
     return r;
 }
@@ -524,7 +524,7 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
 static bool ftepp_define(ftepp_t *ftepp)
 {
     ppmacro *macro = NULL;
-    size_t l = ftepp_ctx(ftepp)->line;
+    size_t l = ftepp_ctx(ftepp).line;
 
     (void)ftepp_next(ftepp);
     if (!ftepp_skipspace(ftepp))
@@ -540,7 +540,7 @@ static bool ftepp_define(ftepp_t *ftepp)
                     return false;
                 ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
             }
-            macro = ppmacro_new(*ftepp_ctx(ftepp), ftepp_tokval(ftepp));
+            macro = ppmacro_new(ftepp_ctx(ftepp), ftepp_tokval(ftepp));
             break;
         default:
             ftepp_error(ftepp, "expected macro name");
@@ -573,7 +573,7 @@ static bool ftepp_define(ftepp_t *ftepp)
         ppmacro_delete(macro);
     }
 
-    for (; l < ftepp_ctx(ftepp)->line; ++l)
+    for (; l < ftepp_ctx(ftepp).line; ++l)
         ftepp_out(ftepp, "\n", true);
     return true;
 }
@@ -840,16 +840,16 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     /*
     printf("__________\n%s\n=========\n", ftepp->output_string);
     */
-    inlex = lex_open_string(ftepp->output_string, vec_size(ftepp->output_string)-1, ftepp->lex->ctx.file);
+    inlex = lex_open_string(ftepp->output_string, vec_size(ftepp->output_string)-1, ftepp->lex->name);
     if (!inlex) {
         ftepp_error(ftepp, "internal error: failed to instantiate lexer");
         retval = false;
         goto cleanup;
     }
 
-    inlex->sline    = ftepp->lex->sline;
-    inlex->ctx.line = ftepp->lex->ctx.line;
-    ftepp->lex      = inlex;
+    inlex->line  = ftepp->lex->line;
+    inlex->sline = ftepp->lex->sline;
+    ftepp->lex   = inlex;
 
     old_inmacro     = ftepp->in_macro;
     ftepp->in_macro = true;
@@ -1446,7 +1446,7 @@ static bool ftepp_include(ftepp_t *ftepp)
         return true;
     }
 
-    ctx = *ftepp_ctx(ftepp);
+    ctx = ftepp_ctx(ftepp);
 
     unescape(ftepp_tokval(ftepp), ftepp_tokval(ftepp));
 
@@ -1517,7 +1517,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
     ppcondition cond;
     ppcondition *pc;
 
-    lex_ctx *ctx = ftepp_ctx(ftepp);
+    lex_ctx ctx = ftepp_ctx(ftepp);
 
     if (!ftepp_skipspace(ftepp))
         return false;

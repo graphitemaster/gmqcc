@@ -746,6 +746,10 @@ qcint     code_alloc_field   (code_t *, size_t qcsize);
 void      code_push_statement(code_t *, prog_section_statement *stmt, int linenum);
 void      code_pop_statement (code_t *);
 
+/*
+ * A shallow copy of a lex_file to remember where which ast node
+ * came from.
+ */
 typedef struct {
     const char *file;
     size_t      line;
@@ -796,10 +800,10 @@ extern size_t compile_errors;
 extern size_t compile_Werrors;
 extern size_t compile_warnings;
 
-void /********/ compile_error   (lex_ctx  ctx, /*LVL_ERROR*/ const char *msg, ...);
-void /********/ vcompile_error  (lex_ctx  ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
-bool GMQCC_WARN compile_warning (lex_ctx  ctx, int warntype, const char *fmt, ...);
-bool GMQCC_WARN vcompile_warning(lex_ctx  ctx, int warntype, const char *fmt, va_list ap);
+void /********/ compile_error   (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
+void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
+bool GMQCC_WARN compile_warning (lex_ctx ctx, int warntype, const char *fmt, ...);
+bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap);
 void            compile_show_werrors(void);
 
 /*===================================================================*/

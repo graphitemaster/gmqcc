@@ -63,7 +63,7 @@ static void lexerror(lex_file *lex, const char *fmt, ...)
 
     va_start(ap, fmt);
     if (lex)
-        con_vprintmsg(LVL_ERROR, lex->ctx.file, lex->sline, lex->ctx.column, "parse error", fmt, ap);
+        con_vprintmsg(LVL_ERROR, lex->name, lex->sline, lex->column, "parse error", fmt, ap);
     else
         con_vprintmsg(LVL_ERROR, "", 0, 0, "parse error", fmt, ap);
     va_end(ap);
@@ -72,10 +72,15 @@ static void lexerror(lex_file *lex, const char *fmt, ...)
 static bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
     bool    r;
+    lex_ctx ctx;
     va_list ap;
 
+    ctx.file   = lex->name;
+    ctx.line   = lex->sline;
+    ctx.column = lex->column;
+
     va_start(ap, fmt);
-    r = vcompile_warning(lex->ctx, warntype, fmt, ap);
+    r = vcompile_warning(ctx, warntype, fmt, ap);
     va_end(ap);
     return r;
 }
@@ -169,7 +174,9 @@ static void lex_token_new(lex_file *lex)
         vec_shrinkto(lex->tok.value, 0);
 
     lex->tok.constval.t  = 0;
-    lex->tok.ctx         = &lex->ctx; /* this is 'shallow' */
+    lex->tok.ctx.line    = lex->sline;
+    lex->tok.ctx.file    = lex->name;
+    lex->tok.ctx.column  = lex->column;
 #endif
 }
 #endif
@@ -193,14 +200,14 @@ lex_file* lex_open(const char *file)
 
     memset(lex, 0, sizeof(*lex));
 
-    lex->file        = in;
-    lex->ctx.file    = util_strdup(file);
-    lex->ctx.line    = 1; /* we start counting at 1 */
-    lex->ctx.column  = 0;
-    lex->peekpos     = 0;
-    lex->eof         = false;
+    lex->file    = in;
+    lex->name    = util_strdup(file);
+    lex->line    = 1; /* we start counting at 1 */
+    lex->column  = 0;
+    lex->peekpos = 0;
+    lex->eof     = false;
 
-    vec_push(lex_filenames, (char *)lex->ctx.file);
+    vec_push(lex_filenames, lex->name);
     return lex;
 }
 
@@ -221,13 +228,13 @@ lex_file* lex_open_string(const char *str, size_t len, const char *name)
     lex->open_string_length = len;
     lex->open_string_pos    = 0;
 
-    lex->ctx.file    = util_strdup(name ? name : "<string-source>");
-    lex->ctx.line    = 1; /* we start counting at 1 */
-    lex->ctx.column  = 0;
-    lex->peekpos     = 0;
-    lex->eof         = false;
+    lex->name    = util_strdup(name ? name : "<string-source>");
+    lex->line    = 1; /* we start counting at 1 */
+    lex->peekpos = 0;
+    lex->eof     = false;
+    lex->column  = 0;
 
-    vec_push(lex_filenames, (char*)lex->ctx.file);
+    vec_push(lex_filenames, lex->name);
 
     return lex;
 }
@@ -265,13 +272,13 @@ void lex_close(lex_file *lex)
 static int lex_fgetc(lex_file *lex)
 {
     if (lex->file) {
-        lex->ctx.column++;
+        lex->column++;
         return fs_file_getc(lex->file);
     }
     if (lex->open_string) {
         if (lex->open_string_pos >= lex->open_string_length)
             return EOF;
-        lex->ctx.column++;
+        lex->column++;
         return lex->open_string[lex->open_string_pos++];
     }
     return EOF;
@@ -288,8 +295,8 @@ static int lex_try_trigraph(lex_file *lex, int old)
     int c2, c3;
     c2 = lex_fgetc(lex);
     if (!lex->push_line && c2 == '\n') {
-        lex->ctx.line++;
-        lex->ctx.column = 0;
+        lex->line++;
+        lex->column = 0;
     }
 
     if (c2 != '?') {
@@ -299,8 +306,8 @@ static int lex_try_trigraph(lex_file *lex, int old)
 
     c3 = lex_fgetc(lex);
     if (!lex->push_line && c3 == '\n') {
-        lex->ctx.line++;
-        lex->ctx.column = 0;
+        lex->line++;
+        lex->column = 0;
     }
 
     switch (c3) {
@@ -328,7 +335,7 @@ static int lex_try_digraph(lex_file *lex, int ch)
      * need to offset a \n the ungetch would recognize
      */
     if (!lex->push_line && c2 == '\n')
-        lex->ctx.line++;
+        lex->line++;
     if      (ch == '<' && c2 == ':')
         return '[';
     else if (ch == ':' && c2 == '>')
@@ -350,13 +357,13 @@ static int lex_getch(lex_file *lex)
     if (lex->peekpos) {
         lex->peekpos--;
         if (!lex->push_line && lex->peek[lex->peekpos] == '\n')
-            lex->ctx.line++;
+            lex->line++;
         return lex->peek[lex->peekpos];
     }
 
     ch = lex_fgetc(lex);
     if (!lex->push_line && ch == '\n')
-        lex->ctx.line++;
+        lex->line++;
     else if (ch == '?')
         return lex_try_trigraph(lex, ch);
     else if (!lex->flags.nodigraphs && (ch == '<' || ch == ':' || ch == '%'))
@@ -367,10 +374,10 @@ static int lex_getch(lex_file *lex)
 static void lex_ungetch(lex_file *lex, int ch)
 {
     lex->peek[lex->peekpos++] = ch;
-    lex->ctx.column--;
+    lex->column--;
     if (!lex->push_line && ch == '\n') {
-        lex->ctx.line--;
-        lex->ctx.column = 0;
+        lex->line--;
+        lex->column = 0;
     }
 }
 
@@ -421,7 +428,7 @@ static bool lex_try_pragma(lex_file *lex)
     if (lex->flags.preprocessing)
         return false;
 
-    line = lex->ctx.line;
+    line = lex->line;
 
     ch = lex_getch(lex);
     if (ch != '#') {
@@ -476,8 +483,8 @@ static bool lex_try_pragma(lex_file *lex)
             goto unroll;
     }
     else if (!strcmp(command, "file")) {
-        lex->ctx.file = util_strdup(param);
-        vec_push(lex_filenames, (char*)lex->ctx.file);
+        lex->name = util_strdup(param);
+        vec_push(lex_filenames, lex->name);
     }
     else if (!strcmp(command, "line")) {
         line = strtol(param, NULL, 0)-1;
@@ -485,7 +492,7 @@ static bool lex_try_pragma(lex_file *lex)
     else
         goto unroll;
 
-    lex->ctx.line = line;
+    lex->line = line;
     while (ch != '\n' && ch != EOF)
         ch = lex_getch(lex);
     vec_free(command);
@@ -522,7 +529,7 @@ unroll:
     }
     lex_ungetch(lex, '#');
 
-    lex->ctx.line = line;
+    lex->line = line;
     return false;
 }
 
@@ -877,7 +884,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                         ch = 0;
                     else {
                         --u8len;
-                        lex->ctx.column += u8len;
+                        lex->column += u8len;
                         for (uc = 0; uc < u8len; ++uc)
                             lex_tokench(lex, u8buf[uc]);
                         /* the last character will be inserted with the tokench() call
@@ -1017,9 +1024,9 @@ int lex_do(lex_file *lex)
         return (lex->tok.ttype = ch);
     }
 
-    lex->sline         = lex->ctx.line;
-    lex->tok.ctx->line = lex->sline;
-    lex->tok.ctx->file = lex->ctx.file;
+    lex->sline = lex->line;
+    lex->tok.ctx.line = lex->sline;
+    lex->tok.ctx.file = lex->name;
 
     if (lex->eof)
         return (lex->tok.ttype = TOKEN_FATAL);

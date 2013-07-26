@@ -129,7 +129,7 @@ static void parseerror(parser_t *parser, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vcompile_error(*(parser->lex->tok.ctx), fmt, ap);
+    vcompile_error(parser->lex->tok.ctx, fmt, ap);
     va_end(ap);
 }
 
@@ -139,7 +139,7 @@ static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *
     bool    r;
     va_list ap;
     va_start(ap, fmt);
-    r = vcompile_warning(*(parser->lex->tok.ctx), warntype, fmt, ap);
+    r = vcompile_warning(parser->lex->tok.ctx, warntype, fmt, ap);
     va_end(ap);
     return r;
 }
@@ -199,7 +199,7 @@ static bool parser_next(parser_t *parser)
 
 #define parser_tokval(p) ((p)->lex->tok.value)
 #define parser_token(p)  (&((p)->lex->tok))
-#define parser_ctx(p)    (*((p)->lex->tok.ctx))
+#define parser_ctx(p)    ((p)->lex->tok.ctx)
 
 static ast_value* parser_const_float(parser_t *parser, double d)
 {
