@@ -41,7 +41,7 @@ struct token_s {
     struct token_s *prev;
 #endif
 
-    lex_ctx ctx;
+    lex_ctx *ctx;
 };
 
 #if 0
@@ -110,10 +110,15 @@ typedef struct lex_file_s {
     size_t      open_string_length;
     size_t      open_string_pos;
 
-    char   *name;
-    size_t  line;
     size_t  sline; /* line at the start of a token */
-    size_t  column;
+
+    /* 
+     * no more 'shallow' copies, instead all new instances
+     * of a lex_ctx will just point to this lex_file::ctx.
+     * i.e 4/8 byte pointer. Instead of every token getting
+     * a 'shallow' 12/24 byte structure.
+     */
+    lex_ctx ctx;
 
     int     peek[256];
     size_t  peekpos;
