@@ -1185,7 +1185,7 @@ ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
     self->return_value     = NULL;
 
     return self;
-    
+
 cleanup:
     mem_d(self);
     return NULL;
@@ -2884,12 +2884,12 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     /* From 'bin' we jump to whatever comes first */
     if      (bprecond)   tmpblock = bprecond;
     else                 tmpblock = bbody;    /* can never be null */
-    
+
     /* DEAD CODE
     else if (bpostcond)  tmpblock = bpostcond;
     else                 tmpblock = bout;
     */
-    
+
     if (!ir_block_create_jump(bin, ast_ctx(self), tmpblock))
         return false;
 
@@ -2899,7 +2899,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         ir_block *ontrue, *onfalse;
         ontrue = bbody; /* can never be null */
 
-        /* all of this is dead code 
+        /* all of this is dead code
         else if (bincrement) ontrue = bincrement;
         else                 ontrue = bpostcond;
         */
@@ -2943,7 +2943,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         if      (bprecond)   ontrue = bprecond;
         else                 ontrue = bbody; /* can never be null */
 
-        /* all of this is dead code 
+        /* all of this is dead code
         else if (bincrement) ontrue = bincrement;
         else                 ontrue = bpostcond;
         */

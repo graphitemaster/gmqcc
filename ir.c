@@ -1807,21 +1807,21 @@ ir_value* ir_block_create_binop(ir_block *self, lex_ctx ctx,
         default:
             /* ranges: */
             /* boolean operations result in floats */
-            
+
             /*
              * opcode >= 10 takes true branch opcode is at least 10
              * opcode <= 23 takes false branch opcode is at least 24
              */
             if (opcode >= INSTR_EQ_F && opcode <= INSTR_GT)
                 ot = TYPE_FLOAT;
-                
-            /* 
-             * At condition "opcode <= 23", the value of "opcode" must be 
+
+            /*
+             * At condition "opcode <= 23", the value of "opcode" must be
              * at least 24.
              * At condition "opcode <= 23", the value of "opcode" cannot be
              * equal to any of {1, 2, 3, 4, 5, 6, 7, 8, 9, 62, 63, 64, 65}.
              * The condition "opcode <= 23" cannot be true.
-             * 
+             *
              * Thus ot=2 (TYPE_FLOAT) can never be true
              */
 #if 0

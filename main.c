@@ -682,7 +682,7 @@ int main(int argc, char **argv) {
 
             if (!line[0] || (line[0] == '/' && line[1] == '/'))
                 continue;
-                
+
             if (hasline) {
                 item.filename = util_strdup(line);
                 item.type     = TYPE_QC;

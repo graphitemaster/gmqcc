@@ -1042,20 +1042,20 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
              * Further more, the only time it is legal to do XOR otherwise
              * is when both operand are floats. This nicely crafted if
              * statement catches them all.
-             * 
+             *
              * In the event that the first operand is a vector, two
              * possible situations can arise, thus, each element of
              * vector A (operand A) is exclusive-ORed with the corresponding
              * element of vector B (operand B), If B is scalar, the
              * scalar value is first replicated for each element.
-             * 
+             *
              * The QCVM itself lacks a BITXOR instruction. Thus emulating
              * the mathematics of it is required. The following equation
              * is used: (LHS | RHS) & ~(LHS & RHS). However, due to the
              * QCVM also lacking a BITNEG instruction, we need to emulate
              * ~FOO with -1 - FOO, the whole process becoming this nicely
              * crafted expression: (LHS | RHS) & (-1 - (LHS & RHS)).
-             * 
+             *
              * When A is not scalar, this process is repeated for all
              * components of vector A with the value in operand B,
              * only if operand B is scalar. When A is not scalar, and B
@@ -1063,7 +1063,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
              * components of the vector A with the components of vector B.
              * Finally when A is scalar and B is scalar, this process is
              * simply used once for A and B being LHS and RHS respectfully.
-             * 
+             *
              * Yes the semantics are a bit strange (no pun intended).
              * But then again BITXOR is strange itself, consdering it's
              * commutative, assocative, and elements of the BITXOR operation
@@ -1099,7 +1099,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         )
                     );
                     expr->refs = AST_REF_NONE;
-                    
+
                     out = (ast_expression*)
                         ast_binary_new(
                             ctx,
@@ -1152,7 +1152,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     }
                 }
             }
-                
+
             break;
 
         case opid2('<','<'):
@@ -6463,7 +6463,7 @@ static void parser_remove_ast(parser_t *parser)
     ast_value_delete(parser->const_vec[0]);
     ast_value_delete(parser->const_vec[1]);
     ast_value_delete(parser->const_vec[2]);
-    
+
     if (parser->reserved_version)
         ast_value_delete(parser->reserved_version);
 

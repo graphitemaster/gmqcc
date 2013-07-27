@@ -276,20 +276,20 @@ typedef struct hash_node_t {
  * This is a patched version of the Murmur2 hashing function to use
  * a proper pre-mix and post-mix setup. Infact this is Murmur3 for
  * the most part just reinvented.
- * 
+ *
  * Murmur 2 contains an inner loop such as:
  * while (l >= 4) {
  *      u32 k = *(u32*)d;
  *      k *= m;
  *      k ^= k >> r;
  *      k *= m;
- * 
+ *
  *      h *= m;
  *      h ^= k;
  *      d += 4;
  *      l -= 4;
  * }
- * 
+ *
  * The two u32s that form the key are the same value x (pulled from data)
  * this premix stage will perform the same results for both values. Unrolled
  * this produces just:
@@ -301,18 +301,18 @@ typedef struct hash_node_t {
  *  h ^= x;
  *  h *= m;
  *  h ^= x;
- * 
+ *
  * This appears to be fine, except what happens when m == 1? well x
  * cancels out entierly, leaving just:
  *  x ^= x >> r;
  *  h ^= x;
  *  h ^= x;
- * 
+ *
  * So all keys hash to the same value, but how often does m == 1?
  * well, it turns out testing x for all possible values yeilds only
  * 172,013,942 unique results instead of 2^32. So nearly ~4.6 bits
  * are cancelled out on average!
- * 
+ *
  * This means we have a 14.5% (rounded) chance of colliding more, which
  * results in another bucket/chain for the hashtable.
  *

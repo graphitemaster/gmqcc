@@ -267,7 +267,7 @@ typedef struct ir_builder_s
     /* there should just be this one nil */
     ir_value    *nil;
     ir_value    *reserved_va_count;
-    
+
     /* code generator */
     code_t      *code;
 } ir_builder;
