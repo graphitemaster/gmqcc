@@ -1,0 +1,17 @@
+To use the spec files in this fedora directory you need the core
+development tools for Fedora, building enviroment for the user, and
+the directory structure for it. If you don't already have these, issue
+the following commands.
+
+# yum groupinstall "Development Tools"
+# yum install rpmdevtools
+# rpmdev-setuptree
+
+Now, depending on the version of GMQCC you want, there are a serise of
+maintained spec files in this directory. Chose the version you want and
+issue the following to build the RPM.
+
+# rpmbuild -bs gmqc-[[version]].spec
+
+This will create an rpm file in the working directory, which you can
+install with the rpm command line tool or mock.

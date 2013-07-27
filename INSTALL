@@ -57,3 +57,6 @@
     
     Debian archives (git build) can be created invoking make in
     ./distro/deb
+
+    Fedora spec files (release) can be found in ./distro/fedora, as well
+    as a README explaining how to build them.

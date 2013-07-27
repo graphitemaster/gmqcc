@@ -81,8 +81,8 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   ifdef  true
 #       undef true
 #   endif /*! true  */
-#   define false (0)
-#   define true  (1)
+#   define false (unsigned)(0)
+#   define true  (unsigned)(1)
 #   ifdef __STDC_VERSION__
 #       if __STDC_VERSION__ < 199901L && __GNUC__ < 3
             typedef int  bool;

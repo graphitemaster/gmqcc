@@ -123,11 +123,11 @@ typedef struct lex_file_s {
     token   tok; /* not a pointer anymore */
 
     struct {
-        bool noops;
-        bool nodigraphs; /* used when lexing string constants */
-        bool preprocessing; /* whitespace and EOLs become actual tokens */
-        bool mergelines; /* backslash at the end of a line escapes the newline */
-    } flags;
+        unsigned noops:1;
+        unsigned nodigraphs:1; /* used when lexing string constants */
+        unsigned preprocessing:1; /* whitespace and EOLs become actual tokens */
+        unsigned mergelines:1; /* backslash at the end of a line escapes the newline */
+    } flags; /* sizeof == 1 */
 
     int framevalue;
     frame_macro *frames;
