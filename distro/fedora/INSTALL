@@ -8,10 +8,10 @@ the following commands.
 # rpmdev-setuptree
 
 Now, depending on the version of GMQCC you want, there are a serise of
-maintained spec files in this directory. Chose the version you want and
+maintained spec files in this directory. Choose the version you want and
 issue the following to build the RPM.
 
-# rpmbuild -bs gmqc-[[version]].spec
+# rpmbuild -bs gmqcc-[[version]].spec
 
-This will create an rpm file in the working directory, which you can
+This will create an RPM file in the working directory, which you can
 install with the rpm command line tool or mock.
