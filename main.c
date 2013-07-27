@@ -562,7 +562,7 @@ int main(int argc, char **argv) {
 
     app_name = argv[0];
     con_init ();
-    opts_init("progs.dat", COMPILER_GMQCC, (1024 << 3));
+    opts_init("progs.dat", COMPILER_QCC, (1024 << 3));
 
     util_seed(time(0));
 

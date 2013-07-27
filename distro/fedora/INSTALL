@@ -5,6 +5,7 @@ the following commands.
 
 # yum groupinstall "Development Tools"
 # yum install rpmdevtools
+# yum install mock
 # rpmdev-setuptree
 
 Now, depending on the version of GMQCC you want, there are a serise of
@@ -13,5 +14,5 @@ issue the following to build the RPM.
 
 # rpmbuild -bs gmqcc-[[version]].spec
 
-This will create an RPM file in the working directory, which you can
-install with the rpm command line tool or mock.
+This will create a src.rpm file in the working directory, which needs
+to be moved
