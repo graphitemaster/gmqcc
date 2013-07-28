@@ -1493,7 +1493,7 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *tar
     {
         irerror(self->context, "cannot store to an SSA value");
         irerror(self->context, "trying to store: %s <- %s", target->name, what->name);
-        irerror(self->context, "instruction: %s", asm_instr[op].m);
+        irerror(self->context, "instruction: %s", util_instr_str[op]);
         return false;
     }
 
@@ -3736,9 +3736,10 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 static const char *qc_opname(int op)
 {
     if (op < 0) return "<INVALID>";
-    if (op < (int)( sizeof(asm_instr) / sizeof(asm_instr[0]) ))
-        return asm_instr[op].m;
+    if (op < VINSTR_END)
+        return util_instr_str[op];
     switch (op) {
+        case VINSTR_END:  return "END";
         case VINSTR_PHI:  return "PHI";
         case VINSTR_JUMP: return "JUMP";
         case VINSTR_COND: return "COND";

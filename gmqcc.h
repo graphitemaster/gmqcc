@@ -479,7 +479,6 @@ void  correct_free(correction_t *);
 /*=========================== code.c ================================*/
 /*===================================================================*/
 
-/* TODO: cleanup */
 /* Note: if you change the order, fix type_sizeof in ir.c */
 enum {
     TYPE_VOID     ,
@@ -711,6 +710,9 @@ enum {
     VINSTR_NRCALL
 };
 
+/* TODO: elide */
+extern const char *util_instr_str[VINSTR_END];
+
 /* uhh? */
 typedef float   qcfloat;
 typedef int32_t qcint;
@@ -806,84 +808,6 @@ bool GMQCC_WARN compile_warning (lex_ctx ctx, int warntype, const char *fmt, ...
 bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap);
 void            compile_show_werrors(void);
 
-/*===================================================================*/
-/*========================= assembler.c =============================*/
-/*===================================================================*/
-/* TODO: remove this ... */
-static const struct {
-    const char  *m; /* menomic     */
-    const size_t o; /* operands    */
-    const size_t l; /* menomic len */
-} asm_instr[] = {
-    { "DONE"      , 1, 4 },
-    { "MUL_F"     , 3, 5 },
-    { "MUL_V"     , 3, 5 },
-    { "MUL_FV"    , 3, 6 },
-    { "MUL_VF"    , 3, 6 },
-    { "DIV"       , 0, 3 },
-    { "ADD_F"     , 3, 5 },
-    { "ADD_V"     , 3, 5 },
-    { "SUB_F"     , 3, 5 },
-    { "SUB_V"     , 3, 5 },
-    { "EQ_F"      , 0, 4 },
-    { "EQ_V"      , 0, 4 },
-    { "EQ_S"      , 0, 4 },
-    { "EQ_E"      , 0, 4 },
-    { "EQ_FNC"    , 0, 6 },
-    { "NE_F"      , 0, 4 },
-    { "NE_V"      , 0, 4 },
-    { "NE_S"      , 0, 4 },
-    { "NE_E"      , 0, 4 },
-    { "NE_FNC"    , 0, 6 },
-    { "LE"        , 0, 2 },
-    { "GE"        , 0, 2 },
-    { "LT"        , 0, 2 },
-    { "GT"        , 0, 2 },
-    { "FIELD_F"   , 0, 7 },
-    { "FIELD_V"   , 0, 7 },
-    { "FIELD_S"   , 0, 7 },
-    { "FIELD_ENT" , 0, 9 },
-    { "FIELD_FLD" , 0, 9 },
-    { "FIELD_FNC" , 0, 9 },
-    { "ADDRESS"   , 0, 7 },
-    { "STORE_F"   , 0, 7 },
-    { "STORE_V"   , 0, 7 },
-    { "STORE_S"   , 0, 7 },
-    { "STORE_ENT" , 0, 9 },
-    { "STORE_FLD" , 0, 9 },
-    { "STORE_FNC" , 0, 9 },
-    { "STOREP_F"  , 0, 8 },
-    { "STOREP_V"  , 0, 8 },
-    { "STOREP_S"  , 0, 8 },
-    { "STOREP_ENT", 0, 10},
-    { "STOREP_FLD", 0, 10},
-    { "STOREP_FNC", 0, 10},
-    { "RETURN"    , 0, 6 },
-    { "NOT_F"     , 0, 5 },
-    { "NOT_V"     , 0, 5 },
-    { "NOT_S"     , 0, 5 },
-    { "NOT_ENT"   , 0, 7 },
-    { "NOT_FNC"   , 0, 7 },
-    { "IF"        , 0, 2 },
-    { "IFNOT"     , 0, 5 },
-    { "CALL0"     , 1, 5 },
-    { "CALL1"     , 2, 5 },
-    { "CALL2"     , 3, 5 },
-    { "CALL3"     , 4, 5 },
-    { "CALL4"     , 5, 5 },
-    { "CALL5"     , 6, 5 },
-    { "CALL6"     , 7, 5 },
-    { "CALL7"     , 8, 5 },
-    { "CALL8"     , 9, 5 },
-    { "STATE"     , 0, 5 },
-    { "GOTO"      , 0, 4 },
-    { "AND"       , 0, 3 },
-    { "OR"        , 0, 2 },
-    { "BITAND"    , 0, 6 },
-    { "BITOR"     , 0, 5 },
-
-    { "END"       , 0, 3 } /* virtual assembler instruction */
-};
 /*===================================================================*/
 /*============================= ir.c ================================*/
 /*===================================================================*/

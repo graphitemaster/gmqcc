@@ -355,7 +355,7 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
             for (;;) {
                 if (code->statements[j].opcode != INSTR_DONE)
                     util_debug("GEN", "        %-12s {% 5i,% 5i,% 5i}\n",
-                        asm_instr[code->statements[j].opcode].m,
+                        util_instr_str[code->statements[j].opcode],
                         code->statements[j].o1.s1,
                         code->statements[j].o2.s1,
                         code->statements[j].o3.s1

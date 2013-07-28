@@ -358,7 +358,7 @@ done:
 }
 
 static void prog_print_statement(qc_program *prog, prog_section_statement *st) {
-    if (st->opcode >= (sizeof(asm_instr)/sizeof(asm_instr[0]))) {
+    if (st->opcode >= VINSTR_END) {
         printf("<illegal instruction %d>\n", st->opcode);
         return;
     }
@@ -368,7 +368,7 @@ static void prog_print_statement(qc_program *prog, prog_section_statement *st) {
             printf("->");
         printf("%s:", vec_last(prog->function_stack));
     }
-    printf(" <> %-12s", asm_instr[st->opcode].m);
+    printf(" <> %-12s", util_instr_str[st->opcode]);
     if (st->opcode >= INSTR_IF &&
         st->opcode <= INSTR_IFNOT)
     {

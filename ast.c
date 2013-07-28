@@ -520,7 +520,7 @@ ast_unary* ast_unary_new(lex_ctx ctx, int op,
     if (op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) {
         self->expression.vtype = TYPE_FLOAT;
     } else
-        compile_error(ctx, "cannot determine type of unary operation %s", asm_instr[op].m);
+        compile_error(ctx, "cannot determine type of unary operation %s", util_instr_str[op]);
 
     return self;
 }
