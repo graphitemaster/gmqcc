@@ -71,9 +71,9 @@ static void lexerror(lex_file *lex, const char *fmt, ...)
 
 static bool lexwarn(lex_file *lex, int warntype, const char *fmt, ...)
 {
-    bool    r;
-    lex_ctx ctx;
-    va_list ap;
+    bool      r;
+    lex_ctx_t ctx;
+    va_list   ap;
 
     ctx.file   = lex->name;
     ctx.line   = lex->sline;

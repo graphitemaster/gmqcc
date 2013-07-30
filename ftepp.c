@@ -41,7 +41,7 @@ typedef struct {
     char *value;
     /* a copy from the lexer */
     union {
-        vector v;
+        vec3_t v;
         int    i;
         double f;
         int    t; /* type */
@@ -49,7 +49,7 @@ typedef struct {
 } pptoken;
 
 typedef struct {
-    lex_ctx ctx;
+    lex_ctx_t ctx;
 
     char   *name;
     char  **params;
@@ -239,14 +239,14 @@ static GMQCC_INLINE char *(*ftepp_predef(const char *name))(lex_file *context) {
 #define ftepp_tokval(f) ((f)->lex->tok.value)
 #define ftepp_ctx(f)    ((f)->lex->tok.ctx)
 
-static void ftepp_errorat(ftepp_t *ftepp, lex_ctx ctx, const char *fmt, ...)
+static void ftepp_errorat(ftepp_t *ftepp, lex_ctx_t ctx, const char *fmt, ...)
 {
     va_list ap;
 
     ftepp->errors++;
 
     va_start(ap, fmt);
-    con_cvprintmsg((void*)&ctx, LVL_ERROR, "error", fmt, ap);
+    con_cvprintmsg(ctx, LVL_ERROR, "error", fmt, ap);
     va_end(ap);
 }
 
@@ -257,7 +257,7 @@ static void ftepp_error(ftepp_t *ftepp, const char *fmt, ...)
     ftepp->errors++;
 
     va_start(ap, fmt);
-    con_cvprintmsg((void*)&ftepp->lex->tok.ctx, LVL_ERROR, "error", fmt, ap);
+    con_cvprintmsg(ftepp->lex->tok.ctx, LVL_ERROR, "error", fmt, ap);
     va_end(ap);
 }
 
@@ -293,7 +293,7 @@ static GMQCC_INLINE void pptoken_delete(pptoken *self)
     mem_d(self);
 }
 
-static ppmacro *ppmacro_new(lex_ctx ctx, const char *name)
+static ppmacro *ppmacro_new(lex_ctx_t ctx, const char *name)
 {
     ppmacro *macro = (ppmacro*)mem_a(sizeof(ppmacro));
 
@@ -1406,7 +1406,7 @@ static void ftepp_directive_message(ftepp_t *ftepp) {
         }
         vec_push(message, '\0');
         if (ftepp->output_on)
-            con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message", message);
+            con_cprintmsg(ftepp->lex->tok.ctx, LVL_MSG, "message", message);
         vec_free(message);
         return;
     }
@@ -1415,7 +1415,7 @@ static void ftepp_directive_message(ftepp_t *ftepp) {
         return;
 
     unescape     (ftepp_tokval(ftepp), ftepp_tokval(ftepp));
-    con_cprintmsg(&ftepp->lex->tok.ctx, LVL_MSG, "message",  ftepp_tokval(ftepp));
+    con_cprintmsg(ftepp->lex->tok.ctx, LVL_MSG, "message",  ftepp_tokval(ftepp));
 }
 
 /**
@@ -1427,7 +1427,7 @@ static bool ftepp_include(ftepp_t *ftepp)
 {
     lex_file *old_lexer = ftepp->lex;
     lex_file *inlex;
-    lex_ctx  ctx;
+    lex_ctx_t ctx;
     char     lineno[128];
     char     *filename;
     char     *old_includename;
@@ -1517,7 +1517,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
     ppcondition cond;
     ppcondition *pc;
 
-    lex_ctx ctx = ftepp_ctx(ftepp);
+    lex_ctx_t ctx = ftepp_ctx(ftepp);
 
     if (!ftepp_skipspace(ftepp))
         return false;
@@ -1878,7 +1878,7 @@ ftepp_t *ftepp_create()
 void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name)
 {
     ppmacro *macro;
-    lex_ctx ctx = { "__builtin__", 0, 0 };
+    lex_ctx_t ctx = { "__builtin__", 0, 0 };
     ctx.file = source;
     macro = ppmacro_new(ctx, name);
     /*vec_push(ftepp->macros, macro);*/

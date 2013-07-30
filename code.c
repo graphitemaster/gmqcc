@@ -26,7 +26,7 @@
 
 /*
  * We could use the old method of casting to uintptr_t then to void*
- * or qcint; however, it's incredibly unsafe for two reasons.
+ * or qcint_t; however, it's incredibly unsafe for two reasons.
  * 1) The compilers aliasing optimization can legally make it unstable
  *    (it's undefined behaviour).
  *
@@ -37,14 +37,14 @@
  */
 typedef union {
     void   *enter;
-    qcint   leave;
+    qcint_t   leave;
 } code_hash_entry_t;
 
 /* Some sanity macros */
 #define CODE_HASH_ENTER(ENTRY) ((ENTRY).enter)
 #define CODE_HASH_LEAVE(ENTRY) ((ENTRY).leave)
 
-void code_push_statement(code_t *code, prog_section_statement *stmt, int linenum)
+void code_push_statement(code_t *code, prog_section_statement_t *stmt, int linenum)
 {
     vec_push(code->statements, *stmt);
     vec_push(code->linenums,   linenum);
@@ -57,9 +57,9 @@ void code_pop_statement(code_t *code)
 }
 
 code_t *code_init() {
-    static prog_section_function  empty_function  = {0,0,0,0,0,0,0,{0,0,0,0,0,0,0,0}};
-    static prog_section_statement empty_statement = {0,{0},{0},{0}};
-    static prog_section_def       empty_def       = {0, 0, 0};
+    static prog_section_function_t  empty_function  = {0,0,0,0,0,0,0,{0,0,0,0,0,0,0,0}};
+    static prog_section_statement_t empty_statement = {0,{0},{0},{0}};
+    static prog_section_def_t       empty_def       = {0, 0, 0};
 
     code_t *code       = (code_t*)mem_a(sizeof(code_t));
     int     i          = 0;
@@ -121,25 +121,25 @@ uint32_t code_genstring(code_t *code, const char *str) {
     return CODE_HASH_LEAVE(existing);
 }
 
-qcint code_alloc_field (code_t *code, size_t qcsize)
+qcint_t code_alloc_field (code_t *code, size_t qcsize)
 {
-    qcint pos = (qcint)code->entfields;
+    qcint_t pos = (qcint_t)code->entfields;
     code->entfields += qcsize;
     return pos;
 }
 
-static void code_create_header(code_t *code, prog_header *code_header) {
-    code_header->statements.offset = sizeof(prog_header);
+static void code_create_header(code_t *code, prog_header_t *code_header) {
+    code_header->statements.offset = sizeof(prog_header_t);
     code_header->statements.length = vec_size(code->statements);
-    code_header->defs.offset       = code_header->statements.offset + (sizeof(prog_section_statement) * vec_size(code->statements));
+    code_header->defs.offset       = code_header->statements.offset + (sizeof(prog_section_statement_t) * vec_size(code->statements));
     code_header->defs.length       = vec_size(code->defs);
-    code_header->fields.offset     = code_header->defs.offset       + (sizeof(prog_section_def)       * vec_size(code->defs));
+    code_header->fields.offset     = code_header->defs.offset       + (sizeof(prog_section_def_t)       * vec_size(code->defs));
     code_header->fields.length     = vec_size(code->fields);
-    code_header->functions.offset  = code_header->fields.offset     + (sizeof(prog_section_field)     * vec_size(code->fields));
+    code_header->functions.offset  = code_header->fields.offset     + (sizeof(prog_section_field_t)     * vec_size(code->fields));
     code_header->functions.length  = vec_size(code->functions);
-    code_header->globals.offset    = code_header->functions.offset  + (sizeof(prog_section_function)  * vec_size(code->functions));
+    code_header->globals.offset    = code_header->functions.offset  + (sizeof(prog_section_function_t)  * vec_size(code->functions));
     code_header->globals.length    = vec_size(code->globals);
-    code_header->strings.offset    = code_header->globals.offset    + (sizeof(int32_t)                * vec_size(code->globals));
+    code_header->strings.offset    = code_header->globals.offset    + (sizeof(int32_t)                  * vec_size(code->globals));
     code_header->strings.length    = vec_size(code->chars);
     code_header->version           = 6;
     code_header->skip              = 0;
@@ -174,10 +174,10 @@ static void code_create_header(code_t *code, prog_header *code_header) {
      * These are not part of the header but we ensure LE format here to save on duplicated
      * code.
      */
-    util_endianswap(code->statements, vec_size(code->statements), sizeof(prog_section_statement));
-    util_endianswap(code->defs,       vec_size(code->defs),       sizeof(prog_section_def));
-    util_endianswap(code->fields,     vec_size(code->fields),     sizeof(prog_section_field));
-    util_endianswap(code->functions,  vec_size(code->functions),  sizeof(prog_section_function));
+    util_endianswap(code->statements, vec_size(code->statements), sizeof(prog_section_statement_t));
+    util_endianswap(code->defs,       vec_size(code->defs),       sizeof(prog_section_def_t));
+    util_endianswap(code->fields,     vec_size(code->fields),     sizeof(prog_section_field_t));
+    util_endianswap(code->functions,  vec_size(code->functions),  sizeof(prog_section_function_t));
     util_endianswap(code->globals,    vec_size(code->globals),    sizeof(int32_t));
 }
 
@@ -187,8 +187,8 @@ static void code_create_header(code_t *code, prog_header *code_header) {
  * we're going to add.
  */
 bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t **lnomem, size_t *sizelno) {
-    prog_header code_header;
-    uint32_t    offset  = 0;
+    prog_header_t code_header;
+    uint32_t      offset  = 0;
 
     if (!datmem)
         return false;
@@ -232,23 +232,23 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
     }
 
     /* Write out the dat */
-    *sizedat += sizeof(prog_header);
-    *sizedat += sizeof(prog_section_statement) * vec_size(code->statements);
-    *sizedat += sizeof(prog_section_def)       * vec_size(code->defs);
-    *sizedat += sizeof(prog_section_field)     * vec_size(code->fields);
-    *sizedat += sizeof(prog_section_function)  * vec_size(code->functions);
-    *sizedat += sizeof(int32_t)                * vec_size(code->globals);
-    *sizedat += 1                              * vec_size(code->chars);
+    *sizedat += sizeof(prog_header_t);
+    *sizedat += sizeof(prog_section_statement_t) * vec_size(code->statements);
+    *sizedat += sizeof(prog_section_def_t)       * vec_size(code->defs);
+    *sizedat += sizeof(prog_section_field_t)     * vec_size(code->fields);
+    *sizedat += sizeof(prog_section_function_t)  * vec_size(code->functions);
+    *sizedat += sizeof(int32_t)                  * vec_size(code->globals);
+    *sizedat += 1                                * vec_size(code->chars);
 
     *datmem = (uint8_t*)mem_a(*sizedat);
 
-    WRITE_CHUNK(datmem, &code_header,     sizeof(prog_header));
-    WRITE_CHUNK(datmem, code->statements, sizeof(prog_section_statement) * vec_size(code->statements));
-    WRITE_CHUNK(datmem, code->defs,       sizeof(prog_section_def)       * vec_size(code->defs));
-    WRITE_CHUNK(datmem, code->fields,     sizeof(prog_section_field)     * vec_size(code->fields));
-    WRITE_CHUNK(datmem, code->functions,  sizeof(prog_section_function)  * vec_size(code->functions));
-    WRITE_CHUNK(datmem, code->globals,    sizeof(int32_t)                * vec_size(code->globals));
-    WRITE_CHUNK(datmem, code->chars,      1                              * vec_size(code->chars));
+    WRITE_CHUNK(datmem, &code_header,     sizeof(prog_header_t));
+    WRITE_CHUNK(datmem, code->statements, sizeof(prog_section_statement_t) * vec_size(code->statements));
+    WRITE_CHUNK(datmem, code->defs,       sizeof(prog_section_def_t)       * vec_size(code->defs));
+    WRITE_CHUNK(datmem, code->fields,     sizeof(prog_section_field_t)     * vec_size(code->fields));
+    WRITE_CHUNK(datmem, code->functions,  sizeof(prog_section_function_t)  * vec_size(code->functions));
+    WRITE_CHUNK(datmem, code->globals,    sizeof(int32_t)                  * vec_size(code->globals));
+    WRITE_CHUNK(datmem, code->chars,      1                                * vec_size(code->chars));
 
     #undef WRITE_CHUNK
 
@@ -267,9 +267,9 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
 }
 
 bool code_write(code_t *code, const char *filename, const char *lnofile) {
-    prog_header  code_header;
-    FILE        *fp           = NULL;
-    size_t       it           = 2;
+    prog_header_t  code_header;
+    FILE          *fp           = NULL;
+    size_t         it           = 2;
 
     code_create_header(code, &code_header);
 
@@ -303,13 +303,13 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
     if (!fp)
         return false;
 
-    if (1                          != fs_file_write(&code_header,     sizeof(prog_header)           , 1                         , fp) ||
-        vec_size(code->statements) != fs_file_write(code->statements, sizeof(prog_section_statement), vec_size(code->statements), fp) ||
-        vec_size(code->defs)       != fs_file_write(code->defs,       sizeof(prog_section_def)      , vec_size(code->defs)      , fp) ||
-        vec_size(code->fields)     != fs_file_write(code->fields,     sizeof(prog_section_field)    , vec_size(code->fields)    , fp) ||
-        vec_size(code->functions)  != fs_file_write(code->functions,  sizeof(prog_section_function) , vec_size(code->functions) , fp) ||
-        vec_size(code->globals)    != fs_file_write(code->globals,    sizeof(int32_t)               , vec_size(code->globals)   , fp) ||
-        vec_size(code->chars)      != fs_file_write(code->chars,      1                             , vec_size(code->chars)     , fp))
+    if (1                          != fs_file_write(&code_header,     sizeof(prog_header_t)           , 1                         , fp) ||
+        vec_size(code->statements) != fs_file_write(code->statements, sizeof(prog_section_statement_t), vec_size(code->statements), fp) ||
+        vec_size(code->defs)       != fs_file_write(code->defs,       sizeof(prog_section_def_t)      , vec_size(code->defs)      , fp) ||
+        vec_size(code->fields)     != fs_file_write(code->fields,     sizeof(prog_section_field_t)    , vec_size(code->fields)    , fp) ||
+        vec_size(code->functions)  != fs_file_write(code->functions,  sizeof(prog_section_function_t) , vec_size(code->functions) , fp) ||
+        vec_size(code->globals)    != fs_file_write(code->globals,    sizeof(int32_t)                 , vec_size(code->globals)   , fp) ||
+        vec_size(code->chars)      != fs_file_write(code->chars,      1                               , vec_size(code->chars)     , fp))
     {
         fs_file_close(fp);
         return false;

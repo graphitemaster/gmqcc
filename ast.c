@@ -84,7 +84,7 @@ static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 }
 
 /* Initialize main ast node aprts */
-static void ast_node_init(ast_node *self, lex_ctx ctx, int nodetype)
+static void ast_node_init(ast_node *self, lex_ctx_t ctx, int nodetype)
 {
     self->context = ctx;
     self->destroy = &_ast_node_destroy;
@@ -174,7 +174,7 @@ void ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     }
 }
 
-static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
+static ast_expression* ast_shallow_type(lex_ctx_t ctx, int vtype)
 {
     ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
     ast_expression_init(self, NULL);
@@ -184,7 +184,7 @@ static ast_expression* ast_shallow_type(lex_ctx ctx, int vtype)
     return self;
 }
 
-ast_expression* ast_type_copy(lex_ctx ctx, const ast_expression *ex)
+ast_expression* ast_type_copy(lex_ctx_t ctx, const ast_expression *ex)
 {
     size_t i;
     const ast_expression *fromex;
@@ -342,7 +342,7 @@ void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize)
 }
 
 static bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out);
-ast_value* ast_value_new(lex_ctx ctx, const char *name, int t)
+ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
@@ -433,7 +433,7 @@ bool ast_value_set_name(ast_value *self, const char *name)
     return !!self->name;
 }
 
-ast_binary* ast_binary_new(lex_ctx ctx, int op,
+ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
                            ast_expression* left, ast_expression* right)
 {
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
@@ -478,7 +478,7 @@ void ast_binary_delete(ast_binary *self)
     mem_d(self);
 }
 
-ast_binstore* ast_binstore_new(lex_ctx ctx, int storop, int op,
+ast_binstore* ast_binstore_new(lex_ctx_t ctx, int storop, int op,
                                ast_expression* left, ast_expression* right)
 {
     ast_instantiate(ast_binstore, ctx, ast_binstore_delete);
@@ -506,7 +506,7 @@ void ast_binstore_delete(ast_binstore *self)
     mem_d(self);
 }
 
-ast_unary* ast_unary_new(lex_ctx ctx, int op,
+ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
                          ast_expression *expr)
 {
     ast_instantiate(ast_unary, ctx, ast_unary_delete);
@@ -532,7 +532,7 @@ void ast_unary_delete(ast_unary *self)
     mem_d(self);
 }
 
-ast_return* ast_return_new(lex_ctx ctx, ast_expression *expr)
+ast_return* ast_return_new(lex_ctx_t ctx, ast_expression *expr)
 {
     ast_instantiate(ast_return, ctx, ast_return_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);
@@ -553,7 +553,7 @@ void ast_return_delete(ast_return *self)
     mem_d(self);
 }
 
-ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expression *field)
+ast_entfield* ast_entfield_new(lex_ctx_t ctx, ast_expression *entity, ast_expression *field)
 {
     if (field->vtype != TYPE_FIELD) {
         compile_error(ctx, "ast_entfield_new with expression not of type field");
@@ -562,7 +562,7 @@ ast_entfield* ast_entfield_new(lex_ctx ctx, ast_expression *entity, ast_expressi
     return ast_entfield_new_force(ctx, entity, field, field->next);
 }
 
-ast_entfield* ast_entfield_new_force(lex_ctx ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
+ast_entfield* ast_entfield_new_force(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
 {
     ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
 
@@ -591,7 +591,7 @@ void ast_entfield_delete(ast_entfield *self)
     mem_d(self);
 }
 
-ast_member* ast_member_new(lex_ctx ctx, ast_expression *owner, unsigned int field, const char *name)
+ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const char *name)
 {
     ast_instantiate(ast_member, ctx, ast_member_delete);
     if (field >= 3) {
@@ -653,7 +653,7 @@ bool ast_member_set_name(ast_member *self, const char *name)
     return !!self->name;
 }
 
-ast_array_index* ast_array_index_new(lex_ctx ctx, ast_expression *array, ast_expression *index)
+ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_expression *index)
 {
     ast_expression *outtype;
     ast_instantiate(ast_array_index, ctx, ast_array_index_delete);
@@ -696,7 +696,7 @@ void ast_array_index_delete(ast_array_index *self)
     mem_d(self);
 }
 
-ast_argpipe* ast_argpipe_new(lex_ctx ctx, ast_expression *index)
+ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index)
 {
     ast_instantiate(ast_argpipe, ctx, ast_argpipe_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_argpipe_codegen);
@@ -713,7 +713,7 @@ void ast_argpipe_delete(ast_argpipe *self)
     mem_d(self);
 }
 
-ast_ifthen* ast_ifthen_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
 {
     ast_instantiate(ast_ifthen, ctx, ast_ifthen_delete);
     if (!ontrue && !onfalse) {
@@ -746,7 +746,7 @@ void ast_ifthen_delete(ast_ifthen *self)
     mem_d(self);
 }
 
-ast_ternary* ast_ternary_new(lex_ctx ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+ast_ternary* ast_ternary_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
 {
     ast_expression *exprtype = ontrue;
     ast_instantiate(ast_ternary, ctx, ast_ternary_delete);
@@ -783,7 +783,7 @@ void ast_ternary_delete(ast_ternary *self)
     mem_d(self);
 }
 
-ast_loop* ast_loop_new(lex_ctx ctx,
+ast_loop* ast_loop_new(lex_ctx_t ctx,
                        ast_expression *initexpr,
                        ast_expression *precond, bool pre_not,
                        ast_expression *postcond, bool post_not,
@@ -832,7 +832,7 @@ void ast_loop_delete(ast_loop *self)
     mem_d(self);
 }
 
-ast_breakcont* ast_breakcont_new(lex_ctx ctx, bool iscont, unsigned int levels)
+ast_breakcont* ast_breakcont_new(lex_ctx_t ctx, bool iscont, unsigned int levels)
 {
     ast_instantiate(ast_breakcont, ctx, ast_breakcont_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_breakcont_codegen);
@@ -849,7 +849,7 @@ void ast_breakcont_delete(ast_breakcont *self)
     mem_d(self);
 }
 
-ast_switch* ast_switch_new(lex_ctx ctx, ast_expression *op)
+ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op)
 {
     ast_instantiate(ast_switch, ctx, ast_switch_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_switch_codegen);
@@ -878,7 +878,7 @@ void ast_switch_delete(ast_switch *self)
     mem_d(self);
 }
 
-ast_label* ast_label_new(lex_ctx ctx, const char *name, bool undefined)
+ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined)
 {
     ast_instantiate(ast_label, ctx, ast_label_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_label_codegen);
@@ -906,7 +906,7 @@ static void ast_label_register_goto(ast_label *self, ast_goto *g)
     vec_push(self->gotos, g);
 }
 
-ast_goto* ast_goto_new(lex_ctx ctx, const char *name)
+ast_goto* ast_goto_new(lex_ctx_t ctx, const char *name)
 {
     ast_instantiate(ast_goto, ctx, ast_goto_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_goto_codegen);
@@ -930,7 +930,7 @@ void ast_goto_set_label(ast_goto *self, ast_label *label)
     self->target = label;
 }
 
-ast_call* ast_call_new(lex_ctx ctx,
+ast_call* ast_call_new(lex_ctx_t ctx,
                        ast_expression *funcexpr)
 {
     ast_instantiate(ast_call, ctx, ast_call_delete);
@@ -1069,7 +1069,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
     return retval;
 }
 
-ast_store* ast_store_new(lex_ctx ctx, int op,
+ast_store* ast_store_new(lex_ctx_t ctx, int op,
                          ast_expression *dest, ast_expression *source)
 {
     ast_instantiate(ast_store, ctx, ast_store_delete);
@@ -1094,7 +1094,7 @@ void ast_store_delete(ast_store *self)
     mem_d(self);
 }
 
-ast_block* ast_block_new(lex_ctx ctx)
+ast_block* ast_block_new(lex_ctx_t ctx)
 {
     ast_instantiate(ast_block, ctx, ast_block_delete);
     ast_expression_init((ast_expression*)self,
@@ -1148,7 +1148,7 @@ void ast_block_set_type(ast_block *self, ast_expression *from)
     ast_type_adopt(self, from);
 }
 
-ast_function* ast_function_new(lex_ctx ctx, const char *name, ast_value *vtype)
+ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype)
 {
     ast_instantiate(ast_function, ctx, ast_function_delete);
 

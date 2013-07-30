@@ -33,21 +33,21 @@ const unsigned int opts_opt_oflag[COUNT_OPTIMIZATIONS+1] = {
     0
 };
 
-const opts_flag_def opts_opt_list[COUNT_OPTIMIZATIONS+1] = {
+const opts_flag_def_t opts_opt_list[COUNT_OPTIMIZATIONS+1] = {
 # define GMQCC_TYPE_OPTIMIZATIONS
 # define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
 #  include "opts.def"
     { NULL, LONGBIT(0) }
 };
 
-const opts_flag_def opts_warn_list[COUNT_WARNINGS+1] = {
+const opts_flag_def_t opts_warn_list[COUNT_WARNINGS+1] = {
 # define GMQCC_TYPE_WARNS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
 #  include "opts.def"
     { NULL, LONGBIT(0) }
 };
 
-const opts_flag_def opts_flag_list[COUNT_FLAGS+1] = {
+const opts_flag_def_t opts_flag_list[COUNT_FLAGS+1] = {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
 #  include "opts.def"
@@ -132,7 +132,7 @@ void opts_init(const char *output, int standard, size_t arraysize) {
     OPTS_OPTION_U16(OPTION_MEMDUMPCOLS)    = 16;
 }
 
-static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def *list, size_t listsize) {
+static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def_t *list, size_t listsize) {
     size_t i;
 
     for (i = 0; i < listsize; ++i) {

@@ -92,7 +92,7 @@ typedef struct parser_s {
     size_t          *_blocklocals;
     ast_value      **_typedefs;
     size_t          *_blocktypedefs;
-    lex_ctx         *_block_ctx;
+    lex_ctx_t         *_block_ctx;
 
     /* we store the '=' operator info */
     const oper_info *assign_op;
@@ -148,32 +148,32 @@ static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *
  * some maths used for constant folding
  */
 
-vector vec3_add(vector a, vector b)
+vec3_t vec3_add(vec3_t a, vec3_t b)
 {
-    vector out;
+    vec3_t out;
     out.x = a.x + b.x;
     out.y = a.y + b.y;
     out.z = a.z + b.z;
     return out;
 }
 
-vector vec3_sub(vector a, vector b)
+vec3_t vec3_sub(vec3_t a, vec3_t b)
 {
-    vector out;
+    vec3_t out;
     out.x = a.x - b.x;
     out.y = a.y - b.y;
     out.z = a.z - b.z;
     return out;
 }
 
-qcfloat vec3_mulvv(vector a, vector b)
+qcfloat_t vec3_mulvv(vec3_t a, vec3_t b)
 {
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
-vector vec3_mulvf(vector a, float b)
+vec3_t vec3_mulvf(vec3_t a, float b)
 {
-    vector out;
+    vec3_t out;
     out.x = a.x * b;
     out.y = a.y * b;
     out.z = a.z * b;
@@ -205,7 +205,7 @@ static ast_value* parser_const_float(parser_t *parser, double d)
 {
     size_t i;
     ast_value *out;
-    lex_ctx ctx;
+    lex_ctx_t ctx;
     for (i = 0; i < vec_size(parser->imm_float); ++i) {
         const double compare = parser->imm_float[i]->constval.vfloat;
         if (memcmp((const void*)&compare, (const void *)&d, sizeof(double)) == 0)
@@ -291,7 +291,7 @@ static ast_value* parser_const_string(parser_t *parser, const char *str, bool do
     return out;
 }
 
-static ast_value* parser_const_vector(parser_t *parser, vector v)
+static ast_value* parser_const_vector(parser_t *parser, vec3_t v)
 {
     size_t i;
     ast_value *out;
@@ -310,7 +310,7 @@ static ast_value* parser_const_vector(parser_t *parser, vector v)
 
 static ast_value* parser_const_vector_f(parser_t *parser, float x, float y, float z)
 {
-    vector v;
+    vec3_t v;
     v.x = x;
     v.y = y;
     v.z = z;
@@ -410,7 +410,7 @@ typedef struct
     size_t          off;
     ast_expression *out;
     ast_block      *block; /* for commas and function calls */
-    lex_ctx ctx;
+    lex_ctx_t ctx;
 } sy_elem;
 
 enum {
@@ -428,7 +428,7 @@ typedef struct
     unsigned int   *paren;
 } shunt;
 
-static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
+static sy_elem syexp(lex_ctx_t ctx, ast_expression *v) {
     sy_elem e;
     e.etype = 0;
     e.off   = 0;
@@ -439,7 +439,7 @@ static sy_elem syexp(lex_ctx ctx, ast_expression *v) {
     return e;
 }
 
-static sy_elem syblock(lex_ctx ctx, ast_block *v) {
+static sy_elem syblock(lex_ctx_t ctx, ast_block *v) {
     sy_elem e;
     e.etype = 0;
     e.off   = 0;
@@ -450,7 +450,7 @@ static sy_elem syblock(lex_ctx ctx, ast_block *v) {
     return e;
 }
 
-static sy_elem syop(lex_ctx ctx, const oper_info *op) {
+static sy_elem syop(lex_ctx_t ctx, const oper_info *op) {
     sy_elem e;
     e.etype = 1 + (op - operators);
     e.off   = 0;
@@ -461,7 +461,7 @@ static sy_elem syop(lex_ctx ctx, const oper_info *op) {
     return e;
 }
 
-static sy_elem syparen(lex_ctx ctx, size_t off) {
+static sy_elem syparen(lex_ctx_t ctx, size_t off) {
     sy_elem e;
     e.etype = 0;
     e.off   = off;
@@ -484,7 +484,7 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     ast_expression  *sub;
     ast_expression  *entity;
 
-    lex_ctx ctx = ast_ctx(*out);
+    lex_ctx_t ctx = ast_ctx(*out);
 
     if (!ast_istype(*out, ast_array_index))
         return false;
@@ -514,7 +514,7 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     return true;
 }
 
-static bool immediate_is_true(lex_ctx ctx, ast_value *v)
+static bool immediate_is_true(lex_ctx_t ctx, ast_value *v)
 {
     switch (v->expression.vtype) {
         case TYPE_FLOAT:
@@ -543,14 +543,14 @@ static bool immediate_is_true(lex_ctx ctx, ast_value *v)
 static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
-    lex_ctx ctx;
+    lex_ctx_t ctx;
     ast_expression *out = NULL;
     ast_expression *exprs[3];
     ast_block      *blocks[3];
     ast_value      *asvalue[3];
     ast_binstore   *asbinstore;
     size_t i, assignop, addop, subop;
-    qcint  generated_op = 0;
+    qcint_t  generated_op = 0;
 
     char ty1[1024];
     char ty2[1024];
@@ -878,7 +878,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         if (CanConstFold(exprs[0], exprs[1]))
                             out = (ast_expression*)parser_const_float(parser, vec3_mulvv(ConstV(0), ConstV(1)));
                         else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && CanConstFold1(exprs[0])) {
-                            vector vec = ConstV(0);
+                            vec3_t vec = ConstV(0);
                             if (!vec.y && !vec.z) { /* 'n 0 0' * v */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[1], 0, NULL);
@@ -907,7 +907,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                 out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                         }
                         else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && CanConstFold1(exprs[1])) {
-                            vector vec = ConstV(1);
+                            vec3_t vec = ConstV(1);
                             if (!vec.y && !vec.z) { /* v * 'n 0 0' */
                                 ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
                                 out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, NULL);
@@ -995,7 +995,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (CanConstFold(exprs[0], exprs[1])) {
                 out = (ast_expression*)parser_const_float(parser,
-                            (float)(((qcint)ConstF(0)) % ((qcint)ConstF(1))));
+                            (float)(((qcint_t)ConstF(0)) % ((qcint_t)ConstF(1))));
             } else {
                 /* generate a call to __builtin_mod */
                 ast_expression *mod  = intrin_func(parser, "mod");
@@ -1024,8 +1024,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (CanConstFold(exprs[0], exprs[1]))
                 out = (ast_expression*)parser_const_float(parser,
-                    (op->id == opid1('|') ? (float)( ((qcint)ConstF(0)) | ((qcint)ConstF(1)) ) :
-                                            (float)( ((qcint)ConstF(0)) & ((qcint)ConstF(1)) ) ));
+                    (op->id == opid1('|') ? (float)( ((qcint_t)ConstF(0)) | ((qcint_t)ConstF(1)) ) :
+                                            (float)( ((qcint_t)ConstF(0)) & ((qcint_t)ConstF(1)) ) ));
             else
                 out = (ast_expression*)ast_binary_new(ctx,
                     (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
@@ -1085,7 +1085,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
              */
             if (exprs[0]->vtype == TYPE_FLOAT) {
                 if(CanConstFold(exprs[0], exprs[1])) {
-                    out = (ast_expression*)parser_const_float(parser, (float)((qcint)(ConstF(0)) ^ ((qcint)(ConstF(1)))));
+                    out = (ast_expression*)parser_const_float(parser, (float)((qcint_t)(ConstF(0)) ^ ((qcint_t)(ConstF(1)))));
                 } else {
                     ast_binary *expr = ast_binary_new(
                         ctx,
@@ -1126,9 +1126,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     if (CanConstFold(exprs[0], exprs[1])) {
                         out = (ast_expression*)parser_const_vector_f(
                             parser,
-                            (float)(((qcint)(ConstV(0).x)) ^ ((qcint)(ConstV(1).x))),
-                            (float)(((qcint)(ConstV(0).y)) ^ ((qcint)(ConstV(1).y))),
-                            (float)(((qcint)(ConstV(0).z)) ^ ((qcint)(ConstV(1).z)))
+                            (float)(((qcint_t)(ConstV(0).x)) ^ ((qcint_t)(ConstV(1).x))),
+                            (float)(((qcint_t)(ConstV(0).y)) ^ ((qcint_t)(ConstV(1).y))),
+                            (float)(((qcint_t)(ConstV(0).z)) ^ ((qcint_t)(ConstV(1).z)))
                         );
                     } else {
                         compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against vector");
@@ -1142,9 +1142,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     if (CanConstFold(exprs[0], exprs[1])) {
                         out = (ast_expression*)parser_const_vector_f(
                             parser,
-                            (float)(((qcint)(ConstV(0).x)) ^ ((qcint)(ConstF(1)))),
-                            (float)(((qcint)(ConstV(0).y)) ^ ((qcint)(ConstF(1)))),
-                            (float)(((qcint)(ConstV(0).z)) ^ ((qcint)(ConstF(1))))
+                            (float)(((qcint_t)(ConstV(0).x)) ^ ((qcint_t)(ConstF(1)))),
+                            (float)(((qcint_t)(ConstV(0).y)) ^ ((qcint_t)(ConstF(1)))),
+                            (float)(((qcint_t)(ConstV(0).z)) ^ ((qcint_t)(ConstF(1))))
                         );
                     } else {
                         compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against float");
@@ -1603,7 +1603,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if(CanConstFold1(exprs[0]))
-                out = (ast_expression*)parser_const_float(parser, ~(qcint)ConstF(0));
+                out = (ast_expression*)parser_const_float(parser, ~(qcint_t)ConstF(0));
             else
                 out = (ast_expression*)
                     ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser_const_float_neg1(parser), exprs[0]);
@@ -1823,7 +1823,7 @@ static ast_expression* parse_vararg_do(parser_t *parser)
     ast_expression *idx, *out;
     ast_value      *typevar;
     ast_value      *funtype = parser->function->vtype;
-    lex_ctx         ctx     = parser_ctx(parser);
+    lex_ctx_t         ctx     = parser_ctx(parser);
 
     if (!parser->function->varargs) {
         parseerror(parser, "function has no variable argument list");
@@ -2538,7 +2538,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
     ast_expression *cond, *ontrue = NULL, *onfalse = NULL;
     bool ifnot = false;
 
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
 
@@ -2677,7 +2677,7 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
 
     bool ifnot = false;
 
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
 
@@ -2778,7 +2778,7 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
 
     bool ifnot = false;
 
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
 
@@ -2903,7 +2903,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     bool ifnot  = false;
 
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
 
     parser_enterblock(parser);
 
@@ -2969,7 +2969,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
 
     /* parse the incrementor */
     if (parser->tok != ')') {
-        lex_ctx condctx = parser_ctx(parser);
+        lex_ctx_t condctx = parser_ctx(parser);
         increment = parse_expression_leave(parser, false, false, false);
         if (!increment)
             goto onerr;
@@ -3021,7 +3021,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     ast_value      *retval   = parser->function->return_value;
     ast_value      *expected = parser->function->vtype;
 
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
 
@@ -3120,7 +3120,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 {
     size_t       i;
     unsigned int levels = 0;
-    lex_ctx      ctx = parser_ctx(parser);
+    lex_ctx_t      ctx = parser_ctx(parser);
     const char **loops = (is_continue ? parser->continues : parser->breaks);
 
     (void)block; /* not touching */
@@ -3407,7 +3407,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
     bool noref, is_static;
     uint32_t qflags = 0;
 
-    lex_ctx ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
 
     (void)block; /* not touching */
     (void)opval;
@@ -3919,7 +3919,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     }
     else
     {
-        lex_ctx ctx = parser_ctx(parser);
+        lex_ctx_t ctx = parser_ctx(parser);
         ast_expression *exp = parse_expression(parser, false, false);
         if (!exp)
             return false;
@@ -3936,7 +3936,7 @@ static bool parse_enum(parser_t *parser)
 {
     bool        flag = false;
     bool        reverse = false;
-    qcfloat     num = 0;
+    qcfloat_t     num = 0;
     ast_value **values = NULL;
     ast_value  *var = NULL;
     ast_value  *asvalue;
@@ -4318,7 +4318,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     if (has_frame_think) {
-        lex_ctx ctx;
+        lex_ctx_t ctx;
         ast_expression *self_frame;
         ast_expression *self_nextthink;
         ast_expression *self_think;
@@ -4498,7 +4498,7 @@ static ast_expression *array_accessor_split(
     ast_ifthen *ifthen;
     ast_binary *cmp;
 
-    lex_ctx ctx = ast_ctx(array);
+    lex_ctx_t ctx = ast_ctx(array);
 
     if (!left || !right) {
         if (left)  ast_delete(left);
@@ -4528,7 +4528,7 @@ static ast_expression *array_accessor_split(
 
 static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast_value *index, ast_value *value, size_t from, size_t afterend)
 {
-    lex_ctx ctx = ast_ctx(array);
+    lex_ctx_t ctx = ast_ctx(array);
 
     if (from+1 == afterend) {
         /* set this value */
@@ -4593,7 +4593,7 @@ static ast_expression *array_field_setter_node(
     size_t     from,
     size_t     afterend)
 {
-    lex_ctx ctx = ast_ctx(array);
+    lex_ctx_t ctx = ast_ctx(array);
 
     if (from+1 == afterend) {
         /* set this value */
@@ -4664,7 +4664,7 @@ static ast_expression *array_field_setter_node(
 
 static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast_value *index, size_t from, size_t afterend)
 {
-    lex_ctx ctx = ast_ctx(array);
+    lex_ctx_t ctx = ast_ctx(array);
 
     if (from+1 == afterend) {
         ast_return      *ret;
@@ -4900,7 +4900,7 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 {
-    lex_ctx     ctx;
+    lex_ctx_t     ctx;
     size_t      i;
     ast_value **params;
     ast_value  *param;
@@ -5027,7 +5027,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
 {
     ast_expression *cexp;
     ast_value      *cval, *tmp;
-    lex_ctx ctx;
+    lex_ctx_t ctx;
 
     ctx = parser_ctx(parser);
 
@@ -5106,7 +5106,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef)
 {
     ast_value *var, *tmp;
-    lex_ctx    ctx;
+    lex_ctx_t    ctx;
 
     const char *name = NULL;
     bool        isfield  = false;
@@ -6277,7 +6277,7 @@ static void generate_checksum(parser_t *parser, ir_builder *ir)
 parser_t *parser_create()
 {
     parser_t *parser;
-    lex_ctx empty_ctx;
+    lex_ctx_t empty_ctx;
     size_t i;
 
     parser = (parser_t*)mem_a(sizeof(parser_t));

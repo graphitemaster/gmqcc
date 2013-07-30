@@ -227,11 +227,11 @@ static bool            ir_function_set_name(ir_function*, const char *name);
 static void            ir_function_delete(ir_function*);
 static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 
-static ir_value*       ir_block_create_general_instr(ir_block *self, lex_ctx, const char *label,
+static ir_value*       ir_block_create_general_instr(ir_block *self, lex_ctx_t, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype);
 static void            ir_block_delete(ir_block*);
 static ir_block*       ir_block_new(struct ir_function_s *owner, const char *label);
-static bool GMQCC_WARN ir_block_create_store(ir_block*, lex_ctx, ir_value *target, ir_value *what);
+static bool GMQCC_WARN ir_block_create_store(ir_block*, lex_ctx_t, ir_value *target, ir_value *what);
 static bool            ir_block_set_label(ir_block*, const char *label);
 static void            ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
@@ -240,15 +240,15 @@ static void            ir_instr_delete(ir_instr*);
 static void            ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 /* error functions */
 
-static void irerror(lex_ctx ctx, const char *msg, ...)
+static void irerror(lex_ctx_t ctx, const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
-    con_cvprintmsg((void*)&ctx, LVL_ERROR, "internal error", msg, ap);
+    con_cvprintmsg(ctx, LVL_ERROR, "internal error", msg, ap);
     va_end(ap);
 }
 
-static bool irwarning(lex_ctx ctx, int warntype, const char *fmt, ...)
+static bool irwarning(lex_ctx_t ctx, int warntype, const char *fmt, ...)
 {
     bool    r;
     va_list ap;
@@ -584,7 +584,7 @@ static void ir_function_collect_value(ir_function *self, ir_value *v)
     vec_push(self->values, v);
 }
 
-ir_block* ir_function_create_block(lex_ctx ctx, ir_function *self, const char *label)
+ir_block* ir_function_create_block(lex_ctx_t ctx, ir_function *self, const char *label)
 {
     ir_block* bn = ir_block_new(self, label);
     bn->context = ctx;
@@ -954,7 +954,7 @@ bool ir_block_set_label(ir_block *self, const char *name)
  *IR Instructions
  */
 
-static ir_instr* ir_instr_new(lex_ctx ctx, ir_block* owner, int op)
+static ir_instr* ir_instr_new(lex_ctx_t ctx, ir_block* owner, int op)
 {
     ir_instr *self;
     self = (ir_instr*)mem_a(sizeof(*self));
@@ -1216,7 +1216,7 @@ bool ir_value_set_func(ir_value *self, int f)
     return true;
 }
 
-bool ir_value_set_vector(ir_value *self, vector v)
+bool ir_value_set_vector(ir_value *self, vec3_t v)
 {
     if (self->vtype != TYPE_VECTOR)
         return false;
@@ -1482,7 +1482,7 @@ static bool ir_check_unreachable(ir_block *self)
     return false;
 }
 
-bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *target, ir_value *what)
+bool ir_block_create_store_op(ir_block *self, lex_ctx_t ctx, int op, ir_value *target, ir_value *what)
 {
     ir_instr *in;
     if (!ir_check_unreachable(self))
@@ -1511,7 +1511,7 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx ctx, int op, ir_value *tar
     return true;
 }
 
-static bool ir_block_create_store(ir_block *self, lex_ctx ctx, ir_value *target, ir_value *what)
+static bool ir_block_create_store(ir_block *self, lex_ctx_t ctx, ir_value *target, ir_value *what)
 {
     int op = 0;
     int vtype;
@@ -1536,7 +1536,7 @@ static bool ir_block_create_store(ir_block *self, lex_ctx ctx, ir_value *target,
     return ir_block_create_store_op(self, ctx, op, target, what);
 }
 
-bool ir_block_create_storep(ir_block *self, lex_ctx ctx, ir_value *target, ir_value *what)
+bool ir_block_create_storep(ir_block *self, lex_ctx_t ctx, ir_value *target, ir_value *what)
 {
     int op = 0;
     int vtype;
@@ -1558,7 +1558,7 @@ bool ir_block_create_storep(ir_block *self, lex_ctx ctx, ir_value *target, ir_va
     return ir_block_create_store_op(self, ctx, op, target, what);
 }
 
-bool ir_block_create_return(ir_block *self, lex_ctx ctx, ir_value *v)
+bool ir_block_create_return(ir_block *self, lex_ctx_t ctx, ir_value *v)
 {
     ir_instr *in;
     if (!ir_check_unreachable(self))
@@ -1578,7 +1578,7 @@ bool ir_block_create_return(ir_block *self, lex_ctx ctx, ir_value *v)
     return true;
 }
 
-bool ir_block_create_if(ir_block *self, lex_ctx ctx, ir_value *v,
+bool ir_block_create_if(ir_block *self, lex_ctx_t ctx, ir_value *v,
                         ir_block *ontrue, ir_block *onfalse)
 {
     ir_instr *in;
@@ -1607,7 +1607,7 @@ bool ir_block_create_if(ir_block *self, lex_ctx ctx, ir_value *v,
     return true;
 }
 
-bool ir_block_create_jump(ir_block *self, lex_ctx ctx, ir_block *to)
+bool ir_block_create_jump(ir_block *self, lex_ctx_t ctx, ir_block *to)
 {
     ir_instr *in;
     if (!ir_check_unreachable(self))
@@ -1625,13 +1625,13 @@ bool ir_block_create_jump(ir_block *self, lex_ctx ctx, ir_block *to)
     return true;
 }
 
-bool ir_block_create_goto(ir_block *self, lex_ctx ctx, ir_block *to)
+bool ir_block_create_goto(ir_block *self, lex_ctx_t ctx, ir_block *to)
 {
     self->owner->flags |= IR_FLAG_HAS_GOTO;
     return ir_block_create_jump(self, ctx, to);
 }
 
-ir_instr* ir_block_create_phi(ir_block *self, lex_ctx ctx, const char *label, int ot)
+ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, int ot)
 {
     ir_value *out;
     ir_instr *in;
@@ -1678,7 +1678,7 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 }
 
 /* call related code */
-ir_instr* ir_block_create_call(ir_block *self, lex_ctx ctx, const char *label, ir_value *func, bool noreturn)
+ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label, ir_value *func, bool noreturn)
 {
     ir_value *out;
     ir_instr *in;
@@ -1729,7 +1729,7 @@ void ir_call_param(ir_instr* self, ir_value *v)
 
 /* binary op related code */
 
-ir_value* ir_block_create_binop(ir_block *self, lex_ctx ctx,
+ir_value* ir_block_create_binop(ir_block *self, lex_ctx_t ctx,
                                 const char *label, int opcode,
                                 ir_value *left, ir_value *right)
 {
@@ -1840,7 +1840,7 @@ ir_value* ir_block_create_binop(ir_block *self, lex_ctx ctx,
     return ir_block_create_general_instr(self, ctx, label, opcode, left, right, ot);
 }
 
-ir_value* ir_block_create_unary(ir_block *self, lex_ctx ctx,
+ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
                                 const char *label, int opcode,
                                 ir_value *operand)
 {
@@ -1873,7 +1873,7 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx ctx,
     return ir_block_create_general_instr(self, ctx, label, opcode, operand, NULL, ot);
 }
 
-static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx ctx, const char *label,
+static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype)
 {
     ir_instr *instr;
@@ -1905,7 +1905,7 @@ on_error:
     return NULL;
 }
 
-ir_value* ir_block_create_fieldaddress(ir_block *self, lex_ctx ctx, const char *label, ir_value *ent, ir_value *field)
+ir_value* ir_block_create_fieldaddress(ir_block *self, lex_ctx_t ctx, const char *label, ir_value *ent, ir_value *field)
 {
     ir_value *v;
 
@@ -1921,7 +1921,7 @@ ir_value* ir_block_create_fieldaddress(ir_block *self, lex_ctx ctx, const char *
     return v;
 }
 
-ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx ctx, const char *label, ir_value *ent, ir_value *field, int outype)
+ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const char *label, ir_value *ent, ir_value *field, int outype)
 {
     int op;
     if (ent->vtype != TYPE_ENTITY)
@@ -2741,7 +2741,7 @@ static bool gen_global_pointer(code_t *code, ir_value *global)
 
 static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *block)
 {
-    prog_section_statement stmt;
+    prog_section_statement_t stmt;
     ir_instr *instr;
     ir_block *target;
     ir_block *ontrue;
@@ -3002,7 +3002,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 static bool gen_function_code(code_t *code, ir_function *self)
 {
     ir_block *block;
-    prog_section_statement stmt, *retst;
+    prog_section_statement_t stmt, *retst;
 
     /* Starting from entry point, we generate blocks "as they come"
      * for now. Dead blocks will not be translated obviously.
@@ -3040,13 +3040,13 @@ static bool gen_function_code(code_t *code, ir_function *self)
     return true;
 }
 
-static qcint ir_builder_filestring(ir_builder *ir, const char *filename)
+static qcint_t ir_builder_filestring(ir_builder *ir, const char *filename)
 {
     /* NOTE: filename pointers are copied, we never strdup them,
      * thus we can use pointer-comparison to find the string.
      */
     size_t i;
-    qcint  str;
+    qcint_t  str;
 
     for (i = 0; i < vec_size(ir->filenames); ++i) {
         if (ir->filenames[i] == filename)
@@ -3061,8 +3061,8 @@ static qcint ir_builder_filestring(ir_builder *ir, const char *filename)
 
 static bool gen_global_function(ir_builder *ir, ir_value *global)
 {
-    prog_section_function fun;
-    ir_function          *irfun;
+    prog_section_function_t fun;
+    ir_function            *irfun;
 
     size_t i;
 
@@ -3116,8 +3116,8 @@ static ir_value* ir_gen_extparam_proto(ir_builder *ir)
 
 static void ir_gen_extparam(ir_builder *ir)
 {
-    prog_section_def def;
-    ir_value        *global;
+    prog_section_def_t def;
+    ir_value          *global;
 
     if (vec_size(ir->extparam_protos) < vec_size(ir->extparams)+1)
         global = ir_gen_extparam_proto(ir);
@@ -3145,7 +3145,7 @@ static bool gen_function_extparam_copy(code_t *code, ir_function *self)
 
     ir_builder *ir = self->owner;
     ir_value   *ep;
-    prog_section_statement stmt;
+    prog_section_statement_t stmt;
 
     numparams = vec_size(self->params);
     if (!numparams)
@@ -3180,7 +3180,7 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
 
     ir_builder *ir = self->owner;
     ir_value   *ep;
-    prog_section_statement stmt;
+    prog_section_statement_t stmt;
 
     numparams = vec_size(self->params);
     if (!numparams)
@@ -3212,10 +3212,10 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
 
 static bool gen_function_locals(ir_builder *ir, ir_value *global)
 {
-    prog_section_function *def;
-    ir_function           *irfun;
-    size_t                 i;
-    uint32_t               firstlocal, firstglobal;
+    prog_section_function_t *def;
+    ir_function             *irfun;
+    size_t                   i;
+    uint32_t                 firstlocal, firstglobal;
 
     irfun = global->constval.vfunc;
     def   = ir->code->functions + irfun->code_function_def;
@@ -3261,8 +3261,8 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
 
 static bool gen_global_function_code(ir_builder *ir, ir_value *global)
 {
-    prog_section_function *fundef;
-    ir_function           *irfun;
+    prog_section_function_t *fundef;
+    ir_function             *irfun;
 
     (void)ir;
 
@@ -3305,7 +3305,7 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     return true;
 }
 
-static void gen_vector_defs(code_t *code, prog_section_def def, const char *name)
+static void gen_vector_defs(code_t *code, prog_section_def_t def, const char *name)
 {
     char  *component;
     size_t len, i;
@@ -3335,7 +3335,7 @@ static void gen_vector_defs(code_t *code, prog_section_def def, const char *name
     mem_d(component);
 }
 
-static void gen_vector_fields(code_t *code, prog_section_field fld, const char *name)
+static void gen_vector_fields(code_t *code, prog_section_field_t fld, const char *name)
 {
     char  *component;
     size_t len, i;
@@ -3367,10 +3367,10 @@ static void gen_vector_fields(code_t *code, prog_section_field fld, const char *
 
 static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
 {
-    size_t           i;
-    int32_t         *iptr;
-    prog_section_def def;
-    bool             pushdef = opts.optimizeoff;
+    size_t             i;
+    int32_t           *iptr;
+    prog_section_def_t def;
+    bool               pushdef = opts.optimizeoff;
 
     def.type   = global->vtype;
     def.offset = vec_size(self->code->globals);
@@ -3543,8 +3543,8 @@ static GMQCC_INLINE void ir_builder_prepare_field(code_t *code, ir_value *field)
 
 static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 {
-    prog_section_def def;
-    prog_section_field fld;
+    prog_section_def_t def;
+    prog_section_field_t fld;
 
     (void)self;
 
@@ -3613,7 +3613,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
 bool ir_builder_generate(ir_builder *self, const char *filename)
 {
-    prog_section_statement stmt;
+    prog_section_statement_t stmt;
     size_t i;
     char  *lnofile = NULL;
 

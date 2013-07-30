@@ -30,7 +30,7 @@ struct token_s {
     char *value;
 
     union {
-        vector v;
+        vec3_t v;
         int    i;
         double f;
         int    t; /* type */
@@ -41,7 +41,7 @@ struct token_s {
     struct token_s *prev;
 #endif
 
-    lex_ctx ctx;
+    lex_ctx_t ctx;
 };
 
 #if 0

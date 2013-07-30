@@ -382,14 +382,14 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_upload(X,Y,S) ((void)(memcpy(vec_add((X), (S) * sizeof(*(Y))), (Y), (S) * sizeof(*(Y)))))
 #define vec_remove(A,I,N) ((void)(memmove((A)+(I),(A)+((I)+(N)),sizeof(*(A))*(vec_meta(A)->used-(I)-(N))),vec_meta(A)->used-=(N)))
 
-typedef struct trie_s {
-    void          *value;
-    struct trie_s *entries;
+typedef struct correct_trie_s {
+    void                  *value;
+    struct correct_trie_s *entries;
 } correct_trie_t;
 
 correct_trie_t* correct_trie_new(void);
 
-typedef struct hash_table_t {
+typedef struct hash_table_s {
     size_t                size;
     struct hash_node_t **table;
 } hash_table_t, *ht;
@@ -525,21 +525,21 @@ extern const uint16_t type_not_instr   [TYPE_COUNT];
 typedef struct {
     uint32_t offset;      /* Offset in file of where data begins  */
     uint32_t length;      /* Length of section (how many of)      */
-} prog_section;
+} prog_section_t;
 
 typedef struct {
-    uint32_t     version;      /* Program version (6)     */
-    uint16_t     crc16;
-    uint16_t     skip;
+    uint32_t       version;      /* Program version (6)     */
+    uint16_t       crc16;
+    uint16_t       skip;
 
-    prog_section statements;   /* prog_section_statement  */
-    prog_section defs;         /* prog_section_def        */
-    prog_section fields;       /* prog_section_field      */
-    prog_section functions;    /* prog_section_function   */
-    prog_section strings;
-    prog_section globals;
-    uint32_t     entfield;     /* Number of entity fields */
-} prog_header;
+    prog_section_t statements;   /* prog_section_statement  */
+    prog_section_t defs;         /* prog_section_def        */
+    prog_section_t fields;       /* prog_section_field      */
+    prog_section_t functions;    /* prog_section_function   */
+    prog_section_t strings;
+    prog_section_t globals;
+    uint32_t       entfield;     /* Number of entity fields */
+} prog_header_t;
 
 /*
  * Each paramater incerements by 3 since vector types hold
@@ -584,7 +584,7 @@ typedef struct {
      * But this one is more sane to work with, and the
      * type sizes are guranteed.
      */
-} prog_section_statement;
+} prog_section_statement_t;
 
 typedef struct {
     /*
@@ -602,10 +602,10 @@ typedef struct {
     uint16_t type;
     uint16_t offset;
     uint32_t name;
-} prog_section_both;
+} prog_section_both_t;
 
-typedef prog_section_both prog_section_def;
-typedef prog_section_both prog_section_field;
+typedef prog_section_both_t prog_section_def_t;
+typedef prog_section_both_t prog_section_field_t;
 
 /* this is ORed to the type */
 #define DEF_SAVEGLOBAL (1<<15)
@@ -620,7 +620,7 @@ typedef struct {
     uint32_t  file;       /* file of the source file              */
     int32_t   nargs;      /* number of arguments                  */
     uint8_t   argsize[8]; /* size of arguments (keep 8 always?)   */
-} prog_section_function;
+} prog_section_function_t;
 
 /*
  * Instructions
@@ -713,22 +713,22 @@ enum {
 /* TODO: elide */
 extern const char *util_instr_str[VINSTR_END];
 
-/* uhh? */
-typedef float   qcfloat;
-typedef int32_t qcint;
+/* TOO: _t */
+typedef float   qcfloat_t;
+typedef int32_t qcint_t;
 
 typedef struct {
-    prog_section_statement *statements;
-    int                    *linenums;
-    prog_section_def       *defs;
-    prog_section_field     *fields;
-    prog_section_function  *functions;
-    int                    *globals;
-    char                   *chars;
-    uint16_t                crc;
-    uint32_t                entfields;
-    ht                      string_cache;
-    qcint                   string_cached_empty;
+    prog_section_statement_t *statements;
+    int                      *linenums;
+    prog_section_def_t       *defs;
+    prog_section_field_t     *fields;
+    prog_section_function_t  *functions;
+    int                      *globals;
+    char                     *chars;
+    uint16_t                  crc;
+    uint32_t                  entfields;
+    ht                        string_cache;
+    qcint_t                     string_cached_empty;
 } code_t;
 
 /*
@@ -744,8 +744,8 @@ GMQCC_WARN
 code_t   *code_init          (void);
 void      code_cleanup       (code_t *);
 uint32_t  code_genstring     (code_t *, const char *string);
-qcint     code_alloc_field   (code_t *, size_t qcsize);
-void      code_push_statement(code_t *, prog_section_statement *stmt, int linenum);
+qcint_t     code_alloc_field   (code_t *, size_t qcsize);
+void      code_push_statement(code_t *, prog_section_statement_t *stmt, int linenum);
 void      code_pop_statement (code_t *);
 
 /*
@@ -756,7 +756,7 @@ typedef struct {
     const char *file;
     size_t      line;
     size_t      column;
-} lex_ctx;
+} lex_ctx_t;
 
 /*===================================================================*/
 /*============================ con.c ================================*/
@@ -784,8 +784,8 @@ FILE *con_default_err(void);
 
 void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
 void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);
-void con_cvprintmsg(void *ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
-void con_cprintmsg (void *ctx, int lvl, const char *msgtype, const char *msg, ...);
+void con_cvprintmsg(lex_ctx_t ctx, int lvl, const char *msgtype, const char *msg, va_list ap);
+void con_cprintmsg (lex_ctx_t ctx, int lvl, const char *msgtype, const char *msg, ...);
 
 void con_close (void);
 void con_init  (void);
@@ -802,10 +802,10 @@ extern size_t compile_errors;
 extern size_t compile_Werrors;
 extern size_t compile_warnings;
 
-void /********/ compile_error   (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, ...);
-void /********/ vcompile_error  (lex_ctx ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
-bool GMQCC_WARN compile_warning (lex_ctx ctx, int warntype, const char *fmt, ...);
-bool GMQCC_WARN vcompile_warning(lex_ctx ctx, int warntype, const char *fmt, va_list ap);
+void /********/ compile_error   (lex_ctx_t ctx, /*LVL_ERROR*/ const char *msg, ...);
+void /********/ vcompile_error  (lex_ctx_t ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
+bool GMQCC_WARN compile_warning (lex_ctx_t ctx, int warntype, const char *fmt, ...);
+bool GMQCC_WARN vcompile_warning(lex_ctx_t ctx, int warntype, const char *fmt, va_list ap);
 void            compile_show_werrors(void);
 
 /*===================================================================*/
@@ -821,13 +821,13 @@ enum store_types {
 };
 
 typedef struct {
-    qcfloat x, y, z;
-} vector;
+    qcfloat_t x, y, z;
+} vec3_t;
 
-vector  vec3_add  (vector, vector);
-vector  vec3_sub  (vector, vector);
-qcfloat vec3_mulvv(vector, vector);
-vector  vec3_mulvf(vector, float);
+vec3_t  vec3_add  (vec3_t, vec3_t);
+vec3_t  vec3_sub  (vec3_t, vec3_t);
+qcfloat_t vec3_mulvv(vec3_t, vec3_t);
+vec3_t  vec3_mulvf(vec3_t, float);
 
 /*===================================================================*/
 /*============================= exec.c ==============================*/
@@ -841,22 +841,21 @@ vector  vec3_mulvf(vector, float);
  * float and int here.
  */
 typedef union {
-    qcint   _int;
-    qcint    string;
-    qcint    function;
-    qcint    edict;
-    qcfloat _float;
-    qcfloat vector[3];
-    qcint   ivector[3];
-} qcany;
+    qcint_t   _int;
+    qcint_t    string;
+    qcint_t    function;
+    qcint_t    edict;
+    qcfloat_t _float;
+    qcfloat_t vector[3];
+    qcint_t   ivector[3];
+} qcany_t;
 
-typedef char qcfloat_size_is_correct [sizeof(qcfloat) == 4 ?1:-1];
-typedef char qcint_size_is_correct   [sizeof(qcint)   == 4 ?1:-1];
+typedef char qcfloat_t_size_is_correct [sizeof(qcfloat_t) == 4 ?1:-1];
+typedef char qcint_t_size_is_correct   [sizeof(qcint_t)   == 4 ?1:-1];
 
 enum {
     VMERR_OK,
     VMERR_TEMPSTRING_ALLOC,
-
     VMERR_END
 };
 
@@ -868,65 +867,61 @@ enum {
 #define VMXF_PROFILE 0x0002     /* profile: increment the profile counters */
 
 struct qc_program_s;
-
-typedef int (*prog_builtin)(struct qc_program_s *prog);
+typedef int (*prog_builtin_t)(struct qc_program_s *prog);
 
 typedef struct {
-    qcint                  stmt;
-    size_t                 localsp;
-    prog_section_function *function;
-} qc_exec_stack;
+    qcint_t                    stmt;
+    size_t                   localsp;
+    prog_section_function_t *function;
+} qc_exec_stack_t;
 
 typedef struct qc_program_s {
-    char           *filename;
+    char                    *filename;
+    prog_section_statement_t *code;
+    prog_section_def_t       *defs;
+    prog_section_def_t       *fields;
+    prog_section_function_t  *functions;
+    char                    *strings;
+    qcint_t                   *globals;
+    qcint_t                   *entitydata;
+    bool                    *entitypool;
 
-    prog_section_statement *code;
-    prog_section_def       *defs;
-    prog_section_def       *fields;
-    prog_section_function  *functions;
-    char                   *strings;
-    qcint                  *globals;
-    qcint                  *entitydata;
-    bool                   *entitypool;
-
-    const char*            *function_stack;
+    const char*             *function_stack;
 
     uint16_t crc16;
 
     size_t tempstring_start;
     size_t tempstring_at;
 
-    qcint  vmerror;
+    qcint_t  vmerror;
 
     size_t *profile;
 
-    prog_builtin *builtins;
-    size_t        builtins_count;
+    prog_builtin_t *builtins;
+    size_t          builtins_count;
 
     /* size_t ip; */
-    qcint  entities;
+    qcint_t  entities;
     size_t entityfields;
     bool   allowworldwrites;
 
-    qcint         *localstack;
-    qc_exec_stack *stack;
+    qcint_t         *localstack;
+    qc_exec_stack_t *stack;
     size_t statement;
 
     size_t xflags;
 
     int    argc; /* current arg count for debugging */
-} qc_program;
+} qc_program_t;
 
-qc_program* prog_load(const char *filename, bool ignoreversion);
-void        prog_delete(qc_program *prog);
-
-bool prog_exec(qc_program *prog, prog_section_function *func, size_t flags, long maxjumps);
-
-const char*       prog_getstring (qc_program *prog, qcint str);
-prog_section_def* prog_entfield  (qc_program *prog, qcint off);
-prog_section_def* prog_getdef    (qc_program *prog, qcint off);
-qcany*            prog_getedict  (qc_program *prog, qcint e);
-qcint             prog_tempstring(qc_program *prog, const char *_str);
+qc_program_t*       prog_load      (const char *filename, bool ignoreversion);
+void                prog_delete    (qc_program_t *prog);
+bool                prog_exec      (qc_program_t *prog, prog_section_function_t *func, size_t flags, long maxjumps);
+const char*         prog_getstring (qc_program_t *prog, qcint_t str);
+prog_section_def_t* prog_entfield  (qc_program_t *prog, qcint_t off);
+prog_section_def_t* prog_getdef    (qc_program_t *prog, qcint_t off);
+qcany_t*            prog_getedict  (qc_program_t *prog, qcint_t e);
+qcint_t               prog_tempstring(qc_program_t *prog, const char *_str);
 
 
 /*===================================================================*/
@@ -990,7 +985,7 @@ int     u8_fromchar(uchar_t w,   char *to,     size_t maxlen);
 typedef struct {
     const char *name;
     longbit     bit;
-} opts_flag_def;
+} opts_flag_def_t;
 
 bool opts_setflag  (const char *, bool);
 bool opts_setwarn  (const char *, bool);
@@ -1037,11 +1032,11 @@ enum {
     OPTION_COUNT
 };
 
-extern const opts_flag_def opts_flag_list[COUNT_FLAGS+1];
-extern const opts_flag_def opts_warn_list[COUNT_WARNINGS+1];
-extern const opts_flag_def opts_opt_list[COUNT_OPTIMIZATIONS+1];
-extern const unsigned int  opts_opt_oflag[COUNT_OPTIMIZATIONS+1];
-extern unsigned int        opts_optimizationcount[COUNT_OPTIMIZATIONS];
+extern const opts_flag_def_t opts_flag_list[COUNT_FLAGS+1];
+extern const opts_flag_def_t opts_warn_list[COUNT_WARNINGS+1];
+extern const opts_flag_def_t opts_opt_list[COUNT_OPTIMIZATIONS+1];
+extern const unsigned int    opts_opt_oflag[COUNT_OPTIMIZATIONS+1];
+extern unsigned int          opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
 /* other options: */
 typedef enum {
