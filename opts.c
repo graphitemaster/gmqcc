@@ -26,6 +26,34 @@
 
 #include "gmqcc.h"
 
+const unsigned int opts_opt_oflag[COUNT_OPTIMIZATIONS+1] = {
+# define GMQCC_TYPE_OPTIMIZATIONS
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) MIN_O,
+#  include "opts.def"
+    0
+};
+
+const opts_flag_def opts_opt_list[COUNT_OPTIMIZATIONS+1] = {
+# define GMQCC_TYPE_OPTIMIZATIONS
+# define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
+#  include "opts.def"
+    { NULL, LONGBIT(0) }
+};
+
+const opts_flag_def opts_warn_list[COUNT_WARNINGS+1] = {
+# define GMQCC_TYPE_WARNS
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
+#  include "opts.def"
+    { NULL, LONGBIT(0) }
+};
+
+const opts_flag_def opts_flag_list[COUNT_FLAGS+1] = {
+# define GMQCC_TYPE_FLAGS
+# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
+#  include "opts.def"
+    { NULL, LONGBIT(0) }
+};
+
 unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
 opts_cmd_t   opts; /* command lien options */
 
@@ -350,7 +378,6 @@ void opts_ini_init(const char *file) {
     char       *error = NULL;
     size_t     line;
     FILE       *ini;
-
 
     if (!file) {
         /* try ini */

@@ -1008,17 +1008,12 @@ void opts_restore_non_Wall(void);
 void opts_backup_non_Werror_all(void);
 void opts_restore_non_Werror_all(void);
 
+
 enum {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) X,
 #  include "opts.def"
     COUNT_FLAGS
-};
-static const opts_flag_def opts_flag_list[] = {
-# define GMQCC_TYPE_FLAGS
-# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
-#  include "opts.def"
-    { NULL, LONGBIT(0) }
 };
 
 enum {
@@ -1027,30 +1022,12 @@ enum {
 #  include "opts.def"
     COUNT_WARNINGS
 };
-static const opts_flag_def opts_warn_list[] = {
-# define GMQCC_TYPE_WARNS
-# define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
-#  include "opts.def"
-    { NULL, LONGBIT(0) }
-};
 
 enum {
 # define GMQCC_TYPE_OPTIMIZATIONS
 # define GMQCC_DEFINE_FLAG(NAME, MIN_O) OPTIM_##NAME,
 #  include "opts.def"
     COUNT_OPTIMIZATIONS
-};
-static const opts_flag_def opts_opt_list[] = {
-# define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
-#  include "opts.def"
-    { NULL, LONGBIT(0) }
-};
-static const unsigned int opts_opt_oflag[] = {
-# define GMQCC_TYPE_OPTIMIZATIONS
-# define GMQCC_DEFINE_FLAG(NAME, MIN_O) MIN_O,
-#  include "opts.def"
-    0
 };
 
 enum {
@@ -1060,7 +1037,11 @@ enum {
     OPTION_COUNT
 };
 
-extern unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
+extern const opts_flag_def opts_flag_list[COUNT_FLAGS+1];
+extern const opts_flag_def opts_warn_list[COUNT_WARNINGS+1];
+extern const opts_flag_def opts_opt_list[COUNT_OPTIMIZATIONS+1];
+extern const unsigned int  opts_opt_oflag[COUNT_OPTIMIZATIONS+1];
+extern unsigned int        opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
 /* other options: */
 typedef enum {

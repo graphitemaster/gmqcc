@@ -327,6 +327,7 @@ int con_out(const char *fmt, ...) {
     return   ln;
 }
 
+#ifndef QCVM_EXECUTOR
 /*
  * Utility console message writes for lexer contexts.  These will allow
  * for reporting of file:line based on lexer context, These are used
@@ -445,3 +446,4 @@ bool GMQCC_WARN compile_warning(lex_ctx ctx, int warntype, const char *fmt, ...)
     va_end(ap);
     return r;
 }
+#endif
