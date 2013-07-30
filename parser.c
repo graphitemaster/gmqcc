@@ -1326,7 +1326,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+            out = CanConstFold(exprs[0], exprs[1])
+                ? (ast_expression*)parser_const_float(parser, ConstF(0) != ConstF(1))
+                : (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -1335,7 +1337,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+            out = CanConstFold(exprs[0], exprs[1])
+                ? (ast_expression*)parser_const_float(parser, ConstF(0) == ConstF(1))
+                : (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
 
         case opid1('='):
