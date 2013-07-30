@@ -2531,6 +2531,31 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     /* update the block which will get the jump - because short-logic or ternaries may have changed this */
     cond = func->curblock;
 
+    /* eliminate branches if value is constant */
+    if (condval->vtype == TYPE_FLOAT && condval->hasvalue && condval->cvq == CV_CONST) {
+        /* don't generate if statements */
+        if (condval->constval.vfloat == 1.0f && self->on_true) {
+            if (!(ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "ontrue"))))
+                return false;
+            /* generate */
+            if (!(*(cgen = self->on_true->codegen))((ast_expression*)(self->on_true), func, false, &dummy))
+                return false;
+            if (!ir_block_create_jump(func->curblock, ast_ctx(self), ontrue))
+                return false;
+            func->curblock = ontrue;
+            return true;
+        } else if (condval->constval.vfloat == 0.0f && self->on_false) {
+            if (!(onfalse = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "onfalse"))))
+                return false;
+            /* generate */
+            if (!(*(cgen = self->on_false->codegen))((ast_expression*)(self->on_false), func, false, &dummy))
+                return false;
+            if (!ir_block_create_jump(func->curblock, ast_ctx(self), onfalse))
+                return false;
+            func->curblock = onfalse;
+            return true;
+        }
+    } 
     /* on-true path */
 
     if (self->on_true) {
