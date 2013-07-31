@@ -353,11 +353,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 #define NotSameType(T) \
              (exprs[0]->vtype != exprs[1]->vtype || \
               exprs[0]->vtype != T)
-
-    /* preform any constant folding on operator usage first */
-    /*if ((out = fold_op(parser->fold, op, exprs)))*/
-    /*goto complete;*/
-
     switch (op->id)
     {
         default:
@@ -506,11 +501,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (exprs[0]->vtype != exprs[1]->vtype ||
                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
             {
-                compile_error(ctx, "invalid types used in expression: cannot add type %s and %s (%s %s)",
+                compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
                               type_name[exprs[0]->vtype],
-                              type_name[exprs[1]->vtype],
-                              asvalue[0]->name,
-                              asvalue[1]->name);
+                              type_name[exprs[1]->vtype]);
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
@@ -1163,7 +1156,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
     }
 #undef NotSameType
-/*complete:*/
     if (!out) {
         compile_error(ctx, "failed to apply operator %s", op->op);
         return false;
