@@ -45,12 +45,15 @@ static GMQCC_INLINE bool fold_possible(const ast_value *val) {
             ((ast_expression*)val)->vtype != TYPE_FUNCTION; /* why not for functions? */
 }
 
-#define isfloat(X)     (((ast_expression*)(X))->vtype == TYPE_FLOAT  && fold_possible(X))
-#define isvector(X)    (((ast_expression*)(X))->vtype == TYPE_VECTOR && fold_possible(X))
-#define isstring(X)    (((ast_expression*)(X))->vtype == TYPE_STRING && fold_possible(X))
-#define isfloats(X,Y)  (isfloat (X) && isfloat(Y))
-#define isvectors(X,Y) (isvector(X) && isvector(Y))
-#define isstrings(X,Y) (isstring(X) && isstring(Y))
+#define isfloatonly(X)  (((ast_expression*)(X))->vtype == TYPE_FLOAT)
+#define isvectoronly(X) (((ast_expression*)(X))->vtype == TYPE_VECTOR)
+#define isstringonly(X) (((ast_expression*)(X))->vtype == TYPE_STRING)
+#define isfloat(X)      (isfloatonly (X) && fold_possible(X))
+#define isvector(X)     (isvectoronly(X) && fold_possible(X))
+#define isstring(X)     (isstringonly(X) && fold_possible(X))
+#define isfloats(X,Y)   (isfloat     (X) && isfloat (Y))
+#define isvectors(X,Y)  (isvector    (X) && isvector(Y))
+#define isstrings(X,Y)  (isstring    (X) && isstring(Y))
 
 /*
  * Implementation of basic vector math for vec3_t, for trivial constant
@@ -106,7 +109,6 @@ static GMQCC_INLINE vec3_t vec3_xorvf(vec3_t a, qcfloat_t b) {
     return out;
 }
 
-#if 0
 static GMQCC_INLINE qcfloat_t vec3_mulvv(vec3_t a, vec3_t b) {
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
@@ -119,7 +121,6 @@ static GMQCC_INLINE vec3_t vec3_mulvf(vec3_t a, qcfloat_t b) {
     out.z = a.z * b;
     return out;
 }
-#endif
 
 static GMQCC_INLINE bool vec3_cmp(vec3_t a, vec3_t b) {
     return a.x == b.x &&
@@ -280,6 +281,82 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
     return (ast_expression*)out;
 }
 
+static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t *vec, ast_value *sel, const char *set) {
+    /*
+     * vector-component constant folding works by matching the component sets
+     * to eliminate expensive operations on whole-vectors (3 components at runtime).
+     * to achive this effect in a clean manner this function generalizes the 
+     * values through the use of a set paramater, which is used as an indexing method
+     * for creating the elided ast binary expression.
+     *
+     * Consider 'n 0 0' where y, and z need to be tested for 0, and x is
+     * used as the value in a binary operation generating an INSTR_MUL instruction
+     * to acomplish the indexing of the correct component value we use set[0], set[1], set[2]
+     * as x, y, z, where the values of those operations return 'x', 'y', 'z'. Because
+     * of how ASCII works we can easily deliniate:
+     * vec.z is the same as set[2]-'x' for when set[2] is 'z', 'z'-'x' results in a
+     * literal value of 2, using this 2, we know that taking the address of vec->x (float)
+     * and indxing it with this literal will yeild the immediate address of that component
+     * 
+     * Of course more work needs to be done to generate the correct index for the ast_member_new
+     * call, which is no problem: set[0]-'x' suffices that job.
+     */
+    qcfloat_t x = (&vec->x)[set[0]-'x'];
+    qcfloat_t y = (&vec->x)[set[1]-'x'];
+    qcfloat_t z = (&vec->x)[set[2]-'x'];
+
+    if (!y && !z) {
+        ast_expression *out;
+        ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
+        out                        = (ast_expression*)ast_member_new(fold_ctx(fold), (ast_expression*)sel, set[0]-'x', NULL);
+        out->node.keep             = false;
+        ((ast_member*)out)->rvalue = true;
+        if (!x != -1)
+            return (ast_expression*)ast_binary_new(fold_ctx(fold), INSTR_MUL_F, fold_constgen_float(fold, x), out);
+    }
+
+    return NULL;
+}
+
+
+static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_value *b) {
+    if (isfloatonly(a)) {
+        return (fold_possible(a) && fold_possible(b))
+                    ? fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a))) /* a=float,  b=vector */
+                    : NULL;                                                                                   /* cannot fold them   */
+    } else if (isfloats(a, b)) {
+        return fold_constgen_float(fold, fold_immvalue_float(a) * fold_immvalue_float(b));                    /* a=float,  b=float  */
+    } else if (isvectoronly(a)) {
+        if (isfloat(b) && fold_possible(a))
+            return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), fold_immvalue_float(b)));   /* a=vector, b=float  */
+        else if (isvector(b)) {
+            /*
+             * if we made it here the two ast values are both vectors. However because vectors are represented as
+             * three float values, constant folding can still occur within reason of the individual const-qualification
+             * of the components the vector is composed of.
+             */
+            if (fold_possible(a) && fold_possible(b))
+                return fold_constgen_float(fold, vec3_mulvv(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+            else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && fold_possible(a)) {
+                vec3_t          vec = fold_immvalue_vector(a);
+                ast_expression *out;
+                if ((out = fold_op_mul_vec(fold, &vec, b, "xyz"))) return out;
+                if ((out = fold_op_mul_vec(fold, &vec, b, "yxz"))) return out;
+                if ((out = fold_op_mul_vec(fold, &vec, b, "zxy"))) return out;
+                return NULL;
+            } else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && fold_possible(b)) {
+                vec3_t          vec = fold_immvalue_vector(b);
+                ast_expression *out;
+                if ((out = fold_op_mul_vec(fold, &vec, a, "xyz"))) return out;
+                if ((out = fold_op_mul_vec(fold, &vec, a, "yxz"))) return out;
+                if ((out = fold_op_mul_vec(fold, &vec, a, "zxy"))) return out;
+                return NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
 ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
     ast_value *a = (ast_value*)opexprs[0];
     ast_value *b = (ast_value*)opexprs[1];
@@ -345,9 +422,7 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
             return isfloat(a)              ? fold_constgen_float (fold, ~(qcint_t)fold_immvalue_float(a))
                  : NULL;
 
-        case opid1('*'):
-            /* TODO: seperate function for this case */
-            return NULL;
+        case opid1('*'): return fold_op_mul(fold, a, b);
         case opid1('/'):
             /* TODO: seperate function for this case */
             return NULL;
