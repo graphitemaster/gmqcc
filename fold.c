@@ -37,8 +37,6 @@
  * 
  * This file is thus, split into two parts.
  */
-ast_expression **fold_const_values = NULL;
-
 static GMQCC_INLINE bool fold_possible(const ast_value *val) {
     return  ast_istype((ast_expression*)val, ast_value) &&
             val->hasvalue && (val->cvq == CV_CONST)     &&
@@ -53,7 +51,7 @@ static GMQCC_INLINE bool fold_possible(const ast_value *val) {
 #define isstring(X)     (isstringonly(X) && fold_possible(X))
 #define isfloats(X,Y)   (isfloat     (X) && isfloat (Y))
 #define isvectors(X,Y)  (isvector    (X) && isvector(Y))
-#define isstrings(X,Y)  (isstring    (X) && isstring(Y))
+/*#define isstrings(X,Y)  (isstring    (X) && isstring(Y))*/
 
 /*
  * Implementation of basic vector math for vec3_t, for trivial constant
@@ -139,17 +137,9 @@ static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
     return (a.x && a.y && a.z);
 }
 
-
-static GMQCC_INLINE float fold_immvalue_float(ast_value *expr) {
-    return expr->constval.vfloat;
-}
-static GMQCC_INLINE vec3_t fold_immvalue_vector(ast_value *expr) {
-    return expr->constval.vvec;
-}
-static GMQCC_INLINE const char *fold_immvalue_string(ast_value *expr) {
-    return expr->constval.vstring;
-}
-
+#define fold_immvalue_float(E)  ((E)->constval.vfloat)
+#define fold_immvalue_vector(E) ((E)->constval.vvec)
+#define fold_immvalue_string(E) ((E)->constval.vstring)
 
 fold_t *fold_init(parser_t *parser) {
     fold_t *fold                 = (fold_t*)mem_a(sizeof(fold_t));
