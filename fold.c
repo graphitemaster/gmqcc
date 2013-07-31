@@ -357,6 +357,22 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
     return NULL;
 }
 
+static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_value *b) {
+    if (isfloatonly(a)) {
+        return (fold_possible(a) && fold_possible(b))
+                    ? fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b))
+                    : NULL;
+    }
+
+    if (isvectoronly(a)) {
+        if (fold_possible(a) && fold_possible(b))
+            return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
+        else if (fold_possible(b))
+            return fold_constgen_float (fold, 1.0f / fold_immvalue_float(b));
+    }
+    return NULL;
+}
+
 ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
     ast_value *a = (ast_value*)opexprs[0];
     ast_value *b = (ast_value*)opexprs[1];
@@ -423,7 +439,7 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
                  : NULL;
 
         case opid1('*'): return fold_op_mul(fold, a, b);
-        case opid1('/'):
+        case opid1('/'): return fold_op_div(fold, a, b);
             /* TODO: seperate function for this case */
             return NULL;
         case opid2('|','|'):
