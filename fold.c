@@ -383,7 +383,7 @@ static GMQCC_INLINE ast_expression *fold_op_sub(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
-        if (isfloat(b)) {
+        if (isvector(b)) {
             if (fold_can_2(a, b))
                 return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a)));
         } else {
@@ -585,5 +585,6 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case opid2('=','='):     return fold_op_cmp    (fold, a, b, false);
         case opid2('~','P'):     return fold_op_bnot   (fold, a);
     }
+    compile_error(fold_ctx(fold), "internal error: attempted to constant for unsupported operator");
     return NULL;
 }

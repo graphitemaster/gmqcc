@@ -506,9 +506,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (exprs[0]->vtype != exprs[1]->vtype ||
                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
             {
-                compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
+                compile_error(ctx, "invalid types used in expression: cannot add type %s and %s (%s %s)",
                               type_name[exprs[0]->vtype],
-                              type_name[exprs[1]->vtype]);
+                              type_name[exprs[1]->vtype],
+                              asvalue[0]->name,
+                              asvalue[1]->name);
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
