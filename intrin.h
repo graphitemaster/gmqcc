@@ -115,7 +115,7 @@ static ast_expression *intrin_pow (parser_t *parser) {
                 parser_ctx(parser),
                 INSTR_STORE_F,
                 (ast_expression*)local,
-                (ast_expression*)parser_const_float_1(parser)
+                (ast_expression*)parser->fold->imm_float[1] /* 1 == 1.0f */
             )
         );
 
@@ -126,7 +126,7 @@ static ast_expression *intrin_pow (parser_t *parser) {
                 INSTR_STORE_F,
                 INSTR_MUL_F,
                 (ast_expression*)arg2,
-                (ast_expression*)parser_const_float(parser, 0.25f)
+                (ast_expression*)fold_constgen_float(parser->fold, 0.25f)
             )
         );
 
@@ -149,7 +149,7 @@ static ast_expression *intrin_pow (parser_t *parser) {
                 parser_ctx(parser),
                 INSTR_AND,
                 (ast_expression*)arg2,
-                (ast_expression*)parser_const_float_1(parser)
+                (ast_expression*)parser->fold->imm_float[1] /* 1 == 1.0f */
             ),
             true, /* ! not */
             NULL,
@@ -168,7 +168,7 @@ static ast_expression *intrin_pow (parser_t *parser) {
                 INSTR_STORE_F,
                 INSTR_SUB_F,
                 (ast_expression*)arg2,
-                (ast_expression*)parser_const_float_1(parser)
+                (ast_expression*)parser->fold->imm_float[1] /* 1 == 1.0f */
             )
         );
         /* local *= x */
@@ -190,7 +190,7 @@ static ast_expression *intrin_pow (parser_t *parser) {
                 parser_ctx(parser),
                 INSTR_GT,
                 (ast_expression*)arg2,
-                (ast_expression*)parser_const_float_0(parser)
+                (ast_expression*)parser->fold->imm_float[0] /* 0 == 0.0f */
             ),
             false,
             NULL,
@@ -291,7 +291,7 @@ static ast_expression *intrin_exp(parser_t *parser) {
         INTRIN_VAL(value, "exp", func, "<float>", TYPE_FLOAT);
 
         /* push arguments for params to call */
-        vec_push(call->params, (ast_expression*)parser_const_float(parser, QC_M_E));
+        vec_push(call->params, (ast_expression*)fold_constgen_float(parser->fold, QC_M_E));
         vec_push(call->params, (ast_expression*)arg1);
 
         /* return pow(QC_M_E, x) */

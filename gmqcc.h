@@ -713,9 +713,10 @@ enum {
 /* TODO: elide */
 extern const char *util_instr_str[VINSTR_END];
 
-/* TOO: _t */
-typedef float   qcfloat_t;
-typedef int32_t qcint_t;
+
+typedef float    qcfloat_t;
+typedef int32_t  qcint_t;
+typedef uint32_t qcuint_t;
 
 typedef struct {
     prog_section_statement_t *statements;
@@ -728,7 +729,7 @@ typedef struct {
     uint16_t                  crc;
     uint32_t                  entfields;
     ht                        string_cache;
-    qcint_t                     string_cached_empty;
+    qcint_t                   string_cached_empty;
 } code_t;
 
 /*
@@ -823,11 +824,6 @@ enum store_types {
 typedef struct {
     qcfloat_t x, y, z;
 } vec3_t;
-
-vec3_t  vec3_add  (vec3_t, vec3_t);
-vec3_t  vec3_sub  (vec3_t, vec3_t);
-qcfloat_t vec3_mulvv(vec3_t, vec3_t);
-vec3_t  vec3_mulvf(vec3_t, float);
 
 /*===================================================================*/
 /*============================= exec.c ==============================*/
