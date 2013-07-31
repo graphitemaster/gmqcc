@@ -113,7 +113,6 @@ static GMQCC_INLINE qcfloat_t vec3_mulvv(vec3_t a, vec3_t b) {
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
-
 static GMQCC_INLINE vec3_t vec3_mulvf(vec3_t a, qcfloat_t b) {
     vec3_t out;
     out.x = a.x * b;
@@ -134,6 +133,10 @@ static GMQCC_INLINE vec3_t vec3_create(float x, float y, float z) {
     out.y = y;
     out.z = z;
     return out;
+}
+
+static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
+    return (a.x && a.y && a.z);
 }
 
 
@@ -357,6 +360,24 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
     return NULL;
 }
 
+static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
+    switch (v->expression.vtype) {
+        case TYPE_FLOAT:   return !!v->constval.vfloat;
+        case TYPE_INTEGER: return !!v->constval.vint;
+        case TYPE_VECTOR:  return OPTS_FLAG(CORRECT_LOGIC) ? vec3_pbool(v->constval.vvec) : !!v->constval.vvec.x;
+        case TYPE_STRING:
+            if (!v->constval.vstring)
+                return false;
+            if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
+                return true;
+            return !!v->constval.vstring[0];
+        default:
+            compile_error(fold_ctx(fold), "internal error: fold_immediate_true on invalid type");
+            break;
+    }
+    return !!v->constval.vfunc;
+}
+
 static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloatonly(a)) {
         return (fold_possible(a) && fold_possible(b))
@@ -369,6 +390,21 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
             return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
         else if (fold_possible(b))
             return fold_constgen_float (fold, 1.0f / fold_immvalue_float(b));
+    }
+    return NULL;
+}
+
+static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, ast_value *b, bool isor) {
+    if (fold_possible(a) && fold_possible(b)) {
+        if (OPTS_FLAG(PERL_LOGIC)) {
+            if (fold_immediate_true(fold, b))
+                return (ast_expression*)b;
+        } else {
+            return ((isor) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
+                           : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
+                                 ? (ast_expression*)fold->imm_float[1]  /* 1.0f */
+                                 : (ast_expression*)fold->imm_float[0]; /* 0.0f */
+        }
     }
     return NULL;
 }
@@ -438,16 +474,10 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
             return isfloat(a)              ? fold_constgen_float (fold, ~(qcint_t)fold_immvalue_float(a))
                  : NULL;
 
-        case opid1('*'): return fold_op_mul(fold, a, b);
-        case opid1('/'): return fold_op_div(fold, a, b);
-            /* TODO: seperate function for this case */
-            return NULL;
-        case opid2('|','|'):
-            /* TODO: seperate function for this case */
-            return NULL;
-        case opid2('&','&'):
-            /* TODO: seperate function for this case */
-            return NULL;
+        case opid1('*'):     return fold_op_mul  (fold, a, b);
+        case opid1('/'):     return fold_op_div  (fold, a, b);
+        case opid2('|','|'): return fold_op_andor(fold, a, b, true);
+        case opid2('&','&'): return fold_op_andor(fold, a, b, false);
         case opid2('?',':'):
             /* TODO: seperate function for this case */
             return NULL;
