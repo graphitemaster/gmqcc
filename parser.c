@@ -355,8 +355,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
               exprs[0]->vtype != T)
 
     /* preform any constant folding on operator usage first */
-    if ((out = fold_op(parser->fold, op, exprs)))
-        goto complete;
+    /*if ((out = fold_op(parser->fold, op, exprs)))*/
+    /*goto complete;*/
 
     switch (op->id)
     {
@@ -452,49 +452,53 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             out = exprs[0];
             break;
         case opid2('-','P'):
-            switch (exprs[0]->vtype) {
-                case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F,
-                                                              (ast_expression*)parser->fold->imm_float[0],
-                                                              exprs[0]);
-                    break;
-                case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V,
-                                                              (ast_expression*)parser->fold->imm_vector[0],
-                                                              exprs[0]);
-                    break;
-                default:
-                compile_error(ctx, "invalid types used in expression: cannot negate type %s",
-                              type_name[exprs[0]->vtype]);
-                return false;
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                switch (exprs[0]->vtype) {
+                    case TYPE_FLOAT:
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F,
+                                                                  (ast_expression*)parser->fold->imm_float[0],
+                                                                  exprs[0]);
+                        break;
+                    case TYPE_VECTOR:
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V,
+                                                                  (ast_expression*)parser->fold->imm_vector[0],
+                                                                  exprs[0]);
+                        break;
+                    default:
+                    compile_error(ctx, "invalid types used in expression: cannot negate type %s",
+                                  type_name[exprs[0]->vtype]);
+                    return false;
+                }
             }
             break;
 
         case opid2('!','P'):
-            switch (exprs[0]->vtype) {
-                case TYPE_FLOAT:
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
-                    break;
-                case TYPE_VECTOR:
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[0]);
-                    break;
-                case TYPE_STRING:
-                    if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                switch (exprs[0]->vtype) {
+                    case TYPE_FLOAT:
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
-                    else
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[0]);
-                    break;
-                /* we don't constant-fold NOT for these types */
-                case TYPE_ENTITY:
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_ENT, exprs[0]);
-                    break;
-                case TYPE_FUNCTION:
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_FNC, exprs[0]);
-                    break;
-                default:
-                compile_error(ctx, "invalid types used in expression: cannot logically negate type %s",
-                              type_name[exprs[0]->vtype]);
-                return false;
+                        break;
+                    case TYPE_VECTOR:
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[0]);
+                        break;
+                    case TYPE_STRING:
+                        if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
+                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
+                        else
+                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[0]);
+                        break;
+                    /* we don't constant-fold NOT for these types */
+                    case TYPE_ENTITY:
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_ENT, exprs[0]);
+                        break;
+                    case TYPE_FUNCTION:
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_FNC, exprs[0]);
+                        break;
+                    default:
+                    compile_error(ctx, "invalid types used in expression: cannot logically negate type %s",
+                                  type_name[exprs[0]->vtype]);
+                    return false;
+                }
             }
             break;
 
@@ -507,42 +511,46 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            switch (exprs[0]->vtype) {
-                case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
-                    break;
-                case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
-                    break;
-                default:
-                    compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
-                                  type_name[exprs[0]->vtype],
-                                  type_name[exprs[1]->vtype]);
-                    return false;
-            };
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                switch (exprs[0]->vtype) {
+                    case TYPE_FLOAT:
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
+                        break;
+                    case TYPE_VECTOR:
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
+                        break;
+                    default:
+                        compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
+                                      type_name[exprs[0]->vtype],
+                                      type_name[exprs[1]->vtype]);
+                        return false;
+                }
+            }
             break;
         case opid1('-'):
-            if (exprs[0]->vtype != exprs[1]->vtype ||
-                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
+            if  (exprs[0]->vtype != exprs[1]->vtype ||
+                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT))
             {
                 compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
                               type_name[exprs[1]->vtype],
                               type_name[exprs[0]->vtype]);
                 return false;
             }
-            switch (exprs[0]->vtype) {
-                case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
-                    break;
-                case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
-                    break;
-                default:
-                    compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
-                                  type_name[exprs[1]->vtype],
-                                  type_name[exprs[0]->vtype]);
-                    return false;
-            };
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                switch (exprs[0]->vtype) {
+                    case TYPE_FLOAT:
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
+                        break;
+                    case TYPE_VECTOR:
+                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
+                        break;
+                    default:
+                        compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
+                                      type_name[exprs[1]->vtype],
+                                      type_name[exprs[0]->vtype]);
+                        return false;
+                }
+            }
             break;
         case opid1('*'):
             if (exprs[0]->vtype != exprs[1]->vtype &&
@@ -557,25 +565,27 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[0]->vtype]);
                 return false;
             }
-            switch (exprs[0]->vtype) {
-                case TYPE_FLOAT:
-                    if (exprs[1]->vtype == TYPE_VECTOR)
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
-                    else
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
-                    break;
-                case TYPE_VECTOR:
-                    if (exprs[1]->vtype == TYPE_FLOAT)
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
-                    else
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
-                    break;
-                default:
-                    compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
-                                  type_name[exprs[1]->vtype],
-                                  type_name[exprs[0]->vtype]);
-                    return false;
-            };
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                switch (exprs[0]->vtype) {
+                    case TYPE_FLOAT:
+                        if (exprs[1]->vtype == TYPE_VECTOR)
+                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
+                        else
+                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
+                        break;
+                    case TYPE_VECTOR:
+                        if (exprs[1]->vtype == TYPE_FLOAT)
+                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
+                        else
+                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
+                        break;
+                    default:
+                        compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
+                                      type_name[exprs[1]->vtype],
+                                      type_name[exprs[0]->vtype]);
+                        return false;
+                }
+            }
             break;
         case opid1('/'):
             if (exprs[1]->vtype != TYPE_FLOAT) {
@@ -584,16 +594,18 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
                 return false;
             }
-            if (exprs[0]->vtype == TYPE_FLOAT) 
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
-            else if (exprs[0]->vtype == TYPE_VECTOR)
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], out);
-            else
-            {
-                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
-                return false;
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                if (exprs[0]->vtype == TYPE_FLOAT) 
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+                else if (exprs[0]->vtype == TYPE_VECTOR)
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], out);
+                else /* TODO stot */
+                {
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
+                    return false;
+                }
             }
             break;
 
@@ -603,7 +615,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     type_name[exprs[0]->vtype],
                     type_name[exprs[1]->vtype]);
                 return false;
-            } else {
+            } else if (!(out = fold_op(parser->fold, op, exprs))) {
                 /* generate a call to __builtin_mod */
                 ast_expression *mod  = intrin_func(parser, "mod");
                 ast_call       *call = NULL;
@@ -629,9 +641,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx,
-                (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
-                exprs[0], exprs[1]);
+            if (!(out = fold_op(parser->fold, op, exprs)))
+                out = (ast_expression*)ast_binary_new(ctx,
+                    (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
+                    exprs[0], exprs[1]);
             break;
         case opid1('^'):
             /*
@@ -681,62 +694,65 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
 
-            /*
-             * IF the first expression is float, the following will be too
-             * since scalar ^ vector is not allowed.
-             */
-            if (exprs[0]->vtype == TYPE_FLOAT) {
-                ast_binary *expr = ast_binary_new(
-                    ctx,
-                    INSTR_SUB_F,
-                    (ast_expression*)parser->fold->imm_float[2],
-                    (ast_expression*)ast_binary_new(
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                /*
+                 * IF the first expression is float, the following will be too
+                 * since scalar ^ vector is not allowed.
+                 */
+                if (exprs[0]->vtype == TYPE_FLOAT) {
+                    ast_binary *expr = ast_binary_new(
                         ctx,
-                        INSTR_BITAND,
-                        exprs[0],
-                        exprs[1]
-                    )
-                );
-                expr->refs = AST_REF_NONE;
-
-                out = (ast_expression*)
-                    ast_binary_new(
-                        ctx,
-                        INSTR_BITAND,
+                        INSTR_SUB_F,
+                        (ast_expression*)parser->fold->imm_float[2],
                         (ast_expression*)ast_binary_new(
                             ctx,
-                            INSTR_BITOR,
+                            INSTR_BITAND,
                             exprs[0],
                             exprs[1]
-                        ),
-                        (ast_expression*)expr
+                        )
                     );
-            } else {
-                /*
-                 * The first is a vector: vector is allowed to xor with vector and
-                 * with scalar, branch here for the second operand.
-                 */
-                if (exprs[1]->vtype == TYPE_VECTOR) {
-                    /*
-                     * Xor all the values of the vector components against the
-                     * vectors components in question.
-                     */
-                    compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against vector");
-                    return false;
+                    expr->refs = AST_REF_NONE;
+
+                    out = (ast_expression*)
+                        ast_binary_new(
+                            ctx,
+                            INSTR_BITAND,
+                            (ast_expression*)ast_binary_new(
+                                ctx,
+                                INSTR_BITOR,
+                                exprs[0],
+                                exprs[1]
+                            ),
+                            (ast_expression*)expr
+                        );
                 } else {
-                    compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against float");
-                    return false;
+                    /*
+                     * The first is a vector: vector is allowed to xor with vector and
+                     * with scalar, branch here for the second operand.
+                     */
+                    if (exprs[1]->vtype == TYPE_VECTOR) {
+                        /*
+                         * Xor all the values of the vector components against the
+                         * vectors components in question.
+                         */
+                        compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against vector");
+                        return false;
+                    } else {
+                        compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against float");
+                        return false;
+                    }
                 }
             }
-
             break;
 
         case opid2('<','<'):
         case opid2('>','>'):
         case opid3('<','<','='):
         case opid3('>','>','='):
-            compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-shifts");
-            return false;
+            if(!(out = fold_op(parser->fold, op, exprs))) {
+                compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-shifts");
+                return false;
+            }
 
         case opid2('|','|'):
             generated_op += 1; /* INSTR_OR */
@@ -748,31 +764,33 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
                 return false;
             }
-            for (i = 0; i < 2; ++i) {
-                if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->vtype == TYPE_VECTOR) {
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
-                    if (!out) break;
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
-                    if (!out) break;
-                    exprs[i] = out; out = NULL;
-                    if (OPTS_FLAG(PERL_LOGIC)) {
-                        /* here we want to keep the right expressions' type */
-                        break;
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                for (i = 0; i < 2; ++i) {
+                    if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->vtype == TYPE_VECTOR) {
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
+                        if (!out) break;
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        if (!out) break;
+                        exprs[i] = out; out = NULL;
+                        if (OPTS_FLAG(PERL_LOGIC)) {
+                            /* here we want to keep the right expressions' type */
+                            break;
+                        }
+                    }
+                    else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->vtype == TYPE_STRING) {
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[i]);
+                        if (!out) break;
+                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        if (!out) break;
+                        exprs[i] = out; out = NULL;
+                        if (OPTS_FLAG(PERL_LOGIC)) {
+                            /* here we want to keep the right expressions' type */
+                            break;
+                        }
                     }
                 }
-                else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->vtype == TYPE_STRING) {
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[i]);
-                    if (!out) break;
-                    out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
-                    if (!out) break;
-                    exprs[i] = out; out = NULL;
-                    if (OPTS_FLAG(PERL_LOGIC)) {
-                        /* here we want to keep the right expressions' type */
-                        break;
-                    }
-                }
+                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             }
-            out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             break;
 
         case opid2('?',':'):
@@ -787,7 +805,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "operands of ternary expression must have the same type, got %s and %s", ty1, ty2);
                 return false;
             }
-            out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
+            if (!(out = fold_op(parser->fold, op, exprs)))
+                out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
             break;
 
         case opid2('*', '*'):
@@ -796,9 +815,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                 compile_error(ctx, "invalid types used in exponentiation: %s and %s",
                     ty1, ty2);
-
                 return false;
-            } else {
+            } else if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser, "pow"));
                 vec_push(gencall->params, exprs[0]);
                 vec_push(gencall->params, exprs[1]);
@@ -814,7 +832,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ty1, ty2);
 
                 return false;
-            } else {
+            } else if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
 
                 eq->refs = AST_REF_NONE;
@@ -854,7 +872,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+            if (!(out = fold_op(parser->fold, op, exprs)))
+                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
             break;
         case opid2('!', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -863,7 +882,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+            if (!(out = fold_op(parser->fold, op, exprs)))
+                out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -872,7 +892,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               type_name[exprs[1]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+            if (!(out = fold_op(parser->fold, op, exprs)))
+                out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
 
         case opid1('='):
@@ -1133,11 +1154,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ast_ctx(exprs[0]), "invalid type for bit not: %s", ty1);
                 return false;
             }
-            out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
+            if (!(out = fold_op(parser->fold, op, exprs)))
+                out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
             break;
     }
 #undef NotSameType
-complete:
+/*complete:*/
     if (!out) {
         compile_error(ctx, "failed to apply operator %s", op->op);
         return false;

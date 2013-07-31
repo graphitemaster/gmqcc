@@ -209,10 +209,10 @@ static const oper_info c_operators[] = {
     { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0,         false},
     { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0,         false},
 
-    { "==",  2, opid2('=','='),     ASSOC_LEFT,  9,  0,         false},
-    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  9,  0,         false},
+    { "==",  2, opid2('=','='),     ASSOC_LEFT,  9,  0,         true},
+    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  9,  0,         true},
 
-    { "&",   2, opid1('&'),         ASSOC_LEFT,  8,  0,         true},
+    { "&",   2, opid1('&'),         ASSOC_LEFT,  8,  0,         false},
 
     { "^",   2, opid1('^'),         ASSOC_LEFT,  7,  0,         true},
 
@@ -228,7 +228,7 @@ static const oper_info c_operators[] = {
     { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 2,  0,         false},
     { "-=",  2, opid2('-','='),     ASSOC_RIGHT, 2,  0,         false},
     { "*=",  2, opid2('*','='),     ASSOC_RIGHT, 2,  0,         false},
-    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 2,  0,         true},
+    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 2,  0,         false},
     { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 2,  0,         false},
     { ">>=", 2, opid3('>','>','='), ASSOC_RIGHT, 2,  0,         false},
     { "<<=", 2, opid3('<','<','='), ASSOC_RIGHT, 2,  0,         false},
@@ -252,9 +252,9 @@ static const oper_info fte_operators[] = {
     { "(",   0, opid1('('),         ASSOC_LEFT,  15, 0,         false}, /* function call */
     { "[",   2, opid1('['),         ASSOC_LEFT,  15, 0,         false}, /* array subscript */
 
-    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX, true},
+    { "!",   1, opid2('!', 'P'),    ASSOC_RIGHT, 14, OP_PREFIX, false},
     { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX, false},
-    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX, true},
+    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX, false},
     { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 14, OP_PREFIX, false},
     { "--",  1, opid3('-','-','P'), ASSOC_RIGHT, 14, OP_PREFIX, false},
 
@@ -273,8 +273,8 @@ static const oper_info fte_operators[] = {
     { ">",   2, opid1('>'),         ASSOC_LEFT,  10, 0,         false},
     { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0,         false},
     { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0,         false},
-    { "==",  2, opid2('=','='),     ASSOC_LEFT,  10, 0,         false},
-    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  10, 0,         false},
+    { "==",  2, opid2('=','='),     ASSOC_LEFT,  10, 0,         true},
+    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  10, 0,         true},
 
     { "?",   3, opid2('?',':'),     ASSOC_RIGHT, 9,  0,         true},
 
@@ -282,7 +282,7 @@ static const oper_info fte_operators[] = {
     { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 8,  0,         false},
     { "-=",  2, opid2('-','='),     ASSOC_RIGHT, 8,  0,         false},
     { "*=",  2, opid2('*','='),     ASSOC_RIGHT, 8,  0,         false},
-    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 8,  0,         true},
+    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 8,  0,         false},
     { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 8,  0,         false},
     { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 8,  0,         false},
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 8,  0,         false},
@@ -320,14 +320,14 @@ static const oper_info qcc_operators[] = {
     { ">",   2, opid1('>'),         ASSOC_LEFT,  10, 0,         false},
     { "<=",  2, opid2('<','='),     ASSOC_LEFT,  10, 0,         false},
     { ">=",  2, opid2('>','='),     ASSOC_LEFT,  10, 0,         false},
-    { "==",  2, opid2('=','='),     ASSOC_LEFT,  10, 0,         false},
-    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  10, 0,         false},
+    { "==",  2, opid2('=','='),     ASSOC_LEFT,  10, 0,         true},
+    { "!=",  2, opid2('!','='),     ASSOC_LEFT,  10, 0,         true},
 
     { "=",   2, opid1('='),         ASSOC_RIGHT, 8,  0,         false},
     { "+=",  2, opid2('+','='),     ASSOC_RIGHT, 8,  0,         false},
     { "-=",  2, opid2('-','='),     ASSOC_RIGHT, 8,  0,         false},
     { "*=",  2, opid2('*','='),     ASSOC_RIGHT, 8,  0,         false},
-    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 8,  0,         true},
+    { "/=",  2, opid2('/','='),     ASSOC_RIGHT, 8,  0,         false},
     { "%=",  2, opid2('%','='),     ASSOC_RIGHT, 8,  0,         false},
     { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 8,  0,         false},
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 8,  0,         false},
