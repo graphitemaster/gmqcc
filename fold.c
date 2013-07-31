@@ -383,13 +383,17 @@ static GMQCC_INLINE ast_expression *fold_op_sub(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
-        if (isfloat(b) && fold_can_2(a, b))
-            return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a)));
-        else if (fold_can_2(a, b))
-            return fold_constgen_float(fold, fold_immvalue_float(a) * fold_immvalue_float(b));
+        if (isfloat(b)) {
+            if (fold_can_2(a, b))
+                return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a)));
+        } else {
+            if (fold_can_2(a, b))
+                return fold_constgen_float(fold, fold_immvalue_float(a) * fold_immvalue_float(b));
+        }
     } else if (isvector(a)) {
-        if (isfloat(b) && fold_can_2(a, b)) {
-            return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
+        if (isfloat(b)) {
+            if (fold_can_2(a, b))
+                return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
         } else {
             if (fold_can_2(a, b)) {
                 return fold_constgen_float(fold, vec3_mulvv(fold_immvalue_vector(a), fold_immvalue_vector(b)));
