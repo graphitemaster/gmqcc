@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 #include <string.h>
+#include <math.h>
+
 #include "ast.h"
 #include "parser.h"
 
@@ -45,7 +47,7 @@ static GMQCC_INLINE bool fold_possible(const ast_value *val) {
 
 #define isfloat(X)     (((ast_expression*)(X))->vtype == TYPE_FLOAT  && fold_possible(X))
 #define isvector(X)    (((ast_expression*)(X))->vtype == TYPE_VECTOR && fold_possible(X))
-#define isstring(S)    (((ast_expression*)(X))->vtype == TYPE_STRING && fold_possible(X))
+#define isstring(X)    (((ast_expression*)(X))->vtype == TYPE_STRING && fold_possible(X))
 #define isfloats(X,Y)  (isfloat (X) && isfloat(Y))
 #define isvectors(X,Y) (isvector(X) && isvector(Y))
 #define isstrings(X,Y) (isstring(X) && isstring(Y))
@@ -108,7 +110,7 @@ static GMQCC_INLINE vec3_t vec3_xorvf(vec3_t a, qcfloat_t b) {
 static GMQCC_INLINE qcfloat_t vec3_mulvv(vec3_t a, vec3_t b) {
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
-#endif
+
 
 static GMQCC_INLINE vec3_t vec3_mulvf(vec3_t a, qcfloat_t b) {
     vec3_t out;
@@ -117,6 +119,7 @@ static GMQCC_INLINE vec3_t vec3_mulvf(vec3_t a, qcfloat_t b) {
     out.z = a.z * b;
     return out;
 }
+#endif
 
 static GMQCC_INLINE bool vec3_cmp(vec3_t a, vec3_t b) {
     return a.x == b.x &&
@@ -139,11 +142,9 @@ static GMQCC_INLINE float fold_immvalue_float(ast_value *expr) {
 static GMQCC_INLINE vec3_t fold_immvalue_vector(ast_value *expr) {
     return expr->constval.vvec;
 }
-#if 0
 static GMQCC_INLINE const char *fold_immvalue_string(ast_value *expr) {
     return expr->constval.vstring;
 }
-#endif
 
 
 fold_t *fold_init(parser_t *parser) {
@@ -301,6 +302,7 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case opid2('!', 'P'):
             return isfloat (a)             ? fold_constgen_float (fold, !fold_immvalue_float(a))
                  : isvector(a)             ? fold_constgen_vector(fold, vec3_not(fold_immvalue_vector(a)))
+                 : isstring(a)             ? fold_constgen_float (fold, !fold_immvalue_string(a) || OPTS_FLAG(TRUE_EMPTY_STRINGS) ? 0 : !*fold_immvalue_string(a))
                  : NULL;
         case opid1('+'):
             return isfloats(a,b)           ? fold_constgen_float (fold, fold_immvalue_float(a) + fold_immvalue_float(b))
@@ -309,15 +311,6 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case opid1('-'):
             return isfloats(a,b)           ? fold_constgen_float (fold, fold_immvalue_float(a) - fold_immvalue_float(b))
                  : isvectors(a,b)          ? fold_constgen_vector(fold, vec3_sub(fold_immvalue_vector(a), fold_immvalue_vector(b)))
-                 : NULL;
-        case opid1('*'):
-            if (isfloat(a))
-                return isvector(b) ? fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a)))
-                                   : fold_constgen_float (fold, fold_immvalue_float(a) * fold_immvalue_float(b));
-            return NULL;
-        case opid1('/'):
-            return isfloats(a,b)           ? fold_constgen_float (fold, fold_immvalue_float(a) / fold_immvalue_float(b))
-                 : isvector(a)&&isfloat(b) ? fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)))
                  : NULL;
         case opid1('%'):
             return isfloats(a,b)           ? fold_constgen_float (fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) % ((qcint_t)fold_immvalue_float(b))))
@@ -339,11 +332,9 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case opid2('>','>'):
             return isfloats(a,b)           ? fold_constgen_float (fold, (qcfloat_t)(((qcuint_t)(fold_immvalue_float(a)) >> ((qcuint_t)fold_immvalue_float(b)))))
                  : NULL;
-        case opid2('|','|'):     return NULL;
-        case opid2('&','&'):     return NULL;
-        case opid2('?',':'):     return NULL;
-        case opid2('*','*'):     return NULL;
-        case opid3('<','=','>'): return NULL;
+        case opid2('*','*'):
+            return isfloats(a,b)           ? fold_constgen_float (fold, (qcfloat_t)powf(fold_immvalue_float(a), fold_immvalue_float(b)))
+                 : NULL;
         case opid2('!','='):
             return isfloats(a,b)           ? fold_constgen_float (fold, fold_immvalue_float(a) != fold_immvalue_float(b))
                  : NULL;
@@ -353,7 +344,25 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case opid2('~','P'):
             return isfloat(a)              ? fold_constgen_float (fold, ~(qcint_t)fold_immvalue_float(a))
                  : NULL;
-            break;
+
+        case opid1('*'):
+            /* TODO: seperate function for this case */
+            return NULL;
+        case opid1('/'):
+            /* TODO: seperate function for this case */
+            return NULL;
+        case opid2('|','|'):
+            /* TODO: seperate function for this case */
+            return NULL;
+        case opid2('&','&'):
+            /* TODO: seperate function for this case */
+            return NULL;
+        case opid2('?',':'):
+            /* TODO: seperate function for this case */
+            return NULL;
+        case opid3('<','=','>'):
+            /* TODO: seperate function for this case */
+            return NULL;
     }
     return NULL;
 }
