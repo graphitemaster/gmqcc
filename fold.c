@@ -323,7 +323,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
         out                        = (ast_expression*)ast_member_new(fold_ctx(fold), (ast_expression*)sel, set[0]-'x', NULL);
         out->node.keep             = false;
         ((ast_member*)out)->rvalue = true;
-        if (!x != -1)
+        if (x != -1)
             return (ast_expression*)ast_binary_new(fold_ctx(fold), INSTR_MUL_F, fold_constgen_float(fold, x), out);
     }
     return NULL;
@@ -416,8 +416,21 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
             return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
-        else if (fold_can_1(b))
-            return fold_constgen_float (fold, 1.0f / fold_immvalue_float(b));
+        else {
+            return (ast_expression*)ast_binary_new(
+                fold_ctx(fold),
+                INSTR_MUL_VF,
+                (ast_expression*)a,
+                (fold_can_1(b))
+                    ? (ast_expression*)fold_constgen_float(fold, 1.0f / fold_immvalue_float(b))
+                    : (ast_expression*)ast_binary_new(
+                                            fold_ctx(fold),
+                                            INSTR_DIV_F,
+                                            (ast_expression*)fold->imm_float[1],
+                                            (ast_expression*)b
+                    )
+            );
+        }
     }
     return NULL;
 }
@@ -478,8 +491,8 @@ static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, as
                 fold, 
                 ((or) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
                       : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
-                            ? 1.0f
-                            : 0.0f
+                            ? 1
+                            : 0
             );
         }
     }

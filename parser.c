@@ -587,6 +587,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 }
             }
             break;
+
         case opid1('/'):
             if (exprs[1]->vtype != TYPE_FLOAT) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
@@ -595,21 +596,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                if (exprs[0]->vtype == TYPE_FLOAT) 
+                if (exprs[0]->vtype == TYPE_FLOAT)
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
-                else if (exprs[0]->vtype == TYPE_VECTOR) {
-                    out = (ast_expression*)ast_binary_new (
-                                ctx,
-                                INSTR_MUL_VF,
-                                exprs[0],
-                                (ast_expression*)ast_binary_new(
-                                    ctx,
-                                    INSTR_DIV_F,
-                                    (ast_expression*)parser->fold->imm_float[1],
-                                    exprs[1]
-                                )
-                    );
-                } else {
+                else {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
