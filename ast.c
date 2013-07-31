@@ -2534,7 +2534,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     cond = func->curblock;
 
     /* try constant folding away the if */
-    if ((fold = fold_cond((ast_value*)condval, func, self)) != -1)
+    if ((fold = fold_cond(condval, func, self)) != -1)
         return fold;
     
     if (self->on_true) {
