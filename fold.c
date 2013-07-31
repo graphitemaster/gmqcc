@@ -75,17 +75,17 @@ static GMQCC_INLINE vec3_t vec3_neg(vec3_t a) {
 
 static GMQCC_INLINE vec3_t vec3_xor(vec3_t a, vec3_t b) {
     vec3_t out;
-    out.x = (qcfloat_t)((qcint_t)a.x ^ (qcint_t)b.x);
-    out.y = (qcfloat_t)((qcint_t)a.y ^ (qcint_t)b.y);
-    out.z = (qcfloat_t)((qcint_t)a.z ^ (qcint_t)b.z);
+    out.x = (qcfloat_t)(((qcint_t)a.x) ^ ((qcint_t)b.x));
+    out.y = (qcfloat_t)(((qcint_t)a.y) ^ ((qcint_t)b.y));
+    out.z = (qcfloat_t)(((qcint_t)a.z) ^ ((qcint_t)b.z));
     return out;
 }
 
 static GMQCC_INLINE vec3_t vec3_xorvf(vec3_t a, qcfloat_t b) {
     vec3_t out;
-    out.x = (qcfloat_t)((qcint_t)a.x ^ (qcint_t)b);
-    out.y = (qcfloat_t)((qcint_t)a.y ^ (qcint_t)b);
-    out.z = (qcfloat_t)((qcint_t)a.z ^ (qcint_t)b);
+    out.x = (qcfloat_t)(((qcint_t)a.x) ^ ((qcint_t)b));
+    out.y = (qcfloat_t)(((qcint_t)a.y) ^ ((qcint_t)b));
+    out.z = (qcfloat_t)(((qcint_t)a.z) ^ ((qcint_t)b));
     return out;
 }
 
@@ -124,7 +124,8 @@ static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
 }
 
 static GMQCC_INLINE bool fold_can_1(const ast_value *val) {
-    return  (ast_istype((ast_expression*)val, ast_value) && val->hasvalue && val->cvq == CV_CONST && ((ast_expression*)val)->vtype != TYPE_FUNCTION);
+    return (ast_istype(((ast_expression*)(val)), ast_value) && val->hasvalue && (val->cvq == CV_CONST) &&
+              ((ast_expression*)(val))->vtype != TYPE_FUNCTION);
 }
 
 static GMQCC_INLINE bool fold_can_2(const ast_value *v1, const ast_value *v2) {
@@ -149,7 +150,7 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
         case TYPE_VECTOR: 
             if (OPTS_FLAG(CORRECT_LOGIC))
                 return vec3_pbool(v->constval.vvec);
-            return !!v->constval.vvec.x;
+            return !!(v->constval.vvec.x);
         case TYPE_STRING:
             if (!v->constval.vstring)
                 return false;

@@ -504,7 +504,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid1('+'):
             if (exprs[0]->vtype != exprs[1]->vtype ||
-                (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
+               (exprs[0]->vtype != TYPE_VECTOR && exprs[0]->vtype != TYPE_FLOAT) )
             {
                 compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
                               type_name[exprs[0]->vtype],
@@ -597,10 +597,19 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 if (exprs[0]->vtype == TYPE_FLOAT) 
                     out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
-                else if (exprs[0]->vtype == TYPE_VECTOR)
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], out);
-                else /* TODO stot */
-                {
+                else if (exprs[0]->vtype == TYPE_VECTOR) {
+                    out = (ast_expression*)ast_binary_new (
+                                ctx,
+                                INSTR_MUL_VF,
+                                exprs[0],
+                                (ast_expression*)ast_binary_new(
+                                    ctx,
+                                    INSTR_DIV_F,
+                                    (ast_expression*)parser->fold->imm_float[1],
+                                    exprs[1]
+                                )
+                    );
+                } else {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     compile_error(ctx, "invalid types used in expression: cannot divide types %s and %s", ty1, ty2);
@@ -758,13 +767,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             generated_op += 1; /* INSTR_OR */
         case opid2('&','&'):
             generated_op += INSTR_AND;
-            if (OPTS_FLAG(PERL_LOGIC) && !ast_compare_type(exprs[0], exprs[1])) {
-                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
-                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
-                compile_error(ctx, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
-                return false;
-            }
             if (!(out = fold_op(parser->fold, op, exprs))) {
+                if (OPTS_FLAG(PERL_LOGIC) && !ast_compare_type(exprs[0], exprs[1])) {
+                    ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                    ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                    compile_error(ctx, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
+                    return false;
+                }
                 for (i = 0; i < 2; ++i) {
                     if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->vtype == TYPE_VECTOR) {
                         out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
@@ -816,7 +825,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ctx, "invalid types used in exponentiation: %s and %s",
                     ty1, ty2);
                 return false;
-            } else if (!(out = fold_op(parser->fold, op, exprs))) {
+            }
+            
+            if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser, "pow"));
                 vec_push(gencall->params, exprs[0]);
                 vec_push(gencall->params, exprs[1]);
@@ -832,7 +843,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ty1, ty2);
 
                 return false;
-            } else if (!(out = fold_op(parser->fold, op, exprs))) {
+            } 
+
+            if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
 
                 eq->refs = AST_REF_NONE;

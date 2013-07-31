@@ -36,7 +36,8 @@ typedef struct {
     hash_table_t    *imm_string_dotranslate; /* map<string, ast_value*> */
 } fold_t;
 
-#define parser_ctx(p)    ((p)->lex->tok.ctx)
+#define parser_ctx(p) ((p)->lex->tok.ctx)
+
 typedef struct parser_s {
     lex_file *lex;
     int      tok;
