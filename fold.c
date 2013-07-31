@@ -42,7 +42,6 @@
 #define isvector(X)     (((ast_expression*)(X))->vtype == TYPE_VECTOR)
 #define isstring(X)     (((ast_expression*)(X))->vtype == TYPE_STRING)
 #define isfloats(X,Y)   (isfloat  (X) && isfloat (Y))
-#define isvectors(X,Y)  (isvector (X) && isvector(Y))
 
 /*
  * Implementation of basic vector math for vec3_t, for trivial constant
@@ -547,8 +546,8 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
     }
 
     switch(info->id) {
-        case opid2('-', 'P'):    return fold_op_neg    (fold, a);
-        case opid2('!', 'P'):    return fold_op_not    (fold, a);
+        case opid2('-','P'):     return fold_op_neg    (fold, a);
+        case opid2('!','P'):     return fold_op_not    (fold, a);
         case opid1('+'):         return fold_op_add    (fold, a, b);
         case opid1('-'):         return fold_op_sub    (fold, a, b);
         case opid1('*'):         return fold_op_mul    (fold, a, b);
