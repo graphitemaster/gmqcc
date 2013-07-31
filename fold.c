@@ -588,3 +588,35 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
     compile_error(fold_ctx(fold), "internal error: attempted to constant for unsupported operator");
     return NULL;
 }
+
+/*
+ * These are all the actual constant folding methods that happen in the AST
+ * stage of the compiler, i.e eliminating branches for const expressions,
+ * which is the only supported thing so far.
+ */
+int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
+    if (condval->vtype == TYPE_FLOAT && condval->hasvalue && condval->cvq == CV_CONST) {
+        ast_expression_codegen *cgen;
+        ir_block               *elide;
+        ir_value               *dummy;
+        bool                    istrue  = (fold_immvalue_float(condval) == 1.0f && branch->on_true);
+        bool                    isfalse = (fold_immvalue_float(condval) == 0.0f && branch->on_false);
+        ast_expression         *path    = (istrue)  ? branch->on_true  :
+                                          (isfalse) ? branch->on_false : NULL;
+        if (!path)
+            return false;
+        if (!(elide = ir_function_create_block(ast_ctx(branch), func->ir_func, ast_function_label(func, ((istrue) ? "ontrue" : "onfalse")))))
+            return false;
+        if (!(*(cgen = path->codegen))((ast_expression*)path, func, false, &dummy))
+            return false;
+        if (!ir_block_create_jump(func->curblock, ast_ctx(branch), elide))
+            return false;
+        /*
+         * now the branch has been eliminates, and the correct block for the constant evaluation
+         * is expanded into the current block for the function.
+         */
+        func->curblock = elide;
+        return true;
+    }
+    return -1; /* nothing done */
+}

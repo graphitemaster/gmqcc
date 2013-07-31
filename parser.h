@@ -112,4 +112,7 @@ ast_expression *fold_constgen_vector(fold_t *, vec3_t);
 ast_expression *fold_constgen_string(fold_t *, const char *, bool);
 bool            fold_generate       (fold_t *, ir_builder *);
 ast_expression *fold_op             (fold_t *, const oper_info *, ast_expression**);
+
+int             fold_cond           (ir_value *, ast_function *, ast_ifthen *);
+
 #endif
