@@ -399,6 +399,17 @@ static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, as
     return NULL;
 }
 
+static GMQCC_INLINE ast_expression *fold_op_lteqgt(fold_t *fold, ast_value *a, ast_value *b) {
+    if (!isfloats(a, b))
+        return NULL;
+
+    if (fold_immvalue_float(a)  < fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[2];/* -1 */
+    if (fold_immvalue_float(a) == fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[0];/* 0  */
+    if (fold_immvalue_float(a)  > fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[1];/* 1  */
+
+    return NULL;
+}
+
 ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
     ast_value *a = (ast_value*)opexprs[0];
     ast_value *b = (ast_value*)opexprs[1];
@@ -464,14 +475,12 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
             return isfloat(a)              ? fold_constgen_float (fold, ~(qcint_t)fold_immvalue_float(a))
                  : NULL;
 
-        case opid1('*'):     return fold_op_mul  (fold, a, b);
-        case opid1('/'):     return fold_op_div  (fold, a, b);
-        case opid2('|','|'): return fold_op_andor(fold, a, b, true);
-        case opid2('&','&'): return fold_op_andor(fold, a, b, false);
+        case opid1('*'):         return fold_op_mul  (fold, a, b);
+        case opid1('/'):         return fold_op_div  (fold, a, b);
+        case opid2('|','|'):     return fold_op_andor(fold, a, b, true);
+        case opid2('&','&'):     return fold_op_andor(fold, a, b, false);
+        case opid3('<','=','>'): return fold_op_lteqgt(fold, a, b);
         case opid2('?',':'):
-            /* TODO: seperate function for this case */
-            return NULL;
-        case opid3('<','=','>'):
             /* TODO: seperate function for this case */
             return NULL;
     }
