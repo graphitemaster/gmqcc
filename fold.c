@@ -603,13 +603,13 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
 #undef fold_can_2
 
 #define isfloat(X)              ((X)->vtype == TYPE_FLOAT)
-#define isstring(X)             ((X)->vtype == TYPE_STRING)
-#define isvector(X)             ((X)->vtype == TYPE_VECTOR)
+/*#define isstring(X)             ((X)->vtype == TYPE_STRING)*/
+/*#define isvector(X)             ((X)->vtype == TYPE_VECTOR)*/
 #define fold_immvalue_float(X)  ((X)->constval.vfloat)
-#define fold_immvalue_vector(X) ((X)->constval.vvec)
-#define fold_immvalue_string(X) ((X)->constval.vstring)
+/*#define fold_immvalue_vector(X) ((X)->constval.vvec)*/
+/*#define fold_immvalue_string(X) ((X)->constval.vstring)*/
 #define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
-#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))
+/*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
 
 
 int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
