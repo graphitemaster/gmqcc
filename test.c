@@ -1108,7 +1108,7 @@ static const char *task_type(task_template_t *tmpl) {
  * from thin air and executed INLINE.
  */
 #include <math.h>
-static void task_schedualize(size_t *pad) {
+static size_t task_schedualize(size_t *pad) {
     char   space[2][64];
     bool   execute  = false;
     char  *data     = NULL;
@@ -1116,6 +1116,7 @@ static void task_schedualize(size_t *pad) {
     size_t size     = 0;
     size_t i        = 0;
     size_t j        = 0;
+    size_t failed   = 0;
 
     util_snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
 
@@ -1180,6 +1181,7 @@ static void task_schedualize(size_t *pad) {
                 (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen("(failed to compile)") - pad[2]),
                 "(failed to compile)"
             );
+            failed++;
             continue;
         }
 
@@ -1257,6 +1259,7 @@ static void task_schedualize(size_t *pad) {
             for (j = 0; j < vec_size(match); j++)
                 mem_d(match[j]);
             vec_free(match);
+            failed++;
             continue;
         }
         
@@ -1274,6 +1277,7 @@ static void task_schedualize(size_t *pad) {
         );
     }
     mem_d(data);
+    return failed;
 }
 
 /*
@@ -1291,6 +1295,7 @@ static void task_schedualize(size_t *pad) {
  * It expects con_init() was called before hand.
  */
 static GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
+    size_t             failed       = false;
     static const char *default_defs = "defs.qh";
 
     size_t pad[] = {
@@ -1320,10 +1325,12 @@ static GMQCC_WARN bool test_perform(const char *curdir, const char *defs) {
      * it's designed to prevent lock contention, and possible syncronization
      * issues.
      */
-    task_schedualize(pad);
+    failed = task_schedualize(pad);
+    if (failed)
+        con_out("%u out of %u tests failed\n", failed, vec_size(task_tasks));
     task_destroy();
 
-    return true;
+    return (failed) ? false : true;
 }
 
 /*
