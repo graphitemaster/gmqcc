@@ -745,7 +745,7 @@ GMQCC_WARN
 code_t   *code_init          (void);
 void      code_cleanup       (code_t *);
 uint32_t  code_genstring     (code_t *, const char *string);
-qcint_t     code_alloc_field   (code_t *, size_t qcsize);
+qcint_t   code_alloc_field   (code_t *, size_t qcsize);
 void      code_push_statement(code_t *, prog_section_statement_t *stmt, int linenum);
 void      code_pop_statement (code_t *);
 

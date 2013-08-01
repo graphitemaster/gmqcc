@@ -4,7 +4,7 @@ UNAME  ?= $(shell uname)
 CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
-CFLAGS  += -Wall -Wextra -Werror -fno-strict-aliasing $(OPTIONAL)
+CFLAGS  += -O3 -Wall -Wextra -Werror -fno-strict-aliasing $(OPTIONAL)
 ifneq ($(shell git describe --always 2>/dev/null),)
     CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
 endif

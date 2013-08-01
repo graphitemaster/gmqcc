@@ -634,6 +634,7 @@ int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
          * is expanded into the current block for the function.
          */
         func->curblock = elide;
+        ++opts_optimizationcount[OPTIM_CONST_FOLD_DCE];
         return true;
     }
     return -1; /* nothing done */
