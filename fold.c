@@ -123,15 +123,6 @@ static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
     return (a.x && a.y && a.z);
 }
 
-static GMQCC_INLINE bool fold_can_1(const ast_value *val) {
-    return (ast_istype(((ast_expression*)(val)), ast_value) && val->hasvalue && (val->cvq == CV_CONST) &&
-              ((ast_expression*)(val))->vtype != TYPE_FUNCTION);
-}
-
-static GMQCC_INLINE bool fold_can_2(const ast_value *v1, const ast_value *v2) {
-    return fold_can_1(v1) && fold_can_1(v2);
-}
-
 static lex_ctx_t fold_ctx(fold_t *fold) {
     lex_ctx_t ctx;
     if (fold->parser->lex)
@@ -163,6 +154,13 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
     }
     return !!v->constval.vfunc;
 }
+
+/* Handy macros to determine if an ast_value can be constant folded. */
+#define fold_can_1(X)  \
+    (ast_istype(((ast_expression*)(X)), ast_value) && (X)->hasvalue && ((X)->cvq == CV_CONST) && \
+                ((ast_expression*)(X))->vtype != TYPE_FUNCTION)
+
+#define fold_can_2(X, Y) (fold_can_1(X) && fold_can_1(Y))
 
 #define fold_immvalue_float(E)  ((E)->constval.vfloat)
 #define fold_immvalue_vector(E) ((E)->constval.vvec)
@@ -590,12 +588,32 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
 }
 
 /*
- * These are all the actual constant folding methods that happen in the AST
- * stage of the compiler, i.e eliminating branches for const expressions,
- * which is the only supported thing so far.
+ * These are all the actual constant folding methods that happen in between
+ * the AST/IR stage of the compiler , i.e eliminating branches for const
+ * expressions, which is the only supported thing so far. We undefine the
+ * testing macros here because an ir_value is differant than an ast_value.
  */
+#undef isfloat
+#undef isstring
+#undef isvector
+#undef fold_immvalue_float
+#undef fold_immvalue_string
+#undef fold_immvalue_vector
+#undef fold_can_1
+#undef fold_can_2
+
+#define isfloat(X)              ((X)->vtype == TYPE_FLOAT)
+#define isstring(X)             ((X)->vtype == TYPE_STRING)
+#define isvector(X)             ((X)->vtype == TYPE_VECTOR)
+#define fold_immvalue_float(X)  ((X)->constval.vfloat)
+#define fold_immvalue_vector(X) ((X)->constval.vvec)
+#define fold_immvalue_string(X) ((X)->constval.vstring)
+#define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
+#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))
+
+
 int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
-    if (condval->vtype == TYPE_FLOAT && condval->hasvalue && condval->cvq == CV_CONST) {
+    if (isfloat(condval) && fold_can_1(condval) && OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
         ast_expression_codegen *cgen;
         ir_block               *elide;
         ir_value               *dummy;

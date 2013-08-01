@@ -606,6 +606,10 @@ in this case, the y component of a vector. This optimization will turn
 such a multiplication into a direct component access. If the factor is
 anything other than 1, a float-multiplication will be added, which is
 still faster than a vector multiplication.
+.It Fl O Ns Cm const-fold-dce
+For constant expressions that result in dead code (such as a branch whos
+condition can be evaluated at compile-time), this will eliminate the branch
+and else body (if present) to produce more optimal code.
 .El
 .Sh CONFIG
 The configuration file is similar to regular .ini files. Comments
