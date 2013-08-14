@@ -225,28 +225,31 @@ uint16_t util_crc16(const char *k, int len, const short clamp) {
 }
 #endif
 
+/* 
+ * modifier is the match to make and the transpsition from it, while add is the upper-value that determines the
+ * transposion from uppercase to lower case.
+ */
+static GMQCC_INLINE size_t util_strtransform(const char *in, char *out, size_t outsz, const char *mod, int add) {
+    size_t sz = 1;
+    for (; *in && sz < outsz; ++in, ++out, ++sz) {
+        *out = (*in == mod[0])
+                    ? mod[1]
+                    : (util_isalpha(*in) && util_isupper(*in + add))
+                        ? *in + add
+                        : *in;
+    }
+    *out = 0;
+    return sz-1;
+}
+
 size_t util_strtocmd(const char *in, char *out, size_t outsz) {
-    size_t sz = 1;
-    for (; *in && sz < outsz; ++in, ++out, ++sz)
-        *out = (*in == '-') ? '_' : (util_isalpha(*in) && !util_isupper(*in)) ? *in + 'A' - 'a': *in;
-    *out = 0;
-    return sz-1;
+    return util_strtransform(in, out, outsz, "-_", 'A'-'a');
 }
-
 size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
-    size_t sz = 1;
-    for (; *in && sz < outsz; ++in, ++out, ++sz)
-        *out = (*in == '_') ? '-' : (util_isalpha(*in) && util_isupper(*in)) ? *in + 'a' - 'A' : *in;
-    *out = 0;
-    return sz-1;
+    return util_strtransform(in, out, outsz, "_-", 'a'-'A');
 }
-
 size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
-    size_t sz = 1;
-    for (; *in && sz < outsz; ++in, ++out, ++sz)
-        *out = (*in == '_') ? ' ' : (util_isalpha(*in) && util_isupper(*in)) ? *in + 'a' - 'A' : *in;
-    *out = 0;
-    return sz-1;
+    return util_strtransform(in, out, outsz, "_ ", 'a'-'A');
 }
 
 /*
