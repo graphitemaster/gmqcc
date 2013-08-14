@@ -234,7 +234,7 @@ static GMQCC_INLINE size_t util_strtransform(const char *in, char *out, size_t o
     for (; *in && sz < outsz; ++in, ++out, ++sz) {
         *out = (*in == mod[0])
                     ? mod[1]
-                    : (util_isalpha(*in) && util_isupper(*in + add))
+                    : (util_isalpha(*in) && ((add > 0) ? util_isupper(*in) : !util_isupper(*in)))
                         ? *in + add
                         : *in;
     }
