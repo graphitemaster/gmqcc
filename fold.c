@@ -556,7 +556,7 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case 2: if(!b) return NULL;
         case 1:
         if(!a) {
-            compile_error(fold_ctx(fold), "interal error: fold_op no operands to fold\n");
+            compile_error(fold_ctx(fold), "internal error: fold_op no operands to fold\n");
             return NULL;
         }
     }
@@ -583,7 +583,7 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case opid2('=','='):     return fold_op_cmp    (fold, a, b, false);
         case opid2('~','P'):     return fold_op_bnot   (fold, a);
     }
-    compile_error(fold_ctx(fold), "internal error: attempted to constant for unsupported operator");
+    compile_error(fold_ctx(fold), "internal error: attempted to constant-fold for unsupported operator");
     return NULL;
 }
 
@@ -630,7 +630,7 @@ int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
         if (!ir_block_create_jump(func->curblock, ast_ctx(branch), elide))
             return false;
         /*
-         * now the branch has been eliminates, and the correct block for the constant evaluation
+         * now the branch has been eliminated and the correct block for the constant evaluation
          * is expanded into the current block for the function.
          */
         func->curblock = elide;

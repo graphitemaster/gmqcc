@@ -105,11 +105,10 @@ static const int ansi2win[] = {
 
 static int win_fputs(FILE *h, const char *str) {
     /* state for translate */
-    int acolor;
-    int wcolor;
-    int icolor;
-
-    int state = 0;
+    int acolor = 0;
+    int wcolor = 0;
+    int icolor = 0;
+    int state  = 0;
 
     /* attributes */
     int intense  =  -1;
@@ -199,9 +198,9 @@ static con_t console;
  */
 static void con_enablecolor(void) {
     if (console.handle_err == stderr || console.handle_err == stdout)
-        console.color_err = !!(isatty(STDERR_FILENO));
+        console.color_err = true; /*!!(isatty(STDERR_FILENO));*/
     if (console.handle_out == stderr || console.handle_out == stdout)
-        console.color_out = !!(isatty(STDOUT_FILENO));
+        console.color_out = true; /*!!(isatty(STDOUT_FILENO));*/
 }
 
 /*
