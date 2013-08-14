@@ -241,6 +241,14 @@ size_t util_strtononcmd(const char *in, char *out, size_t outsz) {
     return sz-1;
 }
 
+size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
+    size_t sz = 1;
+    for (; *in && sz < outsz; ++in, ++out, ++sz)
+        *out = (*in == '_') ? ' ' : (util_isalpha(*in) && util_isupper(*in)) ? *in + 'a' - 'A' : *in;
+    *out = 0;
+    return sz-1;
+}
+
 /*
  * Portable implementation of vasprintf/asprintf. Assumes vsnprintf
  * exists, otherwise compiler error.

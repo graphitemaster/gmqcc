@@ -325,8 +325,9 @@ bool  util_strdigit      (const char *);
 void  util_debug         (const char *, const char *, ...);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
-size_t util_strtocmd    (const char *, char *, size_t);
-size_t util_strtononcmd (const char *, char *, size_t);
+size_t util_strtocmd         (const char *, char *, size_t);
+size_t util_strtononcmd      (const char *, char *, size_t);
+size_t util_optimizationtostr(const char *, char *, size_t);
 
 uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 

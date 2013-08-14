@@ -128,7 +128,34 @@ qcint_t code_alloc_field (code_t *code, size_t qcsize)
     return pos;
 }
 
-static void code_create_header(code_t *code, prog_header_t *code_header) {
+static size_t code_size_generic(code_t *code, prog_header_t *code_header, bool lno) {
+    size_t size = 0;
+    if (lno) {
+        size += 4;  /* LNOF */
+        size += sizeof(uint32_t); /* version */
+        size += sizeof(code_header->defs.length);
+        size += sizeof(code_header->globals.length);
+        size += sizeof(code_header->fields.length);
+        size += sizeof(code_header->statements.length);
+        size += sizeof(code->linenums[0]) * vec_size(code->linenums);
+    } else {
+        size += sizeof(prog_header_t);
+        size += sizeof(prog_section_statement_t) * vec_size(code->statements);
+        size += sizeof(prog_section_def_t)       * vec_size(code->defs);
+        size += sizeof(prog_section_field_t)     * vec_size(code->fields);
+        size += sizeof(prog_section_function_t)  * vec_size(code->functions);
+        size += sizeof(int32_t)                  * vec_size(code->globals);
+        size += 1                                * vec_size(code->chars);
+    }
+    return size;
+}
+
+#define code_size_binary(C, H) code_size_generic((C), (H), false)
+#define code_size_debug(C, H)  code_size_generic((C), (H), true)
+
+static void code_create_header(code_t *code, prog_header_t *code_header, const char *filename, const char *lnofile) {
+    size_t i;
+
     code_header->statements.offset = sizeof(prog_header_t);
     code_header->statements.length = vec_size(code->statements);
     code_header->defs.offset       = code_header->statements.offset + (sizeof(prog_section_statement_t) * vec_size(code->statements));
@@ -179,6 +206,49 @@ static void code_create_header(code_t *code, prog_header_t *code_header) {
     util_endianswap(code->fields,     vec_size(code->fields),     sizeof(prog_section_field_t));
     util_endianswap(code->functions,  vec_size(code->functions),  sizeof(prog_section_function_t));
     util_endianswap(code->globals,    vec_size(code->globals),    sizeof(int32_t));
+
+
+    if (!OPTS_OPTION_BOOL(OPTION_QUIET)) {
+        if (lnofile)
+            con_out("writing '%s' and '%s'...\n", filename, lnofile);
+        else
+            con_out("writing '%s'\n", filename);
+    }
+
+    if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
+        !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
+    {
+        char buffer[1024];
+        con_out("\nOptimizations:\n");
+        for (i = 0; i < COUNT_OPTIMIZATIONS; ++i) {
+            if (opts_optimizationcount[i]) {
+                util_optimizationtostr(opts_opt_list[i].name, buffer, sizeof(buffer));
+                con_out(
+                    "    %s: %u\n",
+                    buffer,
+                    (unsigned int)opts_optimizationcount[i]
+                );
+            }
+        }
+    }
+}
+
+static void code_stats(const char *filename, const char *lnofile, code_t *code, prog_header_t *code_header) {
+    if (OPTS_OPTION_BOOL(OPTION_QUIET) ||
+        OPTS_OPTION_BOOL(OPTION_PP_ONLY))
+            return;
+
+    con_out("\nFile statistics:\n");
+    con_out("    dat:\n");
+    con_out("        name: %s\n",         filename);
+    con_out("        size: %u (bytes)\n", code_size_binary(code, code_header));
+    con_out("        crc:  0x%04X\n",     code->crc);
+
+    if (lnofile) {
+        con_out("    lno:\n");
+        con_out("        name: %s\n",  lnofile);
+        con_out("        size: %u (bytes)\n",  code_size_debug(code, code_header));
+    }
 }
 
 /*
@@ -193,7 +263,7 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
     if (!datmem)
         return false;
 
-    code_create_header(code, &code_header);
+    code_create_header(code, &code_header, "<<memory>>", "<<memory>>");
 
     #define WRITE_CHUNK(C,X,S)                                     \
         do {                                                       \
@@ -205,15 +275,8 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
     if (lnomem) {
         uint32_t version = 1;
 
-        *sizelno += 4;               /* LNOF */
-        *sizelno += sizeof(version);
-        *sizelno += sizeof(code_header.defs.length);
-        *sizelno += sizeof(code_header.globals.length);
-        *sizelno += sizeof(code_header.fields.length);
-        *sizelno += sizeof(code_header.statements.length);
-        *sizelno += sizeof(code->linenums[0]) * vec_size(code->linenums);
-
-        *lnomem   = (uint8_t*)mem_a(*sizelno);
+        *sizelno = code_size_debug(code, &code_header);
+        *lnomem  = (uint8_t*)mem_a(*sizelno);
 
         WRITE_CHUNK(lnomem, "LNOF",                         4);
         WRITE_CHUNK(lnomem, &version,                       sizeof(version));
@@ -232,15 +295,8 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
     }
 
     /* Write out the dat */
-    *sizedat += sizeof(prog_header_t);
-    *sizedat += sizeof(prog_section_statement_t) * vec_size(code->statements);
-    *sizedat += sizeof(prog_section_def_t)       * vec_size(code->defs);
-    *sizedat += sizeof(prog_section_field_t)     * vec_size(code->fields);
-    *sizedat += sizeof(prog_section_function_t)  * vec_size(code->functions);
-    *sizedat += sizeof(int32_t)                  * vec_size(code->globals);
-    *sizedat += 1                                * vec_size(code->chars);
-
-    *datmem = (uint8_t*)mem_a(*sizedat);
+    *sizedat = code_size_binary(code, &code_header);
+    *datmem  = (uint8_t*)mem_a(*sizedat);
 
     WRITE_CHUNK(datmem, &code_header,     sizeof(prog_header_t));
     WRITE_CHUNK(datmem, code->statements, sizeof(prog_section_statement_t) * vec_size(code->statements));
@@ -249,8 +305,6 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
     WRITE_CHUNK(datmem, code->functions,  sizeof(prog_section_function_t)  * vec_size(code->functions));
     WRITE_CHUNK(datmem, code->globals,    sizeof(int32_t)                  * vec_size(code->globals));
     WRITE_CHUNK(datmem, code->chars,      1                                * vec_size(code->chars));
-
-    #undef WRITE_CHUNK
 
     vec_free(code->statements);
     vec_free(code->linenums);
@@ -262,16 +316,17 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
 
     util_htdel(code->string_cache);
     mem_d(code);
-
+    code_stats("<<memory>>", (lnomem) ? "<<memory>>" : NULL, code, &code_header);
     return true;
 }
+#undef WRITE_CHUNK
 
 bool code_write(code_t *code, const char *filename, const char *lnofile) {
     prog_header_t  code_header;
     FILE          *fp           = NULL;
     size_t         it           = 2;
 
-    code_create_header(code, &code_header);
+    code_create_header(code, &code_header, filename, lnofile);
 
     if (lnofile) {
         uint32_t version = 1;
@@ -370,6 +425,7 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
     }
 
     fs_file_close(fp);
+    code_stats(filename, lnofile, code, &code_header);
     return true;
 }
 

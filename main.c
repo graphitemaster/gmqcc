@@ -766,17 +766,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    /* stuff */
-    if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
-        !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
-    {
-        for (itr = 0; itr < COUNT_OPTIMIZATIONS; ++itr) {
-            if (opts_optimizationcount[itr]) {
-                con_out("%s: %u\n", opts_opt_list[itr].name, (unsigned int)opts_optimizationcount[itr]);
-            }
-        }
-    }
-
 cleanup:
     util_debug("COM", "cleaning ...\n");
     if (ftepp)

@@ -3709,16 +3709,11 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (!OPTS_OPTION_BOOL(OPTION_QUIET)) {
-        if (lnofile)
-            con_out("writing '%s' and '%s'...\n", filename, lnofile);
-        else
-            con_out("writing '%s'\n", filename);
-    }
     if (!code_write(self->code, filename, lnofile)) {
         vec_free(lnofile);
         return false;
     }
+
     vec_free(lnofile);
     return true;
 }
