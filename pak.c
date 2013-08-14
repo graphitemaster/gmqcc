@@ -351,11 +351,10 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
      * the directory entry, and the actual contents of the file
      * to the PAK file itself.
      */
-    if (fs_file_seek(fp, 0, SEEK_END) != 0 || ((len = fs_file_tell(fp)) < 0)) {
-        fs_file_close(fp);
-        return false;
-    }
-    fs_file_seek(fp, 0, SEEK_SET);
+    if (fs_file_seek(fp, 0, SEEK_END) != 0 || ((len = fs_file_tell(fp)) < 0))
+        goto err;
+    if (fs_file_seek(fp, 0, SEEK_SET) != 0)
+        goto err;
 
     dir.len = len;
     dir.pos = fs_file_tell(pak->handle);
@@ -364,10 +363,8 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
      * We're limited to 56 bytes for a file name string, that INCLUDES
      * the directory and '/' seperators.
      */
-    if (strlen(file) >= 56) {
-        fs_file_close(fp);
-        return false;
-    }
+    if (strlen(file) >= 56)
+        goto err;
 
     util_strncpy(dir.name, file, strlen(file));
 
@@ -375,10 +372,8 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
      * Allocate some memory for loading in the data that will be
      * redirected into the PAK file.
      */
-    if (!(dat = (unsigned char *)mem_a(dir.len))) {
-        fs_file_close(fp);
-        return false;
-    }
+    if (!(dat = (unsigned char *)mem_a(dir.len)))
+        goto err;
 
     fs_file_read (dat, dir.len, 1, fp);
     fs_file_close(fp);
@@ -391,6 +386,10 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
     vec_push(pak->directories, dir);
 
     return true;
+
+err:
+    fs_file_close(fp);
+    return false;
 }
 
 /*
