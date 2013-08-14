@@ -300,7 +300,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
      * for creating the elided ast binary expression.
      *
      * Consider 'n 0 0' where y, and z need to be tested for 0, and x is
-     * used as the value in a binary operation generating an INSTR_MUL instruction
+     * used as the value in a binary operation generating an INSTR_MUL instruction,
      * to acomplish the indexing of the correct component value we use set[0], set[1], set[2]
      * as x, y, z, where the values of those operations return 'x', 'y', 'z'. Because
      * of how ASCII works we can easily deliniate:

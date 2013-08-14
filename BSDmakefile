@@ -112,7 +112,7 @@ stat.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
-parser.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h intrin.h
+parser.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h
 code.o: gmqcc.h opts.def
 ast.o: gmqcc.h opts.def ast.h ir.h parser.h lexer.h
 ir.o: gmqcc.h opts.def ir.h
