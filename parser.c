@@ -109,7 +109,7 @@ static ast_expression* parser_find_label(parser_t *parser, const char *name)
     return NULL;
 }
 
-static ast_expression* parser_find_global(parser_t *parser, const char *name)
+ast_expression* parser_find_global(parser_t *parser, const char *name)
 {
     ast_expression *var = (ast_expression*)util_htget(parser->aliases, parser_tokval(parser));
     if (var)
@@ -170,9 +170,6 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
     }
     return NULL;
 }
-
-/* include intrinsics */
-#include "intrin.h"
 
 typedef struct
 {
@@ -608,7 +605,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             } else if (!(out = fold_op(parser->fold, op, exprs))) {
                 /* generate a call to __builtin_mod */
-                ast_expression *mod  = intrin_func(parser, "mod");
+                ast_expression *mod  = intrin_func(parser->intrin, "mod");
                 ast_call       *call = NULL;
                 if (!mod) return false; /* can return null for missing floor */
 
@@ -810,7 +807,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser, "pow"));
+                ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser->intrin, "pow"));
                 vec_push(gencall->params, exprs[0]);
                 vec_push(gencall->params, exprs[1]);
                 out = (ast_expression*)gencall;
@@ -1199,7 +1196,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
      * TODO handle this at the intrinsic level with an ast_intrinsic
      * node and codegen.
      */
-    if ((fun = sy->out[fid].out) == intrin_debug_typestring(parser)) {
+    if ((fun = sy->out[fid].out) == intrin_debug_typestring(parser->intrin)) {
         char ty[1024];
         if (fid+2 != vec_size(sy->out) ||
             vec_last(sy->out).block)
@@ -1561,7 +1558,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
              * use the identifier as is.
              */
             if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
-                var = intrin_func(parser, parser_tokval(parser));
+                var = intrin_func(parser->intrin, parser_tokval(parser));
             }
 
             if (!var) {
@@ -5868,7 +5865,8 @@ parser_t *parser_create()
         parser->reserved_version = NULL;
     }
 
-    parser->fold = fold_init(parser);
+    parser->fold   = fold_init  (parser);
+    parser->intrin = intrin_init(parser);
     return parser;
 }
 
@@ -5986,9 +5984,9 @@ static void parser_remove_ast(parser_t *parser)
     if (parser->reserved_version)
         ast_value_delete(parser->reserved_version);
 
-    util_htdel(parser->aliases);
-    intrin_intrinsics_destroy(parser);
+    util_htdel(parser->aliases); 
     fold_cleanup(parser->fold);
+    intrin_cleanup(parser->intrin);
 }
 
 void parser_cleanup(parser_t *parser)

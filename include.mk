@@ -14,7 +14,7 @@ LDFLAGS +=
 LIBS    += -lm
 
 #objects
-OBJ_C = main.o lexer.o parser.o fs.o stat.o util.o code.o ast.o ir.o conout.o ftepp.o opts.o utf8.o correct.o fold.o
+OBJ_C = main.o lexer.o parser.o fs.o stat.o util.o code.o ast.o ir.o conout.o ftepp.o opts.o utf8.o correct.o fold.o intrin.o
 OBJ_P = util.o fs.o conout.o opts.o pak.o stat.o
 OBJ_T = test.o util.o opts.o conout.o fs.o stat.o
 OBJ_X = exec-standalone.o util.o opts.o conout.o fs.o stat.o

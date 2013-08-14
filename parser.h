@@ -27,6 +27,9 @@
 #include "lexer.h"
 #include "ast.h"
 
+typedef struct intrin_s intrin_t;
+typedef struct parser_s parser_t;
+
 typedef struct {
     struct parser_s *parser;
     ast_value      **imm_float;              /* vector<ast_value*> */
@@ -36,9 +39,21 @@ typedef struct {
     hash_table_t    *imm_string_dotranslate; /* map<string, ast_value*> */
 } fold_t;
 
+typedef struct {
+    ast_expression *(*intrin)(intrin_t *);
+    const char       *name;
+    const char       *alias;
+} intrin_func_t;
+
+struct intrin_s {
+    intrin_func_t  *intrinsics;              /* vector<intrin_func_t> */
+    parser_t       *parser;
+    fold_t         *fold;
+};
+
 #define parser_ctx(p) ((p)->lex->tok.ctx)
 
-typedef struct parser_s {
+struct parser_s {
     lex_file *lex;
     int      tok;
 
@@ -98,11 +113,14 @@ typedef struct parser_s {
     /* collected information */
     size_t     max_param_count;
 
-    fold_t *fold;
-} parser_t;
+    fold_t   *fold;
+    intrin_t *intrin;
+};
 
 
-char *parser_strdup(const char *str);
+/* parser.c */
+char           *parser_strdup     (const char *str);
+ast_expression *parser_find_global(parser_t *parser, const char *name);
 
 /* fold.c */
 fold_t         *fold_init           (parser_t *);
@@ -114,5 +132,11 @@ bool            fold_generate       (fold_t *, ir_builder *);
 ast_expression *fold_op             (fold_t *, const oper_info *, ast_expression**);
 
 int             fold_cond           (ir_value *, ast_function *, ast_ifthen *);
+
+/* intrin.c */
+intrin_t       *intrin_init            (parser_t *parser);
+void            intrin_cleanup         (intrin_t *intrin);
+ast_expression *intrin_func            (intrin_t *intrin, const char *name);
+ast_expression *intrin_debug_typestring(intrin_t *intrin);
 
 #endif
