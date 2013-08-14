@@ -198,9 +198,9 @@ static con_t console;
  */
 static void con_enablecolor(void) {
     if (console.handle_err == stderr || console.handle_err == stdout)
-        console.color_err = true; /*!!(isatty(STDERR_FILENO));*/
+        console.color_err = !!(isatty(STDERR_FILENO));
     if (console.handle_out == stderr || console.handle_out == stdout)
-        console.color_out = true; /*!!(isatty(STDOUT_FILENO));*/
+        console.color_out = !!(isatty(STDOUT_FILENO));
 }
 
 /*

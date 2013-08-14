@@ -324,7 +324,7 @@ static ast_expression *intrin_isnan(parser_t *parser) {
     static ast_value *value = NULL;
 
     if (!value) {
-        ast_value    *arg1   = ast_value_new (parser_ctx(parser), "x", TYPE_FLOAT);
+        ast_value    *arg1   = ast_value_new (parser_ctx(parser), "x",     TYPE_FLOAT);
         ast_value    *local  = ast_value_new (parser_ctx(parser), "local", TYPE_FLOAT);
         ast_block    *body   = ast_block_new (parser_ctx(parser));
         ast_function *func   = NULL;
@@ -363,21 +363,23 @@ static ast_expression *intrin_isnan(parser_t *parser) {
     return (ast_expression*)value;
 }
 
+static ast_expression *intrin_debug_typestring(parser_t *parser) {
+    (void)parser;
+    return (ast_expression*)0x1;
+}
+
 static intrin_t intrinsics[] = {
-    {&intrin_exp,   "__builtin_exp",   "exp"},
-    {&intrin_mod,   "__builtin_mod",   "mod"},
-    {&intrin_pow,   "__builtin_pow",   "pow"},
-    {&intrin_isnan, "__builtin_isnan", "isnan"}
+    {&intrin_exp,              "__builtin_exp",              "exp"},
+    {&intrin_mod,              "__builtin_mod",              "mod"},
+    {&intrin_pow,              "__builtin_pow",              "pow"},
+    {&intrin_isnan,            "__builtin_isnan",            "isnan"},
+    {&intrin_debug_typestring, "__builtin_debug_typestring", ""} 
 };
 
 void intrin_intrinsics_destroy(parser_t *parser) {
     /*size_t i;*/
     (void)parser;
     util_htdel(intrin_intrinsics());
-#if 0
-    for (i = 0; i < sizeof(intrinsics)/sizeof(intrin_t); i++)
-        ast_value_delete( (ast_value*) intrinsics[i].intrin(parser));
-#endif
 }
 
 
@@ -389,7 +391,7 @@ static ast_expression *intrin_func(parser_t *parser, const char *name) {
     /* register the intrinsics in the hashtable for O(1) lookup */
     if (!init) {
         for (i = 0; i < sizeof(intrinsics)/sizeof(*intrinsics); i++)
-            util_htset(intrin_intrinsics(), intrinsics[i].alias, &intrinsics[i]);
+            util_htset(intrin_intrinsics(), intrinsics[i].name, &intrinsics[i]);
 
         init = true; /* only once */
     }
@@ -410,6 +412,13 @@ static ast_expression *intrin_func(parser_t *parser, const char *name) {
          */
         return ((intrin_t*)find)->intrin(parser);
     }
+
+    /*
+     * check aliases now to see if there is an implementation of it.
+     */
+    for (i = 0; i < sizeof(intrinsics) / sizeof(*intrinsics); i++)
+        if (!strcmp(intrinsics[i].alias, name))
+            return intrinsics[i].intrin(parser);
 
     parseerror(parser, "need function: `%s` compiler depends on it", name);
     return NULL;

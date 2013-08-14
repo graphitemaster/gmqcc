@@ -29,8 +29,6 @@
 #define PARSER_HT_SIZE    512
 #define TYPEDEF_HT_SIZE   512
 
-static ast_expression * const intrinsic_debug_typestring = (ast_expression*)0x1;
-
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
@@ -1197,9 +1195,11 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     }
 
-    fun = sy->out[fid].out;
-
-    if (fun == intrinsic_debug_typestring) {
+    /* 
+     * TODO handle this at the intrinsic level with an ast_intrinsic
+     * node and codegen.
+     */
+    if ((fun = sy->out[fid].out) == intrin_debug_typestring(parser)) {
         char ty[1024];
         if (fid+2 != vec_size(sy->out) ||
             vec_last(sy->out).block)
@@ -1214,8 +1214,8 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         vec_shrinkby(sy->out, 1);
         return true;
     }
-
     call = ast_call_new(sy->ops[vec_size(sy->ops)].ctx, fun);
+
     if (!call)
         return false;
 
@@ -1531,9 +1531,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         /* a_vector.{x,y,z} */
         if (!vec_size(sy->ops) ||
             !vec_last(sy->ops).etype ||
-            operators[vec_last(sy->ops).etype-1].id != opid1('.') ||
-            (prev >= intrinsic_debug_typestring &&
-             prev <= intrinsic_debug_typestring))
+            operators[vec_last(sy->ops).etype-1].id != opid1('.'))
         {
             /* When adding more intrinsics, fix the above condition */
             prev = NULL;
@@ -1557,16 +1555,13 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         if (!var && !strcmp(parser_tokval(parser), "__FUNC__"))
             var = (ast_expression*)fold_constgen_string(parser->fold, parser->function->name, false);
         if (!var) {
-            /* intrinsics */
-            if (!strcmp(parser_tokval(parser), "__builtin_debug_typestring")) {
-                var = (ast_expression*)intrinsic_debug_typestring;
-            }
-            /* now we try for the real intrinsic hashtable. If the string
+            /* 
+             * now we try for the real intrinsic hashtable. If the string
              * begins with __builtin, we simply skip past it, otherwise we
              * use the identifier as is.
              */
-            else if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
-                var = intrin_func(parser, parser_tokval(parser) + 10 /* skip __builtin */);
+            if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
+                var = intrin_func(parser, parser_tokval(parser));
             }
 
             if (!var) {

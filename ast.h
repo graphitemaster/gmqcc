@@ -52,6 +52,7 @@ typedef struct ast_switch_s      ast_switch;
 typedef struct ast_label_s       ast_label;
 typedef struct ast_goto_s        ast_goto;
 typedef struct ast_argpipe_s     ast_argpipe;
+typedef struct ast_intrinsic_s   ast_intrinsic;
 
 enum {
     TYPE_ast_node,        /*  0 */
@@ -75,7 +76,8 @@ enum {
     TYPE_ast_switch,      /* 18 */
     TYPE_ast_label,       /* 19 */
     TYPE_ast_goto,        /* 20 */
-    TYPE_ast_argpipe      /* 21 */
+    TYPE_ast_argpipe,     /* 21 */
+    TYPE_ast_intrinsic    /* 22 */
 };
 
 #define ast_istype(x, t) ( ((ast_node*)x)->nodetype == (TYPE_##t) )
@@ -176,6 +178,7 @@ typedef union {
     ast_function *vfunc;
     ast_value    *vfield;
 } basic_value_t;
+
 struct ast_value_s
 {
     ast_expression        expression;
@@ -339,7 +342,7 @@ ast_entfield* ast_entfield_new_force(lex_ctx_t ctx, ast_expression *entity, ast_
  */
 struct ast_member_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *owner;
     unsigned int    field;
     const char     *name;
@@ -362,7 +365,7 @@ bool ast_member_set_name(ast_member*, const char *name);
  */
 struct ast_array_index_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *array;
     ast_expression *index;
 };
@@ -374,7 +377,7 @@ ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_e
  */
 struct ast_argpipe_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *index;
 };
 ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index);
@@ -386,7 +389,7 @@ ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index);
  */
 struct ast_store_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     int             op;
     ast_expression *dest;
     ast_expression *source;
@@ -407,7 +410,7 @@ ast_store* ast_store_new(lex_ctx_t ctx, int op,
  */
 struct ast_ifthen_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
@@ -430,7 +433,7 @@ ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *
  */
 struct ast_ternary_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
@@ -463,7 +466,7 @@ continue:      // a 'continue' will jump here
  */
 struct ast_loop_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *initexpr;
     ast_expression *precond;
     ast_expression *postcond;
@@ -489,9 +492,9 @@ ast_loop* ast_loop_new(lex_ctx_t ctx,
  */
 struct ast_breakcont_s
 {
-    ast_expression        expression;
-    bool         is_continue;
-    unsigned int levels;
+    ast_expression expression;
+    bool           is_continue;
+    unsigned int   levels;
 };
 ast_breakcont* ast_breakcont_new(lex_ctx_t ctx, bool iscont, unsigned int levels);
 
@@ -511,7 +514,7 @@ typedef struct {
 } ast_switch_case;
 struct ast_switch_s
 {
-    ast_expression        expression;
+    ast_expression   expression;
 
     ast_expression  *operand;
     ast_switch_case *cases;
@@ -525,12 +528,13 @@ ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op);
  */
 struct ast_label_s
 {
-    ast_expression        expression;
-    const char *name;
-    ir_block   *irblock;
-    ast_goto  **gotos;
+    ast_expression  expression;
+    const char     *name;
+    ir_block       *irblock;
+    ast_goto      **gotos;
+
     /* means it has not yet been defined */
-    bool        undefined;
+    bool           undefined;
 };
 
 ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined);
@@ -541,10 +545,10 @@ ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined);
  */
 struct ast_goto_s
 {
-    ast_expression        expression;
-    const char *name;
-    ast_label  *target;
-    ir_block   *irblock_from;
+    ast_expression expression;
+    const char    *name;
+    ast_label     *target;
+    ir_block      *irblock_from;
 };
 
 ast_goto* ast_goto_new(lex_ctx_t ctx, const char *name);
@@ -562,9 +566,9 @@ void ast_goto_set_label(ast_goto*, ast_label*);
  */
 struct ast_call_s
 {
-    ast_expression        expression;
+    ast_expression  expression;
     ast_expression *func;
-    ast_expression* *params;
+    ast_expression **params;
     ast_expression *va_count;
 };
 ast_call* ast_call_new(lex_ctx_t ctx,
@@ -576,7 +580,7 @@ bool ast_call_check_types(ast_call*, ast_expression *this_func_va_type);
  */
 struct ast_block_s
 {
-    ast_expression        expression;
+    ast_expression   expression;
 
     ast_value*      *locals;
     ast_expression* *exprs;
@@ -601,7 +605,7 @@ bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
  */
 struct ast_function_s
 {
-    ast_node        node;
+    ast_node    node;
 
     ast_value  *vtype;
     const char *name;
