@@ -1340,10 +1340,10 @@ static bool ftepp_directive_warning(ftepp_t *ftepp) {
     /* handle the odd non string constant case so it works like C */
     if (ftepp->token != TOKEN_STRINGCONST) {
         bool  store   = false;
-        vec_upload(message, "#warning", 8);
+        vec_append(message, 8, "#warning");
         ftepp_next(ftepp);
         while (ftepp->token != TOKEN_EOL) {
-            vec_upload(message, ftepp_tokval(ftepp), strlen(ftepp_tokval(ftepp)));
+            vec_append(message, strlen(ftepp_tokval(ftepp)), ftepp_tokval(ftepp));
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
@@ -1370,10 +1370,10 @@ static void ftepp_directive_error(ftepp_t *ftepp) {
 
     /* handle the odd non string constant case so it works like C */
     if (ftepp->token != TOKEN_STRINGCONST) {
-        vec_upload(message, "#error", 6);
+        vec_append(message, 6, "#error");
         ftepp_next(ftepp);
         while (ftepp->token != TOKEN_EOL) {
-            vec_upload(message, ftepp_tokval(ftepp), strlen(ftepp_tokval(ftepp)));
+            vec_append(message, strlen(ftepp_tokval(ftepp)), ftepp_tokval(ftepp));
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
@@ -1398,10 +1398,10 @@ static void ftepp_directive_message(ftepp_t *ftepp) {
 
     /* handle the odd non string constant case so it works like C */
     if (ftepp->token != TOKEN_STRINGCONST) {
-        vec_upload(message, "#message", 8);
+        vec_append(message, 8, "#message");
         ftepp_next(ftepp);
         while (ftepp->token != TOKEN_EOL) {
-            vec_upload(message, ftepp_tokval(ftepp), strlen(ftepp_tokval(ftepp)));
+            vec_append(message, strlen(ftepp_tokval(ftepp)), ftepp_tokval(ftepp));
             ftepp_next(ftepp);
         }
         vec_push(message, '\0');
@@ -1808,10 +1808,10 @@ void ftepp_add_macro(ftepp_t *ftepp, const char *name, const char *value) {
         return;
     }
 
-    vec_upload(create, "#define ", 8);
-    vec_upload(create, name,  strlen(name));
+    vec_append(create, 8,           "#define ");
+    vec_append(create, strlen(name), name);
     vec_push  (create, ' ');
-    vec_upload(create, value, strlen(value));
+    vec_append(create, strlen(value), value);
     vec_push  (create, 0);
 
     ftepp_preprocess_string(ftepp, "__builtin__", create);

@@ -380,7 +380,6 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_shrinkto(A,N) ((void)(vec_meta(A)->used  = (N)))
 #define vec_shrinkby(A,N) ((void)(vec_meta(A)->used -= (N)))
 #define vec_append(A,N,S) ((void)(memcpy(vec_add((A), (N)), (S), (N) * sizeof(*(S)))))
-#define vec_upload(X,Y,S) ((void)(memcpy(vec_add((X), (S) * sizeof(*(Y))), (Y), (S) * sizeof(*(Y)))))
 #define vec_remove(A,I,N) ((void)(memmove((A)+(I),(A)+((I)+(N)),sizeof(*(A))*(vec_meta(A)->used-(I)-(N))),vec_meta(A)->used-=(N)))
 
 typedef struct correct_trie_s {

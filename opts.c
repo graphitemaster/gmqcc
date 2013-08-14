@@ -348,16 +348,16 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
             strcmp(section, "warnings")      &&
             strcmp(section, "optimizations"))
         {
-            vec_upload(error, "invalid section `", 17);
-            vec_upload(error, section, strlen(section));
+            vec_append(error, 17,             "invalid section `");
+            vec_append(error, strlen(section), section);
             vec_push  (error, '`');
             vec_push  (error, '\0');
         } else {
-            vec_upload(error, "invalid variable `", 18);
-            vec_upload(error, name, strlen(name));
+            vec_append(error, 18,             "invalid variable `");
+            vec_append(error, strlen(name), name);
             vec_push  (error, '`');
-            vec_upload(error, " in section: `", 14);
-            vec_upload(error, section, strlen(section));
+            vec_append(error, 14,              " in section: `");
+            vec_append(error, strlen(section), section);
             vec_push  (error, '`');
             vec_push  (error, '\0');
         }
