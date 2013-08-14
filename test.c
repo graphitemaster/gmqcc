@@ -27,8 +27,6 @@
 
 #include "gmqcc.h"
 
-opts_cmd_t opts;
-
 static const char *task_bins[] = {
     "./gmqcc",
     "./qcvm"

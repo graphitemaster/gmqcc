@@ -591,8 +591,6 @@ cleanup:
 #if defined(QCVM_EXECUTOR)
 #include <math.h>
 
-opts_cmd_t opts;
-
 const char *type_name[TYPE_COUNT] = {
     "void",
     "string",
