@@ -52,7 +52,6 @@ typedef struct ast_switch_s      ast_switch;
 typedef struct ast_label_s       ast_label;
 typedef struct ast_goto_s        ast_goto;
 typedef struct ast_argpipe_s     ast_argpipe;
-typedef struct ast_intrinsic_s   ast_intrinsic;
 
 enum {
     TYPE_ast_node,        /*  0 */
@@ -76,8 +75,7 @@ enum {
     TYPE_ast_switch,      /* 18 */
     TYPE_ast_label,       /* 19 */
     TYPE_ast_goto,        /* 20 */
-    TYPE_ast_argpipe,     /* 21 */
-    TYPE_ast_intrinsic    /* 22 */
+    TYPE_ast_argpipe      /* 21 */
 };
 
 #define ast_istype(x, t) ( ((ast_node*)x)->nodetype == (TYPE_##t) )
