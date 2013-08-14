@@ -434,7 +434,7 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
 {
     ir_value *ve;
 
-    if (name && name[0] != '#')
+    if (name[0] != '#')
     {
         ve = ir_builder_get_global(self, name);
         if (ve) {
@@ -3386,7 +3386,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             pushdef = false;
         }
 
-        if (pushdef && global->name) {
+        if (pushdef) {
             if (global->name[0] == '#') {
                 if (!self->str_immediate)
                     self->str_immediate = code_genstring(self->code, "IMMEDIATE");

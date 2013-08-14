@@ -741,6 +741,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-shifts");
                 return false;
             }
+            break;
 
         case opid2('|','|'):
             generated_op += 1; /* INSTR_OR */

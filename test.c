@@ -689,9 +689,12 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
      */
     while ((files = fs_dir_read(dir))) {
         util_asprintf(&claim, "%s/%s", curdir, files->d_name);
-        if (stat(claim, &directory) == -1)
+        if (stat(claim, &directory) == -1) {
+            fs_dir_close(dir);
+            mem_d(claim);
             return false;
-        
+        }
+
         if (S_ISDIR(directory.st_mode) && files->d_name[0] != '.') {
             vec_push(directories, claim);
         } else {
