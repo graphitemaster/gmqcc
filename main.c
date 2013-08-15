@@ -426,7 +426,8 @@ static bool options_parse(int argc, char **argv) {
                         else if (!strcmp(argarg, "ALL"))
                             opts_setoptimlevel(OPTS_OPTION_U32(OPTION_O) = 9999);
                         else if (!strncmp(argarg, "NO_", 3)) {
-                            if (!opts_setoptim(argarg+3, false)) {
+                            /* constant folding cannot be turned off for obvious reasons */
+                            if (!strcmp(argarg, "NO_CONST_FOLD") || !opts_setoptim(argarg+3, false)) {
                                 con_out("unknown optimization: %s\n", argarg+3);
                                 return false;
                             }

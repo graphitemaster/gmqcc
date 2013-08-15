@@ -543,9 +543,10 @@ static GMQCC_INLINE ast_expression *fold_op_bnot(fold_t *fold, ast_value *a) {
 }
 
 ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
-    ast_value *a = (ast_value*)opexprs[0];
-    ast_value *b = (ast_value*)opexprs[1];
-    ast_value *c = (ast_value*)opexprs[2];
+    ast_value      *a = (ast_value*)opexprs[0];
+    ast_value      *b = (ast_value*)opexprs[1];
+    ast_value      *c = (ast_value*)opexprs[2];
+    ast_expression *e = NULL;
 
     /* can a fold operation be applied to this operator usage? */
     if (!info->folds)
@@ -561,28 +562,45 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         }
     }
 
+    /*
+     * we could use a boolean and default case but ironically gcc produces
+     * invalid broken assembly from that operation. clang/tcc get it right,
+     * but interestingly ignore compiling this to a jump-table when I do that,
+     * this happens to be the most efficent method, since you have per-level
+     * granularity on the pointer check happening only for the case you check
+     * it in. Opposed to the default method which would involve a boolean and
+     * pointer check after wards.
+     */
+    #define fold_op_case(ARGS, ARGS_OPID, OP, ARGS_FOLD)    \
+        case opid##ARGS ARGS_OPID:                          \
+            if ((e = fold_op_##OP ARGS_FOLD)) {             \
+                ++opts_optimizationcount[OPTIM_CONST_FOLD]; \
+            }                                               \
+            return e
+
     switch(info->id) {
-        case opid2('-','P'):     return fold_op_neg    (fold, a);
-        case opid2('!','P'):     return fold_op_not    (fold, a);
-        case opid1('+'):         return fold_op_add    (fold, a, b);
-        case opid1('-'):         return fold_op_sub    (fold, a, b);
-        case opid1('*'):         return fold_op_mul    (fold, a, b);
-        case opid1('/'):         return fold_op_div    (fold, a, b);
-        case opid1('%'):         return fold_op_mod    (fold, a, b);
-        case opid1('|'):         return fold_op_bor    (fold, a, b);
-        case opid1('&'):         return fold_op_band   (fold, a, b);
-        case opid1('^'):         return fold_op_xor    (fold, a, b);
-        case opid2('<','<'):     return fold_op_lshift (fold, a, b);
-        case opid2('>','>'):     return fold_op_rshift (fold, a, b);
-        case opid2('|','|'):     return fold_op_andor  (fold, a, b, true);
-        case opid2('&','&'):     return fold_op_andor  (fold, a, b, false);
-        case opid2('?',':'):     return fold_op_tern   (fold, a, b, c);
-        case opid2('*','*'):     return fold_op_exp    (fold, a, b);
-        case opid3('<','=','>'): return fold_op_lteqgt (fold, a, b);
-        case opid2('!','='):     return fold_op_cmp    (fold, a, b, true);
-        case opid2('=','='):     return fold_op_cmp    (fold, a, b, false);
-        case opid2('~','P'):     return fold_op_bnot   (fold, a);
+        fold_op_case(2, ('-', 'P'),    neg,    (fold, a));
+        fold_op_case(2, ('!', 'P'),    not,    (fold, a));
+        fold_op_case(1, ('+'),         add,    (fold, a, b));
+        fold_op_case(1, ('-'),         sub,    (fold, a, b));
+        fold_op_case(1, ('*'),         mul,    (fold, a, b));
+        fold_op_case(1, ('/'),         div,    (fold, a, b));
+        fold_op_case(1, ('%'),         mod,    (fold, a, b));
+        fold_op_case(1, ('|'),         bor,    (fold, a, b));
+        fold_op_case(1, ('&'),         band,   (fold, a, b));
+        fold_op_case(1, ('^'),         xor,    (fold, a, b));
+        fold_op_case(2, ('<', '<'),    lshift, (fold, a, b));
+        fold_op_case(2, ('>', '>'),    rshift, (fold, a, b));
+        fold_op_case(2, ('|', '|'),    andor,  (fold, a, b, true));
+        fold_op_case(2, ('&', '&'),    andor,  (fold, a, b, false));
+        fold_op_case(2, ('?', ':'),    tern,   (fold, a, b, c));
+        fold_op_case(2, ('*', '*'),    exp,    (fold, a, b));
+        fold_op_case(3, ('<','=','>'), lteqgt, (fold, a, b));
+        fold_op_case(2, ('!', '='),    cmp,    (fold, a, b, true));
+        fold_op_case(2, ('=', '='),    cmp,    (fold, a, b, false));
+        fold_op_case(2, ('~', 'P'),    bnot,   (fold, a));
     }
+    #undef fold_op_case
     compile_error(fold_ctx(fold), "internal error: attempted to constant-fold for unsupported operator");
     return NULL;
 }

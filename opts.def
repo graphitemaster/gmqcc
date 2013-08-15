@@ -106,6 +106,7 @@
     GMQCC_DEFINE_FLAG(VOID_RETURN,          1)
     GMQCC_DEFINE_FLAG(VECTOR_COMPONENTS,    1)
     GMQCC_DEFINE_FLAG(CONST_FOLD_DCE,       2)
+    GMQCC_DEFINE_FLAG(CONST_FOLD,           0) /* cannot be turned off */
 #endif
 
 #ifdef GMQCC_TYPE_OPTIONS
