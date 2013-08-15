@@ -107,7 +107,7 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
     stat_mem_block_t *info = (stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size);
     void             *data = (void*)(info + 1);
 
-    if(!info)
+    if(GMQCC_UNLIKELY(!info))
         return NULL;
 
     info->line = line;
@@ -116,7 +116,8 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
     info->prev = NULL;
     info->next = stat_mem_block_root;
 
-    if (stat_mem_block_root)
+    /* unlikely since it only happens once */
+    if (GMQCC_UNLIKELY(stat_mem_block_root != NULL))
         stat_mem_block_root->prev = info;
 
     stat_mem_block_root       = info;
@@ -133,7 +134,7 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
 void stat_mem_deallocate(void *ptr) {
     stat_mem_block_t *info = NULL;
 
-    if (!ptr)
+    if (GMQCC_UNLIKELY(!ptr))
         return;
 
     info = ((stat_mem_block_t*)ptr - 1);
@@ -156,11 +157,11 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     stat_mem_block_t *oldinfo = NULL;
     stat_mem_block_t *newinfo;
 
-    if (!ptr)
+    if (GMQCC_UNLIKELY(!ptr))
         return stat_mem_allocate(size, line, file);
 
-    /* stay consistent with glic */
-    if (!size) {
+    /* stay consistent with glibc */
+    if (GMQCC_UNLIKELY(!size)) {
         stat_mem_deallocate(ptr);
         return NULL;
     }
@@ -168,7 +169,7 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     oldinfo = ((stat_mem_block_t*)ptr - 1);
     newinfo = ((stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size));
 
-    if (!newinfo) {
+    if (GMQCC_UNLIKELY(!newinfo)) {
         stat_mem_deallocate(ptr);
         return NULL;
     }
@@ -188,7 +189,11 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     newinfo->prev = NULL;
     newinfo->next = stat_mem_block_root;
 
-    if (stat_mem_block_root)
+    /* 
+     * likely since the only time there is no root is when it's
+     * being initialized first.
+     */
+    if (GMQCC_LIKELY(stat_mem_block_root != NULL))
         stat_mem_block_root->prev = newinfo;
 
     stat_mem_block_root = newinfo;

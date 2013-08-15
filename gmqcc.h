@@ -149,6 +149,14 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #    define GMQCC_NORETURN
 #endif /*! (defined(__GNUC__) && __GNUC__ >= 2) || defined (__CLANG__) */
 
+#if (defined(__GNUC__)) || defined(__CLANG__)
+#   define GMQCC_LIKELY(X)   __builtin_expect((X), 1)
+#   define GMQCC_UNLIKELY(X) __builtin_expect((X), 0)
+#else
+#   define GMQCC_LIKELY(X)   (X)
+#   define GMQCC_UNLIKELY(X) (X)
+#endif
+
 #ifndef _MSC_VER
 #   include <stdint.h>
 #else
