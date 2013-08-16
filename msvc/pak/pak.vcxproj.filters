@@ -5,12 +5,13 @@
     <ClCompile Include="..\..\fs.c" />
     <ClCompile Include="..\..\opts.c" />
     <ClCompile Include="..\..\pak.c" />
+    <ClCompile Include="..\..\stat.c" />
     <ClCompile Include="..\..\util.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\opts.def" />
+    <ClInclude Include="..\..\gmqcc.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\gmqcc.h" />
+    <None Include="..\..\opts.def" />
   </ItemGroup>
 </Project>

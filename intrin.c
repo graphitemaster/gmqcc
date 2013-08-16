@@ -57,7 +57,7 @@
         vec_push(intrin->parser->globals,   (ast_expression*)(VALUE)); \
     } while (0)
 
-#define QC_M_E 2.71828182845905
+#define QC_M_E 2.71828182845905f
 
 static ast_expression *intrin_pow (intrin_t *intrin) {
     /*

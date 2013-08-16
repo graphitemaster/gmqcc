@@ -3,8 +3,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\conout.c" />
     <ClCompile Include="..\..\exec.c" />
-    <ClCompile Include="..\..\fs.c" />
+    <ClCompile Include="..\..\stat.c" />
     <ClCompile Include="..\..\util.c" />
+    <ClCompile Include="..\..\fs.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\gmqcc.h" />

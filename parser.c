@@ -3866,7 +3866,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
 
         time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
-                         gbl_time, (ast_expression*)fold_constgen_float(parser->fold, 0.1));
+                         gbl_time, (ast_expression*)fold_constgen_float(parser->fold, 0.1f));
 
         if (!self_frame || !self_nextthink || !self_think || !time_plus_1) {
             if (self_frame)     ast_delete(self_frame);

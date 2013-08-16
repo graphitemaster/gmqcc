@@ -55,7 +55,7 @@ const opts_flag_def_t opts_flag_list[COUNT_FLAGS+1] = {
 };
 
 unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
-opts_cmd_t   opts; /* command lien options */
+opts_cmd_t   opts; /* command line options */
 
 static void opts_setdefault(void) {
     memset(&opts, 0, sizeof(opts_cmd_t));

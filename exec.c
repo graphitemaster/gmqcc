@@ -30,6 +30,7 @@
 
 #include "gmqcc.h"
 
+opts_cmd_t   opts; /* command line options */
 static void loaderror(const char *fmt, ...)
 {
     int     err = errno;

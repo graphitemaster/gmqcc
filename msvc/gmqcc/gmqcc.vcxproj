@@ -10,6 +10,34 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ast.c" />
+    <ClCompile Include="..\..\code.c" />
+    <ClCompile Include="..\..\conout.c" />
+    <ClCompile Include="..\..\correct.c" />
+    <ClCompile Include="..\..\fold.c" />
+    <ClCompile Include="..\..\fs.c" />
+    <ClCompile Include="..\..\ftepp.c" />
+    <ClCompile Include="..\..\intrin.c" />
+    <ClCompile Include="..\..\ir.c" />
+    <ClCompile Include="..\..\lexer.c" />
+    <ClCompile Include="..\..\main.c" />
+    <ClCompile Include="..\..\opts.c" />
+    <ClCompile Include="..\..\parser.c" />
+    <ClCompile Include="..\..\stat.c" />
+    <ClCompile Include="..\..\utf8.c" />
+    <ClCompile Include="..\..\util.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ast.h" />
+    <ClInclude Include="..\..\gmqcc.h" />
+    <ClInclude Include="..\..\ir.h" />
+    <ClInclude Include="..\..\lexer.h" />
+    <ClInclude Include="..\..\parser.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\opts.def" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A6BD74E1-31BB-4D00-A9E0-09FF1BC76ED6}</ProjectGuid>
     <RootNamespace>gmqcc</RootNamespace>
@@ -41,6 +69,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>NVALGRIND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -52,6 +81,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NVALGRIND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -59,31 +89,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\ast.c" />
-    <ClCompile Include="..\..\code.c" />
-    <ClCompile Include="..\..\conout.c" />
-    <ClCompile Include="..\..\correct.c" />
-    <ClCompile Include="..\..\fs.c" />
-    <ClCompile Include="..\..\ftepp.c" />
-    <ClCompile Include="..\..\ir.c" />
-    <ClCompile Include="..\..\lexer.c" />
-    <ClCompile Include="..\..\main.c" />
-    <ClCompile Include="..\..\opts.c" />
-    <ClCompile Include="..\..\parser.c" />
-    <ClCompile Include="..\..\utf8.c" />
-    <ClCompile Include="..\..\util.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\ast.h" />
-    <ClInclude Include="..\..\gmqcc.h" />
-    <ClInclude Include="..\..\intrin.h" />
-    <ClInclude Include="..\..\ir.h" />
-    <ClInclude Include="..\..\lexer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\opts.def" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

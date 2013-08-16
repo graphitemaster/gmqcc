@@ -412,7 +412,7 @@ GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
     uint32_t k;
     uint32_t h = 0x1EF0 ^ len;
 
-    for (i = -block; i; i++) {
+    for (i = -((int)block); i; i++) {
         k  = blocks[i];
         k *= mask1;
         k  = GMQCC_ROTL32(k, 15);

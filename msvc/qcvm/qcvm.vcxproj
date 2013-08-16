@@ -10,6 +10,16 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\conout.c" />
+    <ClCompile Include="..\..\exec.c" />
+    <ClCompile Include="..\..\fs.c" />
+    <ClCompile Include="..\..\stat.c" />
+    <ClCompile Include="..\..\util.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\gmqcc.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DC980E20-C7A8-4112-A517-631DBDA788E7}</ProjectGuid>
     <RootNamespace>qcvm</RootNamespace>
@@ -41,7 +51,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>QCVM_EXECUTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NVALGRIND;QCVM_EXECUTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -53,7 +63,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>QCVM_EXECUTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NVALGRIND;QCVM_EXECUTOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -61,15 +71,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\conout.c" />
-    <ClCompile Include="..\..\exec.c" />
-    <ClCompile Include="..\..\fs.c" />
-    <ClCompile Include="..\..\util.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\gmqcc.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
