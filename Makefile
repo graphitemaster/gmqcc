@@ -55,6 +55,7 @@ ifneq ("$(CYGWIN)", "")
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
 	PAK       = gmqpak.exe
+	CFLAGS   += -DNVALGRIND
 else
 ifneq ("$(MINGW)", "")
 	#nullify the common variables that
@@ -67,6 +68,7 @@ ifneq ("$(MINGW)", "")
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
 	PAK       = gmqpak.exe
+	CFLAGS   += -DNVALGRIND
 else
 	QCVM      = qcvm
 	GMQCC     = gmqcc

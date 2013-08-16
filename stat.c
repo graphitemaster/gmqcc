@@ -28,6 +28,22 @@
 #include "gmqcc.h"
 
 /*
+ * For the valgrind integration of our allocator. This allows us to have
+ * more `accurate` valgrind output for our allocator, and also secures the
+ * possible underflows (where one could obtain access to the redzone that
+ * represents info about that allocation).
+ */
+#ifndef NVALGRIND
+#   include <valgrind/valgrind.h>
+#   include <valgrind/memcheck.h>
+#else
+#   define VALGRIND_MALLOCLIKE_BLOCK(PTR, ALLOC_SIZE, REDZONE_SIZE, ZEROED)
+#   define VALGRIND_FREELIKE_BLOCK(PTR, REDZONE_SIZE)
+#   define VALGRIND_MAKE_MEM_DEFINED(PTR, REDZONE_SIZE)
+#   define VALGRIND_MAKE_MEM_NOACCESS(PTR, REDZONE_SIZE)
+#endif
+
+/*
  * GMQCC performs tons of allocations, constructions, and crazyness
  * all around. When trying to optimizes systems, or just get fancy
  * statistics out of the compiler, it's often printf mess. This file
@@ -116,9 +132,12 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
     info->prev = NULL;
     info->next = stat_mem_block_root;
 
-    /* unlikely since it only happens once */
-    if (GMQCC_UNLIKELY(stat_mem_block_root != NULL))
+    /* likely since it only happens once */
+    if (GMQCC_LIKELY(stat_mem_block_root != NULL)) {
+        VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, sizeof(stat_mem_block_t));
         stat_mem_block_root->prev = info;
+        VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, sizeof(stat_mem_block_t));
+    }
 
     stat_mem_block_root       = info;
     stat_mem_allocated       += size;
@@ -128,6 +147,7 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
     if (stat_mem_high > stat_mem_peak)
         stat_mem_peak = stat_mem_high;
 
+    VALGRIND_MALLOCLIKE_BLOCK(data, size, sizeof(stat_mem_block_t), 0);
     return data;
 }
 
@@ -139,18 +159,38 @@ void stat_mem_deallocate(void *ptr) {
 
     info = ((stat_mem_block_t*)ptr - 1);
 
+    /* 
+     * we need access to the redzone that represents the info block
+     * so lets do that.
+     */
+    VALGRIND_MAKE_MEM_DEFINED(info, sizeof(stat_mem_block_t));
+
     stat_mem_deallocated       += info->size;
     stat_mem_high              -= info->size;
     stat_mem_deallocated_total ++;
 
-    if (info->prev) info->prev->next = info->next;
-    if (info->next) info->next->prev = info->prev;
+    if (info->prev) {
+        /* just need access for a short period */
+        VALGRIND_MAKE_MEM_DEFINED(info->prev, sizeof(stat_mem_block_t));
+        info->prev->next = info->next;
+        /* don't need access anymore */
+        VALGRIND_MAKE_MEM_NOACCESS(info->prev, sizeof(stat_mem_block_t));
+    }
+    if (info->next) {
+        /* just need access for a short period */
+        VALGRIND_MAKE_MEM_DEFINED(info->next, sizeof(stat_mem_block_t));
+        info->next->prev = info->prev;
+        /* don't need access anymore */
+        VALGRIND_MAKE_MEM_NOACCESS(info->next, sizeof(stat_mem_block_t));
+    }
 
     /* move ahead */
     if (info == stat_mem_block_root)
         stat_mem_block_root = info->next;
 
     free(info);
+    VALGRIND_MAKE_MEM_NOACCESS(info, sizeof(stat_mem_block_t));
+    VALGRIND_FREELIKE_BLOCK(ptr, sizeof(stat_mem_block_t));
 }
 
 void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file) {
@@ -174,14 +214,35 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
         return NULL;
     }
 
+    VALGRIND_MALLOCLIKE_BLOCK(newinfo + 1, size, sizeof(stat_mem_block_t), 0);
+
+    /* we need access to the old info redzone */
+    VALGRIND_MAKE_MEM_DEFINED(oldinfo, sizeof(stat_mem_block_t));
+
     memcpy(newinfo+1, oldinfo+1, oldinfo->size);
 
-    if (oldinfo->prev) oldinfo->prev->next = oldinfo->next;
-    if (oldinfo->next) oldinfo->next->prev = oldinfo->prev;
+    if (oldinfo->prev) {
+        /* just need access for a short period */
+        VALGRIND_MAKE_MEM_DEFINED(oldinfo->prev, sizeof(stat_mem_block_t));
+        oldinfo->prev->next = oldinfo->next;
+        /* don't need access anymore */
+        VALGRIND_MAKE_MEM_NOACCESS(oldinfo->prev, sizeof(stat_mem_block_t));
+    }
+    
+    if (oldinfo->next) {
+        /* just need access for a short period */
+        VALGRIND_MAKE_MEM_DEFINED(oldinfo->next, sizeof(stat_mem_block_t));
+        oldinfo->next->prev = oldinfo->prev;
+        /* don't need access anymore */
+        VALGRIND_MAKE_MEM_NOACCESS(oldinfo->next, sizeof(stat_mem_block_t));
+    }
 
     /* move ahead */
     if (oldinfo == stat_mem_block_root)
         stat_mem_block_root = oldinfo->next;
+
+    /* we need access to the redzone for the newinfo block */
+    VALGRIND_MAKE_MEM_DEFINED(newinfo, sizeof(stat_mem_block_t));
 
     newinfo->line = line;
     newinfo->size = size;
@@ -193,8 +254,13 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
      * likely since the only time there is no root is when it's
      * being initialized first.
      */
-    if (GMQCC_LIKELY(stat_mem_block_root != NULL))
+    if (GMQCC_LIKELY(stat_mem_block_root != NULL)) {
+        /* we need access to the root */
+        VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, sizeof(stat_mem_block_t));
         stat_mem_block_root->prev = newinfo;
+        /* kill access */
+        VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, sizeof(stat_mem_block_t));
+    }
 
     stat_mem_block_root = newinfo;
     stat_mem_allocated -= oldinfo->size;
@@ -202,10 +268,18 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     stat_mem_allocated += newinfo->size;
     stat_mem_high      += newinfo->size;
 
+    /* 
+     * we're finished with the redzones, lets kill the access
+     * to them.
+     */
+    VALGRIND_MAKE_MEM_NOACCESS(newinfo, sizeof(stat_mem_block_t));
+    VALGRIND_MAKE_MEM_NOACCESS(oldinfo, sizeof(stat_mem_block_t));
+
     if (stat_mem_high > stat_mem_peak)
         stat_mem_peak = stat_mem_high;
 
     free(oldinfo);
+    VALGRIND_FREELIKE_BLOCK(ptr, sizeof(stat_mem_block_t));
     return newinfo + 1;
 }
 
@@ -631,7 +705,11 @@ static void stat_dump_mem_contents(stat_mem_block_t *memory, uint16_t cols) {
 
 static void stat_dump_mem_leaks(void) {
     stat_mem_block_t *info;
+    /* we need access to the root for this */
+    VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, sizeof(stat_mem_block_t));
     for (info = stat_mem_block_root; info; info = info->next) {
+        /* we need access to the block */
+        VALGRIND_MAKE_MEM_DEFINED(info, sizeof(stat_mem_block_t));
         con_out("lost: %u (bytes) at %s:%u\n",
             info->size,
             info->file,
@@ -639,7 +717,15 @@ static void stat_dump_mem_leaks(void) {
         );
 
         stat_dump_mem_contents(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
+
+        /* 
+         * we're finished with the access, the redzone should be marked
+         * inaccesible so that invalid read/writes that could 'step-into'
+         * those redzones will show up as invalid read/writes in valgrind.
+         */
+        VALGRIND_MAKE_MEM_NOACCESS(info, sizeof(stat_mem_block_t));
     }
+    VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, sizeof(stat_mem_block_t));
 }
 
 static void stat_dump_mem_info(void) {
