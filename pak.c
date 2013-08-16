@@ -396,7 +396,8 @@ err:
  * Like pak_insert_one, except this collects files in all directories
  * from a root directory, and inserts them all.
  */
-bool pak_insert_all(pak_file_t *pak, const char *dir) {
+#if 0
+static bool pak_insert_all(pak_file_t *pak, const char *dir) {
     DIR           *dp;
     struct dirent *dirp;
 
@@ -416,6 +417,7 @@ bool pak_insert_all(pak_file_t *pak, const char *dir) {
     fs_dir_close(dp);
     return true;
 }
+#endif /*!if 0 renable when ready to use */
 
 static bool pak_close(pak_file_t *pak) {
     size_t itr;

@@ -206,7 +206,7 @@ qcany_t* prog_getedict(qc_program_t *prog, qcint_t e) {
     return (qcany_t*)(prog->entitydata + (prog->entityfields * e));
 }
 
-qcint_t prog_spawn_entity(qc_program_t *prog) {
+static qcint_t prog_spawn_entity(qc_program_t *prog) {
     char  *data;
     qcint_t  e;
     for (e = 0; e < (qcint_t)vec_size(prog->entitypool); ++e) {
@@ -223,7 +223,7 @@ qcint_t prog_spawn_entity(qc_program_t *prog) {
     return e;
 }
 
-void prog_free_entity(qc_program_t *prog, qcint_t e) {
+static void prog_free_entity(qc_program_t *prog, qcint_t e) {
     if (!e) {
         prog->vmerror++;
         fprintf(stderr, "Trying to free world entity\n");
@@ -903,7 +903,7 @@ static void prog_main_setparams(qc_program_t *prog) {
     }
 }
 
-void escapestring(char* dest, const char* src)  {
+static void escapestring(char* dest, const char* src)  {
   char c;
   while ((c = *(src++))) {
     switch(c) {

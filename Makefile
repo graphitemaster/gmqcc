@@ -4,10 +4,7 @@ UNAME  ?= $(shell uname)
 CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
-CFLAGS  += -O3 -Wall -Wextra -Wstrict-aliasing -Werror $(OPTIONAL)
-ifneq ($(shell git describe --always 2>/dev/null),)
-    CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
-endif
+CFLAGS += -Wall -Wextra -Werror -Wstrict-aliasing
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
@@ -17,25 +14,29 @@ ifeq ($(CC), clang)
 	    -Wno-format-nonliteral             \
 	    -Wno-disabled-macro-expansion      \
 	    -Wno-conversion                    \
-	    -Wno-missing-prototypes            \
 	    -Wno-float-equal                   \
 	    -Wno-unknown-warning-option        \
 	    -Wno-cast-align                    \
-	    -Wstrict-prototypes
+	    -pedantic-errors
 else
-	#Tiny C Compiler doesn't know what -pedantic-errors is
-	# and instead of ignoring .. just errors.
+	ifneq ($(CC), g++)
+		CFLAGS += -Wmissing-prototypes -Wstrict-prototypes
+	endif
+
 	ifneq ($(CC), tcc)
 		CFLAGS += -pedantic-errors
 	else
 		CFLAGS += -Wno-pointer-sign -fno-common
 	endif
-	
-	#-Wstrict-prototypes is not valid in g++
-	ifneq ($(CC), g++)
-		CFLAGS += -Wstrict-prototypes
-	endif
 endif
+
+ifneq ($(shell git describe --always 2>/dev/null),)
+    CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
+endif
+
+# do this last otherwise there is whitespace in the command output and
+# it makes my OCD act up
+CFLAGS += $(OPTIONAL)
 
 #we have duplicate object files when dealing with creating a simple list
 #for dependinces. To combat this we use some clever recrusive-make to
@@ -76,10 +77,10 @@ endif
 
 #standard rules
 %.o: %.c
-	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
+	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS) 
 
 exec-standalone.o: exec.c
-	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS) -DQCVM_EXECUTOR=1
+	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS) -DQCVM_EXECUTOR=1
 
 $(QCVM): $(OBJ_X)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)

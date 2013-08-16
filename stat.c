@@ -206,7 +206,6 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
         stat_mem_peak = stat_mem_high;
 
     free(oldinfo);
-
     return newinfo + 1;
 }
 
@@ -514,6 +513,7 @@ void *util_htget(hash_table_t *ht, const char *key) {
     return util_htgeth(ht, key, util_hthash(ht, key));
 }
 
+void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin);
 void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
     hash_node_t *pair;
     size_t len, keylen;

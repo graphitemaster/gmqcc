@@ -1448,8 +1448,7 @@ static ast_expression* parse_vararg(parser_t *parser)
 }
 
 /* not to be exposed */
-extern bool ftepp_predef_exists(const char *name);
-
+bool ftepp_predef_exists(const char *name);
 static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
 {
     if (OPTS_FLAG(TRANSLATABLE_STRINGS) &&
@@ -5430,7 +5429,7 @@ skipvar:
                         parseerror(parser, "error parsing break definition");
                         break;
                     }
-                    (void)!!parsewarning(parser, WARN_BREAKDEF, "break definition ignored (suggest removing it)");
+                    (void)!parsewarning(parser, WARN_BREAKDEF, "break definition ignored (suggest removing it)");
                 } else {
                     parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
                     break;

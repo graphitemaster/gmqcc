@@ -10,7 +10,7 @@ GITINFO  :=
     GITINFO != git describe --always
 .endif
 
-CFLAGS   +=  -Wall -Wextra -Werror -fno-strict-aliasing -DGMQCC_GITINFO=\"$(GITINFO)\"$(OPTIONAL)
+CFLAGS   +=  -Wall -Wextra -Werror -Wstrict-aliasing
 
 .if $(CC) == clang
     CFLAGS +=   -Weverything\
@@ -18,19 +18,23 @@ CFLAGS   +=  -Wall -Wextra -Werror -fno-strict-aliasing -DGMQCC_GITINFO=\"$(GITI
                 -Wno-format-nonliteral\
                 -Wno-disabled-macro-expansion\
                 -Wno-conversion\
-                -Wno-missing-prototypes\
                 -Wno-float-equal\
                 -Wno-unknown-warning-option\
                 -Wno-cast-align\
-                -Wstrict-prototypes
+                -pedantic-errors
 .else
-.    if $(CC) == tcc
-       CFLAGS += -Wstrict-prototypes -pedantic-errors
+.    if $(CC) != g++
+       CFLAGS += -Wmissing-prototypes -Wstrict-prototypes
+.    endif
+
+.    if $(CC) != tcc
+       CFLAGS += -pedantic-errors
 .    else
        CFLAGS += -Wno-pointer-sign -fno-common
 .    endif
 .endif
 
+CFLAGS += -DGMQCC_GITINFO=\"$(GITINFO)\" $(OPTIONAL)
 DEPS != for i in $(OBJ_C) $(OBJ_P) $(OBJ_T) $(OBJ_X); do echo $$i; done | sort | uniq
 
 QCVM      = qcvm
@@ -40,10 +44,10 @@ PAK       = gmqpak
 
 #standard rules
 c.o: ${.IMPSRC} 
-	$(CC) -c ${.IMPSRC} -o ${.TARGET} $(CPPFLAGS) $(CFLAGS)
+	$(CC) -c ${.IMPSRC} -o ${.TARGET} $(CFLAGS) $(CPPFLAGS) 
 
 exec-standalone.o: exec.c
-	$(CC) -c ${.ALLSRC} -o ${.TARGET} $(CPPFLAGS) $(CFLAGS) -DQCVM_EXECUTOR=1
+	$(CC) -c ${.ALLSRC} -o ${.TARGET} $(CFLAGS) $(CPPFLAGS) -DQCVM_EXECUTOR=1
 
 $(QCVM): $(OBJ_X)
 	$(CC) -o ${.TARGET} ${.IMPSRC} $(LDFLAGS) $(LIBS) $(OBJ_X)

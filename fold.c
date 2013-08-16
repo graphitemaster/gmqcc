@@ -483,7 +483,7 @@ static GMQCC_INLINE ast_expression *fold_op_rshift(fold_t *fold, ast_value *a, a
     return NULL;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, ast_value *b, float or) {
+static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, ast_value *b, float expr) {
     if (fold_can_2(a, b)) {
         if (OPTS_FLAG(PERL_LOGIC)) {
             if (fold_immediate_true(fold, a))
@@ -491,8 +491,8 @@ static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, as
         } else {
             return fold_constgen_float (
                 fold, 
-                ((or) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
-                      : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
+                ((expr) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
+                        : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
                             ? 1
                             : 0
             );

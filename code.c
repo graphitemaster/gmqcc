@@ -256,7 +256,8 @@ static void code_stats(const char *filename, const char *lnofile, code_t *code, 
  * directly out to allocated memory. Which is actually very useful for the future library support
  * we're going to add.
  */
-bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t **lnomem, size_t *sizelno) {
+#if 0
+static bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t **lnomem, size_t *sizelno) GMQCC_UNUSED {
     prog_header_t code_header;
     uint32_t      offset  = 0;
 
@@ -319,6 +320,7 @@ bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, uint8_t 
     code_stats("<<memory>>", (lnomem) ? "<<memory>>" : NULL, code, &code_header);
     return true;
 }
+#endif /*!#if 0 reenable when ready to be used */
 #undef WRITE_CHUNK
 
 bool code_write(code_t *code, const char *filename, const char *lnofile) {

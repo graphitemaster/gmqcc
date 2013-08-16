@@ -226,6 +226,7 @@ static GMQCC_INLINE int ftepp_predef_index(const char *name) {
     return -1;
 }
 
+bool ftepp_predef_exists(const char *name);
 bool ftepp_predef_exists(const char *name) {
     return ftepp_predef_index(name) != -1;
 }
