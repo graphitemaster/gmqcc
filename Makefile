@@ -31,7 +31,11 @@ else
 endif
 
 ifneq ($(shell git describe --always 2>/dev/null),)
-    CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
+	CFLAGS += -DGMQCC_GITINFO="\"$(shell git describe --always)\""
+endif
+
+ifeq ($(shell valgrind --version 2>/dev/null),)
+	CFLAGS += -DNVALGRIND
 endif
 
 # do this last otherwise there is whitespace in the command output and

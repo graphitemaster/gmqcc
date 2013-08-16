@@ -4,6 +4,7 @@
 .include "include.mk"
 
 GITTEST  != git describe --always 2>/dev/null
+VALTEST  != valgrind --version 2>/dev/null
 GITINFO  :=
 
 .if $(GITTEST)
@@ -33,6 +34,11 @@ CFLAGS   +=  -Wall -Wextra -Werror -Wstrict-aliasing
        CFLAGS += -Wno-pointer-sign -fno-common
 .    endif
 .endif
+
+.if !$(VALTEST)
+    CFLAGS += -DNVALGRIND
+.endif
+
 
 CFLAGS += -DGMQCC_GITINFO=\"$(GITINFO)\" $(OPTIONAL)
 DEPS != for i in $(OBJ_C) $(OBJ_P) $(OBJ_T) $(OBJ_X); do echo $$i; done | sort | uniq
