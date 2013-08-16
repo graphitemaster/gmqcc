@@ -326,6 +326,11 @@ When passing variadic parameters via
 it can happen that incompatible types are passed to functions. This
 enables several warnings when static typechecking cannot guarantee
 consistent behavior.
+.It Fl W Ns Cm breakdef
+When compiling original id1 QC, there is a definition for `break`
+which conflicts with the 'break' keyword in GMQCC. Enabling this
+warning will print a warning when the definition occurs. The
+definition is ignored for both cases.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds
@@ -574,7 +579,7 @@ string being added.
 .Pp
 For example the following code will only generate 1 string:
 .Bd -literal -offset indent
-print("Hell you!\\n");
+print("Hello you!\\n");
 print("you!\\n"); // trailing substring of "Hello you!\\n"
 .Ed
 .Pp
