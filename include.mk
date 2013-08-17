@@ -107,3 +107,7 @@ uninstall:
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
+
+whitespace:
+	find . -type f \( -name '*.c' -or -name '*.h' \) -exec sed -i 's/ *$$//' '{}' ';'
+
