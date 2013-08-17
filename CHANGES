@@ -39,13 +39,16 @@ Release v0.3.0
           are attempted.
         - Fixed some bugs with error handling resulting in false-positives.
     * Build:
-        - Can now be compile with TCC (Tiny C compiler) and function as
+        - Can now be compiled with TCC (Tiny C compiler) and function as
           intended (previously couldn't due to bug in TCC codegen).
         - Added Gentoo ebuilds.
         - Added Win32 Makefile for building Win32 packages.
         - Added Slackware pkg build files.
         - Added Fedora spec files.
         - Added Makefile for the BSD make variant.
+    * Misc:
+        - Added valgrind memcheck hook to in-house allocator to help aid
+          in finding invalid reads/writes, and more accurate leaks.
 
 2012-04-27 v0.2.9
     * Preprocessor:
