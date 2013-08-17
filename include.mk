@@ -109,5 +109,5 @@ uninstall:
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
 
 whitespace:
-	find . -type f \( -name '*.c' -or -name '*.h' \) -exec sed -i 's/ *$$//' '{}' ';'
+	find . -type f \( -name '*.[ch]' -or -name '*.def' \) -exec sed -i 's/ *$$//' '{}' ';'
 
