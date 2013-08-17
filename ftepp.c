@@ -227,24 +227,24 @@ static const ftepp_predef_t ftepp_predefs[] = {
     { "__TIME_STAMP__",   &ftepp_predef_timestamp   }
 };
 
-static GMQCC_INLINE int ftepp_predef_index(const char *name) {
+static GMQCC_INLINE size_t ftepp_predef_index(const char *name) {
     /* no hashtable here, we simply check for one to exist the naive way */
-    int i;
-    for(i = 0; i < (int)(sizeof(ftepp_predefs)/sizeof(*ftepp_predefs)); i++)
-        if (!strcmp(ftepp_predefs[i].name, name))
+    size_t i;
+    for(i = 1; i < GMQCC_ARRAY_COUNT(ftepp_predefs) + 1; i++)
+        if (!strcmp(ftepp_predefs[i-1].name, name))
             return i;
-    return -1;
+    return 0;
 }
 
 bool ftepp_predef_exists(const char *name);
 bool ftepp_predef_exists(const char *name) {
-    return ftepp_predef_index(name) != -1;
+    return ftepp_predef_index(name) != 0;
 }
 
 /* singleton because we're allowed */
 static GMQCC_INLINE char *(*ftepp_predef(const char *name))(lex_file *context) {
-    int i = ftepp_predef_index(name);
-    return (i != -1) ? ftepp_predefs[i].func : NULL;
+    size_t i = ftepp_predef_index(name);
+    return (i != 0) ? ftepp_predefs[i-1].func : NULL;
 }
 
 #define ftepp_tokval(f) ((f)->lex->tok.value)

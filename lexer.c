@@ -37,8 +37,6 @@ static const char *keywords_qc[] = {
     "return",
     "const"
 };
-static size_t num_keywords_qc = sizeof(keywords_qc) / sizeof(keywords_qc[0]);
-
 /* For fte/gmgqcc */
 static const char *keywords_fg[] = {
     "switch", "case", "default",
@@ -49,12 +47,10 @@ static const char *keywords_fg[] = {
 
     "__builtin_debug_printtype"
 };
-static size_t num_keywords_fg = sizeof(keywords_fg) / sizeof(keywords_fg[0]);
 
 /*
  * Lexer code
  */
-
 static char* *lex_filenames;
 
 static void lexerror(lex_file *lex, const char *fmt, ...)
@@ -1416,12 +1412,12 @@ int lex_do(lex_file *lex)
             lex->tok.constval.t = TYPE_VECTOR;
         } else {
             size_t kw;
-            for (kw = 0; kw < num_keywords_qc; ++kw) {
+            for (kw = 0; kw < GMQCC_ARRAY_COUNT(keywords_qc); ++kw) {
                 if (!strcmp(v, keywords_qc[kw]))
                     return (lex->tok.ttype = TOKEN_KEYWORD);
             }
             if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_QCC) {
-                for (kw = 0; kw < num_keywords_fg; ++kw) {
+                for (kw = 0; kw < GMQCC_ARRAY_COUNT(keywords_fg); ++kw) {
                     if (!strcmp(v, keywords_fg[kw]))
                         return (lex->tok.ttype = TOKEN_KEYWORD);
                 }

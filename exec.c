@@ -834,7 +834,6 @@ static prog_builtin_t qc_builtins[] = {
     &qc_sqrt,        /*   13  */
     &qc_floor        /*   14  */
 };
-static size_t qc_builtins_count = sizeof(qc_builtins) / sizeof(qc_builtins[0]);
 
 static const char *arg0 = NULL;
 
@@ -1080,7 +1079,7 @@ int main(int argc, char **argv) {
     }
 
     prog->builtins       = qc_builtins;
-    prog->builtins_count = qc_builtins_count;
+    prog->builtins_count = GMQCC_ARRAY_COUNT(qc_builtins);
 
     if (opts_info) {
         printf("Program's system-checksum = 0x%04x\n", (unsigned int)prog->crc16);

@@ -355,7 +355,7 @@ static bool options_parse(int argc, char **argv) {
                     else if (!strcmp(argv[0]+2, "NO_ERROR") ||
                              !strcmp(argv[0]+2, "NO_ERROR_ALL"))
                     {
-                        for (itr = 0; itr < sizeof(opts.werror)/sizeof(opts.werror[0]); ++itr)
+                        for (itr = 0; itr < GMQCC_ARRAY_COUNT(opts.werror); ++itr)
                             opts.werror[itr] = 0;
                         break;
                     }
@@ -363,19 +363,19 @@ static bool options_parse(int argc, char **argv) {
                              !strcmp(argv[0]+2, "ERROR_ALL"))
                     {
                         opts_backup_non_Werror_all();
-                        for (itr = 0; itr < sizeof(opts.werror)/sizeof(opts.werror[0]); ++itr)
+                        for (itr = 0; itr < GMQCC_ARRAY_COUNT(opts.werror); ++itr)
                             opts.werror[itr] = 0xFFFFFFFFL;
                         opts_restore_non_Werror_all();
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "NONE")) {
-                        for (itr = 0; itr < sizeof(opts.warn)/sizeof(opts.warn[0]); ++itr)
+                        for (itr = 0; itr < GMQCC_ARRAY_COUNT(opts.warn); ++itr)
                             opts.warn[itr] = 0;
                         break;
                     }
                     else if (!strcmp(argv[0]+2, "ALL")) {
                         opts_backup_non_Wall();
-                        for (itr = 0; itr < sizeof(opts.warn)/sizeof(opts.warn[0]); ++itr)
+                        for (itr = 0; itr < GMQCC_ARRAY_COUNT(opts.warn); ++itr)
                             opts.warn[itr] = 0xFFFFFFFFL;
                         opts_restore_non_Wall();
                         break;
@@ -576,13 +576,13 @@ int main(int argc, char **argv) {
     /* the standard decides which set of operators to use */
     if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         operators      = c_operators;
-        operator_count = c_operator_count;
+        operator_count = GMQCC_ARRAY_COUNT(c_operators);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC) {
         operators      = fte_operators;
-        operator_count = fte_operator_count;
+        operator_count = GMQCC_ARRAY_COUNT(fte_operators);
     } else {
         operators      = qcc_operators;
-        operator_count = qcc_operator_count;
+        operator_count = GMQCC_ARRAY_COUNT(qcc_operators);
     }
 
     if (operators == fte_operators) {
