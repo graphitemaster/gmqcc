@@ -34,7 +34,7 @@
  * stage constant folding, where, witht he help of the AST, operator
  * usages can be constant folded. Then there is the constant folding
  * in the IR for things like eliding if statements, can occur.
- * 
+ *
  * This file is thus, split into two parts.
  */
 
@@ -46,7 +46,7 @@
 /*
  * Implementation of basic vector math for vec3_t, for trivial constant
  * folding.
- * 
+ *
  * TODO: gcc/clang hinting for autovectorization
  */
 static GMQCC_INLINE vec3_t vec3_add(vec3_t a, vec3_t b) {
@@ -138,7 +138,7 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
             return !!v->constval.vfloat;
         case TYPE_INTEGER:
             return !!v->constval.vint;
-        case TYPE_VECTOR: 
+        case TYPE_VECTOR:
             if (OPTS_FLAG(CORRECT_LOGIC))
                 return vec3_pbool(v->constval.vvec);
             return !!(v->constval.vvec.x);
@@ -295,7 +295,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
     /*
      * vector-component constant folding works by matching the component sets
      * to eliminate expensive operations on whole-vectors (3 components at runtime).
-     * to achive this effect in a clean manner this function generalizes the 
+     * to achive this effect in a clean manner this function generalizes the
      * values through the use of a set paramater, which is used as an indexing method
      * for creating the elided ast binary expression.
      *
@@ -307,7 +307,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
      * vec.z is the same as set[2]-'x' for when set[2] is 'z', 'z'-'x' results in a
      * literal value of 2, using this 2, we know that taking the address of vec->x (float)
      * and indxing it with this literal will yeild the immediate address of that component
-     * 
+     *
      * Of course more work needs to be done to generate the correct index for the ast_member_new
      * call, which is no problem: set[0]-'x' suffices that job.
      */
@@ -490,7 +490,7 @@ static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, as
                 return (ast_expression*)b;
         } else {
             return fold_constgen_float (
-                fold, 
+                fold,
                 ((expr) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
                         : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
                             ? 1

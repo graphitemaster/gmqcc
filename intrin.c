@@ -351,7 +351,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
 #undef INTRIN_REG
 #undef INTRIN_VAL
 
-/* 
+/*
  * TODO: make static (and handle ast_type_string) here for the builtin
  * instead of in SYA parse close.
  */
@@ -365,7 +365,7 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_mod,              "__builtin_mod",              "mod"},
     {&intrin_pow,              "__builtin_pow",              "pow"},
     {&intrin_isnan,            "__builtin_isnan",            "isnan"},
-    {&intrin_debug_typestring, "__builtin_debug_typestring", ""} 
+    {&intrin_debug_typestring, "__builtin_debug_typestring", ""}
 };
 
 static void intrin_error(intrin_t *intrin, const char *fmt, ...) {

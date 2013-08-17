@@ -159,7 +159,7 @@ void stat_mem_deallocate(void *ptr) {
 
     info = ((stat_mem_block_t*)ptr - 1);
 
-    /* 
+    /*
      * we need access to the redzone that represents the info block
      * so lets do that.
      */
@@ -228,7 +228,7 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
         /* don't need access anymore */
         VALGRIND_MAKE_MEM_NOACCESS(oldinfo->prev, sizeof(stat_mem_block_t));
     }
-    
+
     if (oldinfo->next) {
         /* just need access for a short period */
         VALGRIND_MAKE_MEM_DEFINED(oldinfo->next, sizeof(stat_mem_block_t));
@@ -250,7 +250,7 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     newinfo->prev = NULL;
     newinfo->next = stat_mem_block_root;
 
-    /* 
+    /*
      * likely since the only time there is no root is when it's
      * being initialized first.
      */
@@ -268,7 +268,7 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     stat_mem_allocated += newinfo->size;
     stat_mem_high      += newinfo->size;
 
-    /* 
+    /*
      * we're finished with the redzones, lets kill the access
      * to them.
      */
@@ -718,7 +718,7 @@ static void stat_dump_mem_leaks(void) {
 
         stat_dump_mem_contents(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));
 
-        /* 
+        /*
          * we're finished with the access, the redzone should be marked
          * inaccesible so that invalid read/writes that could 'step-into'
          * those redzones will show up as invalid read/writes in valgrind.

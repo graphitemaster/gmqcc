@@ -684,7 +684,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
     char           **directories = NULL;
     char            *claim = util_strdup(curdir);
     size_t           i;
-    
+
     vec_push(directories, claim);
     dir = fs_dir_open(claim);
 
@@ -716,7 +716,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
      */
     for (i = 0; i < vec_size(directories); i++) {
         dir = fs_dir_open(directories[i]);
-        
+
         while ((files = fs_dir_read(dir))) {
             util_snprintf(buffer, sizeof(buffer), "%s/%s", directories[i], files->d_name);
             if (stat(buffer, &directory) == -1) {
@@ -871,7 +871,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 vec_push(task_tasks, task);
             }
         }
-        
+
         fs_dir_close(dir);
         mem_d(directories[i]); /* free claimed memory */
     }
@@ -967,7 +967,7 @@ static bool task_trymatch(size_t i, char ***line) {
     FILE            *execute;
     char             buffer[4096];
     task_template_t *tmpl = task_tasks[i].tmpl;
-    
+
     memset  (buffer,0,sizeof(buffer));
 
     if (!strcmp(tmpl->proceduretype, "-execute")) {
@@ -1013,7 +1013,7 @@ static bool task_trymatch(size_t i, char ***line) {
          */
         if (!(execute = fs_file_open(task_tasks[i].stderrlogfile, "r")))
             return false;
-        
+
         process = false;
     }
 
@@ -1025,7 +1025,7 @@ static bool task_trymatch(size_t i, char ***line) {
         char  *data    = NULL;
         size_t size    = 0;
         size_t compare = 0;
-        
+
         while (fs_file_getline(&data, &size, execute) != EOF) {
             if (!strcmp(data, "No main function found\n")) {
                 con_err("test failure: `%s` (No main function found) [%s]\n",
@@ -1045,7 +1045,7 @@ static bool task_trymatch(size_t i, char ***line) {
              */
             if  (strrchr(data, '\n'))
                 *strrchr(data, '\n') = '\0';
-                
+
             /*
              * We remove the file/directory and stuff from the error
              * match messages when testing diagnostics.
@@ -1139,7 +1139,7 @@ static size_t task_schedualize(size_t *pad) {
          * Generate a task from thin air if it requires execution in
          * the QCVM.
          */
-         
+
         /* diagnostic is not executed, but compare tested instead, like preproessor */
         execute = !! (!strcmp(task_tasks[i].tmpl->proceduretype, "-execute")) ||
                      (!strcmp(task_tasks[i].tmpl->proceduretype, "-pp"))      ||
@@ -1270,7 +1270,7 @@ static size_t task_schedualize(size_t *pad) {
             failed++;
             continue;
         }
-        
+
         for (j = 0; j < vec_size(match); j++)
             mem_d(match[j]);
         vec_free(match);

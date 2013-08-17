@@ -27,7 +27,7 @@
 #include "gmqcc.h"
 
 /*
- * Initially this was handled with a table in the gmqcc.h header, but 
+ * Initially this was handled with a table in the gmqcc.h header, but
  * much to my surprise the contents of the table was duplicated for
  * each translation unit, causing all these strings to be duplicated
  * for every .c file it was included into. This method culls back on
@@ -211,7 +211,7 @@ uint16_t util_crc16(const char *k, int len, const short clamp) {
 }
 #endif
 
-/* 
+/*
  * modifier is the match to make and the transpsition from it, while add is the upper-value that determines the
  * transposion from uppercase to lower case.
  */

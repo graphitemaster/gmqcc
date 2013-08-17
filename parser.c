@@ -806,7 +806,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ty1, ty2);
                 return false;
             }
-            
+
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser->intrin, "pow"));
                 vec_push(gencall->params, exprs[0]);
@@ -823,7 +823,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ty1, ty2);
 
                 return false;
-            } 
+            }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
@@ -1193,7 +1193,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
     }
 
-    /* 
+    /*
      * TODO handle this at the intrinsic level with an ast_intrinsic
      * node and codegen.
      */
@@ -1552,7 +1552,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         if (!var && !strcmp(parser_tokval(parser), "__FUNC__"))
             var = (ast_expression*)fold_constgen_string(parser->fold, parser->function->name, false);
         if (!var) {
-            /* 
+            /*
              * now we try for the real intrinsic hashtable. If the string
              * begins with __builtin, we simply skip past it, otherwise we
              * use the identifier as is.
@@ -5984,7 +5984,7 @@ static void parser_remove_ast(parser_t *parser)
     if (parser->reserved_version)
         ast_value_delete(parser->reserved_version);
 
-    util_htdel(parser->aliases); 
+    util_htdel(parser->aliases);
     fold_cleanup(parser->fold);
     intrin_cleanup(parser->intrin);
 }

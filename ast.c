@@ -2536,7 +2536,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     /* try constant folding away the if */
     if ((fold = fold_cond(condval, func, self)) != -1)
         return fold;
-    
+
     if (self->on_true) {
         /* create on-true block */
         ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "ontrue"));

@@ -304,7 +304,7 @@ static bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdi
 
     mem_d(dat);
     return true;
-    
+
 err:
     if (dat) mem_d(dat);
     if (out) fs_file_close(out);
