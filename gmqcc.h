@@ -157,6 +157,8 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   define GMQCC_UNLIKELY(X) (X)
 #endif
 
+#define GMQCC_ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
+
 #ifndef _MSC_VER
 #   include <stdint.h>
 #else

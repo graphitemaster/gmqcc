@@ -3,10 +3,22 @@ Release v0.3.0
         - Return assignments, the ability to assign to the return keyword
           as if it were a local variable.
         - Added bitwise XOR operator (^)
+        - Array initializers: e.g float a[] = {1, 2, 3};
+        - Fix bug that dissalowed language operators to be used in strings.
     * Compilation:
         - Optimized memory usage (now uses on average %3 less memory for
           compilation).
         - Fixed dotranslate (translatable strings)
+        - Rewrote constant folding optimization pass for the parser.
+        - New additional dead-code-elimination-consatant-fold pass for
+          if statements whos expression can be evaluated at compile-time
+          (allowing the if/else branch to be entierly elided at compile-time).
+        - Added support for columns in error diagnostics.
+        - Limit corrector to <= 16 byte strings.
+        - Improved hash function for hashtable (old hash function had 15% error,
+          this speeds up compilation)
+        - Improved performance of in-house allocator with branch-hinting, speeds
+          up compilation of Xonotic by 3 seconds!
     * QCVM:
         - Escape strings for -printdefs
     * Commandline:
@@ -14,13 +26,23 @@ Release v0.3.0
           hashtables, vectors, and number of unique sizes of vectors and
           hashtables. The amount of memory used for vectors. As well as the
           number of strdups used in total for compilation.
+        - Added compile statistic dumps, gives information about the compiled
+          binary, and LNO, such as the size, CRC, the number of times a
+          specific optimization was applied, etc.
+        - Make -std=qcc default
     * Testsuite:
         - Fixed a floating point exception rasied by modulo operation in
           -memchk.
+        - Added support for the test-suite to source tests and task-template
+          files from subdirectories in the test/ directory.
     * Build:
-        - Added gentoo ebuilds.
-        - Added win32 Makefile for building win32 packages.
-        - Added slackware pkg build files
+        - Can now be compile with TCC (Tiny C compiler) and function as
+          intended (previously couldn't due to bug in TCC codegen).
+        - Added Gentoo ebuilds.
+        - Added Win32 Makefile for building Win32 packages.
+        - Added Slackware pkg build files.
+        - Added Fedora spec files.
+        - Added Makefile for the BSD make variant.
 
 2012-04-27 v0.2.9
     * Preprocessor:
@@ -75,6 +97,9 @@ Release v0.3.0
         - Added support for preprocessor tests
         - Added preprocessor tests
         - Added defs.qh (auto included) for qcvm definitions
+        - Now prints the number of failed tests (if any) after all tests
+          are attempted.
+        - Fixed some bugs with error handling resulting in false-positives.
     * Syntax Highlighting:
         - Added various syntax highlighting description files for
           various text editors / integrated development envirorments,
