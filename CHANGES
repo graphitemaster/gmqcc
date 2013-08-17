@@ -35,6 +35,9 @@ Release v0.3.0
           -memchk.
         - Added support for the test-suite to source tests and task-template
           files from subdirectories in the test/ directory.
+        - Now prints the number of failed tests (if any) after all tests
+          are attempted.
+        - Fixed some bugs with error handling resulting in false-positives.
     * Build:
         - Can now be compile with TCC (Tiny C compiler) and function as
           intended (previously couldn't due to bug in TCC codegen).
@@ -97,9 +100,6 @@ Release v0.3.0
         - Added support for preprocessor tests
         - Added preprocessor tests
         - Added defs.qh (auto included) for qcvm definitions
-        - Now prints the number of failed tests (if any) after all tests
-          are attempted.
-        - Fixed some bugs with error handling resulting in false-positives.
     * Syntax Highlighting:
         - Added various syntax highlighting description files for
           various text editors / integrated development envirorments,
