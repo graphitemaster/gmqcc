@@ -249,6 +249,8 @@ static void code_stats(const char *filename, const char *lnofile, code_t *code, 
         con_out("        name: %s\n",  lnofile);
         con_out("        size: %u (bytes)\n",  code_size_debug(code, code_header));
     }
+
+    con_out("\n");
 }
 
 /*
