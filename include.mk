@@ -111,3 +111,6 @@ uninstall:
 whitespace:
 	find . -type f \( -name '*.[ch]' -or -name '*.def' \) -exec sed -i 's/ *$$//' '{}' ';'
 
+newline:
+	find . -type f \( -name '*.[ch]' -or -name '*.def' \) -exec sed -i -e '$$a\' '{}' ';'
+
