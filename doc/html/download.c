@@ -74,6 +74,9 @@ int security_decode(unsigned char *dest, const unsigned char *src, int srclen) {
 #define DEBIAN_64_REF    "%sgmqcc-%c.%c.%c-x86_64.deb%s"
 #define WINDOWS_32_REF   "%sgmqcc-%c.%c.%c-win32.zip%s"
 #define WINDOWS_64_REF   "%sgmqcc-%c.%c.%c-win64.zip%s"
+#define SLACKWARE_32_REF "%sgmqcc-%c.%c.%c-i686.txz%s"
+#define SLACKWARE_64_REF "%sgmqcc-%c.%c.%c-x86_64.txz%s"
+
 
 #define HTML "\
 <!doctype html>\
@@ -122,6 +125,10 @@ int security_decode(unsigned char *dest, const unsigned char *src, int srclen) {
       <td><a href=\"%s\">Download</a></td>\
      </tr>\
      <tr>\
+      <td>Slackware</td>\
+      <td><a href=\"%s\">Download</a></td>\
+      <td><a href=\"%s\">Download</a></td>\
+     <tr>\
       <td>Windows</td>\
       <td><a href=\"%s\">Download</a></td>\
       <td><a href=\"%s\">Download</a></td>\
@@ -140,6 +147,7 @@ int security_decode(unsigned char *dest, const unsigned char *src, int srclen) {
 static char build_table[][4096] = {
     ARCHLINUX_32_REF, ARCHLINUX_64_REF,
     DEBIAN_32_REF,    DEBIAN_64_REF,
+    SLACKWARE_32_REF, SLACKWARE_64_REF,
     WINDOWS_32_REF,   WINDOWS_64_REF
 };
 /* </tag> */

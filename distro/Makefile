@@ -15,9 +15,12 @@ base:
 	$(MAKE) -C archlinux/this/
 	$(MAKE) -C archlinux/this/ CARCH=i686
 	$(MAKE) -C win32/
+	$(MAKE) -C slackware/this/
+	$(MAKE) -C slackware/this/ CARCH=i686
 	@mv deb/*.deb ./
 	@mv archlinux/this/*pkg.tar.xz ./
 	@mv win32/*.zip ./
+	@mv slackware/this/*.txz ./
 
 upload:
 	@echo "APPKEY:76vh3q42hnvmzm3" > dropbox_config
@@ -28,7 +31,7 @@ upload:
 	@wget -q "http://raw.github.com/andreafabrizi/Dropbox-Uploader/master/dropbox_uploader.sh"
 	@chmod +x dropbox_uploader.sh
 	@sed -i -e "s/~\/.dropbox_uploader/.\/dropbox_config/g" $$(basename $(DROPBOX))
-	@find . -type f -regex ".*/.*\.\(xz\|deb\|zip\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
+	@find . -type f -regex ".*/.*\.\(xz\|deb\|zip\|txz\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
 	@rm dropbox_config dropbox_uploader.sh
 
 website:
@@ -49,5 +52,6 @@ clean:
 	@rm -f *.zip
 	@rm -f *.gen
 	@rm -f *.html
+	@rm -f *.txz
 
 all: base upload
