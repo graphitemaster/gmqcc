@@ -235,7 +235,8 @@ void genhtml() {
     fprintf(fp, HTML,
         build_table[0], build_table[1],
         build_table[2], build_table[3],
-        build_table[4], build_table[5]
+        build_table[4], build_table[5],
+        build_table[6], build_table[7]
     );
     fclose (fp);
 }
