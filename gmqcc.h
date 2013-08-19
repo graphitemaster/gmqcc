@@ -41,7 +41,7 @@
 #define GMQCC_VERSION \
     GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
 /* Undefine the following on a release-tag: */
-#define GMQCC_VERSION_TYPE_DEVEL
+/*#define GMQCC_VERSION_TYPE_DEVEL*/
 
 /* Full version string in case we need it */
 #ifdef GMQCC_VERSION_TYPE_DEVEL
