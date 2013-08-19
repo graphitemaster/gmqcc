@@ -1,7 +1,7 @@
 # Contributor: matthiaskrgr <matthiaskrgr _strange_curverd_character_ freedroid D0T org>
 
 pkgname=gmqcc-git
-pkgver=0.2.612.g160e7cf
+pkgver=0.3.0
 pkgver(){
     cd gmqcc
     git describe --tags | sed -e 's/^gmqcc\-//' -e 's/-/./g'
