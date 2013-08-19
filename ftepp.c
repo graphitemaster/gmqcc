@@ -184,7 +184,7 @@ static char *ftepp_predef_timestamp(lex_file *context) {
     char       *value;
     size_t      size;
 #ifdef _MSC_VER
-	char        buffer[64];
+    char        buffer[64];
 #endif
     if (stat(context->name, &finfo))
         return util_strdup("\"<failed to determine timestamp>\"");
@@ -197,8 +197,8 @@ static char *ftepp_predef_timestamp(lex_file *context) {
 #ifndef _MSC_VER
     find  = ctime(&finfo.st_mtime);
 #else
-	ctime_s(buffer, sizeof(buffer), &finfo.st_mtime);
-	find = buffer;
+    ctime_s(buffer, sizeof(buffer), &finfo.st_mtime);
+    find = buffer;
 #endif
 
     value = (char*)mem_a(strlen(find) + 1);

@@ -166,8 +166,8 @@ static int task_pclose(FILE **handles) {
         tmpnam(open->name_err);
         tmpnam(open->name_out);
 #else
-		tmpnam_s(open->name_err, L_tmpnam);
-		tmpnam_s(open->name_out, L_tmpnam);
+        tmpnam_s(open->name_err, L_tmpnam);
+        tmpnam_s(open->name_out, L_tmpnam);
 #endif
 
         (void)mode; /* excluded */
@@ -193,8 +193,8 @@ static int task_pclose(FILE **handles) {
 
         mem_d(open);
     }
-#	define popen _popen
-#	define pclose _pclose
+#   define popen _popen
+#   define pclose _pclose
 #endif /*! _WIN32 */
 
 #define TASK_COMPILE    0

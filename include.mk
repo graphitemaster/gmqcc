@@ -108,9 +108,13 @@ uninstall:
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
 
+STYLE_MATCH = \( -name '*.[ch]' -or -name '*.def' \)
+
 whitespace:
-	find . -type f \( -name '*.[ch]' -or -name '*.def' \) -exec sed -i 's/ *$$//' '{}' ';'
-
+	find . -type f $(STYLE_MATCH) -exec sed -i 's/ *$$//' '{}' ';'
 newline:
-	find . -type f \( -name '*.[ch]' -or -name '*.def' \) -exec sed -i -e '$$a\' '{}' ';'
+	find . -type f $(STYLE_MATCH) -exec sed -i -e '$$a\' '{}' ';'
+indent:
+	find . -type f $(STYLE_MATCH) -exec sed -i 's/\t/    /g' '{}' ';'
 
+style: whitespace newline indent
