@@ -82,8 +82,8 @@ endif
 endif
 
 #standard rules
-%.o: %.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS) 
+c.o:
+	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 exec-standalone.o: exec.c
 	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS) -DQCVM_EXECUTOR=1
