@@ -33,5 +33,6 @@ package() {
 	make install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."
 
-	install -D -m644 LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
+	install -dm755 ${pkgdir}/usr/share/licenses/gmqcc
+	install -m644 LICENSE ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
 }

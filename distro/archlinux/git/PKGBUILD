@@ -38,11 +38,23 @@ package() {
 	make install DESTDIR=$pkgdir PREFIX=/usr
 	msg "Compiling done."
 
-	install -Dm644 syntax/geany/filetypes.qc    ${pkgdir}/usr/share/geany/filetypes.qc
-	install -Dm644 syntax/gtksourceview/qc.lang ${pkgdir}/usr/share/gtksourceview-3.0/language-specs/qc.lang
-	# jedit
-	install -Dm644 syntax/kate/qc.xml ${pkgdir}/usr/share/apps/katepart/syntax/qc.xml
-	install -Dm644 syntax/nano/qc.nanorc ${pkgdir}/usr/share/nano/qc.nanorc
+	install -dm755 ${pkgdir}/usr/share/geany
+	install -m644 syntax/geany/filetypes.qc \
+	               ${pkgdir}/usr/share/geany/filetypes.qc
 
-	install -Dm644 LICENSE 					 ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
+	install -dm755 ${pkgdir}/usr/share/gtksourceview-3.0/language-specs
+	install -m644 syntax/gtksourceview/qc.lang \
+	               ${pkgdir}/usr/share/gtksourceview-3.0/language-specs/qc.lang
+
+	install -dm755 ${pkgdir}/usr/share/apps/katepart/syntax
+	install -m644 syntax/kate/qc.xml \
+	               ${pkgdir}/usr/share/apps/katepart/syntax/qc.xml
+
+	install -dm755 ${pkgdir}/usr/share/nano
+	install -m644 syntax/nano/qc.nanorc \
+	               ${pkgdir}/usr/share/nano/qc.nanorc
+
+	install -dm755 ${pkgdir}/usr/share/licenses/gmqcc
+	install -m644 LICENSE \
+	               ${pkgdir}/usr/share/licenses/gmqcc/LICENSE
 }
