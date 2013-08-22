@@ -32,7 +32,7 @@
  * each translation unit, causing all these strings to be duplicated
  * for every .c file it was included into. This method culls back on
  * it. This is a 'utility' function because the executor also depends
- * on this for dissasembled bytecode.
+ * on this for disassembled byte-code.
  */
 const char *util_instr_str[VINSTR_END] = {
     "DONE",       "MUL_F",      "MUL_V",      "MUL_FV",
@@ -148,7 +148,7 @@ void util_endianswap(void *_data, size_t length, unsigned int typesize) {
  * well as (but not limited to the idea of reflected versions) where the final register
  * value becomes reversed, and finally weather the value itself is used to XOR the final
  * register value.  AS such you can already imagine how painfully annoying CRCs are,
- * of course we stand to target Quake, which expects it's certian set of rules for proper
+ * of course we stand to target Quake, which expects it's certain set of rules for proper
  * calculation of a CRC.
  *
  * In most traditional CRC algorithms on uses a reflected table driven method where a value
@@ -201,7 +201,7 @@ uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
         h = util_crc16_table[(h>>8)^((unsigned char)*k)]^(h<<8);
     return h;
 }
-/* Reflective Varation (for reference) */
+/* Reflective Variation (for reference) */
 #if 0
 uint16_t util_crc16(const char *k, int len, const short clamp) {
     register uint16_t h= (uint16_t)0xFFFFFFFF;
@@ -212,8 +212,8 @@ uint16_t util_crc16(const char *k, int len, const short clamp) {
 #endif
 
 /*
- * modifier is the match to make and the transpsition from it, while add is the upper-value that determines the
- * transposion from uppercase to lower case.
+ * modifier is the match to make and the transposition from it, while add is the upper-value that determines the
+ * transposition from uppercase to lower case.
  */
 static GMQCC_INLINE size_t util_strtransform(const char *in, char *out, size_t outsz, const char *mod, int add) {
     size_t sz = 1;
@@ -250,7 +250,7 @@ int util_vasprintf(char **dat, const char *fmt, va_list args) {
     char *tmp = NULL;
 
     /*
-     * For visuals tido _vsnprintf doesn't tell you the length of a
+     * For visual studio _vsnprintf doesn't tell you the length of a
      * formatted string if it overflows. However there is a MSVC
      * intrinsic (which is documented wrong) called _vcsprintf which
      * will return the required amount to allocate.
@@ -271,9 +271,9 @@ int util_vasprintf(char **dat, const char *fmt, va_list args) {
         return len;
     #else
         /*
-         * For everything else we have a decent conformint vsnprintf that
+         * For everything else we have a decent conforming vsnprintf that
          * returns the number of bytes needed.  We give it a try though on
-         * a short buffer, since efficently speaking, it could be nice to
+         * a short buffer, since efficiently speaking, it could be nice to
          * above a second vsnprintf call.
          */
         char    buf[128];
@@ -311,8 +311,8 @@ int util_asprintf(char **ret, const char *fmt, ...) {
 
 /*
  * These are various re-implementations (wrapping the real ones) of
- * string functions that MSVC consideres unsafe. We wrap these up and
- * use the safe varations on MSVC.
+ * string functions that MSVC considers unsafe. We wrap these up and
+ * use the safe variations on MSVC.
  */
 #ifdef _MSC_VER
     static char **util_strerror_allocated() {
