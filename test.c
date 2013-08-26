@@ -964,6 +964,7 @@ static void task_destroy(void) {
 static bool task_trymatch(size_t i, char ***line) {
     bool             success = true;
     bool             process = true;
+    int              retval  = EXIT_SUCCESS;
     FILE            *execute;
     char             buffer[4096];
     task_template_t *tmpl = task_tasks[i].tmpl;
@@ -1094,11 +1095,11 @@ static bool task_trymatch(size_t i, char ***line) {
     }
 
     if (process)
-        pclose(execute);
+        retval = pclose(execute);
     else
         fs_file_close(execute);
 
-    return success;
+    return success && retval == EXIT_SUCCESS;
 }
 
 static const char *task_type(task_template_t *tmpl) {
