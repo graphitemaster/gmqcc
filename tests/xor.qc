@@ -38,6 +38,12 @@ void main() {
     // vector ^ vector
     // vector ^ float
     // are legal in constant expressions (currently)
+    vector v1 = '5 2 5';
+    vector v2 = '3 10 3';
+
+    print("vv: ", vtos(v1 ^ v2), "\n");
+    print("vf: ", vtos(v1 ^ 10), "\n");
+    
     const vector v3 = '5 2 5' ^ '3 10 3';
     const vector v4 = '5 2 5' ^ 10;
     
@@ -49,4 +55,12 @@ void main() {
     float swap_y = 200;
     vector swaps = swap(swap_x, swap_y);
     print("100:200 swapped is: ", ftos(swaps.x), ":", ftos(swaps.y), "\n");
+
+    // good olde xor swap test too
+    vector swap_u = '1 2 3';
+    vector swap_v = '4 5 6';
+    swap_u ^= swap_v;
+    swap_v ^= swap_u;
+    swap_u ^= swap_v;
+    print("'1 2 3':'4 5 6' swapped is: ", vtos(swap_u), ":", vtos(swap_v), "\n");
 }
