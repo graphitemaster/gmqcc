@@ -1032,6 +1032,11 @@ static void ir_instr_delete(ir_instr *self)
 
 static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
 {
+    if (v && v->vtype == TYPE_NOEXPR) {
+        irerror(self->context, "tried to use a NOEXPR value");
+        return false;
+    }
+
     if (self->_ops[op]) {
         size_t idx;
         if (writing && vec_ir_instr_find(self->_ops[op]->writes, self, &idx))
