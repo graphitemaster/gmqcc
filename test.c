@@ -184,7 +184,7 @@ static int task_pclose(FILE **handles) {
         return open->handles;
     }
 
-    static void task_pclose(FILE **files) {
+    static int task_pclose(FILE **files) {
         popen_t *open = ((popen_t*)files);
         fs_file_close(files[1]);
         fs_file_close(files[2]);
@@ -192,6 +192,8 @@ static int task_pclose(FILE **handles) {
         remove(open->name_out);
 
         mem_d(open);
+
+        return EXIT_SUCCESS;
     }
 #   define popen _popen
 #   define pclose _pclose
@@ -1423,7 +1425,6 @@ int main(int argc, char **argv) {
     con_change(redirout, redirerr);
     succeed = test_perform("tests", defs);
     stat_info();
-
 
     return (succeed) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -740,6 +740,7 @@ typedef uint32_t qcuint_t;
 typedef struct {
     prog_section_statement_t *statements;
     int                      *linenums;
+    int                      *columnnums;
     prog_section_def_t       *defs;
     prog_section_field_t     *fields;
     prog_section_function_t  *functions;
@@ -750,6 +751,16 @@ typedef struct {
     ht                        string_cache;
     qcint_t                   string_cached_empty;
 } code_t;
+
+/*
+ * A shallow copy of a lex_file to remember where which ast node
+ * came from.
+ */
+typedef struct {
+    const char *file;
+    size_t      line;
+    size_t      column;
+} lex_ctx_t;
 
 /*
  * code_write          -- writes out the compiled file
@@ -765,18 +776,9 @@ code_t   *code_init          (void);
 void      code_cleanup       (code_t *);
 uint32_t  code_genstring     (code_t *, const char *string);
 qcint_t   code_alloc_field   (code_t *, size_t qcsize);
-void      code_push_statement(code_t *, prog_section_statement_t *stmt, int linenum);
+void      code_push_statement(code_t *, prog_section_statement_t *stmt, lex_ctx_t ctx);
 void      code_pop_statement (code_t *);
 
-/*
- * A shallow copy of a lex_file to remember where which ast node
- * came from.
- */
-typedef struct {
-    const char *file;
-    size_t      line;
-    size_t      column;
-} lex_ctx_t;
 
 /*===================================================================*/
 /*============================ con.c ================================*/

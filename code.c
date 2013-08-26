@@ -44,19 +44,22 @@ typedef union {
 #define CODE_HASH_ENTER(ENTRY) ((ENTRY).enter)
 #define CODE_HASH_LEAVE(ENTRY) ((ENTRY).leave)
 
-void code_push_statement(code_t *code, prog_section_statement_t *stmt, int linenum)
+void code_push_statement(code_t *code, prog_section_statement_t *stmt, lex_ctx_t ctx)
 {
     vec_push(code->statements, *stmt);
-    vec_push(code->linenums,   linenum);
+    vec_push(code->linenums,   (int)ctx.line);
+    vec_push(code->columnnums, (int)ctx.column);
 }
 
 void code_pop_statement(code_t *code)
 {
     vec_pop(code->statements);
     vec_pop(code->linenums);
+    vec_pop(code->columnnums);
 }
 
 code_t *code_init() {
+    static lex_ctx_t                empty_ctx       = {0, 0, 0};
     static prog_section_function_t  empty_function  = {0,0,0,0,0,0,0,{0,0,0,0,0,0,0,0}};
     static prog_section_statement_t empty_statement = {0,{0},{0},{0}};
     static prog_section_def_t       empty_def       = {0, 0, 0};
@@ -78,7 +81,7 @@ code_t *code_init() {
     vec_push(code->chars, '\0');
     vec_push(code->functions,  empty_function);
 
-    code_push_statement(code, &empty_statement, 0);
+    code_push_statement(code, &empty_statement, empty_ctx);
 
     vec_push(code->defs,    empty_def);
     vec_push(code->fields,  empty_def);
@@ -137,7 +140,8 @@ static size_t code_size_generic(code_t *code, prog_header_t *code_header, bool l
         size += sizeof(code_header->globals.length);
         size += sizeof(code_header->fields.length);
         size += sizeof(code_header->statements.length);
-        size += sizeof(code->linenums[0]) * vec_size(code->linenums);
+        size += sizeof(code->linenums[0])   * vec_size(code->linenums);
+        size += sizeof(code->columnnums[0]) * vec_size(code->columnnums);
     } else {
         size += sizeof(prog_header_t);
         size += sizeof(prog_section_statement_t) * vec_size(code->statements);
@@ -311,6 +315,7 @@ static bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, u
 
     vec_free(code->statements);
     vec_free(code->linenums);
+    vec_free(code->columnnums);
     vec_free(code->defs);
     vec_free(code->fields);
     vec_free(code->functions);
@@ -339,17 +344,18 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
         if (!fp)
             return false;
 
-        util_endianswap(&version,      1,                         sizeof(version));
-        util_endianswap(code->linenums, vec_size(code->linenums), sizeof(code->linenums[0]));
+        util_endianswap(&version,         1,                          sizeof(version));
+        util_endianswap(code->linenums,   vec_size(code->linenums),   sizeof(code->linenums[0]));
+        util_endianswap(code->columnnums, vec_size(code->columnnums), sizeof(code->columnnums[0]));
 
-
-        if (fs_file_write("LNOF",                          4,                                      1,                        fp) != 1 ||
-            fs_file_write(&version,                        sizeof(version),                        1,                        fp) != 1 ||
-            fs_file_write(&code_header.defs.length,        sizeof(code_header.defs.length),        1,                        fp) != 1 ||
-            fs_file_write(&code_header.globals.length,     sizeof(code_header.globals.length),     1,                        fp) != 1 ||
-            fs_file_write(&code_header.fields.length,      sizeof(code_header.fields.length),      1,                        fp) != 1 ||
-            fs_file_write(&code_header.statements.length,  sizeof(code_header.statements.length),  1,                        fp) != 1 ||
-            fs_file_write(code->linenums,                  sizeof(code->linenums[0]),              vec_size(code->linenums), fp) != vec_size(code->linenums))
+        if (fs_file_write("LNOF",                          4,                                      1,                          fp) != 1 ||
+            fs_file_write(&version,                        sizeof(version),                        1,                          fp) != 1 ||
+            fs_file_write(&code_header.defs.length,        sizeof(code_header.defs.length),        1,                          fp) != 1 ||
+            fs_file_write(&code_header.globals.length,     sizeof(code_header.globals.length),     1,                          fp) != 1 ||
+            fs_file_write(&code_header.fields.length,      sizeof(code_header.fields.length),      1,                          fp) != 1 ||
+            fs_file_write(&code_header.statements.length,  sizeof(code_header.statements.length),  1,                          fp) != 1 ||
+            fs_file_write(code->linenums,                  sizeof(code->linenums[0]),              vec_size(code->linenums),   fp) != vec_size(code->linenums) ||
+            fs_file_write(code->columnnums,                sizeof(code->columnnums[0]),            vec_size(code->columnnums), fp) != vec_size(code->columnnums))
         {
             con_err("failed to write lno file\n");
         }
@@ -436,6 +442,7 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
 void code_cleanup(code_t *code) {
     vec_free(code->statements);
     vec_free(code->linenums);
+    vec_free(code->columnnums);
     vec_free(code->defs);
     vec_free(code->fields);
     vec_free(code->functions);

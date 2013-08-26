@@ -2822,7 +2822,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o2.s1 = 0;
             stmt.o3.s1 = 0;
             if (stmt.o1.s1 != 1)
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
 
             /* no further instructions can be in this block */
             return true;
@@ -2833,17 +2833,17 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             stmt.opcode = INSTR_BITAND;
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
             stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             stmt.opcode = INSTR_SUB_F;
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
             stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2854,15 +2854,15 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2873,15 +2873,15 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2893,18 +2893,18 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
                 stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + j;
                 stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]) + j;
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
                 stmt.opcode = INSTR_BITAND;
                 stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
                 stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + j;
                 stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
             }
             stmt.opcode = INSTR_SUB_V;
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
             stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2915,13 +2915,13 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2932,13 +2932,13 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2950,18 +2950,18 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
                 stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
                 stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]) + j;
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
                 stmt.opcode = INSTR_BITAND;
                 stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
                 stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
                 stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
             }
             stmt.opcode = INSTR_SUB_V;
             stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
             stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
             stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             /* instruction generated */
             continue;
@@ -2982,13 +2982,13 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.opcode = INSTR_IF;
                 stmt.o2.s1 = (ontrue->code_start) - vec_size(code->statements);
                 if (stmt.o2.s1 != 1)
-                    code_push_statement(code, &stmt, instr->context.line);
+                    code_push_statement(code, &stmt, instr->context);
             }
             if (onfalse->generated) {
                 stmt.opcode = INSTR_IFNOT;
                 stmt.o2.s1 = (onfalse->code_start) - vec_size(code->statements);
                 if (stmt.o2.s1 != 1)
-                    code_push_statement(code, &stmt, instr->context.line);
+                    code_push_statement(code, &stmt, instr->context);
             }
             if (!ontrue->generated) {
                 if (onfalse->generated)
@@ -3008,7 +3008,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 ontrue = tmp;
             }
             stidx = vec_size(code->statements);
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
             /* on false we jump, so add ontrue-path */
             if (!gen_blocks_recursive(code, func, ontrue))
                 return false;
@@ -3040,7 +3040,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.o2.s1 = 0;
                 stmt.o3.s1 = 0;
                 if (stmt.o1.s1 != 1)
-                    code_push_statement(code, &stmt, instr->context.line);
+                    code_push_statement(code, &stmt, instr->context);
                 return true;
             }
             else if (stidx+2 == vec_size(code->statements) && code->statements[stidx].o2.s1 == 1) {
@@ -3079,7 +3079,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
             }
             /* Now handle extparams */
             first = vec_size(instr->params);
@@ -3108,7 +3108,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = ir_value_code_addr(targetparam);
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
             }
 
             stmt.opcode = INSTR_CALL0 + vec_size(instr->params);
@@ -3117,7 +3117,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o1.u1 = ir_value_code_addr(instr->_ops[1]);
             stmt.o2.u1 = 0;
             stmt.o3.u1 = 0;
-            code_push_statement(code, &stmt, instr->context.line);
+            code_push_statement(code, &stmt, instr->context);
 
             retvalue = instr->_ops[0];
             if (retvalue && retvalue->store != store_return &&
@@ -3131,7 +3131,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.o1.u1 = OFS_RETURN;
                 stmt.o2.u1 = ir_value_code_addr(retvalue);
                 stmt.o3.u1 = 0;
-                code_push_statement(code, &stmt, instr->context.line);
+                code_push_statement(code, &stmt, instr->context);
             }
             continue;
         }
@@ -3181,7 +3181,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             }
         }
 
-        code_push_statement(code, &stmt, instr->context.line);
+        code_push_statement(code, &stmt, instr->context);
     }
     return true;
 }
@@ -3218,11 +3218,16 @@ static bool gen_function_code(code_t *code, ir_function *self)
         retst->opcode = INSTR_DONE;
         ++opts_optimizationcount[OPTIM_VOID_RETURN];
     } else {
+        lex_ctx_t last;
+
         stmt.opcode = INSTR_DONE;
-        stmt.o1.u1 = 0;
-        stmt.o2.u1 = 0;
-        stmt.o3.u1 = 0;
-        code_push_statement(code, &stmt, vec_last(code->linenums));
+        stmt.o1.u1  = 0;
+        stmt.o2.u1  = 0;
+        stmt.o3.u1  = 0;
+        last.line   = vec_last(code->linenums);
+        last.column = vec_last(code->columnnums);
+
+        code_push_statement(code, &stmt, last);
     }
     return true;
 }
@@ -3355,7 +3360,7 @@ static bool gen_function_extparam_copy(code_t *code, ir_function *self)
         }
         stmt.o1.u1 = ir_value_code_addr(ep);
         stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
-        code_push_statement(code, &stmt, self->context.line);
+        code_push_statement(code, &stmt, self->context);
     }
 
     return true;
@@ -3380,7 +3385,7 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
         if (i < 8) {
             stmt.o1.u1 = OFS_PARM0 + 3*i;
             stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
-            code_push_statement(code, &stmt, self->context.line);
+            code_push_statement(code, &stmt, self->context);
             continue;
         }
         ext = i - 8;
@@ -3391,7 +3396,7 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
 
         stmt.o1.u1 = ir_value_code_addr(ep);
         stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
-        code_push_statement(code, &stmt, self->context.line);
+        code_push_statement(code, &stmt, self->context);
     }
 
     return true;
@@ -3876,11 +3881,16 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     /* DP errors if the last instruction is not an INSTR_DONE. */
     if (vec_last(self->code->statements).opcode != INSTR_DONE)
     {
+        lex_ctx_t last;
+
         stmt.opcode = INSTR_DONE;
-        stmt.o1.u1 = 0;
-        stmt.o2.u1 = 0;
-        stmt.o3.u1 = 0;
-        code_push_statement(self->code, &stmt, vec_last(self->code->linenums));
+        stmt.o1.u1  = 0;
+        stmt.o2.u1  = 0;
+        stmt.o3.u1  = 0;
+        last.line   = vec_last(self->code->linenums);
+        last.column = vec_last(self->code->columnnums);
+
+        code_push_statement(self->code, &stmt, last);
     }
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY))
