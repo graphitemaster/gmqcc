@@ -352,14 +352,18 @@ static int lex_getch(lex_file *lex)
 
     if (lex->peekpos) {
         lex->peekpos--;
-        if (!lex->push_line && lex->peek[lex->peekpos] == '\n')
+        if (!lex->push_line && lex->peek[lex->peekpos] == '\n') {
             lex->line++;
+            lex->column = 0;
+        }
         return lex->peek[lex->peekpos];
     }
 
     ch = lex_fgetc(lex);
-    if (!lex->push_line && ch == '\n')
+    if (!lex->push_line && ch == '\n') {
         lex->line++;
+        lex->column = 0;
+    }
     else if (ch == '?')
         return lex_try_trigraph(lex, ch);
     else if (!lex->flags.nodigraphs && (ch == '<' || ch == ':' || ch == '%'))
