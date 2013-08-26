@@ -240,6 +240,7 @@ ir_block*       ir_function_create_block(lex_ctx_t ctx, ir_function*, const char
 
 /* builder */
 #define IR_HT_SIZE 1024
+#define IR_MAX_VINSTR_TEMPS 1
 typedef struct ir_builder_s
 {
     char *name;
@@ -261,12 +262,16 @@ typedef struct ir_builder_s
     uint32_t      first_common_globaltemp;
 
     const char **filenames;
-    qcint_t       *filestrings;
+    qcint_t     *filestrings;
     /* we cache the #IMMEDIATE string here */
-    qcint_t        str_immediate;
+    qcint_t      str_immediate;
     /* there should just be this one nil */
     ir_value    *nil;
     ir_value    *reserved_va_count;
+    /* some virtual instructions require temps, and their code is isolated
+     * so that we don't need to keep track of their liveness.
+     */
+    ir_value    *vinstr_temp[IR_MAX_VINSTR_TEMPS];
 
     /* code generator */
     code_t      *code;

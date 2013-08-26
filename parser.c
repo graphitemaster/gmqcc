@@ -623,55 +623,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid1('|'):
         case opid1('&'):
-            if (NotSameType(TYPE_FLOAT)) {
-                compile_error(ctx, "invalid types used in expression: cannot perform bit operations between types %s and %s",
-                              type_name[exprs[0]->vtype],
-                              type_name[exprs[1]->vtype]);
-                return false;
-            }
-            if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx,
-                    (op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
-                    exprs[0], exprs[1]);
-            break;
         case opid1('^'):
-            /*
-             * Okay lets designate what the hell is an acceptable use
-             * of the ^ operator. In many vector processing units, XOR
-             * is allowed to be used on vectors, but only if the first
-             * operand is a vector, the second operand can be a float
-             * or vector. It's never legal for the first operand to be
-             * a float, and then the following operand to be a vector.
-             * Further more, the only time it is legal to do XOR otherwise
-             * is when both operand are floats. This nicely crafted if
-             * statement catches them all.
-             *
-             * In the event that the first operand is a vector, two
-             * possible situations can arise, thus, each element of
-             * vector A (operand A) is exclusive-ORed with the corresponding
-             * element of vector B (operand B), If B is scalar, the
-             * scalar value is first replicated for each element.
-             *
-             * The QCVM itself lacks a BITXOR instruction. Thus emulating
-             * the mathematics of it is required. The following equation
-             * is used: (LHS | RHS) & ~(LHS & RHS). However, due to the
-             * QCVM also lacking a BITNEG instruction, we need to emulate
-             * ~FOO with -1 - FOO, the whole process becoming this nicely
-             * crafted expression: (LHS | RHS) & (-1 - (LHS & RHS)).
-             *
-             * When A is not scalar, this process is repeated for all
-             * components of vector A with the value in operand B,
-             * only if operand B is scalar. When A is not scalar, and B
-             * is also not scalar, this process is repeated for all
-             * components of the vector A with the components of vector B.
-             * Finally when A is scalar and B is scalar, this process is
-             * simply used once for A and B being LHS and RHS respectfully.
-             *
-             * Yes the semantics are a bit strange (no pun intended).
-             * But then again BITXOR is strange itself, consdering it's
-             * commutative, assocative, and elements of the BITXOR operation
-             * are their own inverse.
-             */
             if ( !(exprs[0]->vtype == TYPE_FLOAT  && exprs[1]->vtype == TYPE_FLOAT) &&
                  !(exprs[0]->vtype == TYPE_VECTOR && exprs[1]->vtype == TYPE_FLOAT) &&
                  !(exprs[0]->vtype == TYPE_VECTOR && exprs[1]->vtype == TYPE_VECTOR))
@@ -688,46 +640,26 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                  * since scalar ^ vector is not allowed.
                  */
                 if (exprs[0]->vtype == TYPE_FLOAT) {
-                    ast_binary *expr = ast_binary_new(
-                        ctx,
-                        INSTR_SUB_F,
-                        (ast_expression*)parser->fold->imm_float[2],
-                        (ast_expression*)ast_binary_new(
-                            ctx,
-                            INSTR_BITAND,
-                            exprs[0],
-                            exprs[1]
-                        )
-                    );
-                    expr->refs = AST_REF_NONE;
-
-                    out = (ast_expression*)
-                        ast_binary_new(
-                            ctx,
-                            INSTR_BITAND,
-                            (ast_expression*)ast_binary_new(
-                                ctx,
-                                INSTR_BITOR,
-                                exprs[0],
-                                exprs[1]
-                            ),
-                            (ast_expression*)expr
-                        );
+                    out = (ast_expression*)ast_binary_new(ctx,
+                        (op->id == opid1('^') ? VINSTR_BITXOR : op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
+                        exprs[0], exprs[1]);
                 } else {
                     /*
-                     * The first is a vector: vector is allowed to xor with vector and
+                     * The first is a vector: vector is allowed to bitop with vector and
                      * with scalar, branch here for the second operand.
                      */
                     if (exprs[1]->vtype == TYPE_VECTOR) {
                         /*
-                         * Xor all the values of the vector components against the
+                         * Bitop all the values of the vector components against the
                          * vectors components in question.
                          */
-                        compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against vector");
-                        return false;
+                        out = (ast_expression*)ast_binary_new(ctx,
+                            (op->id == opid1('^') ? VINSTR_BITXOR_V : op->id == opid1('|') ? VINSTR_BITOR_V : VINSTR_BITAND_V),
+                            exprs[0], exprs[1]);
                     } else {
-                        compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-xor for vector against float");
-                        return false;
+                        out = (ast_expression*)ast_binary_new(ctx,
+                            (op->id == opid1('^') ? VINSTR_BITXOR_VF : op->id == opid1('|') ? VINSTR_BITOR_VF : VINSTR_BITAND_VF),
+                            exprs[0], exprs[1]);
                     }
                 }
             }
@@ -1096,7 +1028,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid2('&','='):
         case opid2('|','='):
-            if (NotSameType(TYPE_FLOAT)) {
+        case opid2('^','='):
+            if (NotSameType(TYPE_FLOAT) && NotSameType(TYPE_VECTOR)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                 compile_error(ctx, "invalid types used in expression: %s and %s",
@@ -1110,16 +1043,21 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 assignop = type_storep_instr[exprs[0]->vtype];
             else
                 assignop = type_store_instr[exprs[0]->vtype];
-            out = (ast_expression*)ast_binstore_new(ctx, assignop,
-                                                    (op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
-                                                    exprs[0], exprs[1]);
+            if (exprs[0]->vtype == TYPE_FLOAT)
+                out = (ast_expression*)ast_binstore_new(ctx, assignop,
+                                                        (op->id == opid2('^','=') ? VINSTR_BITXOR : op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
+                                                        exprs[0], exprs[1]);
+            else
+                out = (ast_expression*)ast_binstore_new(ctx, assignop,
+                                                        (op->id == opid2('^','=') ? VINSTR_BITXOR_V : op->id == opid2('&','=') ? VINSTR_BITAND_V : VINSTR_BITOR_V),
+                                                        exprs[0], exprs[1]);
             break;
         case opid3('&','~','='):
             /* This is like: a &= ~(b);
              * But QC has no bitwise-not, so we implement it as
              * a -= a & (b);
              */
-            if (NotSameType(TYPE_FLOAT)) {
+            if (NotSameType(TYPE_FLOAT) && NotSameType(TYPE_VECTOR)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                 compile_error(ctx, "invalid types used in expression: %s and %s",
@@ -1130,25 +1068,36 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 assignop = type_storep_instr[exprs[0]->vtype];
             else
                 assignop = type_store_instr[exprs[0]->vtype];
-            out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
+            if (exprs[0]->vtype == TYPE_FLOAT)
+                out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
+            else
+                out = (ast_expression*)ast_binary_new(ctx, VINSTR_BITAND_V, exprs[0], exprs[1]);
             if (!out)
                 return false;
             if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
                 compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
             }
-            asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
+            if (exprs[0]->vtype == TYPE_FLOAT)
+                asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
+            else
+                asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_V, exprs[0], out);
             asbinstore->keep_dest = true;
             out = (ast_expression*)asbinstore;
             break;
 
         case opid2('~', 'P'):
-            if (exprs[0]->vtype != TYPE_FLOAT) {
+            if (exprs[0]->vtype != TYPE_FLOAT && exprs[0]->vtype != TYPE_VECTOR) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                 compile_error(ast_ctx(exprs[0]), "invalid type for bit not: %s", ty1);
                 return false;
             }
-            if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                if (exprs[0]->vtype == TYPE_FLOAT) {
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
+                } else {
+                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, (ast_expression*)parser->fold->imm_vector[1], exprs[0]);
+                }
+            }
             break;
     }
 #undef NotSameType
