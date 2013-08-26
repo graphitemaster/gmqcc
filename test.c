@@ -1085,6 +1085,10 @@ static bool task_trymatch(size_t i, char ***line) {
             data = NULL;
             size = 0;
         }
+
+        if (compare != vec_size(tmpl->comparematch))
+            success = false;
+
         mem_d(data);
         data = NULL;
     }
