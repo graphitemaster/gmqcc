@@ -44,9 +44,81 @@ typedef union {
 #define CODE_HASH_ENTER(ENTRY) ((ENTRY).enter)
 #define CODE_HASH_LEAVE(ENTRY) ((ENTRY).leave)
 
-void code_push_statement(code_t *code, prog_section_statement_t *stmt, lex_ctx_t ctx)
+void code_push_statement(code_t *code, prog_section_statement_t *stmt_in, lex_ctx_t ctx)
 {
-    vec_push(code->statements, *stmt);
+    prog_section_statement_t stmt = *stmt_in;
+
+    if (OPTS_FLAG(TYPELESS_STORES)) {
+        switch (stmt.opcode) {
+            case INSTR_LOAD_S:
+            case INSTR_LOAD_ENT:
+            case INSTR_LOAD_FLD:
+            case INSTR_LOAD_FNC:
+                stmt.opcode = INSTR_LOAD_F;
+                break;
+            case INSTR_STORE_S:
+            case INSTR_STORE_ENT:
+            case INSTR_STORE_FLD:
+            case INSTR_STORE_FNC:
+                stmt.opcode = INSTR_STORE_F;
+                break;
+            case INSTR_STOREP_S:
+            case INSTR_STOREP_ENT:
+            case INSTR_STOREP_FLD:
+            case INSTR_STOREP_FNC:
+                stmt.opcode = INSTR_STOREP_F;
+                break;
+        }
+    }
+
+    if (OPTS_FLAG(SORT_OPERANDS)) {
+        switch (stmt.opcode) {
+#define SINGLE(a) \
+            case INSTR_##a: \
+                if (stmt.o1.u1 < stmt.o2.u1) { \
+                    uint16_t x = stmt.o1.u1; stmt.o1.u1 = stmt.o2.u1; stmt.o2.u1 = x; \
+                } \
+                break
+#define PAIR(a,b) \
+            case INSTR_##a: \
+                if (stmt.o1.u1 < stmt.o2.u1) { \
+                    uint16_t x = stmt.o1.u1; stmt.o1.u1 = stmt.o2.u1; stmt.o2.u1 = x; \
+                    stmt.opcode = INSTR_##b; \
+                } \
+                break; \
+            case INSTR_##b: \
+                if (stmt.o1.u1 < stmt.o2.u1) { \
+                    uint16_t x = stmt.o1.u1; stmt.o1.u1 = stmt.o2.u1; stmt.o2.u1 = x; \
+                    stmt.opcode = INSTR_##a; \
+                } \
+                break
+            PAIR(MUL_VF, MUL_FV);
+            PAIR(LT, GT);
+            PAIR(LE, GE);
+            SINGLE(MUL_F);
+            SINGLE(MUL_V);
+            SINGLE(ADD_F);
+            SINGLE(ADD_V);
+            SINGLE(EQ_F);
+            SINGLE(EQ_V);
+            SINGLE(EQ_S);
+            SINGLE(EQ_E);
+            SINGLE(EQ_FNC);
+            SINGLE(NE_F);
+            SINGLE(NE_V);
+            SINGLE(NE_S);
+            SINGLE(NE_E);
+            SINGLE(NE_FNC);
+            SINGLE(AND);
+            SINGLE(OR);
+            SINGLE(BITAND);
+            SINGLE(BITOR);
+#undef PAIR
+#undef SINGLE
+        }
+    }
+
+    vec_push(code->statements, stmt);
     vec_push(code->linenums,   (int)ctx.line);
     vec_push(code->columnnums, (int)ctx.column);
 }
