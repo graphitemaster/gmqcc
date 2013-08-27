@@ -535,6 +535,15 @@ When passing on varargs to a different functions, this turns some
 static error cases into warnings. Like when the caller's varargs are
 restricted to a different type than the callee's parameter. Or a list
 of unrestricted varargs is passed into restricted varargs.
+.It Fl f Ns Cm typeless-stores
+Always use STORE_F, LOAD_F, STOREP_F when accessing scalar variables.
+This is somewhat incorrect assembly instruction use, but in all engines
+they do exactly the same. This makes disassembly output harder to read,
+breaks decompilers, but causes the output file to be better compressible.
+.It Fl f Ns Cm sort-operands
+In commutative instructions, always put the lower-numbered operand first.
+This shaves off 1 byte of entropy from all these instructions, reducing
+compressed size of the output file.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds

@@ -273,6 +273,21 @@
     UNSAFE_VARARGS = false
 
 
+    #Always use STORE_F, LOAD_F, STOREP_F when accessing scalar variables.
+    #This is somewhat incorrect assembly instruction use, but in all engines
+    #they do exactly the same. This makes disassembly output harder to read,
+    #breaks decompilers, but causes the output file to be better compressible.
+
+    TYPELESS_STORES = false
+
+
+    #In commutative instructions, always put the lower-numbered operand first.
+    #This shaves off 1 byte of entropy from all these instructions, reducing
+    #compressed size of the output file.
+
+    SORT_OPERANDS = false
+
+
 
 [warnings]
     #Generate a warning about variables which are declared but never
