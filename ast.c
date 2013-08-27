@@ -443,6 +443,7 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
     self->op = op;
     self->left = left;
     self->right = right;
+    self->right_first = false;
 
     ast_propagate_effects(self, left);
     ast_propagate_effects(self, right);
@@ -2037,6 +2038,8 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
     if ((OPTS_FLAG(SHORT_LOGIC) || OPTS_FLAG(PERL_LOGIC)) &&
         (self->op == INSTR_AND || self->op == INSTR_OR))
     {
+        /* NOTE: The short-logic path will ignore right_first */
+
         /* short circuit evaluation */
         ir_block *other, *merge;
         ir_block *from_left, *from_right;
@@ -2134,13 +2137,21 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         return true;
     }
 
-    cgen = self->left->codegen;
-    if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
-        return false;
-
-    cgen = self->right->codegen;
-    if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
-        return false;
+    if (self->right_first) {
+        cgen = self->right->codegen;
+        if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
+            return false;
+        cgen = self->left->codegen;
+        if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
+            return false;
+    } else {
+        cgen = self->left->codegen;
+        if (!(*cgen)((ast_expression*)(self->left), func, false, &left))
+            return false;
+        cgen = self->right->codegen;
+        if (!(*cgen)((ast_expression*)(self->right), func, false, &right))
+            return false;
+    }
 
     *out = ir_block_create_binop(func->curblock, ast_ctx(self), ast_function_label(func, "bin"),
                                  self->op, left, right);
