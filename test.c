@@ -445,9 +445,6 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
                     goto failure;
                 }
 
-                if (value && (*value == ' ' || *value == '\t'))
-                    value++;
-
                 /*
                  * Value will contain a newline character at the end, we need to strip
                  * this otherwise kaboom, seriously, kaboom :P
