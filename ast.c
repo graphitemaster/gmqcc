@@ -1396,8 +1396,10 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             }
 
             /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-            if (!array->expression.count || array->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
+            if (!array->expression.count || array->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
                 compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
+                return false;
+            }
 
             elemtype = array->expression.next;
             vtype = elemtype->vtype;
@@ -1463,8 +1465,10 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         }
 
         /* same as with field arrays */
-        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE))
+        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+            return false;
+        }
 
         v = ir_builder_create_global(ir, self->name, vtype);
         if (!v) {
@@ -1603,6 +1607,7 @@ static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
         if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
             compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+            return false;
         }
 
         self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
