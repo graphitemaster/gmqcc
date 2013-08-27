@@ -71,50 +71,49 @@ void code_push_statement(code_t *code, prog_section_statement_t *stmt_in, lex_ct
         }
     }
 
+
     if (OPTS_FLAG(SORT_OPERANDS)) {
+        uint16_t pair;
+
         switch (stmt.opcode) {
-#define SINGLE(a) \
-            case INSTR_##a: \
-                if (stmt.o1.u1 < stmt.o2.u1) { \
-                    uint16_t x = stmt.o1.u1; stmt.o1.u1 = stmt.o2.u1; stmt.o2.u1 = x; \
-                } \
-                break
-#define PAIR(a,b) \
-            case INSTR_##a: \
-                if (stmt.o1.u1 < stmt.o2.u1) { \
-                    uint16_t x = stmt.o1.u1; stmt.o1.u1 = stmt.o2.u1; stmt.o2.u1 = x; \
-                    stmt.opcode = INSTR_##b; \
-                } \
-                break; \
-            case INSTR_##b: \
-                if (stmt.o1.u1 < stmt.o2.u1) { \
-                    uint16_t x = stmt.o1.u1; stmt.o1.u1 = stmt.o2.u1; stmt.o2.u1 = x; \
-                    stmt.opcode = INSTR_##a; \
-                } \
-                break
-            PAIR(MUL_VF, MUL_FV);
-            PAIR(LT, GT);
-            PAIR(LE, GE);
-            SINGLE(MUL_F);
-            SINGLE(MUL_V);
-            SINGLE(ADD_F);
-            SINGLE(ADD_V);
-            SINGLE(EQ_F);
-            SINGLE(EQ_V);
-            SINGLE(EQ_S);
-            SINGLE(EQ_E);
-            SINGLE(EQ_FNC);
-            SINGLE(NE_F);
-            SINGLE(NE_V);
-            SINGLE(NE_S);
-            SINGLE(NE_E);
-            SINGLE(NE_FNC);
-            SINGLE(AND);
-            SINGLE(OR);
-            SINGLE(BITAND);
-            SINGLE(BITOR);
-#undef PAIR
-#undef SINGLE
+            case INSTR_MUL_F:
+            case INSTR_MUL_V:
+            case INSTR_ADD_F:
+            case INSTR_EQ_F:
+            case INSTR_EQ_S:
+            case INSTR_EQ_E:
+            case INSTR_EQ_FNC:
+            case INSTR_NE_F:
+            case INSTR_NE_V:
+            case INSTR_NE_S:
+            case INSTR_NE_E:
+            case INSTR_NE_FNC:
+            case INSTR_AND:
+            case INSTR_OR:
+            case INSTR_BITAND:
+            case INSTR_BITOR:
+                if (stmt.o1.u1 < stmt.o2.u1) {
+                    uint16_t a = stmt.o2.u1;
+                    stmt.o1.u1 = stmt.o2.u1;
+                    stmt.o2.u1 = a;
+                }
+                break;
+
+            case INSTR_MUL_VF: pair = INSTR_MUL_FV; goto case_pair_gen;
+            case INSTR_MUL_FV: pair = INSTR_MUL_VF; goto case_pair_gen;
+            case INSTR_LT:     pair = INSTR_GT;     goto case_pair_gen;
+            case INSTR_GT:     pair = INSTR_LT;     goto case_pair_gen;
+            case INSTR_LE:     pair = INSTR_GT;     goto case_pair_gen;
+            case INSTR_GE:     pair = INSTR_LE;
+
+            case_pair_gen:
+                if (stmt.o1.u1 < stmt.o2.u1) {
+                    uint16_t x  = stmt.o1.u1;
+                    stmt.o1.u1  = stmt.o2.u1;
+                    stmt.o2.u1  = x;
+                    stmt.opcode = pair;
+                }
+                break;
         }
     }
 
