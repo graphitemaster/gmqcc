@@ -642,25 +642,13 @@ static bool ir_function_pass_peephole(ir_function *self)
                 if (!instr_is_operation(oper->opcode))
                     continue;
 
-                /* Old engine's mul for vector+float cannot deal with aliased inputs. */
+                /* Don't change semantics of MUL_VF in engines where these may not alias. */
                 if (OPTS_FLAG(LEGACY_VECTOR_MATHS)) {
                     if (oper->opcode == INSTR_MUL_VF && oper->_ops[2]->memberof == oper->_ops[1])
                         continue;
                     if (oper->opcode == INSTR_MUL_FV && oper->_ops[1]->memberof == oper->_ops[2])
                         continue;
                 }
-
-                /* Emulated bitxor cannot deal with aliased inputs. */
-                if (oper->opcode == VINSTR_BITXOR && oper->_ops[2]->memberof == oper->_ops[1])
-                    continue;
-
-                /* Emulated bitand/bitor for vector+float cannot deal with aliased inputs. */
-                if (oper->opcode == VINSTR_BITAND_VF && oper->_ops[2]->memberof == oper->_ops[1])
-                    continue;
-                if (oper->opcode == VINSTR_BITOR_VF && oper->_ops[2]->memberof == oper->_ops[1])
-                    continue;
-                if (oper->opcode == VINSTR_BITXOR_VF && oper->_ops[2]->memberof == oper->_ops[1])
-                    continue;
 
                 value = oper->_ops[0];
 
@@ -2526,9 +2514,9 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
          * same source and destination operand otherwise, as the engine may
          * read the source multiple times. */
         if (instr->opcode == INSTR_MUL_VF ||
-            instr->opcode == VINSTR_BITXOR ||
             instr->opcode == VINSTR_BITAND_VF ||
             instr->opcode == VINSTR_BITOR_VF ||
+            instr->opcode == VINSTR_BITXOR ||
             instr->opcode == VINSTR_BITXOR_VF ||
             instr->opcode == VINSTR_BITXOR_V)
         {
@@ -2539,7 +2527,12 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
             if (value->memberof && ir_value_life_merge(value->memberof, instr->eid+1))
                 *changed = true;
         }
-        else if (instr->opcode == INSTR_MUL_FV || instr->opcode == INSTR_LOAD_V)
+
+        if (instr->opcode == INSTR_MUL_FV ||
+            instr->opcode == INSTR_LOAD_V ||
+            instr->opcode == VINSTR_BITXOR ||
+            instr->opcode == VINSTR_BITXOR_VF ||
+            instr->opcode == VINSTR_BITXOR_V)
         {
             value = instr->_ops[1];
             /* the float source will get an additional lifetime */
