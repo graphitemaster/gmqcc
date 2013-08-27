@@ -1348,6 +1348,20 @@ static bool ast_global_array_set(ast_value *self)
     return true;
 }
 
+static bool check_array(ast_value *self, ast_value *array)
+{
+    if (array->expression.flags & AST_FLAG_ARRAY_INIT && !array->initlist) {
+        compile_error(ast_ctx(self), "array without size: %s", self->name);
+        return false;
+    }
+    /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
+    if (!array->expression.count || array->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
+        compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
+        return false;
+    }
+    return true;
+}
+
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 {
     ir_value *v = NULL;
@@ -1395,11 +1409,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 return false;
             }
 
-            /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-            if (!array->expression.count || array->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
-                compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)array->expression.count);
+            if (!check_array(self, array))
                 return false;
-            }
 
             elemtype = array->expression.next;
             vtype = elemtype->vtype;
@@ -1465,10 +1476,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         }
 
         /* same as with field arrays */
-        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
-            compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+        if (!check_array(self, self))
             return false;
-        }
 
         v = ir_builder_create_global(ir, self->name, vtype);
         if (!v) {
@@ -1605,10 +1614,8 @@ static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         }
 
         /* we are lame now - considering the way QC works we won't tolerate arrays > 1024 elements */
-        if (!self->expression.count || self->expression.count > OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE)) {
-            compile_error(ast_ctx(self), "Invalid array of size %lu", (unsigned long)self->expression.count);
+        if (!check_array(self, self))
             return false;
-        }
 
         self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
         if (!self->ir_values) {
