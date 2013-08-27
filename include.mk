@@ -95,7 +95,7 @@ SPLINTFLAGS =                 \
     -abstract                 \
     -statictrans              \
     -castfcnptr
-    
+
 #always the right rule
 default: all
 
@@ -108,7 +108,7 @@ uninstall:
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
 
-STYLE_MATCH = \( -name '*.[ch]' -or -name '*.def' \)
+STYLE_MATCH = \( -name '*.[ch]' -or -name '*.def' -or -name '*.qc' \)
 
 whitespace:
 	find . -type f $(STYLE_MATCH) -exec sed -i 's/ *$$//' '{}' ';'
