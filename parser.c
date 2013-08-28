@@ -5112,8 +5112,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
                 if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
                     ast_delete(var);
-                    var = NULL;
-                    goto skipvar;
+                    if (ast_istype(old, ast_value))
+                        var = (ast_value*)old;
+                    else {
+                        var = NULL;
+                        goto skipvar;
+                    }
                 }
             }
         }
