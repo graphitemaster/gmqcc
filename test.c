@@ -923,7 +923,6 @@ static void task_destroy(void) {
          * Close any open handles to files or processes here.  It's mighty
          * annoying to have to do all this cleanup work.
          */
-        if (task_tasks[i].runhandles) task_pclose(task_tasks[i].runhandles);
         if (task_tasks[i].stdoutlog)  fs_file_close (task_tasks[i].stdoutlog);
         if (task_tasks[i].stderrlog)  fs_file_close (task_tasks[i].stderrlog);
 
@@ -1060,7 +1059,6 @@ static bool task_trymatch(size_t i, char ***line) {
                 }
             }
 
-
             /*
              * We need to ignore null lines for when -pp is used (preprocessor), since
              * the preprocessor is likely to create empty newlines in certain macro
@@ -1194,6 +1192,18 @@ static size_t task_schedualize(size_t *pad) {
                 task_tasks[i].tmpl->rulesfile,
                 (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen("(failed to compile)") - pad[2]),
                 "(failed to compile)"
+            );
+            failed++;
+            continue;
+        }
+
+        if (task_pclose(task_tasks[i].runhandles) != EXIT_SUCCESS && strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {
+            con_out("failure:   `%s` %*s %*s\n",
+                task_tasks[i].tmpl->description,
+                (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),
+                task_tasks[i].tmpl->rulesfile,
+                (pad[1] + pad[2] - strlen(task_tasks[i].tmpl->rulesfile)) + (strlen("(compiler didn't return exit success)") - pad[2]),
+                "(compiler didn't return exit success)"
             );
             failed++;
             continue;
