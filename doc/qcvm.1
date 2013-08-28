@@ -69,7 +69,9 @@ Append a string parameter to be passed to
 The following builtin functions are available:
 .Bl -ohang
 .It Li 1) void print(string...) = #1;
-.D1 Print the passed strings to stdout. At most 8 strings are allowed.
+.Bd -unfilled -offset indent -compact
+Print the passed strings to stdout. At most 8 strings are allowed.
+.Ed
 .It Li 2) string ftos(float) = #2;
 .D1 Convert a float to a string.
 .It Li 3) entity spawn() = #3;
