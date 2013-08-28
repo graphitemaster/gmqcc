@@ -41,3 +41,5 @@ check_opt() {
 check_opt FLAGS f
 check_opt WARNS W
 check_opt OPTIMIZATIONS O
+
+for i in doc/*.1; do mandoc -Tlint -Wall "$i"; done
