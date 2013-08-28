@@ -707,8 +707,15 @@ int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
         bool                    isfalse = (fold_immvalue_float(condval) == 0.0f && branch->on_false);
         ast_expression         *path    = (istrue)  ? branch->on_true  :
                                           (isfalse) ? branch->on_false : NULL;
-        if (!path)
-            return false;
+        if (!path) {
+            /*
+             * no path to take implies that the evaluation is if(0) and there
+             * is no else block. so eliminate all the code.
+             */
+            ++opts_optimizationcount[OPTIM_CONST_FOLD_DCE];
+            return true;
+        }
+
         if (!(elide = ir_function_create_block(ast_ctx(branch), func->ir_func, ast_function_label(func, ((istrue) ? "ontrue" : "onfalse")))))
             return false;
         if (!(*(cgen = path->codegen))((ast_expression*)path, func, false, &dummy))
