@@ -1060,11 +1060,13 @@ static bool task_trymatch(size_t i, char ***line) {
                 }
             }
 
+
             /*
-             * If data is just null now, that means the line was an empty
-             * one and for that, we just ignore it.
+             * We need to ignore null lines for when -pp is used (preprocessor), since
+             * the preprocessor is likely to create empty newlines in certain macro
+             * instantations, otherwise it's in the wrong nature to ignore empty newlines.
              */
-            if (!*data)
+            if (!strcmp(tmpl->proceduretype, "-pp") && !*data)
                 continue;
 
             if (vec_size(tmpl->comparematch) > compare) {
