@@ -1187,13 +1187,13 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
      * intrinsic call and just evaluate it i.e constant fold it.
      */
     if (fold && ast_istype(fun, ast_value) && ((ast_value*)fun)->intrinsic) {
-        ast_expression **exprs = NULL;
-        ast_expression *fold   = NULL;
+        ast_expression **exprs  = NULL;
+        ast_expression *foldval = NULL;
 
         for (i = 0; i < paramcount; i++)
             vec_push(exprs, sy->out[fid+1 + i].out);
 
-        if (!(fold = intrin_fold(parser->intrin, (ast_value*)fun, exprs))) {
+        if (!(foldval = intrin_fold(parser->intrin, (ast_value*)fun, exprs))) {
             vec_free(exprs);
             goto fold_leave;
         }
@@ -1202,7 +1202,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
          * Blub: what sorts of unreffing and resizing of
          * sy->out should I be doing here?
          */
-        sy->out[fid] = syexp(fold->node.context, fold);
+        sy->out[fid] = syexp(foldval->node.context, foldval);
         vec_shrinkby(sy->out, 1);
         vec_free(exprs);
 
