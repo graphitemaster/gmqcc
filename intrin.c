@@ -39,6 +39,7 @@
             "__builtin_" NAME,                                         \
             TYPE_FUNCTION                                              \
         );                                                             \
+        (VALUE)->intrinsic = true;                                     \
         (VALUE)->expression.next = (ast_expression*)ast_value_new (    \
             parser_ctx(intrin->parser),                                \
             STYPE,                                                     \
@@ -437,6 +438,19 @@ intrin_t *intrin_init(parser_t *parser) {
 void intrin_cleanup(intrin_t *intrin) {
     vec_free(intrin->intrinsics);
     mem_d(intrin);
+}
+
+ast_expression *intrin_fold(intrin_t *intrin, ast_value *value, ast_expression **exprs) {
+    size_t i;
+
+    if (!value || !value->name)
+        return NULL;
+
+    for (i = 0; i < vec_size(intrin->intrinsics); i++)
+        if (!strcmp(value->name, intrin->intrinsics[i].name))
+            return fold_intrin(intrin->fold, value->name, exprs);
+
+    return NULL;
 }
 
 ast_expression *intrin_func(intrin_t *intrin, const char *name) {

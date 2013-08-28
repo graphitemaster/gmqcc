@@ -1119,6 +1119,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
 
     size_t          fid;
     size_t          paramcount, i;
+    bool            fold = true;
 
     fid = vec_last(sy->ops).off;
     vec_shrinkby(sy->ops, 1);
@@ -1161,13 +1162,58 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         vec_shrinkby(sy->out, 1);
         return true;
     }
+
+    /*
+     * Now we need to determine if the function that is being called is
+     * an intrinsic so we can evaluate if the arguments to it are constant
+     * and than fruitfully fold them.
+     */
+#define fold_can_1(X)  \
+    (ast_istype(((ast_expression*)(X)), ast_value) && (X)->hasvalue && ((X)->cvq == CV_CONST) && \
+                ((ast_expression*)(X))->vtype != TYPE_FUNCTION)
+
+    if (fid + 1 < vec_size(sy->out))
+        ++paramcount;
+
+    for (i = 0; i < paramcount; ++i) {
+        if (!fold_can_1((ast_value*)sy->out[fid + 1 + i].out)) {
+            fold = false;
+            break;
+        }
+    }
+
+    /*
+     * All is well which ends well, if we make it into here we can ignore the
+     * intrinsic call and just evaluate it i.e constant fold it.
+     */
+    if (fold && ast_istype(fun, ast_value) && ((ast_value*)fun)->intrinsic) {
+        ast_expression **exprs = NULL;
+        ast_expression *fold   = NULL;
+
+        for (i = 0; i < paramcount; i++)
+            vec_push(exprs, sy->out[fid+1 + i].out);
+
+        if (!(fold = intrin_fold(parser->intrin, (ast_value*)fun, exprs))) {
+            vec_free(exprs);
+            goto fold_leave;
+        }
+
+        /*
+         * Blub: what sorts of unreffing and resizing of
+         * sy->out should I be doing here?
+         */
+        sy->out[fid] = syexp(fold->node.context, fold);
+        vec_shrinkby(sy->out, 1);
+        vec_free(exprs);
+
+        return true;
+    }
+
+    fold_leave:
     call = ast_call_new(sy->ops[vec_size(sy->ops)].ctx, fun);
 
     if (!call)
         return false;
-
-    if (fid+1 < vec_size(sy->out))
-        ++paramcount;
 
     if (fid+1 + paramcount != vec_size(sy->out)) {
         parseerror(parser, "internal error: parameter count mismatch: (%lu+1+%lu), %lu",

@@ -129,13 +129,15 @@ ast_expression *fold_constgen_float (fold_t *, qcfloat_t);
 ast_expression *fold_constgen_vector(fold_t *, vec3_t);
 ast_expression *fold_constgen_string(fold_t *, const char *, bool);
 bool            fold_generate       (fold_t *, ir_builder *);
-ast_expression *fold_op             (fold_t *, const oper_info *, ast_expression**);
+ast_expression *fold_op             (fold_t *, const oper_info *, ast_expression **);
+ast_expression *fold_intrin         (fold_t *, const char      *, ast_expression **);
 
 int             fold_cond           (ir_value *, ast_function *, ast_ifthen *);
 
 /* intrin.c */
 intrin_t       *intrin_init            (parser_t *parser);
 void            intrin_cleanup         (intrin_t *intrin);
+ast_expression *intrin_fold            (intrin_t *intrin, ast_value *, ast_expression **);
 ast_expression *intrin_func            (intrin_t *intrin, const char *name);
 ast_expression *intrin_debug_typestring(intrin_t *intrin);
 

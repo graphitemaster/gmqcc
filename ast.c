@@ -369,7 +369,8 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
     self->getter = NULL;
     self->desc   = NULL;
 
-    self->argcounter  = NULL;
+    self->argcounter = NULL;
+    self->intrinsic = false;
 
     return self;
 }

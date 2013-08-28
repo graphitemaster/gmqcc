@@ -673,12 +673,74 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
     return NULL;
 }
 
+#define expect(X)                                                                                        \
+    do {                                                                                                 \
+        if (vec_size(params) != (X)) {                                                                   \
+            compile_error(                                                                               \
+                fold_ctx(fold),                                                                          \
+                "internal error: attempted to constant-fold with invalid paramaters for intrinsic `%s`", \
+                intrin                                                                                   \
+            );                                                                                           \
+            return NULL;                                                                                 \
+        }                                                                                                \
+    } while (0)
+
+ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **params) {
+    if (!fold)   return NULL;
+    if (!intrin) return NULL;
+
+    if (!strcmp(intrin, "__builtin_exp")) {
+        expect(1);
+        ++opts_optimizationcount[OPTIM_CONST_FOLD];
+        return fold_constgen_float(fold, exp(fold_immvalue_float((ast_value*)params[0])));
+    }
+
+    if (!strcmp(intrin, "__builtin_mod")) {
+        expect(2);
+        ++opts_optimizationcount[OPTIM_CONST_FOLD];
+        return fold_constgen_float(
+                    fold,
+                    fmodf(
+                        fold_immvalue_float((ast_value*)params[0]),
+                        fold_immvalue_float((ast_value*)params[1])
+                    )
+                );
+    }
+
+    if (!strcmp(intrin, "__builtin_pow")) {
+        expect(2);
+        ++opts_optimizationcount[OPTIM_CONST_FOLD];
+        return fold_constgen_float(
+                    fold,
+                    powf(
+                        fold_immvalue_float((ast_value*)params[0]),
+                        fold_immvalue_float((ast_value*)params[1])
+                    )
+                );
+    }
+
+    if (!strcmp(intrin, "__builtin_isnan")) {
+        expect(1);
+        ++opts_optimizationcount[OPTIM_CONST_FOLD];
+        return fold_constgen_float(fold, isnan(fold_immvalue_float((ast_value*)params[0])) != 0.0f);
+    }
+
+    if (!strcmp(intrin, "__builtin_fabs")) {
+        expect(1);
+        ++opts_optimizationcount[OPTIM_CONST_FOLD];
+        return fold_constgen_float(fold, fabs(fold_immvalue_float((ast_value*)params[0])));
+    }
+
+    return NULL;
+}
+
 /*
  * These are all the actual constant folding methods that happen in between
  * the AST/IR stage of the compiler , i.e eliminating branches for const
  * expressions, which is the only supported thing so far. We undefine the
  * testing macros here because an ir_value is differant than an ast_value.
  */
+#undef expect
 #undef isfloat
 #undef isstring
 #undef isvector

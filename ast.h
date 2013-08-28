@@ -207,6 +207,9 @@ struct ast_value_s
     /* ONLY for arrays in progs version up to 6 */
     ast_value *setter;
     ast_value *getter;
+
+
+    bool      intrinsic; /* true if associated with intrinsic */
 };
 
 ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int qctype);
