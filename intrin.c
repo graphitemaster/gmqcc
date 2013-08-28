@@ -348,6 +348,52 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
 
     return (ast_expression*)value;
 }
+
+static ast_expression *intrin_fabs(intrin_t *intrin) {
+    /*
+     * float fabs(float x) {
+     *     return x < 0 ? -x : x;
+     * }
+     */
+    static ast_value *value = NULL;
+    if (!value) {
+        ast_value    *arg1   = ast_value_new(parser_ctx(intrin->parser), "x",     TYPE_FLOAT);
+        ast_block    *body   = ast_block_new(parser_ctx(intrin->parser));
+        ast_function *func   = NULL;
+
+        INTRIN_VAL(value, "fabs", func, "<float>", TYPE_FLOAT);
+
+        vec_push(body->exprs,
+            (ast_expression*)ast_return_new(
+                parser_ctx(intrin->parser),
+                (ast_expression*)ast_ternary_new(
+                    parser_ctx(intrin->parser),
+                    (ast_expression*)ast_binary_new(
+                        parser_ctx(intrin->parser),
+                        INSTR_LE,
+                        (ast_expression*)arg1,
+                        (ast_expression*)intrin->fold->imm_float[0]
+                    ),
+                    (ast_expression*)ast_binary_new(
+                        parser_ctx(intrin->parser),
+                        INSTR_SUB_F,
+                        (ast_expression*)intrin->fold->imm_float[0],
+                        (ast_expression*)arg1
+                    ),
+                    (ast_expression*)arg1
+                )
+            )
+        );
+
+        vec_push(value->expression.params, arg1);
+        vec_push(func->blocks, body);
+
+        INTRIN_REG(func, value);
+    }
+
+    return (ast_expression*)value;
+}
+
 #undef INTRIN_REG
 #undef INTRIN_VAL
 
@@ -365,6 +411,7 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_mod,              "__builtin_mod",              "mod"},
     {&intrin_pow,              "__builtin_pow",              "pow"},
     {&intrin_isnan,            "__builtin_isnan",            "isnan"},
+    {&intrin_fabs,             "__builtin_fabs",             "fabs"},
     {&intrin_debug_typestring, "__builtin_debug_typestring", ""}
 };
 
