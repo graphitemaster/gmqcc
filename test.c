@@ -621,17 +621,17 @@ failure:
     return NULL;
 }
 
-static void task_template_destroy(task_template_t **tmpl) {
+static void task_template_destroy(task_template_t *tmpl) {
     if (!tmpl)
         return;
 
-    if ((*tmpl)->description)    mem_d((*tmpl)->description);
-    if ((*tmpl)->proceduretype)  mem_d((*tmpl)->proceduretype);
-    if ((*tmpl)->compileflags)   mem_d((*tmpl)->compileflags);
-    if ((*tmpl)->executeflags)   mem_d((*tmpl)->executeflags);
-    if ((*tmpl)->sourcefile)     mem_d((*tmpl)->sourcefile);
-    if ((*tmpl)->rulesfile)      mem_d((*tmpl)->rulesfile);
-    if ((*tmpl)->testflags)      mem_d((*tmpl)->testflags);
+    if (tmpl->description)    mem_d(tmpl->description);
+    if (tmpl->proceduretype)  mem_d(tmpl->proceduretype);
+    if (tmpl->compileflags)   mem_d(tmpl->compileflags);
+    if (tmpl->executeflags)   mem_d(tmpl->executeflags);
+    if (tmpl->sourcefile)     mem_d(tmpl->sourcefile);
+    if (tmpl->rulesfile)      mem_d(tmpl->rulesfile);
+    if (tmpl->testflags)      mem_d(tmpl->testflags);
 
     /*
      * Delete all allocated string for task tmpl then destroy the
@@ -639,18 +639,18 @@ static void task_template_destroy(task_template_t **tmpl) {
      */
     {
         size_t i = 0;
-        for (; i < vec_size((*tmpl)->comparematch); i++)
-            mem_d((*tmpl)->comparematch[i]);
+        for (; i < vec_size(tmpl->comparematch); i++)
+            mem_d(tmpl->comparematch[i]);
 
-        vec_free((*tmpl)->comparematch);
+        vec_free(tmpl->comparematch);
     }
 
     /*
      * Nullify all the template members otherwise NULL comparision
      * checks will fail if tmpl pointer is reused.
      */
-    mem_d((*tmpl)->tempfilename);
-    mem_d(*tmpl);
+    mem_d(tmpl->tempfilename);
+    mem_d(tmpl);
 }
 
 /*
@@ -948,7 +948,7 @@ static void task_destroy(void) {
         mem_d(task_tasks[i].stdoutlogfile);
         mem_d(task_tasks[i].stderrlogfile);
 
-        task_template_destroy(&task_tasks[i].tmpl);
+        task_template_destroy(task_tasks[i].tmpl);
     }
     vec_free(task_tasks);
 }
