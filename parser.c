@@ -1714,6 +1714,15 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
             }
 
+            if (olast &&
+                olast->id != op->id &&
+                (op->id    == opid1('&') || op->id    == opid1('|') || op->id    == opid1('^')) &&
+                (olast->id == opid1('&') || olast->id == opid1('|') || olast->id == opid1('^')))
+            {
+                (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around bitwise operations");
+                warn_truthvalue = false;
+            }
+
             while (olast && (
                     (op->prec < olast->prec) ||
                     (op->assoc == ASSOC_LEFT && op->prec <= olast->prec) ) )
