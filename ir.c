@@ -3464,6 +3464,14 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     if (irfun->builtin)
         return true;
 
+    /*
+     * If there is no definition and the thing is eraseable, we can ignore
+     * outputting the function to begin with.
+     */
+    if (global->flags & IR_FLAG_ERASEABLE && irfun->code_function_def < 0) {
+        return true;
+    }
+
     if (irfun->code_function_def < 0) {
         irerror(irfun->context, "`%s`: IR global wasn't generated, failed to access function-def", irfun->name);
         return false;
@@ -3563,6 +3571,14 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     if (OPTS_OPTION_BOOL(OPTION_G) || !islocal)
     {
         pushdef = true;
+
+        /*
+         * if we're eraseable and the function isn't referenced ignore outputting
+         * the function.
+         */
+        if (global->flags & IR_FLAG_ERASEABLE && vec_size(global->reads) == 0) {
+            return true;
+        }
 
         if (OPTS_OPTIMIZATION(OPTIM_STRIP_CONSTANT_NAMES) &&
             !(global->flags & IR_FLAG_INCLUDE_DEF) &&

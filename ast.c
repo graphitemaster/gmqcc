@@ -1385,6 +1385,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         self->ir_v = func->value;
         if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
             self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
+        if (self->expression.flags & AST_FLAG_ERASEABLE)
+            self->ir_v->flags |= IR_FLAG_ERASEABLE;
         /* The function is filled later on ast_function_codegen... */
         return true;
     }
@@ -1426,8 +1428,11 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             v->unique_life = true;
             v->locked      = true;
             array->ir_v = self->ir_v = v;
+
             if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
                 self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
+            if (self->expression.flags & AST_FLAG_ERASEABLE)
+                self->ir_v->flags |= IR_FLAG_ERASEABLE;
 
             namelen = strlen(self->name);
             name    = (char*)mem_a(namelen + 16);
@@ -1460,6 +1465,9 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             self->ir_v = v;
             if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
                 self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
+
+            if (self->expression.flags & AST_FLAG_ERASEABLE)
+                self->ir_v->flags |= IR_FLAG_ERASEABLE;
         }
         return true;
     }
@@ -1489,8 +1497,11 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         v->context = ast_ctx(self);
         v->unique_life = true;
         v->locked      = true;
+
         if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
             v->flags |= IR_FLAG_INCLUDE_DEF;
+        if (self->expression.flags & AST_FLAG_ERASEABLE)
+            self->ir_v->flags |= IR_FLAG_ERASEABLE;
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
@@ -1531,8 +1542,11 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     /* link us to the ir_value */
     v->cvq = self->cvq;
     self->ir_v = v;
+
     if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
         self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
+    if (self->expression.flags & AST_FLAG_ERASEABLE)
+        self->ir_v->flags |= IR_FLAG_ERASEABLE;
 
     /* initialize */
     if (self->hasvalue) {

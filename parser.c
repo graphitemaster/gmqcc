@@ -2738,7 +2738,15 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
             else if (!strcmp(parser_tokval(parser), "inline")) {
                 flags |= AST_FLAG_INLINE;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
+                    parseerror(parser, "`inline` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
+            else if (!strcmp(parser_tokval(parser), "eraseable")) {
+                flags |= AST_FLAG_ERASEABLE;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`eraseable` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
                     return false;
                 }

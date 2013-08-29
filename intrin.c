@@ -50,6 +50,7 @@
             "__builtin_" NAME,                                         \
             (VALUE)                                                    \
         );                                                             \
+        (VALUE)->expression.flags |= AST_FLAG_ERASEABLE;               \
     } while (0)
 
 #define INTRIN_REG(FUNC, VALUE)                                        \
