@@ -165,6 +165,9 @@ static bool options_parse(int argc, char **argv) {
 
                     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,          true);
                     opts_set(opts.flags, CORRECT_LOGIC,                 true);
+                    opts_set(opts.flags, SHORT_LOGIC,                   true);
+                    opts_set(opts.flags, UNTYPED_NIL,                   true);
+                    opts_set(opts.flags, VARIADIC_ARGS,                 true);
                     opts_set(opts.flags, FALSE_EMPTY_STRINGS,           false);
                     opts_set(opts.flags, TRUE_EMPTY_STRINGS,            true);
                     opts_set(opts.flags, LOOP_LABELS,                   true);
@@ -174,6 +177,7 @@ static bool options_parse(int argc, char **argv) {
                     opts_set(opts.werror, WARN_MISSING_RETURN_VALUES,   true);
                     opts_set(opts.flags,  EXPRESSIONS_FOR_BUILTINS,     true);
                     opts_set(opts.warn,   WARN_BREAKDEF,                true);
+
 
 
                     OPTS_OPTION_U32(OPTION_STANDARD) = COMPILER_GMQCC;
