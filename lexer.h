@@ -235,7 +235,6 @@ static const oper_info c_operators[] = {
     { "&=",  2, opid2('&','='),     ASSOC_RIGHT, 2,  0,         false},
     { "^=",  2, opid2('^','='),     ASSOC_RIGHT, 2,  0,         false},
     { "|=",  2, opid2('|','='),     ASSOC_RIGHT, 2,  0,         false},
-    { "&~=", 2, opid3('&','~','='), ASSOC_RIGHT, 2,  0,         false},
 
     { ":",   0, opid2(':','?'),     ASSOC_RIGHT, 1,  0,         false},
 
