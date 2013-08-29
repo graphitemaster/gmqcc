@@ -765,7 +765,7 @@ int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
         ast_expression_codegen *cgen;
         ir_block               *elide;
         ir_value               *dummy;
-        bool                    istrue  = (fold_immvalue_float(condval) == 1.0f && branch->on_true);
+        bool                    istrue  = (fold_immvalue_float(condval) != 0.0f && branch->on_true);
         bool                    isfalse = (fold_immvalue_float(condval) == 0.0f && branch->on_false);
         ast_expression         *path    = (istrue)  ? branch->on_true  :
                                           (isfalse) ? branch->on_false : NULL;
