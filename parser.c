@@ -1629,7 +1629,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     /* only warn once about an assignment in a truth value because the current code
      * would trigger twice on: if(a = b && ...), once for the if-truth-value, once for the && part
      */
-    bool warn_truthvalue = true;
+    bool warn_parenthesis = true;
 
     /* count the parens because an if starts with one, so the
      * end of a condition is an unmatched closing paren
@@ -1703,24 +1703,30 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 (x) == opid2('|','=') || \
                 (x) == opid3('&','~','=') \
                 )
-            if (warn_truthvalue) {
+            if (warn_parenthesis) {
                 if ( (olast && IsAssignOp(olast->id) && (op->id == opid2('&','&') || op->id == opid2('|','|'))) ||
                      (olast && IsAssignOp(op->id) && (olast->id == opid2('&','&') || olast->id == opid2('|','|'))) ||
                      (truthvalue && !vec_size(sy.paren) && IsAssignOp(op->id))
                    )
                 {
                     (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around assignment used as truth value");
-                    warn_truthvalue = false;
+                    warn_parenthesis = false;
                 }
-            }
 
-            if (olast &&
-                olast->id != op->id &&
-                (op->id    == opid1('&') || op->id    == opid1('|') || op->id    == opid1('^')) &&
-                (olast->id == opid1('&') || olast->id == opid1('|') || olast->id == opid1('^')))
-            {
-                (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around bitwise operations");
-                warn_truthvalue = false;
+                if (olast && olast->id != op->id) {
+                    if ((op->id    == opid1('&') || op->id    == opid1('|') || op->id    == opid1('^')) &&
+                        (olast->id == opid1('&') || olast->id == opid1('|') || olast->id == opid1('^')))
+                    {
+                        (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around bitwise operations");
+                        warn_parenthesis = false;
+                    }
+                    else if ((op->id    == opid2('&','&') || op->id    == opid2('|','|')) &&
+                             (olast->id == opid2('&','&') || olast->id == opid2('|','|')))
+                    {
+                        (void)!parsewarning(parser, WARN_PARENTHESIS, "suggesting parenthesis around logical operations");
+                        warn_parenthesis = false;
+                    }
+                }
             }
 
             while (olast && (
