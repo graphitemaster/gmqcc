@@ -1692,6 +1692,17 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
             if (vec_size(sy.ops) && !vec_last(sy.ops).isparen)
                 olast = &operators[vec_last(sy.ops).etype-1];
 
+            /* first only apply higher precedences, assoc_left+equal comes after we warn about precedence rules */
+            while (olast && op->prec < olast->prec)
+            {
+                if (!parser_sy_apply_operator(parser, &sy))
+                    goto onerr;
+                if (vec_size(sy.ops) && !vec_last(sy.ops).isparen)
+                    olast = &operators[vec_last(sy.ops).etype-1];
+                else
+                    olast = NULL;
+            }
+
 #define IsAssignOp(x) (\
                 (x) == opid1('=') || \
                 (x) == opid2('+','=') || \
