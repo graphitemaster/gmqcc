@@ -673,63 +673,49 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
     return NULL;
 }
 
-#define expect(X)                                                                                        \
-    do {                                                                                                 \
-        if (vec_size(params) != (X)) {                                                                   \
-            compile_error(                                                                               \
-                fold_ctx(fold),                                                                          \
-                "internal error: attempted to constant-fold with invalid paramaters for intrinsic `%s`", \
-                intrin                                                                                   \
-            );                                                                                           \
-            return NULL;                                                                                 \
-        }                                                                                                \
-    } while (0)
+/*
+ * Constant folding for compiler intrinsics, simaler approach to operator
+ * folding, primarly: individual functions for each intrinsics to fold,
+ * and a generic selection function.
+ */
+static GMQCC_INLINE ast_expression *fold_intrin_mod(fold_t *fold, ast_value *lhs, ast_value *rhs) {
+    return fold_constgen_float(
+                fold,
+                fmodf(
+                    fold_immvalue_float(lhs),
+                    fold_immvalue_float(rhs)
+                )
+            );
+}
 
-ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **params) {
-    if (!fold)   return NULL;
-    if (!intrin) return NULL;
+static GMQCC_INLINE ast_expression *fold_intrin_pow(fold_t *fold, ast_value *lhs, ast_value *rhs) {
+    return fold_constgen_float(
+                fold,
+                powf(
+                    fold_immvalue_float(lhs),
+                    fold_immvalue_float(rhs)
+                )
+            );
+}
 
-    if (!strcmp(intrin, "__builtin_exp")) {
-        expect(1);
-        ++opts_optimizationcount[OPTIM_CONST_FOLD];
-        return fold_constgen_float(fold, exp(fold_immvalue_float((ast_value*)params[0])));
-    }
+static GMQCC_INLINE ast_expression *fold_intrin_exp(fold_t *fold, ast_value *value) {
+    return fold_constgen_float(fold, exp(fold_immvalue_float(value)));
+}
 
-    if (!strcmp(intrin, "__builtin_mod")) {
-        expect(2);
-        ++opts_optimizationcount[OPTIM_CONST_FOLD];
-        return fold_constgen_float(
-                    fold,
-                    fmodf(
-                        fold_immvalue_float((ast_value*)params[0]),
-                        fold_immvalue_float((ast_value*)params[1])
-                    )
-                );
-    }
+static GMQCC_INLINE ast_expression *fold_intrin_isnan(fold_t *fold, ast_value *value) {
+    return fold_constgen_float(fold, isnan(fold_immvalue_float(value)) != 0.0f);
+}
 
-    if (!strcmp(intrin, "__builtin_pow")) {
-        expect(2);
-        ++opts_optimizationcount[OPTIM_CONST_FOLD];
-        return fold_constgen_float(
-                    fold,
-                    powf(
-                        fold_immvalue_float((ast_value*)params[0]),
-                        fold_immvalue_float((ast_value*)params[1])
-                    )
-                );
-    }
+static GMQCC_INLINE ast_expression *fold_intrin_fabs(fold_t *fold, ast_value *value) {
+    return fold_constgen_float(fold, fabs(fold_immvalue_float(value)));
+}
 
-    if (!strcmp(intrin, "__builtin_isnan")) {
-        expect(1);
-        ++opts_optimizationcount[OPTIM_CONST_FOLD];
-        return fold_constgen_float(fold, isnan(fold_immvalue_float((ast_value*)params[0])) != 0.0f);
-    }
-
-    if (!strcmp(intrin, "__builtin_fabs")) {
-        expect(1);
-        ++opts_optimizationcount[OPTIM_CONST_FOLD];
-        return fold_constgen_float(fold, fabs(fold_immvalue_float((ast_value*)params[0])));
-    }
+ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **arg) {
+    if (!strcmp(intrin, "mod"))   return fold_intrin_mod  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
+    if (!strcmp(intrin, "pow"))   return fold_intrin_pow  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
+    if (!strcmp(intrin, "exp"))   return fold_intrin_exp  (fold, (ast_value*)arg[0]);
+    if (!strcmp(intrin, "isnan")) return fold_intrin_isnan(fold, (ast_value*)arg[0]);
+    if (!strcmp(intrin, "fabs"))  return fold_intrin_fabs (fold, (ast_value*)arg[0]);
 
     return NULL;
 }

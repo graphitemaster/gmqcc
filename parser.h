@@ -43,6 +43,7 @@ typedef struct {
     ast_expression *(*intrin)(intrin_t *);
     const char       *name;
     const char       *alias;
+    size_t            args;
 } intrin_func_t;
 
 struct intrin_s {
