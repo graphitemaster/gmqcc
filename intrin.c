@@ -449,15 +449,8 @@ ast_expression *intrin_fold(intrin_t *intrin, ast_value *value, ast_expression *
 
     for (i = 0; i < vec_size(intrin->intrinsics); i++) {
         if (!strcmp(value->name, intrin->intrinsics[i].name)) {
-            if (intrin->intrinsics[i].args != vec_size(exprs)) {
-                intrin_error(
-                    intrin,
-                    "internal error: attempted to constant-fold with invalid paramaters for intrinsic `%s`\n"
-                    "   ==> expected %u arguments, got %u instead",
-                    value->name, intrin->intrinsics[i].args, vec_size(exprs)
-                );
+            if (intrin->intrinsics[i].args != vec_size(exprs))
                 return NULL;
-            }
             /* +10 to skip the "__builtin_" substring in the string */
             return fold_intrin(intrin->fold, value->name + 10, exprs);
         }
