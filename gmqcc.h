@@ -332,7 +332,6 @@ void *stat_mem_allocate  (size_t, size_t, const char *);
 bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-void  util_debug         (const char *, const char *, ...);
 void  util_endianswap    (void *,  size_t, unsigned int);
 
 size_t util_strtocmd         (const char *, char *, size_t);

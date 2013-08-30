@@ -253,8 +253,6 @@ static void code_create_header(code_t *code, prog_header_t *code_header, const c
     code_header->entfield          = code->entfields;
 
     if (OPTS_FLAG(DARKPLACES_STRING_TABLE_BUG)) {
-        util_debug("GEN", "Patching stringtable for -fdarkplaces-stringtablebug\n");
-
         /* >= + P */
         vec_push(code->chars, '\0'); /* > */
         vec_push(code->chars, '\0'); /* = */
@@ -403,8 +401,7 @@ static bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, u
 
 bool code_write(code_t *code, const char *filename, const char *lnofile) {
     prog_header_t  code_header;
-    FILE          *fp           = NULL;
-    size_t         it           = 2;
+    FILE          *fp = NULL;
 
     code_create_header(code, &code_header, filename, lnofile);
 
@@ -449,60 +446,6 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
     {
         fs_file_close(fp);
         return false;
-    }
-
-    util_debug("GEN","HEADER:\n");
-    util_debug("GEN","    version:    = %d\n", code_header.version );
-    util_debug("GEN","    crc16:      = %d\n", code_header.crc16   );
-    util_debug("GEN","    entfield:   = %d\n", code_header.entfield);
-    util_debug("GEN","    statements  = {.offset = % 8d, .length = % 8d}\n", code_header.statements.offset, code_header.statements.length);
-    util_debug("GEN","    defs        = {.offset = % 8d, .length = % 8d}\n", code_header.defs      .offset, code_header.defs      .length);
-    util_debug("GEN","    fields      = {.offset = % 8d, .length = % 8d}\n", code_header.fields    .offset, code_header.fields    .length);
-    util_debug("GEN","    functions   = {.offset = % 8d, .length = % 8d}\n", code_header.functions .offset, code_header.functions .length);
-    util_debug("GEN","    globals     = {.offset = % 8d, .length = % 8d}\n", code_header.globals   .offset, code_header.globals   .length);
-    util_debug("GEN","    strings     = {.offset = % 8d, .length = % 8d}\n", code_header.strings   .offset, code_header.strings   .length);
-
-    /* FUNCTIONS */
-    util_debug("GEN", "FUNCTIONS:\n");
-    for (; it < vec_size(code->functions); it++) {
-        size_t j = code->functions[it].entry;
-        util_debug("GEN", "    {.entry =% 5d, .firstlocal =% 5d, .locals =% 5d, .profile =% 5d, .name =% 5d, .file =% 5d, .nargs =% 5d, .argsize ={%d,%d,%d,%d,%d,%d,%d,%d} }\n",
-            code->functions[it].entry,
-            code->functions[it].firstlocal,
-            code->functions[it].locals,
-            code->functions[it].profile,
-            code->functions[it].name,
-            code->functions[it].file,
-            code->functions[it].nargs,
-            code->functions[it].argsize[0],
-            code->functions[it].argsize[1],
-            code->functions[it].argsize[2],
-            code->functions[it].argsize[3],
-            code->functions[it].argsize[4],
-            code->functions[it].argsize[5],
-            code->functions[it].argsize[6],
-            code->functions[it].argsize[7]
-
-        );
-        util_debug("GEN", "    NAME: %s\n", &code->chars[code->functions[it].name]);
-        /* Internal functions have no code */
-        if (code->functions[it].entry >= 0) {
-            util_debug("GEN", "    CODE:\n");
-            for (;;) {
-                if (code->statements[j].opcode != INSTR_DONE)
-                    util_debug("GEN", "        %-12s {% 5i,% 5i,% 5i}\n",
-                        util_instr_str[code->statements[j].opcode],
-                        code->statements[j].o1.s1,
-                        code->statements[j].o2.s1,
-                        code->statements[j].o3.s1
-                    );
-                else {
-                    util_debug("GEN", "        DONE  {0x00000,0x00000,0x00000}\n");
-                    break;
-                }
-                j++;
-            }
-        }
     }
 
     fs_file_close(fp);

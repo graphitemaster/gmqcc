@@ -54,20 +54,6 @@ const char *util_instr_str[VINSTR_END] = {
     "BITAND",     "BITOR"
 };
 
-void util_debug(const char *area, const char *ms, ...) {
-    va_list  va;
-    if (!OPTS_OPTION_BOOL(OPTION_DEBUG))
-        return;
-
-    if (!strcmp(area, "MEM") && !OPTS_OPTION_BOOL(OPTION_MEMCHK))
-        return;
-
-    va_start(va, ms);
-    con_out ("[%s] ", area);
-    con_vout(ms, va);
-    va_end  (va);
-}
-
 /*
  * only required if big endian .. otherwise no need to swap
  * data.

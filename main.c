@@ -568,6 +568,8 @@ int main(int argc, char **argv) {
 
     util_seed(time(0));
 
+    printf("size is: %u\n", (unsigned)sizeof(opts_cmd_t));
+
     if (!options_parse(argc, argv)) {
         return usage();
     }
@@ -649,8 +651,6 @@ int main(int argc, char **argv) {
             goto cleanup;
         }
     }
-
-    util_debug("COM", "starting ...\n");
 
     /* add macros */
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY) || OPTS_FLAG(FTEPP)) {
@@ -772,7 +772,6 @@ int main(int argc, char **argv) {
     }
 
 cleanup:
-    util_debug("COM", "cleaning ...\n");
     if (ftepp)
         ftepp_finish(ftepp);
     con_close();
