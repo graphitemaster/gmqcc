@@ -282,6 +282,21 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     return true;
 }
 
+static bool check_write_to(lex_ctx_t ctx, ast_expression *expr)
+{
+    if (ast_istype(expr, ast_value)) {
+        ast_value *val = (ast_value*)expr;
+        if (val->cvq == CV_CONST) {
+            if (val->name[0] == '#')
+                compile_error(ctx, "invalid assignment to a literal constant");
+            else
+                compile_error(ctx, "assignment to constant `%s`", val->name);
+            return false;
+        }
+    }
+    return true;
+}
+
 static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 {
     const oper_info *op;
@@ -289,7 +304,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     ast_expression *out = NULL;
     ast_expression *exprs[3];
     ast_block      *blocks[3];
-    ast_value      *asvalue[3];
     ast_binstore   *asbinstore;
     size_t i, assignop, addop, subop;
     qcint_t  generated_op = 0;
@@ -328,7 +342,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     for (i = 0; i < op->operands; ++i) {
         exprs[i]  = sy->out[vec_size(sy->out)+i].out;
         blocks[i] = sy->out[vec_size(sy->out)+i].block;
-        asvalue[i] = (ast_value*)exprs[i];
 
         if (exprs[i]->vtype == TYPE_NOEXPR &&
             !(i != 0 && op->id == opid2('?',':')) &&
@@ -881,9 +894,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ctx, exprs[0]);
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
         case opid3('+','+','P'):
@@ -898,9 +909,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 addop = INSTR_ADD_F;
             else
                 addop = INSTR_SUB_F;
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ast_ctx(exprs[0]), "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ast_ctx(exprs[0]), exprs[0]);
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
                                                         exprs[0],
@@ -926,9 +935,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 addop = INSTR_SUB_F;
                 subop = INSTR_ADD_F;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ast_ctx(exprs[0]), "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ast_ctx(exprs[0]), exprs[0]);
             if (ast_istype(exprs[0], ast_entfield)) {
                 out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
                                                         exprs[0],
@@ -955,9 +962,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ctx, exprs[0]);
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->vtype];
             else
@@ -992,9 +997,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ctx, exprs[0]);
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->vtype];
             else
@@ -1038,9 +1041,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ctx, exprs[0]);
             if (ast_istype(exprs[0], ast_entfield))
                 assignop = type_storep_instr[exprs[0]->vtype];
             else
@@ -1076,9 +1077,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = (ast_expression*)ast_binary_new(ctx, VINSTR_BITAND_V, exprs[0], exprs[1]);
             if (!out)
                 return false;
-            if (ast_istype(exprs[0], ast_value) && asvalue[0]->cvq == CV_CONST) {
-                compile_error(ctx, "assignment to constant `%s`", asvalue[0]->name);
-            }
+            (void)check_write_to(ctx, exprs[0]);
             if (exprs[0]->vtype == TYPE_FLOAT)
                 asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
             else
