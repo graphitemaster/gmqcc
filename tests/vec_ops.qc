@@ -8,4 +8,5 @@ void main(vector v) {
     print(vtos(v & 16), "\n");
     print(vtos(v | '25 42 51'), "\n");
     print(vtos(v & '25 42 51'), "\n");
+    print(vtos('1 2 3' >< '3 2 1'));
 }

@@ -196,6 +196,7 @@ static const oper_info c_operators[] = {
     { "*",   2, opid1('*'),         ASSOC_LEFT,  13, 0,         true},
     { "/",   2, opid1('/'),         ASSOC_LEFT,  13, 0,         true},
     { "%",   2, opid1('%'),         ASSOC_LEFT,  13, 0,         true},
+    { "><",  2, opid2('>','<'),     ASSOC_LEFT,  13, 0,         true},
 
     { "+",   2, opid1('+'),         ASSOC_LEFT,  12, 0,         true},
     { "-",   2, opid1('-'),         ASSOC_LEFT,  12, 0,         true},

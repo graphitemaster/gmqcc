@@ -762,6 +762,22 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             break;
 
+        case opid2('>', '<'):
+            if (NotSameType(TYPE_VECTOR)) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                ast_type_to_string(exprs[1], ty2, sizeof(ty2));
+                compile_error(ctx, "invalid types used in cross product: %s and %s",
+                    ty1, ty2);
+                return false;
+            }
+
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                compile_error(ctx, "cross product for non-constant vectors unimplemented");
+                return false;
+            }
+
+            break;
+
         case opid3('<','=','>'): /* -1, 0, or 1 */
             if (NotSameType(TYPE_FLOAT)) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));

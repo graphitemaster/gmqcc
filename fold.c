@@ -163,6 +163,14 @@ static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
     return (a.x && a.y && a.z);
 }
 
+static GMQCC_INLINE vec3_t vec3_cross(vec3_t a, vec3_t b) {
+    vec3_t out;
+    out.x = a.y * b.z - a.z * b.y;
+    out.y = a.z * b.x - a.x * b.z;
+    out.z = a.x * b.y - a.y * b.x;
+    return out;
+}
+
 static lex_ctx_t fold_ctx(fold_t *fold) {
     lex_ctx_t ctx;
     if (fold->parser->lex)
@@ -641,6 +649,12 @@ static GMQCC_INLINE ast_expression *fold_op_bnot(fold_t *fold, ast_value *a) {
     return NULL;
 }
 
+static GMQCC_INLINE ast_expression *fold_op_cross(fold_t *fold, ast_value *a, ast_value *b) {
+    if (fold_can_2(a, b))
+        return fold_constgen_vector(fold, vec3_cross(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+    return NULL;
+}
+
 ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
     ast_value      *a = (ast_value*)opexprs[0];
     ast_value      *b = (ast_value*)opexprs[1];
@@ -698,6 +712,7 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         fold_op_case(2, ('!', '='),    cmp,    (fold, a, b, true));
         fold_op_case(2, ('=', '='),    cmp,    (fold, a, b, false));
         fold_op_case(2, ('~', 'P'),    bnot,   (fold, a));
+        fold_op_case(2, ('>', '<'),    cross,  (fold, a, b));
     }
     #undef fold_op_case
     compile_error(fold_ctx(fold), "internal error: attempted to constant-fold for unsupported operator");
