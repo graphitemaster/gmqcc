@@ -4658,6 +4658,11 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
  * The base type makes up every bit of type information which comes *before* the
  * variable name.
  *
+ * NOTE: The value must either be named, have a NULL name, or a name starting
+ *       with '<'. In the first case, this will be the actual variable or type
+ *       name, in the other cases it is assumed that the name will appear
+ *       later, and an error is generated otherwise.
+ *
  * The following will be parsed in its entirety:
  *     void() foo()
  * The 'basetype' in this case is 'void()'
@@ -4817,6 +4822,13 @@ static bool parse_typedef(parser_t *parser)
 
     if (!typevar)
         return false;
+
+    /* while parsing types, the ast_value's get named '<something>' */
+    if (!typevar->name || typevar->name[0] == '<') {
+        parseerror(parser, "missing name in typedef");
+        ast_delete(typevar);
+        return false;
+    }
 
     if ( (old = parser_find_var(parser, typevar->name)) ) {
         parseerror(parser, "cannot define a type with the same name as a variable: %s\n"
@@ -4978,6 +4990,14 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     /* get the first complete variable */
     var = parse_typename(parser, &basetype, cached_typedef);
     if (!var) {
+        if (basetype)
+            ast_delete(basetype);
+        return false;
+    }
+
+    /* while parsing types, the ast_value's get named '<something>' */
+    if (!var->name || var->name[0] == '<') {
+        parseerror(parser, "declaration does not declare anything");
         if (basetype)
             ast_delete(basetype);
         return false;
