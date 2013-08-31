@@ -1877,6 +1877,17 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     return true;
 }
 
+static bool starts_a_label(ast_expression *ex)
+{
+    while (ex && ast_istype(ex, ast_block)) {
+        ast_block *b = (ast_block*)ex;
+        ex = b->exprs[0];
+    }
+    if (!ex)
+        return false;
+    return ast_istype(ex, ast_label);
+}
+
 /* Note, you will not see ast_block_codegen generate ir_blocks.
  * To the AST and the IR, blocks are 2 different things.
  * In the AST it represents a block of code, usually enclosed in
@@ -1922,7 +1933,7 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     for (i = 0; i < vec_size(self->exprs); ++i)
     {
         ast_expression_codegen *gen;
-        if (func->curblock->final && !ast_istype(self->exprs[i], ast_label)) {
+        if (func->curblock->final && !starts_a_label(self->exprs[i])) {
             if (compile_warning(ast_ctx(self->exprs[i]), WARN_UNREACHABLE_CODE, "unreachable statement"))
                 return false;
             continue;
