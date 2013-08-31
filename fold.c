@@ -201,10 +201,24 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
                 ((ast_expression*)(X))->vtype != TYPE_FUNCTION)
 
 #define fold_can_2(X, Y) (fold_can_1(X) && fold_can_1(Y))
+#define fold_can_div(X) (fold_immvalue_float(X) != 0.0f)
 
 #define fold_immvalue_float(E)  ((E)->constval.vfloat)
 #define fold_immvalue_vector(E) ((E)->constval.vvec)
 #define fold_immvalue_string(E) ((E)->constval.vstring)
+
+#ifdef INFINITY
+#   define fold_infinity_float  INFINITY
+#else
+#   define fold_infinity_float  (1.0 / 0.0)
+#endif /*! INFINITY */
+
+#define fold_infinity_vector \
+    vec3_create(             \
+        fold_infinity_float, \
+        fold_infinity_float, \
+        fold_infinity_float  \
+    )
 
 fold_t *fold_init(parser_t *parser) {
     fold_t *fold                 = (fold_t*)mem_a(sizeof(fold_t));
@@ -222,9 +236,11 @@ fold_t *fold_init(parser_t *parser) {
     (void)fold_constgen_float (fold,  0.0f);
     (void)fold_constgen_float (fold,  1.0f);
     (void)fold_constgen_float (fold, -1.0f);
+    (void)fold_constgen_float (fold,  fold_infinity_float); /* +inf */
 
     (void)fold_constgen_vector(fold, vec3_create(0.0f, 0.0f, 0.0f));
     (void)fold_constgen_vector(fold, vec3_create(-1.0f, -1.0f, -1.0f));
+    (void)fold_constgen_vector(fold, fold_infinity_vector); /* +inf */
 
     return fold;
 }
@@ -454,12 +470,23 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
-        if (fold_can_2(a, b))
-            return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b));
+        if (fold_can_2(a, b)) {
+            if (fold_can_div(b))
+                return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b));
+            else
+                return (ast_expression*)fold->imm_float[3]; /* inf */
+        }
     } else if (isvector(a)) {
-        if (fold_can_2(a, b))
-            return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
-        else {
+        if (fold_can_2(a, b)) {
+            if (fold_can_div(b)) {
+                printf("hit wrong logic\n");
+                return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
+            }
+            else {
+                printf("hit logic\n");
+                return (ast_expression*)fold->imm_vector[2]; /* inf */
+            }
+        } else {
             return (ast_expression*)ast_binary_new(
                 fold_ctx(fold),
                 INSTR_MUL_VF,
@@ -479,8 +506,12 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
 }
 
 static GMQCC_INLINE ast_expression *fold_op_mod(fold_t *fold, ast_value *a, ast_value *b) {
-    if (fold_can_2(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) % ((qcint_t)fold_immvalue_float(b))));
+    if (fold_can_2(a, b)) {
+        if (fold_can_div(b))
+            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) % ((qcint_t)fold_immvalue_float(b))));
+        else
+            return (ast_expression*)fold->imm_float[3]; /* inf */
+    }
     return NULL;
 }
 
