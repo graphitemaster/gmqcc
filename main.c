@@ -568,8 +568,6 @@ int main(int argc, char **argv) {
 
     util_seed(time(0));
 
-    printf("size is: %u\n", (unsigned)sizeof(opts_cmd_t));
-
     if (!options_parse(argc, argv)) {
         return usage();
     }
