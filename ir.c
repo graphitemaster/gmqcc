@@ -613,7 +613,7 @@ static bool instr_is_operation(uint16_t op)
              (op >= INSTR_NOT_F  && op <= INSTR_NOT_FNC) ||
              (op >= INSTR_AND    && op <= INSTR_BITOR) ||
              (op >= INSTR_CALL0  && op <= INSTR_CALL8) ||
-             (op >= VINSTR_BITAND_V && op <= VINSTR_BITXOR_VF) );
+             (op >= VINSTR_BITAND_V && op <= VINSTR_CROSS) );
 }
 
 static bool ir_function_pass_peephole(ir_function *self)
@@ -1815,6 +1815,7 @@ ir_value* ir_block_create_binop(ir_block *self, lex_ctx_t ctx,
         case VINSTR_BITAND_VF:
         case VINSTR_BITOR_VF:
         case VINSTR_BITXOR_VF:
+        case VINSTR_CROSS:
 #if 0
         case INSTR_DIV_VF:
         case INSTR_MUL_IV:
@@ -2518,7 +2519,8 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
             instr->opcode == VINSTR_BITOR_VF ||
             instr->opcode == VINSTR_BITXOR ||
             instr->opcode == VINSTR_BITXOR_VF ||
-            instr->opcode == VINSTR_BITXOR_V)
+            instr->opcode == VINSTR_BITXOR_V ||
+            instr->opcode == VINSTR_CROSS)
         {
             value = instr->_ops[2];
             /* the float source will get an additional lifetime */
@@ -2532,7 +2534,8 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
             instr->opcode == INSTR_LOAD_V ||
             instr->opcode == VINSTR_BITXOR ||
             instr->opcode == VINSTR_BITXOR_VF ||
-            instr->opcode == VINSTR_BITXOR_V)
+            instr->opcode == VINSTR_BITXOR_V ||
+            instr->opcode == VINSTR_CROSS)
         {
             value = instr->_ops[1];
             /* the float source will get an additional lifetime */
@@ -2947,6 +2950,28 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.opcode = INSTR_BITAND;
                 stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
                 stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
+                stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
+                code_push_statement(code, &stmt, instr->context);
+            }
+            stmt.opcode = INSTR_SUB_V;
+            stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
+            stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
+            code_push_statement(code, &stmt, instr->context);
+
+            /* instruction generated */
+            continue;
+        }
+
+        if (instr->opcode == VINSTR_CROSS) {
+            stmt.opcode = INSTR_MUL_F;
+            for (j = 0; j < 3; ++j) {
+                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + (j + 1) % 3;
+                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + (j + 2) % 3;
+                stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]) + j;
+                code_push_statement(code, &stmt, instr->context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + (j + 2) % 3;
+                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + (j + 1) % 3;
                 stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
                 code_push_statement(code, &stmt, instr->context);
             }
@@ -3959,6 +3984,7 @@ static const char *qc_opname(int op)
         case VINSTR_BITAND_VF: return "BITAND_VF";
         case VINSTR_BITOR_VF:  return "BITOR_VF";
         case VINSTR_BITXOR_VF: return "BITXOR_VF";
+        case VINSTR_CROSS:     return "CROSS";
         default:               return "<UNK>";
     }
 }

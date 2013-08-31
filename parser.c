@@ -772,8 +772,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                compile_error(ctx, "cross product for non-constant vectors unimplemented");
-                return false;
+                out = (ast_expression*)ast_binary_new(
+                        parser_ctx(parser),
+                        VINSTR_CROSS,
+                        exprs[0],
+                        exprs[1]
+                );
             }
 
             break;

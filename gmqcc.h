@@ -725,7 +725,8 @@ enum {
     VINSTR_BITOR_VF,
     VINSTR_BITXOR,
     VINSTR_BITXOR_V,
-    VINSTR_BITXOR_VF /* BITXOR_VF must be the last emulated bitop */
+    VINSTR_BITXOR_VF,
+    VINSTR_CROSS
 };
 
 /* TODO: elide */
