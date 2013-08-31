@@ -311,8 +311,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     ctx = vec_last(sy->ops).ctx;
 
     if (vec_size(sy->out) < op->operands) {
-        compile_error(ctx, "internal error: not enough operands: %i (operator %s (%i))", vec_size(sy->out),
-                      op->op, (int)op->id);
+        if (op->flags & OP_PREFIX)
+            compile_error(ctx, "expected expression after unary operator `%s`", op->op, (int)op->id);
+        else /* this should have errored previously already */
+            compile_error(ctx, "expected expression after operator `%s`", op->op, (int)op->id);
         return false;
     }
 
@@ -1664,7 +1666,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                 }
             }
             if (o == operator_count) {
-                compile_error(parser_ctx(parser), "unknown operator: %s", parser_tokval(parser));
+                compile_error(parser_ctx(parser), "unexpected operator: %s", parser_tokval(parser));
                 goto onerr;
             }
             /* found an operator */
