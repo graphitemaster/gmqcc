@@ -1256,7 +1256,7 @@ void prog_disasm_function(qc_program_t *prog, size_t id) {
 #   define FLOAT_IS_TRUE_FOR_INT(x) ( (x) & 0x7FFFFFFF )
 #endif
 
-while (1) {
+while (prog->vmerror == 0) {
     prog_section_function_t  *newf;
     qcany_t          *ed;
     qcany_t          *ptr;
