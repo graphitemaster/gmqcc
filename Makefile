@@ -165,3 +165,4 @@ ftepp.o: gmqcc.h opts.def lexer.h
 utf8.o: gmqcc.h opts.def
 correct.o: gmqcc.h opts.def
 fold.o: ast.h ir.h gmqcc.h opts.def parser.h lexer.h
+intrin.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h
