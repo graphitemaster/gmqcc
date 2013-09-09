@@ -40,7 +40,11 @@ base:
 	@echo "makepkgopt = zipman" >> $(PKGINFO)
 	@echo "makepkgopt = purge" >> $(PKGINFO)
 	@echo "makepkgopt = !upx" >> $(PKGINFO)
-	@tar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO usr/
+	@tar -C $(PKGDIR) -czf $(PKGDIR)/.MTREE \
+	    --format=mtree \
+	    --options='!all,use-set,type,uid,gid,mode,time,size,md5,sha256,link' \
+	    .PKGINFO usr/
+	@tar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO .MTREE usr/
 	@rm -rf $(PKGDIR)
 
 clean:
