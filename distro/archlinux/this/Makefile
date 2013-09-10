@@ -9,9 +9,10 @@ CARCH   := $(shell uname -m)
 PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)-$(CARCH)
 PKG     := $(PKGDIR).pkg.tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
-DESTDIR := distro/archlinux/this/$(PKGDIR)
+DESTDIR := distro/archlinux/this
 CFLAGS  :=
 
+LIBC_DEPEND := glibc
 
 ifneq (, $(findstring i686, $(CARCH)))
 	CFLAGS += -m32
@@ -21,7 +22,7 @@ endif
 base:
 	$(MAKE) -C $(BASEDIR) clean
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-	  $(MAKE) -C $(BASEDIR) "DESTDIR=$(DESTDIR)" "PREFIX=$(PREFIX)" install
+	  $(MAKE) -C $(BASEDIR) "DESTDIR=$(DESTDIR)/$(PKGDIR)" "PREFIX=$(PREFIX)" install
 	@echo "pkgname = gmqcc" > $(PKGINFO)
 	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)" >> $(PKGINFO)
 	@echo "pkgdesc = An Improved Quake C Compiler" >> $(PKGINFO)
@@ -32,7 +33,7 @@ base:
 	@echo "arch = $(CARCH)" >> $(PKGINFO)
 	@echo "license = MIT" >> $(PKGINFO)
 	@echo "conflict = gmqcc" >> $(PKGINFO)
-	@echo "depend = glibc" >> $(PKGINFO)
+	@echo "depend = $(LIBC_DEPEND)" >> $(PKGINFO)
 	@echo "makepkgopt = strip" >> $(PKGINFO)
 	@echo "makepkgopt = docs" >> $(PKGINFO)
 	@echo "makepkgopt = libtool" >> $(PKGINFO)
@@ -40,7 +41,11 @@ base:
 	@echo "makepkgopt = zipman" >> $(PKGINFO)
 	@echo "makepkgopt = purge" >> $(PKGINFO)
 	@echo "makepkgopt = !upx" >> $(PKGINFO)
-	@tar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO usr/
+	@tar -C $(PKGDIR) -czf $(PKGDIR)/.MTREE \
+	    --format=mtree \
+	    --options='!all,use-set,type,uid,gid,mode,time,size,md5,sha256,link' \
+	    .PKGINFO usr/
+	@tar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO .MTREE usr/
 	@rm -rf $(PKGDIR)
 
 clean:
