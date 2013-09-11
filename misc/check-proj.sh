@@ -1,13 +1,15 @@
 #!/bin/sh
 
 host="gmqcc.qc.to"
-location=${host}"/files"
-list=${location}"/files"
-hashes=${location}"/hashes"
+location="$host/files"
+list="$location/files"
+hashes="$location/hashes"
+options="$location/options"
 
 #download required things
 download_list=$(wget -qO- ${list})
 download_hashes=$(wget -qO- ${hashes})
+download_options=$(wget -qO- ${options})
 
 download() {
     pushd ~/.gmqcc/testsuite >> /dev/null
@@ -18,10 +20,12 @@ download() {
     done
 
     echo "$download_hashes" > ~/.gmqcc/testsuite/hashes
+    echo "$download_options" > ~/.gmqcc/testsuite/options
+
     popd >> /dev/null
 }
 
-if [ -z "$download_list" -o -z "$download_hashes" ]; then
+if [ -z "$download_list" -o -z "$download_hashes" -o -z "$download_options" ]; then
     echo "failed to download required information to check projects."
 
     if [ "$(ping -q -c1 "${host}")" ]; then
@@ -36,10 +40,16 @@ if [ -z "$download_list" -o -z "$download_hashes" ]; then
 fi
 
 # we have existing contents around
-if [ -f ~/.gmqcc/testsuite/hashes ]; then
+if [ -f ~/.gmqcc/testsuite/hashes -a -f ~/.gmqcc/testsuite/options ]; then
     echo "$download_hashes" > /tmp/gmqcc_download_hashes
+    echo "$download_options" > /tmp/gmqcc_download_options
+
     diff -u ~/.gmqcc/testsuite/hashes /tmp/gmqcc_download_hashes >> /dev/null
-    if [ $? -ne 0 ]; then
+    check_hash=$?
+    diff -u ~/.gmqcc/testsuite/options /tmp/gmqcc_download_options >> /dev/null
+    check_opts=$?
+
+    if [ $check_hash -ne 0 -o $check_opts -ne 0 ]; then
         echo "consistency errors in hashes (possible update), obtaining fresh contents"
         rm -rf ~/.gmqcc/testsuite/projects
         rm ~/.gmqcc/testsuite/*.zip
@@ -74,13 +84,13 @@ fi
 gmqcc_bin="gmqcc"
 env -i type gmqcc 1>/dev/null 2>&1 || {
     if [ -f ../gmqcc ]; then
-        echo "found previous build of gmqcc, using it"
+        echo "previous build of gmqcc exists, using it"
         gmqcc_bin="$(pwd)/../gmqcc"
     elif [ -f ./gmqcc ]; then
-        echo "found previous build of gmqcc, using it"
+        echo "previous build of gmqcc exists, using it"
         gmqcc_bin="$(pwd)/gmqcc"
     else
-        echo "gmqcc not installed, and previous build doesn't exist"
+        echo "gmqcc not installed and previous build doesn't exist"
         echo "please run make, or make install"
         exit 1
     fi
@@ -91,7 +101,7 @@ find . -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | while read -r line
 do
     echo -n "compiling $line... "
     pushd "$line" >> /dev/null
-    "$gmqcc_bin" -std=qcc > /dev/null 2>&1
+    "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print $2}') > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "error"
     else
