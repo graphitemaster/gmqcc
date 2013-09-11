@@ -76,6 +76,9 @@ env -i type gmqcc 1>/dev/null 2>&1 || {
     if [ -f ../gmqcc ]; then
         echo "found previous build of gmqcc, using it"
         gmqcc_bin="$(pwd)/../gmqcc"
+    elif [ -f ./gmqcc ]; then
+        echo "found previous build of gmqcc, using it"
+        gmqcc_bin="$(pwd)/gmqcc"
     else
         echo "gmqcc not installed, and previous build doesn't exist"
         echo "please run make, or make install"
