@@ -5221,6 +5221,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 retval = false;
                 goto cleanup;
             }
+            /* doing this here as the above is just for a single scope */
             old = parser_find_local(parser, var->name, 0, &isparam);
             if (old && isparam) {
                 if (parsewarning(parser, WARN_LOCAL_SHADOWS,
@@ -5234,7 +5235,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
                     ast_delete(var);
                     if (ast_istype(old, ast_value))
-                        var = (ast_value*)old;
+                        var = proto = (ast_value*)old;
                     else {
                         var = NULL;
                         goto skipvar;
