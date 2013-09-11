@@ -71,13 +71,24 @@ else
 fi
 
 # compile projects in those directories
-which gmqcc >> /dev/null || (echo "error gmqcc not installed" && exit 1)
+gmqcc_bin="gmqcc"
+env -i type gmqcc 1>/dev/null 2>&1 || {
+    if [ -f ../gmqcc ]; then
+        echo "found previous build of gmqcc, using it"
+        gmqcc_bin="$(pwd)/../gmqcc"
+    else
+        echo "gmqcc not installed, and previous build doesn't exist"
+        echo "please run make, or make install"
+        exit 1
+    fi
+}
+
 pushd ~/.gmqcc/testsuite/projects >> /dev/null
 find . -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | while read -r line
 do
     echo -n "compiling $line... "
     pushd "$line" >> /dev/null
-    gmqcc -std=qcc > /dev/null 2>&1
+    "$gmqcc_bin" -std=qcc > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "error"
     else
