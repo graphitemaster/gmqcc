@@ -38,11 +38,14 @@ rm -f *.src
 echo "complete"
 
 echo -n "creating prog.src files ... "
-find client common warpzonelib csqcmodellib -type f > csprogs.src
+echo "csprogs.dat" > csprogs.src
+find client common warpzonelib csqcmodellib -type f >> csprogs.src
 ls server/w_*.qc | cat >> csprogs.src
-find server common warpzonelib csqcmodellib -type f > progs.src
+echo "progs.dat" > progs.src
+find server common warpzonelib csqcmodellib -type f >> progs.src
 ls server/w_*.qc | cat >> progs.src
-find menu common warpzonelib -type f > menu.src
+echo "menu.dat" > menu.src
+find menu common warpzonelib -type f >> menu.src
 ls server/w_*.qc | cat >> menu.src
 echo "complete"
 
