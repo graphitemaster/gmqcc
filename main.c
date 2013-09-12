@@ -234,6 +234,10 @@ static bool options_parse(int argc, char **argv) {
                 OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = (uint16_t)strtol(memdumpcols, NULL, 10);
                 continue;
             }
+            if (options_long_gcc("progsrc", &argc, &argv, &argarg)) {
+                OPTS_OPTION_STR(OPTION_PROGSRC) = argarg;
+                continue;
+            }
 
             /* show defaults (like pathscale) */
             if (!strcmp(argv[0]+1, "show-defaults")) {
@@ -670,9 +674,9 @@ int main(int argc, char **argv) {
 
         progs_src = true;
 
-        src = fs_file_open("progs.src", "rb");
+        src = fs_file_open(OPTS_OPTION_STR(OPTION_PROGSRC), "rb");
         if (!src) {
-            con_err("failed to open `progs.src` for reading\n");
+            con_err("failed to open `%s` for reading\n", OPTS_OPTION_STR(OPTION_PROGSRC));
             retval = 1;
             goto cleanup;
         }

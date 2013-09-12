@@ -26,7 +26,6 @@ else
 fi
 
 echo -n "removing redundant files ... "
-# remove redundant stuff
 rm -f autocvarize.pl
 rm -f autocvarize-update.sh
 rm -f collect-precache.sh
@@ -48,7 +47,7 @@ ls server/w_*.qc | cat >> menu.src
 echo "complete"
 
 echo -n "creating zip archive ... "
-zip -r ../xonotic.zip * > /dev/null
+zip -r -9 ../xonotic.zip * > /dev/null
 echo "complete"
 
 popd > /dev/null

@@ -129,6 +129,7 @@
     GMQCC_DEFINE_FLAG(ADD_INFO)
     GMQCC_DEFINE_FLAG(CORRECTION)
     GMQCC_DEFINE_FLAG(STATISTICS)
+    GMQCC_DEFINE_FLAG(PROGSRC)
 #endif
 
 /* some cleanup so we don't have to */
