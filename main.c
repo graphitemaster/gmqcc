@@ -790,5 +790,7 @@ cleanup:
     lex_cleanup();
     stat_info();
 
+    if (!retval && compile_errors)
+        retval = 1;
     return retval;
 }
