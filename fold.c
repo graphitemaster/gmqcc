@@ -494,11 +494,9 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
     } else if (isvector(a)) {
         if (fold_can_2(a, b)) {
             if (fold_can_div(b)) {
-                printf("hit wrong logic\n");
                 return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
             }
             else {
-                printf("hit logic\n");
                 return (ast_expression*)fold->imm_vector[2]; /* inf */
             }
         } else {
