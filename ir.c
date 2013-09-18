@@ -248,7 +248,7 @@ static void irerror(lex_ctx_t ctx, const char *msg, ...)
     va_end(ap);
 }
 
-static bool irwarning(lex_ctx_t ctx, int warntype, const char *fmt, ...)
+static bool GMQCC_WARN irwarning(lex_ctx_t ctx, int warntype, const char *fmt, ...)
 {
     bool    r;
     va_list ap;
@@ -3479,8 +3479,16 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
     irfun = global->constval.vfunc;
     if (!irfun) {
         if (global->cvq == CV_NONE) {
-            irwarning(global->context, WARN_IMPLICIT_FUNCTION_POINTER,
-                      "function `%s` has no body and in QC implicitly becomes a function-pointer", global->name);
+            if (irwarning(global->context, WARN_IMPLICIT_FUNCTION_POINTER,
+                          "function `%s` has no body and in QC implicitly becomes a function-pointer",
+                          global->name))
+            {
+                /* Not bailing out just now. If this happens a lot you don't want to have
+                 * to rerun gmqcc for each such function.
+                 */
+
+                /* return false; */
+            }
         }
         /* this was a function pointer, don't generate code for those */
         return true;
@@ -3648,9 +3656,12 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             /* TODO: same as above but for entity-fields rather than globsl
              */
         }
-        else
-            irwarning(global->context, WARN_VOID_VARIABLES, "unrecognized variable of type void `%s`",
-                      global->name);
+        else if(irwarning(global->context, WARN_VOID_VARIABLES, "unrecognized variable of type void `%s`",
+                          global->name))
+        {
+            /* Not bailing out */
+            /* return false; */
+        }
         /* I'd argue setting it to 0 is sufficient, but maybe some depend on knowing how far
          * the system fields actually go? Though the engine knows this anyway...
          * Maybe this could be an -foption
