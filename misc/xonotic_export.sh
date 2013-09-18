@@ -35,7 +35,13 @@ rm -f i18n-guide.txt
 rm -rf server-testcase
 rm -f Makefile
 rm -f *.src
+rm -f qccversion.*
 echo "complete"
+
+cat client/progs.src | sed "s/\.\.\///" > csprogs.src
+cat server/progs.src | sed "s/\.\.\///" > progs.src
+cat menu/progs.src | sed "s/\.\.\///" > menu.src
+
 
 echo -n "creating zip archive ... "
 zip -r -9 ../xonotic.zip * > /dev/null
