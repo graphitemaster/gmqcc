@@ -1,12 +1,10 @@
 Name:           gmqcc
-Version:        0.2.9
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        Improved Quake C Compiler
 License:        MIT
 URL:            http://graphitemaster.github.io/gmqcc/
 Source0:        https://github.com/graphitemaster/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
-# Downstream patch. TODO: drop it in 0.3.0 release.
-Patch0:         build_fix.patch
 
 %description
 Modern written-from-scratch compiler for the QuakeC language with
@@ -21,11 +19,15 @@ as gmqcc or fteqcc. It provides a small set of built-in functions, and
 by default executes the main function if there is one. Some options
 useful for debugging are available as well.
 
-# TODO: add new package gmqpak after 0.3.0 release
+%package -n gmqpak
+Summary:        Standalone Quake PAK file utility
+
+%description -n gmqpak
+Standalone Quake PAK file utility supporting the extraction of files,
+directories, or whole PAKs, as well as the opposite (creation of PAK files).
 
 %prep
 %setup -q
-%patch0 -p1
 echo '#!/bin/sh' > ./configure
 chmod +x ./configure
 
@@ -42,14 +44,22 @@ make check
 %files
 %doc LICENSE README AUTHORS CHANGES TODO
 %doc gmqcc.ini.example
-%doc %{_mandir}/man1/gmqcc.1.gz
+%{_mandir}/man1/gmqcc.1.gz
 %{_bindir}/gmqcc
 
 %files -n qcvm
 %doc LICENSE README AUTHORS CHANGES TODO
-%doc %{_mandir}/man1/qcvm.1.gz
+%{_mandir}/man1/qcvm.1.gz
 %{_bindir}/qcvm
 
+%files -n gmqpak
+%doc LICENSE README AUTHORS CHANGES TODO
+%{_mandir}/man1/gmqpak.1.gz
+%{_bindir}/gmqpak
+
 %changelog
+* Fri Sep 20 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.0-1
+- Update to 0.3.0 (improved new package: gmqpak)
+
 * Sat Jul 27 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.2.9-1
 - Initial release
