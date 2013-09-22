@@ -7,7 +7,7 @@ script: make && make check
 notifications:
     irc:
         channels:
-          - "irc.freenode.org#kf-engine"
+          - "irc.freenode.org#gmqcc"
         template:
           - "[%{commit} : %{author}] %{message}"
           - "%{build_url}"
