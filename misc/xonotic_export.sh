@@ -20,8 +20,8 @@ if [ $? -ne 0 ]; then
     echo "not a git directory, continuing without rebase"
 else
     echo -n "resetting git state and updating ... "
-    git reset --hard HEAD > /dev/null
-    git pull > /dev/null
+    git reset --hard HEAD > /dev/null 2>&1
+    git pull > /dev/null 2>&1
     echo "complete"
 fi
 
@@ -38,13 +38,19 @@ rm -f *.src
 rm -f qccversion.*
 echo "complete"
 
-cat client/progs.src | sed "s/\.\.\///" > csprogs.src
-cat server/progs.src | sed "s/\.\.\///" > progs.src
-cat menu/progs.src | sed "s/\.\.\///" > menu.src
+cat client/progs.src | sed "s/\.\.\///" > client.src
+cat server/progs.src | sed "s/\.\.\///" > server.src
+cat menu/progs.src | sed "s/\.\.\///"   > menu.src
 
+echo "creating zip archives..."
+cp client.src progs.src
+cat progs.src | zip ../xonotic-client.zip -@ > /dev/null
+cp server.src progs.src
+cat progs.src | zip ../xonotic-server.zip -@ > /dev/null
+cp menu.src progs.src
+cat progs.src | zip ../xonotic-menu.zip -@ > /dev/null
+rm client.src server.src menu.src progs.src
 
-echo -n "creating zip archive ... "
-zip -r -9 ../xonotic.zip * > /dev/null
 echo "complete"
 
 popd > /dev/null
