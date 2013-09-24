@@ -327,10 +327,15 @@ it can happen that incompatible types are passed to functions. This
 enables several warnings when static typechecking cannot guarantee
 consistent behavior.
 .It Fl W Ns Cm breakdef
-When compiling original id1 QC, there is a definition for `break`
+When compiling original id1 QC there is a definition for `break`
 which conflicts with the 'break' keyword in GMQCC. Enabling this
-warning will print a warning when the definition occurs. The
-definition is ignored for both cases.
+will print a warning when the definition occurs. The definition is
+ignored for both cases.
+.It Fl W Ns Cm const-overwrite
+When compiling original QuakeWorld QC there are instances where
+code overwrites constants. This is considered an error, however
+for QuakeWorld to compile it needs to be treated as a warning
+instead, as such this warning only works when -std=qcc.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds

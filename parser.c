@@ -287,10 +287,18 @@ static bool check_write_to(lex_ctx_t ctx, ast_expression *expr)
     if (ast_istype(expr, ast_value)) {
         ast_value *val = (ast_value*)expr;
         if (val->cvq == CV_CONST) {
-            if (val->name[0] == '#')
+            if (val->name[0] == '#') {
                 compile_error(ctx, "invalid assignment to a literal constant");
-            else
+                return false;
+            }
+            /*
+             * To work around quakeworld we must elide the error and make it
+             * a warning instead.
+             */
+            if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_QCC)
                 compile_error(ctx, "assignment to constant `%s`", val->name);
+            else
+                (void)!compile_warning(ctx, WARN_CONST_OVERWRITE, "assignment to constant `%s`", val->name);
             return false;
         }
     }

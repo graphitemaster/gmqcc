@@ -31,7 +31,7 @@
     #write a ticket.
 
     FTEPP = true
-    
+
 
     #Enable some predefined macros. This only works in combination
     #with '-fftepp' and is currently not included by '-std=fteqcc'.
@@ -516,12 +516,20 @@
     UNSAFE_TYPES = true
 
 
-    #When compiling original id1 QC, there is a definition for `break`
+    #When compiling original id1 QC there is a definition for `break`
     #which conflicts with the 'break' keyword in GMQCC. Enabling this
-    #warning will print a warning when the definition occurs. The
-    #definition is ignored for both cases.
+    #print a warning when the definition occurs. The definition is
+    #ignored for both cases.
 
     BREAKDEF = true
+
+
+    #When compiling original QuakeWorld QC there are instances where
+    #code overwrites constants. This is considered an error, however
+    #for QuakeWorld to compile it needs to be treated as a warning
+    #instead, as such this warning only works when -std=qcc.
+
+    CONST_OVERWRITE = true
 
 [optimizations]
     #Some general peephole optimizations. For instance the code `a = b
@@ -563,7 +571,7 @@
 
     LOCAL_TEMPS = true
 
- 
+
     #Causes temporary values which do not need to be backed up on a
     #CALL to not be stored in the function's locals-area. With this, a
     #CALL to a function may need to back up fewer values and thus exe‐
