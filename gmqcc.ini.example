@@ -531,6 +531,8 @@
 
     CONST_OVERWRITE = true
 
+
+
 [optimizations]
     #Some general peephole optimizations. For instance the code `a = b
     #+ c` typically generates 2 instructions, an ADD and a STORE. This
@@ -559,7 +561,6 @@
     #too dangerous for this optimization.
 
     OVERLAP_LOCALS = true
-
 
 
     #This promotes locally declared variables to "temps". Meaning when
@@ -643,6 +644,7 @@
     #more optimal code.
 
     CONST_FOLD_DCE = true
+
 
     #For constant expressions we can fold them to immediate values.
     #this option cannot be disabled or enabled, the compiler forces
