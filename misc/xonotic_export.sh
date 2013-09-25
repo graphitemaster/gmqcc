@@ -25,6 +25,10 @@ else
     echo "complete"
 fi
 
+echo -n "generated precache-for-csqc ..."
+./collect-precache.sh > /dev/null 2>&1
+echo "complete"
+
 echo -n "removing redundant files ..."
 rm -f Makefile
 rm -f autocvarize-update.sh

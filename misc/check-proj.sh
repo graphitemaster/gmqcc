@@ -99,37 +99,34 @@ env -i type gmqcc 1>/dev/null 2>&1 || {
 pushd ~/.gmqcc/testsuite/projects > /dev/null
 find . -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | while read -r line
 do
-    error=0
     echo -n "compiling $line... "
     pushd "$line" > /dev/null
 
     # does the project have multiple subprojects?
     if [ -f dirs ]; then
+        echo ""
         cat dirs | while read -r dir
         do
             # change to subproject
+            echo -n "    compiling $dir... "
             pushd "$dir" > /dev/null
-            "$gmqcc_bin" $(cat ../../../options | grep "$line:" | awk '{print $2}') > /dev/null 2>&1
+            "$gmqcc_bin" $(cat ../../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}') > /dev/null 2>&1
             if [ $? -ne 0 ]; then
-                error=1
+                echo "error"
+            else
+                echo "success"
             fi
             popd > /dev/null
         done
     # nope only one project
     else
-        "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print $2}') > /dev/null 2>&1
+        "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}') > /dev/null 2>&1
         if [ $? -ne 0 ]; then
-            error=1
+            echo "error"
+        else
+            echo "success"
         fi
     fi
-
-    # status
-    if [ $error -ne 0 ]; then
-        echo "error"
-    else
-        echo "success"
-    fi
-
     popd > /dev/null
 done
 
