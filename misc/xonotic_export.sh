@@ -25,7 +25,7 @@ else
     echo "complete"
 fi
 
-echo -n "generated precache-for-csqc ..."
+echo -n "generate precache for csqc ..."
 ./collect-precache.sh > /dev/null 2>&1
 echo "complete"
 
