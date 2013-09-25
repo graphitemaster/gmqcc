@@ -12,7 +12,7 @@ download_hashes=$(wget -qO- ${hashes})
 download_options=$(wget -qO- ${options})
 
 download() {
-    pushd ~/.gmqcc/testsuite >> /dev/null
+    pushd ~/.gmqcc/testsuite > /dev/null
     echo "$download_list" | while read -r line
     do
         echo "downloading $line ..."
@@ -22,7 +22,7 @@ download() {
     echo "$download_hashes" > ~/.gmqcc/testsuite/hashes
     echo "$download_options" > ~/.gmqcc/testsuite/options
 
-    popd >> /dev/null
+    popd > /dev/null
 }
 
 if [ -z "$download_list" -o -z "$download_hashes" -o -z "$download_options" ]; then
@@ -44,9 +44,9 @@ if [ -f ~/.gmqcc/testsuite/hashes -a -f ~/.gmqcc/testsuite/options ]; then
     echo "$download_hashes" > /tmp/gmqcc_download_hashes
     echo "$download_options" > /tmp/gmqcc_download_options
 
-    diff -u ~/.gmqcc/testsuite/hashes /tmp/gmqcc_download_hashes >> /dev/null
+    diff -u ~/.gmqcc/testsuite/hashes /tmp/gmqcc_download_hashes > /dev/null
     check_hash=$?
-    diff -u ~/.gmqcc/testsuite/options /tmp/gmqcc_download_options >> /dev/null
+    diff -u ~/.gmqcc/testsuite/options /tmp/gmqcc_download_options > /dev/null
     check_opts=$?
 
     if [ $check_hash -ne 0 -o $check_opts -ne 0 ]; then
@@ -68,14 +68,14 @@ fi
 
 if [ ! -d ~/.gmqcc/testsuite/projects ]; then
     mkdir -p ~/.gmqcc/testsuite/projects
-    pushd ~/.gmqcc/testsuite/projects >> /dev/null
-    echo "$(ls ../ | cat | grep -v '^hashes$' | grep -v '^projects$')" | while read -r line
+    pushd ~/.gmqcc/testsuite/projects > /dev/null
+    echo "$(ls ../ | cat | grep -v '^hashes$' | grep -v '^projects$' | grep -v '^options$')" | while read -r line
     do
         echo "extracting project $line"
         mkdir "$(echo "$line" | sed 's/\(.*\)\..*/\1/')"
         unzip -qq "../$line" -d $(echo "$line" | sed 's/\(.*\)\..*/\1/')
     done
-    popd >> /dev/null
+    popd > /dev/null
 else
     echo "previous state exists, using it"
 fi
@@ -96,18 +96,41 @@ env -i type gmqcc 1>/dev/null 2>&1 || {
     fi
 }
 
-pushd ~/.gmqcc/testsuite/projects >> /dev/null
+pushd ~/.gmqcc/testsuite/projects > /dev/null
 find . -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | while read -r line
 do
+    error=0
     echo -n "compiling $line... "
-    pushd "$line" >> /dev/null
-    "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print $2}') > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
+    pushd "$line" > /dev/null
+
+    # does the project have multiple subprojects?
+    if [ -f dirs ]; then
+        cat dirs | while read -r dir
+        do
+            # change to subproject
+            pushd "$dir" > /dev/null
+            "$gmqcc_bin" $(cat ../../../options | grep "$line:" | awk '{print $2}') > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                error=1
+            fi
+            popd > /dev/null
+        done
+    # nope only one project
+    else
+        "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print $2}') > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            error=1
+        fi
+    fi
+
+    # status
+    if [ $error -ne 0 ]; then
         echo "error"
     else
         echo "success"
     fi
 
-    popd >> /dev/null
+    popd > /dev/null
 done
-popd >> /dev/null
+
+popd > /dev/null
