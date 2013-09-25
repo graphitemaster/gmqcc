@@ -12,7 +12,8 @@ download_hashes=$(wget -qO- ${hashes})
 download_options=$(wget -qO- ${options})
 
 download() {
-    pushd ~/.gmqcc/testsuite > /dev/null
+    local old="$PWD"
+    cd ~/.gmqcc/testsuite
     echo "$download_list" | while read -r line
     do
         echo "downloading $line ..."
@@ -22,7 +23,7 @@ download() {
     echo "$download_hashes" > ~/.gmqcc/testsuite/hashes
     echo "$download_options" > ~/.gmqcc/testsuite/options
 
-    popd > /dev/null
+    cd "$old"
 }
 
 if [ -z "$download_list" -o -z "$download_hashes" -o -z "$download_options" ]; then
@@ -68,14 +69,15 @@ fi
 
 if [ ! -d ~/.gmqcc/testsuite/projects ]; then
     mkdir -p ~/.gmqcc/testsuite/projects
-    pushd ~/.gmqcc/testsuite/projects > /dev/null
+    local old="$PWD"
+    cd ~/.gmqcc/testsuite/projects
     echo "$(ls ../ | cat | grep -v '^hashes$' | grep -v '^projects$' | grep -v '^options$')" | while read -r line
     do
         echo "extracting project $line"
         mkdir "$(echo "$line" | sed 's/\(.*\)\..*/\1/')"
         unzip -qq "../$line" -d $(echo "$line" | sed 's/\(.*\)\..*/\1/')
     done
-    popd > /dev/null
+    cd "$old"
 else
     echo "previous state exists, using it"
 fi
@@ -96,11 +98,13 @@ env -i type gmqcc 1>/dev/null 2>&1 || {
     fi
 }
 
-pushd ~/.gmqcc/testsuite/projects > /dev/null
+end_dir="$PWD"
+cd ~/.gmqcc/testsuite/projects
+start="$PWD"
 find . -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | while read -r line
 do
     echo -n "compiling $line... "
-    pushd "$line" > /dev/null
+    cd "${start}/${line}"
 
     # does the project have multiple subprojects?
     if [ -f dirs ]; then
@@ -109,14 +113,15 @@ do
         do
             # change to subproject
             echo -n "    compiling $dir... "
-            pushd "$dir" > /dev/null
+            local old="$PWD"
+            cd "$dir"
             "$gmqcc_bin" $(cat ../../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}') > /dev/null 2>&1
             if [ $? -ne 0 ]; then
                 echo "error"
             else
                 echo "success"
             fi
-            popd > /dev/null
+            cd "$old"
         done
     # nope only one project
     else
@@ -127,7 +132,6 @@ do
             echo "success"
         fi
     fi
-    popd > /dev/null
 done
 
-popd > /dev/null
+cd "$end_dir"
