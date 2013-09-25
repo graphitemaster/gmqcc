@@ -3299,7 +3299,13 @@ static bool parse_pragma_do(parser_t *parser)
     else
     {
         (void)!parsewarning(parser, WARN_UNKNOWN_PRAGMAS, "ignoring #pragma %s", parser_tokval(parser));
-        return false;
+
+        /* skip to eol */
+        while (!parse_eol(parser)) {
+            parser_next(parser);
+        }
+
+        return true;
     }
 
     return true;
