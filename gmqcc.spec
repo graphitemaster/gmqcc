@@ -1,6 +1,6 @@
 Name:           gmqcc
 Version:        0.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Improved Quake C Compiler
 License:        MIT
 URL:            http://graphitemaster.github.io/gmqcc/
@@ -31,6 +31,23 @@ directories, or whole PAKs, as well as the opposite (creation of PAK files).
 echo '#!/bin/sh' > ./configure
 chmod +x ./configure
 
+# and for all for all of those switches they increase the runtime of the compile
+# making compiles of code slower
+
+# we don't need compiel time buffer protection, we test with clangs address
+# sanatizer and valgrind before releases
+%global optflags %(echo %{optflags} | sed 's/-D_FORTIFY_SOURCE=2 //')
+# there is no exceptions in C
+%global optflags %(echo %{optflags} | sed 's/-fexceptions //')
+# same with clangs address sanatizer and valgrind testing
+%global optflags %(echo %{optflags} | sed 's/-fstack-protector-strong //')
+# buffer overflow protection is unrequired since most (if not all) allocations
+# happen dynamically and we have our own memory allocator which checks this
+# (with valgrind integration), also clangs address santatizer cathes it as
+# for grecord-gcc-switches, that just adds pointless information to the binary
+# increasing it size
+%global optflags %(echo %{optflags} | sed 's/--param=ssp-buffer-size=4 //')
+
 %build
 %configure
 make %{?_smp_mflags}
@@ -58,6 +75,9 @@ make check
 %{_bindir}/gmqpak
 
 %changelog
+* Thu Sep 26 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.0-2
+- Optimizing compile flags
+
 * Fri Sep 20 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.0-1
 - Update to 0.3.0 (improved new package: gmqpak)
 
