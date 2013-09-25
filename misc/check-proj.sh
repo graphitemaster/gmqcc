@@ -69,7 +69,7 @@ fi
 
 if [ ! -d ~/.gmqcc/testsuite/projects ]; then
     mkdir -p ~/.gmqcc/testsuite/projects
-    local old="$PWD"
+    old="$PWD"
     cd ~/.gmqcc/testsuite/projects
     echo "$(ls ../ | cat | grep -v '^hashes$' | grep -v '^projects$' | grep -v '^options$')" | while read -r line
     do
@@ -101,8 +101,9 @@ env -i type gmqcc 1>/dev/null 2>&1 || {
 end_dir="$PWD"
 cd ~/.gmqcc/testsuite/projects
 start="$PWD"
-find . -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | while read -r line
+find . -maxdepth 1 -mindepth 1 -type d | while read -r line
 do
+    line="${line#./}"
     echo -n "compiling $line... "
     cd "${start}/${line}"
 
@@ -113,7 +114,7 @@ do
         do
             # change to subproject
             echo -n "    compiling $dir... "
-            local old="$PWD"
+            old="$PWD"
             cd "$dir"
             "$gmqcc_bin" $(cat ../../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}') > /dev/null 2>&1
             if [ $? -ne 0 ]; then
