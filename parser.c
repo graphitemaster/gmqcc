@@ -5308,7 +5308,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        if (var->expression.vtype != find->vtype) {
+                        if (!ast_compare_type((ast_expression*)var, find)) {
                             char ty1[1024];
                             char ty2[1024];
 
