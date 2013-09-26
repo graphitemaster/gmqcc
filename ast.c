@@ -2582,8 +2582,8 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     /* update the block which will get the jump - because short-logic or ternaries may have changed this */
     cond = func->curblock;
 
-    /* try constant folding away the if */
-    if ((fold = fold_cond(condval, func, self)) != -1)
+    /* try constant folding away the condition */
+    if ((fold = fold_cond_ifthen(condval, func, self)) != -1)
         return fold;
 
     if (self->on_true) {
@@ -2666,6 +2666,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     ir_block *ontrue, *ontrue_out = NULL;
     ir_block *onfalse, *onfalse_out = NULL;
     ir_block *merge;
+    int       fold  = 0;
 
     /* Ternary can never create an lvalue... */
     if (lvalue)
@@ -2689,6 +2690,10 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     if (!(*cgen)((ast_expression*)(self->cond), func, false, &condval))
         return false;
     cond_out = func->curblock;
+
+    /* try constant folding away the condition */
+    if ((fold = fold_cond_ternary(condval, func, self)) != -1)
+        return fold;
 
     /* create on-true block */
     ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "tern_T"));

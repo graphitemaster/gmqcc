@@ -133,7 +133,8 @@ bool            fold_generate       (fold_t *, ir_builder *);
 ast_expression *fold_op             (fold_t *, const oper_info *, ast_expression **);
 ast_expression *fold_intrin         (fold_t *, const char      *, ast_expression **);
 
-int             fold_cond           (ir_value *, ast_function *, ast_ifthen *);
+int             fold_cond_ifthen    (ir_value *, ast_function *, ast_ifthen  *);
+int             fold_cond_ternary   (ir_value *, ast_function *, ast_ternary *);
 
 /* intrin.c */
 intrin_t       *intrin_init            (parser_t *parser);

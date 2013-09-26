@@ -797,7 +797,7 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
 /*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
 
 
-int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
+static GMQCC_INLINE int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
     if (isfloat(condval) && fold_can_1(condval) && OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
         ast_expression_codegen *cgen;
         ir_block               *elide;
@@ -830,4 +830,12 @@ int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
         return true;
     }
     return -1; /* nothing done */
+}
+
+int fold_cond_ternary(ir_value *condval, ast_function *func, ast_ternary *branch) {
+    return fold_cond(condval, func, (ast_ifthen*)branch);
+}
+
+int fold_cond_ifthen(ir_value *condval, ast_function *func, ast_ifthen *branch) {
+    return fold_cond(condval, func, branch);
 }
