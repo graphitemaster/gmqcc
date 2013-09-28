@@ -3180,7 +3180,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         if (stmt.opcode == INSTR_NOT_F) {
             /*
-             * We can optimize for superfluous cases of not. Consider
+             * We can optimize for superfluous cases of not.
              */
             if (i + 4 <= vec_size(block->instr)) {
                 for (j = 0; j < 2; j++) {
