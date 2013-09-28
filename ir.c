@@ -3178,32 +3178,6 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
         if (instr->_ops[2])
             stmt.o2.u1 = ir_value_code_addr(instr->_ops[2]);
 
-        if (stmt.opcode == INSTR_NOT_F) {
-            /*
-             * We can optimize for superfluous cases of not.
-             */
-            if (i + 4 <= vec_size(block->instr)) {
-                for (j = 0; j < 2; j++) {
-                    if (ir_value_code_addr(block->instr[i+j]->_ops[0]) != ir_value_code_addr(block->instr[i+j]->_ops[1]))
-                        break;
-                }
-                if (--j && block->instr[i+2]->_ops[0] && block->instr[i+2]->_ops[1]
-                        && block->instr[i+3]->_ops[0] && block->instr[i+2]->_ops[1]
-                        && ir_value_code_addr(block->instr[i+2]->_ops[1]) == ir_value_code_addr(block->instr[i+3]->_ops[0])
-                        && ir_value_code_addr(block->instr[i+2]->_ops[0]) == ir_value_code_addr(block->instr[i+3]->_ops[1]))
-                {
-                    code_push_statement(code, &stmt, instr->context);
-                    code_push_statement(code, &stmt, instr->context);
-                    for (j = 1; j < 4; j++)
-                        block->instr[i+j]->opcode = VINSTR_NOP;
-                    ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                    continue;
-                }
-            }
-            code_push_statement(code, &stmt, instr->context);
-            continue;
-        }
-
         if (stmt.opcode == INSTR_RETURN || stmt.opcode == INSTR_DONE)
         {
             stmt.o1.u1 = stmt.o3.u1;
@@ -3228,7 +3202,6 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 continue;
             }
         }
-
         code_push_statement(code, &stmt, instr->context);
     }
     return true;
