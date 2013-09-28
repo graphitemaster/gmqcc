@@ -518,7 +518,7 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
     self->op = op;
     self->operand = expr;
 
-    if (ast_istype(expr, ast_unary)) {
+    if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         ast_unary *prev = (ast_unary*)((ast_unary*)expr)->operand;
         if (ast_istype(prev, ast_unary)) {
             ast_expression_delete((ast_expression*)self);
