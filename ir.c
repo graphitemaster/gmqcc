@@ -2799,10 +2799,6 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
     {
         instr = block->instr[i];
 
-        /* Ignore NOP instruction */
-        if (instr->opcode == VINSTR_NOP)
-            continue;
-
         if (instr->opcode == VINSTR_PHI) {
             irerror(block->context, "cannot generate virtual instruction (phi)");
             return false;

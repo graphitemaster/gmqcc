@@ -726,13 +726,7 @@ enum {
     VINSTR_BITXOR,
     VINSTR_BITXOR_V,
     VINSTR_BITXOR_VF,
-    VINSTR_CROSS,
-
-    /*
-     * An instruction that is never emitted, useful for marking ir_instr
-     * to not be generated (just set the ->opcode member to it).
-     */
-    VINSTR_NOP
+    VINSTR_CROSS
 };
 
 /* TODO: elide */
