@@ -1,12 +1,10 @@
 Name:           gmqcc
-Version:        0.2.9
-Release:        1%{?dist}
+Version:        0.3.0
+Release:        2%{?dist}
 Summary:        Improved Quake C Compiler
 License:        MIT
 URL:            http://graphitemaster.github.io/gmqcc/
 Source0:        https://github.com/graphitemaster/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
-# Downstream patch. TODO: drop it in 0.3.0 release.
-Patch0:         build_fix.patch
 
 %description
 Modern written-from-scratch compiler for the QuakeC language with
@@ -21,13 +19,34 @@ as gmqcc or fteqcc. It provides a small set of built-in functions, and
 by default executes the main function if there is one. Some options
 useful for debugging are available as well.
 
-# TODO: add new package gmqpak after 0.3.0 release
+%package -n gmqpak
+Summary:        Standalone Quake PAK file utility
+
+%description -n gmqpak
+Standalone Quake PAK file utility supporting the extraction of files,
+directories, or whole PAKs, as well as the opposite (creation of PAK files).
 
 %prep
 %setup -q
-%patch0 -p1
 echo '#!/bin/sh' > ./configure
-chmod +x ./configure 
+chmod +x ./configure
+
+# and for all for all of those switches they increase the runtime of the compile
+# making compiles of code slower
+
+# we don't need compiel time buffer protection, we test with clangs address
+# sanatizer and valgrind before releases
+%global optflags %(echo %{optflags} | sed 's/-D_FORTIFY_SOURCE=2 //')
+# there is no exceptions in C
+%global optflags %(echo %{optflags} | sed 's/-fexceptions //')
+# same with clangs address sanatizer and valgrind testing
+%global optflags %(echo %{optflags} | sed 's/-fstack-protector-strong //')
+# buffer overflow protection is unrequired since most (if not all) allocations
+# happen dynamically and we have our own memory allocator which checks this
+# (with valgrind integration), also clangs address santatizer cathes it as
+# for grecord-gcc-switches, that just adds pointless information to the binary
+# increasing it size
+%global optflags %(echo %{optflags} | sed 's/--param=ssp-buffer-size=4 //')
 
 %build
 %configure
@@ -42,14 +61,25 @@ make check
 %files
 %doc LICENSE README AUTHORS CHANGES TODO
 %doc gmqcc.ini.example
-%doc %{_mandir}/man1/gmqcc.1.gz
+%{_mandir}/man1/gmqcc.1.gz
 %{_bindir}/gmqcc
 
 %files -n qcvm
 %doc LICENSE README AUTHORS CHANGES TODO
-%doc %{_mandir}/man1/qcvm.1.gz
+%{_mandir}/man1/qcvm.1.gz
 %{_bindir}/qcvm
 
+%files -n gmqpak
+%doc LICENSE README AUTHORS CHANGES TODO
+%{_mandir}/man1/gmqpak.1.gz
+%{_bindir}/gmqpak
+
 %changelog
+* Thu Sep 26 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.0-2
+- Optimizing compile flags
+
+* Fri Sep 20 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.0-1
+- Update to 0.3.0 (improved new package: gmqpak)
+
 * Sat Jul 27 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.2.9-1
 - Initial release
