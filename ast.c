@@ -515,7 +515,7 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
     ast_instantiate(ast_unary, ctx, ast_unary_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_unary_codegen);
 
-    self->op = op;
+    self->op      = op;
     self->operand = expr;
 
     if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
@@ -530,10 +530,13 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
 
     ast_propagate_effects(self, expr);
 
-    if (op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) {
+    if (op >= INSTR_NOT_F  && op <= INSTR_NOT_FNC) {
         self->expression.vtype = TYPE_FLOAT;
-    } else
+    } else if (op >= VINSTR_NEG_F && op <= VINSTR_NEG_V) {
+        self->expression.vtype = TYPE_FLOAT;
+    } else {
         compile_error(ctx, "cannot determine type of unary operation %s", util_instr_str[op]);
+    }
 
     return self;
 }

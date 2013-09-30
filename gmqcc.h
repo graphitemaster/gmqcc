@@ -712,6 +712,7 @@ enum {
     VINSTR_PHI,
     VINSTR_JUMP,
     VINSTR_COND,
+
     /* A never returning CALL.
      * Creating this causes IR blocks to be marked as 'final'.
      * No-Return-Call
@@ -726,7 +727,9 @@ enum {
     VINSTR_BITXOR,
     VINSTR_BITXOR_V,
     VINSTR_BITXOR_VF,
-    VINSTR_CROSS
+    VINSTR_CROSS,
+    VINSTR_NEG_F,
+    VINSTR_NEG_V
 };
 
 /* TODO: elide */

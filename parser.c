@@ -466,22 +466,18 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             break;
         case opid2('-','P'):
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                switch (exprs[0]->vtype) {
-                    case TYPE_FLOAT:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F,
-                                                                  (ast_expression*)parser->fold->imm_float[0],
-                                                                  exprs[0]);
-                        break;
-                    case TYPE_VECTOR:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V,
-                                                                  (ast_expression*)parser->fold->imm_vector[0],
-                                                                  exprs[0]);
-                        break;
-                    default:
-                    compile_error(ctx, "invalid types used in expression: cannot negate type %s",
-                                  type_name[exprs[0]->vtype]);
+                if (exprs[0]->vtype != TYPE_FLOAT &&
+                    exprs[0]->vtype != TYPE_VECTOR) {
+                        compile_error(ctx, "invalid types used in unary expression: cannot negate type %s",
+                                      type_name[exprs[0]->vtype]);
                     return false;
                 }
+                /*
+                 * TYPE_VECTOR  = TYPE_FLOAT+1,
+                 * VINSTR_NEG_V = VINSTR_NEG_F+1,
+                 * thus (VINSTR_NEG_F-TYPE_FLOAT) + TYPE_* = VINSTR_NEG_*.
+                 */
+                out = (ast_expression*)ast_unary_new(ctx, (VINSTR_NEG_F-TYPE_FLOAT) + exprs[0]->vtype, exprs[0]);
             }
             break;
 

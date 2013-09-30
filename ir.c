@@ -1878,16 +1878,22 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
         case INSTR_NOT_V:
         case INSTR_NOT_S:
         case INSTR_NOT_ENT:
-        case INSTR_NOT_FNC:
-#if 0
-        case INSTR_NOT_I:
-#endif
+        case INSTR_NOT_FNC: /*
+        case INSTR_NOT_I:   */
             ot = TYPE_FLOAT;
             break;
-        /* QC doesn't have other unary operations. We expect extensions to fill
-         * the above list, otherwise we assume out-type = in-type, eg for an
-         * unary minus
+
+        /*
+         * Negation for virtual instructions is emulated with 0-value. Thankfully
+         * the operand for 0 already exists so we just source it from here.
          */
+        case VINSTR_NEG_F:
+            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_F, NULL, operand, ot);
+            break;
+        case VINSTR_NEG_V:
+            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, NULL, operand, ot);
+            break;
+
         default:
             ot = operand->vtype;
             break;
