@@ -521,11 +521,12 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
 
     if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         ast_unary *prev = (ast_unary*)((ast_unary*)expr)->operand;
-        ast_unary *cur  = (ast_unary*)expr;
 
         /* Handle for double negation */
-        if (cur->op == op && (op >= VINSTR_NEG_F && op <= VINSTR_NEG_V))
-            prev = cur;
+        if ((((ast_unary*)expr)->op == VINSTR_NEG_V && op == VINSTR_NEG_V) ||
+            (((ast_unary*)expr)->op == VINSTR_NEG_F && op == VINSTR_NEG_F)) {
+            prev = (ast_unary*)((ast_unary*)expr)->operand;
+        }
 
         if (ast_istype(prev, ast_unary)) {
             ast_expression_delete((ast_expression*)self);
@@ -537,10 +538,10 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
 
     ast_propagate_effects(self, expr);
 
-    if (op >= INSTR_NOT_F  && op <= INSTR_NOT_FNC) {
+    if ((op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) || op == VINSTR_NEG_F) {
         self->expression.vtype = TYPE_FLOAT;
-    } else if (op >= VINSTR_NEG_F && op <= VINSTR_NEG_V) {
-        self->expression.vtype = TYPE_FLOAT;
+    } else if (op == VINSTR_NEG_V) {
+        self->expression.vtype = TYPE_VECTOR;
     } else {
         compile_error(ctx, "cannot determine type of unary operation %s", util_instr_str[op]);
     }
