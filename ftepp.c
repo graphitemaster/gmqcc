@@ -1523,6 +1523,11 @@ static bool ftepp_else_allowed(ftepp_t *ftepp)
     return true;
 }
 
+static GMQCC_INLINE void ftepp_inmacro(ftepp_t *ftepp, const char *hash) {
+    if (ftepp->in_macro)
+        (void)!ftepp_warn(ftepp, WARN_CPP, "`#%s` directive in macro", hash);
+}
+
 static bool ftepp_hash(ftepp_t *ftepp)
 {
     ppcondition cond;
@@ -1538,12 +1543,15 @@ static bool ftepp_hash(ftepp_t *ftepp)
         case TOKEN_IDENT:
         case TOKEN_TYPENAME:
             if (!strcmp(ftepp_tokval(ftepp), "define")) {
+                ftepp_inmacro(ftepp, "define");
                 return ftepp_define(ftepp);
             }
             else if (!strcmp(ftepp_tokval(ftepp), "undef")) {
+                ftepp_inmacro(ftepp, "undef");
                 return ftepp_undef(ftepp);
             }
             else if (!strcmp(ftepp_tokval(ftepp), "ifdef")) {
+                ftepp_inmacro(ftepp, "ifdef");
                 if (!ftepp_ifdef(ftepp, &cond))
                     return false;
                 cond.was_on = cond.on;
@@ -1552,6 +1560,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "ifndef")) {
+                ftepp_inmacro(ftepp, "ifndef");
                 if (!ftepp_ifdef(ftepp, &cond))
                     return false;
                 cond.on = !cond.on;
@@ -1561,6 +1570,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elifdef")) {
+                ftepp_inmacro(ftepp, "elifdef");
                 if (!ftepp_else_allowed(ftepp))
                     return false;
                 if (!ftepp_ifdef(ftepp, &cond))
@@ -1572,6 +1582,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elifndef")) {
+                ftepp_inmacro(ftepp, "elifndef");
                 if (!ftepp_else_allowed(ftepp))
                     return false;
                 if (!ftepp_ifdef(ftepp, &cond))
@@ -1584,6 +1595,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "elif")) {
+                ftepp_inmacro(ftepp, "elif");
                 if (!ftepp_else_allowed(ftepp))
                     return false;
                 if (!ftepp_if(ftepp, &cond))
@@ -1595,6 +1607,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "if")) {
+                ftepp_inmacro(ftepp, "if");
                 if (!ftepp_if(ftepp, &cond))
                     return false;
                 cond.was_on = cond.on;
@@ -1603,6 +1616,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "else")) {
+                ftepp_inmacro(ftepp, "else");
                 if (!ftepp_else_allowed(ftepp))
                     return false;
                 pc = &vec_last(ftepp->conditions);
@@ -1613,6 +1627,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "endif")) {
+                ftepp_inmacro(ftepp, "endif");
                 if (!vec_size(ftepp->conditions)) {
                     ftepp_error(ftepp, "#endif without #if");
                     return false;
@@ -1623,6 +1638,7 @@ static bool ftepp_hash(ftepp_t *ftepp)
                 break;
             }
             else if (!strcmp(ftepp_tokval(ftepp), "include")) {
+                ftepp_inmacro(ftepp, "include");
                 return ftepp_include(ftepp);
             }
             else if (!strcmp(ftepp_tokval(ftepp), "pragma")) {
