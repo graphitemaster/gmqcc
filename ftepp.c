@@ -1525,7 +1525,7 @@ static bool ftepp_else_allowed(ftepp_t *ftepp)
 
 static GMQCC_INLINE void ftepp_inmacro(ftepp_t *ftepp, const char *hash) {
     if (ftepp->in_macro)
-        (void)!ftepp_warn(ftepp, WARN_CPP, "`#%s` directive in macro", hash);
+        (void)!ftepp_warn(ftepp, WARN_DIRECTIVE_INMACRO, "`#%s` directive in macro", hash);
 }
 
 static bool ftepp_hash(ftepp_t *ftepp)

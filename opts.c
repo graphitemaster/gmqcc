@@ -91,6 +91,7 @@ static void opts_setdefault(void) {
     opts_set(opts.warn,  WARN_DEPRECATED,                true);
     opts_set(opts.warn,  WARN_PARENTHESIS,               true);
     opts_set(opts.warn,  WARN_CONST_OVERWRITE,           true);
+    opts_set(opts.warn,  WARN_DIRECTIVE_INMACRO,         true);
 
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
