@@ -532,6 +532,11 @@
     CONST_OVERWRITE = true
 
 
+    #Warn about the use of preprocessor directives inside macros.
+
+    DIRECTIVE_INMACRO = true
+
+
 
 [optimizations]
     #Some general peephole optimizations. For instance the code `a = b
