@@ -465,15 +465,15 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             out = exprs[0];
             break;
         case opid2('-','P'):
-            if (!(out = fold_op(parser->fold, op, exprs))) {
-                if (exprs[0]->vtype != TYPE_FLOAT &&
-                    exprs[0]->vtype != TYPE_VECTOR) {
-                        compile_error(ctx, "invalid types used in unary expression: cannot negate type %s",
-                                      type_name[exprs[0]->vtype]);
-                    return false;
-                }
-                out = (ast_expression*)ast_unary_new(ctx, (VINSTR_NEG_F-TYPE_FLOAT) + exprs[0]->vtype, exprs[0]);
+            if ((out = fold_op(parser->fold, op, exprs)))
+                break;
+            if (exprs[0]->vtype != TYPE_FLOAT &&
+                exprs[0]->vtype != TYPE_VECTOR) {
+                    compile_error(ctx, "invalid types used in unary expression: cannot negate type %s",
+                                  type_name[exprs[0]->vtype]);
+                return false;
             }
+            out = (ast_expression*)ast_unary_new(ctx, (VINSTR_NEG_F-TYPE_FLOAT) + exprs[0]->vtype, exprs[0]);
             break;
 
         case opid2('!','P'):
