@@ -518,8 +518,15 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
     self->op      = op;
     self->operand = expr;
 
+
     if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         ast_unary *prev = (ast_unary*)((ast_unary*)expr)->operand;
+        ast_unary *cur  = (ast_unary*)expr;
+
+        /* Handle for double negation */
+        if (cur->op == op && (op >= VINSTR_NEG_F && op <= VINSTR_NEG_V))
+            prev = cur;
+
         if (ast_istype(prev, ast_unary)) {
             ast_expression_delete((ast_expression*)self);
             mem_d(self);

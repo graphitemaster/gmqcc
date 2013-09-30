@@ -29,20 +29,9 @@ Optimizations:
             Which can be replaced with calls to a shared subroutine. To
             reduce duplicated code. (Size optimization)
 
-    The following are optimizations that can be implemented anywhere, ideally
-    these are functional language optimizations.
-
-        Removing Recursion:
-            Tail recursive algorithms can be converted to iteration, which
-            does not have to have call overhead.
-
-
 Language Features:
     The following are language features that we'd like to see implemented in the
     future.
-
-    Enumerations:
-        Like C
 
     AST Macros:
         Macros with sanity.  Not textual substiution.
@@ -153,5 +142,3 @@ Testsuite:
 Assembler:
     Possibly support for a future assembler for QCASM.  But we're not
     entirely sure if it makes sense.
-
-
