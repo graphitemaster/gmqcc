@@ -472,11 +472,6 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                       type_name[exprs[0]->vtype]);
                     return false;
                 }
-                /*
-                 * TYPE_VECTOR  = TYPE_FLOAT+1,
-                 * VINSTR_NEG_V = VINSTR_NEG_F+1,
-                 * thus (VINSTR_NEG_F-TYPE_FLOAT) + TYPE_* = VINSTR_NEG_*.
-                 */
                 out = (ast_expression*)ast_unary_new(ctx, (VINSTR_NEG_F-TYPE_FLOAT) + exprs[0]->vtype, exprs[0]);
             }
             break;
