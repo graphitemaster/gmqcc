@@ -32,32 +32,29 @@
  * is entered when -fintrin is used (causing all existing builtins to
  * be ignored by the compiler and instead interface through here.
  */
-#define INTRIN_VAL(VALUE, NAME, FUNC, STYPE, VTYPE)                    \
-    do {                                                               \
-        (VALUE) = ast_value_new (                                      \
-            parser_ctx(intrin->parser),                                \
-            "__builtin_" NAME,                                         \
-            TYPE_FUNCTION                                              \
-        );                                                             \
-        (VALUE)->intrinsic = true;                                     \
-        (VALUE)->expression.next = (ast_expression*)ast_value_new (    \
-            parser_ctx(intrin->parser),                                \
-            STYPE,                                                     \
-            VTYPE                                                      \
-        );                                                             \
-        (FUNC) = ast_function_new (                                    \
-            parser_ctx(intrin->parser),                                \
-            "__builtin_" NAME,                                         \
-            (VALUE)                                                    \
-        );                                                             \
-        (VALUE)->expression.flags |= AST_FLAG_ERASEABLE;               \
-    } while (0)
+#define intrin_ctx(I) parser_ctx((I)->parser)
 
-#define INTRIN_REG(FUNC, VALUE)                                        \
-    do {                                                               \
-        vec_push(intrin->parser->functions, (FUNC));                   \
-        vec_push(intrin->parser->globals,   (ast_expression*)(VALUE)); \
-    } while (0)
+static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **value, const char *name, qcint_t vtype) {
+    ast_function *func = NULL;
+    char          buffer[1024];
+    char          stype [1024];
+
+    util_snprintf(buffer, sizeof(buffer), "__builtin_%s", name);
+    util_snprintf(stype,  sizeof(stype),   "<%s>",        type_name[vtype]);
+
+    *value                      = ast_value_new(intrin_ctx(intrin), buffer, TYPE_FUNCTION);
+    (*value)->intrinsic         = true;
+    (*value)->expression.next   = (ast_expression*)ast_value_new(intrin_ctx(intrin), stype, vtype);
+     func                       = ast_function_new(intrin_ctx(intrin), buffer, *value);
+    (*value)->expression.flags |= AST_FLAG_ERASEABLE;
+
+    return func;
+}
+
+static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, ast_function *const func) {
+    vec_push(intrin->parser->functions, func);
+    vec_push(intrin->parser->globals,   (ast_expression*)value);
+}
 
 #define QC_M_E 2.71828182845905f
 
@@ -87,9 +84,7 @@ static ast_expression *intrin_pow (intrin_t *intrin) {
         ast_block    *l2b   = ast_block_new(parser_ctx(intrin->parser)); /* loop 2 body */
         ast_loop     *loop1 = NULL;
         ast_loop     *loop2 = NULL;
-        ast_function *func  = NULL;
-
-        INTRIN_VAL(value, "pow", func, "<float>", TYPE_FLOAT);
+        ast_function *func  = intrin_value(intrin, &value, "pow", TYPE_FLOAT);
 
         /* arguments */
         vec_push(value->expression.params, arg1);
@@ -202,7 +197,7 @@ static ast_expression *intrin_pow (intrin_t *intrin) {
         /* push block and register intrin for codegen */
         vec_push(func->blocks, body);
 
-        INTRIN_REG(func, value);
+        intrin_reg(intrin, value, func);
     }
 
     return (ast_expression*)value;
@@ -221,9 +216,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
         ast_value    *arg1  = ast_value_new(parser_ctx(intrin->parser), "x", TYPE_FLOAT);
         ast_value    *arg2  = ast_value_new(parser_ctx(intrin->parser), "y", TYPE_FLOAT);
         ast_block    *body  = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func  = NULL;
-
-        INTRIN_VAL(value, "mod", func, "<float>", TYPE_FLOAT);
+        ast_function *func  = intrin_value(intrin, &value, "mod", TYPE_FLOAT);
 
         /* floor(x/y) */
         vec_push(call->params,
@@ -257,7 +250,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
 
         vec_push(func->blocks,             body); /* {{{ body }}} */
 
-        INTRIN_REG(func, value);
+        intrin_reg(intrin, value, func);
     }
 
     return (ast_expression*)value;
@@ -275,9 +268,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
         ast_call     *call = ast_call_new (parser_ctx(intrin->parser), intrin_func(intrin, "pow"));
         ast_value    *arg1 = ast_value_new(parser_ctx(intrin->parser), "x", TYPE_FLOAT);
         ast_block    *body = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func = NULL;
-
-        INTRIN_VAL(value, "exp", func, "<float>", TYPE_FLOAT);
+        ast_function *func = intrin_value(intrin, &value, "exp", TYPE_FLOAT);
 
         /* push arguments for params to call */
         vec_push(call->params, (ast_expression*)fold_constgen_float(intrin->fold, QC_M_E));
@@ -295,7 +286,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
 
         vec_push(func->blocks,             body); /* {{{ body }}} */
 
-        INTRIN_REG(func, value);
+        intrin_reg(intrin, value, func);
     }
 
     return (ast_expression*)value;
@@ -316,9 +307,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
         ast_value    *arg1   = ast_value_new(parser_ctx(intrin->parser), "x",     TYPE_FLOAT);
         ast_value    *local  = ast_value_new(parser_ctx(intrin->parser), "local", TYPE_FLOAT);
         ast_block    *body   = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func   = NULL;
-
-        INTRIN_VAL(value, "isnan", func, "<float>", TYPE_FLOAT);
+        ast_function *func   = intrin_value(intrin, &value, "isnan", TYPE_FLOAT);
 
         vec_push(body->locals, local);
         vec_push(body->exprs,
@@ -345,7 +334,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
         vec_push(value->expression.params, arg1);
         vec_push(func->blocks, body);
 
-        INTRIN_REG(func, value);
+        intrin_reg(intrin, value, func);
     }
 
     return (ast_expression*)value;
@@ -361,9 +350,7 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
     if (!value) {
         ast_value    *arg1   = ast_value_new(parser_ctx(intrin->parser), "x",     TYPE_FLOAT);
         ast_block    *body   = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func   = NULL;
-
-        INTRIN_VAL(value, "fabs", func, "<float>", TYPE_FLOAT);
+        ast_function *func   = intrin_value(intrin, &value, "fabs", TYPE_FLOAT);
 
         vec_push(body->exprs,
             (ast_expression*)ast_return_new(
@@ -390,14 +377,11 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
         vec_push(value->expression.params, arg1);
         vec_push(func->blocks, body);
 
-        INTRIN_REG(func, value);
+        intrin_reg(intrin, value, func);
     }
 
     return (ast_expression*)value;
 }
-
-#undef INTRIN_REG
-#undef INTRIN_VAL
 
 /*
  * TODO: make static (and handle ast_type_string) here for the builtin
