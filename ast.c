@@ -467,9 +467,9 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
         else
             self->expression.vtype = TYPE_FLOAT;
     }
-    else if (op == INSTR_BITAND || op == INSTR_BITOR)
+    else if (op == INSTR_BITAND || op == INSTR_BITOR || op == INSTR_MUL_F)
         self->expression.vtype = TYPE_FLOAT;
-    else if (op == INSTR_MUL_FV || op == INSTR_MUL_FV)
+    else if (op >= INSTR_MUL_V && op <=  INSTR_MUL_VF)
         self->expression.vtype = TYPE_VECTOR;
     else
         self->expression.vtype = left->vtype;
