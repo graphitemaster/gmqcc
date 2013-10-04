@@ -791,7 +791,7 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
 /*#define isstring(X)             ((X)->vtype == TYPE_STRING)*/
 /*#define isvector(X)             ((X)->vtype == TYPE_VECTOR)*/
 #define fold_immvalue_float(X)  ((X)->constval.vfloat)
-/*#define fold_immvalue_vector(X) ((X)->constval.vvec)*/
+#define fold_immvalue_vector(X) ((X)->constval.vvec)
 /*#define fold_immvalue_string(X) ((X)->constval.vstring)*/
 #define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
 /*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
@@ -799,28 +799,37 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
 ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, int op) {
     ast_value *load;
 
-    if (!ast_istype(left, ast_value))
+    if (!ast_istype(left, ast_value) || !fold_can_1((load = (ast_value*)right)))
         return NULL;
-
-    load = (ast_value*)right;
 
     switch (op) {
         case INSTR_MUL_F:
-        case INSTR_MUL_V:
-        case INSTR_MUL_FV:
-        case INSTR_MUL_VF:
         case INSTR_DIV_F:
-            if (fold_can_1(load) && fold_immvalue_float(load) == 1.0f) {
+            if (fold_immvalue_float(load) == 1.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 return (ast_expression*)left;
             }
             break;
 
+
         case INSTR_ADD_F:
-        case INSTR_ADD_V:
         case INSTR_SUB_F:
+            if (fold_immvalue_float(load) == 0.0f) {
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
+                return (ast_expression*)left;
+            }
+            break;
+
+        case INSTR_MUL_V:
+            if (vec3_cmp(fold_immvalue_vector(load), vec3_create(1, 1, 1))) {
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
+                return (ast_expression*)left;
+            }
+            break;
+
+        case INSTR_ADD_V:
         case INSTR_SUB_V:
-            if (fold_can_1(load) && fold_immvalue_float(load) == 0.0f) {
+            if (vec3_cmp(fold_immvalue_vector(load), vec3_create(0, 0, 0))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 return (ast_expression*)left;
             }
