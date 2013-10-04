@@ -454,7 +454,7 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
      * Try to fold away superfluous binary operations, such as:
      * A * 1, a + 0, etc.
      */
-    if ((fold = (ast_binary*)fold_superfluous(left, right, op))) {
+    if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE) && (fold = (ast_binary*)fold_superfluous(left, right, op))) {
         ast_binary_delete(self);
         return fold;
     }
