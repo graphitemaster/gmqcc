@@ -438,6 +438,7 @@ bool ast_value_set_name(ast_value *self, const char *name)
 ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
                            ast_expression* left, ast_expression* right)
 {
+    ast_binary *fold;
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binary_codegen);
 
@@ -449,6 +450,15 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
     ast_propagate_effects(self, left);
     ast_propagate_effects(self, right);
 
+    /*
+     * Try to fold away superfluous binary operations, such as:
+     * A * 1, a + 0, etc.
+     */
+    if ((fold = (ast_binary*)fold_superfluous(left, right, op))) {
+        ast_binary_delete(self);
+        return fold;
+    }
+
     if (op >= INSTR_EQ_F && op <= INSTR_GT)
         self->expression.vtype = TYPE_FLOAT;
     else if (op == INSTR_AND || op == INSTR_OR) {
@@ -459,10 +469,8 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
     }
     else if (op == INSTR_BITAND || op == INSTR_BITOR)
         self->expression.vtype = TYPE_FLOAT;
-    else if (op == INSTR_MUL_VF || op == INSTR_MUL_FV)
+    else if (op == INSTR_MUL_FV || op == INSTR_MUL_FV)
         self->expression.vtype = TYPE_VECTOR;
-    else if (op == INSTR_MUL_V)
-        self->expression.vtype = TYPE_FLOAT;
     else
         self->expression.vtype = left->vtype;
 

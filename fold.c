@@ -796,6 +796,39 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
 #define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
 /*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
 
+ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, int op) {
+    ast_value *load;
+
+    if (!ast_istype(left, ast_value))
+        return NULL;
+
+    load = (ast_value*)right;
+
+    switch (op) {
+        case INSTR_MUL_F:
+        case INSTR_MUL_V:
+        case INSTR_MUL_FV:
+        case INSTR_MUL_VF:
+        case INSTR_DIV_F:
+            if (fold_can_1(load) && fold_immvalue_float(load) == 1.0f) {
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
+                return (ast_expression*)left;
+            }
+            break;
+
+        case INSTR_ADD_F:
+        case INSTR_ADD_V:
+        case INSTR_SUB_F:
+        case INSTR_SUB_V:
+            if (fold_can_1(load) && fold_immvalue_float(load) == 0.0f) {
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
+                return (ast_expression*)left;
+            }
+            break;
+    }
+
+    return NULL;
+}
 
 static GMQCC_INLINE int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
     if (isfloat(condval) && fold_can_1(condval) && OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
