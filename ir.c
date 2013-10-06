@@ -613,7 +613,7 @@ static bool instr_is_operation(uint16_t op)
              (op >= INSTR_NOT_F  && op <= INSTR_NOT_FNC) ||
              (op >= INSTR_AND    && op <= INSTR_BITOR) ||
              (op >= INSTR_CALL0  && op <= INSTR_CALL8) ||
-             (op >= VINSTR_BITAND_V && op <= VINSTR_CROSS) );
+             (op >= VINSTR_BITAND_V && op <= VINSTR_NEG_V) );
 }
 
 static bool ir_function_pass_peephole(ir_function *self)
@@ -3999,6 +3999,8 @@ static const char *qc_opname(int op)
         case VINSTR_BITOR_VF:  return "BITOR_VF";
         case VINSTR_BITXOR_VF: return "BITXOR_VF";
         case VINSTR_CROSS:     return "CROSS";
+        case VINSTR_NEG_F:     return "NEG_F";
+        case VINSTR_NEG_V:     return "NEG_V";
         default:               return "<UNK>";
     }
 }

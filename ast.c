@@ -450,10 +450,6 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
     ast_propagate_effects(self, left);
     ast_propagate_effects(self, right);
 
-    /*
-     * Try to fold away superfluous binary operations, such as:
-     * A * 1, a + 0, etc.
-     */
     if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE) && (fold = (ast_binary*)fold_superfluous(left, right, op))) {
         ast_binary_delete(self);
         return fold;
@@ -467,10 +463,12 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
         else
             self->expression.vtype = TYPE_FLOAT;
     }
-    else if (op == INSTR_BITAND || op == INSTR_BITOR || op == INSTR_MUL_F)
+    else if (op == INSTR_BITAND || op == INSTR_BITOR)
         self->expression.vtype = TYPE_FLOAT;
-    else if (op >= INSTR_MUL_V && op <=  INSTR_MUL_VF)
+    else if (op == INSTR_MUL_VF || op == INSTR_MUL_FV)
         self->expression.vtype = TYPE_VECTOR;
+    else if (op == INSTR_MUL_V)
+        self->expression.vtype = TYPE_FLOAT;
     else
         self->expression.vtype = left->vtype;
 

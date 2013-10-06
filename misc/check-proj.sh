@@ -116,7 +116,8 @@ do
             echo -n "    compiling $dir... "
             old="$PWD"
             cd "$dir"
-            "$gmqcc_bin" $(cat ../../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}') > /dev/null 2>&1
+            cmd="$(cat ../../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}')"
+            "$gmqcc_bin" $cmd > /dev/null 2>&1
             if [ $? -ne 0 ]; then
                 echo "error"
             else
@@ -126,7 +127,9 @@ do
         done
     # nope only one project
     else
-        "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}') > /dev/null 2>&1
+        echo "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}')
+        cmd="$(cat ../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}')"
+        "$gmqcc_bin" $cmd > /dev/null 2>&1
         if [ $? -ne 0 ]; then
             echo "error"
         else
