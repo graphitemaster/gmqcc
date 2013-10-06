@@ -127,7 +127,6 @@ do
         done
     # nope only one project
     else
-        echo "$gmqcc_bin" $(cat ../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}')
         cmd="$(cat ../../options | grep "$line:" | awk '{print substr($0, index($0, $2))}')"
         "$gmqcc_bin" $cmd > /dev/null 2>&1
         if [ $? -ne 0 ]; then
