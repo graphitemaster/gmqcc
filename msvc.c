@@ -20,7 +20,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "gmqcc.h"
+#include <string.h>
+#include <stdlib.h>
+#include <io.h>
+
+#include "platform.h"
 
 #define CTIME_BUFFER    64
 #define GETENV_BUFFER   4096
@@ -111,4 +115,65 @@ const char *platform_strerror(int err) {
     char *buffer = (char*)platform_mem_allocate(STRERROR_BUFFER);
     strerror_s(buffer, STRERROR_BUFFER, err);
     return buffer;
+}
+
+FILE *platform_fopen(const char *filename, const char *mode) {
+    FILE *handle;
+    return (fopen_s(&handle, filename, mode) != 0) ? NULL : handle;
+}
+
+size_t platform_fread(void *ptr, size_t size, size_t count, FILE *stream) {
+    return fread_s(ptr, size, size, count, stream);
+}
+
+size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream) {
+    return fwrite(ptr, size, count, stream);
+}
+
+int platform_vfprintf(FILE *stream, const char *format, va_list arg) {
+    return vfprintf_s(stream, format, arg);
+}
+
+int platform_fclose(FILE *stream) {
+    return fclose(stream);
+}
+
+int platform_ferror(FILE *stream) {
+    return ferror(stream);
+}
+
+int platform_fgetc(FILE *stream) {
+    return fgetc(stream);
+}
+
+int platform_fputs(const char *str, FILE *stream) {
+    return fputs(str, stream);
+}
+
+int platform_fseek(FILE *stream, long offset, int origin) {
+    return fseek(stream, offset, origin);
+}
+
+long platform_ftell(FILE *stream) {
+    return ftell(stream);
+}
+
+int platform_mkdir(const char *path, int mode) {
+    return mkdir(path, mode);
+}
+
+DIR *platform_opendir(const char *path) {
+    return opendir(path);
+}
+
+int platform_closedir(DIR *dir) {
+    return closedir(dir);
+}
+
+struct dirent *platform_readdir(DIR *dir) {
+    return readdir(dir);
+}
+
+int platform_istty(int fd) {
+    return _istty(fd);
 }

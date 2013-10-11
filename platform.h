@@ -23,7 +23,6 @@
 
 #ifndef GMQCC_PLATFORM_HDR
 #define GMQCC_PLATFORM_HDR
-#include <stddef.h>
 #include <stdarg.h>
 #include <time.h>
 #include <stdio.h>
@@ -59,6 +58,6 @@ int platform_mkdir(const char *path, int mode);
 DIR *platform_opendir(const char *path);
 int platform_closedir(DIR *dir);
 struct dirent *platform_readdir(DIR *dir);
-
+int platform_isatty(int fd);
 
 #endif

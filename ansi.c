@@ -22,6 +22,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "platform.h"
 
@@ -137,4 +138,8 @@ int platform_closedir(DIR *dir) {
 
 struct dirent *platform_readdir(DIR *dir) {
     return readdir(dir);
+}
+
+int platform_isatty(int fd) {
+    return isatty(fd);
 }

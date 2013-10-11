@@ -20,22 +20,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "gmqcc.h"
+#include <unistd.h>
 
-/*
- * isatty/STDERR_FILENO/STDOUT_FILNO
- * + some other things likewise.
- */
-#ifndef _WIN32
-#   include <unistd.h>
-#else
-#   include <io.h>
-    /*
-     * Windows and it's posix underscore bullshit.  We simply fix this
-     * with yay, another macro :P
-     */
-#   define isatty _isatty
-#endif
+#include "gmqcc.h"
+#include "platform.h"
 
 #define GMQCC_IS_STDOUT(X) ((FILE*)((void*)X) == stdout)
 #define GMQCC_IS_STDERR(X) ((FILE*)((void*)X) == stderr)
@@ -198,9 +186,9 @@ static con_t console;
  */
 static void con_enablecolor(void) {
     if (console.handle_err == stderr || console.handle_err == stdout)
-        console.color_err = !!(isatty(STDERR_FILENO));
+        console.color_err = !!(platform_isatty(STDERR_FILENO));
     if (console.handle_out == stderr || console.handle_out == stdout)
-        console.color_out = !!(isatty(STDOUT_FILENO));
+        console.color_out = !!(platform_isatty(STDOUT_FILENO));
 }
 
 /*
