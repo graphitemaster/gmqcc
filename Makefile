@@ -148,22 +148,22 @@ install-doc:
 
 # DO NOT DELETE
 
-pak.o: gmqcc.h opts.def platform.h
 ansi.o: platform.h gmqcc.h opts.def
 util.o: gmqcc.h opts.def platform.h
 stat.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def platform.h
-conout.o: gmqcc.h opts.def platform.h
-opts.o: gmqcc.h opts.def platform.h
+opts.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def
+pak.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def platform.h
 main.o: gmqcc.h opts.def lexer.h
-lexer.o: gmqcc.h opts.def lexer.h platform.h
-parser.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h platform.h
+lexer.o: gmqcc.h opts.def lexer.h
+parser.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h
 code.o: gmqcc.h opts.def
-ast.o: gmqcc.h opts.def ast.h ir.h parser.h lexer.h platform.h
-ir.o: gmqcc.h opts.def ir.h platform.h
-ftepp.o: gmqcc.h opts.def lexer.h platform.h
+ast.o: gmqcc.h opts.def ast.h ir.h parser.h lexer.h
+ir.o: gmqcc.h opts.def ir.h
+ftepp.o: gmqcc.h opts.def lexer.h
 utf8.o: gmqcc.h opts.def
 correct.o: gmqcc.h opts.def
-fold.o: ast.h ir.h gmqcc.h opts.def parser.h lexer.h platform.h
-intrin.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h platform.h
+fold.o: ast.h ir.h gmqcc.h opts.def parser.h lexer.h
+intrin.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h
