@@ -23,7 +23,6 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/stat.h>
 
 #include "gmqcc.h"

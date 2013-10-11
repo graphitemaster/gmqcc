@@ -22,10 +22,6 @@
  * SOFTWARE.
  */
 #define GMQCC_PLATFORM_HEADER
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
 #include "gmqcc.h"
 #include "platform.h"
 
@@ -286,9 +282,40 @@ bool util_isatty(fs_file_t *file) {
     return false;
 }
 
-void util_seed(uint32_t value) {
-    srand((int)value);
-}
+/*
+ * A small noncryptographic PRNG based on:
+ * http://burtleburtle.net/bob/rand/smallprng.html
+ */
+static uint32_t util_rand_state[4] = {
+    0xF1EA5EED, 0x00000000,
+    0x00000000, 0x00000000
+};
+
+#define util_rand_rot(X, Y) (((X)<<(Y))|((X)>>(32-(Y))))
+
 uint32_t util_rand() {
-    return rand();
+    uint32_t last;
+
+    last               = util_rand_state[0] - util_rand_rot(util_rand_state[1], 27);
+    util_rand_state[0] = util_rand_state[1] ^ util_rand_rot(util_rand_state[2], 17);
+    util_rand_state[1] = util_rand_state[2] + util_rand_state[3];
+    util_rand_state[2] = util_rand_state[3] + last;
+    util_rand_state[3] = util_rand_state[0] + last;
+
+    return util_rand_state[3];
 }
+
+#undef util_rand_rot
+
+void util_seed(uint32_t value) {
+    size_t i;
+
+    util_rand_state[0] = 0xF1EA5EED;
+    util_rand_state[1] = value;
+    util_rand_state[2] = value;
+    util_rand_state[3] = value;
+
+    for (i = 0; i < 20; ++i)
+        (void)util_rand();
+}
+
