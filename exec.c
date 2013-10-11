@@ -23,10 +23,9 @@
  */
 #ifndef QCVM_LOOP
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "gmqcc.h"
 
@@ -54,9 +53,9 @@ static void qcvmerror(qc_program_t *prog, const char *fmt, ...)
 
 qc_program_t* prog_load(const char *filename, bool skipversion)
 {
-    qc_program_t   *prog;
     prog_header_t   header;
-    FILE         *file  = fs_file_open(filename, "rb");
+    qc_program_t   *prog;
+    fs_file_t      *file  = fs_file_open(filename, "rb");
 
     if (!file)
         return NULL;
@@ -91,11 +90,11 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     }
 
 #define read_data(hdrvar, progvar, reserved)                           \
-    if (fs_file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {        \
+    if (fs_file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {     \
         loaderror("seek failed");                                      \
         goto error;                                                    \
     }                                                                  \
-    if (fs_file_read (                                                    \
+    if (fs_file_read (                                                 \
             vec_add(prog->progvar, header.hdrvar.length + reserved),   \
             sizeof(*prog->progvar),                                    \
             header.hdrvar.length,                                      \
@@ -352,7 +351,7 @@ static void trace_print_global(qc_program_t *prog, unsigned int glob, int vtype)
 done:
     if (len < (int)sizeof(spaces)-1) {
         spaces[sizeof(spaces)-1-len] = 0;
-        fs_file_puts(stdout, spaces);
+        fs_file_puts((fs_file_t*)stdout, spaces);
         spaces[sizeof(spaces)-1-len] = ' ';
     }
 }
@@ -877,17 +876,10 @@ static void prog_main_setparams(qc_program_t *prog) {
         arg->vector[2] = 0;
         switch (main_params[i].vtype) {
             case TYPE_VECTOR:
-#ifdef _MSC_VER
-                (void)sscanf_s(main_params[i].value, " %f %f %f ",
-                               &arg->vector[0],
-                               &arg->vector[1],
-                               &arg->vector[2]);
-#else
-                (void)sscanf(main_params[i].value, " %f %f %f ",
-                             &arg->vector[0],
-                             &arg->vector[1],
-                             &arg->vector[2]);
-#endif
+                (void)util_sscanf(main_params[i].value, " %f %f %f ",
+                                       &arg->vector[0],
+                                       &arg->vector[1],
+                                       &arg->vector[2]);
                 break;
             case TYPE_FLOAT:
                 arg->_float = atof(main_params[i].value);

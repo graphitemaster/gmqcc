@@ -213,7 +213,7 @@ static char *opts_ini_next(const char *s, char c) {
 }
 
 static size_t opts_ini_parse (
-    FILE   *filehandle,
+    fs_file_t *filehandle,
     char *(*loadhandle)(const char *, const char *, const char *),
     char **errorhandle
 ) {
@@ -230,7 +230,7 @@ static size_t opts_ini_parse (
     char *read_name;
     char *read_value;
 
-    while (fs_file_getline(&line, &linesize, filehandle) != EOF) {
+    while (fs_file_getline(&line, &linesize, filehandle) != FS_FILE_EOF) {
         parse_beg = line;
 
         /* handle BOM */
@@ -380,7 +380,7 @@ void opts_ini_init(const char *file) {
      */
     char       *error = NULL;
     size_t     line;
-    FILE       *ini;
+    fs_file_t  *ini;
 
     if (!file) {
         /* try ini */

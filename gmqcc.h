@@ -24,7 +24,8 @@
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
 #include <stdarg.h>
-#include <stdio.h> /* TODO: remove this */
+#include <stddef.h>
+#include <time.h>   /* TODO: remove?*/
 
 /*
  * Disable some over protective warnings in visual studio because fixing them is a waste
@@ -252,46 +253,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   endif
 #endif /*! !defined (PLATFORM_BYTE_ORDER) */
 
-/*
- * On windows systems where we're not compiling with MING32 we need a
- * little extra help on dependinces for implementing our own dirent.h
- * in fs.c.
- */
-#if defined(_WIN32) && !defined(__MINGW32__)
-#   define _WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-#   include <io.h>
-#   include <fcntl.h>
-
-    struct dirent {
-        long               d_ino;
-        unsigned short     d_reclen;
-        unsigned short     d_namlen;
-        char               d_name[FILENAME_MAX];
-    };
-
-    typedef struct {
-        struct _finddata_t dd_dta;
-        struct dirent      dd_dir;
-        long               dd_handle;
-        int                dd_stat;
-        char               dd_name[1];
-    } DIR;
-    /*
-     * Visual studio also lacks S_ISDIR for sys/stat.h, so we emulate this as well
-     * which is not hard at all.
-     */
-#    ifdef S_ISDIR
-#        undef  S_ISDIR
-#    endif /*! S_ISDIR */
-#   define S_ISDIR(X) ((X)&_S_IFDIR)
-#else
-#   include <dirent.h>
-#endif /*! _WIN32 && !defined(__MINGW32__) */
-
-/*===================================================================*/
-/*=========================== stat.c ================================*/
-/*===================================================================*/
+/* stat.c */
 void  stat_info          (void);
 char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
 void *stat_mem_reallocate(void *,       size_t, size_t, const char *);
@@ -307,9 +269,7 @@ void *stat_mem_allocate  (size_t, size_t, const char *);
 #define util_strdup(SRC)         stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, false)
 #define util_strdupe(SRC)        stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, true)
 
-/*===================================================================*/
-/*=========================== util.c ================================*/
-/*===================================================================*/
+/* util.c */
 
 /*
  * Microsoft implements against the spec versions of ctype.h. Which
@@ -329,10 +289,9 @@ void *stat_mem_allocate  (size_t, size_t, const char *);
 #define util_isprint(a) (((unsigned)(a)-0x20) < 0x5F)
 #define util_isspace(a) (((a) >= 9 && (a) <= 13) || (a) == ' ')
 
-bool  util_filexists     (const char *);
 bool  util_strupper      (const char *);
 bool  util_strdigit      (const char *);
-void  util_endianswap    (void *,  size_t, unsigned int);
+void  util_endianswap    (void *, size_t, unsigned int);
 
 size_t util_strtocmd         (const char *, char *, size_t);
 size_t util_strtononcmd      (const char *, char *, size_t);
@@ -343,18 +302,18 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 void     util_seed(uint32_t);
 uint32_t util_rand(void);
 
-/*
- * String functions (formatting, copying, concatenating, errors). These are wrapped
- * to use the MSVC _safe_ versions when using MSVC, plus some implementations of
- * these are non-conformant or don't exist such as asprintf and snprintf, which are
- * not supported in C90, but do exist in C99.
- */
-int         util_vasprintf(char **ret, const char *fmt, va_list);
-int         util_asprintf (char **ret, const char *fmt, ...);
-int         util_snprintf (char *src,  size_t bytes, const char *format, ...);
-char       *util_strcat   (char *dest, const char *src);
-char       *util_strncpy  (char *dest, const char *src, size_t num);
-const char *util_strerror (int num);
+int      util_asprintf (char **ret, const char *fmt, ...);
+int      util_sscanf   (const char *str, const char *format, ...);
+char    *util_strncpy  (char *dest, const char *src, size_t n);
+char    *util_strncat  (char *dest, const char *src, size_t n);
+char    *util_strcat   (char *dest, const char *src);
+const char *util_strerror(int err);
+
+const struct tm *util_localtime(const time_t *timer);
+const char      *util_ctime    (const time_t *timer);
+
+typedef struct fs_file_s fs_file_t;
+int              util_isatty   (fs_file_t *);
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -390,13 +349,6 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 #define vec_shrinkby(A,N) ((void)(vec_meta(A)->used -= (N)))
 #define vec_append(A,N,S) ((void)(memcpy(vec_add((A), (N)), (S), (N) * sizeof(*(S)))))
 #define vec_remove(A,I,N) ((void)(memmove((A)+(I),(A)+((I)+(N)),sizeof(*(A))*(vec_meta(A)->used-(I)-(N))),vec_meta(A)->used-=(N)))
-
-typedef struct correct_trie_s {
-    void                  *value;
-    struct correct_trie_s *entries;
-} correct_trie_t;
-
-correct_trie_t* correct_trie_new(void);
 
 typedef struct hash_table_s {
     size_t                size;
@@ -445,34 +397,48 @@ void          util_htrm  (hash_table_t *ht, const char *key, void (*cb)(void*));
 void         *util_htget (hash_table_t *ht, const char *key);
 void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
 
-/*===================================================================*/
-/*============================ file.c ===============================*/
-/*===================================================================*/
-/* file handling */
-void           fs_file_close  (FILE *);
-int            fs_file_error  (FILE *);
-int            fs_file_getc   (FILE *);
-int            fs_file_printf (FILE *, const char *, ...);
-int            fs_file_puts   (FILE *, const char *);
-int            fs_file_seek   (FILE *, long int, int);
-long int       fs_file_tell   (FILE *);
+int           util_snprintf(char *str, size_t, const char *fmt, ...);
 
-size_t         fs_file_read   (void *,        size_t, size_t, FILE *);
-size_t         fs_file_write  (const void *,  size_t, size_t, FILE *);
 
-FILE          *fs_file_open   (const char *, const char *);
-int            fs_file_getline(char  **, size_t *, FILE *);
+/* fs.c */
+#define FS_FILE_SEEK_SET  0
+#define FS_FILE_SEEK_CUR  1
+#define FS_FILE_SEEK_END  2
+#define FS_FILE_EOF      -1
 
-/* directory handling */
+typedef struct fs_dir_s  fs_dir_t;
+/*typedef struct fs_file_s fs_file_t;*/
+typedef struct dirent    fs_dirent_t;
+
+void           fs_file_close  (fs_file_t *);
+int            fs_file_error  (fs_file_t *);
+int            fs_file_getc   (fs_file_t *);
+int            fs_file_printf (fs_file_t *, const char *, ...);
+int            fs_file_puts   (fs_file_t *, const char *);
+int            fs_file_seek   (fs_file_t *, long int, int);
+long           fs_file_tell   (fs_file_t *);
+int            fs_file_flush  (fs_file_t *);
+
+size_t         fs_file_read   (void *,        size_t, size_t, fs_file_t *);
+size_t         fs_file_write  (const void *,  size_t, size_t, fs_file_t *);
+
+fs_file_t     *fs_file_open   (const char *, const char *);
+int            fs_file_getline(char  **, size_t *, fs_file_t *);
+
 int            fs_dir_make    (const char *);
-DIR           *fs_dir_open    (const char *);
-int            fs_dir_close   (DIR *);
-struct dirent *fs_dir_read    (DIR *);
+fs_dir_t      *fs_dir_open    (const char *);
+int            fs_dir_close   (fs_dir_t *);
+fs_dirent_t   *fs_dir_read    (fs_dir_t *);
 
 
-/*===================================================================*/
-/*=========================== correct.c =============================*/
-/*===================================================================*/
+/* correct.c */
+typedef struct correct_trie_s {
+    void                  *value;
+    struct correct_trie_s *entries;
+} correct_trie_t;
+
+correct_trie_t* correct_trie_new(void);
+
 typedef struct {
     char   ***edits;
     size_t  **lens;
@@ -484,9 +450,8 @@ char *correct_str (correction_t *, correct_trie_t*, const char *);
 void  correct_init(correction_t *);
 void  correct_free(correction_t *);
 
-/*===================================================================*/
-/*=========================== code.c ================================*/
-/*===================================================================*/
+
+/* code.c */
 
 /* Note: if you change the order, fix type_sizeof in ir.c */
 enum {
@@ -783,9 +748,7 @@ void      code_push_statement(code_t *, prog_section_statement_t *stmt, lex_ctx_
 void      code_pop_statement (code_t *);
 
 
-/*===================================================================*/
-/*============================ con.c ================================*/
-/*===================================================================*/
+/* conout.c */
 enum {
     CON_BLACK   = 30,
     CON_RED,
@@ -804,8 +767,8 @@ enum {
     LVL_ERROR
 };
 
-FILE *con_default_out(void);
-FILE *con_default_err(void);
+fs_file_t *con_default_out(void);
+fs_file_t *con_default_err(void);
 
 void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
 void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);
@@ -833,10 +796,8 @@ bool GMQCC_WARN compile_warning (lex_ctx_t ctx, int warntype, const char *fmt, .
 bool GMQCC_WARN vcompile_warning(lex_ctx_t ctx, int warntype, const char *fmt, va_list ap);
 void            compile_show_werrors(void);
 
-/*===================================================================*/
-/*============================= ir.c ================================*/
-/*===================================================================*/
-
+/* ir.c */
+/* TODO: cleanup */
 enum store_types {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */
@@ -849,9 +810,7 @@ typedef struct {
     qcfloat_t x, y, z;
 } vec3_t;
 
-/*===================================================================*/
-/*============================= exec.c ==============================*/
-/*===================================================================*/
+/* exec.c */
 
 /* TODO: cleanup */
 /*
@@ -944,9 +903,7 @@ qcany_t*            prog_getedict  (qc_program_t *prog, qcint_t e);
 qcint_t               prog_tempstring(qc_program_t *prog, const char *_str);
 
 
-/*===================================================================*/
-/*===================== parser.c commandline ========================*/
-/*===================================================================*/
+/* parser.c */
 struct parser_s;
 struct parser_s *parser_create        (void);
 bool             parser_compile_file  (struct parser_s *parser, const char *);
@@ -954,9 +911,7 @@ bool             parser_compile_string(struct parser_s *parser, const char *, co
 bool             parser_finish        (struct parser_s *parser, const char *);
 void             parser_cleanup       (struct parser_s *parser);
 
-/*===================================================================*/
-/*====================== ftepp.c commandline ========================*/
-/*===================================================================*/
+/* ftepp.c */
 struct ftepp_s;
 struct ftepp_s *ftepp_create           (void);
 bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);
@@ -967,9 +922,7 @@ void            ftepp_flush            (struct ftepp_s *ftepp);
 void            ftepp_add_define       (struct ftepp_s *ftepp, const char *source, const char *name);
 void            ftepp_add_macro        (struct ftepp_s *ftepp, const char *name,   const char *value);
 
-/*===================================================================*/
-/*======================= main.c commandline ========================*/
-/*===================================================================*/
+/* main.c */
 
 #if 1
 /* Helpers to allow for a whole lot of flags. Otherwise we'd limit
@@ -987,16 +940,12 @@ typedef uint32_t longbit;
 #define LONGBIT_SET(B, I) ((B) = (I))
 #endif
 
-/*===================================================================*/
-/*============================= utf8.c ==============================*/
-/*===================================================================*/
+/* utf.8 */
 typedef long utf8ch_t;
 int utf8_from(char *, utf8ch_t);
 int utf8_to(utf8ch_t *, const unsigned char *, size_t);
 
-/*===================================================================*/
-/*============================= opts.c ==============================*/
-/*===================================================================*/
+/* opts.c */
 typedef struct {
     const char *name;
     longbit     bit;

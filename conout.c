@@ -20,167 +20,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <stdio.h>
 #include "gmqcc.h"
 
-/*
- * isatty/STDERR_FILENO/STDOUT_FILNO
- * + some other things likewise.
- */
-#ifndef _WIN32
-#   include <unistd.h>
-#else
-#   include <io.h>
-    /*
-     * Windows and it's posix underscore bullshit.  We simply fix this
-     * with yay, another macro :P
-     */
-#   define isatty _isatty
-#endif
-
-#define GMQCC_IS_STDOUT(X) ((FILE*)((void*)X) == stdout)
-#define GMQCC_IS_STDERR(X) ((FILE*)((void*)X) == stderr)
+#define GMQCC_IS_STDOUT(X) ((fs_file_t*)((void*)X) == (fs_file_t*)stdout)
+#define GMQCC_IS_STDERR(X) ((fs_file_t*)((void*)X) == (fs_file_t*)stderr)
 #define GMQCC_IS_DEFINE(X) (GMQCC_IS_STDERR(X) || GMQCC_IS_STDOUT(X))
 
 typedef struct {
-    FILE *handle_err;
-    FILE *handle_out;
-
-    int   color_err;
-    int   color_out;
+    fs_file_t *handle_err;
+    fs_file_t *handle_out;
+    int        color_err;
+    int        color_out;
 } con_t;
-
-/*
- * Doing colored output on windows is fucking stupid.  The linux way is
- * the real way. So we emulate it on windows :)
- */
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-/*
- * Windows doesn't have constants for FILENO, sadly but the docs tell
- * use the constant values.
- */
-#undef  STDERR_FILENO
-#undef  STDOUT_FILENO
-#define STDERR_FILENO 2
-#define STDOUT_FILENO 1
-
-enum {
-    RESET = 0,
-    BOLD  = 1,
-    BLACK = 30,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    GRAY,
-    WHITE = GRAY
-};
-
-enum {
-    WBLACK,
-    WBLUE,
-    WGREEN   = 2,
-    WRED     = 4,
-    WINTENSE = 8,
-    WCYAN    = WBLUE  | WGREEN,
-    WMAGENTA = WBLUE  | WRED,
-    WYELLOW  = WGREEN | WRED,
-    WWHITE   = WBLUE  | WGREEN | WRED
-};
-
-static const int ansi2win[] = {
-    WBLACK,
-    WRED,
-    WGREEN,
-    WYELLOW,
-    WBLUE,
-    WMAGENTA,
-    WCYAN,
-    WWHITE
-};
-
-static int win_fputs(FILE *h, const char *str) {
-    /* state for translate */
-    int acolor = 0;
-    int wcolor = 0;
-    int icolor = 0;
-    int state  = 0;
-
-    /* attributes */
-    int intense  =  -1;
-    int colors[] = {-1, -1 };
-    int colorpos = 1;
-    int length   = 0;
-    CONSOLE_SCREEN_BUFFER_INFO cinfo;
-    GetConsoleScreenBufferInfo (
-        (GMQCC_IS_STDOUT(h)) ?
-            GetStdHandle(STD_OUTPUT_HANDLE) :
-            GetStdHandle(STD_ERROR_HANDLE), &cinfo
-    );
-    icolor = cinfo.wAttributes;
-
-    while (*str) {
-        if (*str == '\x1B')
-            state = '\x1B';
-        else if (state == '\x1B' && *str == '[')
-            state = '[';
-        else if (state == '[') {
-            if (*str != 'm') {
-                colors[colorpos] = *str;
-                colorpos--;
-            } else {
-                int find;
-                int mult;
-                for (find = colorpos + 1, acolor = 0, mult = 1; find < 2; find++) {
-                    acolor += (colors[find] - 48) * mult;
-                    mult   *= 10;
-                }
-
-                /* convert to windows color */
-                if (acolor == BOLD)
-                    intense = WINTENSE;
-                else if (acolor == RESET) {
-                    intense = WBLACK;
-                    wcolor  = icolor;
-                }
-                else if (BLACK <= acolor && acolor <= WHITE)
-                    wcolor = ansi2win[acolor - 30];
-                else if (acolor == 90) {
-                    /* special gray really white man */
-                    wcolor  = WWHITE;
-                    intense = WBLACK;
-                }
-
-                SetConsoleTextAttribute (
-                    (GMQCC_IS_STDOUT(h)) ?
-                    GetStdHandle(STD_OUTPUT_HANDLE) :
-                    GetStdHandle(STD_ERROR_HANDLE),
-
-                    wcolor | intense | (icolor & 0xF0)
-                );
-                colorpos =  1;
-                state    = -1;
-            }
-        } else {
-            fs_file_write(str, 1, 1, stdout);
-            length ++;
-        }
-        str++;
-    }
-    /* restore */
-    SetConsoleTextAttribute(
-        (GMQCC_IS_STDOUT(h)) ?
-        GetStdHandle(STD_OUTPUT_HANDLE) :
-        GetStdHandle(STD_ERROR_HANDLE),
-        icolor
-    );
-    return length;
-}
-#endif
 
 /*
  * We use standard files as default. These can be changed at any time
@@ -197,10 +49,8 @@ static con_t console;
  * checks.
  */
 static void con_enablecolor(void) {
-    if (console.handle_err == stderr || console.handle_err == stdout)
-        console.color_err = !!(isatty(STDERR_FILENO));
-    if (console.handle_out == stderr || console.handle_out == stdout)
-        console.color_out = !!(isatty(STDOUT_FILENO));
+    console.color_err = util_isatty(console.handle_err);
+    console.color_out = util_isatty(console.handle_out);
 }
 
 /*
@@ -208,23 +58,8 @@ static void con_enablecolor(void) {
  * arguments.  This colorizes for windows as well via translate
  * step.
  */
-static int con_write(FILE *handle, const char *fmt, va_list va) {
-    int      ln;
-    #ifndef _WIN32
-    ln = vfprintf(handle, fmt, va);
-    #else
-    {
-        char data[4096];
-        memset(data, 0, sizeof(data));
-#ifdef _MSC_VER
-        vsnprintf_s(data, sizeof(data), sizeof(data), fmt, va);
-#else
-        vsnprintf(data, sizeof(data), fmt, va);
-#endif
-        ln = (GMQCC_IS_DEFINE(handle)) ? win_fputs(handle, data) : fs_file_puts(handle, data);
-    }
-    #endif
-    return ln;
+static int con_write(fs_file_t *handle, const char *fmt, va_list va) {
+    return vfprintf((FILE*)handle, fmt, va);
 }
 
 /**********************************************************************
@@ -248,8 +83,8 @@ void con_color(int state) {
 }
 
 void con_init() {
-    console.handle_err = stderr;
-    console.handle_out = stdout;
+    console.handle_err = (fs_file_t*)stderr;
+    console.handle_out = (fs_file_t*)stdout;
     con_enablecolor();
 }
 
@@ -271,16 +106,16 @@ void con_reset() {
 int con_change(const char *out, const char *err) {
     con_close();
 
-    if (!out) out = (const char *)((!console.handle_out) ? stdout : console.handle_out);
-    if (!err) err = (const char *)((!console.handle_err) ? stderr : console.handle_err);
+    if (!out) out = (const char *)((!console.handle_out) ? (fs_file_t*)stdout : console.handle_out);
+    if (!err) err = (const char *)((!console.handle_err) ? (fs_file_t*)stderr : console.handle_err);
 
     if (GMQCC_IS_DEFINE(out)) {
-        console.handle_out = GMQCC_IS_STDOUT(out) ? stdout : stderr;
+        console.handle_out = (fs_file_t*)(GMQCC_IS_STDOUT(out) ? stdout : stderr);
         con_enablecolor();
     } else if (!(console.handle_out = fs_file_open(out, "w"))) return 0;
 
     if (GMQCC_IS_DEFINE(err)) {
-        console.handle_err = GMQCC_IS_STDOUT(err) ? stdout : stderr;
+        console.handle_err = (fs_file_t*)(GMQCC_IS_STDOUT(err) ? stdout : stderr);
         con_enablecolor();
     } else if (!(console.handle_err = fs_file_open(err, "w"))) return 0;
 
@@ -291,11 +126,11 @@ int con_change(const char *out, const char *err) {
  * Defaultizer because stdio.h shouldn't be used anywhere except here
  * and inside file.c To prevent mis-match of wrapper-interfaces.
  */
-FILE *con_default_out() {
-    return (console.handle_out = stdout);
+fs_file_t *con_default_out() {
+    return (fs_file_t*)(console.handle_out = (fs_file_t*)stdout);
 }
-FILE *con_default_err() {
-    return (console.handle_err = stderr);
+fs_file_t *con_default_err() {
+    return (fs_file_t*)(console.handle_err = (fs_file_t*)stderr);
 }
 
 int con_verr(const char *fmt, va_list va) {
@@ -339,10 +174,10 @@ static void con_vprintmsg_c(int level, const char *name, size_t line, size_t col
         CON_RED
     };
 
-    int  err                         = !!(level == LVL_ERROR);
-    int  color                       = (err) ? console.color_err : console.color_out;
-    int (*print) (const char *, ...)  = (err) ? &con_err          : &con_out;
-    int (*vprint)(const char *, va_list) = (err) ? &con_verr : &con_vout;
+    int  err                             = !!(level == LVL_ERROR);
+    int  color                           = (err) ? console.color_err : console.color_out;
+    int (*print) (const char *, ...)     = (err) ? &con_err          : &con_out;
+    int (*vprint)(const char *, va_list) = (err) ? &con_verr         : &con_vout;
 
     if (color)
         print("\033[0;%dm%s:%d:%d: \033[0;%dm%s: \033[0m", CON_CYAN, name, (int)line, (int)column, sel[level], msgtype);

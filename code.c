@@ -401,7 +401,7 @@ static bool code_write_memory(code_t *code, uint8_t **datmem, size_t *sizedat, u
 
 bool code_write(code_t *code, const char *filename, const char *lnofile) {
     prog_header_t  code_header;
-    FILE          *fp = NULL;
+    fs_file_t     *fp = NULL;
 
     code_create_header(code, &code_header, filename, lnofile);
 
