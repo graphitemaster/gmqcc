@@ -219,7 +219,43 @@ const char *platform_tmpnam(char *str);
  */
 const char *platform_getenv(char *var);
 
+/*
+ * Function: platform_vasprintf
+ *  Print to allocated string
+ *
+ * Parameters:
+ *  dat  - Pointer to pointer to store allocated data.
+ *  fmt  - Format specification.
+ *  args - Variable argument list.
+ *
+ * Returns:
+ *  Number of character written, -1 is used to indicate an error.
+ *
+ * Remarks:
+ *  Allocate a string large enough to hold the output including
+ *  the terminating null character than write formatted output
+ *  to it using format specification.
+ */
 int platform_vasprintf(char **dat, const char *fmt, va_list args);
+
+/*
+ * Function: platform_vfprintf
+ *  Write formatted output using a pointer to a list of arguments.
+ *
+ * Parameters:
+ *  stream - Pointer to stream.
+ *  format - Format specification.
+ *  atrg   - Variable argument list.
+ *
+ * Returns:
+ *  Number of characters written, not including the terminating null
+ *  character, or a negitive value if an output error occurs. -1 is
+ *  also used to indicate an error.
+ *
+ * Remarks:
+ *  Takes a pointer to an argument list, then formats and writes the
+ *  given data to `stream`.
+ */
 int platform_vfprintf(FILE *stream, const char *format, va_list arg);
 
 /*
@@ -335,23 +371,123 @@ size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream)
  *
  * Parameters:
  *  stream - Pointer to stream
+ *
+ * Returns:
+ *  0 value if the buffer was succesffuly flushed. The value 0 is also
+ *  returned in cases in which the specified stream has no buffer or is
+ *  open for reading only. A return value of *EOF* indicates an error.
+ *
+ * Remarks:
+ *  Flushes a stream. If the file associated with stream is open for output,
+ *  platform_fflush writes to that file the contents of the buffer
+ *  associated with the stream. If the stream is open for input,
+ *  platform_fflush clears the contents of the buffer. platform_fflush
+ *  negates the effect of any prior call to ungetc against stream. Also,
+ *  platform_fflush(NULL) flushes all streams opened for output.
+ *  The stream remains open after the call. platform_fflush has no effect
+ *  on an unbuffered stream.
  */
 int platform_fflush(FILE *stream);
 
 /*
  * Function: platform_fclose
- *  Closes a stream
+ *  Closes a stream.
  *
  * Parameters:
- *  stream - Pointer to stream
+ *  stream - Pointer to stream.
+ *
+ * Returns:
+ *  0 value. *EOF* is used to indicate an error.
+ *
+ * Remarks:
+ *  Closes a stream.
  */
 int platform_fclose(FILE *stream);
 
+/*
+ * Function: platform_ferror
+ *  Tests for an error on a stream.
+ *
+ * Parameters:
+ *  stream - Pointer to stream.
+ *
+ * Returns:
+ *  If not error has occured on `stream`, 0 value is returned, otherwise
+ *  it returns a nonzero value.
+ *
+ * Remarks:
+ *  Tests for a reading or writing error on the file associated with `stream`.
+ *  If an error has occured, the error indicator for the stream remains set
+ *  until the stream is closed or rewound.
+ */
 int platform_ferror(FILE *stream);
+
+/*
+ * Function: platform_fgetc
+ *  Read a character from a stream.
+ *
+ * Parameters:
+ *  stream - Pointer to a stream.
+ *
+ * Returns:
+ *  The chracter read as an int or EOF to indicate an error or end-of-file.
+ *
+ * Remarks:
+ *  Reads a single chracter from the current position of the file associated
+ *  with `stream`. Than increments that position. If the steam is at the end
+ *  of the file, the end-of-file indicator for the stream is set.
+ */
 int platform_fgetc(FILE *stream);
+
+/*
+ * Function: platform_fputs
+ *  Write a string to a stream
+ *
+ * Parameters:
+ *  str    - Output string.
+ *  stream - Pointer to stream.
+ *
+ * Returns:
+ *  Non-negative value if successful. EOF is used to indicate an error.
+ *
+ * Remarks:
+ *  Copies `str` to the output stream at the current position.
+ */
 int platform_fputs(const char *str, FILE *stream);
+
+/*
+ * Function: platform_fseek
+ *  Moves the file pointer to a specified location.
+ *
+ * Parameters:
+ *  stream - Pointer to stream.
+ *  offset - Number of bytes from origin to offset.
+ *  origin - Initital position.
+ *
+ * Returns:
+ *  0 value, nonzero values are used to indicate an error.
+ *
+ * Remarks:
+ *  Moves the file pointer (if any) associated with stream to a new
+ *  location that is offset bytes from origin.
+ *  The next operation on the stream takes place at the new location.
+ *  On a stream open for update, the next operation can be either a
+ *  read or a write.
+ */
 int platform_fseek(FILE *stream, long offset, int origin);
 
+/*
+ * Function: platform_ftell
+ *  Gets the current position of a file pointer
+ *
+ * Parameters:
+ *  stream - Pointer to stream
+ *
+ * Returns:
+ *  Current file position. May not reflect physical byte offset, e.g
+ *  systems where read-mode does carriage return-linefeed translation.
+ *  -1 value is used to indivate an error.
+ */
 long platform_ftell(FILE *stream);
 
 /*
