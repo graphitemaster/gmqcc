@@ -20,9 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#define GMQCC_PLATFORM_HEADER
+#include <stdio.h>
 #include "gmqcc.h"
-#include "platform.h"
 
 #define GMQCC_IS_STDOUT(X) ((fs_file_t*)((void*)X) == (fs_file_t*)stdout)
 #define GMQCC_IS_STDERR(X) ((fs_file_t*)((void*)X) == (fs_file_t*)stderr)
@@ -50,10 +49,8 @@ static con_t console;
  * checks.
  */
 static void con_enablecolor(void) {
-    if (console.handle_err == (fs_file_t*)stderr || console.handle_err == (fs_file_t*)stdout)
-        console.color_err = !!(platform_isatty(STDERR_FILENO));
-    if (console.handle_out == (fs_file_t*)stderr || console.handle_out == (fs_file_t*)stdout)
-        console.color_out = !!(platform_isatty(STDOUT_FILENO));
+    console.color_err = util_isatty(console.handle_err);
+    console.color_out = util_isatty(console.handle_out);
 }
 
 /*

@@ -312,6 +312,9 @@ const char *util_strerror(int err);
 const struct tm *util_localtime(const time_t *timer);
 const char      *util_ctime    (const time_t *timer);
 
+typedef struct fs_file_s fs_file_t;
+int              util_isatty   (fs_file_t *);
+
 /*
  * A flexible vector implementation: all vector pointers contain some
  * data about themselfs exactly - sizeof(vector_t) behind the pointer
@@ -404,7 +407,7 @@ int           util_snprintf(char *str, size_t, const char *fmt, ...);
 #define FS_FILE_EOF      -1
 
 typedef struct fs_dir_s  fs_dir_t;
-typedef struct fs_file_s fs_file_t;
+/*typedef struct fs_file_s fs_file_t;*/
 typedef struct dirent    fs_dirent_t;
 
 void           fs_file_close  (fs_file_t *);

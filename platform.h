@@ -75,9 +75,71 @@
 #   include <dirent.h>
 #endif /*!_WIN32*/
 
+/*
+ * Function: platform_vsnprintf
+ *  Write formatted output using a pointer to a lis of arguments.
+ *
+ * Parameters:
+ *  buffer - Storage location for output.
+ *  bytes  - Maximum number of characters to write.
+ *  format - Format specification.
+ *  arg    - Variable argument list.
+ *
+ * Returns:
+ *  The number of characters written if the number of characters to write
+ *  is less than or equal to `bytes`; if the number of characters to write
+ *  is greater than `bytes`, this function returns -1 indicating that the
+ *  output has been truncated. The return value does not include the
+ *  terminating null, if one is written.
+ *
+ * Remarks:
+ *  Function takes pointer to an argument list, then formats the data,
+ *  and writes up to `bytes` characters to the memory pointed to by
+ *  `buffer`. If there is room at the end (that is, if the number of
+ *  character to write is less than `bytes`), the buffer will be null-terminated.
+ */
 int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg);
-int platform_vsscanf(const char *str, const char *format, va_list arg);
+
+/*
+ * Function: platform_vsscanf
+ *  Reads formatted data from a string.
+ *
+ * Parameters:
+ *  buffer - Stored data to read.
+ *  format - Format specification.
+ *  arg    - Variable argument list.
+ *
+ * Returns:
+ *  The number of fields that are successfully converted and assigned;
+ *  the return value does not include fields that were read but not
+ *  assigned. A return vlaue of 0 indicated that no fields were assigned.
+ *  The return value if EOF for error or if the end of the string is
+ *  reached before the first conversion.
+ *
+ * Remarks:
+ *  Reads data from `buffer` into the locations that are given by each
+ *  argument in the `arg` argument list. Every argument in the list must
+ *  be a pointer to a variable that has a type that corresponds to a
+ *  type specifier in `format`. The `format` argument controls th
+ *  interpretation of the input fields and has the same form and function
+ *  as the `format` argument for the *scanf* function. If copying takes
+ *  place between strings that overlap, the behaviour is undefined.
+ */
+int platform_vsscanf(const char *buffer, const char *format, va_list arg);
+
+/*
+ * Function: platform_localtime
+ *  Convert a time value and correct for the local time zone.
+ *
+ * Parameters
+ *  timer - Pointer to stored time.
+ *
+ * Returns:
+ *  A pointer to a structure result, or NULL if the date passed to
+ *  the function is before midnight, January 1, 1970.
+ */
 const struct tm *platform_localtime(const time_t *timer);
+
 const char *platform_ctime(const time_t *timer);
 char *platform_strncat(char *dest, const char *src, size_t num);
 const char *platform_tmpnam(char *str);

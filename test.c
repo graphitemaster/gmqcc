@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#define GMQCC_PLATFORM_HEADER
+#define GMQCC_PLATFORM_HEADER /* TODO: eliminate! */
 #include <stdlib.h>
 #include <string.h>
 

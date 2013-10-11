@@ -280,6 +280,12 @@ const char *util_ctime(const time_t *timer) {
     return platform_ctime(timer);
 }
 
+bool util_isatty(fs_file_t *file) {
+    if (file == (fs_file_t*)stdout) return !!platform_isatty(STDOUT_FILENO);
+    if (file == (fs_file_t*)stderr) return !!platform_isatty(STDERR_FILENO);
+    return false;
+}
+
 void util_seed(uint32_t value) {
     srand((int)value);
 }
