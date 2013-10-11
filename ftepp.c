@@ -23,12 +23,14 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
 #include "platform.h"
 
 #define HT_MACROS 1024
+
 typedef struct {
     bool on;
     bool was_on;

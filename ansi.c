@@ -157,7 +157,16 @@ long platform_ftell(FILE *stream) {
 }
 
 int platform_mkdir(const char *path, int mode) {
+    /*
+     * For some reason mingw32 just doesn't have a correct mkdir impl
+     * so we handle that here.
+     */
+#   ifdef _WIN32
+    (void)mode;
+    return mkdir(path);
+#   else
     return mkdir(path, mode);
+#   endif /*!_WIN32*/
 }
 
 DIR *platform_opendir(const char *path) {
