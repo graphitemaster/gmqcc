@@ -71,7 +71,7 @@ if [ ! -d ~/.gmqcc/testsuite/projects ]; then
     mkdir -p ~/.gmqcc/testsuite/projects
     old="$PWD"
     cd ~/.gmqcc/testsuite/projects
-    echo "$(ls ../ | cat | grep -v '^hashes$' | grep -v '^projects$' | grep -v '^options$')" | while read -r line
+    echo "$(ls ../ | grep -v '^hashes$' | grep -v '^projects$' | grep -v '^options$')" | while read -r line
     do
         echo "extracting project $line"
         mkdir "$(echo "$line" | sed 's/\(.*\)\..*/\1/')"
