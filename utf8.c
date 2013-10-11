@@ -50,6 +50,18 @@
  * In this table the transition values are pre-multiplied with 16 to
  * save a shift instruction for every byte, we throw away fillers
  * which makes the table smaller.
+ *
+ * The first section of the table handles bytes with leading C
+ * The second section of the table handles bytes with leading D
+ * The third section of the table handles bytes with leading E
+ * The last section of the table handles bytes with leading F
+ *
+ * The values themselfs in the table are arranged so that when you
+ * left shift them by 6 to shif continuation characters into palce, the
+ * new top bits tell:
+ *
+ *  1 - if you keep going
+ *  2 - the range of valid values for the next byte
  */
 static const uint32_t utf8_tab[] = {
     0xC0000002, 0xC0000003, 0xC0000004, 0xC0000005, 0xC0000006, 0xC0000007,
