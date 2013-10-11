@@ -220,6 +220,7 @@ const char *platform_tmpnam(char *str);
 const char *platform_getenv(char *var);
 
 int platform_vasprintf(char **dat, const char *fmt, va_list args);
+int platform_vfprintf(FILE *stream, const char *format, va_list arg);
 
 /*
  * Function: platform_strcat
@@ -288,20 +289,138 @@ const char *platform_strerror(int err);
  */
 FILE *platform_fopen(const char *filename, const char *mode);
 
+/*
+ * Function: platform_fread
+ *  Reads data from a stream
+ *
+ * Parameters:
+ *  ptr    - Storage location for data.
+ *  size   - Item size in bytes.
+ *  count  - Maximum number of items to be read.
+ *  stream - Pointer to stream
+ *
+ * Returns:
+ *  The number of full items actually read, which may be less than `count`
+ *  if an error occurs or if the end of the file is encountered before
+ *  reaching `count`. If `size` or `count` is 0, `platform_fread`
+ *  returns 0 and the buffer contents are unchanged.
+ */
 size_t platform_fread(void *ptr, size_t size, size_t count, FILE *stream);
+
+/*
+ * Function: platform_fwrite
+ *  Writes data to a stream
+ *
+ * Parameters:
+ *  ptr    - Pointer to data to be written.
+ *  size   - Item size in bytes.
+ *  count  - Maximum number of items to be read.
+ *  stream - Pointer to stream
+ *
+ * Returns:
+ *  The number of full items actually written, which may be less than
+ *  `count` if an error occurs. Also, if an error occurs, the
+ *  file-position indicator cannot be determined.
+ *
+ * Remarks:
+ *  Writes up to `count` items, of `size` length each, from `ptr` to the
+ *  output stream. The file pointer associated with stream (if there is one)
+ *  is incremented by the number of bytes actually written.
+ */
 size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+
+/*
+ * Function: platform_fflush
+ *  Flushes a stream
+ *
+ * Parameters:
+ *  stream - Pointer to stream
+ */
 int platform_fflush(FILE *stream);
-int platform_vfprintf(FILE *stream, const char *format, va_list arg);
+
+/*
+ * Function: platform_fclose
+ *  Closes a stream
+ *
+ * Parameters:
+ *  stream - Pointer to stream
+ */
 int platform_fclose(FILE *stream);
+
 int platform_ferror(FILE *stream);
 int platform_fgetc(FILE *stream);
 int platform_fputs(const char *str, FILE *stream);
 int platform_fseek(FILE *stream, long offset, int origin);
+
 long platform_ftell(FILE *stream);
 
+/*
+ * Function: platform_mkdir
+ *  Make a directory
+ *
+ * Parameters:
+ *  path    - Path to create
+ *  mode    - The mode of the directory (implementation defined)
+ *
+ * Returns:
+ *  0 value. -1 value is used to indicate an error. On error no
+ *  directory shall be created.
+ *
+ * Remarks:
+ *  Shall create a new empty directory with with the name path specified
+ *  by argument `path.
+ */
 int platform_mkdir(const char *path, int mode);
+
+/*
+ * Function: platform_opendir
+ *  Open a directory
+ *
+ * Parameters:
+ *  path - Path to the directory to open
+ *
+ * Returns:
+ *  Pointer to an object of type *DIR*. A null pointer value indicates
+ *  an error.
+ *
+ * Remarks:
+ *  Shall open a directory stream corresponding to the directory named by
+ *  the `path` argument. The directory stream is positioned at the first entry.
+ */
 DIR *platform_opendir(const char *path);
+
+/*
+ * Function: platform_closedir
+ *  Close a directory stream
+ *
+ * Parameters:
+ *  dir - Pointer to directory stream
+ *
+ * Returns:
+ *  0 value. A -1 value indicated an error.
+ *
+ * Remarks:
+ *  Shall close the directory stream referred to by the argument
+ *  `dir`. Upon return, the value of `dir` may no longer point to
+ *  an accessible object of the type *DIR*.
+ */
 int platform_closedir(DIR *dir);
+
+/*
+ * Function: platform_readdir
+ *  Read directory
+ *
+ * Parameters:
+ *  dir - Pointer to directory stream
+ *
+ * Returns:
+ *  Pointer to an object of type `struct dirent`. A null pointer value
+ *  indicates an error.
+ *
+ * Remarks:
+ *  When the end of the directory is encountered, a null pointer is
+ *  returned.
+ */
 struct dirent *platform_readdir(DIR *dir);
 
 /*
