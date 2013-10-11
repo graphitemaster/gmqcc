@@ -7,6 +7,7 @@ PATCH   := $(shell sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' $(HEADER))
 PKGREL  := 1
 CARCH   := $(shell uname -m)
 PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)-$(CARCH)
+TARCOMP := -J
 PKG     := $(PKGDIR).pkg.tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
 DESTDIR := distro/archlinux/this
@@ -45,7 +46,7 @@ base:
 	    --format=mtree \
 	    --options='!all,use-set,type,uid,gid,mode,time,size,md5,sha256,link' \
 	    .PKGINFO usr/
-	@bsdtar -cJvf $(PKG) -C $(PKGDIR)/ .PKGINFO .MTREE usr/
+	@bsdtar $(TARCOMP) -cvf $(PKG) -C $(PKGDIR)/ .PKGINFO .MTREE usr/
 	@rm -rf $(PKGDIR)
 
 clean:
