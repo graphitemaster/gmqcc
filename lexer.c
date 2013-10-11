@@ -761,7 +761,7 @@ static bool lex_finish_frames(lex_file *lex)
 
 static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 {
-    uchar_t chr;
+    utf8ch_t chr = 0;
     int ch = 0;
     int nextch;
     bool hex;
@@ -879,7 +879,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                     }
                 }
                 if (OPTS_FLAG(UTF8) && chr >= 128) {
-                    u8len = u8_fromchar(chr, u8buf, sizeof(u8buf));
+                    u8len = utf8_from(u8buf, chr);
                     if (!u8len)
                         ch = 0;
                     else {
@@ -887,7 +887,8 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                         lex->column += u8len;
                         for (uc = 0; uc < u8len; ++uc)
                             lex_tokench(lex, u8buf[uc]);
-                        /* the last character will be inserted with the tokench() call
+                        /*
+                         * the last character will be inserted with the tokench() call
                          * below the switch
                          */
                         ch = u8buf[uc];
@@ -1487,9 +1488,9 @@ int lex_do(lex_file *lex)
         else
         {
             if (!lex->flags.preprocessing && strlen(lex->tok.value) > 1) {
-                uchar_t u8char;
+                utf8ch_t u8char;
                 /* check for a valid utf8 character */
-                if (!OPTS_FLAG(UTF8) || !u8_analyze(lex->tok.value, NULL, NULL, &u8char, 8)) {
+                if (!OPTS_FLAG(UTF8) || !utf8_to(&u8char, (const unsigned char *)lex->tok.value, 8)) {
                     if (lexwarn(lex, WARN_MULTIBYTE_CHARACTER,
                                 ( OPTS_FLAG(UTF8) ? "invalid multibyte character sequence `%s`"
                                                   : "multibyte character: `%s`" ),

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012, 2013
- *     Wolfgang Bumiller
+ *     Dale Weiler
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -22,262 +22,141 @@
  */
 #include "gmqcc.h"
 
-static unsigned char utf8_lengths[256] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* ascii characters */
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x80 - 0xBF are within multibyte sequences        */
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* they could be interpreted as 2-byte starts but    */
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* the codepoint would be < 127                      */
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*                                                   */
-    0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /* C0 and C1 would also result in overlong encodings */
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*                                                   */
-    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-    4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    /* with F5 the codepoint is above 0x10FFFF,
-     * F8-FB would start 5-byte sequences
-     * FC-FD would start 6-byte sequences
-     * ...
-     */
-};
-
-static uchar_t utf8_range[5] = {
-    1,       /* invalid - let's not allow the creation of 0-bytes :P */
-    1,       /* ascii minimum                                        */
-    0x80,    /* 2-byte minimum                                       */
-    0x800,   /* 3-byte minimum                                       */
-    0x10000, /* 4-byte minimum                                       */
-};
-
-/** Analyze the next character and return various information if requested.
- * @param _s      An utf-8 string.
- * @param _start  Filled with the start byte-offset of the next valid character
- * @param _len    Filled with the length of the next valid character
- * @param _ch     Filled with the unicode value of the next character
- * @param _maxlen Maximum number of bytes to read from _s
- * @return        Whether or not another valid character is in the string
+/*
+ * Based on the flexible and economical utf8 decoder:
+ * http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *
+ * This is slightly more economical, the fastest way to decode utf8 is
+ * with a lookup table as in:
+ *
+ * first 1-byte lookup
+ * if that fails, 2-byte lookup
+ * if that fails, 3-byte lookup
+ * if that fails, 4-byte lookup
+ *
+ * The following table can be generated with some interval trickery.
+ * consider an interval [a, b):
+ *
+ *      a must be 0x80 or b must be 0xc0, lower 3 bits
+ *      are clear, thus:
+ *          interval(a,b) = ((uint32_t)((a==0x80?0x40-b:-a)<<23))
+ *
+ * The failstate can be represented as interval(0x80,0x80), it's
+ * odd to see but this is a full state machine.
+ *
+ * The table than maps the corresponding sections as a serise of
+ * intervals.
+ *
+ * In this table the transition values are pre-multiplied with 16 to
+ * save a shift instruction for every byte, we throw away fillers
+ * which makes the table smaller.
  */
-bool u8_analyze(const char *_s, size_t *_start, size_t *_len, uchar_t *_ch, size_t _maxlen)
-{
-    const unsigned char *s = (const unsigned char*)_s;
-    size_t i, j;
-    size_t bits = 0;
-    uchar_t ch;
+static const uint32_t utf8_tab[] = {
+    0xC0000002, 0xC0000003, 0xC0000004, 0xC0000005, 0xC0000006, 0xC0000007,
+    0xC0000008, 0xC0000009, 0xC000000A, 0xC000000B, 0xC000000C, 0xC000000D,
+    0xC000000E, 0xC000000F, 0xC0000010, 0xC0000011, 0xC0000012, 0xC0000013,
+    0xC0000014, 0xC0000015, 0xC0000016, 0xC0000017, 0xC0000018, 0xC0000019,
+    0xC000001A, 0xC000001B, 0xC000001C, 0xC000001D, 0xC000001E, 0xC000001F,
+    0xB3000000, 0xC3000001, 0xC3000002, 0xC3000003, 0xC3000004, 0xC3000005,
+    0xC3000006, 0xC3000007, 0xC3000008, 0xC3000009, 0xC300000A, 0xC300000B,
+    0xC300000C, 0xD300000D, 0xC300000E, 0xC300000F, 0xBB0C0000, 0xC30C0001,
+    0xC30C0002, 0xC30C0003, 0xD30C0004, 0x58257830, 0x202C,     0x3B031B01,
+    0x30,       0x5,        0xFFFFFD1C, 0x7C,       0xFFFFFD5C, 0x4C,
+    0xFFFFFE4C, 0xA4,       0xFFFFFE8C, 0xC4,       0xFFFFFEFC, 0x10C,
+    0x14,       0x0,        0x527A01,   0x1107801,  0x8070C1B,  0x10070190,
+    0x14,       0x1C,       0xFFFFFD08, 0x2A,       0x0,        0x0,
+    0x14,       0x0,        0x527A01,   0x1107801,  0x8070C1B,  0x190,
+    0x24,       0x1C,       0xFFFFFC98, 0x40,       0x46100E00, 0xF4A180E,
+    0x8008770B, 0x3B1A3F00, 0x2224332A, 0x0,        0x1C,       0x44,
+    0xFFFFFDA0, 0x3E,       0x100E4100, 0xD430286,  0x70C7906,  0x8,
+    0x44,       0x64,       0xFFFFFDC0, 0x65,       0x100E4200, 0xE45028F,
+    0x45038E18, 0x48D200E,  0x8C280E45, 0x300E4805, 0xE480686,  0x4D078338,
+    0xE6C400E,  0x300E4138, 0x42280E41, 0xE42200E,  0x100E4218, 0x80E42,
+    0x14,       0xAC,       0xFFFFFDE8, 0x2,        0x0,        0x0,
+    0x0,        0x0,        0x4004D0,   0x0,        0x4004B0,   0x0,
+    0x0,        0x0,        0x1,        0x0,        0x1,        0x0,
+    0xC,        0x0,        0x4003A8,   0x0,        0xD,        0x0,
+    0x4005B4,   0x0,        0x19,       0x0,        0x6007E0,   0x0,
+    0x1B,       0x0,        0x8,        0x0,        0x1A,       0x0,
+    0x6007E8,   0x0,        0x1C,       0x0,        0x8,        0x0,
+    0x6FFFFEF5, 0x0,        0x400260,   0x0,        0x5,        0x0,
+    0x4002E0,   0x0,        0x6,        0x0,        0x400280,   0x0,
+    0xA,        0x0,        0x3F,       0x0,        0xB,        0x0,
+    0x18,       0x0,        0x15,       0x0,        0x0,        0x0,
+    0x3,        0x0,        0x6009D0,   0x0,        0x2,        0x0,
+    0x48,       0x0,        0x14,       0x0,        0x7,        0x0,
+    0x17,       0x0,        0x400360,   0x0,        0x7,        0x0
+};
 
-    i = 0;
-/* findchar: */
-    while (i < _maxlen && s[i] && (bits = utf8_lengths[s[i]]) == 0)
-        ++i;
-
-    if (i >= _maxlen || !s[i]) {
-        if (_start) *_start = i;
-        if (_len) *_len = 0;
-        return false;
-    }
-
-    if (bits == 1) { /* ascii */
-        if (_start) *_start = i;
-        if (_len) *_len = 1;
-        if (_ch) *_ch = (uchar_t)s[i];
-        return true;
-    }
-
-    ch = (s[i] & (0xFF >> bits));
-    for (j = 1; j < bits; ++j)
-    {
-        if ( (s[i+j] & 0xC0) != 0x80 )
-        {
-            i += j;
-            /* in gmqcc, invalid / overlong encodings are considered an error
-             * goto findchar;
-             */
-            if (!s[i]) goto done;
-            return false;
-        }
-        ch = (ch << 6) | (s[i+j] & 0x3F);
-    }
-    if (ch < utf8_range[bits] || ch >= 0x10FFFF)
-    {
-        /* same: error
-         * i += bits;
-         * goto findchar;
-         */
-        return false;
-    }
-
-done:
-    if (_start)
-        *_start = i;
-    if (_len)
-        *_len = bits;
-    if (_ch)
-        *_ch = ch;
-    return true;
-}
-
-/* might come in handy */
-size_t u8_strlen(const char *_s)
-{
-    size_t st, ln;
-    size_t len = 0;
-    const unsigned char *s = (const unsigned char*)_s;
-
-    while (*s)
-    {
-        /* ascii char, skip u8_analyze */
-        if (*s < 0x80)
-        {
-            ++len;
-            ++s;
-            continue;
-        }
-
-        /* invalid, skip u8_analyze */
-        if (*s < 0xC2)
-        {
-            ++s;
-            continue;
-        }
-
-        if (!u8_analyze((const char*)s, &st, &ln, NULL, 0x10))
-            break;
-        /* valid character, skip after it */
-        s += st + ln;
-        ++len;
-    }
-    return len;
-}
-
-size_t u8_strnlen(const char *_s, size_t n)
-{
-    size_t st, ln;
-    size_t len = 0;
-    const unsigned char *s = (const unsigned char*)_s;
-
-    while (*s && n)
-    {
-        /* ascii char, skip u8_analyze */
-        if (*s < 0x80)
-        {
-            ++len;
-            ++s;
-            --n;
-            continue;
-        }
-
-        /* invalid, skip u8_analyze */
-        if (*s < 0xC2)
-        {
-            ++s;
-            --n;
-            continue;
-        }
-
-        if (!u8_analyze((const char*)s, &st, &ln, NULL, n))
-            break;
-        /* valid character, see if it's still inside the range specified by n: */
-        if (n < st + ln)
-            return len;
-        ++len;
-        n -= st + ln;
-        s += st + ln;
-    }
-    return len;
-}
-
-/* Required for character constants */
-uchar_t u8_getchar(const char *_s, const char **_end)
-{
-    size_t st, ln;
-    uchar_t ch;
-
-    if (!u8_analyze(_s, &st, &ln, &ch, 0x10))
-        ch = 0;
-    else if (_end)
-        *_end = _s + st + ln;
-    return ch;
-}
-
-uchar_t u8_getnchar(const char *_s, const char **_end, size_t _maxlen)
-{
-    size_t st, ln;
-    uchar_t ch;
-
-    if (!u8_analyze(_s, &st, &ln, &ch, _maxlen))
-        ch = 0;
-    else if (_end)
-        *_end = _s + st + ln;
-    return ch;
-}
-
-/* required for \x{asdf}-like string escape sequences */
-int u8_fromchar(uchar_t w, char *to, size_t maxlen)
-{
-    if (maxlen < 1)
+int utf8_from(char *s, utf8ch_t ch) {
+    if (!s)
         return 0;
 
-    if (!w)
-        return 0;
-
-/* We may want an -f flag for this behaviour...
-    if (w >= 0xE000)
-        w -= 0xE000;
-*/
-
-    if (w < 0x80)
-    {
-        to[0] = (char)w;
-        if (maxlen < 2)
-            return -1;
-        to[1] = 0;
+    if ((unsigned)ch < 0x80) {
+        *s = ch;
         return 1;
-    }
-    /* for a little speedup */
-    if (w < 0x800)
-    {
-        if (maxlen < 3)
-        {
-            to[0] = 0;
-            return -1;
-        }
-        to[2] = 0;
-        to[1] = 0x80 | (w & 0x3F); w >>= 6;
-        to[0] = 0xC0 | w;
+    } else if ((unsigned)ch < 0x800) {
+        *s++ = 0xC0 | (ch >> 6);
+        *s   = 0x80 | (ch & 0x3F);
         return 2;
-    }
-    if (w < 0x10000)
-    {
-        if (maxlen < 4)
-        {
-            to[0] = 0;
-            return -1;
-        }
-        to[3] = 0;
-        to[2] = 0x80 | (w & 0x3F); w >>= 6;
-        to[1] = 0x80 | (w & 0x3F); w >>= 6;
-        to[0] = 0xE0 | w;
+    } else if ((unsigned)ch < 0xD800 || (unsigned)ch - 0xE000 < 0x2000) {
+        *s++ = 0xE0 | (ch >> 12);
+        *s++ = 0x80 | ((ch >> 6) & 0x3F);
+        *s   = 0x80 | (ch & 0x3F);
         return 3;
-    }
-
-    /* RFC 3629 */
-    if (w <= 0x10FFFF)
-    {
-        if (maxlen < 5)
-        {
-            to[0] = 0;
-            return -1;
-        }
-        to[4] = 0;
-        to[3] = 0x80 | (w & 0x3F); w >>= 6;
-        to[2] = 0x80 | (w & 0x3F); w >>= 6;
-        to[1] = 0x80 | (w & 0x3F); w >>= 6;
-        to[0] = 0xF0 | w;
+    } else if ((unsigned)ch - 0x10000 < 0x100000) {
+        *s++ = 0xF0 | (ch >> 18);
+        *s++ = 0x80 | ((ch >> 12) & 0x3F);
+        *s++ = 0x80 | ((ch >> 6) & 0x3F);
+        *s   = 0x80 | (ch & 0x3F);
         return 4;
     }
     return 0;
+}
+
+int utf8_to(utf8ch_t *i, const unsigned char *s, size_t n) {
+    unsigned c,j;
+
+    if (!s || !n)
+        return 0;
+
+    /* This is consistent with mbtowc behaviour. */
+    if (!i)
+        i = (utf8ch_t*)(void*)&i;
+
+    if (*s < 0x80)
+        return !!(*i = *s);
+    if (*s-0xC2U > 0xFFFFFFCE)
+        return 0;
+
+    c = utf8_tab[*s++-0xC2U];
+
+    /*
+     * Avoid excessive checks against n.
+     *
+     * When shifting state `n-1` times does not clear the high bit,
+     * then the value of `n` won't satisfy the condition to read a
+     * character as it will be insufficent.
+     */
+    if (n < 4 && ((c<<(6*n-6)) & (1U << 31)))
+        return 0;
+
+    /*
+     * The upper 6 state bits are negitive integer offset to a bound-check
+     * next byte equivlant to: ((b-0x80)+(b+offset))&~0x3f
+     */
+    if ((((*s>>3)-0x10)|((*s>>3)+((int32_t)c>>26))) & ~7)
+        return 0;
+
+    for (j=2; j<3; j++) {
+        if (!((c = c<<6 | (*s++-0x80))&(1U<<31))) {
+            *i = c;
+            return j;
+        }
+        if (*s-0x80U >= 0x40)
+            return 0;
+    }
+
+    *i = c<<6 | (*s++-0x80);
+    return 4;
 }
