@@ -149,8 +149,8 @@ install-doc:
 # DO NOT DELETE
 
 pak.o: gmqcc.h opts.def platform.h
-ansi.o: platform.h
-util.o: gmqcc.h opts.def
+ansi.o: platform.h gmqcc.h opts.def
+util.o: gmqcc.h opts.def platform.h
 stat.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def platform.h
 conout.o: gmqcc.h opts.def platform.h

@@ -22,7 +22,6 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include <io.h>
 
 #include "platform.h"
 
@@ -191,15 +190,57 @@ int platform_mkdir(const char *path, int mode) {
 }
 
 DIR *platform_opendir(const char *path) {
-    return opendir(path);
+    DIR *dir = (DIR*)mem_a(sizeof(DIR) + strlen(path));
+    if (!dir)
+        return NULL;
+
+    platform_strncpy(dir->dd_name, path, strlen(path));
+    return dir;
 }
 
 int platform_closedir(DIR *dir) {
-    return closedir(dir);
+    FindClose((HANDLE)dir->dd_handle);
+    mem_d((void*)dir);
+    return 0;
 }
 
 struct dirent *platform_readdir(DIR *dir) {
-    return readdir(dir);
+    WIN32_FIND_DATA info;
+    struct dirent  *data;
+    int             ret;
+
+    if (!dir->dd_handle) {
+        char *dirname;
+        if (*dir->dd_name) {
+            size_t n = strlen(dir->dd_name);
+            if ((dir = (char*)mem_a(n+5))) {
+                platform_strncpy(dirname,     dir->dd_name, n);
+                platform_strncpy(dirname + n, "\\*.*",      4);
+            }
+        } else {
+            if (!(dirname = util_strdup("\\*.*")))
+                return NULL;
+        }
+
+        dir->dd_handle = (long)FindFirstFile(dirname, &info);
+        mem_d(dirname);
+        ret = !(!dir->dd_handle);
+    } else if (dir->dd_handle != -11) {
+        ret = FindNextFile((HANDLE)dir->dd_handle, &info);
+    } else {
+        ret = 0;
+    }
+
+    if (!ret)
+        return NULL;
+
+    if ((data = (struct dirent*)mem_a(sizeof(struct dirent)))) {
+        platform_strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
+        data->d_name[FILENAME_MAX - 1] = '\0';
+        data->d_namelen                = strlen(data->d_name);
+    }
+
+    return data;
 }
 
 int platform_istty(int fd) {

@@ -28,11 +28,12 @@
 #include <stdio.h>
 
 #ifdef _WIN32
-#   undef  STDERR_FILENO
-#   undef  STDOUT_FILENO
-#   define STDERR_FILENO 2
-#   define STDOUT_FILENO 1
-
+#   ifndef STDERR_FILENO
+#       define STDERR_FILENO 2
+#   endif
+#   ifndef STDOUT_FILENO
+#       define STDOUT_FILENO 1
+#   endif
 #   ifndef __MINGW32__
 #       define _WIN32_LEAN_AND_MEAN
 #       include <windows.h>
