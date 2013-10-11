@@ -57,8 +57,8 @@
  * The last section of the table handles bytes with leading F
  *
  * The values themselfs in the table are arranged so that when you
- * left shift them by 6 to shif continuation characters into place, the
- * new top bits tell:
+ * left shift them by 6 to shift continuation characters into place, the
+ * new top bits tell you:
  *
  *  1 - if you keep going
  *  2 - the range of valid values for the next byte
