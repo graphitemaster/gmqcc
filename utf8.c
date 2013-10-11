@@ -126,7 +126,7 @@ int utf8_to(utf8ch_t *i, const unsigned char *s, size_t n) {
 
     if (*s < 0x80)
         return !!(*i = *s);
-    if (*s-0xC2U > 0xFFFFFFCE)
+    if (*s-0xC2U > 0x32)
         return 0;
 
     c = utf8_tab[*s++-0xC2U];
