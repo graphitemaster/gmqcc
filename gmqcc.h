@@ -313,7 +313,7 @@ const struct tm *util_localtime(const time_t *timer);
 const char      *util_ctime    (const time_t *timer);
 
 typedef struct fs_file_s fs_file_t;
-int              util_isatty   (fs_file_t *);
+bool            util_isatty   (fs_file_t *);
 
 /*
  * A flexible vector implementation: all vector pointers contain some
