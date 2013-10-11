@@ -229,7 +229,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
         if (!dir)
             return NULL;
 
-        util_strncpy(dir->dd_name, name, strlen(name));
+        platform_strncpy(dir->dd_name, name, strlen(name));
         return dir;
     }
 
@@ -249,8 +249,8 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             if (*dir->dd_name) {
                 size_t n = strlen(dir->dd_name);
                 if ((dirname  = (char*)mem_a(n + 5) /* 4 + 1 */)) {
-                    util_strncpy(dirname, dir->dd_name, n);
-                    util_strncpy(dirname + n, "\\*.*", 4);   /* 4 + 1 */
+                    platform_strncpy(dirname, dir->dd_name, n);
+                    platform_strncpy(dirname + n, "\\*.*", 4);   /* 4 + 1 */
                 }
             } else {
                 if (!(dirname = util_strdup("\\*.*")))
@@ -270,7 +270,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             return NULL;
 
         if ((data = (struct dirent*)mem_a(sizeof(struct dirent)))) {
-            util_strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
+            platform_strncpy(data->d_name, info.cFileName, FILENAME_MAX - 1);
             data->d_name[FILENAME_MAX - 1] = '\0'; /* terminate */
             data->d_namlen                 = strlen(data->d_name);
         }

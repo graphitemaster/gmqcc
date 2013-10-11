@@ -98,14 +98,14 @@ static void pak_tree_build(const char *entry) {
 
     memset(pathsplit, 0, 56);
 
-    util_strncpy(directory, entry, 56);
+    platform_strncpy(directory, entry, 56);
     for (itr = 0; (token = pak_tree_sep(&directory, "/")) != NULL; itr++) {
         elements[itr] = token;
     }
 
     for (jtr = 0; jtr < itr - 1; jtr++) {
-        util_strcat(pathsplit, elements[jtr]);
-        util_strcat(pathsplit, "/");
+        platform_strcat(pathsplit, elements[jtr]);
+        platform_strcat(pathsplit, "/");
 
         if (fs_dir_make(pathsplit)) {
             mem_d(pathsplit);
@@ -366,7 +366,7 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
     if (strlen(file) >= 56)
         goto err;
 
-    util_strncpy(dir.name, file, strlen(file));
+    platform_strncpy(dir.name, file, strlen(file));
 
     /*
      * Allocate some memory for loading in the data that will be

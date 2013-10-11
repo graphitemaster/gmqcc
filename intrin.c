@@ -39,8 +39,8 @@ static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **val
     char          buffer[1024];
     char          stype [1024];
 
-    util_snprintf(buffer, sizeof(buffer), "__builtin_%s", name);
-    util_snprintf(stype,  sizeof(stype),   "<%s>",        type_name[vtype]);
+    platform_snprintf(buffer, sizeof(buffer), "__builtin_%s", name);
+    platform_snprintf(stype,  sizeof(stype),   "<%s>",        type_name[vtype]);
 
     *value                      = ast_value_new(intrin_ctx(intrin), buffer, TYPE_FUNCTION);
     (*value)->intrinsic         = true;

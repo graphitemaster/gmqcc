@@ -37,7 +37,7 @@ static void loaderror(const char *fmt, ...)
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
-    printf(": %s\n", util_strerror(err));
+    printf(": %s\n", platform_strerror(err));
 }
 
 static void qcvmerror(qc_program_t *prog, const char *fmt, ...)
@@ -91,11 +91,11 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     }
 
 #define read_data(hdrvar, progvar, reserved)                           \
-    if (fs_file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {        \
+    if (fs_file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {     \
         loaderror("seek failed");                                      \
         goto error;                                                    \
     }                                                                  \
-    if (fs_file_read (                                                    \
+    if (fs_file_read (                                                 \
             vec_add(prog->progvar, header.hdrvar.length + reserved),   \
             sizeof(*prog->progvar),                                    \
             header.hdrvar.length,                                      \
@@ -661,7 +661,7 @@ static int qc_ftos(qc_program_t *prog) {
     qcany_t str;
     CheckArgs(1);
     num = GetArg(0);
-    util_snprintf(buffer, sizeof(buffer), "%g", num->_float);
+    platform_snprintf(buffer, sizeof(buffer), "%g", num->_float);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -683,7 +683,7 @@ static int qc_vtos(qc_program_t *prog) {
     qcany_t str;
     CheckArgs(1);
     num = GetArg(0);
-    util_snprintf(buffer, sizeof(buffer), "'%g %g %g'", num->vector[0], num->vector[1], num->vector[2]);
+    platform_snprintf(buffer, sizeof(buffer), "'%g %g %g'", num->vector[0], num->vector[1], num->vector[2]);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -695,7 +695,7 @@ static int qc_etos(qc_program_t *prog) {
     qcany_t str;
     CheckArgs(1);
     num = GetArg(0);
-    util_snprintf(buffer, sizeof(buffer), "%i", num->_int);
+    platform_snprintf(buffer, sizeof(buffer), "%i", num->_int);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -877,17 +877,10 @@ static void prog_main_setparams(qc_program_t *prog) {
         arg->vector[2] = 0;
         switch (main_params[i].vtype) {
             case TYPE_VECTOR:
-#ifdef _MSC_VER
-                (void)sscanf_s(main_params[i].value, " %f %f %f ",
-                               &arg->vector[0],
-                               &arg->vector[1],
-                               &arg->vector[2]);
-#else
-                (void)sscanf(main_params[i].value, " %f %f %f ",
-                             &arg->vector[0],
-                             &arg->vector[1],
-                             &arg->vector[2]);
-#endif
+                (void)platform_sscanf(main_params[i].value, " %f %f %f ",
+                                       &arg->vector[0],
+                                       &arg->vector[1],
+                                       &arg->vector[2]);
                 break;
             case TYPE_FLOAT:
                 arg->_float = atof(main_params[i].value);

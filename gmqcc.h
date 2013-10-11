@@ -24,6 +24,7 @@
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
 #include <stdarg.h>
+#include <time.h>  /* TODO: remove this? */
 #include <stdio.h> /* TODO: remove this */
 
 /*
@@ -343,18 +344,8 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 void     util_seed(uint32_t);
 uint32_t util_rand(void);
 
-/*
- * String functions (formatting, copying, concatenating, errors). These are wrapped
- * to use the MSVC _safe_ versions when using MSVC, plus some implementations of
- * these are non-conformant or don't exist such as asprintf and snprintf, which are
- * not supported in C90, but do exist in C99.
- */
-int         util_vasprintf(char **ret, const char *fmt, va_list);
-int         util_asprintf (char **ret, const char *fmt, ...);
-int         util_snprintf (char *src,  size_t bytes, const char *format, ...);
-char       *util_strcat   (char *dest, const char *src);
-char       *util_strncpy  (char *dest, const char *src, size_t num);
-const char *util_strerror (int num);
+int      util_vasprintf(char **ret, const char *fmt, va_list);
+int      util_asprintf (char **ret, const char *fmt, ...);
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -469,6 +460,18 @@ DIR           *fs_dir_open    (const char *);
 int            fs_dir_close   (DIR *);
 struct dirent *fs_dir_read    (DIR *);
 
+
+int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg);
+int platform_sscanf(const char *str, const char *format, ...);
+const struct tm *platform_localtime(const time_t *timer);
+const char *platform_ctime(const time_t *timer);
+char *platform_strncat(char *dest, const char *src, size_t num);
+const char *platform_tmpnam(char *str);
+const char *platform_getenv(char *var);
+int platform_snprintf(char *src, size_t bytes, const char *format, ...);
+char *platform_strcat(char *dest, const char *src);
+char *platform_strncpy(char *dest, const char *src, size_t num);
+const char *platform_strerror(int err);
 
 /*===================================================================*/
 /*=========================== correct.c =============================*/

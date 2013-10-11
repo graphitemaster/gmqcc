@@ -85,22 +85,14 @@ static uint32_t ftepp_predef_randval  = 0;
 
 /* __DATE__ */
 static char *ftepp_predef_date(lex_file *context) {
-    struct tm *itime = NULL;
-    time_t     rtime;
-    char      *value = (char*)mem_a(82);
-    /* 82 is enough for strftime but we also have " " in our string */
+    const struct tm *itime = NULL;
+    char            *value = (char*)mem_a(82);
+    time_t           rtime;
 
     (void)context;
 
-    /* get time */
     time (&rtime);
-
-#ifdef _MSC_VER
-    localtime_s(itime, &rtime);
-#else
-    itime = localtime(&rtime);
-#endif
-
+    itime = platform_localtime(&rtime);
     strftime(value, 82, "\"%b %d %Y\"", itime);
 
     return value;
@@ -108,22 +100,14 @@ static char *ftepp_predef_date(lex_file *context) {
 
 /* __TIME__ */
 static char *ftepp_predef_time(lex_file *context) {
-    struct tm *itime = NULL;
-    time_t     rtime;
-    char      *value = (char*)mem_a(82);
-    /* 82 is enough for strftime but we also have " " in our string */
+    const struct tm *itime = NULL;
+    char            *value = (char*)mem_a(82);
+    time_t           rtime;
 
     (void)context;
 
-    /* get time */
     time (&rtime);
-
-#ifdef _MSC_VER
-    localtime_s(itime, &rtime);
-#else
-    itime = localtime(&rtime);
-#endif
-
+    itime = platform_localtime(&rtime);
     strftime(value, 82, "\"%X\"", itime);
 
     return value;
@@ -139,7 +123,7 @@ static char *ftepp_predef_line(lex_file *context) {
 static char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    util_snprintf(value, length, "\"%s\"", context->name);
+    platform_snprintf(value, length, "\"%s\"", context->name);
 
     return value;
 }
@@ -180,27 +164,14 @@ static char *ftepp_predef_randomlast(lex_file *context) {
 /* __TIMESTAMP__ */
 static char *ftepp_predef_timestamp(lex_file *context) {
     struct stat finfo;
-    char       *find;
+    const char *find;
     char       *value;
     size_t      size;
-#ifdef _MSC_VER
-    char        buffer[64];
-#endif
+
     if (stat(context->name, &finfo))
         return util_strdup("\"<failed to determine timestamp>\"");
 
-    /*
-     * ctime and its fucking annoying newline char, no worries, we're
-     * professionals here.
-     */
-
-#ifndef _MSC_VER
-    find  = ctime(&finfo.st_mtime);
-#else
-    ctime_s(buffer, sizeof(buffer), &finfo.st_mtime);
-    find = buffer;
-#endif
-
+    find = platform_ctime(&finfo.st_mtime);
     value = (char*)mem_a(strlen(find) + 1);
     memcpy(&value[1], find, (size = strlen(find)) - 1);
 
@@ -893,7 +864,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
 
     if (resetline && !ftepp->in_macro) {
         char lineno[128];
-        util_snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
+        platform_snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
 
@@ -1493,7 +1464,7 @@ static bool ftepp_include(ftepp_t *ftepp)
 
     ftepp_out(ftepp, "\n#pragma file(", false);
     ftepp_out(ftepp, ctx.file, false);
-    util_snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
+    platform_snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
     ftepp_out(ftepp, lineno, false);
 
     /* skip the line */
@@ -1872,12 +1843,12 @@ ftepp_t *ftepp_create()
         minor[2] = '"';
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         ftepp_add_define(ftepp, NULL, "__STD_GMQCC__");
-        util_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
-        util_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
+        platform_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        platform_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
         ftepp_add_define(ftepp, NULL, "__STD_QCCX__");
-        util_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
-        util_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
+        platform_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        platform_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
         ftepp_add_define(ftepp, NULL, "__STD_QCC__");
         /* 1.0 */

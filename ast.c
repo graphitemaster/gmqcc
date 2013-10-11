@@ -259,7 +259,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
     if (!e) {
         if (pos + 6 >= bufsize)
             goto full;
-        util_strncpy(buf + pos, "(null)", 6);
+        platform_strncpy(buf + pos, "(null)", 6);
         return pos + 6;
     }
 
@@ -268,7 +268,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
 
     switch (e->vtype) {
         case TYPE_VARIANT:
-            util_strncpy(buf + pos, "(variant)", 9);
+            platform_strncpy(buf + pos, "(variant)", 9);
             return pos + 9;
 
         case TYPE_FIELD:
@@ -314,7 +314,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             if (pos + 1 >= bufsize)
                 goto full;
             buf[pos++] = '[';
-            pos += util_snprintf(buf + pos, bufsize - pos - 1, "%i", (int)e->count);
+            pos += platform_snprintf(buf + pos, bufsize - pos - 1, "%i", (int)e->count);
             if (pos + 1 >= bufsize)
                 goto full;
             buf[pos++] = ']';
@@ -325,7 +325,7 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             typelen = strlen(typestr);
             if (pos + typelen >= bufsize)
                 goto full;
-            util_strncpy(buf + pos, typestr, typelen);
+            platform_strncpy(buf + pos, typestr, typelen);
             return pos + typelen;
     }
 
@@ -1463,12 +1463,12 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
             namelen = strlen(self->name);
             name    = (char*)mem_a(namelen + 16);
-            util_strncpy(name, self->name, namelen);
+            platform_strncpy(name, self->name, namelen);
 
             array->ir_values = (ir_value**)mem_a(sizeof(array->ir_values[0]) * array->expression.count);
             array->ir_values[0] = v;
             for (ai = 1; ai < array->expression.count; ++ai) {
-                util_snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+                platform_snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
                 array->ir_values[ai] = ir_builder_create_field(ir, name, vtype);
                 if (!array->ir_values[ai]) {
                     mem_d(name);
@@ -1532,12 +1532,12 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
-        util_strncpy(name, self->name, namelen);
+        platform_strncpy(name, self->name, namelen);
 
         self->ir_values = (ir_value**)mem_a(sizeof(self->ir_values[0]) * self->expression.count);
         self->ir_values[0] = v;
         for (ai = 1; ai < self->expression.count; ++ai) {
-            util_snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+            platform_snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
             self->ir_values[ai] = ir_builder_create_global(ir, name, vtype);
             if (!self->ir_values[ai]) {
                 mem_d(name);
@@ -1677,11 +1677,11 @@ static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
-        util_strncpy(name, self->name, namelen);
+        platform_strncpy(name, self->name, namelen);
 
         self->ir_values[0] = v;
         for (ai = 1; ai < self->expression.count; ++ai) {
-            util_snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
+            platform_snprintf(name + namelen, 16, "[%u]", (unsigned int)ai);
             self->ir_values[ai] = ir_function_create_local(func, name, vtype, param);
             if (!self->ir_values[ai]) {
                 compile_error(ast_ctx(self), "internal_error: ir_builder_create_global failed on `%s`", name);

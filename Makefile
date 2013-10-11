@@ -148,12 +148,13 @@ install-doc:
 
 # DO NOT DELETE
 
+pak.o: gmqcc.h opts.def
+ansi.o: gmqcc.h opts.def
 util.o: gmqcc.h opts.def
+stat.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
 opts.o: gmqcc.h opts.def
-pak.o: gmqcc.h opts.def
-stat.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h

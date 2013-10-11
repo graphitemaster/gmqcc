@@ -3320,7 +3320,7 @@ static ir_value* ir_gen_extparam_proto(ir_builder *ir)
     ir_value *global;
     char      name[128];
 
-    util_snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)));
+    platform_snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)));
     global = ir_value_var(name, store_global, TYPE_VECTOR);
 
     vec_push(ir->extparam_protos, global);
@@ -3977,10 +3977,6 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 
 #define IND_BUFSZ 1024
 
-#ifdef _MSC_VER
-#   define strncat(dst, src, sz) strncat_s(dst, sz, src, _TRUNCATE)
-#endif
-
 static const char *qc_opname(int op)
 {
     if (op < 0) return "<INVALID>";
@@ -4039,7 +4035,7 @@ void ir_function_dump(ir_function *f, char *ind,
         return;
     }
     oprintf("%sfunction %s\n", ind, f->name);
-    strncat(ind, "\t", IND_BUFSZ-1);
+    platform_strncat(ind, "\t", IND_BUFSZ-1);
     if (vec_size(f->locals))
     {
         oprintf("%s%i locals:\n", ind, (int)vec_size(f->locals));
@@ -4135,7 +4131,7 @@ void ir_block_dump(ir_block* b, char *ind,
 {
     size_t i;
     oprintf("%s:%s\n", ind, b->label);
-    strncat(ind, "\t", IND_BUFSZ-1);
+    platform_strncat(ind, "\t", IND_BUFSZ-1);
 
     if (b->instr && b->instr[0])
         oprintf("%s (%i) [entry]\n", ind, (int)(b->instr[0]->eid-1));
@@ -4169,7 +4165,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
         return;
     }
 
-    strncat(ind, "\t", IND_BUFSZ-1);
+    platform_strncat(ind, "\t", IND_BUFSZ-1);
 
     if (in->_ops[0] && (in->_ops[1] || in->_ops[2])) {
         ir_value_dump(in->_ops[0], oprintf);

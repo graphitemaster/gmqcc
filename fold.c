@@ -338,7 +338,7 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
 
     if (translate) {
         char name[32];
-        util_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(fold->parser->translated++));
+        platform_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(fold->parser->translated++));
         out                    = ast_value_new(parser_ctx(fold->parser), name, TYPE_STRING);
         out->expression.flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
     } else

@@ -162,13 +162,8 @@ static int task_pclose(FILE **handles) {
         char    *cmd  = NULL;
         popen_t *open = (popen_t*)mem_a(sizeof(popen_t));
 
-#ifndef _MSC_VER
-        tmpnam(open->name_err);
-        tmpnam(open->name_out);
-#else
-        tmpnam_s(open->name_err, L_tmpnam);
-        tmpnam_s(open->name_out, L_tmpnam);
-#endif
+        platform_tmpnam(open->name_err);
+        platform_tmpnam(open->name_out);
 
         (void)mode; /* excluded */
 
@@ -507,7 +502,7 @@ static task_template_t *task_template_compile(const char *file, const char *dir,
     FILE            *tempfile = NULL;
     task_template_t *tmpl     = NULL;
 
-    util_snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
+    platform_snprintf(fullfile,    sizeof(fullfile), "%s/%s", dir, file);
 
     tempfile = fs_file_open(fullfile, "r");
     tmpl     = (task_template_t*)mem_a(sizeof(task_template_t));
@@ -717,7 +712,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
         dir = fs_dir_open(directories[i]);
 
         while ((files = fs_dir_read(dir))) {
-            util_snprintf(buffer, sizeof(buffer), "%s/%s", directories[i], files->d_name);
+            platform_snprintf(buffer, sizeof(buffer), "%s/%s", directories[i], files->d_name);
             if (stat(buffer, &directory) == -1) {
                 con_err("internal error: stat failed, aborting\n");
                 abort();
@@ -733,7 +728,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             if (strcmp(files->d_name + strlen(files->d_name) - 5, ".tmpl") == 0) {
                 task_template_t *tmpl = task_template_compile(files->d_name, directories[i], pad);
                 char             buf[4096]; /* one page should be enough */
-                char            *qcflags = NULL;
+                const char      *qcflags = NULL;
                 task_t           task;
 
                 found ++;
@@ -754,16 +749,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                  * to test compile flags for all tests.  This needs to be
                  * BEFORE other flags (so that the .tmpl can override them)
                  */
-                #ifdef _MSC_VER
-                {
-                    char   buffer[4096];
-                    size_t size;
-                    getenv_s(&size, buffer, sizeof(buffer), "QCFLAGS");
-                    qcflags = buffer;
-                }
-                #else
-                qcflags = getenv("QCFLAGS");
-                #endif
+                qcflags = platform_getenv("QCFLAGS");
 
                 /*
                  * Generate the command required to open a pipe to a process
@@ -773,7 +759,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 if (strcmp(tmpl->proceduretype, "-pp")) {
                     if (qcflags) {
                         if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                            util_snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
+                            platform_snprintf(buf, sizeof(buf), "%s %s/%s %s %s -o %s",
                                 task_bins[TASK_COMPILE],
                                 directories[i],
                                 tmpl->sourcefile,
@@ -782,7 +768,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                                 tmpl->tempfilename
                             );
                         } else {
-                            util_snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
+                            platform_snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s %s -o %s",
                                 task_bins[TASK_COMPILE],
                                 curdir,
                                 defs,
@@ -795,7 +781,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                         }
                     } else {
                         if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                            util_snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
+                            platform_snprintf(buf, sizeof(buf), "%s %s/%s %s -o %s",
                                 task_bins[TASK_COMPILE],
                                 directories[i],
                                 tmpl->sourcefile,
@@ -803,7 +789,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                                 tmpl->tempfilename
                             );
                         } else {
-                            util_snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
+                            platform_snprintf(buf, sizeof(buf), "%s %s/%s %s/%s %s -o %s",
                                 task_bins[TASK_COMPILE],
                                 curdir,
                                 defs,
@@ -817,14 +803,14 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 } else {
                     /* Preprocessing (qcflags mean shit all here we don't allow them) */
                     if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
+                        platform_snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
                             task_bins[TASK_COMPILE],
                             directories[i],
                             tmpl->sourcefile,
                             tmpl->tempfilename
                         );
                     } else {
-                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
+                        platform_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             defs,
@@ -850,14 +836,14 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                  * Open up some file desciptors for logging the stdout/stderr
                  * to our own.
                  */
-                util_snprintf(buf,  sizeof(buf), "%s.stdout", tmpl->tempfilename);
+                platform_snprintf(buf,  sizeof(buf), "%s.stdout", tmpl->tempfilename);
                 task.stdoutlogfile = util_strdup(buf);
                 if (!(task.stdoutlog     = fs_file_open(buf, "w"))) {
                     con_err("error opening %s for stdout\n", buf);
                     continue;
                 }
 
-                util_snprintf(buf,  sizeof(buf), "%s.stderr", tmpl->tempfilename);
+                platform_snprintf(buf,  sizeof(buf), "%s.stderr", tmpl->tempfilename);
                 task.stderrlogfile = util_strdup(buf);
                 if (!(task.stderrlog = fs_file_open(buf, "w"))) {
                     con_err("error opening %s for stderr\n", buf);
@@ -892,7 +878,7 @@ static void task_precleanup(const char *curdir) {
             strstr(files->d_name, ".stdout") ||
             strstr(files->d_name, ".stderr"))
         {
-            util_snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
+            platform_snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
             if (remove(buffer))
                 con_err("error removing temporary file: %s\n", buffer);
         }
@@ -961,12 +947,12 @@ static bool task_trymatch(size_t i, char ***line) {
          * actually specified.
          */
         if (!strcmp(tmpl->executeflags, "$null")) {
-            util_snprintf(buffer,  sizeof(buffer), "%s %s",
+            platform_snprintf(buffer,  sizeof(buffer), "%s %s",
                 task_bins[TASK_EXECUTE],
                 tmpl->tempfilename
             );
         } else {
-            util_snprintf(buffer,  sizeof(buffer), "%s %s %s",
+            platform_snprintf(buffer,  sizeof(buffer), "%s %s %s",
                 task_bins[TASK_EXECUTE],
                 tmpl->executeflags,
                 tmpl->tempfilename
@@ -1111,11 +1097,11 @@ static size_t task_schedualize(size_t *pad) {
     size_t j        = 0;
     size_t failed   = 0;
 
-    util_snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
+    platform_snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
 
     for (; i < vec_size(task_tasks); i++) {
         memset(space[1], 0, sizeof(space[1]));
-        util_snprintf(space[1], sizeof(space[1]), "%d", (int)(i + 1));
+        platform_snprintf(space[1], sizeof(space[1]), "%d", (int)(i + 1));
 
         con_out("test #%u %*s", i + 1, strlen(space[0]) - strlen(space[1]), "");
 

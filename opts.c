@@ -251,7 +251,7 @@ static size_t opts_ini_parse (
             /* section found */
             if (*(parse_end = opts_ini_next(parse_beg + 1, ']')) == ']') {
                 * parse_end = '\0'; /* terminate bro */
-                util_strncpy(section_data, parse_beg + 1, sizeof(section_data));
+                platform_strncpy(section_data, parse_beg + 1, sizeof(section_data));
                 section_data[sizeof(section_data) - 1] = '\0';
                 *oldname_data                          = '\0';
             } else if (!error) {
@@ -272,7 +272,7 @@ static size_t opts_ini_parse (
                 opts_ini_rstrip(read_value);
 
                 /* valid name value pair, lets call down to handler */
-                util_strncpy(oldname_data, read_name, sizeof(oldname_data));
+                platform_strncpy(oldname_data, read_name, sizeof(oldname_data));
                 oldname_data[sizeof(oldname_data) - 1] ='\0';
 
                 if ((*errorhandle = loadhandle(section_data, read_name, read_value)) && !error)
