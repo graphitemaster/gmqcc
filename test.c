@@ -152,6 +152,7 @@ static int task_pclose(fs_file_t **handles) {
     return status;
 }
 #else
+    #include <sys/stat.h>
     typedef struct {
         fs_file_t *handles[3];
         char       name_err[L_tmpnam];

@@ -282,6 +282,10 @@ bool util_isatty(fs_file_t *file) {
     return false;
 }
 
+const char *util_tmpnam(char *str) {
+    return platform_tmpnam(str);
+}
+
 /*
  * A small noncryptographic PRNG based on:
  * http://burtleburtle.net/bob/rand/smallprng.html

@@ -17,7 +17,7 @@ endif
 base:
 	$(MAKE) -C $(BASEDIR) clean
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-	  $(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR) PREFIX=$(PREFIX) install
+	  $(MAKE) -C $(BASEDIR) DESTDIR=distro/deb/$(DEBDIR) PREFIX=$(PREFIX) strip install
 	@install -d -m755 $(DEBDIR)/DEBIAN
 	@echo "Package: gmqcc" > $(CONTROL)
 	@echo "Version: $(MAJOR).$(MINOR).$(PATCH)" >> $(CONTROL)

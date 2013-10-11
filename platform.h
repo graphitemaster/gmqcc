@@ -60,14 +60,13 @@
             int                dd_stat;
             char               dd_name[1];
         } DIR;
-
-#       ifdef S_ISDIR
-#           undef  S_ISDIR
-#       endif /*! S_ISDIR */
-#       define S_ISDIR(X) ((X)&_S_IFDIR)
 #   else
 #       include <dirent.h>
 #   endif /*!__MINGW32__*/
+
+#   ifndef S_ISDIR
+#       define S_ISDIR(X) ((X)&_S_IFDIR)
+#   endif
 #else
 #   include <sys/types.h>
 #   include <sys/stat.h>

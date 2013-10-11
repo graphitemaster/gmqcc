@@ -7,7 +7,7 @@ BINDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)
 
 base:
 	$(MAKE) CC=i486-mingw32-gcc UNAME=MINGW32 -C $(BASEDIR) clean
-	$(MAKE) CC=i486-mingw32-gcc UNAME=MINGW32 -C $(BASEDIR) DESTDIR=distro/win32/$(BINDIR) PREFIX=/ install
+	$(MAKE) CC=i486-mingw32-gcc UNAME=MINGW32 -C $(BASEDIR) DESTDIR=distro/win32/$(BINDIR) PREFIX=/ strip install
 	@mkdir -p $(BINDIR)/doc
 	@groff -mandoc $(BINDIR)/man1/gmqpak.1 | ps2pdf - $(BINDIR)/doc/gmqpak.pdf
 	@groff -mandoc $(BINDIR)/man1/qcvm.1 | ps2pdf - $(BINDIR)/doc/qcvm.pdf

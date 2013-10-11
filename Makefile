@@ -107,6 +107,11 @@ check: all
 test: all
 	@ ./$(TESTSUITE)
 
+strip: $(GMQCC) $(QCVM) $(TESTSUITE)
+	strip $(GMQCC)
+	strip $(QCVM)
+	strip $(TESTSUITE)
+
 clean:
 	rm -rf *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
 

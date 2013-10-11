@@ -20,7 +20,7 @@ endif
 base:
 	$(MAKE) -C $(BASEDIR) clean
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-	  $(MAKE) -C $(BASEDIR) "DESTDIR=$(DESTDIR)" "PREFIX=$(PREFIX)" install
+	  $(MAKE) -C $(BASEDIR) "DESTDIR=$(DESTDIR)" "PREFIX=$(PREFIX)" strip install
 	gzip -9 $(PKGDIR)/usr/share/man/man?/*.?
 	strip -s $(PKGDIR)/usr/bin/*
 	mkdir $(PKGDIR)/install

@@ -23,7 +23,7 @@ endif
 base:
 	$(MAKE) -C $(BASEDIR) clean
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-	  $(MAKE) -C $(BASEDIR) "DESTDIR=$(DESTDIR)/$(PKGDIR)" "PREFIX=$(PREFIX)" install
+	  $(MAKE) -C $(BASEDIR) "DESTDIR=$(DESTDIR)/$(PKGDIR)" "PREFIX=$(PREFIX)" strip install
 	@echo "pkgname = gmqcc" > $(PKGINFO)
 	@echo "pkgver = $(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)" >> $(PKGINFO)
 	@echo "pkgdesc = An Improved Quake C Compiler" >> $(PKGINFO)
