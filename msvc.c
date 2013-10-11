@@ -101,6 +101,30 @@ int platform_snprintf(char *src, size_t bytes, const char *format, ...) {
     return rt;
 }
 
+/*
+ * TODO: this isn't exactly 'accurate' for MSVC but it seems to work,
+ * at least to some extent.
+ */
+int platform_vasprintf(char **dat, const char *fmt, va_list args) {
+    int   ret;
+    int   len;
+    char *tmp = NULL;
+
+    if ((len = _vscprintf(fmt, args)) < 0) {
+        *dat = NULL;
+        return -1;
+    }
+
+    tmp = (char*)mem_a(len + 1);
+    if ((ret = _vsnprintf_s(tmp, len+1, len+1, fmt, args)) != len) {
+        mem_d(tmp);
+        *dat = NULL;
+        return -1;
+    }
+    *dat = tmp;
+    return len;
+}
+
 char *platform_strcat(char *dest, const char *src) {
     strcat_s(dest, strlen(src), src);
     return dest;

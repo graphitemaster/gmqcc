@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "platform.h"
+#include "gmqcc.h"
 
 int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg) {
     return vsnprintf(buffer, bytes, format, arg);
@@ -70,6 +71,33 @@ int platform_snprintf(char *src, size_t bytes, const char *format, ...) {
     va_end(va);
 
     return rt;
+}
+
+int platform_vasprintf(char **dat, const char *fmt, va_list args) {
+    int     ret;
+    int     len;
+    char   *tmp = NULL;
+    char    buf[128];
+    va_list cpy;
+
+    va_copy(cpy, args);
+    len = vsnprintf(buf, sizeof(buf), fmt, cpy);
+    va_end (cpy);
+
+    if (len < (int)sizeof(buf)) {
+        *dat = util_strdup(buf);
+        return len;
+    }
+
+    tmp = (char*)mem_a(len + 1);
+    if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
+        mem_d(tmp);
+        *dat = NULL;
+        return -1;
+    }
+
+    *dat = tmp;
+    return len;
 }
 
 char *platform_strcat(char *dest, const char *src) {

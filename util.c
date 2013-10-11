@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "gmqcc.h"
+#include "platform.h"
 
 /*
  * Initially this was handled with a table in the gmqcc.h header, but
@@ -224,72 +225,11 @@ size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
     return util_strtransform(in, out, outsz, "_ ", 'a'-'A');
 }
 
-/*
- * Portable implementation of vasprintf/asprintf. Assumes vsnprintf
- * exists, otherwise compiler error.
- *
- * TODO: fix for MSVC ....
- */
-int util_vasprintf(char **dat, const char *fmt, va_list args) {
-    int   ret;
-    int   len;
-    char *tmp = NULL;
-
-    /*
-     * For visual studio _vsnprintf doesn't tell you the length of a
-     * formatted string if it overflows. However there is a MSVC
-     * intrinsic (which is documented wrong) called _vcsprintf which
-     * will return the required amount to allocate.
-     */
-    #ifdef _MSC_VER
-        if ((len = _vscprintf(fmt, args)) < 0) {
-            *dat = NULL;
-            return -1;
-        }
-
-        tmp = (char*)mem_a(len + 1);
-        if ((ret = _vsnprintf_s(tmp, len+1, len+1, fmt, args)) != len) {
-            mem_d(tmp);
-            *dat = NULL;
-            return -1;
-        }
-        *dat = tmp;
-        return len;
-    #else
-        /*
-         * For everything else we have a decent conforming vsnprintf that
-         * returns the number of bytes needed.  We give it a try though on
-         * a short buffer, since efficiently speaking, it could be nice to
-         * above a second vsnprintf call.
-         */
-        char    buf[128];
-        va_list cpy;
-        va_copy(cpy, args);
-        len = vsnprintf(buf, sizeof(buf), fmt, cpy);
-        va_end (cpy);
-
-        if (len < (int)sizeof(buf)) {
-            *dat = util_strdup(buf);
-            return len;
-        }
-
-        /* not large enough ... */
-        tmp = (char*)mem_a(len + 1);
-        if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
-            mem_d(tmp);
-            *dat = NULL;
-            return -1;
-        }
-
-        *dat = tmp;
-        return len;
-    #endif
-}
 int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
     int      read;
     va_start(args, fmt);
-    read = util_vasprintf(ret, fmt, args);
+    read = platform_vasprintf(ret, fmt, args);
     va_end  (args);
 
     return read;

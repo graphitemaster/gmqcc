@@ -76,6 +76,7 @@ char *platform_strncat(char *dest, const char *src, size_t num);
 const char *platform_tmpnam(char *str);
 const char *platform_getenv(char *var);
 int platform_snprintf(char *src, size_t bytes, const char *format, ...);
+int platform_vasprintf(char **dat, const char *fmt, va_list args);
 char *platform_strcat(char *dest, const char *src);
 char *platform_strncpy(char *dest, const char *src, size_t num);
 const char *platform_strerror(int err);
