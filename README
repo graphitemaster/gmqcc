@@ -12,3 +12,7 @@ For documentation:
 For syntax highlighting description files, or information
 regarding how to install them:
     See the README in syntax directory
+
+For description on porting GMQCC to other platforms, or information
+on how to approach porting GMQCC to more 'exotic' platforms:
+    See the PORTING file.
