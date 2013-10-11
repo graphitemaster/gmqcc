@@ -20,6 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#define GMQCC_PLATFORM_HEADER
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,15 +32,8 @@ int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list a
     return vsnprintf(buffer, bytes, format, arg);
 }
 
-int platform_sscanf(const char *str, const char *format, ...) {
-    int     rt;
-    va_list va;
-
-    va_start(va, format);
-    rt = vsscanf(str, format, va);
-    va_end (va);
-
-    return rt;
+int platform_vsscanf(const char *str, const char *format, va_list arg) {
+    return vsscanf(str, format, arg);
 }
 
 const struct tm *platform_localtime(const time_t *timer) {
@@ -60,17 +54,6 @@ const char *platform_tmpnam(char *str) {
 
 const char *platform_getenv(char *var) {
     return getenv(var);
-}
-
-int platform_snprintf(char *src, size_t bytes, const char *format, ...) {
-    int     rt;
-    va_list va;
-
-    va_start(va, format);
-    rt = vsnprintf(src, bytes, format, va);
-    va_end(va);
-
-    return rt;
 }
 
 int platform_vasprintf(char **dat, const char *fmt, va_list args) {

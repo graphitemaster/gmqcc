@@ -25,7 +25,6 @@
 
 #include "ast.h"
 #include "parser.h"
-#include "platform.h"
 
 #define FOLD_STRING_UNTRANSLATE_HTSIZE 1024
 #define FOLD_STRING_DOTRANSLATE_HTSIZE 1024
@@ -339,7 +338,7 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
 
     if (translate) {
         char name[32];
-        platform_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(fold->parser->translated++));
+        util_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(fold->parser->translated++));
         out                    = ast_value_new(parser_ctx(fold->parser), name, TYPE_STRING);
         out->expression.flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
     } else

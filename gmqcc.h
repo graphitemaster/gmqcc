@@ -25,6 +25,7 @@
 #define GMQCC_HDR
 #include <stdarg.h>
 #include <stddef.h>
+#include <time.h>   /* TODO remove?*/
 
 /*
  * Disable some over protective warnings in visual studio because fixing them is a waste
@@ -301,8 +302,15 @@ uint16_t util_crc16(uint16_t crc, const char *data, size_t len);
 void     util_seed(uint32_t);
 uint32_t util_rand(void);
 
-int      util_vasprintf(char **ret, const char *fmt, va_list);
 int      util_asprintf (char **ret, const char *fmt, ...);
+int      util_sscanf   (const char *str, const char *format, ...);
+char    *util_strncpy  (char *dest, const char *src, size_t n);
+char    *util_strncat  (char *dest, const char *src, size_t n);
+char    *util_strcat   (char *dest, const char *src);
+const char *util_strerror(int err);
+
+const struct tm *util_localtime(const time_t *timer);
+const char      *util_ctime    (const time_t *timer);
 
 /*
  * A flexible vector implementation: all vector pointers contain some
@@ -386,8 +394,15 @@ void          util_htrm  (hash_table_t *ht, const char *key, void (*cb)(void*));
 void         *util_htget (hash_table_t *ht, const char *key);
 void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
 
+int           util_snprintf(char *str, size_t, const char *fmt, ...);
+
 
 /* fs.c */
+#define FS_FILE_SEEK_SET  0
+#define FS_FILE_SEEK_CUR  1
+#define FS_FILE_SEEK_END  2
+#define FS_FILE_EOF      -1
+
 typedef struct fs_dir_s  fs_dir_t;
 typedef struct fs_file_s fs_file_t;
 typedef struct dirent    fs_dirent_t;
@@ -411,6 +426,7 @@ int            fs_dir_make    (const char *);
 fs_dir_t      *fs_dir_open    (const char *);
 int            fs_dir_close   (fs_dir_t *);
 fs_dirent_t   *fs_dir_read    (fs_dir_t *);
+
 
 /* correct.c */
 typedef struct correct_trie_s {

@@ -21,8 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#define GMQCC_PLATFORM_HEADER
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "gmqcc.h"
 #include "platform.h"
@@ -225,14 +227,57 @@ size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
     return util_strtransform(in, out, outsz, "_ ", 'a'-'A');
 }
 
+int util_snprintf(char *str, size_t size, const char *fmt, ...) {
+    va_list  arg;
+    int      ret;
+
+    va_start(arg, fmt);
+    ret = platform_vsnprintf(str, size, fmt, arg);
+    va_end(arg);
+
+    return ret;
+}
+
 int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
     int      read;
+
     va_start(args, fmt);
     read = platform_vasprintf(ret, fmt, args);
     va_end  (args);
 
     return read;
+}
+
+int util_sscanf(const char *str, const char *format, ...) {
+    va_list  args;
+    int      read;
+
+    va_start(args, format);
+    read = platform_vsscanf(str, format, args);
+    va_end(args);
+
+    return read;
+}
+
+char *util_strncpy(char *dest, const char *src, size_t n) {
+    return platform_strncpy(dest, src, n);
+}
+char *util_strncat(char *dest, const char *src, size_t n) {
+    return platform_strncat(dest, src, n);
+}
+char *util_strcat(char *dest, const char *src) {
+    return platform_strcat(dest, src);
+}
+const char *util_strerror(int err) {
+    return platform_strerror(err);
+}
+
+const struct tm *util_localtime(const time_t *timer) {
+    return platform_localtime(timer);
+}
+const char *util_ctime(const time_t *timer) {
+    return platform_ctime(timer);
 }
 
 void util_seed(uint32_t value) {

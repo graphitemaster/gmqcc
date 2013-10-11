@@ -25,9 +25,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "gmqcc.h"
-#include "platform.h"
 
 static void loaderror(const char *fmt, ...)
 {
@@ -36,7 +36,7 @@ static void loaderror(const char *fmt, ...)
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
-    printf(": %s\n", platform_strerror(err));
+    printf(": %s\n", util_strerror(err));
 }
 
 static void qcvmerror(qc_program_t *prog, const char *fmt, ...)
@@ -660,7 +660,7 @@ static int qc_ftos(qc_program_t *prog) {
     qcany_t str;
     CheckArgs(1);
     num = GetArg(0);
-    platform_snprintf(buffer, sizeof(buffer), "%g", num->_float);
+    util_snprintf(buffer, sizeof(buffer), "%g", num->_float);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -682,7 +682,7 @@ static int qc_vtos(qc_program_t *prog) {
     qcany_t str;
     CheckArgs(1);
     num = GetArg(0);
-    platform_snprintf(buffer, sizeof(buffer), "'%g %g %g'", num->vector[0], num->vector[1], num->vector[2]);
+    util_snprintf(buffer, sizeof(buffer), "'%g %g %g'", num->vector[0], num->vector[1], num->vector[2]);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -694,7 +694,7 @@ static int qc_etos(qc_program_t *prog) {
     qcany_t str;
     CheckArgs(1);
     num = GetArg(0);
-    platform_snprintf(buffer, sizeof(buffer), "%i", num->_int);
+    util_snprintf(buffer, sizeof(buffer), "%i", num->_int);
     str.string = prog_tempstring(prog, buffer);
     Return(str);
     return 0;
@@ -876,7 +876,7 @@ static void prog_main_setparams(qc_program_t *prog) {
         arg->vector[2] = 0;
         switch (main_params[i].vtype) {
             case TYPE_VECTOR:
-                (void)platform_sscanf(main_params[i].value, " %f %f %f ",
+                (void)util_sscanf(main_params[i].value, " %f %f %f ",
                                        &arg->vector[0],
                                        &arg->vector[1],
                                        &arg->vector[2]);

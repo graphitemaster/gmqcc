@@ -20,6 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#define GMQCC_PLATFORM_HEADER
 #include "gmqcc.h"
 #include "platform.h"
 
@@ -59,7 +60,8 @@ int fs_file_error(fs_file_t *fp) {
 }
 
 int fs_file_getc(fs_file_t *fp) {
-    return platform_fgetc((FILE*)fp);
+    int get = platform_fgetc((FILE*)fp);
+    return (get == EOF) ? FS_FILE_EOF : get;
 }
 
 int fs_file_puts(fs_file_t *fp, const char *str) {
@@ -67,6 +69,11 @@ int fs_file_puts(fs_file_t *fp, const char *str) {
 }
 
 int fs_file_seek(fs_file_t *fp, long int off, int whence) {
+    switch(whence) {
+        case FS_FILE_SEEK_CUR: whence = SEEK_CUR; break;
+        case FS_FILE_SEEK_SET: whence = SEEK_SET; break;
+        case FS_FILE_SEEK_END: whence = SEEK_END; break;
+    }
     return platform_fseek((FILE*)fp, off, whence);
 }
 

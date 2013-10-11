@@ -25,7 +25,6 @@
 #include <math.h>
 
 #include "parser.h"
-#include "platform.h"
 
 #define PARSER_HT_LOCALS  2
 #define PARSER_HT_SIZE    512
@@ -4025,13 +4024,13 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         varargs->expression.flags |= AST_FLAG_IS_VARARG;
         varargs->expression.next = (ast_expression*)ast_value_new(ast_ctx(var), NULL, TYPE_VECTOR);
         varargs->expression.count = 0;
-        platform_snprintf(name, sizeof(name), "%s##va##SET", var->name);
+        util_snprintf(name, sizeof(name), "%s##va##SET", var->name);
         if (!parser_create_array_setter_proto(parser, varargs, name)) {
             ast_delete(varargs);
             ast_block_delete(block);
             goto enderrfn;
         }
-        platform_snprintf(name, sizeof(name), "%s##va##GET", var->name);
+        util_snprintf(name, sizeof(name), "%s##va##GET", var->name);
         if (!parser_create_array_getter_proto(parser, varargs, varargs->expression.next, name)) {
             ast_delete(varargs);
             ast_block_delete(block);
@@ -4928,10 +4927,10 @@ static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, cons
 static bool create_array_accessors(parser_t *parser, ast_value *var)
 {
     char name[1024];
-    platform_snprintf(name, sizeof(name), "%s##SET", var->name);
+    util_snprintf(name, sizeof(name), "%s##SET", var->name);
     if (!parser_create_array_setter(parser, var, name))
         return false;
-    platform_snprintf(name, sizeof(name), "%s##GET", var->name);
+    util_snprintf(name, sizeof(name), "%s##GET", var->name);
     if (!parser_create_array_getter(parser, var, var->expression.next, name))
         return false;
     return true;
@@ -5459,14 +5458,14 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 goto cleanup;
             }
 
-            platform_snprintf(name, sizeof(name), "%s##SETF", var->name);
+            util_snprintf(name, sizeof(name), "%s##SETF", var->name);
             if (!parser_create_array_field_setter(parser, array, name))
                 goto cleanup;
 
             telem = ast_type_copy(ast_ctx(var), array->expression.next);
             tfield = ast_value_new(ast_ctx(var), "<.type>", TYPE_FIELD);
             tfield->expression.next = telem;
-            platform_snprintf(name, sizeof(name), "%s##GETFP", var->name);
+            util_snprintf(name, sizeof(name), "%s##GETFP", var->name);
             if (!parser_create_array_getter(parser, array, (ast_expression*)tfield, name)) {
                 ast_delete(tfield);
                 goto cleanup;
@@ -5907,7 +5906,7 @@ parser_t *parser_create()
         }
     }
     if (!parser->assign_op) {
-        printf("internal error: initializing parser: failed to find assign operator\n");
+        con_err("internal error: initializing parser: failed to find assign operator\n");
         mem_d(parser);
         return NULL;
     }

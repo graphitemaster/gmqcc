@@ -23,11 +23,11 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <sys/stat.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
-#include "platform.h"
 
 #define HT_MACROS 1024
 
@@ -93,7 +93,7 @@ static char *ftepp_predef_date(lex_file *context) {
     (void)context;
 
     time (&rtime);
-    itime = platform_localtime(&rtime);
+    itime = util_localtime(&rtime);
     strftime(value, 82, "\"%b %d %Y\"", itime);
 
     return value;
@@ -108,7 +108,7 @@ static char *ftepp_predef_time(lex_file *context) {
     (void)context;
 
     time (&rtime);
-    itime = platform_localtime(&rtime);
+    itime = util_localtime(&rtime);
     strftime(value, 82, "\"%X\"", itime);
 
     return value;
@@ -124,7 +124,7 @@ static char *ftepp_predef_line(lex_file *context) {
 static char *ftepp_predef_file(lex_file *context) {
     size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
     char   *value  = (char*)mem_a(length);
-    platform_snprintf(value, length, "\"%s\"", context->name);
+    util_snprintf(value, length, "\"%s\"", context->name);
 
     return value;
 }
@@ -172,7 +172,7 @@ static char *ftepp_predef_timestamp(lex_file *context) {
     if (stat(context->name, &finfo))
         return util_strdup("\"<failed to determine timestamp>\"");
 
-    find = platform_ctime(&finfo.st_mtime);
+    find = util_ctime(&finfo.st_mtime);
     value = (char*)mem_a(strlen(find) + 1);
     memcpy(&value[1], find, (size = strlen(find)) - 1);
 
@@ -865,7 +865,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
 
     if (resetline && !ftepp->in_macro) {
         char lineno[128];
-        platform_snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
+        util_snprintf(lineno, 128, "\n#pragma line(%lu)\n", (unsigned long)(old_lexer->sline));
         ftepp_out(ftepp, lineno, false);
     }
 
@@ -1465,7 +1465,7 @@ static bool ftepp_include(ftepp_t *ftepp)
 
     ftepp_out(ftepp, "\n#pragma file(", false);
     ftepp_out(ftepp, ctx.file, false);
-    platform_snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
+    util_snprintf(lineno, sizeof(lineno), ")\n#pragma line(%lu)\n", (unsigned long)(ctx.line+1));
     ftepp_out(ftepp, lineno, false);
 
     /* skip the line */
@@ -1844,12 +1844,12 @@ ftepp_t *ftepp_create()
         minor[2] = '"';
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         ftepp_add_define(ftepp, NULL, "__STD_GMQCC__");
-        platform_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
-        platform_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
+        util_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        util_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCCX) {
         ftepp_add_define(ftepp, NULL, "__STD_QCCX__");
-        platform_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
-        platform_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
+        util_snprintf(major, 32, "\"%d\"", GMQCC_VERSION_MAJOR);
+        util_snprintf(minor, 32, "\"%d\"", GMQCC_VERSION_MINOR);
     } else if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC) {
         ftepp_add_define(ftepp, NULL, "__STD_QCC__");
         /* 1.0 */

@@ -23,6 +23,12 @@
 
 #ifndef GMQCC_PLATFORM_HDR
 #define GMQCC_PLATFORM_HDR
+
+#ifndef GMQCC_PLATFORM_HEADER
+#   error "This header shouldn't be included!"
+#endif
+
+#undef GMQCC_PLATFORM_HEADER
 #include <stdarg.h>
 #include <time.h>
 #include <stdio.h>
@@ -70,13 +76,12 @@
 #endif /*!_WIN32*/
 
 int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg);
-int platform_sscanf(const char *str, const char *format, ...);
+int platform_vsscanf(const char *str, const char *format, va_list arg);
 const struct tm *platform_localtime(const time_t *timer);
 const char *platform_ctime(const time_t *timer);
 char *platform_strncat(char *dest, const char *src, size_t num);
 const char *platform_tmpnam(char *str);
 const char *platform_getenv(char *var);
-int platform_snprintf(char *src, size_t bytes, const char *format, ...);
 int platform_vasprintf(char **dat, const char *fmt, va_list args);
 char *platform_strcat(char *dest, const char *src);
 char *platform_strncpy(char *dest, const char *src, size_t num);
