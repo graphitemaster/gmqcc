@@ -140,15 +140,154 @@ int platform_vsscanf(const char *buffer, const char *format, va_list arg);
  */
 const struct tm *platform_localtime(const time_t *timer);
 
+/*
+ * Function: platform_ctime
+ *  Convert a time value to a string and adjust for local time zone
+ *  settings.
+ *
+ * Parameters:
+ *  timer - Pointer to stored time.
+ *
+ * Returns:
+ *  Pointer to the character string result. NULL will be returned if time
+ *  represents a date before midnight, January 1, 1970, UTC.
+ *
+ * Remarks:
+ *  Converts a time value stored as a `time_t` value into a chracter string.
+ *  The `timer` value is usually obtained from a call to *time*, which returns
+ *  the number of seconds since midnight, January 1, 1970 UTC. The return
+ *  value of the string contains exactly 26 characters. A 24-hour clock is used.
+ *  All fields have constant width. The newline chracter and the null character
+ *  occupy the last two positions of the string. The converted character string
+ *  is also adjusted according to the local time zone settings.
+ */
 const char *platform_ctime(const time_t *timer);
+
+/*
+ * Function: platform_strncat
+ *  Append characters of a string.
+ *
+ * Parameters:
+ *  dest - Null terminated destination string
+ *  src  - Source string
+ *  num  - Number of characters to append
+ *
+ * Returns:
+ *  Pointer to the destination string. No return value is used to indicate
+ *  an error.
+ *
+ * Remarks:
+ *  Function appends, at mode, the first `num` characters of `src` to
+ *  `dest`. The initial character of `src` overwrites the terminating
+ *  null chracter of `dest`. If a null character appears in `src` before
+ *  `num` chracters are appended, `platform_strncat` appends all chracters
+ *  from `src`, up to the null chracter. If `num` is greater than the
+ *  length of `src`, the length of `src` is used in place of `num`.
+ */
 char *platform_strncat(char *dest, const char *src, size_t num);
+
+/*
+ * Function: platform_tmpnam
+ *  Generates names you can use to create temporary files.
+ *
+ * Parameters:
+ *  str - Pointer that will hold the generated name and will be identical
+ *        to the name returned by the function. This is a convenient way
+ *        to save the generated name.
+ *
+ * Returns:
+ *  Pointer to the name generate or *NULL* if there is a failure. Failure
+ *  can occur if you attempt more than TMP_MAX calls.
+ *
+ * Remarks:
+ *  Returns a name unique in the current workign directory.
+ */
 const char *platform_tmpnam(char *str);
+
+/*
+ * Function: platform_getenv
+ *  Get a value from the current enviroment.
+ *
+ * Parameters:
+ *  var - Enviroment variable name
+ *
+ * Returns:
+ *  A pointer to the enviroment table entry containing `var. It's not
+ *  safe to modify the value of the enviroment variable using the returned
+ *  pointer. The return value is *NULL* if `var` is not found in the
+ *  enviroment table.
+ */
 const char *platform_getenv(char *var);
+
 int platform_vasprintf(char **dat, const char *fmt, va_list args);
+
+/*
+ * Function: platform_strcat
+ *  Append characters of a string.
+ *
+ * Parameters:
+ *  dest - Null terminated destination string
+ *  src  - Source string
+ *
+ * Returns:
+ *  Pointer to the destination string. No return value is used to indicate
+ *  an error.
+ *
+ * Remarks:
+ *  Appens `src` to `dest` and terminates with resulting null character.
+ *  The initial character of `src` overwrites the terminating null
+ *  character of `dest`. The behaviour of platform_strcat is undefined
+ *  if the source and destination string overlap.
+ */
 char *platform_strcat(char *dest, const char *src);
+
+/*
+ * Function: platform_strncpy
+ *  Copys characters of one string to another.
+ *
+ * Parameters:
+ *  dest - Destination string.
+ *  src  - Source string.
+ *  num  - Number of characters to be copied.
+ *
+ * Returns:
+ *  `dest`. No return value is reserved to indicate an error.
+ *
+ * Remarks:
+ *  Copies the initial characters of `src` to `dest` and returns `dest`.
+ *  If `num` is less than or equal to the length of `src1 a null character
+ *  is not appended automatically to the copied string. If `num` is greater
+ *  than the length of `src`, the destination string is padded with null
+ *  characters up to length `num`. The behaviour of this function is undefined
+ *  if the source and destination strings overlap.
+ */
 char *platform_strncpy(char *dest, const char *src, size_t num);
+
+/*
+ * Function: platform_strerror
+ *  Get a system error message
+ *
+ * Parameters:
+ *  err - Error number.
+ *
+ * Returns:
+ *  A pointer to the error message
+ */
 const char *platform_strerror(int err);
+
+/*
+ * Function: platform_fopen
+ *  Opens a file
+ *
+ * Parameters:
+ *  filename - File name.
+ *  mode     - Kind of access that's enabled.
+ *
+ * Returns:
+ *  A pointer to the open file. A null pointer value indicates an error.
+ */
 FILE *platform_fopen(const char *filename, const char *mode);
+
 size_t platform_fread(void *ptr, size_t size, size_t count, FILE *stream);
 size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
 int platform_fflush(FILE *stream);
@@ -159,10 +298,21 @@ int platform_fgetc(FILE *stream);
 int platform_fputs(const char *str, FILE *stream);
 int platform_fseek(FILE *stream, long offset, int origin);
 long platform_ftell(FILE *stream);
+
 int platform_mkdir(const char *path, int mode);
 DIR *platform_opendir(const char *path);
 int platform_closedir(DIR *dir);
 struct dirent *platform_readdir(DIR *dir);
+
+/*
+ * Function: platform_isatty
+ *  Determines whether a file descriptor is associated with a character
+ *  device.
+ *
+ * Returns:
+ *  A nonzero value if the descriptor is associated with a character
+ *  device. Otherwise `platform_isatty` returns 0.
+ */
 int platform_isatty(int fd);
 
 #endif

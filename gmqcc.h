@@ -25,7 +25,7 @@
 #define GMQCC_HDR
 #include <stdarg.h>
 #include <stddef.h>
-#include <time.h>   /* TODO remove?*/
+#include <time.h>   /* TODO: remove?*/
 
 /*
  * Disable some over protective warnings in visual studio because fixing them is a waste
