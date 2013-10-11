@@ -3334,7 +3334,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     if (parser->tok == TOKEN_IDENT)
         typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
-    if (typevar || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
+    if (typevar || parser->tok == TOKEN_TYPENAME || parser->tok == '.' || parser->tok == TOKEN_DOTS)
     {
         /* local variable */
         if (!block) {
@@ -4708,8 +4708,10 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     ctx = parser_ctx(parser);
 
     /* types may start with a dot */
-    if (parser->tok == '.') {
+    if (parser->tok == '.' || parser->tok == TOKEN_DOTS) {
         isfield = true;
+        if (parser->tok == TOKEN_DOTS)
+            morefields += 2;
         /* if we parsed a dot we need a typename now */
         if (!parser_next(parser)) {
             parseerror(parser, "expected typename for field definition");
@@ -4719,8 +4721,13 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
         /* Further dots are handled seperately because they won't be part of the
          * basetype
          */
-        while (parser->tok == '.') {
-            ++morefields;
+        while (true) {
+            if (parser->tok == '.')
+                ++morefields;
+            else if (parser->tok == TOKEN_DOTS)
+                morefields += 3;
+            else
+                break;
             if (!parser_next(parser)) {
                 parseerror(parser, "expected typename for field definition");
                 return NULL;
@@ -5766,7 +5773,7 @@ static bool parser_global_statement(parser_t *parser)
     if (parser->tok == TOKEN_IDENT)
         istype = parser_find_typedef(parser, parser_tokval(parser), 0);
 
-    if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.')
+    if (istype || parser->tok == TOKEN_TYPENAME || parser->tok == '.' || parser->tok == TOKEN_DOTS)
     {
         return parse_variable(parser, NULL, false, CV_NONE, istype, false, false, 0, NULL);
     }
