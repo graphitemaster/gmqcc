@@ -57,7 +57,7 @@
  * The last section of the table handles bytes with leading F
  *
  * The values themselfs in the table are arranged so that when you
- * left shift them by 6 to shif continuation characters into palce, the
+ * left shift them by 6 to shif continuation characters into place, the
  * new top bits tell:
  *
  *  1 - if you keep going
