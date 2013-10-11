@@ -231,5 +231,5 @@ struct dirent *platform_readdir(DIR *dir) {
 }
 
 int platform_istty(int fd) {
-    return _istty(fd);
+    return _isatty(fd);
 }
