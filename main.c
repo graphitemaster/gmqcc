@@ -531,7 +531,7 @@ static bool options_parse(int argc, char **argv) {
 }
 
 /* returns the line number, or -1 on error */
-static bool progs_nextline(char **out, size_t *alen,FILE *src) {
+static bool progs_nextline(char **out, size_t *alen, fs_file_t *src) {
     int    len;
     char  *line;
     char  *start;
@@ -562,7 +562,7 @@ int main(int argc, char **argv) {
     bool            opts_output_free = false;
     bool            operators_free   = false;
     bool            progs_src        = false;
-    FILE            *outfile         = NULL;
+    fs_file_t       *outfile         = NULL;
     struct parser_s *parser          = NULL;
     struct ftepp_s  *ftepp           = NULL;
 
@@ -667,10 +667,10 @@ int main(int argc, char **argv) {
     }
 
     if (!vec_size(items)) {
-        FILE  *src;
-        char  *line    = NULL;
-        size_t linelen = 0;
-        bool   hasline = false;
+        fs_file_t *src;
+        char      *line    = NULL;
+        size_t     linelen = 0;
+        bool       hasline = false;
 
         progs_src = true;
 

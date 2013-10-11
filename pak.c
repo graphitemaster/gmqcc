@@ -124,7 +124,7 @@ static void pak_tree_build(const char *entry) {
 typedef struct {
     pak_directory_t *directories;
     pak_header_t     header;
-    FILE            *handle;
+    fs_file_t       *handle;
     bool             insert;
 } pak_file_t;
 
@@ -162,7 +162,7 @@ static pak_file_t *pak_open_read(const char *file) {
      * Time to read in the directory handles and prepare the directories
      * vector.  We're going to be reading some the file inwards soon.
      */
-    fs_file_seek(pak->handle, pak->header.diroff, SEEK_SET);
+    fs_file_seek(pak->handle, pak->header.diroff, FS_FILE_SEEK_SET);
 
     /*
      * Read in all directories from the PAK file. These are considered
@@ -266,7 +266,7 @@ static bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdi
     pak_directory_t *dir   = NULL;
     unsigned char   *dat   = NULL;
     char            *local = NULL;
-    FILE            *out   = NULL;
+    fs_file_t       *out   = NULL;
 
     if (!pak_exists(pak, file, &dir)) {
         return false;
@@ -295,7 +295,7 @@ static bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdi
     mem_d(local);
 
     /* read */
-    if (fs_file_seek (pak->handle, dir->pos, SEEK_SET) != 0)
+    if (fs_file_seek (pak->handle, dir->pos, FS_FILE_SEEK_SET) != 0)
         goto err;
 
     fs_file_read (dat, 1, dir->len, pak->handle);
@@ -333,7 +333,7 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
     pak_directory_t dir;
     unsigned char  *dat;
     long            len;
-    FILE           *fp;
+    fs_file_t      *fp;
 
     /*
      * We don't allow insertion on files that already exist within the
@@ -351,9 +351,9 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
      * the directory entry, and the actual contents of the file
      * to the PAK file itself.
      */
-    if (fs_file_seek(fp, 0, SEEK_END) != 0 || ((len = fs_file_tell(fp)) < 0))
+    if (fs_file_seek(fp, 0, FS_FILE_SEEK_END) != 0 || ((len = fs_file_tell(fp)) < 0))
         goto err;
-    if (fs_file_seek(fp, 0, SEEK_SET) != 0)
+    if (fs_file_seek(fp, 0, FS_FILE_SEEK_SET) != 0)
         goto err;
 
     dir.len = len;
@@ -438,18 +438,17 @@ static bool pak_close(pak_file_t *pak) {
         pak->header.diroff = tell;
 
         /* patch header */
-        if (fs_file_seek (pak->handle, 0, SEEK_SET) != 0)
+        if (fs_file_seek (pak->handle, 0, FS_FILE_SEEK_SET) != 0)
             goto err;
 
         fs_file_write(&(pak->header), sizeof(pak_header_t), 1, pak->handle);
 
         /* write directories */
-        if (fs_file_seek (pak->handle, pak->header.diroff, SEEK_SET) != 0)
+        if (fs_file_seek (pak->handle, pak->header.diroff, FS_FILE_SEEK_SET) != 0)
             goto err;
 
-        for (itr = 0; itr < vec_size(pak->directories); itr++) {
+        for (itr = 0; itr < vec_size(pak->directories); itr++)
             fs_file_write(&(pak->directories[itr]), sizeof(pak_directory_t), 1, pak->handle);
-        }
     }
 
     vec_free     (pak->directories);
@@ -496,6 +495,7 @@ static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out,
     return true;
 }
 
+#include <stdio.h>
 int main(int argc, char **argv) {
     bool          extract   = true;
     char         *redirout  = (char*)stdout;

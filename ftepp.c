@@ -21,15 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <sys/stat.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
 
 #define HT_MACROS 1024
+
 typedef struct {
     bool on;
     bool was_on;
@@ -85,22 +86,14 @@ static uint32_t ftepp_predef_randval  = 0;
 
 /* __DATE__ */
 static char *ftepp_predef_date(lex_file *context) {
-    struct tm *itime = NULL;
-    time_t     rtime;
-    char      *value = (char*)mem_a(82);
-    /* 82 is enough for strftime but we also have " " in our string */
+    const struct tm *itime = NULL;
+    char            *value = (char*)mem_a(82);
+    time_t           rtime;
 
     (void)context;
 
-    /* get time */
     time (&rtime);
-
-#ifdef _MSC_VER
-    localtime_s(itime, &rtime);
-#else
-    itime = localtime(&rtime);
-#endif
-
+    itime = util_localtime(&rtime);
     strftime(value, 82, "\"%b %d %Y\"", itime);
 
     return value;
@@ -108,22 +101,14 @@ static char *ftepp_predef_date(lex_file *context) {
 
 /* __TIME__ */
 static char *ftepp_predef_time(lex_file *context) {
-    struct tm *itime = NULL;
-    time_t     rtime;
-    char      *value = (char*)mem_a(82);
-    /* 82 is enough for strftime but we also have " " in our string */
+    const struct tm *itime = NULL;
+    char            *value = (char*)mem_a(82);
+    time_t           rtime;
 
     (void)context;
 
-    /* get time */
     time (&rtime);
-
-#ifdef _MSC_VER
-    localtime_s(itime, &rtime);
-#else
-    itime = localtime(&rtime);
-#endif
-
+    itime = util_localtime(&rtime);
     strftime(value, 82, "\"%X\"", itime);
 
     return value;
@@ -180,27 +165,14 @@ static char *ftepp_predef_randomlast(lex_file *context) {
 /* __TIMESTAMP__ */
 static char *ftepp_predef_timestamp(lex_file *context) {
     struct stat finfo;
-    char       *find;
+    const char *find;
     char       *value;
     size_t      size;
-#ifdef _MSC_VER
-    char        buffer[64];
-#endif
+
     if (stat(context->name, &finfo))
         return util_strdup("\"<failed to determine timestamp>\"");
 
-    /*
-     * ctime and its fucking annoying newline char, no worries, we're
-     * professionals here.
-     */
-
-#ifndef _MSC_VER
-    find  = ctime(&finfo.st_mtime);
-#else
-    ctime_s(buffer, sizeof(buffer), &finfo.st_mtime);
-    find = buffer;
-#endif
-
+    find = util_ctime(&finfo.st_mtime);
     value = (char*)mem_a(strlen(find) + 1);
     memcpy(&value[1], find, (size = strlen(find)) - 1);
 
@@ -1303,7 +1275,7 @@ static void unescape(const char *str, char *out) {
 
 static char *ftepp_include_find_path(const char *file, const char *pathfile)
 {
-    FILE       *fp;
+    fs_file_t  *fp;
     char       *filename = NULL;
     const char *last_slash;
     size_t      len;

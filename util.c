@@ -21,10 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#define GMQCC_PLATFORM_HEADER
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "gmqcc.h"
+#include "platform.h"
 
 /*
  * Initially this was handled with a table in the gmqcc.h header, but
@@ -224,163 +227,64 @@ size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
     return util_strtransform(in, out, outsz, "_ ", 'a'-'A');
 }
 
-/*
- * Portable implementation of vasprintf/asprintf. Assumes vsnprintf
- * exists, otherwise compiler error.
- *
- * TODO: fix for MSVC ....
- */
-int util_vasprintf(char **dat, const char *fmt, va_list args) {
-    int   ret;
-    int   len;
-    char *tmp = NULL;
+int util_snprintf(char *str, size_t size, const char *fmt, ...) {
+    va_list  arg;
+    int      ret;
 
-    /*
-     * For visual studio _vsnprintf doesn't tell you the length of a
-     * formatted string if it overflows. However there is a MSVC
-     * intrinsic (which is documented wrong) called _vcsprintf which
-     * will return the required amount to allocate.
-     */
-    #ifdef _MSC_VER
-        if ((len = _vscprintf(fmt, args)) < 0) {
-            *dat = NULL;
-            return -1;
-        }
+    va_start(arg, fmt);
+    ret = platform_vsnprintf(str, size, fmt, arg);
+    va_end(arg);
 
-        tmp = (char*)mem_a(len + 1);
-        if ((ret = _vsnprintf_s(tmp, len+1, len+1, fmt, args)) != len) {
-            mem_d(tmp);
-            *dat = NULL;
-            return -1;
-        }
-        *dat = tmp;
-        return len;
-    #else
-        /*
-         * For everything else we have a decent conforming vsnprintf that
-         * returns the number of bytes needed.  We give it a try though on
-         * a short buffer, since efficiently speaking, it could be nice to
-         * above a second vsnprintf call.
-         */
-        char    buf[128];
-        va_list cpy;
-        va_copy(cpy, args);
-        len = vsnprintf(buf, sizeof(buf), fmt, cpy);
-        va_end (cpy);
-
-        if (len < (int)sizeof(buf)) {
-            *dat = util_strdup(buf);
-            return len;
-        }
-
-        /* not large enough ... */
-        tmp = (char*)mem_a(len + 1);
-        if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
-            mem_d(tmp);
-            *dat = NULL;
-            return -1;
-        }
-
-        *dat = tmp;
-        return len;
-    #endif
+    return ret;
 }
+
 int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
     int      read;
+
     va_start(args, fmt);
-    read = util_vasprintf(ret, fmt, args);
+    read = platform_vasprintf(ret, fmt, args);
     va_end  (args);
 
     return read;
 }
 
-/*
- * These are various re-implementations (wrapping the real ones) of
- * string functions that MSVC considers unsafe. We wrap these up and
- * use the safe variations on MSVC.
- */
-#ifdef _MSC_VER
-    static char **util_strerror_allocated() {
-        static char **data = NULL;
-        return data;
-    }
+int util_sscanf(const char *str, const char *format, ...) {
+    va_list  args;
+    int      read;
 
-    static void util_strerror_cleanup(void) {
-        size_t i;
-        char  **data = util_strerror_allocated();
-        for (i = 0; i < vec_size(data); i++)
-            mem_d(data[i]);
-        vec_free(data);
-    }
+    va_start(args, format);
+    read = platform_vsscanf(str, format, args);
+    va_end(args);
 
-    const char *util_strerror(int num) {
-        char         *allocated = NULL;
-        static bool   install   = false;
-        static size_t tries     = 0;
-        char        **vector    = util_strerror_allocated();
+    return read;
+}
 
-        /* try installing cleanup handler */
-        while (!install) {
-            if (tries == 32)
-                return "(unknown)";
+char *util_strncpy(char *dest, const char *src, size_t n) {
+    return platform_strncpy(dest, src, n);
+}
+char *util_strncat(char *dest, const char *src, size_t n) {
+    return platform_strncat(dest, src, n);
+}
+char *util_strcat(char *dest, const char *src) {
+    return platform_strcat(dest, src);
+}
+const char *util_strerror(int err) {
+    return platform_strerror(err);
+}
 
-            install = !atexit(&util_strerror_cleanup);
-            tries ++;
-        }
+const struct tm *util_localtime(const time_t *timer) {
+    return platform_localtime(timer);
+}
+const char *util_ctime(const time_t *timer) {
+    return platform_ctime(timer);
+}
 
-        allocated = (char*)mem_a(4096); /* A page must be enough */
-        strerror_s(allocated, 4096, num);
-
-        vec_push(vector, allocated);
-        return (const char *)allocated;
-    }
-
-    int util_snprintf(char *src, size_t bytes, const char *format, ...) {
-        int      rt;
-        va_list  va;
-        va_start(va, format);
-
-        rt = vsprintf_s(src, bytes, format, va);
-        va_end  (va);
-
-        return rt;
-    }
-
-    char *util_strcat(char *dest, const char *src) {
-        strcat_s(dest, strlen(src), src);
-        return dest;
-    }
-
-    char *util_strncpy(char *dest, const char *src, size_t num) {
-        strncpy_s(dest, num, src, num);
-        return dest;
-    }
-#else
-    const char *util_strerror(int num) {
-        return strerror(num);
-    }
-
-    int util_snprintf(char *src, size_t bytes, const char *format, ...) {
-        int      rt;
-        va_list  va;
-        va_start(va, format);
-        rt = vsnprintf(src, bytes, format, va);
-        va_end  (va);
-
-        return rt;
-    }
-
-    char *util_strcat(char *dest, const char *src) {
-        return strcat(dest, src);
-    }
-
-    char *util_strncpy(char *dest, const char *src, size_t num) {
-        return strncpy(dest, src, num);
-    }
-
-#endif /*! _MSC_VER */
-
+bool util_isatty(fs_file_t *file) {
+    if (file == (fs_file_t*)stdout) return !!platform_isatty(STDOUT_FILENO);
+    if (file == (fs_file_t*)stderr) return !!platform_isatty(STDERR_FILENO);
+    return false;
+}
 
 void util_seed(uint32_t value) {
     srand((int)value);

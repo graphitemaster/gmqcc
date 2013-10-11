@@ -23,6 +23,7 @@
  */
 #include <string.h>
 #include <math.h>
+
 #include "parser.h"
 
 #define PARSER_HT_LOCALS  2
@@ -5912,7 +5913,7 @@ parser_t *parser_create()
         }
     }
     if (!parser->assign_op) {
-        printf("internal error: initializing parser: failed to find assign operator\n");
+        con_err("internal error: initializing parser: failed to find assign operator\n");
         mem_d(parser);
         return NULL;
     }
