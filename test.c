@@ -22,10 +22,9 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "gmqcc.h"
+#include "platform.h"
 
 static const char *task_bins[] = {
     "./gmqcc",

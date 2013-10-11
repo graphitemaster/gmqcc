@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 #include <string.h>
+
 #include "parser.h"
+#include "platform.h"
 
 /*
  * Provides all the "intrinsics" / "builtins" for GMQCC. These can do

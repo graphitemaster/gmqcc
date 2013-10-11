@@ -27,6 +27,7 @@
 #include "gmqcc.h"
 #include "ast.h"
 #include "parser.h"
+#include "platform.h"
 
 #define ast_instantiate(T, ctx, destroyfn)                          \
     T* self = (T*)mem_a(sizeof(T));                                 \

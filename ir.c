@@ -26,6 +26,7 @@
 
 #include "gmqcc.h"
 #include "ir.h"
+#include "platform.h"
 
 /***********************************************************************
  * Type sizes used at multiple points in the IR codegen

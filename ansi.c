@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "gmqcc.h"
+#include "platform.h"
 
 int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg) {
     return vsnprintf(buffer, bytes, format, arg);
@@ -81,4 +81,60 @@ char *platform_strncpy(char *dest, const char *src, size_t num) {
 
 const char *platform_strerror(int err) {
     return strerror(err);
+}
+
+FILE *platform_fopen(const char *filename, const char *mode) {
+    return fopen(filename, mode);
+}
+
+size_t platform_fread(void *ptr, size_t size, size_t count, FILE *stream) {
+    return fread(ptr, size, count, stream);
+}
+
+size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream) {
+    return fwrite(ptr, size, count, stream);
+}
+
+int platform_vfprintf(FILE *stream, const char *format, va_list arg) {
+    return vfprintf(stream, format, arg);
+}
+
+int platform_fclose(FILE *stream) {
+    return fclose(stream);
+}
+
+int platform_ferror(FILE *stream) {
+    return ferror(stream);
+}
+
+int platform_fgetc(FILE *stream) {
+    return fgetc(stream);
+}
+
+int platform_fputs(const char *str, FILE *stream) {
+    return fputs(str, stream);
+}
+
+int platform_fseek(FILE *stream, long offset, int origin) {
+    return fseek(stream, offset, origin);
+}
+
+long platform_ftell(FILE *stream) {
+    return ftell(stream);
+}
+
+int platform_mkdir(const char *path, int mode) {
+    return mkdir(path, mode);
+}
+
+DIR *platform_opendir(const char *path) {
+    return opendir(path);
+}
+
+int platform_closedir(DIR *dir) {
+    return closedir(dir);
+}
+
+struct dirent *platform_readdir(DIR *dir) {
+    return readdir(dir);
 }

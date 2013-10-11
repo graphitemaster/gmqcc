@@ -24,7 +24,6 @@
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
 #include <stdarg.h>
-#include <time.h>  /* TODO: remove this? */
 #include <stdio.h> /* TODO: remove this */
 
 /*
@@ -459,19 +458,6 @@ int            fs_dir_make    (const char *);
 DIR           *fs_dir_open    (const char *);
 int            fs_dir_close   (DIR *);
 struct dirent *fs_dir_read    (DIR *);
-
-
-int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg);
-int platform_sscanf(const char *str, const char *format, ...);
-const struct tm *platform_localtime(const time_t *timer);
-const char *platform_ctime(const time_t *timer);
-char *platform_strncat(char *dest, const char *src, size_t num);
-const char *platform_tmpnam(char *str);
-const char *platform_getenv(char *var);
-int platform_snprintf(char *src, size_t bytes, const char *format, ...);
-char *platform_strcat(char *dest, const char *src);
-char *platform_strncpy(char *dest, const char *src, size_t num);
-const char *platform_strerror(int err);
 
 /*===================================================================*/
 /*=========================== correct.c =============================*/

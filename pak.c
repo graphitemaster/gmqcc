@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 #include "gmqcc.h"
+#include "platform.h"
 
 /*
  * The PAK format uses a FOURCC concept for storing the magic ident within

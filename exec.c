@@ -23,12 +23,11 @@
  */
 #ifndef QCVM_LOOP
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "gmqcc.h"
+#include "platform.h"
 
 static void loaderror(const char *fmt, ...)
 {

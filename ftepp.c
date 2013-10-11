@@ -21,13 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 
 #include "gmqcc.h"
 #include "lexer.h"
+#include "platform.h"
 
 #define HT_MACROS 1024
 typedef struct {

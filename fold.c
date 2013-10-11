@@ -25,6 +25,7 @@
 
 #include "ast.h"
 #include "parser.h"
+#include "platform.h"
 
 #define FOLD_STRING_UNTRANSLATE_HTSIZE 1024
 #define FOLD_STRING_DOTRANSLATE_HTSIZE 1024

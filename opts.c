@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "gmqcc.h"
+#include "platform.h"
 
 const unsigned int opts_opt_oflag[COUNT_OPTIMIZATIONS+1] = {
 # define GMQCC_TYPE_OPTIMIZATIONS

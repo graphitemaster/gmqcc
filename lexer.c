@@ -25,6 +25,8 @@
 
 #include "gmqcc.h"
 #include "lexer.h"
+#include "platform.h"
+
 /*
  * List of Keywords
  */

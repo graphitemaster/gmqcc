@@ -23,7 +23,9 @@
  */
 #include <string.h>
 #include <math.h>
+
 #include "parser.h"
+#include "platform.h"
 
 #define PARSER_HT_LOCALS  2
 #define PARSER_HT_SIZE    512
