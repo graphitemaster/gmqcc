@@ -153,7 +153,7 @@ ansi.o: platform.h
 util.o: gmqcc.h opts.def
 stat.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def platform.h
-conout.o: gmqcc.h opts.def
+conout.o: gmqcc.h opts.def platform.h
 opts.o: gmqcc.h opts.def platform.h
 test.o: gmqcc.h opts.def platform.h
 main.o: gmqcc.h opts.def lexer.h

@@ -27,11 +27,46 @@
 #include <time.h>
 #include <stdio.h>
 
-#ifndef _MSC_VER
+#ifdef _WIN32
+#   undef  STDERR_FILENO
+#   undef  STDOUT_FILENO
+#   define STDERR_FILENO 2
+#   define STDOUT_FILENO 1
+
+#   ifndef __MINGW32__
+#       define _WIN32_LEAN_AND_MEAN
+#       include <windows.h>
+#       include <io.h>
+#       include <fcntl.h>
+
+        struct dirent {
+            long               d_ino;
+            unsigned short     d_reclen;
+            unsigned short     d_namlen;
+            char               d_name[FILENAME_MAX];
+        };
+
+        typedef struct {
+            struct _finddata_t dd_dta;
+            struct dirent      dd_dir;
+            long               dd_handle;
+            int                dd_stat;
+            char               dd_name[1];
+        } DIR;
+
+#       ifdef S_ISDIR
+#           undef  S_ISDIR
+#       endif /*! S_ISDIR */
+#       define S_ISDIR(X) ((X)&_S_IFDIR)
+#   else
+#       include <dirent.h>
+#   endif /*!__MINGW32__*/
+#else
 #   include <sys/types.h>
 #   include <sys/stat.h>
+#   include <unistd.h>
 #   include <dirent.h>
-#endif
+#endif /*!_WIN32*/
 
 int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg);
 int platform_sscanf(const char *str, const char *format, ...);
@@ -47,6 +82,7 @@ const char *platform_strerror(int err);
 FILE *platform_fopen(const char *filename, const char *mode);
 size_t platform_fread(void *ptr, size_t size, size_t count, FILE *stream);
 size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+int platform_fflush(FILE *stream);
 int platform_vfprintf(FILE *stream, const char *format, va_list arg);
 int platform_fclose(FILE *stream);
 int platform_ferror(FILE *stream);

@@ -181,8 +181,8 @@ static void lex_token_new(lex_file *lex)
 
 lex_file* lex_open(const char *file)
 {
-    lex_file *lex;
-    FILE *in = fs_file_open(file, "rb");
+    lex_file  *lex;
+    fs_file_t *in = fs_file_open(file, "rb");
 
     if (!in) {
         lexerror(NULL, "open failed: '%s'\n", file);

@@ -252,43 +252,6 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   endif
 #endif /*! !defined (PLATFORM_BYTE_ORDER) */
 
-/*
- * On windows systems where we're not compiling with MING32 we need a
- * little extra help on dependinces for implementing our own dirent.h
- * in fs.c.
- */
-#if defined(_WIN32) && !defined(__MINGW32__)
-#   define _WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-#   include <io.h>
-#   include <fcntl.h>
-
-    struct dirent {
-        long               d_ino;
-        unsigned short     d_reclen;
-        unsigned short     d_namlen;
-        char               d_name[FILENAME_MAX];
-    };
-
-    typedef struct {
-        struct _finddata_t dd_dta;
-        struct dirent      dd_dir;
-        long               dd_handle;
-        int                dd_stat;
-        char               dd_name[1];
-    } DIR;
-    /*
-     * Visual studio also lacks S_ISDIR for sys/stat.h, so we emulate this as well
-     * which is not hard at all.
-     */
-#    ifdef S_ISDIR
-#        undef  S_ISDIR
-#    endif /*! S_ISDIR */
-#   define S_ISDIR(X) ((X)&_S_IFDIR)
-#else
-#   include <dirent.h>
-#endif /*! _WIN32 && !defined(__MINGW32__) */
-
 /* stat.c */
 void  stat_info          (void);
 char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
@@ -425,24 +388,29 @@ void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
 
 
 /* fs.c */
-void           fs_file_close  (FILE *);
-int            fs_file_error  (FILE *);
-int            fs_file_getc   (FILE *);
-int            fs_file_printf (FILE *, const char *, ...);
-int            fs_file_puts   (FILE *, const char *);
-int            fs_file_seek   (FILE *, long int, int);
-long int       fs_file_tell   (FILE *);
+typedef struct fs_dir_s  fs_dir_t;
+typedef struct fs_file_s fs_file_t;
+typedef struct dirent    fs_dirent_t;
 
-size_t         fs_file_read   (void *,        size_t, size_t, FILE *);
-size_t         fs_file_write  (const void *,  size_t, size_t, FILE *);
+void           fs_file_close  (fs_file_t *);
+int            fs_file_error  (fs_file_t *);
+int            fs_file_getc   (fs_file_t *);
+int            fs_file_printf (fs_file_t *, const char *, ...);
+int            fs_file_puts   (fs_file_t *, const char *);
+int            fs_file_seek   (fs_file_t *, long int, int);
+long           fs_file_tell   (fs_file_t *);
+int            fs_file_flush  (fs_file_t *);
 
-FILE          *fs_file_open   (const char *, const char *);
-int            fs_file_getline(char  **, size_t *, FILE *);
+size_t         fs_file_read   (void *,        size_t, size_t, fs_file_t *);
+size_t         fs_file_write  (const void *,  size_t, size_t, fs_file_t *);
+
+fs_file_t     *fs_file_open   (const char *, const char *);
+int            fs_file_getline(char  **, size_t *, fs_file_t *);
 
 int            fs_dir_make    (const char *);
-DIR           *fs_dir_open    (const char *);
-int            fs_dir_close   (DIR *);
-struct dirent *fs_dir_read    (DIR *);
+fs_dir_t      *fs_dir_open    (const char *);
+int            fs_dir_close   (fs_dir_t *);
+fs_dirent_t   *fs_dir_read    (fs_dir_t *);
 
 /* correct.c */
 typedef struct correct_trie_s {
@@ -780,8 +748,8 @@ enum {
     LVL_ERROR
 };
 
-FILE *con_default_out(void);
-FILE *con_default_err(void);
+fs_file_t *con_default_out(void);
+fs_file_t *con_default_err(void);
 
 void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
 void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);

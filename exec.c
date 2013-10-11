@@ -53,9 +53,9 @@ static void qcvmerror(qc_program_t *prog, const char *fmt, ...)
 
 qc_program_t* prog_load(const char *filename, bool skipversion)
 {
-    qc_program_t   *prog;
     prog_header_t   header;
-    FILE         *file  = fs_file_open(filename, "rb");
+    qc_program_t   *prog;
+    fs_file_t      *file  = fs_file_open(filename, "rb");
 
     if (!file)
         return NULL;
@@ -351,7 +351,7 @@ static void trace_print_global(qc_program_t *prog, unsigned int glob, int vtype)
 done:
     if (len < (int)sizeof(spaces)-1) {
         spaces[sizeof(spaces)-1-len] = 0;
-        fs_file_puts(stdout, spaces);
+        fs_file_puts((fs_file_t*)stdout, spaces);
         spaces[sizeof(spaces)-1-len] = ' ';
     }
 }

@@ -125,7 +125,7 @@ static void pak_tree_build(const char *entry) {
 typedef struct {
     pak_directory_t *directories;
     pak_header_t     header;
-    FILE            *handle;
+    fs_file_t       *handle;
     bool             insert;
 } pak_file_t;
 
@@ -267,7 +267,7 @@ static bool pak_extract_one(pak_file_t *pak, const char *file, const char *outdi
     pak_directory_t *dir   = NULL;
     unsigned char   *dat   = NULL;
     char            *local = NULL;
-    FILE            *out   = NULL;
+    fs_file_t       *out   = NULL;
 
     if (!pak_exists(pak, file, &dir)) {
         return false;
@@ -334,7 +334,7 @@ static bool pak_insert_one(pak_file_t *pak, const char *file) {
     pak_directory_t dir;
     unsigned char  *dat;
     long            len;
-    FILE           *fp;
+    fs_file_t      *fp;
 
     /*
      * We don't allow insertion on files that already exist within the

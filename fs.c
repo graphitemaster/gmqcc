@@ -23,62 +23,66 @@
 #include "gmqcc.h"
 #include "platform.h"
 
-FILE *fs_file_open(const char *filename, const char *mode) {
-    return platform_fopen(filename, mode);
+fs_file_t *fs_file_open(const char *filename, const char *mode) {
+    return (fs_file_t*)platform_fopen(filename, mode);
 }
 
-size_t fs_file_read(void *buffer, size_t size, size_t count, FILE *fp) {
-    return platform_fread(buffer, size, count, fp);
+size_t fs_file_read(void *buffer, size_t size, size_t count, fs_file_t *fp) {
+    return platform_fread(buffer, size, count, (FILE*)fp);
 }
 
-int fs_file_printf(FILE *fp, const char *format, ...) {
+int fs_file_printf(fs_file_t *fp, const char *format, ...) {
     int      rt;
     va_list  va;
     va_start(va, format);
-    rt = platform_vfprintf(fp, format, va);
+    rt = platform_vfprintf((FILE*)fp, format, va);
     va_end  (va);
 
     return rt;
 }
 
-void fs_file_close(FILE *fp) {
-    platform_fclose (fp);
+void fs_file_close(fs_file_t *fp) {
+    platform_fclose((FILE*)fp);
 }
 
 size_t  fs_file_write (
     const void    *buffer,
     size_t         size,
     size_t         count,
-    FILE          *fp
+    fs_file_t     *fp
 ) {
-    return platform_fwrite(buffer, size, count, fp);
+    return platform_fwrite(buffer, size, count, (FILE*)fp);
 }
 
-int fs_file_error(FILE *fp) {
-    return platform_ferror(fp);
+int fs_file_error(fs_file_t *fp) {
+    return platform_ferror((FILE*)fp);
 }
 
-int fs_file_getc(FILE *fp) {
-    return platform_fgetc(fp);
+int fs_file_getc(fs_file_t *fp) {
+    return platform_fgetc((FILE*)fp);
 }
 
-int fs_file_puts(FILE *fp, const char *str) {
-    return platform_fputs(str, fp);
+int fs_file_puts(fs_file_t *fp, const char *str) {
+    return platform_fputs(str, (FILE*)fp);
 }
 
-int fs_file_seek(FILE *fp, long int off, int whence) {
-    return platform_fseek(fp, off, whence);
+int fs_file_seek(fs_file_t *fp, long int off, int whence) {
+    return platform_fseek((FILE*)fp, off, whence);
 }
 
-long int fs_file_tell(FILE *fp) {
-    return platform_ftell(fp);
+long int fs_file_tell(fs_file_t *fp) {
+    return platform_ftell((FILE*)fp);
+}
+
+int fs_file_flush(fs_file_t *fp) {
+    return platform_fflush((FILE*)fp);
 }
 
 /*
  * Implements libc getline for systems that don't have it, which is
  * assmed all.  This works the same as getline().
  */
-int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
+int fs_file_getline(char **lineptr, size_t *n, fs_file_t *stream) {
     int   chr;
     int   ret;
     char *pos;
@@ -104,7 +108,7 @@ int fs_file_getline(char **lineptr, size_t *n, FILE *stream) {
             pos = *n - chr + *lineptr;
         }
 
-        if (ferror(stream))
+        if (fs_file_error(stream))
             return -1;
         if (c == EOF) {
             if (pos == *lineptr)
@@ -126,14 +130,14 @@ int fs_dir_make(const char *path) {
     return platform_mkdir(path, 0700);
 }
 
-DIR *fs_dir_open(const char *name) {
-    return platform_opendir(name);
+fs_dir_t *fs_dir_open(const char *name) {
+    return (fs_dir_t*)platform_opendir(name);
 }
 
-int fs_dir_close(DIR *dir) {
-    return platform_closedir(dir);
+int fs_dir_close(fs_dir_t *dir) {
+    return platform_closedir((DIR*)dir);
 }
 
-struct dirent *fs_dir_read(DIR *dir) {
-    return platform_readdir(dir);
+fs_dirent_t *fs_dir_read(fs_dir_t *dir) {
+    return (fs_dirent_t*)platform_readdir((DIR*)dir);
 }

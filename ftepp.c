@@ -1273,7 +1273,7 @@ static void unescape(const char *str, char *out) {
 
 static char *ftepp_include_find_path(const char *file, const char *pathfile)
 {
-    FILE       *fp;
+    fs_file_t  *fp;
     char       *filename = NULL;
     const char *last_slash;
     size_t      len;

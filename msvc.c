@@ -130,6 +130,10 @@ size_t platform_fwrite(const void *ptr, size_t size, size_t count, FILE *stream)
     return fwrite(ptr, size, count, stream);
 }
 
+int platform_fflush(FILE *stream) {
+    return fflush(stream);
+}
+
 int platform_vfprintf(FILE *stream, const char *format, va_list arg) {
     return vfprintf_s(stream, format, arg);
 }
