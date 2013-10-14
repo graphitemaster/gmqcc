@@ -37,7 +37,7 @@
  */
 typedef union {
     void   *enter;
-    qcint_t   leave;
+    qcint_t leave;
 } code_hash_entry_t;
 
 /* Some sanity macros */

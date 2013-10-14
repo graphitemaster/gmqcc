@@ -20,7 +20,7 @@ COMMON   = ansi.o util.o stat.o fs.o opts.o conout.o
 OBJ_C = $(COMMON) main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o
 OBJ_P = $(COMMON) pak.o
 OBJ_T = $(COMMON) test.o
-OBJ_X = $(COMMON) exec-standalone.o
+OBJ_X = $(COMMON) exec.o
 
 #gource flags
 GOURCEFLAGS =                 \
@@ -111,13 +111,19 @@ uninstall:
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
 	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
 
+#style rule
 STYLE_MATCH = \( -name '*.[ch]' -or -name '*.def' -or -name '*.qc' \)
 
-whitespace:
+style:
 	find . -type f $(STYLE_MATCH) -exec sed -i 's/ *$$//' '{}' ';'
-newline:
 	find . -type f $(STYLE_MATCH) -exec sed -i -e '$$a\' '{}' ';'
-indent:
 	find . -type f $(STYLE_MATCH) -exec sed -i 's/\t/    /g' '{}' ';'
 
-style: whitespace newline indent
+splint:
+	@splint $(SPLINTFLAGS) *.c *.h
+
+gource:
+	@gource $(GOURCEFLAGS)
+
+gource-record:
+	@gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4

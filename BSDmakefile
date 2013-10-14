@@ -49,11 +49,8 @@ TESTSUITE = testsuite
 PAK       = gmqpak
 
 #standard rules
-c.o: ${.IMPSRC} 
-	$(CC) -c ${.IMPSRC} -o ${.TARGET} $(CFLAGS) $(CPPFLAGS) 
-
-exec-standalone.o: exec.c
-	$(CC) -c ${.ALLSRC} -o ${.TARGET} $(CFLAGS) $(CPPFLAGS) -DQCVM_EXECUTOR=1
+c.o: ${.IMPSRC}
+	$(CC) -c ${.IMPSRC} -o ${.TARGET} $(CFLAGS) $(CPPFLAGS)
 
 $(QCVM): $(OBJ_X)
 	$(CC) -o ${.TARGET} ${.IMPSRC} $(LDFLAGS) $(LIBS) $(OBJ_X)
@@ -74,17 +71,13 @@ check: all
 test: all
 	@ ./$(TESTSUITE)
 
+strip: $(GMQCC) $(QCVM) $(TESTSUITE)
+	strip $(GMQCC)
+	strip $(QCVM)
+	strip $(TESTSUITE)
+
 clean:
 	rm -rf *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
-
-splint:
-	@ splint $(SPLINTFLAGS) *.c *.h
-
-gource:
-	@ gource $(GOURCEFLAGS)
-
-gource-record:
-	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
 	@makedepend -Y -f BSDmakefile -w 65536 2> /dev/null ${DEPS:C/\.o/.c/g}

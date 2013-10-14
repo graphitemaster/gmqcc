@@ -85,9 +85,6 @@ endif
 c.o:
 	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
-exec-standalone.o: exec.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(CPPFLAGS) -DQCVM_EXECUTOR=1
-
 $(QCVM): $(OBJ_X)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -114,15 +111,6 @@ strip: $(GMQCC) $(QCVM) $(TESTSUITE)
 
 clean:
 	rm -rf *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
-
-splint:
-	@  splint $(SPLINTFLAGS) *.c *.h
-
-gource:
-	@ gource $(GOURCEFLAGS)
-
-gource-record:
-	@ gource $(GOURCEFLAGS) -o - | ffmpeg $(FFMPEGFLAGS) gource.mp4
 
 depend:
 	@ makedepend -Y -w 65536 2> /dev/null $(subst .o,.c,$(DEPS))

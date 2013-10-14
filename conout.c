@@ -213,8 +213,7 @@ void con_cprintmsg(lex_ctx_t ctx, int lvl, const char *msgtype, const char *msg,
     va_end  (va);
 }
 
-#ifndef QCVM_EXECUTOR
-/* General error interface */
+/* General error interface: TODO seperate as part of the compiler front-end */
 size_t compile_errors   = 0;
 size_t compile_warnings = 0;
 size_t compile_Werrors  = 0;
@@ -279,4 +278,3 @@ bool GMQCC_WARN compile_warning(lex_ctx_t ctx, int warntype, const char *fmt, ..
     va_end(ap);
     return r;
 }
-#endif

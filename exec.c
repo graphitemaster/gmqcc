@@ -587,7 +587,6 @@ cleanup:
  * main for when building the standalone executor
  */
 
-#if defined(QCVM_EXECUTOR)
 #include <math.h>
 
 const char *type_name[TYPE_COUNT] = {
@@ -1226,7 +1225,6 @@ void prog_disasm_function(qc_program_t *prog, size_t id) {
         ++st;
     }
 }
-#endif
 #else /* !QCVM_LOOP */
 /*
  * Everything from here on is not including into the compilation of the
