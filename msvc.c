@@ -52,7 +52,7 @@ static void *platform_mem_allocate(size_t bytes) {
 }
 
 int platform_vsnprintf(char *buffer, size_t bytes, const char *format, va_list arg) {
-    vsnprintf_s(buffer, bytes, bytes, format, arg);
+    return vsnprintf_s(buffer, bytes, bytes, format, arg);
 }
 
 int platform_vsscanf(const char *str, const char *format, va_list va) {

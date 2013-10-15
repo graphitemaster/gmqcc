@@ -914,7 +914,7 @@ int main(int argc, char **argv) {
 
     if (argc < 2) {
         usage();
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     while (argc > 1) {
@@ -923,7 +923,7 @@ int main(int argc, char **argv) {
             !strcmp(argv[1], "--help"))
         {
             usage();
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
         else if (!strcmp(argv[1], "-v")) {
             ++opts_v;
@@ -937,7 +937,7 @@ int main(int argc, char **argv) {
                     ++opts_v;
                 else {
                     usage();
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 }
             }
             --argc;
@@ -947,7 +947,7 @@ int main(int argc, char **argv) {
                  !strcmp(argv[1], "--version"))
         {
             version();
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
         else if (!strcmp(argv[1], "-trace")) {
             --argc;
@@ -976,7 +976,7 @@ int main(int argc, char **argv) {
             ++argv;
             if (argc <= 1) {
                 usage();
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             vec_push(dis_list, argv[1]);
             --argc;
@@ -1019,7 +1019,7 @@ int main(int argc, char **argv) {
             ++argv;
             if (argc < 2) {
                 usage();
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             p.value = argv[1];
 
@@ -1036,7 +1036,7 @@ int main(int argc, char **argv) {
             if (progsfile) {
                 fprintf(stderr, "only 1 program file may be specified\n");
                 usage();
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             progsfile = argv[1];
             --argc;
@@ -1046,7 +1046,7 @@ int main(int argc, char **argv) {
         {
             fprintf(stderr, "unknown parameter: %s\n", argv[1]);
             usage();
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -1059,13 +1059,13 @@ int main(int argc, char **argv) {
     if (!progsfile) {
         fprintf(stderr, "must specify a program to execute\n");
         usage();
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     prog = prog_load(progsfile, noexec);
     if (!prog) {
         fprintf(stderr, "failed to load program '%s'\n", progsfile);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     prog->builtins       = qc_builtins;
@@ -1155,7 +1155,7 @@ int main(int argc, char **argv) {
     if (opts_printfuns) {
         for (i = 0; i < vec_size(prog->functions); ++i) {
             int32_t a;
-            printf("Function: %-16s taking %i parameters:(",
+            printf("Function: %-16s taking %u parameters:(",
                    prog_getstring(prog, prog->functions[i].name),
                    (unsigned int)prog->functions[i].nargs);
             for (a = 0; a < prog->functions[i].nargs; ++a) {

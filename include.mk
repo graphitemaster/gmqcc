@@ -55,6 +55,7 @@ FFMPEGFLAGS=                  \
 
 #splint flags
 SPLINTFLAGS =                 \
+    -preproc                  \
     -redef                    \
     -noeffect                 \
     -nullderef                \
