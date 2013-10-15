@@ -279,7 +279,7 @@ ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value) {
     size_t      i;
 
     for (i = 0; i < vec_size(fold->imm_float); i++) {
-        if (fold->imm_float[i]->constval.vfloat == value)
+        if (!memcmp(&fold->imm_float[i]->constval.vfloat, &value, sizeof(qcfloat_t)))
             return (ast_expression*)fold->imm_float[i];
     }
 
