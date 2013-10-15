@@ -529,7 +529,7 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
         ast_unary *prev = (ast_unary*)((ast_unary*)expr)->operand;
 
         /* Handle for double negation */
-        if ((((ast_unary*)expr)->op == op))
+        if (((ast_unary*)expr)->op == op)
             prev = (ast_unary*)((ast_unary*)expr)->operand;
 
         if (ast_istype(prev, ast_unary)) {
