@@ -216,7 +216,7 @@ const char *platform_tmpnam(char *str);
  *  pointer. The return value is *NULL* if `var` is not found in the
  *  enviroment table.
  */
-const char *platform_getenv(char *var);
+const char *platform_getenv(const char *var);
 
 /*
  * Function: platform_vasprintf

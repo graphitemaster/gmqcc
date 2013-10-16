@@ -52,7 +52,7 @@ const char *platform_tmpnam(char *str) {
     return tmpnam(str);
 }
 
-const char *platform_getenv(char *var) {
+const char *platform_getenv(const char *var) {
     return getenv(var);
 }
 

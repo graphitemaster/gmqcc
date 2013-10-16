@@ -80,7 +80,7 @@ const char *platform_tmpnam(char *str) {
     return tmpnam_s(str, L_tmpnam);
 }
 
-const char *platform_getenv(char *var) {
+const char *platform_getenv(const char *var) {
     char  *buffer = (char *)platform_mem_allocate(GETENV_BUFFER);
     size_t size;
     getenv_s(&size, buffer, GETENV_BUFFER, var);
