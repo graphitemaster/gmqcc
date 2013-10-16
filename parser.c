@@ -372,6 +372,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 #define NotSameType(T) \
              (exprs[0]->vtype != exprs[1]->vtype || \
               exprs[0]->vtype != T)
+
     switch (op->id)
     {
         default:
@@ -468,6 +469,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid2('-','P'):
             if ((out = fold_op(parser->fold, op, exprs)))
                 break;
+
             if (exprs[0]->vtype != TYPE_FLOAT &&
                 exprs[0]->vtype != TYPE_VECTOR) {
                     compile_error(ctx, "invalid types used in unary expression: cannot negate type %s",
@@ -970,6 +972,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             out = (ast_expression*)ast_binary_new(ctx, subop,
                                                   out,
                                                   (ast_expression*)parser->fold->imm_float[1]);
+
             break;
         case opid2('+','='):
         case opid2('-','='):

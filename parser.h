@@ -43,11 +43,11 @@ typedef struct {
     ast_expression *(*intrin)(intrin_t *);
     const char       *name;
     const char       *alias;
-    size_t            args;
 } intrin_func_t;
 
 struct intrin_s {
-    intrin_func_t  *intrinsics;              /* vector<intrin_func_t> */
+    intrin_func_t  *intrinsics;              /* vector<intrin_func_t>   */
+    ast_expression **generated;              /* vector<ast_expression*> */
     parser_t       *parser;
     fold_t         *fold;
 };

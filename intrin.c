@@ -34,20 +34,22 @@
  */
 #define intrin_ctx(I) parser_ctx((I)->parser)
 
-static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **value, const char *name, qcint_t vtype) {
-    ast_function *func = NULL;
+static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **out, const char *name, qcint_t vtype) {
+    ast_value    *value = NULL;
+    ast_function *func  = NULL;
     char          buffer[1024];
     char          stype [1024];
 
     util_snprintf(buffer, sizeof(buffer), "__builtin_%s", name);
     util_snprintf(stype,  sizeof(stype),   "<%s>",        type_name[vtype]);
 
-    *value                      = ast_value_new(intrin_ctx(intrin), buffer, TYPE_FUNCTION);
-    (*value)->intrinsic         = true;
-    (*value)->expression.next   = (ast_expression*)ast_value_new(intrin_ctx(intrin), stype, vtype);
-     func                       = ast_function_new(intrin_ctx(intrin), buffer, *value);
-    (*value)->expression.flags |= AST_FLAG_ERASEABLE;
+    value                    = ast_value_new(intrin_ctx(intrin), buffer, TYPE_FUNCTION);
+    value->intrinsic         = true;
+    value->expression.next   = (ast_expression*)ast_value_new(intrin_ctx(intrin), stype, vtype);
+    func                     = ast_function_new(intrin_ctx(intrin), buffer, value);
+    value->expression.flags |= AST_FLAG_ERASEABLE;
 
+    *out = value;
     return func;
 }
 
@@ -73,132 +75,129 @@ static ast_expression *intrin_pow (intrin_t *intrin) {
      *   return local;
      * }
      */
-    static ast_value *value = NULL;
+    ast_value    *value = NULL;
+    ast_value    *arg1  = ast_value_new(intrin_ctx(intrin), "x",     TYPE_FLOAT);
+    ast_value    *arg2  = ast_value_new(intrin_ctx(intrin), "y",     TYPE_FLOAT);
+    ast_value    *local = ast_value_new(intrin_ctx(intrin), "local", TYPE_FLOAT);
+    ast_block    *body  = ast_block_new(intrin_ctx(intrin));
+    ast_block    *l1b   = ast_block_new(intrin_ctx(intrin)); /* loop 1 body */
+    ast_block    *l2b   = ast_block_new(intrin_ctx(intrin)); /* loop 2 body */
+    ast_loop     *loop1 = NULL;
+    ast_loop     *loop2 = NULL;
+    ast_function *func  = intrin_value(intrin, &value, "pow", TYPE_FLOAT);
 
-    if (!value) {
-        ast_value    *arg1  = ast_value_new(parser_ctx(intrin->parser), "x",     TYPE_FLOAT);
-        ast_value    *arg2  = ast_value_new(parser_ctx(intrin->parser), "y",     TYPE_FLOAT);
-        ast_value    *local = ast_value_new(parser_ctx(intrin->parser), "local", TYPE_FLOAT);
-        ast_block    *body  = ast_block_new(parser_ctx(intrin->parser));
-        ast_block    *l1b   = ast_block_new(parser_ctx(intrin->parser)); /* loop 1 body */
-        ast_block    *l2b   = ast_block_new(parser_ctx(intrin->parser)); /* loop 2 body */
-        ast_loop     *loop1 = NULL;
-        ast_loop     *loop2 = NULL;
-        ast_function *func  = intrin_value(intrin, &value, "pow", TYPE_FLOAT);
+    /* arguments */
+    vec_push(value->expression.params, arg1);
+    vec_push(value->expression.params, arg2);
 
-        /* arguments */
-        vec_push(value->expression.params, arg1);
-        vec_push(value->expression.params, arg2);
+    /* local */
+    vec_push(body->locals, local);
 
-        /* local */
-        vec_push(body->locals, local);
+    /* assignment to local of value 1.0f */
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new (
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)local,
+            (ast_expression*)intrin->fold->imm_float[1] /* 1 == 1.0f */
+        )
+    );
 
-        /* assignment to local of value 1.0f */
-        vec_push(body->exprs,
-            (ast_expression*)ast_store_new (
-                parser_ctx(intrin->parser),
-                INSTR_STORE_F,
-                (ast_expression*)local,
-                (ast_expression*)intrin->fold->imm_float[1] /* 1 == 1.0f */
-            )
-        );
+    /* y >>= 2 */
+    vec_push(l2b->exprs,
+        (ast_expression*)ast_binstore_new (
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_MUL_F,
+            (ast_expression*)arg2,
+            (ast_expression*)fold_constgen_float(intrin->parser->fold, 0.25f)
+        )
+    );
 
-        /* y >>= 2 */
-        vec_push(l2b->exprs,
-            (ast_expression*)ast_binstore_new (
-                parser_ctx(intrin->parser),
-                INSTR_STORE_F,
-                INSTR_MUL_F,
-                (ast_expression*)arg2,
-                (ast_expression*)fold_constgen_float(intrin->parser->fold, 0.25f)
-            )
-        );
+    /* x *= x */
+    vec_push(l2b->exprs,
+        (ast_expression*)ast_binstore_new (
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_MUL_F,
+            (ast_expression*)arg1,
+            (ast_expression*)arg1
+        )
+    );
 
-        /* x *= x */
-        vec_push(l2b->exprs,
-            (ast_expression*)ast_binstore_new (
-                parser_ctx(intrin->parser),
-                INSTR_STORE_F,
-                INSTR_MUL_F,
-                (ast_expression*)arg1,
-                (ast_expression*)arg1
-            )
-        );
+    /* while (!(y&1)) */
+    loop2 = ast_loop_new (
+        intrin_ctx(intrin),
+        NULL,
+        (ast_expression*)ast_binary_new (
+            intrin_ctx(intrin),
+            INSTR_AND,
+            (ast_expression*)arg2,
+            (ast_expression*)intrin->fold->imm_float[1] /* 1 == 1.0f */
+        ),
+        true, /* ! not */
+        NULL,
+        false,
+        NULL,
+        (ast_expression*)l2b
+    );
 
-        /* while (!(y&1)) */
-        loop2 = ast_loop_new (
-            parser_ctx(intrin->parser),
-            NULL,
-            (ast_expression*)ast_binary_new (
-                parser_ctx(intrin->parser),
-                INSTR_AND,
-                (ast_expression*)arg2,
-                (ast_expression*)intrin->fold->imm_float[1] /* 1 == 1.0f */
-            ),
-            true, /* ! not */
-            NULL,
-            false,
-            NULL,
-            (ast_expression*)l2b
-        );
+    /* push nested loop into loop expressions */
+    vec_push(l1b->exprs, (ast_expression*)loop2);
 
-        /* push nested loop into loop expressions */
-        vec_push(l1b->exprs, (ast_expression*)loop2);
+    /* y-- */
+    vec_push(l1b->exprs,
+        (ast_expression*)ast_binstore_new (
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_SUB_F,
+            (ast_expression*)arg2,
+            (ast_expression*)intrin->fold->imm_float[1] /* 1 == 1.0f */
+        )
+    );
+    /* local *= x */
+    vec_push(l1b->exprs,
+        (ast_expression*)ast_binstore_new (
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_MUL_F,
+            (ast_expression*)local,
+            (ast_expression*)arg1
+        )
+    );
 
-        /* y-- */
-        vec_push(l1b->exprs,
-            (ast_expression*)ast_binstore_new (
-                parser_ctx(intrin->parser),
-                INSTR_STORE_F,
-                INSTR_SUB_F,
-                (ast_expression*)arg2,
-                (ast_expression*)intrin->fold->imm_float[1] /* 1 == 1.0f */
-            )
-        );
-        /* local *= x */
-        vec_push(l1b->exprs,
-            (ast_expression*)ast_binstore_new (
-                parser_ctx(intrin->parser),
-                INSTR_STORE_F,
-                INSTR_MUL_F,
-                (ast_expression*)local,
-                (ast_expression*)arg1
-            )
-        );
+    /* while (y > 0) */
+    loop1 = ast_loop_new (
+        intrin_ctx(intrin),
+        NULL,
+        (ast_expression*)ast_binary_new (
+            intrin_ctx(intrin),
+            INSTR_GT,
+            (ast_expression*)arg2,
+            (ast_expression*)intrin->fold->imm_float[0] /* 0 == 0.0f */
+        ),
+        false,
+        NULL,
+        false,
+        NULL,
+        (ast_expression*)l1b
+    );
 
-        /* while (y > 0) */
-        loop1 = ast_loop_new (
-            parser_ctx(intrin->parser),
-            NULL,
-            (ast_expression*)ast_binary_new (
-                parser_ctx(intrin->parser),
-                INSTR_GT,
-                (ast_expression*)arg2,
-                (ast_expression*)intrin->fold->imm_float[0] /* 0 == 0.0f */
-            ),
-            false,
-            NULL,
-            false,
-            NULL,
-            (ast_expression*)l1b
-        );
+    /* push the loop1 into the body for the function */
+    vec_push(body->exprs, (ast_expression*)loop1);
 
-        /* push the loop1 into the body for the function */
-        vec_push(body->exprs, (ast_expression*)loop1);
+    /* return local; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new (
+            intrin_ctx(intrin),
+            (ast_expression*)local
+        )
+    );
 
-        /* return local; */
-        vec_push(body->exprs,
-            (ast_expression*)ast_return_new (
-                parser_ctx(intrin->parser),
-                (ast_expression*)local
-            )
-        );
+    /* push block and register intrin for codegen */
+    vec_push(func->blocks, body);
 
-        /* push block and register intrin for codegen */
-        vec_push(func->blocks, body);
-
-        intrin_reg(intrin, value, func);
-    }
+    intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;
 }
@@ -209,49 +208,46 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
      *   return x - y * floor(x / y);
      * }
      */
-    static ast_value *value = NULL;
+    ast_value    *value = NULL;
+    ast_call     *call  = ast_call_new (intrin_ctx(intrin), intrin_func(intrin, "floor"));
+    ast_value    *arg1  = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_value    *arg2  = ast_value_new(intrin_ctx(intrin), "y", TYPE_FLOAT);
+    ast_block    *body  = ast_block_new(intrin_ctx(intrin));
+    ast_function *func  = intrin_value(intrin, &value, "mod", TYPE_FLOAT);
 
-    if (!value) {
-        ast_call     *call  = ast_call_new (parser_ctx(intrin->parser), intrin_func(intrin, "floor"));
-        ast_value    *arg1  = ast_value_new(parser_ctx(intrin->parser), "x", TYPE_FLOAT);
-        ast_value    *arg2  = ast_value_new(parser_ctx(intrin->parser), "y", TYPE_FLOAT);
-        ast_block    *body  = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func  = intrin_value(intrin, &value, "mod", TYPE_FLOAT);
+    /* floor(x/y) */
+    vec_push(call->params,
+        (ast_expression*)ast_binary_new (
+            intrin_ctx(intrin),
+            INSTR_DIV_F,
+            (ast_expression*)arg1,
+            (ast_expression*)arg2
+        )
+    );
 
-        /* floor(x/y) */
-        vec_push(call->params,
-            (ast_expression*)ast_binary_new (
-                parser_ctx(intrin->parser),
-                INSTR_DIV_F,
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_SUB_F,
                 (ast_expression*)arg1,
-                (ast_expression*)arg2
-            )
-        );
-
-        vec_push(body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(intrin->parser),
                 (ast_expression*)ast_binary_new(
-                    parser_ctx(intrin->parser),
-                    INSTR_SUB_F,
-                    (ast_expression*)arg1,
-                    (ast_expression*)ast_binary_new(
-                        parser_ctx(intrin->parser),
-                        INSTR_MUL_F,
-                        (ast_expression*)arg2,
-                        (ast_expression*)call
-                    )
+                    intrin_ctx(intrin),
+                    INSTR_MUL_F,
+                    (ast_expression*)arg2,
+                    (ast_expression*)call
                 )
             )
-        );
+        )
+    );
 
-        vec_push(value->expression.params, arg1); /* float x (for param) */
-        vec_push(value->expression.params, arg2); /* float y (for param) */
+    vec_push(value->expression.params, arg1); /* float x (for param) */
+    vec_push(value->expression.params, arg2); /* float y (for param) */
 
-        vec_push(func->blocks,             body); /* {{{ body }}} */
+    vec_push(func->blocks,             body); /* {{{ body }}} */
 
-        intrin_reg(intrin, value, func);
-    }
+    intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;
 }
@@ -262,32 +258,29 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
      *     return pow(QC_M_E, x);
      * }
      */
-    static ast_value *value = NULL;
+    ast_value    *value = NULL;
+    ast_call     *call  = ast_call_new (intrin_ctx(intrin), intrin_func(intrin, "pow"));
+    ast_value    *arg1  = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_block    *body  = ast_block_new(intrin_ctx(intrin));
+    ast_function *func  = intrin_value(intrin, &value, "exp", TYPE_FLOAT);
 
-    if (!value) {
-        ast_call     *call = ast_call_new (parser_ctx(intrin->parser), intrin_func(intrin, "pow"));
-        ast_value    *arg1 = ast_value_new(parser_ctx(intrin->parser), "x", TYPE_FLOAT);
-        ast_block    *body = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func = intrin_value(intrin, &value, "exp", TYPE_FLOAT);
+    /* push arguments for params to call */
+    vec_push(call->params, (ast_expression*)fold_constgen_float(intrin->fold, QC_M_E));
+    vec_push(call->params, (ast_expression*)arg1);
 
-        /* push arguments for params to call */
-        vec_push(call->params, (ast_expression*)fold_constgen_float(intrin->fold, QC_M_E));
-        vec_push(call->params, (ast_expression*)arg1);
+    /* return pow(QC_M_E, x) */
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)call
+        )
+    );
 
-        /* return pow(QC_M_E, x) */
-        vec_push(body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(intrin->parser),
-                (ast_expression*)call
-            )
-        );
+    vec_push(value->expression.params, arg1); /* float x (for param) */
 
-        vec_push(value->expression.params, arg1); /* float x (for param) */
+    vec_push(func->blocks,             body); /* {{{ body }}} */
 
-        vec_push(func->blocks,             body); /* {{{ body }}} */
-
-        intrin_reg(intrin, value, func);
-    }
+    intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;
 }
@@ -301,41 +294,38 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
      *   return (x != local);
      * }
      */
-    static ast_value *value = NULL;
+    ast_value    *value  = NULL;
+    ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x",     TYPE_FLOAT);
+    ast_value    *local  = ast_value_new(intrin_ctx(intrin), "local", TYPE_FLOAT);
+    ast_block    *body   = ast_block_new(intrin_ctx(intrin));
+    ast_function *func   = intrin_value(intrin, &value, "isnan", TYPE_FLOAT);
 
-    if (!value) {
-        ast_value    *arg1   = ast_value_new(parser_ctx(intrin->parser), "x",     TYPE_FLOAT);
-        ast_value    *local  = ast_value_new(parser_ctx(intrin->parser), "local", TYPE_FLOAT);
-        ast_block    *body   = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func   = intrin_value(intrin, &value, "isnan", TYPE_FLOAT);
+    vec_push(body->locals, local);
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)local,
+            (ast_expression*)arg1
+        )
+    );
 
-        vec_push(body->locals, local);
-        vec_push(body->exprs,
-            (ast_expression*)ast_store_new(
-                parser_ctx(intrin->parser),
-                INSTR_STORE_F,
-                (ast_expression*)local,
-                (ast_expression*)arg1
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_NE_F,
+                (ast_expression*)arg1,
+                (ast_expression*)local
             )
-        );
+        )
+    );
 
-        vec_push(body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(intrin->parser),
-                (ast_expression*)ast_binary_new(
-                    parser_ctx(intrin->parser),
-                    INSTR_NE_F,
-                    (ast_expression*)arg1,
-                    (ast_expression*)local
-                )
-            )
-        );
+    vec_push(value->expression.params, arg1);
+    vec_push(func->blocks, body);
 
-        vec_push(value->expression.params, arg1);
-        vec_push(func->blocks, body);
-
-        intrin_reg(intrin, value, func);
-    }
+    intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;
 }
@@ -346,39 +336,37 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
      *     return x < 0 ? -x : x;
      * }
      */
-    static ast_value *value = NULL;
-    if (!value) {
-        ast_value    *arg1   = ast_value_new(parser_ctx(intrin->parser), "x",     TYPE_FLOAT);
-        ast_block    *body   = ast_block_new(parser_ctx(intrin->parser));
-        ast_function *func   = intrin_value(intrin, &value, "fabs", TYPE_FLOAT);
+    ast_value    *value  = NULL;
+    ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_block    *body   = ast_block_new(intrin_ctx(intrin));
+    ast_function *func   = intrin_value(intrin, &value, "fabs", TYPE_FLOAT);
 
-        vec_push(body->exprs,
-            (ast_expression*)ast_return_new(
-                parser_ctx(intrin->parser),
-                (ast_expression*)ast_ternary_new(
-                    parser_ctx(intrin->parser),
-                    (ast_expression*)ast_binary_new(
-                        parser_ctx(intrin->parser),
-                        INSTR_LE,
-                        (ast_expression*)arg1,
-                        (ast_expression*)intrin->fold->imm_float[0]
-                    ),
-                    (ast_expression*)ast_binary_new(
-                        parser_ctx(intrin->parser),
-                        INSTR_SUB_F,
-                        (ast_expression*)intrin->fold->imm_float[0],
-                        (ast_expression*)arg1
-                    ),
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_ternary_new(
+                intrin_ctx(intrin),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_LE,
+                    (ast_expression*)arg1,
+                    (ast_expression*)intrin->fold->imm_float[0]
+                ),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_SUB_F,
+                    (ast_expression*)intrin->fold->imm_float[0],
                     (ast_expression*)arg1
-                )
+                ),
+                (ast_expression*)arg1
             )
-        );
+        )
+    );
 
-        vec_push(value->expression.params, arg1);
-        vec_push(func->blocks, body);
+    vec_push(value->expression.params, arg1);
+    vec_push(func->blocks, body);
 
-        intrin_reg(intrin, value, func);
-    }
+    intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;
 }
@@ -393,12 +381,12 @@ ast_expression *intrin_debug_typestring(intrin_t *intrin) {
 }
 
 static const intrin_func_t intrinsics[] = {
-    {&intrin_exp,              "__builtin_exp",              "exp",   1},
-    {&intrin_mod,              "__builtin_mod",              "mod",   2},
-    {&intrin_pow,              "__builtin_pow",              "pow",   2},
-    {&intrin_isnan,            "__builtin_isnan",            "isnan", 1},
-    {&intrin_fabs,             "__builtin_fabs",             "fabs",  1},
-    {&intrin_debug_typestring, "__builtin_debug_typestring", "",      0}
+    {&intrin_exp,              "__builtin_exp",              "exp"},
+    {&intrin_mod,              "__builtin_mod",              "mod"},
+    {&intrin_pow,              "__builtin_pow",              "pow"},
+    {&intrin_isnan,            "__builtin_isnan",            "isnan"},
+    {&intrin_fabs,             "__builtin_fabs",             "fabs"},
+    {&intrin_debug_typestring, "__builtin_debug_typestring", ""}
 };
 
 static void intrin_error(intrin_t *intrin, const char *fmt, ...) {
@@ -411,55 +399,65 @@ static void intrin_error(intrin_t *intrin, const char *fmt, ...) {
 /* exposed */
 intrin_t *intrin_init(parser_t *parser) {
     intrin_t *intrin = (intrin_t*)mem_a(sizeof(intrin_t));
+    size_t    i;
+
     intrin->parser     = parser;
     intrin->fold       = parser->fold;
     intrin->intrinsics = NULL;
+    intrin->generated  = NULL;
 
-    vec_append(intrin->intrinsics, sizeof(intrinsics)/sizeof(*intrinsics), intrinsics);
+    vec_append(intrin->intrinsics, GMQCC_ARRAY_COUNT(intrinsics), intrinsics);
+
+    /* populate with null pointers for tracking generation */
+    for (i = 0; i < GMQCC_ARRAY_COUNT(intrinsics); i++)
+        vec_push(intrin->generated, NULL);
 
     return intrin;
 }
 
 void intrin_cleanup(intrin_t *intrin) {
     vec_free(intrin->intrinsics);
+    vec_free(intrin->generated);
     mem_d(intrin);
 }
 
 ast_expression *intrin_fold(intrin_t *intrin, ast_value *value, ast_expression **exprs) {
     size_t i;
-
     if (!value || !value->name)
         return NULL;
-
-    for (i = 0; i < vec_size(intrin->intrinsics); i++) {
-        if (!strcmp(value->name, intrin->intrinsics[i].name)) {
-            if (intrin->intrinsics[i].args != vec_size(exprs))
-                return NULL;
-            /* +10 to skip the "__builtin_" substring in the string */
+    for (i = 0; i < vec_size(intrin->intrinsics); i++)
+        if (!strcmp(value->name, intrin->intrinsics[i].name))
             return fold_intrin(intrin->fold, value->name + 10, exprs);
-        }
-    }
+    return NULL;
+}
 
+static GMQCC_INLINE ast_expression *intrin_func_try(intrin_t *intrin, size_t offset, const char *compare) {
+    size_t i;
+    for (i = 0; i < vec_size(intrin->intrinsics); i++) {
+        if (strcmp(*(char **)((char *)&intrin->intrinsics[i] + offset), compare))
+            continue;
+        if (intrin->generated[i])
+            return intrin->generated[i];
+        return intrin->generated[i] = intrin->intrinsics[i].intrin(intrin);
+    }
     return NULL;
 }
 
 ast_expression *intrin_func(intrin_t *intrin, const char *name) {
-    size_t       i    = 0;
-    void        *find;
+    size_t           i;
+    ast_expression  *find;
 
     /* try current first */
-    if ((find = (void*)parser_find_global(intrin->parser, name)) && ((ast_value*)find)->expression.vtype == TYPE_FUNCTION)
+    if ((find = parser_find_global(intrin->parser, name)) && ((ast_value*)find)->expression.vtype == TYPE_FUNCTION)
         for (i = 0; i < vec_size(intrin->parser->functions); ++i)
             if (((ast_value*)find)->name && !strcmp(intrin->parser->functions[i]->name, ((ast_value*)find)->name) && intrin->parser->functions[i]->builtin < 0)
-                return (ast_expression*)find;
+                return find;
     /* try name second */
-    for (i = 0; i < vec_size(intrin->intrinsics); i++)
-        if (!strcmp(intrin->intrinsics[i].name, name))
-            return intrin->intrinsics[i].intrin(intrin);
+    if ((find = intrin_func_try(intrin, offsetof(intrin_func_t, name),  name)))
+        return find;
     /* try alias third */
-    for (i = 0; i < vec_size(intrin->intrinsics); i++)
-        if (!strcmp(intrin->intrinsics[i].alias, name))
-            return intrin->intrinsics[i].intrin(intrin);
+    if ((find = intrin_func_try(intrin, offsetof(intrin_func_t, alias), name)))
+        return find;
 
     intrin_error(intrin, "need function: `%s` compiler depends on it", name);
     return NULL;
