@@ -51,11 +51,11 @@ typedef struct ir_value_s {
     /* constantvalues */
     bool hasvalue;
     union {
-        float    vfloat;
-        int      vint;
-        vec3_t   vvec;
-        int32_t  ivec[3];
-        char    *vstring;
+        qcfloat_t vfloat;
+        int       vint;
+        vec3_t    vvec;
+        int32_t   ivec[3];
+        char     *vstring;
         struct ir_value_s *vpointer;
         struct ir_function_s *vfunc;
     } constval;

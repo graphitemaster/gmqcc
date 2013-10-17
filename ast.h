@@ -169,7 +169,7 @@ struct ast_expression_common
  * is like creating a 'float foo', foo serving as the type's name.
  */
 typedef union {
-    double        vfloat;
+    qcfloat_t     vfloat;
     int           vint;
     vec3_t        vvec;
     const char   *vstring;
