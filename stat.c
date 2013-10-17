@@ -56,6 +56,7 @@ typedef struct stat_mem_block_s {
     const char              *file;
     size_t                   line;
     size_t                   size;
+    const char              *expr;
     struct stat_mem_block_s *next;
     struct stat_mem_block_s *prev;
 } stat_mem_block_t;
@@ -119,7 +120,7 @@ static void stat_size_put(stat_size_table_t table, size_t key, size_t value) {
  * information as a header, returns the memory + 1 past it, can be
  * retrieved again with - 1. Where type is stat_mem_block_t*.
  */
-void *stat_mem_allocate(size_t size, size_t line, const char *file) {
+void *stat_mem_allocate(size_t size, size_t line, const char *file, const char *expr) {
     stat_mem_block_t *info = (stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size);
     void             *data = (void*)(info + 1);
 
@@ -129,6 +130,7 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file) {
     info->line = line;
     info->size = size;
     info->file = file;
+    info->expr = expr;
     info->prev = NULL;
     info->next = stat_mem_block_root;
 
@@ -193,12 +195,12 @@ void stat_mem_deallocate(void *ptr) {
     VALGRIND_FREELIKE_BLOCK(ptr, sizeof(stat_mem_block_t));
 }
 
-void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file) {
+void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file, const char *expr) {
     stat_mem_block_t *oldinfo = NULL;
     stat_mem_block_t *newinfo;
 
     if (GMQCC_UNLIKELY(!ptr))
-        return stat_mem_allocate(size, line, file);
+        return stat_mem_allocate(size, line, file, expr);
 
     /* stay consistent with glibc */
     if (GMQCC_UNLIKELY(!size)) {
@@ -247,6 +249,7 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file)
     newinfo->line = line;
     newinfo->size = size;
     newinfo->file = file;
+    newinfo->expr = expr;
     newinfo->prev = NULL;
     newinfo->next = stat_mem_block_root;
 
@@ -296,7 +299,7 @@ char *stat_mem_strdup(const char *src, size_t line, const char *file, bool empty
         return NULL;
 
     len = strlen(src);
-    if (((!empty) ? len : true) && (ptr = (char*)stat_mem_allocate(len + 1, line, file))) {
+    if (((!empty) ? len : true) && (ptr = (char*)stat_mem_allocate(len + 1, line, file, NULL))) {
         memcpy(ptr, src, len);
         ptr[len] = '\0';
     }
@@ -681,26 +684,34 @@ void util_htdel(hash_table_t *ht) {
  * The following functions below implement printing / dumping of statistical
  * information.
  */
-static void stat_dump_mem_contents(stat_mem_block_t *memory, uint16_t cols) {
-    uint32_t i, j;
-    for (i = 0; i < memory->size + ((memory->size % cols) ? (cols - memory->size % cols) : 0); i++) {
-        if (i % cols == 0)    con_out(" 0x%06X: ", i);
-        if (i < memory->size) con_out("%02X " , 0xFF & ((unsigned char*)(memory + 1))[i]);
-        else                  con_out(" ");
+static void stat_dump_mem_contents(stat_mem_block_t *block, uint16_t cols) {
+    unsigned char *buffer = mem_a(cols);
+    unsigned char *memory = (unsigned char *)(block + 1);
+    size_t         i;
 
-        if ((uint16_t)(i % cols) == (cols - 1)) {
-            for (j = i - (cols - 1); j <= i; j++) {
-                con_out("%c",
-                    (j >= memory->size)
-                        ? ' '
-                        : (util_isprint(((unsigned char*)(memory + 1))[j]))
-                            ? 0xFF & ((unsigned char*)(memory + 1)) [j]
-                            : '.'
-                );
-            }
-            con_out("\n");
+    for (i = 0; i < block->size; i++) {
+        if (!(i % 16)) {
+            if (i != 0)
+                con_out(" %s\n", buffer);
+            con_out(" 0x%08X: ", i);
         }
+
+        con_out(" %02X", memory[i]);
+
+        buffer[i % cols] = ((memory[i] < 0x20) || (memory[i] > 0x7E))
+                            ? '.'
+                            : memory[i];
+
+        buffer[(i % cols) + 1] = '\0';
     }
+
+    while ((i % cols) != 0) {
+        con_out("   ");
+        i++;
+    }
+
+    con_out(" %s\n", buffer);
+    mem_d(buffer);
 }
 
 static void stat_dump_mem_leaks(void) {
@@ -710,10 +721,11 @@ static void stat_dump_mem_leaks(void) {
     for (info = stat_mem_block_root; info; info = info->next) {
         /* we need access to the block */
         VALGRIND_MAKE_MEM_DEFINED(info, sizeof(stat_mem_block_t));
-        con_out("lost: %u (bytes) at %s:%u\n",
+        con_out("lost: %u (bytes) at %s:%u %s\n",
             info->size,
             info->file,
-            info->line
+            info->line,
+            info->expr
         );
 
         stat_dump_mem_contents(info, OPTS_OPTION_U16(OPTION_MEMDUMPCOLS));

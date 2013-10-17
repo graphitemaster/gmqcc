@@ -256,14 +256,14 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 /* stat.c */
 void  stat_info          (void);
 char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
-void *stat_mem_reallocate(void *,       size_t, size_t, const char *);
+void *stat_mem_reallocate(void *,       size_t, size_t, const char *, const char *);
 void  stat_mem_deallocate(void *);
-void *stat_mem_allocate  (size_t, size_t, const char *);
+void *stat_mem_allocate  (size_t, size_t, const char *, const char *);
 
-#define mem_a(SIZE)              stat_mem_allocate  ((SIZE), __LINE__, __FILE__)
+#define mem_a(SIZE)              stat_mem_allocate  ((SIZE), __LINE__, __FILE__, #SIZE)
 #define mem_d(PTRN)              stat_mem_deallocate((void*)(PTRN))
-#define mem_r(PTRN, SIZE)        stat_mem_reallocate((void*)(PTRN), (SIZE), __LINE__, __FILE__)
-#define mem_af(SIZE, FILE, LINE) stat_mem_allocate  ((SIZE), (LINE), (FILE))
+#define mem_r(PTRN, SIZE)        stat_mem_reallocate((void*)(PTRN), (SIZE), __LINE__, __FILE__, #SIZE)
+#define mem_af(SIZE, FILE, LINE) stat_mem_allocate  ((SIZE), (LINE), (FILE), #SIZE)
 
 /* TODO: rename to mem variations */
 #define util_strdup(SRC)         stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, false)
