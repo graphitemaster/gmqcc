@@ -766,6 +766,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
     int ch = 0;
     int nextch;
     bool hex;
+    bool oct;
     char u8buf[8]; /* way more than enough */
     int  u8len, uc;
 
@@ -851,23 +852,31 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                 chr = 0;
                 nextch = lex_getch(lex);
                 hex = (nextch == 'x');
-                if (!hex)
+                oct = (nextch == '0');
+                if (!hex && !oct)
                     lex_ungetch(lex, nextch);
                 for (nextch = lex_getch(lex); nextch != '}'; nextch = lex_getch(lex)) {
-                    if (!hex) {
+                    if (!hex && !oct) {
                         if (nextch >= '0' && nextch <= '9')
                             chr = chr * 10 + nextch - '0';
                         else {
                             lexerror(lex, "bad character code");
                             return (lex->tok.ttype = TOKEN_ERROR);
                         }
-                    } else {
+                    } else if (!oct) {
                         if (nextch >= '0' && nextch <= '9')
                             chr = chr * 0x10 + nextch - '0';
                         else if (nextch >= 'a' && nextch <= 'f')
                             chr = chr * 0x10 + nextch - 'a' + 10;
                         else if (nextch >= 'A' && nextch <= 'F')
                             chr = chr * 0x10 + nextch - 'A' + 10;
+                        else {
+                            lexerror(lex, "bad character code");
+                            return (lex->tok.ttype = TOKEN_ERROR);
+                        }
+                    } else {
+                        if (nextch >= '0' && nextch <= '9')
+                            chr = chr * 8 + chr - '0';
                         else {
                             lexerror(lex, "bad character code");
                             return (lex->tok.ttype = TOKEN_ERROR);
