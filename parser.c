@@ -4841,8 +4841,14 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     }
 
     /* there may be a name now */
-    if (parser->tok == TOKEN_IDENT) {
+    if (parser->tok == TOKEN_IDENT || parser->tok == TOKEN_KEYWORD) {
+        if (!strcmp(parser_tokval(parser), "break"))
+            (void)!parsewarning(parser, WARN_BREAKDEF, "break definition ignored (suggest removing it)");
+        else if (parser->tok == TOKEN_KEYWORD)
+            goto leave;
+
         name = util_strdup(parser_tokval(parser));
+
         /* parse on */
         if (!parser_next(parser)) {
             ast_delete(var);
@@ -4852,6 +4858,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
         }
     }
 
+    leave:
     /* now this may be an array */
     if (parser->tok == '[') {
         wasarray = true;
@@ -5571,16 +5578,8 @@ skipvar:
 
         if (parser->tok != '{' || var->expression.vtype != TYPE_FUNCTION) {
             if (parser->tok != '=') {
-                if (!strcmp(parser_tokval(parser), "break")) {
-                    if (!parser_next(parser)) {
-                        parseerror(parser, "error parsing break definition");
-                        break;
-                    }
-                    (void)!parsewarning(parser, WARN_BREAKDEF, "break definition ignored (suggest removing it)");
-                } else {
-                    parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
-                    break;
-                }
+                parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
+                break;
             }
 
             if (!parser_next(parser)) {
