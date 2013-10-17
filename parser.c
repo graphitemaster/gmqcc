@@ -4007,7 +4007,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
 
         /* generate a new name increasing the accumulation count*/
-        util_snprintf(acname, sizeof(acname), "$ACCUMULATE_%s_%d", var->name, var->constval.vfunc->accumulation++);
+        util_snprintf(acname, sizeof(acname), "##ACCUMULATE_%s_%d", var->name, var->constval.vfunc->accumulation++);
         accum = ast_value_new(parser_ctx(parser), acname, ((ast_expression*)var)->vtype);
         if (!accum)
             return false;
