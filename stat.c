@@ -299,7 +299,7 @@ char *stat_mem_strdup(const char *src, size_t line, const char *file, bool empty
         return NULL;
 
     len = strlen(src);
-    if (((!empty) ? len : true) && (ptr = (char*)stat_mem_allocate(len + 1, line, file, NULL))) {
+    if (((!empty) ? len : true) && (ptr = (char*)stat_mem_allocate(len + 1, line, file, "strdup"))) {
         memcpy(ptr, src, len);
         ptr[len] = '\0';
     }
@@ -721,7 +721,7 @@ static void stat_dump_mem_leaks(void) {
     for (info = stat_mem_block_root; info; info = info->next) {
         /* we need access to the block */
         VALGRIND_MAKE_MEM_DEFINED(info, sizeof(stat_mem_block_t));
-        con_out("lost: %u (bytes) at %s:%u %s\n",
+        con_out("lost: %u (bytes) at %s:%u from expression `%s`\n",
             info->size,
             info->file,
             info->line,
