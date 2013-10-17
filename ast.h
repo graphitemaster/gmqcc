@@ -156,10 +156,13 @@ struct ast_expression_common
 #define AST_FLAG_IS_VARARG    (1<<6)
 #define AST_FLAG_ALIAS        (1<<7)
 #define AST_FLAG_ERASEABLE    (1<<8)
-/* An array declared as []
- * so that the size is taken from the initializer */
-#define AST_FLAG_ARRAY_INIT   (1<<9)
-#define AST_FLAG_TYPE_MASK (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
+#define AST_FLAG_ACCUMULATE   (1<<9)
+/*
+ * An array declared as []
+ * so that the size is taken from the initializer
+ */
+#define AST_FLAG_ARRAY_INIT   (1<<10)
+#define AST_FLAG_TYPE_MASK    (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value
  *
@@ -613,6 +616,10 @@ struct ast_function_s
     const char *name;
 
     int builtin;
+
+    /* function accumulation */
+    ast_function *accumulate;    /* pointer to the next function in the chain */
+    size_t        accumulation;  /* base functions # of accumulations         */
 
     ir_function *ir_func;
     ir_block    *curblock;

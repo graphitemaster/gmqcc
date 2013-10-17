@@ -1184,6 +1184,7 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
         compile_error(ast_ctx(self), "internal error: ast_function_new condition 0");
         goto cleanup;
     } else if (vtype->hasvalue || vtype->expression.vtype != TYPE_FUNCTION) {
+    } else if (vtype->hasvalue || vtype->expression.vtype != TYPE_FUNCTION) {
         compile_error(ast_ctx(self), "internal error: ast_function_new condition %i %i type=%i (probably 2 bodies?)",
                  (int)!vtype,
                  (int)vtype->hasvalue,
@@ -1211,6 +1212,9 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
     self->argc             = NULL;
     self->fixedparams      = NULL;
     self->return_value     = NULL;
+
+    self->accumulate   = NULL;
+    self->accumulation = 0;
 
     return self;
 
@@ -1792,6 +1796,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     ir_value    *dummy;
     ast_expression         *ec;
     ast_expression_codegen *cgen;
+
     size_t    i;
 
     (void)ir;
@@ -1866,6 +1871,14 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         {
             return false;
         }
+    }
+
+    /* generate the call for any accumulation */
+    if (self->accumulate) {
+        ast_call *call = ast_call_new(ast_ctx(self), (ast_expression*)self->accumulate->vtype);
+        for (i = 0; i < vec_size(ec->params); i++)
+            vec_push(call->params, (ast_expression*)ec->params[i]);
+        vec_push(vec_last(self->blocks)->exprs, (ast_expression*)call);
     }
 
     for (i = 0; i < vec_size(self->blocks); ++i) {

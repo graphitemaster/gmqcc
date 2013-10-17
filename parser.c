@@ -2801,6 +2801,14 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                     return false;
                 }
             }
+            else if (!strcmp(parser_tokval(parser), "accumulate")) {
+                flags |= AST_FLAG_ACCUMULATE;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`accumulate` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
             else if (!strcmp(parser_tokval(parser), "alias") && !(flags & AST_FLAG_ALIAS)) {
                 flags   |= AST_FLAG_ALIAS;
                 *message = NULL;
@@ -3976,19 +3984,50 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
-    if (var->hasvalue) {
+    if (var->hasvalue && !(var->expression.flags & AST_FLAG_ACCUMULATE)) {
         parseerror(parser, "function `%s` declared with multiple bodies", var->name);
         ast_block_delete(block);
         goto enderr;
     }
 
-    func = ast_function_new(ast_ctx(var), var->name, var);
+    /* accumulation? */
+    if (var->hasvalue) {
+        ast_value    *accum    = NULL;
+        ast_function *previous = NULL;
+        char          acname[1024];
+
+        /* generate a new name increasing the accumulation count*/
+        util_snprintf(acname, sizeof(acname), "$ACCUMULATE_%s_%d", var->name, var->constval.vfunc->accumulation++);
+        accum = ast_value_new(parser_ctx(parser), acname, ((ast_expression*)var)->vtype);
+        if (!accum)
+            return false;
+
+        ast_type_adopt(accum, var);
+        func = ast_function_new(ast_ctx(var), NULL, accum);
+        if (!func)
+            return false;
+
+        parser_addglobal(parser, acname, (ast_expression*)accum);
+        vec_push(parser->functions, func);
+
+        /* update the previous calls accumulate pointer for the codegen */
+        previous = var->constval.vfunc;
+        while (previous->accumulate)
+            previous = previous->accumulate;
+
+        if (ast_istype(previous, ast_function))
+            previous->accumulate = func;
+
+    } else {
+        func = ast_function_new(ast_ctx(var), var->name, var);
+        vec_push(parser->functions, func);
+    }
+
     if (!func) {
         parseerror(parser, "failed to allocate function for `%s`", var->name);
         ast_block_delete(block);
         goto enderr;
     }
-    vec_push(parser->functions, func);
 
     parser_enterblock(parser);
 
