@@ -3991,10 +3991,20 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     /* accumulation? */
-    if (var->hasvalue) {
+    if (var->hasvalue && var->expression.vtype == TYPE_FUNCTION) {
         ast_value    *accum    = NULL;
         ast_function *previous = NULL;
         char          acname[1024];
+
+        /* only void please */
+        if (var->expression.next->vtype != TYPE_VOID) {
+            parseerror(parser, "accumulated function `%s` declared with return type `%s` (accumulated functions must return void)",
+                var->name,
+                type_name[var->expression.next->vtype]
+            );
+            ast_block_delete(block);
+            goto enderr;
+        }
 
         /* generate a new name increasing the accumulation count*/
         util_snprintf(acname, sizeof(acname), "$ACCUMULATE_%s_%d", var->name, var->constval.vfunc->accumulation++);
