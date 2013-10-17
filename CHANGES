@@ -5,7 +5,7 @@ Release 0.3.5:
     * Language:
         - Added vector bit operations.
         - Added vector cross product operator `><` for -std=gmqcc.
-        - Added `[[eraseable]]` attribute.
+        - Added `[[eraseable]]` and `[[accumulation]]` attributes.
         - Removed &~= operator for -std=gmqcc.
         - #pragmas which are ignored are actually ignored to EOL.
     * Compilation:
