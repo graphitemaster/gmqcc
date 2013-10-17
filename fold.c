@@ -734,13 +734,18 @@ static GMQCC_INLINE ast_expression *fold_intrin_fabs(fold_t *fold, ast_value *va
 }
 
 ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **arg) {
-    if (!strcmp(intrin, "mod"))   return fold_intrin_mod  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
-    if (!strcmp(intrin, "pow"))   return fold_intrin_pow  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
-    if (!strcmp(intrin, "exp"))   return fold_intrin_exp  (fold, (ast_value*)arg[0]);
-    if (!strcmp(intrin, "isnan")) return fold_intrin_isnan(fold, (ast_value*)arg[0]);
-    if (!strcmp(intrin, "fabs"))  return fold_intrin_fabs (fold, (ast_value*)arg[0]);
+    ast_expression *ret = NULL;
 
-    return NULL;
+    if (!strcmp(intrin, "mod"))   ret = fold_intrin_mod  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
+    if (!strcmp(intrin, "pow"))   ret = fold_intrin_pow  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
+    if (!strcmp(intrin, "exp"))   ret = fold_intrin_exp  (fold, (ast_value*)arg[0]);
+    if (!strcmp(intrin, "isnan")) ret = fold_intrin_isnan(fold, (ast_value*)arg[0]);
+    if (!strcmp(intrin, "fabs"))  ret = fold_intrin_fabs (fold, (ast_value*)arg[0]);
+
+    if (ret)
+        ++opts_optimizationcount[OPTIM_CONST_FOLD];
+
+    return ret;
 }
 
 /*

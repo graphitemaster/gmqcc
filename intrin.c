@@ -381,12 +381,12 @@ ast_expression *intrin_debug_typestring(intrin_t *intrin) {
 }
 
 static const intrin_func_t intrinsics[] = {
-    {&intrin_exp,              "__builtin_exp",              "exp"},
-    {&intrin_mod,              "__builtin_mod",              "mod"},
-    {&intrin_pow,              "__builtin_pow",              "pow"},
-    {&intrin_isnan,            "__builtin_isnan",            "isnan"},
-    {&intrin_fabs,             "__builtin_fabs",             "fabs"},
-    {&intrin_debug_typestring, "__builtin_debug_typestring", ""}
+    {&intrin_exp,              "__builtin_exp",              "exp",   1},
+    {&intrin_mod,              "__builtin_mod",              "mod",   2},
+    {&intrin_pow,              "__builtin_pow",              "pow",   2},
+    {&intrin_isnan,            "__builtin_isnan",            "isnan", 1},
+    {&intrin_fabs,             "__builtin_fabs",             "fabs",  1},
+    {&intrin_debug_typestring, "__builtin_debug_typestring", "",      0}
 };
 
 static void intrin_error(intrin_t *intrin, const char *fmt, ...) {
@@ -427,7 +427,9 @@ ast_expression *intrin_fold(intrin_t *intrin, ast_value *value, ast_expression *
         return NULL;
     for (i = 0; i < vec_size(intrin->intrinsics); i++)
         if (!strcmp(value->name, intrin->intrinsics[i].name))
-            return fold_intrin(intrin->fold, value->name + 10, exprs);
+            return (vec_size(exprs) != intrin->intrinsics[i].args)
+                        ? NULL
+                        : fold_intrin(intrin->fold, value->name + 10, exprs);
     return NULL;
 }
 

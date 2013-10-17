@@ -1227,7 +1227,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
          * sy->out should I be doing here?
          */
         sy->out[fid] = syexp(foldval->node.context, foldval);
-        vec_shrinkby(sy->out, 1);
+        vec_shrinkby(sy->out, paramcount);
         vec_free(exprs);
 
         return true;
