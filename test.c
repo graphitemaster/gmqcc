@@ -745,7 +745,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                  * so we don't trample over an existing one.
                  */
                 tmpl->tempfilename = NULL;
-                util_asprintf(&tmpl->tempfilename, "%s/TMPDAT.%s", directories[i], files->d_name);
+                util_asprintf(&tmpl->tempfilename, "%s/TMPDAT.%s.dat", directories[i], files->d_name);
 
                 /*
                  * Additional QCFLAGS enviroment variable may be used
@@ -879,7 +879,8 @@ static void task_precleanup(const char *curdir) {
     while ((files = fs_dir_read(dir))) {
         if (strstr(files->d_name, "TMP")     ||
             strstr(files->d_name, ".stdout") ||
-            strstr(files->d_name, ".stderr"))
+            strstr(files->d_name, ".stderr") ||
+            strstr(files->d_name, ".dat"))
         {
             util_snprintf(buffer, sizeof(buffer), "%s/%s", curdir, files->d_name);
             if (remove(buffer))
