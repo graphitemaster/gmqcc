@@ -1879,6 +1879,8 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         for (i = 0; i < vec_size(ec->params); i++)
             vec_push(call->params, (ast_expression*)ec->params[i]);
         vec_push(vec_last(self->blocks)->exprs, (ast_expression*)call);
+
+        self->ir_func->flags |= IR_FLAG_ACCUMULATE;
     }
 
     for (i = 0; i < vec_size(self->blocks); ++i) {

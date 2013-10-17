@@ -1583,7 +1583,13 @@ bool ir_block_create_return(ir_block *self, lex_ctx_t ctx, ir_value *v)
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return false;
+
     self->final = true;
+
+    /* can eliminate the return instructions for accumulation */
+    if (self->owner->flags & IR_FLAG_ACCUMULATE)
+        return true;
+
     self->is_return = true;
     in = ir_instr_new(ctx, self, INSTR_RETURN);
     if (!in)
