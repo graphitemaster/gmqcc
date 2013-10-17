@@ -111,6 +111,7 @@ ast.o: gmqcc.h opts.def ast.h ir.h parser.h lexer.h
 code.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
 correct.o: gmqcc.h opts.def
+exec.o: gmqcc.h opts.def
 fold.o: ast.h ir.h gmqcc.h opts.def parser.h lexer.h
 fs.o: gmqcc.h opts.def platform.h
 ftepp.o: gmqcc.h opts.def lexer.h
