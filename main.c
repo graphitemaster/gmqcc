@@ -557,7 +557,6 @@ static bool progs_nextline(char **out, size_t *alen, fs_file_t *src) {
 int main(int argc, char **argv) {
     size_t          itr;
     int             retval           = 0;
-    bool            opts_output_free = false;
     bool            operators_free   = false;
     bool            progs_src        = false;
     fs_file_t       *outfile         = NULL;
@@ -690,8 +689,7 @@ int main(int argc, char **argv) {
                 item.type     = TYPE_QC;
                 vec_push(items, item);
             } else if (!opts_output_wasset) {
-                OPTS_OPTION_STR(OPTION_OUTPUT) = util_strdup(line);
-                opts_output_free               = true;
+                OPTS_OPTION_DUP(OPTION_OUTPUT) = util_strdup(line);
                 hasline                        = true;
             }
         }
@@ -780,8 +778,12 @@ cleanup:
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY))
         if(parser) parser_cleanup(parser);
-    if (opts_output_free)
-        mem_d(OPTS_OPTION_STR(OPTION_OUTPUT));
+
+    /* free allocated option strings */
+    for (itr = 0; itr < OPTION_COUNT; itr++)
+        if (OPTS_OPTION_DUPED(itr))
+            mem_d(OPTS_OPTION_STR(itr));
+
     if (operators_free)
         mem_d((void*)operators);
 

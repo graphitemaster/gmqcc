@@ -1012,11 +1012,19 @@ typedef enum {
     COMPILER_GMQCC    /* this   QuakeC */
 } opts_std_t;
 
-typedef union {
-    bool     B;
-    uint16_t U16;
-    uint32_t U32;
-    char    *STR;
+typedef struct {
+    union {
+        bool     b;
+        uint16_t u16;
+        uint32_t u32;
+
+        union {
+            char       *p;
+            const char *c;
+        } str;
+    } data;
+
+    bool allocated;
 } opt_value_t;
 
 
@@ -1038,9 +1046,11 @@ extern opts_cmd_t opts;
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
 #define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))
 #define OPTS_OPTIMIZATION(i) OPTS_GENERIC(opts.optimization, (i))
-#define OPTS_OPTION_BOOL(X) (opts.options[X].B)
-#define OPTS_OPTION_U16(X)  (opts.options[X].U16)
-#define OPTS_OPTION_U32(X)  (opts.options[X].U32)
-#define OPTS_OPTION_STR(X)  (opts.options[X].STR)
+#define OPTS_OPTION_DUPED(X) (opts.options[X].allocated)
+#define OPTS_OPTION_BOOL(X) (opts.options[X].data.b)
+#define OPTS_OPTION_U16(X)  (opts.options[X].data.u16)
+#define OPTS_OPTION_U32(X)  (opts.options[X].data.u32)
+#define OPTS_OPTION_DUP(X) *(OPTS_OPTION_DUPED(X)=true, &(opts.options[X].data.str.p))
+#define OPTS_OPTION_STR(X)  (opts.options[X].data.str.c)
 
 #endif /*! GMQCC_HDR */

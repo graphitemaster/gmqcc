@@ -60,7 +60,7 @@ opts_cmd_t   opts; /* command line options */
 static void opts_setdefault(void) {
     memset(&opts, 0, sizeof(opts_cmd_t));
     OPTS_OPTION_BOOL(OPTION_CORRECTION) = true;
-    OPTS_OPTION_STR(OPTION_PROGSRC) = (char*)"progs.src";
+    OPTS_OPTION_STR(OPTION_PROGSRC)     = "progs.src";
 
     /* warnings */
     opts_set(opts.warn,  WARN_UNUSED_VARIABLE,           true);
@@ -129,7 +129,7 @@ void opts_restore_non_Werror_all() {
 void opts_init(const char *output, int standard, size_t arraysize) {
     opts_setdefault();
 
-    OPTS_OPTION_STR(OPTION_OUTPUT)         = (char*)output;
+    OPTS_OPTION_STR(OPTION_OUTPUT)         = output;
     OPTS_OPTION_U32(OPTION_STANDARD)       = standard;
     OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE) = arraysize;
     OPTS_OPTION_U16(OPTION_MEMDUMPCOLS)    = 16;
