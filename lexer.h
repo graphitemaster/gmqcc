@@ -30,10 +30,10 @@ struct token_s {
     char *value;
 
     union {
-        vec3_t v;
-        int    i;
-        double f;
-        int    t; /* type */
+        vec3_t    v;
+        int       i;
+        qcfloat_t f;
+        int       t; /* type */
     } constval;
 
 #if 0
