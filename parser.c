@@ -5088,6 +5088,13 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             var->expression.flags & AST_FLAG_ALIAS)
             var->desc = vstring;
 
+        if (parser_find_global(parser, var->name) && var->expression.flags & AST_FLAG_ALIAS) {
+            parseerror(parser, "function aliases cannot be forward declared");
+            retval = false;
+            goto cleanup;
+        }
+
+
         /* Part 1:
          * check for validity: (end_sys_..., multiple-definitions, prototypes, ...)
          * Also: if there was a prototype, `var` will be deleted and set to `proto` which
