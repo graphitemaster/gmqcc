@@ -3984,59 +3984,28 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
-    if (var->hasvalue && !(var->expression.flags & AST_FLAG_ACCUMULATE)) {
-        parseerror(parser, "function `%s` declared with multiple bodies", var->name);
-        ast_block_delete(block);
-        goto enderr;
-    }
-
-    /* accumulation? */
-    if (var->hasvalue && var->expression.vtype == TYPE_FUNCTION) {
-        ast_value    *accum    = NULL;
-        ast_function *previous = NULL;
-        char          acname[1024];
-
-        /* only void please */
-        if (var->expression.next->vtype != TYPE_VOID) {
-            parseerror(parser, "accumulated function `%s` declared with return type `%s` (accumulated functions must return void)",
-                var->name,
-                type_name[var->expression.next->vtype]
-            );
+    if (var->hasvalue) {
+        if (!(var->expression.flags & AST_FLAG_ACCUMULATE)) {
+            parseerror(parser, "function `%s` declared with multiple bodies", var->name);
             ast_block_delete(block);
             goto enderr;
         }
+        func = var->constval.vfunc;
 
-        /* generate a new name increasing the accumulation count*/
-        util_snprintf(acname, sizeof(acname), "##ACCUMULATE_%s_%d", var->name, var->constval.vfunc->accumulation++);
-        accum = ast_value_new(parser_ctx(parser), acname, ((ast_expression*)var)->vtype);
-        if (!accum)
-            return false;
-
-        ast_type_adopt(accum, var);
-        func = ast_function_new(ast_ctx(var), NULL, accum);
-        if (!func)
-            return false;
-
-        parser_addglobal(parser, acname, (ast_expression*)accum);
-        vec_push(parser->functions, func);
-
-        /* update the previous calls accumulate pointer for the codegen */
-        previous = var->constval.vfunc;
-        while (previous->accumulate)
-            previous = previous->accumulate;
-
-        if (ast_istype(previous, ast_function))
-            previous->accumulate = func;
-
+        if (!func) {
+            parseerror(parser, "internal error: NULL function: `%s`", var->name);
+            ast_block_delete(block);
+            goto enderr;
+        }
     } else {
         func = ast_function_new(ast_ctx(var), var->name, var);
-        vec_push(parser->functions, func);
-    }
 
-    if (!func) {
-        parseerror(parser, "failed to allocate function for `%s`", var->name);
-        ast_block_delete(block);
-        goto enderr;
+        if (!func) {
+            parseerror(parser, "failed to allocate function for `%s`", var->name);
+            ast_block_delete(block);
+            goto enderr;
+        }
+        vec_push(parser->functions, func);
     }
 
     parser_enterblock(parser);
@@ -4064,13 +4033,13 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
-    if (var->argcounter) {
+    if (var->argcounter && !func->argc) {
         ast_value *argc = ast_value_new(ast_ctx(var), var->argcounter, TYPE_FLOAT);
         parser_addlocal(parser, argc->name, (ast_expression*)argc);
         func->argc = argc;
     }
 
-    if (OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC) {
+    if (OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC && !func->varargs) {
         char name[1024];
         ast_value *varargs = ast_value_new(ast_ctx(var), "reserved:va_args", TYPE_ARRAY);
         varargs->expression.flags |= AST_FLAG_IS_VARARG;
@@ -4099,7 +4068,6 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     vec_push(func->blocks, block);
-
 
     parser->function = old;
     if (!parser_leaveblock(parser))

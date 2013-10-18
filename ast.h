@@ -617,10 +617,6 @@ struct ast_function_s
 
     int builtin;
 
-    /* function accumulation */
-    ast_function *accumulate;    /* pointer to the next function in the chain */
-    size_t        accumulation;  /* base functions # of accumulations         */
-
     ir_function *ir_func;
     ir_block    *curblock;
     ir_block    **breakblocks;
