@@ -1,10 +1,15 @@
-[[accumulate]] void foo() {
+#define ACCUMULATE_FUNCTION(FUNC) \
+    [[accumulate]] void FUNC ()
+
+ACCUMULATE_FUNCTION(foo) {
     print("hello ");
 }
-[[accumulate]] void foo() {
+
+ACCUMULATE_FUNCTION(foo) {
     print("accumulation ");
 }
-[[accumulate]] void foo() {
+
+ACCUMULATE_FUNCTION(foo) {
     print("world\n");
 }
 
