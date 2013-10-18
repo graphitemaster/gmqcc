@@ -1513,6 +1513,8 @@ static bool ftepp_hash(ftepp_t *ftepp)
         case TOKEN_KEYWORD:
         case TOKEN_IDENT:
         case TOKEN_TYPENAME:
+        case TOKEN_ATTRIBUTE_CLOSE:
+        case TOKEN_ATTRIBUTE_OPEN:
             if (!strcmp(ftepp_tokval(ftepp), "define")) {
                 ftepp_inmacro(ftepp, "define");
                 return ftepp_define(ftepp);
