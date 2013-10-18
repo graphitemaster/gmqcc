@@ -315,7 +315,6 @@ const char      *util_ctime    (const time_t *timer);
 typedef struct fs_file_s fs_file_t;
 
 bool             util_isatty(fs_file_t *);
-const char      *util_tmpnam(char *);
 
 /*
  * A flexible vector implementation: all vector pointers contain some
