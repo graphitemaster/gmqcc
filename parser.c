@@ -44,7 +44,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
 static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname);
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef, bool *is_vararg);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -1422,7 +1422,7 @@ static ast_expression* parse_vararg_do(parser_t *parser)
         return NULL;
     }
 
-    typevar = parse_typename(parser, NULL, NULL);
+    typevar = parse_typename(parser, NULL, NULL, NULL);
     if (!typevar) {
         ast_unref(idx);
         return NULL;
@@ -4505,7 +4505,6 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     return parser_create_array_getter_impl(parser, array);
 }
 
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 {
     lex_ctx_t     ctx;
@@ -4531,6 +4530,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 
     /* parse variables until we hit a closing paren */
     while (parser->tok != ')') {
+        bool is_varargs = false;
+
         if (!first) {
             /* there must be commas between them */
             if (parser->tok != ',') {
@@ -4544,10 +4545,13 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         }
         first = false;
 
-        if (parser->tok == TOKEN_DOTS) {
+        param = parse_typename(parser, NULL, NULL, &is_varargs);
+        if (!param && !is_varargs)
+            goto on_error;
+        if (is_varargs) {
             /* '...' indicates a varargs function */
             variadic = true;
-            if (!parser_next(parser) || (parser->tok != ')' && parser->tok != TOKEN_IDENT)) {
+            if (parser->tok != ')' && parser->tok != TOKEN_IDENT) {
                 parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                 goto on_error;
             }
@@ -4558,13 +4562,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                     goto on_error;
                 }
             }
-        }
-        else
-        {
-            /* for anything else just parse a typename */
-            param = parse_typename(parser, NULL, NULL);
-            if (!param)
-                goto on_error;
+        } else {
             vec_push(params, param);
             if (param->expression.vtype >= TYPE_VARIANT) {
                 char tname[1024]; /* typename is reserved in C++ */
@@ -4716,7 +4714,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
  *     void() foo(), bar
  * then the type-information 'void()' can be stored in 'storebase'
  */
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef)
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef, bool *is_vararg)
 {
     ast_value *var, *tmp;
     lex_ctx_t    ctx;
@@ -4725,6 +4723,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     bool        isfield  = false;
     bool        wasarray = false;
     size_t      morefields = 0;
+
+    bool        vararg = (parser->tok == TOKEN_DOTS);
 
     ctx = parser_ctx(parser);
 
@@ -4749,6 +4749,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
                 morefields += 3;
             else
                 break;
+            vararg = false;
             if (!parser_next(parser)) {
                 parseerror(parser, "expected typename for field definition");
                 return NULL;
@@ -4758,6 +4759,10 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     if (parser->tok == TOKEN_IDENT)
         cached_typedef = parser_find_typedef(parser, parser_tokval(parser), 0);
     if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
+        if (vararg && is_vararg) {
+            *is_vararg = true;
+            return NULL;
+        }
         parseerror(parser, "expected typename");
         return NULL;
     }
@@ -4878,7 +4883,7 @@ static bool parse_typedef(parser_t *parser)
     ast_value      *typevar, *oldtype;
     ast_expression *old;
 
-    typevar = parse_typename(parser, NULL, NULL);
+    typevar = parse_typename(parser, NULL, NULL, NULL);
 
     if (!typevar)
         return false;
@@ -5048,7 +5053,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         parseerror(parser, "`static` qualifier is not supported in global scope");
 
     /* get the first complete variable */
-    var = parse_typename(parser, &basetype, cached_typedef);
+    var = parse_typename(parser, &basetype, cached_typedef, NULL);
     if (!var) {
         if (basetype)
             ast_delete(basetype);
