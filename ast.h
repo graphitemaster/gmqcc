@@ -25,6 +25,8 @@
 #define GMQCC_AST_HDR
 #include "ir.h"
 
+typedef uint16_t ast_flag_t;
+
 /* Note: I will not be using a _t suffix for the
  * "main" ast node types for now.
  */
@@ -52,6 +54,28 @@ typedef struct ast_switch_s      ast_switch;
 typedef struct ast_label_s       ast_label;
 typedef struct ast_goto_s        ast_goto;
 typedef struct ast_argpipe_s     ast_argpipe;
+
+enum {
+    AST_FLAG_VARIADIC      = 1 << 0,
+    AST_FLAG_NORETURN      = 1 << 1,
+    AST_FLAG_INLINE        = 1 << 2,
+    AST_FLAG_INITIALIZED   = 1 << 3,
+    AST_FLAG_DEPRECATED    = 1 << 4,
+    AST_FLAG_INCLUDE_DEF   = 1 << 5,
+    AST_FLAG_IS_VARARG     = 1 << 6,
+    AST_FLAG_ALIAS         = 1 << 7,
+    AST_FLAG_ERASEABLE     = 1 << 8,
+    AST_FLAG_ACCUMULATE    = 1 << 9,
+
+    /*
+     * An array declared as []
+     * so that the size is taken from the initializer
+     */
+    AST_FLAG_ARRAY_INIT    = 1 << 10,
+
+    AST_FLAG_LAST,
+    AST_FLAG_TYPE_MASK     = (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
+};
 
 enum {
     TYPE_ast_node,        /*  0 */
@@ -134,7 +158,7 @@ struct ast_expression_common
     /* arrays get a member-count */
     size_t                  count;
     ast_value*             *params;
-    uint32_t                flags;
+    ast_flag_t              flags;
     /* void foo(string...) gets varparam set as a restriction
      * for variadic parameters
      */
@@ -147,22 +171,6 @@ struct ast_expression_common
     ir_value               *outl;
     ir_value               *outr;
 };
-#define AST_FLAG_VARIADIC     (1<<0)
-#define AST_FLAG_NORETURN     (1<<1)
-#define AST_FLAG_INLINE       (1<<2)
-#define AST_FLAG_INITIALIZED  (1<<3)
-#define AST_FLAG_DEPRECATED   (1<<4)
-#define AST_FLAG_INCLUDE_DEF  (1<<5)
-#define AST_FLAG_IS_VARARG    (1<<6)
-#define AST_FLAG_ALIAS        (1<<7)
-#define AST_FLAG_ERASEABLE    (1<<8)
-#define AST_FLAG_ACCUMULATE   (1<<9)
-/*
- * An array declared as []
- * so that the size is taken from the initializer
- */
-#define AST_FLAG_ARRAY_INIT   (1<<10)
-#define AST_FLAG_TYPE_MASK    (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 
 /* Value
  *
@@ -656,4 +664,11 @@ const char* ast_function_label(ast_function*, const char *prefix);
 bool ast_function_codegen(ast_function *self, ir_builder *builder);
 bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir);
 
+/*
+ * If the condition creates a situation where this becomes -1 size it means there are
+ * more AST_FLAGs than the type ast_flag_t is capable of holding. So either eliminate
+ * the AST flag count or change the ast_flag_t typedef to a type large enough to accomodate
+ * all the flags.
+ */
+typedef int static_assert_is_ast_flag_safe [((AST_FLAG_LAST) <= (ast_flag_t)(-1)) ? 1 : -1];
 #endif
