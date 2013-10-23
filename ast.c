@@ -438,7 +438,6 @@ bool ast_value_set_name(ast_value *self, const char *name)
 ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
                            ast_expression* left, ast_expression* right)
 {
-    ast_binary *fold;
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binary_codegen);
 
