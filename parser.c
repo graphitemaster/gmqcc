@@ -521,10 +521,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 switch (exprs[0]->vtype) {
                     case TYPE_FLOAT:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
                         break;
                     case TYPE_VECTOR:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                         break;
                     default:
                         compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
@@ -546,10 +546,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 switch (exprs[0]->vtype) {
                     case TYPE_FLOAT:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
                         break;
                     case TYPE_VECTOR:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                         break;
                     default:
                         compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
@@ -576,15 +576,15 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 switch (exprs[0]->vtype) {
                     case TYPE_FLOAT:
                         if (exprs[1]->vtype == TYPE_VECTOR)
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
                         else
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
                         break;
                     case TYPE_VECTOR:
                         if (exprs[1]->vtype == TYPE_FLOAT)
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
                         else
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                         break;
                     default:
                         compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
@@ -604,7 +604,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 if (exprs[0]->vtype == TYPE_FLOAT)
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+                    out = fold_binary(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
                 else {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -657,7 +657,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                  * since scalar ^ vector is not allowed.
                  */
                 if (exprs[0]->vtype == TYPE_FLOAT) {
-                    out = (ast_expression*)ast_binary_new(ctx,
+                    out = fold_binary(ctx,
                         (op->id == opid1('^') ? VINSTR_BITXOR : op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
                         exprs[0], exprs[1]);
                 } else {
@@ -670,11 +670,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                          * Bitop all the values of the vector components against the
                          * vectors components in question.
                          */
-                        out = (ast_expression*)ast_binary_new(ctx,
+                        out = fold_binary(ctx,
                             (op->id == opid1('^') ? VINSTR_BITXOR_V : op->id == opid1('|') ? VINSTR_BITOR_V : VINSTR_BITAND_V),
                             exprs[0], exprs[1]);
                     } else {
-                        out = (ast_expression*)ast_binary_new(ctx,
+                        out = fold_binary(ctx,
                             (op->id == opid1('^') ? VINSTR_BITXOR_VF : op->id == opid1('|') ? VINSTR_BITOR_VF : VINSTR_BITAND_VF),
                             exprs[0], exprs[1]);
                     }
@@ -727,7 +727,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         }
                     }
                 }
-                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+                out = fold_binary(ctx, generated_op, exprs[0], exprs[1]);
             }
             break;
 
@@ -774,7 +774,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                out = (ast_expression*)ast_binary_new(
+                out = fold_binary(
                         parser_ctx(parser),
                         VINSTR_CROSS,
                         exprs[0],
@@ -795,6 +795,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
+                /* This whole block is NOT fold_binary safe */
                 ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
 
                 eq->refs = AST_REF_NONE;
@@ -835,7 +836,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+                out = fold_binary(ctx, generated_op, exprs[0], exprs[1]);
             break;
         case opid2('!', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -845,7 +846,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+                out = fold_binary(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -855,7 +856,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+                out = fold_binary(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
 
         case opid1('='):
@@ -969,9 +970,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!out)
                 return false;
-            out = (ast_expression*)ast_binary_new(ctx, subop,
-                                                  out,
-                                                  (ast_expression*)parser->fold->imm_float[1]);
+            out = fold_binary(ctx, subop,
+                              out,
+                              (ast_expression*)parser->fold->imm_float[1]);
 
             break;
         case opid2('+','='):
@@ -1036,9 +1037,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_MUL_VF,
                                                                 exprs[0], exprs[1]);
                     } else {
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
-                                                                  (ast_expression*)parser->fold->imm_float[1],
-                                                                  exprs[1]);
+                        out = fold_binary(ctx, INSTR_DIV_F,
+                                         (ast_expression*)parser->fold->imm_float[1],
+                                         exprs[1]);
                         if (!out) {
                             compile_error(ctx, "internal error: failed to generate division");
                             return false;
@@ -1095,9 +1096,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             else
                 assignop = type_store_instr[exprs[0]->vtype];
             if (exprs[0]->vtype == TYPE_FLOAT)
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
+                out = fold_binary(ctx, INSTR_BITAND, exprs[0], exprs[1]);
             else
-                out = (ast_expression*)ast_binary_new(ctx, VINSTR_BITAND_V, exprs[0], exprs[1]);
+                out = fold_binary(ctx, VINSTR_BITAND_V, exprs[0], exprs[1]);
             if (!out)
                 return false;
             (void)check_write_to(ctx, exprs[0]);
@@ -1117,9 +1118,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 if (exprs[0]->vtype == TYPE_FLOAT) {
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
+                    out = fold_binary(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
                 } else {
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, (ast_expression*)parser->fold->imm_vector[1], exprs[0]);
+                    out = fold_binary(ctx, INSTR_SUB_V, (ast_expression*)parser->fold->imm_vector[1], exprs[0]);
                 }
             }
             break;
