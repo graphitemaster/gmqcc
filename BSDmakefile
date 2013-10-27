@@ -3,6 +3,8 @@
 #
 .include "include.mk"
 
+.MAKE.JOB.PREFIX=
+
 GITTEST  != git describe --always 2>/dev/null
 VALTEST  != valgrind --version 2>/dev/null
 GITINFO  :=
