@@ -23,7 +23,6 @@
 #define GMQCC_PLATFORM_HEADER
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "platform.h"
 #include "gmqcc.h"
