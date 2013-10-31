@@ -2,13 +2,13 @@
 # Contributor: Wolfgang Bumiller <blub@speed.at>
 
 pkgname=gmqcc-git
-pkgver=20130127
+pkgver=20131031
 pkgrel=1
 pkgdesc="An Improved Quake C Compiler"
 arch=('i686' 'x86_64')
 depends=()
 conflicts=('gmqcc')
-provides=('gmqcc=0.2.4')
+provides=('gmqcc=0.3.5')
 makedepends=('git')
 url="https://github.com/graphitemaster/gmqcc.git"
 license=('MIT')

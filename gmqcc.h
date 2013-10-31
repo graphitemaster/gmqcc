@@ -37,12 +37,12 @@
 
 #define GMQCC_VERSION_MAJOR 0
 #define GMQCC_VERSION_MINOR 3
-#define GMQCC_VERSION_PATCH 5
+#define GMQCC_VERSION_PATCH 6
 #define GMQCC_VERSION_BUILD(J,N,P) (((J)<<16)|((N)<<8)|(P))
 #define GMQCC_VERSION \
     GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
 /* Undefine the following on a release-tag: */
-/* #define GMQCC_VERSION_TYPE_DEVEL */
+#define GMQCC_VERSION_TYPE_DEVEL
 
 /* Full version string in case we need it */
 #ifdef GMQCC_VERSION_TYPE_DEVEL
