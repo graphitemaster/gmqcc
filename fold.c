@@ -773,18 +773,28 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
 #define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
 /*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
 
-ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, int op) {
+static ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, int op) {
+    ast_expression *swapped = NULL; /* using this as bool */
     ast_value *load;
 
-    if (!ast_istype(left, ast_value) || !fold_can_1((load = (ast_value*)right)))
+    if (!ast_istype(right, ast_value) || !fold_can_1((load = (ast_value*)right))) {
+        swapped = left;
+        left    = right;
+        right   = swapped;
+    }
+
+    if (!ast_istype(right, ast_value) || !fold_can_1((load = (ast_value*)right)))
         return NULL;
 
     switch (op) {
-        case INSTR_MUL_F:
         case INSTR_DIV_F:
+            if (swapped)
+                return NULL;
+        case INSTR_MUL_F:
             if (fold_immvalue_float(load) == 1.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                return (ast_expression*)left;
+                ast_unref(right);
+                return left;
             }
             break;
 
@@ -793,14 +803,16 @@ ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, in
         case INSTR_SUB_F:
             if (fold_immvalue_float(load) == 0.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                return (ast_expression*)left;
+                ast_unref(right);
+                return left;
             }
             break;
 
         case INSTR_MUL_V:
             if (vec3_cmp(fold_immvalue_vector(load), vec3_create(1, 1, 1))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                return (ast_expression*)left;
+                ast_unref(right);
+                return left;
             }
             break;
 
@@ -808,12 +820,20 @@ ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, in
         case INSTR_SUB_V:
             if (vec3_cmp(fold_immvalue_vector(load), vec3_create(0, 0, 0))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                return (ast_expression*)left;
+                ast_unref(right);
+                return left;
             }
             break;
     }
 
     return NULL;
+}
+
+ast_expression *fold_binary(lex_ctx_t ctx, int op, ast_expression *left, ast_expression *right) {
+    ast_expression *ret = fold_superfluous(left, right, op);
+    if (ret)
+        return ret;
+    return (ast_expression*)ast_binary_new(ctx, op, left, right);
 }
 
 static GMQCC_INLINE int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {

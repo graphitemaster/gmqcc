@@ -163,8 +163,8 @@ static int task_pclose(fs_file_t **handles) {
         char    *cmd  = NULL;
         popen_t *open = (popen_t*)mem_a(sizeof(popen_t));
 
-        util_tmpnam(open->name_err);
-        util_tmpnam(open->name_out);
+        tmpnam(open->name_err);
+        tmpnam(open->name_out);
 
         (void)mode; /* excluded */
 

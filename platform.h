@@ -186,24 +186,6 @@ const char *platform_ctime(const time_t *timer);
 char *platform_strncat(char *dest, const char *src, size_t num);
 
 /*
- * Function: platform_tmpnam
- *  Generates names you can use to create temporary files.
- *
- * Parameters:
- *  str - Pointer that will hold the generated name and will be identical
- *        to the name returned by the function. This is a convenient way
- *        to save the generated name.
- *
- * Returns:
- *  Pointer to the name generate or *NULL* if there is a failure. Failure
- *  can occur if you attempt more than TMP_MAX calls.
- *
- * Remarks:
- *  Returns a name unique in the current workign directory.
- */
-const char *platform_tmpnam(char *str);
-
-/*
  * Function: platform_getenv
  *  Get a value from the current enviroment.
  *

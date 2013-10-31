@@ -74,17 +74,13 @@ typedef struct ftepp_s {
     char        *itemname;
     char        *includename;
     bool         in_macro;
+
+    uint32_t predef_countval;
+    uint32_t predef_randval;
 } ftepp_t;
 
-/*
- * Implement the predef subsystem now.  We can do this safely with the
- * help of lexer contexts.
- */
-static uint32_t ftepp_predef_countval = 0;
-static uint32_t ftepp_predef_randval  = 0;
-
 /* __DATE__ */
-static char *ftepp_predef_date(lex_file *context) {
+static char *ftepp_predef_date(ftepp_t *context) {
     const struct tm *itime = NULL;
     char            *value = (char*)mem_a(82);
     time_t           rtime;
@@ -99,7 +95,7 @@ static char *ftepp_predef_date(lex_file *context) {
 }
 
 /* __TIME__ */
-static char *ftepp_predef_time(lex_file *context) {
+static char *ftepp_predef_time(ftepp_t *context) {
     const struct tm *itime = NULL;
     char            *value = (char*)mem_a(82);
     time_t           rtime;
@@ -114,61 +110,58 @@ static char *ftepp_predef_time(lex_file *context) {
 }
 
 /* __LINE__ */
-static char *ftepp_predef_line(lex_file *context) {
-    char   *value;
-    util_asprintf(&value, "%d", (int)context->line);
+static char *ftepp_predef_line(ftepp_t *context) {
+    char *value;
+
+    util_asprintf(&value, "%d", (int)context->lex->line);
     return value;
 }
 /* __FILE__ */
-static char *ftepp_predef_file(lex_file *context) {
-    size_t  length = strlen(context->name) + 3; /* two quotes and a terminator */
-    char   *value  = (char*)mem_a(length);
-    util_snprintf(value, length, "\"%s\"", context->name);
+static char *ftepp_predef_file(ftepp_t *context) {
+    size_t length = strlen(context->lex->name) + 3; /* two quotes and a terminator */
+    char  *value  = (char*)mem_a(length);
 
+    util_snprintf(value, length, "\"%s\"", context->lex->name);
     return value;
 }
 /* __COUNTER_LAST__ */
-static char *ftepp_predef_counterlast(lex_file *context) {
-    char   *value;
-    util_asprintf(&value, "%u", ftepp_predef_countval);
-
-    (void)context;
+static char *ftepp_predef_counterlast(ftepp_t *context) {
+    char *value;
+    util_asprintf(&value, "%u", context->predef_countval);
     return value;
 }
 /* __COUNTER__ */
-static char *ftepp_predef_counter(lex_file *context) {
-    char   *value;
-    ftepp_predef_countval ++;
-    util_asprintf(&value, "%u", ftepp_predef_countval);
-    (void)context;
+static char *ftepp_predef_counter(ftepp_t *context) {
+    char *value;
+
+    context->predef_countval ++;
+    util_asprintf(&value, "%u", context->predef_countval);
 
     return value;
 }
 /* __RANDOM__ */
-static char *ftepp_predef_random(lex_file *context) {
-    char  *value;
-    ftepp_predef_randval = (util_rand() % 0xFF) + 1;
-    util_asprintf(&value, "%u", ftepp_predef_randval);
+static char *ftepp_predef_random(ftepp_t *context) {
+    char *value;
 
-    (void)context;
+    context->predef_randval = (util_rand() % 0xFF) + 1;
+    util_asprintf(&value, "%u", context->predef_randval);
     return value;
 }
 /* __RANDOM_LAST__ */
-static char *ftepp_predef_randomlast(lex_file *context) {
-    char   *value;
-    util_asprintf(&value, "%u", ftepp_predef_randval);
+static char *ftepp_predef_randomlast(ftepp_t *context) {
+    char *value;
 
-    (void)context;
+    util_asprintf(&value, "%u", context->predef_randval);
     return value;
 }
 /* __TIMESTAMP__ */
-static char *ftepp_predef_timestamp(lex_file *context) {
+static char *ftepp_predef_timestamp(ftepp_t *context) {
     struct stat finfo;
     const char *find;
     char       *value;
     size_t      size;
 
-    if (stat(context->name, &finfo))
+    if (stat(context->lex->name, &finfo))
         return util_strdup("\"<failed to determine timestamp>\"");
 
     find = util_ctime(&finfo.st_mtime);
@@ -183,7 +176,7 @@ static char *ftepp_predef_timestamp(lex_file *context) {
 
 typedef struct {
     const char   *name;
-    char       *(*func)(lex_file *);
+    char       *(*func)(ftepp_t *);
 } ftepp_predef_t;
 
 static const ftepp_predef_t ftepp_predefs[] = {
@@ -213,7 +206,7 @@ bool ftepp_predef_exists(const char *name) {
 }
 
 /* singleton because we're allowed */
-static GMQCC_INLINE char *(*ftepp_predef(const char *name))(lex_file *context) {
+static GMQCC_INLINE char *(*ftepp_predef(const char *name))(ftepp_t *context) {
     size_t i = ftepp_predef_index(name);
     return (i != 0) ? ftepp_predefs[i-1].func : NULL;
 }
@@ -305,8 +298,10 @@ static ftepp_t* ftepp_new(void)
     ftepp = (ftepp_t*)mem_a(sizeof(*ftepp));
     memset(ftepp, 0, sizeof(*ftepp));
 
-    ftepp->macros    = util_htnew(HT_MACROS);
-    ftepp->output_on = true;
+    ftepp->macros          = util_htnew(HT_MACROS);
+    ftepp->output_on       = true;
+    ftepp->predef_countval = 0;
+    ftepp->predef_randval  = 0;
 
     return ftepp;
 }
@@ -1686,9 +1681,9 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
             case TOKEN_TYPENAME:
                 /* is it a predef? */
                 if (OPTS_FLAG(FTEPP_PREDEFS)) {
-                    char *(*predef)(lex_file*) = ftepp_predef(ftepp_tokval(ftepp));
+                    char *(*predef)(ftepp_t*) = ftepp_predef(ftepp_tokval(ftepp));
                     if (predef) {
-                        expand = predef(ftepp->lex);
+                        expand = predef(ftepp);
                         ftepp_out (ftepp, expand, false);
                         ftepp_next(ftepp);
 

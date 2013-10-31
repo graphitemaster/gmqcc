@@ -23,7 +23,6 @@
 #define GMQCC_PLATFORM_HEADER
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "platform.h"
 #include "gmqcc.h"
@@ -46,10 +45,6 @@ const char *platform_ctime(const time_t *timer) {
 
 char *platform_strncat(char *dest, const char *src, size_t num) {
     return strncat(dest, src, num);
-}
-
-const char *platform_tmpnam(char *str) {
-    return tmpnam(str);
 }
 
 const char *platform_getenv(const char *var) {

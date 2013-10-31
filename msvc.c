@@ -76,10 +76,6 @@ char *platform_strncat(char *dest, const char *src, size_t num) {
     return strncat_s(dest, num, src, _TRUNCATE);
 }
 
-const char *platform_tmpnam(char *str) {
-    return tmpnam_s(str, L_tmpnam);
-}
-
 const char *platform_getenv(const char *var) {
     char  *buffer = (char *)platform_mem_allocate(GETENV_BUFFER);
     size_t size;

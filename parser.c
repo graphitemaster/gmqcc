@@ -44,7 +44,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
 static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *array, const char *funcname);
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef, bool *is_vararg);
 
 static void parseerror(parser_t *parser, const char *fmt, ...)
 {
@@ -521,10 +521,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 switch (exprs[0]->vtype) {
                     case TYPE_FLOAT:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_ADD_F, exprs[0], exprs[1]);
                         break;
                     case TYPE_VECTOR:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_ADD_V, exprs[0], exprs[1]);
                         break;
                     default:
                         compile_error(ctx, "invalid types used in expression: cannot add type %s and %s",
@@ -546,10 +546,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 switch (exprs[0]->vtype) {
                     case TYPE_FLOAT:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_SUB_F, exprs[0], exprs[1]);
                         break;
                     case TYPE_VECTOR:
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
+                        out = fold_binary(ctx, INSTR_SUB_V, exprs[0], exprs[1]);
                         break;
                     default:
                         compile_error(ctx, "invalid types used in expression: cannot subtract type %s from %s",
@@ -576,15 +576,15 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 switch (exprs[0]->vtype) {
                     case TYPE_FLOAT:
                         if (exprs[1]->vtype == TYPE_VECTOR)
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_FV, exprs[0], exprs[1]);
                         else
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_F, exprs[0], exprs[1]);
                         break;
                     case TYPE_VECTOR:
                         if (exprs[1]->vtype == TYPE_FLOAT)
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_VF, exprs[0], exprs[1]);
                         else
-                            out = (ast_expression*)ast_binary_new(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
+                            out = fold_binary(ctx, INSTR_MUL_V, exprs[0], exprs[1]);
                         break;
                     default:
                         compile_error(ctx, "invalid types used in expression: cannot multiply types %s and %s",
@@ -604,7 +604,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 if (exprs[0]->vtype == TYPE_FLOAT)
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
+                    out = fold_binary(ctx, INSTR_DIV_F, exprs[0], exprs[1]);
                 else {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -657,7 +657,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                  * since scalar ^ vector is not allowed.
                  */
                 if (exprs[0]->vtype == TYPE_FLOAT) {
-                    out = (ast_expression*)ast_binary_new(ctx,
+                    out = fold_binary(ctx,
                         (op->id == opid1('^') ? VINSTR_BITXOR : op->id == opid1('|') ? INSTR_BITOR : INSTR_BITAND),
                         exprs[0], exprs[1]);
                 } else {
@@ -670,11 +670,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                          * Bitop all the values of the vector components against the
                          * vectors components in question.
                          */
-                        out = (ast_expression*)ast_binary_new(ctx,
+                        out = fold_binary(ctx,
                             (op->id == opid1('^') ? VINSTR_BITXOR_V : op->id == opid1('|') ? VINSTR_BITOR_V : VINSTR_BITAND_V),
                             exprs[0], exprs[1]);
                     } else {
-                        out = (ast_expression*)ast_binary_new(ctx,
+                        out = fold_binary(ctx,
                             (op->id == opid1('^') ? VINSTR_BITXOR_VF : op->id == opid1('|') ? VINSTR_BITOR_VF : VINSTR_BITAND_VF),
                             exprs[0], exprs[1]);
                     }
@@ -727,7 +727,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         }
                     }
                 }
-                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+                out = fold_binary(ctx, generated_op, exprs[0], exprs[1]);
             }
             break;
 
@@ -774,7 +774,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                out = (ast_expression*)ast_binary_new(
+                out = fold_binary(
                         parser_ctx(parser),
                         VINSTR_CROSS,
                         exprs[0],
@@ -795,6 +795,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
+                /* This whole block is NOT fold_binary safe */
                 ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
 
                 eq->refs = AST_REF_NONE;
@@ -835,7 +836,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, generated_op, exprs[0], exprs[1]);
+                out = fold_binary(ctx, generated_op, exprs[0], exprs[1]);
             break;
         case opid2('!', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -845,7 +846,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+                out = fold_binary(ctx, type_ne_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
             if (exprs[0]->vtype != exprs[1]->vtype) {
@@ -855,7 +856,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (!(out = fold_op(parser->fold, op, exprs)))
-                out = (ast_expression*)ast_binary_new(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
+                out = fold_binary(ctx, type_eq_instr[exprs[0]->vtype], exprs[0], exprs[1]);
             break;
 
         case opid1('='):
@@ -969,9 +970,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!out)
                 return false;
-            out = (ast_expression*)ast_binary_new(ctx, subop,
-                                                  out,
-                                                  (ast_expression*)parser->fold->imm_float[1]);
+            out = fold_binary(ctx, subop,
+                              out,
+                              (ast_expression*)parser->fold->imm_float[1]);
 
             break;
         case opid2('+','='):
@@ -1036,9 +1037,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_MUL_VF,
                                                                 exprs[0], exprs[1]);
                     } else {
-                        out = (ast_expression*)ast_binary_new(ctx, INSTR_DIV_F,
-                                                                  (ast_expression*)parser->fold->imm_float[1],
-                                                                  exprs[1]);
+                        out = fold_binary(ctx, INSTR_DIV_F,
+                                         (ast_expression*)parser->fold->imm_float[1],
+                                         exprs[1]);
                         if (!out) {
                             compile_error(ctx, "internal error: failed to generate division");
                             return false;
@@ -1095,9 +1096,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             else
                 assignop = type_store_instr[exprs[0]->vtype];
             if (exprs[0]->vtype == TYPE_FLOAT)
-                out = (ast_expression*)ast_binary_new(ctx, INSTR_BITAND, exprs[0], exprs[1]);
+                out = fold_binary(ctx, INSTR_BITAND, exprs[0], exprs[1]);
             else
-                out = (ast_expression*)ast_binary_new(ctx, VINSTR_BITAND_V, exprs[0], exprs[1]);
+                out = fold_binary(ctx, VINSTR_BITAND_V, exprs[0], exprs[1]);
             if (!out)
                 return false;
             (void)check_write_to(ctx, exprs[0]);
@@ -1117,9 +1118,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 if (exprs[0]->vtype == TYPE_FLOAT) {
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
+                    out = fold_binary(ctx, INSTR_SUB_F, (ast_expression*)parser->fold->imm_float[2], exprs[0]);
                 } else {
-                    out = (ast_expression*)ast_binary_new(ctx, INSTR_SUB_V, (ast_expression*)parser->fold->imm_vector[1], exprs[0]);
+                    out = fold_binary(ctx, INSTR_SUB_V, (ast_expression*)parser->fold->imm_vector[1], exprs[0]);
                 }
             }
             break;
@@ -1422,7 +1423,7 @@ static ast_expression* parse_vararg_do(parser_t *parser)
         return NULL;
     }
 
-    typevar = parse_typename(parser, NULL, NULL);
+    typevar = parse_typename(parser, NULL, NULL, NULL);
     if (!typevar) {
         ast_unref(idx);
         return NULL;
@@ -3984,59 +3985,28 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
-    if (var->hasvalue && !(var->expression.flags & AST_FLAG_ACCUMULATE)) {
-        parseerror(parser, "function `%s` declared with multiple bodies", var->name);
-        ast_block_delete(block);
-        goto enderr;
-    }
-
-    /* accumulation? */
-    if (var->hasvalue && var->expression.vtype == TYPE_FUNCTION) {
-        ast_value    *accum    = NULL;
-        ast_function *previous = NULL;
-        char          acname[1024];
-
-        /* only void please */
-        if (var->expression.next->vtype != TYPE_VOID) {
-            parseerror(parser, "accumulated function `%s` declared with return type `%s` (accumulated functions must return void)",
-                var->name,
-                type_name[var->expression.next->vtype]
-            );
+    if (var->hasvalue) {
+        if (!(var->expression.flags & AST_FLAG_ACCUMULATE)) {
+            parseerror(parser, "function `%s` declared with multiple bodies", var->name);
             ast_block_delete(block);
             goto enderr;
         }
+        func = var->constval.vfunc;
 
-        /* generate a new name increasing the accumulation count*/
-        util_snprintf(acname, sizeof(acname), "##ACCUMULATE_%s_%d", var->name, var->constval.vfunc->accumulation++);
-        accum = ast_value_new(parser_ctx(parser), acname, ((ast_expression*)var)->vtype);
-        if (!accum)
-            return false;
-
-        ast_type_adopt(accum, var);
-        func = ast_function_new(ast_ctx(var), NULL, accum);
-        if (!func)
-            return false;
-
-        parser_addglobal(parser, acname, (ast_expression*)accum);
-        vec_push(parser->functions, func);
-
-        /* update the previous calls accumulate pointer for the codegen */
-        previous = var->constval.vfunc;
-        while (previous->accumulate)
-            previous = previous->accumulate;
-
-        if (ast_istype(previous, ast_function))
-            previous->accumulate = func;
-
+        if (!func) {
+            parseerror(parser, "internal error: NULL function: `%s`", var->name);
+            ast_block_delete(block);
+            goto enderr;
+        }
     } else {
         func = ast_function_new(ast_ctx(var), var->name, var);
-        vec_push(parser->functions, func);
-    }
 
-    if (!func) {
-        parseerror(parser, "failed to allocate function for `%s`", var->name);
-        ast_block_delete(block);
-        goto enderr;
+        if (!func) {
+            parseerror(parser, "failed to allocate function for `%s`", var->name);
+            ast_block_delete(block);
+            goto enderr;
+        }
+        vec_push(parser->functions, func);
     }
 
     parser_enterblock(parser);
@@ -4064,13 +4034,13 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         }
     }
 
-    if (var->argcounter) {
+    if (var->argcounter && !func->argc) {
         ast_value *argc = ast_value_new(ast_ctx(var), var->argcounter, TYPE_FLOAT);
         parser_addlocal(parser, argc->name, (ast_expression*)argc);
         func->argc = argc;
     }
 
-    if (OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC) {
+    if (OPTS_FLAG(VARIADIC_ARGS) && var->expression.flags & AST_FLAG_VARIADIC && !func->varargs) {
         char name[1024];
         ast_value *varargs = ast_value_new(ast_ctx(var), "reserved:va_args", TYPE_ARRAY);
         varargs->expression.flags |= AST_FLAG_IS_VARARG;
@@ -4099,7 +4069,6 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     vec_push(func->blocks, block);
-
 
     parser->function = old;
     if (!parser_leaveblock(parser))
@@ -4537,7 +4506,6 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
     return parser_create_array_getter_impl(parser, array);
 }
 
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef);
 static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 {
     lex_ctx_t     ctx;
@@ -4563,6 +4531,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 
     /* parse variables until we hit a closing paren */
     while (parser->tok != ')') {
+        bool is_varargs = false;
+
         if (!first) {
             /* there must be commas between them */
             if (parser->tok != ',') {
@@ -4576,10 +4546,13 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         }
         first = false;
 
-        if (parser->tok == TOKEN_DOTS) {
+        param = parse_typename(parser, NULL, NULL, &is_varargs);
+        if (!param && !is_varargs)
+            goto on_error;
+        if (is_varargs) {
             /* '...' indicates a varargs function */
             variadic = true;
-            if (!parser_next(parser) || (parser->tok != ')' && parser->tok != TOKEN_IDENT)) {
+            if (parser->tok != ')' && parser->tok != TOKEN_IDENT) {
                 parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                 goto on_error;
             }
@@ -4590,13 +4563,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                     goto on_error;
                 }
             }
-        }
-        else
-        {
-            /* for anything else just parse a typename */
-            param = parse_typename(parser, NULL, NULL);
-            if (!param)
-                goto on_error;
+        } else {
             vec_push(params, param);
             if (param->expression.vtype >= TYPE_VARIANT) {
                 char tname[1024]; /* typename is reserved in C++ */
@@ -4748,7 +4715,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
  *     void() foo(), bar
  * then the type-information 'void()' can be stored in 'storebase'
  */
-static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef)
+static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef, bool *is_vararg)
 {
     ast_value *var, *tmp;
     lex_ctx_t    ctx;
@@ -4757,6 +4724,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     bool        isfield  = false;
     bool        wasarray = false;
     size_t      morefields = 0;
+
+    bool        vararg = (parser->tok == TOKEN_DOTS);
 
     ctx = parser_ctx(parser);
 
@@ -4781,6 +4750,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
                 morefields += 3;
             else
                 break;
+            vararg = false;
             if (!parser_next(parser)) {
                 parseerror(parser, "expected typename for field definition");
                 return NULL;
@@ -4790,6 +4760,10 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     if (parser->tok == TOKEN_IDENT)
         cached_typedef = parser_find_typedef(parser, parser_tokval(parser), 0);
     if (!cached_typedef && parser->tok != TOKEN_TYPENAME) {
+        if (vararg && is_vararg) {
+            *is_vararg = true;
+            return NULL;
+        }
         parseerror(parser, "expected typename");
         return NULL;
     }
@@ -4910,7 +4884,7 @@ static bool parse_typedef(parser_t *parser)
     ast_value      *typevar, *oldtype;
     ast_expression *old;
 
-    typevar = parse_typename(parser, NULL, NULL);
+    typevar = parse_typename(parser, NULL, NULL, NULL);
 
     if (!typevar)
         return false;
@@ -5080,7 +5054,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         parseerror(parser, "`static` qualifier is not supported in global scope");
 
     /* get the first complete variable */
-    var = parse_typename(parser, &basetype, cached_typedef);
+    var = parse_typename(parser, &basetype, cached_typedef, NULL);
     if (!var) {
         if (basetype)
             ast_delete(basetype);
