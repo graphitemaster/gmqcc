@@ -799,8 +799,10 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
             break;
 
 
-        case INSTR_ADD_F:
         case INSTR_SUB_F:
+            if (swapped)
+                return NULL;
+        case INSTR_ADD_F:
             if (fold_immvalue_float(load) == 0.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 ast_unref(right);
@@ -816,8 +818,10 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
             }
             break;
 
-        case INSTR_ADD_V:
         case INSTR_SUB_V:
+            if (swapped)
+                return NULL;
+        case INSTR_ADD_V:
             if (vec3_cmp(fold_immvalue_vector(load), vec3_create(0, 0, 0))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 ast_unref(right);
