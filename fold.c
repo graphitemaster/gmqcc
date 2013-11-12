@@ -59,9 +59,9 @@ static GMQCC_INLINE vec3_t vec3_add(vec3_t a, vec3_t b) {
 
 static GMQCC_INLINE vec3_t vec3_sub(vec3_t a, vec3_t b) {
     vec3_t out;
-    out.x = a.x + b.x;
-    out.y = a.y + b.y;
-    out.z = a.z + b.z;
+    out.x = a.x - b.x;
+    out.y = a.y - b.y;
+    out.z = a.z - b.z;
     return out;
 }
 
