@@ -123,9 +123,9 @@ static GMQCC_INLINE vec3_t vec3_xorvf(vec3_t a, qcfloat_t b) {
 
 static GMQCC_INLINE vec3_t vec3_not(vec3_t a) {
     vec3_t out;
-    out.x = (qcfloat_t)(~((qcint_t)a.x));
-    out.y = (qcfloat_t)(~((qcint_t)a.y));
-    out.z = (qcfloat_t)(~((qcint_t)a.z));
+    out.x = -1-a.x;
+    out.y = -1-a.y;
+    out.z = -1-a.z;
     return out;
 }
 
