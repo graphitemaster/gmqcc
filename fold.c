@@ -160,7 +160,7 @@ static GMQCC_INLINE qcfloat_t vec3_notf(vec3_t a) {
 }
 
 static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
-    return (a.x && a.y && a.z);
+    return (a.x || a.y || a.z);
 }
 
 static GMQCC_INLINE vec3_t vec3_cross(vec3_t a, vec3_t b) {
