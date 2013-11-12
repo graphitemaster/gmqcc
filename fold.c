@@ -537,11 +537,10 @@ static GMQCC_INLINE ast_expression *fold_op_xor(fold_t *fold, ast_value *a, ast_
         if (fold_can_2(a, b))
             return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) ^ ((qcint_t)fold_immvalue_float(b))));
     } else {
-        if (isvector(b)) {
-            if (fold_can_2(a, b))
+        if (fold_can_2(a, b)) {
+            if (isvector(b))
                 return fold_constgen_vector(fold, vec3_xor(fold_immvalue_vector(a), fold_immvalue_vector(b)));
-        } else {
-            if (fold_can_2(a, b))
+            else
                 return fold_constgen_vector(fold, vec3_xorvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
         }
     }
