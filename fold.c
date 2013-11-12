@@ -606,11 +606,10 @@ static GMQCC_INLINE ast_expression *fold_op_lteqgt(fold_t *fold, ast_value *a, a
 
 static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_value *b, bool ne) {
     if (fold_can_2(a, b)) {
-        return fold_constgen_float(
-                    fold,
-                    (ne) ? (fold_immvalue_float(a) != fold_immvalue_float(b))
-                         : (fold_immvalue_float(a) == fold_immvalue_float(b))
-                );
+        if (isfloat(a) && isfloat(b))
+            return fold_constgen_float(fold, ne != (fold_immvalue_float(a) == fold_immvalue_float(b)));
+        if (isvector(a) && isvector(b))
+            return fold_constgen_float(fold, ne != vec3_cmp(fold_immvalue_vector(a), fold_immvalue_vector(b)));
     }
     return NULL;
 }
