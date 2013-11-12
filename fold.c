@@ -563,8 +563,10 @@ static GMQCC_INLINE ast_expression *fold_op_rshift(fold_t *fold, ast_value *a, a
 static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, ast_value *b, float expr) {
     if (fold_can_2(a, b)) {
         if (OPTS_FLAG(PERL_LOGIC)) {
-            if (fold_immediate_true(fold, a))
-                return (ast_expression*)b;
+            if (expr)
+                return (fold_immediate_true(fold, a)) ? (ast_expression*)a : (ast_expression*)b;
+            else
+                return (fold_immediate_true(fold, a)) ? (ast_expression*)b : (ast_expression*)a;
         } else {
             return fold_constgen_float (
                 fold,
