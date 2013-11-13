@@ -1892,7 +1892,7 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
         case VINSTR_NEG_F:
             return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_F, NULL, operand, ot);
         case VINSTR_NEG_V:
-            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, NULL, operand, ot);
+            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, NULL, operand, TYPE_VECTOR);
 
         default:
             ot = operand->vtype;

@@ -1,7 +1,7 @@
 DROPBOX := dropbox_uploader.sh
 UNAME   := $(shell uname -m)
 DOWNLOAD:= ../doc/html/download.c
-BRANCH  := $(shell git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+BRANCH  := $(shell git rev-parse --abbrev-ref HEAD)
 ifneq ($(shell uname -m), x86_64)
     $(error Cannot build packages without an x86_64 capable CPU)
 endif
