@@ -476,7 +476,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                                   type_name[exprs[0]->vtype]);
                 return false;
             }
-            out = (ast_expression*)ast_unary_new(ctx, (VINSTR_NEG_F-TYPE_FLOAT) + exprs[0]->vtype, exprs[0]);
+            if (exprs[0]->vtype == TYPE_FLOAT)
+                out = (ast_expression*)ast_unary_new(ctx, VINSTR_NEG_F, exprs[0]);
+            else
+                out = (ast_expression*)ast_unary_new(ctx, VINSTR_NEG_V, exprs[0]);
             break;
 
         case opid2('!','P'):
