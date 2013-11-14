@@ -616,7 +616,7 @@ static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_
 static GMQCC_INLINE ast_expression *fold_op_bnot(fold_t *fold, ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, ~((qcint_t)fold_immvalue_float(a)));
+            return fold_constgen_float(fold, -1-fold_immvalue_float(a));
     } else {
         if (isvector(a)) {
             if (fold_can_1(a))
