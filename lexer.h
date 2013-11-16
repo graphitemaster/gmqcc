@@ -185,13 +185,12 @@ static const oper_info c_operators[] = {
     { "++",  1, opid3('+','+','P'), ASSOC_RIGHT, 16, OP_PREFIX, false},
     { "--",  1, opid3('-','-','P'), ASSOC_RIGHT, 16, OP_PREFIX, false},
 
-    { "!",   1, opid2('!','P'),     ASSOC_RIGHT, 15, OP_PREFIX, true},
-    { "~",   1, opid2('~','P'),     ASSOC_RIGHT, 15, OP_PREFIX, true},
-    { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 15, OP_PREFIX, false},
-    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 15, OP_PREFIX, true},
-/*  { "&",   1, opid2('&','P'),     ASSOC_RIGHT, 15, OP_PREFIX, false}, */
-
     { "**",  2, opid2('*','*'),     ASSOC_RIGHT, 14, 0,         true},
+    { "!",   1, opid2('!','P'),     ASSOC_RIGHT, 14, OP_PREFIX, true},
+    { "~",   1, opid2('~','P'),     ASSOC_RIGHT, 14, OP_PREFIX, true},
+    { "+",   1, opid2('+','P'),     ASSOC_RIGHT, 14, OP_PREFIX, false},
+    { "-",   1, opid2('-','P'),     ASSOC_RIGHT, 14, OP_PREFIX, true},
+/*  { "&",   1, opid2('&','P'),     ASSOC_RIGHT, 14, OP_PREFIX, false}, */
 
     { "*",   2, opid1('*'),         ASSOC_LEFT,  13, 0,         true},
     { "/",   2, opid1('/'),         ASSOC_LEFT,  13, 0,         true},
