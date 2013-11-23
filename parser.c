@@ -1575,8 +1575,6 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         if (!var && !strcmp(parser_tokval(parser), "__FUNC__"))
             var = (ast_expression*)fold_constgen_string(parser->fold, parser->function->name, false);
         if (!var) {
-            char *tryintrinsic = NULL;
-
             /*
              * now we try for the real intrinsic hashtable. If the string
              * begins with __builtin, we simply skip past it, otherwise we
@@ -1587,22 +1585,19 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             }
 
             /*
-             * Try it as an instruction by appending __builtin_ to the token
-             * and emit a warning if an intrinsic function matching that
-             * name exists.
+             * Try it again, intrin_func deals with the alias method as well
+             * the first one masks for __builtin though, we emit warning here.
              */
             if (!var) {
-                util_asprintf(&tryintrinsic, "__builtin_%s", parser_tokval(parser));
-                if ((var = intrin_func(parser->intrin, tryintrinsic))) {
+                if ((var = intrin_func(parser->intrin, parser_tokval(parser)))) {
                     (void)!!compile_warning(
                         parser_ctx(parser),
                         WARN_BUILTINS,
-                        "using implicitly defined builtin `%s' for `%s'",
-                        tryintrinsic,
+                        "using implicitly defined builtin `__builtin_%s' for `%s'",
+                        parser_tokval(parser),
                         parser_tokval(parser)
                     );
                 }
-                mem_d(tryintrinsic);
             }
 
 
