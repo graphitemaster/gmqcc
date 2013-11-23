@@ -338,6 +338,12 @@ for QuakeWorld to compile it needs to be treated as a warning
 instead, as such this warning only works when -std=qcc.
 .It Fl W Ns Cm directive-inmacro
 Warn about the use of preprocessor directives inside macros.
+.It Fl W Ns Cm builtins
+When using a function that is not explicitly defined, the compiler
+will search its intrinsics table for something that matches that
+function name by appending "__builtin_" to it. This behaviour may
+be unexpected, so enabling this will produce a diagnostic when
+such a function is resolved to a builtin.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds

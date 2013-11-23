@@ -537,6 +537,14 @@
     DIRECTIVE_INMACRO = true
 
 
+    #When using a function that is not explicitly defined, the compiler
+    #will search its intrinsics table for something that matches that
+    #function name by appending "__builtin_" to it. This behaviour may
+    #be unexpected, so enabling this will produce a diagnostic when
+    #such a function is resolved to a builtin.
+
+    BUILTINS = true
+
 
 [optimizations]
     #Some general peephole optimizations. For instance the code `a = b
