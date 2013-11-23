@@ -751,7 +751,7 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_isnan,            "__builtin_isnan",            "isnan",    1},
     {&intrin_fabs,             "__builtin_fabs",             "fabs",     1},
     {&intrin_debug_typestring, "__builtin_debug_typestring", "",         0},
-    {&intrin_nullfunc,         "__builtin_nullfunc",         "",         0}
+    {&intrin_nullfunc,         "#nullfunc",                  "",         0}
 };
 
 static void intrin_error(intrin_t *intrin, const char *fmt, ...) {
@@ -831,7 +831,7 @@ static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, cons
     else
         intrin_error(intrin, "need function `%s', compiler depends on it", name);
 
-    return intrin_func(intrin, "__builtin_nullfunc");
+    return intrin_func(intrin, "#nullfunc");
 }
 
 ast_expression *intrin_func(intrin_t *intrin, const char *name) {
