@@ -191,7 +191,7 @@ uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
 uint16_t util_crc16(const char *k, int len, const short clamp) {
     register uint16_t h= (uint16_t)0xFFFFFFFF;
     for (; len; --len, ++k)
-    h = util_crc16_table[(h^((unsigned char)*k))&0xFF]^(h>>8);
+        h = util_crc16_table[(h^((unsigned char)*k))&0xFF]^(h>>8);
     return (~h)%clamp;
 }
 #endif
