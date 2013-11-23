@@ -460,7 +460,7 @@ uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
     register uint16_t h = current;
 
     /* don't load twice */
-    uint8_t *GMQCC_RESTRICT data = (uint8_t *GMQCC_RESTRICT)k;
+    const uint8_t *GMQCC_RESTRICT data = (const uint8_t *GMQCC_RESTRICT)k;
     size_t n;
 
     /* deal with the first bytes as bytes until we reach an 8 byte boundary */
