@@ -647,6 +647,37 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
     return (ast_expression*)value;
 }
 
+static ast_expression *intrin_exp2(intrin_t *intrin) {
+    /*
+     * float exp2(float x) {
+     *     return pow(2, x);
+     * }
+     */
+    ast_value    *value     = NULL;
+    ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", "exp2"));
+    ast_value    *arg1      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_block    *body      = ast_block_new(intrin_ctx(intrin));
+    ast_function *func      = intrin_value(intrin, &value, "exp2", TYPE_FLOAT);
+
+    vec_push(value->expression.params, arg1);
+
+    vec_push(callpow->params, (ast_expression*)fold_constgen_float(intrin->fold, 2.0f));
+    vec_push(callpow->params, (ast_expression*)arg1);
+
+    /* return <callpow> */
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)callpow
+        )
+    );
+
+    vec_push(func->blocks, body);
+
+    intrin_reg(intrin, value, func);
+    return (ast_expression*)value;
+}
+
 static ast_expression *intrin_isnan(intrin_t *intrin) {
     /*
      * float isnan(float x) {
@@ -743,6 +774,7 @@ ast_expression *intrin_debug_typestring(intrin_t *intrin) {
 
 static const intrin_func_t intrinsics[] = {
     {&intrin_exp,              "__builtin_exp",              "exp",      1},
+    {&intrin_exp2,             "__builtin_exp2",             "exp2",     1},
     {&intrin_mod,              "__builtin_mod",              "mod",      2},
     {&intrin_pow,              "__builtin_pow",              "pow",      2},
     {&intrin_isnan,            "__builtin_isnan",            "isnan",    1},

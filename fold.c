@@ -725,6 +725,10 @@ static GMQCC_INLINE ast_expression *fold_intrin_exp(fold_t *fold, ast_value *val
     return fold_constgen_float(fold, exp(fold_immvalue_float(value)));
 }
 
+static GMQCC_INLINE ast_expression *fold_intrin_exp2(fold_t *fold, ast_value *value) {
+    return fold_constgen_float(fold, pow(2, fold_immvalue_float(value)));
+}
+
 static GMQCC_INLINE ast_expression *fold_intrin_isnan(fold_t *fold, ast_value *value) {
     return fold_constgen_float(fold, isnan(fold_immvalue_float(value)) != 0.0f);
 }
@@ -739,6 +743,7 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
     if (!strcmp(intrin, "mod"))   ret = fold_intrin_mod  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
     if (!strcmp(intrin, "pow"))   ret = fold_intrin_pow  (fold, (ast_value*)arg[0], (ast_value*)arg[1]);
     if (!strcmp(intrin, "exp"))   ret = fold_intrin_exp  (fold, (ast_value*)arg[0]);
+    if (!strcmp(intrin, "exp2"))  ret = fold_intrin_exp2 (fold, (ast_value*)arg[0]);
     if (!strcmp(intrin, "isnan")) ret = fold_intrin_isnan(fold, (ast_value*)arg[0]);
     if (!strcmp(intrin, "fabs"))  ret = fold_intrin_fabs (fold, (ast_value*)arg[0]);
 
