@@ -441,6 +441,21 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
     ast_instantiate(ast_binary, ctx, ast_binary_delete);
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binary_codegen);
 
+    if (ast_istype(right, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
+        ast_expression *normal = ((ast_unary*)right)->operand;
+
+        /* make a-(-b) => a + b */
+        if (op == INSTR_SUB_F) {
+            op = INSTR_ADD_F;
+            right = normal;
+            ++opts_optimizationcount[OPTIM_PEEPHOLE];
+        } else if (op == INSTR_SUB_V) {
+            op = INSTR_ADD_V;
+            right = normal;
+            ++opts_optimizationcount[OPTIM_PEEPHOLE];
+        }
+    }
+
     self->op = op;
     self->left = left;
     self->right = right;
