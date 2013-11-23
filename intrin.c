@@ -58,7 +58,6 @@ static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, as
     vec_push(intrin->parser->globals,   (ast_expression*)value);
 }
 
-#define QC_M_E         2.718281828459045f
 #define QC_POW_EPSILON 0.00001f
 
 /*
@@ -622,45 +621,107 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
 static ast_expression *intrin_exp(intrin_t *intrin) {
     /*
      * float exp(float x) {
-     *     // mul 10 to round increments of 0.1f
-     *     return floor((pow(QC_M_E, x) * 10) + 0.5) / 10;
+     *     float sum = 1.0;
+     *     float acc = 1.0;
+     *     float i;
+     *     for (i = 1; i < 200; ++i)
+     *         sum += (acc *= x / i);
+     *
+     *     return sum;
      * }
      */
-    ast_value    *value     = NULL;
-    ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", "exp"));
-    ast_call     *callfloor = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "floor", "exp"));
-    ast_value    *arg1      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
-    ast_block    *body      = ast_block_new(intrin_ctx(intrin));
-    ast_function *func      = intrin_value(intrin, &value, "exp", TYPE_FLOAT);
+    ast_value    *value = NULL;
+    ast_value    *x     = ast_value_new(intrin_ctx(intrin), "x",   TYPE_FLOAT);
+    ast_value    *sum   = ast_value_new(intrin_ctx(intrin), "sum", TYPE_FLOAT);
+    ast_value    *acc   = ast_value_new(intrin_ctx(intrin), "acc", TYPE_FLOAT);
+    ast_value    *i     = ast_value_new(intrin_ctx(intrin), "i",   TYPE_FLOAT);
+    ast_block    *body  = ast_block_new(intrin_ctx(intrin));
+    ast_function *func  = intrin_value(intrin, &value, "mexp", TYPE_FLOAT);
 
-    vec_push(value->expression.params, arg1);
+    vec_push(value->expression.params, x);
+    vec_push(body->locals, sum);
+    vec_push(body->locals, acc);
+    vec_push(body->locals, i);
 
-    vec_push(callpow->params, (ast_expression*)fold_constgen_float(intrin->fold, QC_M_E));
-    vec_push(callpow->params, (ast_expression*)arg1);
-    vec_push(callfloor->params,
-        (ast_expression*)ast_binary_new(
+    /* sum = 1.0; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
-            INSTR_ADD_F,
-            (ast_expression*)ast_binary_new(
-                intrin_ctx(intrin),
-                INSTR_MUL_F,
-                (ast_expression*)callpow,
-                (ast_expression*)fold_constgen_float(intrin->fold, 10.0f)
-            ),
-            (ast_expression*)fold_constgen_float(intrin->fold, 0.5f)
+            INSTR_STORE_F,
+            (ast_expression*)sum,
+            (ast_expression*)intrin->fold->imm_float[1]
         )
     );
 
-    /* return <callfloor> / 10.0f */
+    /* acc = 1.0; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)acc,
+            (ast_expression*)intrin->fold->imm_float[1]
+        )
+    );
+
+    /*
+     * for (i = 1; i < 200; ++i)
+     *     sum += (acc *= x / i);
+     */
+    vec_push(body->exprs,
+        (ast_expression*)ast_loop_new(
+            intrin_ctx(intrin),
+            /* i = 1; */
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)i,
+                (ast_expression*)intrin->fold->imm_float[1]
+            ),
+            /* i < 200; */
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_LT,
+                (ast_expression*)i,
+                (ast_expression*)fold_constgen_float(intrin->fold, 200.0f)
+            ),
+            false,
+            NULL,
+            false,
+            /* ++i; */
+            (ast_expression*)ast_binstore_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                INSTR_ADD_F,
+                (ast_expression*)i,
+                (ast_expression*)intrin->fold->imm_float[1]
+            ),
+            /* sum += (acc *= (x / i)) */
+            (ast_expression*)ast_binstore_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                INSTR_ADD_F,
+                (ast_expression*)sum,
+                (ast_expression*)ast_binstore_new(
+                    intrin_ctx(intrin),
+                    INSTR_STORE_F,
+                    INSTR_MUL_F,
+                    (ast_expression*)acc,
+                    (ast_expression*)ast_binary_new(
+                        intrin_ctx(intrin),
+                        INSTR_DIV_F,
+                        (ast_expression*)x,
+                        (ast_expression*)i
+                    )
+                )
+            )
+        )
+    );
+
+    /* return sum; */
     vec_push(body->exprs,
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
-            (ast_expression*)ast_binary_new(
-                intrin_ctx(intrin),
-                INSTR_DIV_F,
-                (ast_expression*)callfloor,
-                (ast_expression*)fold_constgen_float(intrin->fold, 10.0f)
-            )
+            (ast_expression*)sum
         )
     );
 
