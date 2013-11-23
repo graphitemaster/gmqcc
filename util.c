@@ -484,6 +484,9 @@ uint16_t util_crc16(uint16_t current, const char *GMQCC_RESTRICT k, size_t len) 
         data += 8;
     }
 
+    #undef SELECT_BULK
+    #undef SELECT_DATA
+
     /* deal with the rest with the byte method */
     for (n = len & 7; n; --n)
         h = (uint16_t)(h << 8) ^ (*util_crc16_table)[(h >> 8) ^ *data++];
