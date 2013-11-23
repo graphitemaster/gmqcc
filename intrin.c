@@ -73,10 +73,7 @@ static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, as
 static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, const char *from);
 static ast_expression *intrin_nullfunc(intrin_t *intrin) {
     ast_value    *value = NULL;
-    ast_function *func  = intrin_value(intrin, &value, "nil", TYPE_VOID);
-
-    vec_push(func->blocks, ast_block_new(intrin_ctx(intrin)));
-
+    ast_function *func  = intrin_value(intrin, &value, NULL, TYPE_VOID);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
