@@ -449,6 +449,40 @@ uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
     return h;
 }
 
+#if 0
+/* for reference: table generated with this: */
+/* compile with cc -std=c99 */
+int main(void) {
+    for (unsigned i = 0; i < 0x100; ++i) {
+        uint16_t x = i << 8;
+        for (int j = 0; j < 8; ++j)
+            x = (x << 1) ^ ((x & 0x8000) ? 0x1021 : 0);
+        tab[0][i] = x;
+    }
+    for (unsigned i = 0; i < 0x100; ++i) {
+        uint16_t c = tab[0][i];
+        for (unsigned j = 1; j < 8; ++j) {
+            c = tab[0][c >> 8] ^ (c << 8);
+            tab[j][i] = c;
+        }
+    }
+
+    printf("static const uint16_t util_crc16_table[8][256] = {");
+    for (int i = 0; i < 8; ++i) {
+        printf("{\n");
+        for (int j = 0; j < 0x100; ++j) {
+            printf((j & 7) ? " " : "    ");
+            printf((j != 0x100-1) ? "0x%04X," : "0x%04X", tab[i][j]);
+            if ((j & 7) == 7)
+                printf("\n");
+        }
+        printf((i != 7) ? "}," : "}");
+    }
+    printf("};\n");
+    return 0;
+}
+#endif
+
 /*
  * modifier is the match to make and the transposition from it, while add is the upper-value that determines the
  * transposition from uppercase to lower case.
