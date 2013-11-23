@@ -150,12 +150,20 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #    define GMQCC_NORETURN
 #endif /*! (defined(__GNUC__) && __GNUC__ >= 2) || defined (__CLANG__) */
 
-#if (defined(__GNUC__)) || defined(__CLANG__)
+#if defined(__GNUC__) || defined(__CLANG__)
 #   define GMQCC_LIKELY(X)   __builtin_expect((X), 1)
 #   define GMQCC_UNLIKELY(X) __builtin_expect((X), 0)
 #else
 #   define GMQCC_LIKELY(X)   (X)
 #   define GMQCC_UNLIKELY(X) (X)
+#endif
+
+#if defined(__GNUC__) || defined(__CLANG__)
+#   define GMQCC_RESTRICT __restrict__
+#elif defined(__MSC_VER)
+#   define GMQCC_RESTRICT __restrict
+#else
+#   define GMQCC_RESTRICT
 #endif
 
 #define GMQCC_ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
