@@ -902,12 +902,11 @@ static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, cons
     if ((find = intrin_func_try(intrin, offsetof(intrin_func_t, alias), name)))
         return find;
 
-    if (from)
+    if (from) {
         intrin_error(intrin, "need function `%s', compiler depends on it for `__builtin_%s'", name, from);
-    else
-        intrin_error(intrin, "need function `%s', compiler depends on it", name);
-
-    return intrin_func(intrin, "#nullfunc");
+        return intrin_func_self(intrin, "#nullfunc", NULL);
+    }
+    return NULL;
 }
 
 ast_expression *intrin_func(intrin_t *intrin, const char *name) {
