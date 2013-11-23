@@ -15,11 +15,6 @@ Optimizations:
             are determined via underlying equivalence, opposed to lexically identical
             expressions (CSE).
 
-        Spare Conditional Constant Propagation:
-            Simultaneously remove dead code and propagates constants. This is
-            not the same as individual dead code elimination and constant propagation
-            passes.  This is multipass.
-
     The following are optimizations that can be implemented before the
     transformation into a binary (code generator).
 
@@ -44,16 +39,6 @@ Language Features:
             - No virtuals / pure virtuals
             - Essentially "C structs but with operators" :)
 
-    Arrays:
-        They're currently implemented, but support in the engine
-        plus implicit bounds checks (and ability to turn the bounds
-        checking off)
-
-    Exceptions:
-        I feel like all languages suck at implementing this.  This would
-        require support from the engine, but it would help catch bugs. We
-        could make it fast using a neat method of "frame pointers".
-
     Overloaded Functions:
         Ability to make individual functions with the same name, but take
         different amount of arguments or type of arguments.
@@ -65,80 +50,15 @@ Language Features:
         become "default", otherwise if two arguments are specified then
         the "default" string is overrode with what ever the user passes.
 
-    Character Type:
-        A char type would be nice to have.  Essentially implemented as a
-        string, we can both "get" and "set" indices inside strings with
-        the help of builtin functions.
-
-        {
-            string foo = "test";
-            foo[0] = 'r';
-
-            print("it's time to ", foo);
-        }
-
-    Array Accessor With C-Semantics:
-        Also the ability to use them as array accessors:
-
-        {
-            float hugearray['Z'];
-
-            hugearray['a'] = 100.0f;
-        }
-
-        Keep existing "pointer-like" semantics as well.  In C arrays
-        simple work as pointers, a[1] -> *(a+1), or 1[a] -> *(1+a)
-        so we should allow both forms of syntax.  As well as operand
-        reversal.
-
-        {
-            float h['Z'];
-            *(h+'a') = 100;
-            *('a'+h) = 'a'[h];
-        }
-
-    FTEQCC Inline Assembly:
-        This is still up for debate, mainly because a) it's syntax is
-        just utter crap. b) If we do an assembler, it should be nice.
-        we could provide a -std=fteqcc for the assembler itself :P
-        just like the compiler; although I think that's just insane.
-
-        Please see Assembler below.
-
     Namespaces:
         There is already a ticket open on this. They'd work just like C++
         identically even.
-
-Standalone QCVM:
-    The following are QCVM additions:
-
-        Proper ASM disassembly:
-            Proper disassembly of compiled .dat files. Annotated if possible
-            when -g (is used during compilation)
-
-        Debugging:
-            A step-through debugger -d (with separate compilation as well)
-            Called -> qcdb  Optionally alias to qcvm -d :)
-
-            We should be able to see the assembly and source it matches to
-            and the state of OFS_* and calls.
 
 Testsuite:
     The following are things we'd like to see added to the testsuite
     in the distant future:
 
-    Multithreading:
-        Chances are when we start adding more and more tests, executing
-        them individually will be midly slow (even if that's a whole minute)
-        It would be nice to add a -j paramater to allow multiple threads to
-        be used and so we can execute many tests in parallel.
-
     Interface:
         Ability to select individual tests, or set parameters manually
         opposed to using the static task-template files. (A method to
         override them rather).
-
-
-Assembler:
-    Possibly support for a future assembler for QCASM.  But we're not
-    entirely sure if it makes sense.
