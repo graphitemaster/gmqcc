@@ -678,6 +678,52 @@ static ast_expression *intrin_exp2(intrin_t *intrin) {
     return (ast_expression*)value;
 }
 
+static ast_expression *intrin_isinf(intrin_t *intrin) {
+    /*
+     * float isinf(float x) {
+     *     return (x != 0.0) && (x + x == x);
+     * }
+     */
+    ast_value    *value = NULL;
+    ast_value    *x     = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_block    *body  = ast_block_new(intrin_ctx(intrin));
+    ast_function *func  = intrin_value(intrin, &value, "isinf", TYPE_FLOAT);
+
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_AND,
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_NE_F,
+                    (ast_expression*)x,
+                    (ast_expression*)intrin->fold->imm_float[0]
+                ),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_EQ_F,
+                    (ast_expression*)ast_binary_new(
+                        intrin_ctx(intrin),
+                        INSTR_ADD_F,
+                        (ast_expression*)x,
+                        (ast_expression*)x
+                    ),
+                    (ast_expression*)x
+                )
+            )
+        )
+    );
+
+    vec_push(value->expression.params, x);
+    vec_push(func->blocks, body);
+
+    intrin_reg(intrin, value, func);
+
+    return (ast_expression*)value;
+}
+
 static ast_expression *intrin_isnan(intrin_t *intrin) {
     /*
      * float isnan(float x) {
@@ -778,6 +824,7 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_mod,              "__builtin_mod",              "mod",      2},
     {&intrin_pow,              "__builtin_pow",              "pow",      2},
     {&intrin_isnan,            "__builtin_isnan",            "isnan",    1},
+    {&intrin_isinf,            "__builtin_isinf",            "isinf",    1},
     {&intrin_fabs,             "__builtin_fabs",             "fabs",     1},
     {&intrin_debug_typestring, "__builtin_debug_typestring", "",         0},
     {&intrin_nullfunc,         "#nullfunc",                  "",         0}
