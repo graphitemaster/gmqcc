@@ -61,7 +61,27 @@ static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, as
 #define QC_M_E         2.718281828459045f
 #define QC_POW_EPSILON 0.00001f
 
-static ast_expression *intrin_pow (intrin_t *intrin) {
+/*
+ * since some intrinsics depend on each other there is the possibility
+ * that an intrinsic will fail to get a 'depended' function that a
+ * builtin needs, causing some dependency in the chain to have a NULL
+ * function. This will cause a segmentation fault at code generation,
+ * even though an error was raised. To contiue to allow it (instead
+ * of stopping compilation right away). We need to return from the
+ * parser, before compilation stops after all the collected errors.
+ */
+static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, const char *from);
+static ast_expression *intrin_nullfunc(intrin_t *intrin) {
+    ast_value    *value = NULL;
+    ast_function *func  = intrin_value(intrin, &value, "nil", TYPE_VOID);
+
+    vec_push(func->blocks, ast_block_new(intrin_ctx(intrin)));
+
+    intrin_reg(intrin, value, func);
+    return (ast_expression*)value;
+}
+
+static ast_expression *intrin_pow(intrin_t *intrin) {
     /*
      *
      * float pow(float base, float exp) {
@@ -107,9 +127,9 @@ static ast_expression *intrin_pow (intrin_t *intrin) {
     /* prepare some calls for later */
     ast_call *callpow1  = ast_call_new(intrin_ctx(intrin), (ast_expression*)value);      /* for pow(base, -exp)    */
     ast_call *callpow2  = ast_call_new(intrin_ctx(intrin), (ast_expression*)value);      /* for pow(vase, exp / 2) */
-    ast_call *callsqrt1 = ast_call_new(intrin_ctx(intrin), intrin_func(intrin, "sqrt")); /* for sqrt(base)         */
-    ast_call *callsqrt2 = ast_call_new(intrin_ctx(intrin), intrin_func(intrin, "sqrt")); /* for sqrt(square)       */
-    ast_call *callfabs  = ast_call_new(intrin_ctx(intrin), intrin_func(intrin, "fabs")); /* for fabs(mid - exp)    */
+    ast_call *callsqrt1 = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "sqrt", "pow")); /* for sqrt(base)         */
+    ast_call *callsqrt2 = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "sqrt", "pow")); /* for sqrt(square)       */
+    ast_call *callfabs  = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "fabs", "pow")); /* for fabs(mid - exp)    */
 
     /* prepare some blocks for later */
     ast_block *expgt1       = ast_block_new(intrin_ctx(intrin));
@@ -491,7 +511,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
      * }
      */
     ast_value    *value = NULL;
-    ast_call     *call  = ast_call_new (intrin_ctx(intrin), intrin_func(intrin, "floor"));
+    ast_call     *call  = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "floor", "mod"));
     ast_value    *a     = ast_value_new(intrin_ctx(intrin), "a",    TYPE_FLOAT);
     ast_value    *b     = ast_value_new(intrin_ctx(intrin), "b",    TYPE_FLOAT);
     ast_value    *div   = ast_value_new(intrin_ctx(intrin), "div",  TYPE_FLOAT);
@@ -587,8 +607,8 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
      * }
      */
     ast_value    *value     = NULL;
-    ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func(intrin, "pow"));
-    ast_call     *callfloor = ast_call_new (intrin_ctx(intrin), intrin_func(intrin, "floor"));
+    ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", "exp"));
+    ast_call     *callfloor = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "floor", "exp"));
     ast_value    *arg1      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body      = ast_block_new(intrin_ctx(intrin));
     ast_function *func      = intrin_value(intrin, &value, "exp", TYPE_FLOAT);
@@ -725,12 +745,13 @@ ast_expression *intrin_debug_typestring(intrin_t *intrin) {
 }
 
 static const intrin_func_t intrinsics[] = {
-    {&intrin_exp,              "__builtin_exp",              "exp",   1},
-    {&intrin_mod,              "__builtin_mod",              "mod",   2},
-    {&intrin_pow,              "__builtin_pow",              "pow",   2},
-    {&intrin_isnan,            "__builtin_isnan",            "isnan", 1},
-    {&intrin_fabs,             "__builtin_fabs",             "fabs",  1},
-    {&intrin_debug_typestring, "__builtin_debug_typestring", "",      0}
+    {&intrin_exp,              "__builtin_exp",              "exp",      1},
+    {&intrin_mod,              "__builtin_mod",              "mod",      2},
+    {&intrin_pow,              "__builtin_pow",              "pow",      2},
+    {&intrin_isnan,            "__builtin_isnan",            "isnan",    1},
+    {&intrin_fabs,             "__builtin_fabs",             "fabs",     1},
+    {&intrin_debug_typestring, "__builtin_debug_typestring", "",         0},
+    {&intrin_nullfunc,         "__builtin_nullfunc",         "",         0}
 };
 
 static void intrin_error(intrin_t *intrin, const char *fmt, ...) {
@@ -789,7 +810,7 @@ static GMQCC_INLINE ast_expression *intrin_func_try(intrin_t *intrin, size_t off
     return NULL;
 }
 
-ast_expression *intrin_func(intrin_t *intrin, const char *name) {
+static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, const char *from) {
     size_t           i;
     ast_expression  *find;
 
@@ -805,6 +826,14 @@ ast_expression *intrin_func(intrin_t *intrin, const char *name) {
     if ((find = intrin_func_try(intrin, offsetof(intrin_func_t, alias), name)))
         return find;
 
-    intrin_error(intrin, "need function: `%s` compiler depends on it", name);
-    return NULL;
+    if (from)
+        intrin_error(intrin, "need function `%s', compiler depends on it for `__builtin_%s'", name, from);
+    else
+        intrin_error(intrin, "need function `%s', compiler depends on it", name);
+
+    return intrin_func(intrin, "__builtin_nullfunc");
+}
+
+ast_expression *intrin_func(intrin_t *intrin, const char *name) {
+    return intrin_func_self(intrin, name, NULL);
 }
