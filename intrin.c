@@ -204,49 +204,96 @@ static ast_expression *intrin_pow (intrin_t *intrin) {
 
 static ast_expression *intrin_mod(intrin_t *intrin) {
     /*
-     * float mod(float x, float y) {
-     *   return x - y * floor(x / y);
+     * float mod(float a, float b) {
+     *     float div = a / b;
+     *     float sign = (div < 0.0f) ? -1 : 1;
+     *     return a - b * sign * floor(sign * div);
      * }
      */
     ast_value    *value = NULL;
     ast_call     *call  = ast_call_new (intrin_ctx(intrin), intrin_func(intrin, "floor"));
-    ast_value    *arg1  = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
-    ast_value    *arg2  = ast_value_new(intrin_ctx(intrin), "y", TYPE_FLOAT);
+    ast_value    *a     = ast_value_new(intrin_ctx(intrin), "a",    TYPE_FLOAT);
+    ast_value    *b     = ast_value_new(intrin_ctx(intrin), "b",    TYPE_FLOAT);
+    ast_value    *div   = ast_value_new(intrin_ctx(intrin), "div",  TYPE_FLOAT);
+    ast_value    *sign  = ast_value_new(intrin_ctx(intrin), "sign", TYPE_FLOAT);
     ast_block    *body  = ast_block_new(intrin_ctx(intrin));
     ast_function *func  = intrin_value(intrin, &value, "mod", TYPE_FLOAT);
 
-    /* floor(x/y) */
-    vec_push(call->params,
-        (ast_expression*)ast_binary_new (
+    vec_push(value->expression.params, a);
+    vec_push(value->expression.params, b);
+
+    vec_push(body->locals, div);
+    vec_push(body->locals, sign);
+
+    /* div = a / b; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
-            INSTR_DIV_F,
-            (ast_expression*)arg1,
-            (ast_expression*)arg2
+            INSTR_STORE_F,
+            (ast_expression*)div,
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_DIV_F,
+                (ast_expression*)a,
+                (ast_expression*)b
+            )
         )
     );
 
+    /* sign = (div < 0.0f) ? -1 : 1; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)sign,
+            (ast_expression*)ast_ternary_new(
+                intrin_ctx(intrin),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_LT,
+                    (ast_expression*)div,
+                    (ast_expression*)intrin->fold->imm_float[0]
+                ),
+                (ast_expression*)intrin->fold->imm_float[2],
+                (ast_expression*)intrin->fold->imm_float[1]
+            )
+        )
+    );
+
+    /* floor(sign * div) */
+    vec_push(call->params,
+        (ast_expression*)ast_binary_new(
+            intrin_ctx(intrin),
+            INSTR_MUL_F,
+            (ast_expression*)sign,
+            (ast_expression*)div
+        )
+    );
+
+    /* return a - b * sign * <call> */
     vec_push(body->exprs,
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
                 intrin_ctx(intrin),
                 INSTR_SUB_F,
-                (ast_expression*)arg1,
+                (ast_expression*)a,
                 (ast_expression*)ast_binary_new(
                     intrin_ctx(intrin),
                     INSTR_MUL_F,
-                    (ast_expression*)arg2,
-                    (ast_expression*)call
+                    (ast_expression*)b,
+                    (ast_expression*)ast_binary_new(
+                        intrin_ctx(intrin),
+                        INSTR_MUL_F,
+                        (ast_expression*)sign,
+                        (ast_expression*)call
+                    )
                 )
             )
         )
     );
 
-    vec_push(value->expression.params, arg1); /* float x (for param) */
-    vec_push(value->expression.params, arg2); /* float y (for param) */
-
-    vec_push(func->blocks,             body); /* {{{ body }}} */
-
+    vec_push(func->blocks, body); /* {{{ body }}} */
     intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;
