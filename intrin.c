@@ -90,6 +90,8 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     float accumulate;
      *
      *     if (exp == 0.0)
+     *         return 1;
+     *     if (exp == 1.0)
      *         return base;
      *     if (exp < 0)
      *         return 1.0 / pow(base, -exp);
@@ -166,7 +168,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
 
     /*
      * if (exp == 0.0)
-     *     return base;
+     *     return 1;
      */
     vec_push(body->exprs,
         (ast_expression*)ast_ifthen_new(
@@ -176,6 +178,27 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                 INSTR_EQ_F,
                 (ast_expression*)exp,
                 (ast_expression*)intrin->fold->imm_float[0]
+            ),
+            (ast_expression*)ast_return_new(
+                intrin_ctx(intrin),
+                (ast_expression*)intrin->fold->imm_float[1]
+            ),
+            NULL
+        )
+    );
+
+    /*
+     * if (exp == 1.0)
+     *     return base;
+     */
+    vec_push(body->exprs,
+        (ast_expression*)ast_ifthen_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_EQ_F,
+                (ast_expression*)exp,
+                (ast_expression*)intrin->fold->imm_float[1]
             ),
             (ast_expression*)ast_return_new(
                 intrin_ctx(intrin),
