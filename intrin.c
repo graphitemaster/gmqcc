@@ -124,8 +124,8 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     ast_function *func = intrin_value(intrin, &value, "pow", TYPE_FLOAT);
 
     /* prepare some calls for later */
-    ast_call *callpow1  = ast_call_new(intrin_ctx(intrin), (ast_expression*)value);      /* for pow(base, -exp)    */
-    ast_call *callpow2  = ast_call_new(intrin_ctx(intrin), (ast_expression*)value);      /* for pow(vase, exp / 2) */
+    ast_call *callpow1  = ast_call_new(intrin_ctx(intrin), (ast_expression*)value);                  /* for pow(base, -exp)    */
+    ast_call *callpow2  = ast_call_new(intrin_ctx(intrin), (ast_expression*)value);                  /* for pow(vase, exp / 2) */
     ast_call *callsqrt1 = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "sqrt", "pow")); /* for sqrt(base)         */
     ast_call *callsqrt2 = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "sqrt", "pow")); /* for sqrt(square)       */
     ast_call *callfabs  = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "fabs", "pow")); /* for fabs(mid - exp)    */
@@ -507,7 +507,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
         )
     );
 
-    /* return midvalue */
+    /* return accumulate */
     vec_push(body->exprs,
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
