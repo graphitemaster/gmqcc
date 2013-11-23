@@ -126,26 +126,68 @@ void util_endianswap(void *_data, size_t length, unsigned int typesize) {
 }
 
 /*
-* CRC algorithms vary in the width of the polynomial, the value of said polynomial,
-* the initial value used for the register, weather the bits of each byte are reflected
-* before being processed, weather the algorithm itself feeds input bytes through the
-* register or XORs them with a byte from one end and then straight into the table, as
-* well as (but not limited to the idea of reflected versions) where the final register
-* value becomes reversed, and finally weather the value itself is used to XOR the final
-* register value. AS such you can already imagine how painfully annoying CRCs are,
-* of course we stand to target Quake, which expects it's certain set of rules for proper
-* calculation of a CRC.
+* Based On:
+*   Slicing-by-8 algorithms by Michael E.
+*       Kounavis and Frank L. Berry from Intel Corp.
+*       http://www.intel.com/technology/comms/perfnet/download/CRC_generators.pdf
 *
-* In most traditional CRC algorithms on uses a reflected table driven method where a value
-* or register is reflected if it's bits are swapped around it's center. For example:
-* take the bits 0101 is the 4-bit reflection of 1010, and respectfully 0011 would be the
-* reflection of 1100. Quake however expects a NON-Reflected CRC on the output, but still
-* requires a final XOR on the values (0xFFFF and 0x0000) this is a standard CCITT CRC-16
-* which I respectfully as a programmer don't agree with.
+*   This code was made to be slightly less confusing with macros, which
+*   I suppose is somewhat ironic.
 *
-* So now you know what we target, and why we target it, despite how unsettling it may seem
-* but those are what Quake seems to request.
+*   The code had to be changed for non reflected on the output register
+*   since that's the method Quake uses.
+*
+*   The code also had to be changed for CRC16, which is slightly harder
+*   since the CRC32 method in the original Intel paper used a different
+*   bit order convention.
+*
+* Notes about the table:
+*   - It's exactly 4K in size
+*   - 64 elements fit in a cache line
+*   - can do 8 iterations unrolled 8 times for free
+*   - The first 256 elements of the table are standard CRC16 table
+*
+* Table can be generated with the following utility:
 */
+#if 0
+#include <stdio.h>
+#include <stdint.h>
+int main(void) {
+    for (unsigned i = 0; i < 0x100; ++i) {
+        uint16_t x = i << 8;
+        for (int j = 0; j < 8; ++j)
+            x = (x << 1) ^ ((x & 0x8000) ? 0x1021 : 0);
+        tab[0][i] = x;
+    }
+    for (unsigned i = 0; i < 0x100; ++i) {
+        uint16_t c = tab[0][i];
+        for (unsigned j = 1; j < 8; ++j) {
+            c = tab[0][c >> 8] ^ (c << 8);
+            tab[j][i] = c;
+        }
+    }
+    printf("static const uint16_t util_crc16_table[8][256] = {");
+    for (int i = 0; i < 8; ++i) {
+        printf("{\n");
+        for (int j = 0; j < 0x100; ++j) {
+            printf((j & 7) ? " " : "    ");
+            printf((j != 0x100-1) ? "0x%04X," : "0x%04X", tab[i][j]);
+            if ((j & 7) == 7)
+                printf("\n");
+        }
+        printf((i != 7) ? "}," : "}");
+    }
+    printf("};\n");
+    return 0;
+}
+#endif
+/*
+ * Non-Reflective version is present as well as a reference.
+ *
+ * TODO:
+ *  combine the crc16 into u32s and mask off low high for byte order
+ *  to make the arrays smaller.
+ */
 
 static const uint16_t util_crc16_table[8][256] = {{
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -448,40 +490,6 @@ uint16_t util_crc16(uint16_t current, const char *k, size_t len) {
 
     return h;
 }
-
-#if 0
-/* for reference: table generated with this: */
-/* compile with cc -std=c99 */
-int main(void) {
-    for (unsigned i = 0; i < 0x100; ++i) {
-        uint16_t x = i << 8;
-        for (int j = 0; j < 8; ++j)
-            x = (x << 1) ^ ((x & 0x8000) ? 0x1021 : 0);
-        tab[0][i] = x;
-    }
-    for (unsigned i = 0; i < 0x100; ++i) {
-        uint16_t c = tab[0][i];
-        for (unsigned j = 1; j < 8; ++j) {
-            c = tab[0][c >> 8] ^ (c << 8);
-            tab[j][i] = c;
-        }
-    }
-
-    printf("static const uint16_t util_crc16_table[8][256] = {");
-    for (int i = 0; i < 8; ++i) {
-        printf("{\n");
-        for (int j = 0; j < 0x100; ++j) {
-            printf((j & 7) ? " " : "    ");
-            printf((j != 0x100-1) ? "0x%04X," : "0x%04X", tab[i][j]);
-            if ((j & 7) == 7)
-                printf("\n");
-        }
-        printf((i != 7) ? "}," : "}");
-    }
-    printf("};\n");
-    return 0;
-}
-#endif
 
 /*
  * modifier is the match to make and the transposition from it, while add is the upper-value that determines the
