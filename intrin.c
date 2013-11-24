@@ -85,7 +85,7 @@ static ast_expression *intrin_isfinite(intrin_t *intrin) {
      */
     ast_value    *value     = NULL;
     ast_value    *x         = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
-    ast_function *func      = intrin_value(intrin, &value, NULL, TYPE_FLOAT);
+    ast_function *func      = intrin_value(intrin, &value, "isfinite", TYPE_FLOAT);
     ast_call     *callisnan = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "isnan", "isfinite"));
     ast_call     *callisinf = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "isinf", "isfinite"));
     ast_block    *block     = ast_block_new(intrin_ctx(intrin));
