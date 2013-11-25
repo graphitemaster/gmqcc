@@ -860,6 +860,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)intrin->fold->imm_float[1]
         )
     );
+
     vec_push(body->exprs,
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
@@ -868,6 +869,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)callsqrt1
         )
     );
+
     vec_push(body->exprs,
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),

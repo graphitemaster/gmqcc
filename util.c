@@ -482,6 +482,7 @@ uint16_t util_crc16(uint16_t current, const char *GMQCC_RESTRICT k, size_t len) 
             SELECT_DATA(1) ^
             SELECT_DATA(0);
         data += 8;
+        len  -= 8;
     }
 
     #undef SELECT_BULK
