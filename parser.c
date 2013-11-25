@@ -1590,7 +1590,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
              */
             if (!var) {
                 if ((var = intrin_func(parser->intrin, parser_tokval(parser)))) {
-                    (void)!!!compile_warning(
+                    (void)!compile_warning(
                         parser_ctx(parser),
                         WARN_BUILTINS,
                         "using implicitly defined builtin `__builtin_%s' for `%s'",
