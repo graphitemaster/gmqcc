@@ -559,7 +559,7 @@ static ast_expression *intrin_exp2(intrin_t *intrin) {
 
     vec_push(value->expression.params, arg1);
 
-    vec_push(callpow->params, (ast_expression*)fold_constgen_float(intrin->fold, 2.0f));
+    vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
     vec_push(callpow->params, (ast_expression*)arg1);
 
     /* return <callpow> */
