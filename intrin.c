@@ -1846,14 +1846,14 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_mod,              "__builtin_mod",              "mod",      2},
     {&intrin_pow,              "__builtin_pow",              "pow",      2},
     {&intrin_fabs,             "__builtin_fabs",             "fabs",     1},
-    {&intrin_epsilon,          "__builtin_epsilon",          "",         0},
-    {&intrin_nan,              "__builtin_nan",              "",         0},
-    {&intrin_inf,              "__builtin_inf",              "",         0},
-    {&intrin_ln,               "__builtin_ln",               "",         2},
     {&intrin_log,              "__builtin_log",              "log",      1},
     {&intrin_log10,            "__builtin_log10",            "log10",    1},
     {&intrin_log2,             "__builtin_log2",             "log2",     1},
     {&intrin_logb,             "__builtin_logb",             "logb",     1},
+    {&intrin_epsilon,          "__builtin_epsilon",          "",         0},
+    {&intrin_nan,              "__builtin_nan",              "",         0},
+    {&intrin_inf,              "__builtin_inf",              "",         0},
+    {&intrin_ln,               "__builtin_ln",               "",         2},
     {&intrin_debug_typestring, "__builtin_debug_typestring", "",         0},
     {&intrin_nullfunc,         "#nullfunc",                  "",         0}
 };
