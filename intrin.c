@@ -1310,7 +1310,7 @@ static ast_expression *intrin_nan(intrin_t *intrin) {
 
 static ast_expression *intrin_inf(intrin_t *intrin) {
     /*
-     * float nan(void) {
+     * float inf(void) {
      *     float x = 1.0f;
      *     float y = 0.0f;
      *     return x / y;
@@ -1389,8 +1389,18 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      *       nth   = 0.0f;
      *
      *       while (whole >= base) {
-     *           whole /= base;
-     *           nth++;
+     *           float base2    = base;
+     *           float n2       = 1.0f;
+     *           float newbase2 = base2 * base2;
+     *
+     *           while (whole >= newbase2) {
+     *               base2     = newbase2;
+     *               n2       *= 2;
+     *               newbase2 *= newbase2;
+     *           }
+     *
+     *           whole /= base2;
+     *           nth += n2;
      *       }
      *
      *       float b_iplus1 = n;
@@ -1426,12 +1436,16 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     ast_value    *A_iplus1   = ast_value_new(intrin_ctx(intrin), "A_iplus1",  TYPE_FLOAT);
     ast_value    *B_iplus1   = ast_value_new(intrin_ctx(intrin), "B_iplus1",  TYPE_FLOAT);
     ast_value    *eps        = ast_value_new(intrin_ctx(intrin), "eps",       TYPE_FLOAT);
+    ast_value    *base2      = ast_value_new(intrin_ctx(intrin), "base2",     TYPE_FLOAT);
+    ast_value    *n2         = ast_value_new(intrin_ctx(intrin), "n2",        TYPE_FLOAT);
+    ast_value    *newbase2   = ast_value_new(intrin_ctx(intrin), "newbase2",  TYPE_FLOAT);
     ast_block    *block      = ast_block_new(intrin_ctx(intrin));
     ast_block    *plt1orblt1 = ast_block_new(intrin_ctx(intrin)); /* (power <= 1.0f || base <= 1.0f) */
     ast_block    *plt1       = ast_block_new(intrin_ctx(intrin)); /* (power < 1.0f) */
     ast_block    *blt1       = ast_block_new(intrin_ctx(intrin)); /* (base  < 1.0f) */
     ast_block    *forloop    = ast_block_new(intrin_ctx(intrin)); /* for(;;) */
     ast_block    *whileloop  = ast_block_new(intrin_ctx(intrin)); /* while (whole >= base) */
+    ast_block    *nestwhile  = ast_block_new(intrin_ctx(intrin)); /* while (whole >= newbase2) */
     ast_function *func       = intrin_value(intrin, &value, "ln", TYPE_FLOAT);
     size_t        i;
 
@@ -1605,25 +1619,116 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
         )
     );
 
-    /* whole /= base; */
+    /* base2 = base; */
+    vec_push(whileloop->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)base2,
+            (ast_expression*)base
+        )
+    );
+
+    /* n2 = 1.0f; */
+    vec_push(whileloop->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)n2,
+            (ast_expression*)intrin->fold->imm_float[1]
+        )
+    );
+
+    /* newbase2 = base2 * base2; */
+    vec_push(whileloop->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)newbase2,
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_MUL_F,
+                (ast_expression*)base2,
+                (ast_expression*)base2
+            )
+        )
+    );
+
+    /* while loop locals */
+    vec_push(whileloop->locals, base2);
+    vec_push(whileloop->locals, n2);
+    vec_push(whileloop->locals, newbase2);
+
+    /* base2 = newbase2; */
+    vec_push(nestwhile->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)base2,
+            (ast_expression*)newbase2
+        )
+    );
+
+    /* n2 *= 2; */
+    vec_push(nestwhile->exprs,
+        (ast_expression*)ast_binstore_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_MUL_F,
+            (ast_expression*)n2,
+            (ast_expression*)intrin->fold->imm_float[3] /* 2.0f */
+        )
+    );
+
+    /* newbase2 *= newbase2; */
+    vec_push(nestwhile->exprs,
+        (ast_expression*)ast_binstore_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_MUL_F,
+            (ast_expression*)newbase2,
+            (ast_expression*)newbase2
+        )
+    );
+
+    /* while (whole >= newbase2) */
+    vec_push(whileloop->exprs,
+        (ast_expression*)ast_loop_new(
+            intrin_ctx(intrin),
+            NULL,
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_GE,
+                (ast_expression*)whole,
+                (ast_expression*)newbase2
+            ),
+            false,
+            NULL,
+            false,
+            NULL,
+            (ast_expression*)nestwhile
+        )
+    );
+
+    /* whole /= base2; */
     vec_push(whileloop->exprs,
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
             INSTR_DIV_F,
             (ast_expression*)whole,
-            (ast_expression*)base
+            (ast_expression*)base2
         )
     );
 
-    /* nth ++; */
+    /* nth += n2; */
     vec_push(whileloop->exprs,
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
             INSTR_ADD_F,
             (ast_expression*)nth,
-            (ast_expression*)intrin->fold->imm_float[1]
+            (ast_expression*)n2
         )
     );
 
