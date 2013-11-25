@@ -1379,7 +1379,6 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      *       }
      *   }
      *
-     *   float out;
      *   float A_i       = 1;
      *   float B_i       = 0;
      *   float A_iminus1 = 0;
@@ -1419,7 +1418,6 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     ast_value    *whole      = ast_value_new(intrin_ctx(intrin), "whole",     TYPE_FLOAT);
     ast_value    *nth        = ast_value_new(intrin_ctx(intrin), "nth",       TYPE_FLOAT);
     ast_value    *sign       = ast_value_new(intrin_ctx(intrin), "sign",      TYPE_FLOAT);
-    ast_value    *out        = ast_value_new(intrin_ctx(intrin), "out",       TYPE_FLOAT);
     ast_value    *A_i        = ast_value_new(intrin_ctx(intrin), "A_i",       TYPE_FLOAT);
     ast_value    *B_i        = ast_value_new(intrin_ctx(intrin), "B_i",       TYPE_FLOAT);
     ast_value    *A_iminus1  = ast_value_new(intrin_ctx(intrin), "A_iminus1", TYPE_FLOAT);
@@ -1444,7 +1442,6 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     vec_push(block->locals, nth);
     vec_push(block->locals, sign);
     vec_push(block->locals, eps);
-    vec_push(block->locals, out);
     vec_push(block->locals, A_i);
     vec_push(block->locals, B_i);
     vec_push(block->locals, A_iminus1);
