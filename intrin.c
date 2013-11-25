@@ -784,7 +784,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             intrin_ctx(intrin),
             INSTR_DIV_F,
             (ast_expression*)exp,
-            (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+            (ast_expression*)intrin->fold->imm_float[3] /* 2.0f */
         )
     );
 
@@ -887,7 +887,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                 intrin_ctx(intrin),
                 INSTR_DIV_F,
                 (ast_expression*)high,
-                (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+                (ast_expression*)intrin->fold->imm_float[3] /* 2.0f */
             )
         )
     );
@@ -996,7 +996,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                     (ast_expression*)low,
                     (ast_expression*)high
                 ),
-                (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+                (ast_expression*)intrin->fold->imm_float[3] /* 2.0f */
             )
         )
     );
@@ -1236,7 +1236,7 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
                         intrin_ctx(intrin),
                         INSTR_MUL_F,
                         (ast_expression*)eps,
-                        (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+                        (ast_expression*)intrin->fold->imm_float[3] /* 2.0f */
                     )
                 ),
                 (ast_expression*)intrin->fold->imm_float[1]
@@ -1248,7 +1248,7 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
                 INSTR_STORE_F,
                 INSTR_DIV_F,
                 (ast_expression*)eps,
-                (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+                (ast_expression*)intrin->fold->imm_float[3] /* 2.0f */
             )
         )
     );

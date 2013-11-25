@@ -230,6 +230,7 @@ fold_t *fold_init(parser_t *parser) {
     (void)fold_constgen_float (fold,  0.0f);
     (void)fold_constgen_float (fold,  1.0f);
     (void)fold_constgen_float (fold, -1.0f);
+    (void)fold_constgen_float (fold,  2.0f);
 
     (void)fold_constgen_vector(fold, vec3_create(0.0f, 0.0f, 0.0f));
     (void)fold_constgen_vector(fold, vec3_create(-1.0f, -1.0f, -1.0f));
