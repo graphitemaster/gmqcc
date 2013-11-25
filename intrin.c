@@ -1356,6 +1356,475 @@ static ast_expression *intrin_inf(intrin_t *intrin) {
     return (ast_expression*)value;
 }
 
+static ast_expression *intrin_ln(intrin_t *intrin) {
+    /*
+     * float log(float power, float base) {
+     *   float whole;
+     *   float nth
+     *   float sign = 1.0f;
+     *   float eps  = epsilon();
+     *
+     *   if (power <= 1.0f || bbase <= 1.0) {
+     *       if (power <= 0.0f || base <= 0.0f)
+     *           return nan();
+     *
+     *       if (power < 1.0f) {
+     *           power = 1.0f / power;
+     *           sign *= -1.0f;
+     *       }
+     *
+     *       if (base < 1.0f) {
+     *           sign *= -1.0f;
+     *           base  = 1.0f / base;
+     *       }
+     *   }
+     *
+     *   float out;
+     *   float A_i       = 1;
+     *   float B_i       = 0;
+     *   float A_iminus1 = 0;
+     *   float B_iminus1 = 1;
+     *
+     *   for (;;) {
+     *       whole = power;
+     *       nth   = 0.0f;
+     *
+     *       while (whole >= base) {
+     *           whole /= base;
+     *           nth++;
+     *       }
+     *
+     *       float b_iplus1 = n;
+     *       float A_iplus1 = b_iplus1 * A_i + A_iminus1;
+     *       float B_iplus1 = b_iplus1 * B_i + B_iminus1;
+     *
+     *       A_iminus1 = A_i;
+     *       B_iminus1 = B_i;
+     *       A_i       = A_iplus1;
+     *       B_i       = B_iplus1;
+     *
+     *       if (whole <= 1.0f + eps)
+     *           break;
+     *
+     *       power = base;
+     *       bower = whole;
+     *   }
+     *   return sign * A_i / B_i;
+     * }
+     */
+
+    ast_value    *value      = NULL;
+    ast_value    *power      = ast_value_new(intrin_ctx(intrin), "power",     TYPE_FLOAT);
+    ast_value    *base       = ast_value_new(intrin_ctx(intrin), "base",      TYPE_FLOAT);
+    ast_value    *whole      = ast_value_new(intrin_ctx(intrin), "whole",     TYPE_FLOAT);
+    ast_value    *nth        = ast_value_new(intrin_ctx(intrin), "nth",       TYPE_FLOAT);
+    ast_value    *sign       = ast_value_new(intrin_ctx(intrin), "sign",      TYPE_FLOAT);
+    ast_value    *out        = ast_value_new(intrin_ctx(intrin), "out",       TYPE_FLOAT);
+    ast_value    *A_i        = ast_value_new(intrin_ctx(intrin), "A_i",       TYPE_FLOAT);
+    ast_value    *B_i        = ast_value_new(intrin_ctx(intrin), "B_i",       TYPE_FLOAT);
+    ast_value    *A_iminus1  = ast_value_new(intrin_ctx(intrin), "A_iminus1", TYPE_FLOAT);
+    ast_value    *B_iminus1  = ast_value_new(intrin_ctx(intrin), "B_iminus1", TYPE_FLOAT);
+    ast_value    *b_iplus1   = ast_value_new(intrin_ctx(intrin), "b_iplus1",  TYPE_FLOAT);
+    ast_value    *A_iplus1   = ast_value_new(intrin_ctx(intrin), "A_iplus1",  TYPE_FLOAT);
+    ast_value    *B_iplus1   = ast_value_new(intrin_ctx(intrin), "B_iplus1",  TYPE_FLOAT);
+    ast_value    *eps        = ast_value_new(intrin_ctx(intrin), "eps",       TYPE_FLOAT);
+    ast_block    *block      = ast_block_new(intrin_ctx(intrin));
+    ast_block    *plt1orblt1 = ast_block_new(intrin_ctx(intrin)); /* (power <= 1.0f || base <= 1.0f) */
+    ast_block    *plt1       = ast_block_new(intrin_ctx(intrin)); /* (power < 1.0f) */
+    ast_block    *blt1       = ast_block_new(intrin_ctx(intrin)); /* (base  < 1.0f) */
+    ast_block    *forloop    = ast_block_new(intrin_ctx(intrin)); /* for(;;) */
+    ast_block    *whileloop  = ast_block_new(intrin_ctx(intrin)); /* while (whole >= base) */
+    ast_function *func       = intrin_value(intrin, &value, "ln", TYPE_FLOAT);
+    size_t        i;
+
+    vec_push(value->expression.params, power);
+    vec_push(value->expression.params, base);
+
+    vec_push(block->locals, whole);
+    vec_push(block->locals, nth);
+    vec_push(block->locals, sign);
+    vec_push(block->locals, eps);
+    vec_push(block->locals, out);
+    vec_push(block->locals, A_i);
+    vec_push(block->locals, B_i);
+    vec_push(block->locals, A_iminus1);
+    vec_push(block->locals, B_iminus1);
+
+    /* sign = 1.0f; */
+    vec_push(block->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)sign,
+            (ast_expression*)intrin->fold->imm_float[1]
+        )
+    );
+
+    /* eps = __builtin_epsilon(); */
+    vec_push(block->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)eps,
+            (ast_expression*)ast_call_new(
+                intrin_ctx(intrin),
+                intrin_func_self(intrin, "__builtin_epsilon", "ln")
+            )
+        )
+    );
+
+    /*
+     * A_i       = 1;
+     * B_i       = 0;
+     * A_iminus1 = 0;
+     * B_iminus1 = 1;
+     */
+    for (i = 0; i <= 1; i++) {
+        int j;
+        for (j = 1; j >= 0; j--) {
+            vec_push(block->exprs,
+                (ast_expression*)ast_store_new(
+                    intrin_ctx(intrin),
+                    INSTR_STORE_F,
+                    (ast_expression*)((j) ? ((i) ? B_iminus1 : A_i)
+                                          : ((i) ? A_iminus1 : B_i)),
+                    (ast_expression*)intrin->fold->imm_float[j]
+                )
+            );
+        }
+    }
+
+    /*
+     * <plt1> = {
+     *     power = 1.0f / power;
+     *     sign *= -1.0f;
+     * }
+     * <blt1> = {
+     *     base  = 1.0f / base;
+     *     sign *= -1.0f;
+     * }
+     */
+    for (i = 0; i <= 1; i++) {
+        vec_push(((i) ? blt1 : plt1)->exprs,
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)((i) ? base : power),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_DIV_F,
+                    (ast_expression*)intrin->fold->imm_float[1],
+                    (ast_expression*)((i) ? base : power)
+                )
+            )
+        );
+        vec_push(plt1->exprs,
+            (ast_expression*)ast_binstore_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                INSTR_MUL_F,
+                (ast_expression*)sign,
+                (ast_expression*)intrin->fold->imm_float[2]
+            )
+        );
+    }
+
+    /*
+     * <plt1orblt1> = {
+     *     if (power <= 0.0 || base <= 0.0f)
+     *         return __builtin_nan();
+     *     if (power < 1.0f)
+     *         <plt1>
+     *     if (base < 1.0f)
+     *         <blt1>
+     * }
+     */
+    vec_push(plt1orblt1->exprs,
+        (ast_expression*)ast_ifthen_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_OR,
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_LE,
+                    (ast_expression*)power,
+                    (ast_expression*)intrin->fold->imm_float[0]
+                ),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_LE,
+                    (ast_expression*)base,
+                    (ast_expression*)intrin->fold->imm_float[0]
+                )
+            ),
+            (ast_expression*)ast_return_new(
+                intrin_ctx(intrin),
+                (ast_expression*)ast_call_new(
+                    intrin_ctx(intrin),
+                    intrin_func_self(intrin, "__builtin_nan", "ln")
+                )
+            ),
+            NULL
+        )
+    );
+
+    for (i = 0; i <= 1; i++) {
+        vec_push(plt1orblt1->exprs,
+            (ast_expression*)ast_ifthen_new(
+                intrin_ctx(intrin),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_LT,
+                    (ast_expression*)((i) ? base : power),
+                    (ast_expression*)intrin->fold->imm_float[1]
+                ),
+                (ast_expression*)((i) ? blt1 : plt1),
+                NULL
+            )
+        );
+    }
+
+    vec_push(block->exprs, (ast_expression*)plt1orblt1);
+
+
+    /* whole = power; */
+    vec_push(forloop->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)whole,
+            (ast_expression*)power
+        )
+    );
+
+    /* nth = 0.0f; */
+    vec_push(forloop->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)nth,
+            (ast_expression*)intrin->fold->imm_float[0]
+        )
+    );
+
+    /* whole /= base; */
+    vec_push(whileloop->exprs,
+        (ast_expression*)ast_binstore_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_DIV_F,
+            (ast_expression*)whole,
+            (ast_expression*)base
+        )
+    );
+
+    /* nth ++; */
+    vec_push(whileloop->exprs,
+        (ast_expression*)ast_binstore_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            INSTR_ADD_F,
+            (ast_expression*)nth,
+            (ast_expression*)intrin->fold->imm_float[1]
+        )
+    );
+
+    /* while (whole >= base) */
+    vec_push(forloop->exprs,
+        (ast_expression*)ast_loop_new(
+            intrin_ctx(intrin),
+            NULL,
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_GE,
+                (ast_expression*)whole,
+                (ast_expression*)base
+            ),
+            false,
+            NULL,
+            false,
+            NULL,
+            (ast_expression*)whileloop
+        )
+    );
+
+    vec_push(forloop->locals, b_iplus1);
+    vec_push(forloop->locals, A_iplus1);
+    vec_push(forloop->locals, B_iplus1);
+
+    /* b_iplus1 = nth; */
+    vec_push(forloop->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)b_iplus1,
+            (ast_expression*)nth
+        )
+    );
+
+    /*
+     * A_iplus1 = b_iplus1 * A_i + A_iminus1;
+     * B_iplus1 = b_iplus1 * B_i + B_iminus1;
+     */
+    for (i = 0; i <= 1; i++) {
+        vec_push(forloop->exprs,
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)((i) ? B_iplus1 : A_iplus1),
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_ADD_F,
+                    (ast_expression*)ast_binary_new(
+                        intrin_ctx(intrin),
+                        INSTR_MUL_F,
+                        (ast_expression*)b_iplus1,
+                        (ast_expression*) ((i) ? B_i : A_i)
+                    ),
+                    (ast_expression*)((i) ? B_iminus1 : A_iminus1)
+                )
+            )
+        );
+    }
+
+    /*
+     * A_iminus1 = A_i;
+     * B_iminus1 = B_i;
+     */
+    for (i = 0; i <= 1; i++) {
+        vec_push(forloop->exprs,
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)((i) ? B_iminus1 : A_iminus1),
+                (ast_expression*)((i) ? B_i       : A_i)
+            )
+        );
+    }
+
+    /*
+     * A_i = A_iplus1;
+     * B_i = B_iplus1;
+     */
+    for (i = 0; i <= 1; i++) {
+        vec_push(forloop->exprs,
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)((i) ? B_i      : A_i),
+                (ast_expression*)((i) ? B_iplus1 : A_iplus1)
+            )
+        );
+    }
+
+    /*
+     * if (whole <= 1.0f + eps)
+     *     break;
+     */
+    vec_push(forloop->exprs,
+        (ast_expression*)ast_ifthen_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_LE,
+                (ast_expression*)whole,
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_ADD_F,
+                    (ast_expression*)intrin->fold->imm_float[1],
+                    (ast_expression*)eps
+                )
+            ),
+            (ast_expression*)ast_breakcont_new(
+                intrin_ctx(intrin),
+                false,
+                0
+            ),
+            NULL
+        )
+    );
+
+    /*
+     * power = base;
+     * base  = whole;
+     */
+    for (i = 0; i <= 1; i++) {
+        vec_push(forloop->exprs,
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)((i) ? base  : power),
+                (ast_expression*)((i) ? whole : base)
+            )
+        );
+    }
+
+    /* add the for loop block */
+    vec_push(block->exprs,
+        (ast_expression*)ast_loop_new(
+            intrin_ctx(intrin),
+            NULL,
+            /* for(; 1; ) ?? (can this be NULL too?) */
+            (ast_expression*)intrin->fold->imm_float[1],
+            false,
+            NULL,
+            false,
+            NULL,
+            (ast_expression*)forloop
+        )
+    );
+
+    /* return sign * A_i / B_il */
+    vec_push(block->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_MUL_F,
+                (ast_expression*)sign,
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_DIV_F,
+                    (ast_expression*)A_i,
+                    (ast_expression*)B_i
+                )
+            )
+        )
+    );
+
+    vec_push(func->blocks, block);
+    intrin_reg(intrin, value, func);
+
+    return (ast_expression*)value;
+}
+
+#define LOG_VARIANT(NAME, BASE) \
+static ast_expression *intrin_##NAME(intrin_t *intrin) { \
+    ast_value    *value  = NULL; \
+    ast_call     *callln = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "__builtin_ln", #NAME)); \
+    ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT); \
+    ast_block    *body   = ast_block_new(intrin_ctx(intrin)); \
+    ast_function *func   = intrin_value(intrin, &value, #NAME, TYPE_FLOAT); \
+    vec_push(value->expression.params, arg1); \
+    vec_push(callln->params, (ast_expression*)arg1); \
+    vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, BASE)); \
+    vec_push(body->exprs, \
+        (ast_expression*)ast_return_new( \
+            intrin_ctx(intrin), \
+            (ast_expression*)callln \
+        ) \
+    ); \
+    vec_push(func->blocks, body); \
+    intrin_reg(intrin, value, func); \
+    return (ast_expression*)value; \
+}
+LOG_VARIANT(log, 2.7182818284590452354)
+LOG_VARIANT(log10, 10)
+LOG_VARIANT(log2, 2)
+LOG_VARIANT(logb, 2) /* FLT_RADIX == 2 for now */
+#undef LOG_VARIANT
+
 /*
  * TODO: make static (and handle ast_type_string) here for the builtin
  * instead of in SYA parse close.
@@ -1383,6 +1852,11 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_epsilon,          "__builtin_epsilon",          "",         0},
     {&intrin_nan,              "__builtin_nan",              "",         0},
     {&intrin_inf,              "__builtin_inf",              "",         0},
+    {&intrin_ln,               "__builtin_ln",               "",         2},
+    {&intrin_log,              "__builtin_log",              "log",      1},
+    {&intrin_log10,            "__builtin_log10",            "log10",    1},
+    {&intrin_log2,             "__builtin_log2",             "log2",     1},
+    {&intrin_logb,             "__builtin_logb",             "logb",     1},
     {&intrin_debug_typestring, "__builtin_debug_typestring", "",         0},
     {&intrin_nullfunc,         "#nullfunc",                  "",         0}
 };
