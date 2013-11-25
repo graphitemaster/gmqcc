@@ -539,7 +539,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body); /* {{{ body }}} */
+    vec_push(func->blocks, body);
 
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
@@ -1194,6 +1194,168 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
     return (ast_expression*)value;
 }
 
+static ast_expression *intrin_epsilon(intrin_t *intrin) {
+    /*
+     * float epsilon(void) {
+     *     float eps = 1.0f;
+     *     do { eps /= 2.0f; } while ((1.0f + (eps / 2.0f)) != 1.0f);
+     *     return eps;
+     * }
+     */
+    ast_value    *value  = NULL;
+    ast_value    *eps    = ast_value_new(intrin_ctx(intrin), "eps", TYPE_FLOAT);
+    ast_block    *body   = ast_block_new(intrin_ctx(intrin));
+    ast_function *func   = intrin_value(intrin, &value, "epsilon", TYPE_FLOAT);
+
+    vec_push(body->locals, eps);
+
+    /* eps = 1.0f; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)eps,
+            (ast_expression*)intrin->fold->imm_float[0]
+        )
+    );
+
+    vec_push(body->exprs,
+        (ast_expression*)ast_loop_new(
+            intrin_ctx(intrin),
+            NULL,
+            NULL,
+            false,
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_NE_F,
+                (ast_expression*)ast_binary_new(
+                    intrin_ctx(intrin),
+                    INSTR_ADD_F,
+                    (ast_expression*)intrin->fold->imm_float[1],
+                    (ast_expression*)ast_binary_new(
+                        intrin_ctx(intrin),
+                        INSTR_MUL_F,
+                        (ast_expression*)eps,
+                        (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+                    )
+                ),
+                (ast_expression*)intrin->fold->imm_float[1]
+            ),
+            false,
+            NULL,
+            (ast_expression*)ast_binstore_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                INSTR_DIV_F,
+                (ast_expression*)eps,
+                (ast_expression*)fold_constgen_float(intrin->fold, 2.0f)
+            )
+        )
+    );
+
+    /* return eps; */
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)eps
+        )
+    );
+
+    vec_push(func->blocks, body);
+    intrin_reg(intrin, value, func);
+
+    return (ast_expression*)value;
+}
+
+static ast_expression *intrin_nan(intrin_t *intrin) {
+    /*
+     * float nan(void) {
+     *     float x = 0.0f;
+     *     return x / x;
+     * }
+     */
+    ast_value    *value  = NULL;
+    ast_value    *x      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_function *func   = intrin_value(intrin, &value, "nan", TYPE_FLOAT);
+    ast_block    *block  = ast_block_new(intrin_ctx(intrin));
+
+    vec_push(block->locals, x);
+
+    vec_push(block->exprs,
+        (ast_expression*)ast_store_new(
+            intrin_ctx(intrin),
+            INSTR_STORE_F,
+            (ast_expression*)x,
+            (ast_expression*)intrin->fold->imm_float[0]
+        )
+    );
+
+    vec_push(block->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_DIV_F,
+                (ast_expression*)x,
+                (ast_expression*)x
+            )
+        )
+    );
+
+    vec_push(func->blocks, block);
+    intrin_reg(intrin, value, func);
+
+    return (ast_expression*)value;
+}
+
+static ast_expression *intrin_inf(intrin_t *intrin) {
+    /*
+     * float nan(void) {
+     *     float x = 1.0f;
+     *     float y = 0.0f;
+     *     return x / y;
+     * }
+     */
+    ast_value    *value  = NULL;
+    ast_value    *x      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_value    *y      = ast_value_new(intrin_ctx(intrin), "y", TYPE_FLOAT);
+    ast_function *func   = intrin_value(intrin, &value, "nan", TYPE_FLOAT);
+    ast_block    *block  = ast_block_new(intrin_ctx(intrin));
+    size_t        i;
+
+    vec_push(block->locals, x);
+    vec_push(block->locals, y);
+
+    /* to keep code size down */
+    for (i = 0; i <= 1; i++) {
+        vec_push(block->exprs,
+            (ast_expression*)ast_store_new(
+                intrin_ctx(intrin),
+                INSTR_STORE_F,
+                (ast_expression*)((i == 0) ? x : y),
+                (ast_expression*)intrin->fold->imm_float[i]
+            )
+        );
+    }
+
+    vec_push(block->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                INSTR_DIV_F,
+                (ast_expression*)x,
+                (ast_expression*)y
+            )
+        )
+    );
+
+    vec_push(func->blocks, block);
+    intrin_reg(intrin, value, func);
+
+    return (ast_expression*)value;
+}
+
 /*
  * TODO: make static (and handle ast_type_string) here for the builtin
  * instead of in SYA parse close.
@@ -1218,8 +1380,10 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_mod,              "__builtin_mod",              "mod",      2},
     {&intrin_pow,              "__builtin_pow",              "pow",      2},
     {&intrin_fabs,             "__builtin_fabs",             "fabs",     1},
+    {&intrin_epsilon,          "__builtin_epsilon",          "",         0},
+    {&intrin_nan,              "__builtin_nan",              "",         0},
+    {&intrin_inf,              "__builtin_inf",              "",         0},
     {&intrin_debug_typestring, "__builtin_debug_typestring", "",         0},
-
     {&intrin_nullfunc,         "#nullfunc",                  "",         0}
 };
 
