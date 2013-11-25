@@ -685,7 +685,7 @@ void util_htdel(hash_table_t *ht) {
  * information.
  */
 static void stat_dump_mem_contents(stat_mem_block_t *block, uint16_t cols) {
-    unsigned char *buffer = mem_a(cols);
+    unsigned char *buffer = (unsigned char *)mem_a(cols);
     unsigned char *memory = (unsigned char *)(block + 1);
     size_t         i;
 
