@@ -1319,7 +1319,7 @@ static ast_expression *intrin_inf(intrin_t *intrin) {
     ast_value    *value  = NULL;
     ast_value    *x      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_value    *y      = ast_value_new(intrin_ctx(intrin), "y", TYPE_FLOAT);
-    ast_function *func   = intrin_value(intrin, &value, "nan", TYPE_FLOAT);
+    ast_function *func   = intrin_value(intrin, &value, "inf", TYPE_FLOAT);
     ast_block    *block  = ast_block_new(intrin_ctx(intrin));
     size_t        i;
 
