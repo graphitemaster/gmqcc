@@ -1222,6 +1222,9 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
     self->fixedparams      = NULL;
     self->return_value     = NULL;
 
+    self->static_names     = NULL;
+    self->static_count     = 0;
+
     return self;
 
 cleanup:
@@ -1243,6 +1246,9 @@ void ast_function_delete(ast_function *self)
          */
         ast_unref(self->vtype);
     }
+    for (i = 0; i < vec_size(self->static_names); ++i)
+        mem_d(self->static_names[i]);
+    vec_free(self->static_names);
     for (i = 0; i < vec_size(self->blocks); ++i)
         ast_delete(self->blocks[i]);
     vec_free(self->blocks);
