@@ -25,27 +25,14 @@
 #define GMQCC_HDR
 #include <stdarg.h>
 #include <stddef.h>
-#include <time.h>   /* TODO: remove?*/
-
-/*
- * Disable some over protective warnings in visual studio because fixing them is a waste
- * of my time.
- */
-#ifdef _MSC_VER
-#   pragma warning(disable : 4244 ) /* conversion from 'int' to 'float', possible loss of data */
-#endif /*! _MSC_VER */
+#include <time.h>
 
 #define GMQCC_VERSION_MAJOR 0
 #define GMQCC_VERSION_MINOR 3
 #define GMQCC_VERSION_PATCH 6
-#define GMQCC_VERSION_BUILD(J,N,P) (((J)<<16)|((N)<<8)|(P))
-#define GMQCC_VERSION \
-    GMQCC_VERSION_BUILD(GMQCC_VERSION_MAJOR, GMQCC_VERSION_MINOR, GMQCC_VERSION_PATCH)
-/* Undefine the following on a release-tag: */
-#define GMQCC_VERSION_TYPE_DEVEL
+#define GMQCC_VERSION ((GMQCC_VERSION_MAJOR<<16)|(GMQCC_VERSION_MINOR<<8)|GMQCC_VERSION_PATCH)
 
-/* Full version string in case we need it */
-#ifdef GMQCC_VERSION_TYPE_DEVEL
+#ifdef GMQCC_VERSION_TYPE_RELEASE
 #    ifdef GMQCC_GITINFO
 #        define GMQCC_DEV_VERSION_STRING "git build: " GMQCC_GITINFO "\n"
 #    elif defined(GMQCC_VERSION_TYPE_DEVEL)
@@ -67,125 +54,47 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 " Built " __DATE__ " " __TIME__ \
 "\n" GMQCC_DEV_VERSION_STRING
 
-/*
- * We cannot rely on C99 at all, since compilers like MSVC
- * simply don't support it.  We define our own boolean type
- * as a result (since we cannot include <stdbool.h>). For
- * compilers that are in 1999 mode (C99 compliant) we can use
- * the language keyword _Bool which can allow for better code
- * on GCC and GCC-like compilers, opposed to `int`.
- */
 #ifndef __cplusplus
-#   ifdef  false
-#       undef  false
-#   endif /*! false */
-#   ifdef  true
-#       undef true
-#   endif /*! true  */
-#   define false (unsigned)(0)
-#   define true  (unsigned)(1)
-#   ifdef __STDC_VERSION__
-#       if __STDC_VERSION__ < 199901L && __GNUC__ < 3
-            typedef int  bool;
-#       else
-            typedef _Bool bool;
-#       endif /*! __STDC_VERSION__ < 199901L && __GNUC__ < 3 */
-#   else
-        typedef int bool;
-#   endif /*! __STDC_VERSION__ */
-#endif /*! __cplusplus      */
-
-/*
- * Of some functions which are generated we want to make sure
- * that the result isn't ignored. To find such function calls,
- * we use this macro.
- */
-#if defined(__GNUC__) || defined(__CLANG__)
-#   define GMQCC_WARN __attribute__((warn_unused_result))
-#   define GMQCC_USED __attribute__((used))
-#else
-#   define GMQCC_WARN
-#   define GMQCC_USED
-#endif /*! defined(__GNUC__) || defined (__CLANG__) */
-
-/*
- * Inline is not supported in < C90, however some compilers
- * like gcc and clang might have an inline attribute we can
- * use if present.
- */
-#ifdef __STDC_VERSION__
-#    if __STDC_VERSION__ < 199901L
-#       if defined(__GNUC__) || defined (__CLANG__)
-#           if __GNUC__ < 2
-#               define GMQCC_INLINE
-#           else
-#               define GMQCC_INLINE __attribute__ ((always_inline))
-#           endif /*! __GNUC__ < 2 */
-#       else
-#           define GMQCC_INLINE
-#       endif /*! defined(__GNUC__) || defined (__CLANG__) */
-#    else
-#       define GMQCC_INLINE inline
-#    endif /*! __STDC_VERSION < 199901L */
-/*
- * Visual studio has __forcinline we can use.  So lets use that
- * I suspect it also has just __inline of some sort, but our use
- * of inline is correct (not guessed), WE WANT IT TO BE INLINE
- */
-#elif defined(_MSC_VER)
-#    define GMQCC_INLINE __forceinline
-#else
-#    define GMQCC_INLINE
-#endif /*! __STDC_VERSION__ */
-
-/*
- * noreturn is present in GCC and clang
- * it's required for _ast_node_destory otherwise -Wmissing-noreturn
- * in clang complains about there being no return since abort() is
- * called.
- */
-#if (defined(__GNUC__) && __GNUC__ >= 2) || defined(__CLANG__)
-#    define GMQCC_NORETURN __attribute__ ((noreturn))
-#else
-#    define GMQCC_NORETURN
-#endif /*! (defined(__GNUC__) && __GNUC__ >= 2) || defined (__CLANG__) */
+#   define false (unsigned char)(0)
+#   define true  (unsigned char)(1)
+    typedef unsigned char bool;
+#endif
 
 #if defined(__GNUC__) || defined(__CLANG__)
+#   include <stdint.h>
+#   if (__GNUC__ >= 2) || defined(__CLANG__)
+#       define GMQCC_NORETURN    __attribute__((noreturn))
+#       define GMQCC_FORCEINLINE __attribute__((always_inline))
+#       define GMQCC_INLINE      __inline
+#   endif
 #   define GMQCC_LIKELY(X)   __builtin_expect((X), 1)
 #   define GMQCC_UNLIKELY(X) __builtin_expect((X), 0)
+#   define GMQCC_WARN        __attribute__((warn_unused_result))
+#   define GMQCC_USED        __attribute__((used))
+#   define GMQCC_RESTRICT    __restrict__
 #else
+#   ifdef _MSC_VER
+        /* conversion from 'int' to 'float', possible loss of data */
+#       pragma warning(disable : 4244 )
+
+        typedef unsigned __int8  uint8_t;
+        typedef unsigned __int16 uint16_t;
+        typedef unsigned __int32 uint32_t;
+        typedef unsigned __int64 uint64_t;
+        typedef __int16          int16_t;
+        typedef __int32          int32_t;
+        typedef __int64          int64_t;
+#       define GMQCC_NORETURN    __declspec(noreturn)
+#       define GMQCC_FORCEINLINE __forceinline
+#       define GMQCC_INLINE      __inline
+#       define GMQCC_RESTRICT    __restrict
+#   endif
 #   define GMQCC_LIKELY(X)   (X)
 #   define GMQCC_UNLIKELY(X) (X)
+#   define GMQCC_WARN
+#   define GMQCC_USED
 #endif
 
-#if defined(__GNUC__) || defined(__CLANG__)
-#   define GMQCC_RESTRICT __restrict__
-#elif defined(__MSC_VER)
-#   define GMQCC_RESTRICT __restrict
-#else
-#   define GMQCC_RESTRICT
-#endif
-
-#define GMQCC_ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
-
-#ifndef _MSC_VER
-#   include <stdint.h>
-#else
-    typedef unsigned __int8  uint8_t;
-    typedef unsigned __int16 uint16_t;
-    typedef unsigned __int32 uint32_t;
-    typedef unsigned __int64 uint64_t;
-
-    typedef __int16          int16_t;
-    typedef __int32          int32_t;
-    typedef __int64          int64_t;
-#endif /*! _MSC_VER */
-
-/*
- * Very roboust way at determining endianess at compile time: this handles
- * almost every possible situation.  Otherwise a runtime check has to be
- * performed.
- */
 #define GMQCC_BYTE_ORDER_LITTLE 1234
 #define GMQCC_BYTE_ORDER_BIG    4321
 
@@ -259,7 +168,9 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #   else
 #       define PLATFORM_BYTE_ORDER -1
 #   endif
-#endif /*! !defined (PLATFORM_BYTE_ORDER) */
+#endif
+
+#define GMQCC_ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
 
 /* stat.c */
 void  stat_info          (void);

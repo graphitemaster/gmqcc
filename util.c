@@ -499,7 +499,7 @@ uint16_t util_crc16(uint16_t current, const char *GMQCC_RESTRICT k, size_t len) 
  * modifier is the match to make and the transposition from it, while add is the upper-value that determines the
  * transposition from uppercase to lower case.
  */
-static GMQCC_INLINE size_t util_strtransform(const char *in, char *out, size_t outsz, const char *mod, int add) {
+static size_t util_strtransform(const char *in, char *out, size_t outsz, const char *mod, int add) {
     size_t sz = 1;
     for (; *in && sz < outsz; ++in, ++out, ++sz) {
         *out = (*in == mod[0])

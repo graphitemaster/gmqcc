@@ -402,7 +402,7 @@ typedef struct hash_node_t {
  */
 #if 1
 #define GMQCC_ROTL32(X, R) (((X) << (R)) | ((X) >> (32 - (R))))
-GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
+size_t util_hthash(hash_table_t *ht, const char *key) {
     const unsigned char *data   = (const unsigned char *)key;
     const size_t         len    = strlen(key);
     const size_t         block  = len / 4;

@@ -579,7 +579,7 @@ static int lex_skipwhite(lex_file *lex, bool hadwhite)
                         if (ch == '\n')
                             lex_tokench(lex, '\n');
                         else
-                            lex_tokench(lex, ' '); /* ch); */
+                            lex_tokench(lex, ' ');
                     }
                 }
                 ch = ' '; /* cause TRUE in the isspace check */

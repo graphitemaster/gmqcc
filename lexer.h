@@ -22,6 +22,8 @@
  */
 #ifndef GMQCC_LEXER_HDR
 #define GMQCC_LEXER_HDR
+#include "gmqcc.h"
+
 typedef struct token_s token;
 
 struct token_s {
