@@ -178,10 +178,14 @@ static void lex_token_new(lex_file *lex)
 }
 #endif
 
+static void lex_ungetch(lex_file *lex, int ch);
+static int lex_getch(lex_file *lex);
+
 lex_file* lex_open(const char *file)
 {
     lex_file  *lex;
     fs_file_t *in = fs_file_open(file, "rb");
+    uint32_t   read;
 
     if (!in) {
         lexerror(NULL, "open failed: '%s'\n", file);
@@ -203,6 +207,19 @@ lex_file* lex_open(const char *file)
     lex->column  = 0;
     lex->peekpos = 0;
     lex->eof     = false;
+
+    /* handle BOM */
+    if ((read = (lex_getch(lex) << 16) | (lex_getch(lex) << 8) | lex_getch(lex)) != 0xEFBBBF) {
+        lex_ungetch(lex, (read & 0x0000FF));
+        lex_ungetch(lex, (read & 0x00FF00) >> 8);
+        lex_ungetch(lex, (read & 0xFF0000) >> 16);
+    } else {
+        /*
+         * otherwise the lexer has advanced 3 bytes for the BOM, we need
+         * to set the column back to 0
+         */
+        lex->column = 0;
+    }
 
     vec_push(lex_filenames, lex->name);
     return lex;
@@ -266,6 +283,8 @@ void lex_close(lex_file *lex)
     mem_d(lex);
 }
 
+
+
 static int lex_fgetc(lex_file *lex)
 {
     if (lex->file) {
@@ -286,7 +305,6 @@ static int lex_fgetc(lex_file *lex)
  * are working on.
  * The are merely wrapping get/put in order to count line numbers.
  */
-static void lex_ungetch(lex_file *lex, int ch);
 static int lex_try_trigraph(lex_file *lex, int old)
 {
     int c2, c3;
