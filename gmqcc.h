@@ -75,7 +75,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #else
 #   ifdef _MSC_VER
         /* conversion from 'int' to 'float', possible loss of data */
-#       pragma warning(disable : 4244 )
+#       pragma warning(disable : 4244)
 
         typedef unsigned __int8  uint8_t;
         typedef unsigned __int16 uint16_t;
@@ -965,15 +965,17 @@ typedef struct {
 extern opts_cmd_t opts;
 
 #define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< (unsigned)((i)%32))))
+
 #define OPTS_FLAG(i)         OPTS_GENERIC(opts.flags,        (i))
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))
 #define OPTS_WERROR(i)       OPTS_GENERIC(opts.werror,       (i))
 #define OPTS_OPTIMIZATION(i) OPTS_GENERIC(opts.optimization, (i))
+
 #define OPTS_OPTION_DUPED(X) (opts.options[X].allocated)
-#define OPTS_OPTION_BOOL(X) (opts.options[X].data.b)
-#define OPTS_OPTION_U16(X)  (opts.options[X].data.u16)
-#define OPTS_OPTION_U32(X)  (opts.options[X].data.u32)
-#define OPTS_OPTION_DUP(X) *(OPTS_OPTION_DUPED(X)=true, &(opts.options[X].data.str.p))
-#define OPTS_OPTION_STR(X)  (opts.options[X].data.str.c)
+#define OPTS_OPTION_BOOL(X)  (opts.options[X].data.b)
+#define OPTS_OPTION_U16(X)   (opts.options[X].data.u16)
+#define OPTS_OPTION_U32(X)   (opts.options[X].data.u32)
+#define OPTS_OPTION_STR(X)   (opts.options[X].data.str.c)
+#define OPTS_OPTION_DUP(X)  *(OPTS_OPTION_DUPED(X)=true, &(opts.options[X].data.str.p))
 
 #endif /*! GMQCC_HDR */

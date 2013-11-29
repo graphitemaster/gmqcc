@@ -1193,7 +1193,6 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
         compile_error(ast_ctx(self), "internal error: ast_function_new condition 0");
         goto cleanup;
     } else if (vtype->hasvalue || vtype->expression.vtype != TYPE_FUNCTION) {
-    } else if (vtype->hasvalue || vtype->expression.vtype != TYPE_FUNCTION) {
         compile_error(ast_ctx(self), "internal error: ast_function_new condition %i %i type=%i (probably 2 bodies?)",
                  (int)!vtype,
                  (int)vtype->hasvalue,

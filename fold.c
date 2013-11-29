@@ -706,10 +706,10 @@ static GMQCC_INLINE ast_expression *fold_intrin_isfinite(fold_t *fold, ast_value
     return fold_constgen_float(fold, isfinite(fold_immvalue_float(a)));
 }
 static GMQCC_INLINE ast_expression *fold_intrin_isinf(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isinff(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, isinf(fold_immvalue_float(a)));
 }
 static GMQCC_INLINE ast_expression *fold_intrin_isnan(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isnanf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, isnan(fold_immvalue_float(a)));
 }
 static GMQCC_INLINE ast_expression *fold_intrin_isnormal(fold_t *fold, ast_value *a) {
     return fold_constgen_float(fold, isnormal(fold_immvalue_float(a)));
