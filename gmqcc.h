@@ -88,6 +88,11 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #       define GMQCC_FORCEINLINE __forceinline
 #       define GMQCC_INLINE      __inline
 #       define GMQCC_RESTRICT    __restrict
+#   else
+#       define GMQCC_NORETURN
+#       define GMQCC_FORCEINLINE
+#       define GMQCC_INLINE
+#       define GMQCC_RESTRICT
 #   endif
 #   define GMQCC_LIKELY(X)   (X)
 #   define GMQCC_UNLIKELY(X) (X)
