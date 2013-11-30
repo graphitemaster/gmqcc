@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 #define GMQCC_PLATFORM_HEADER
+#include <stdlib.h>
 #include "gmqcc.h"
 #include "platform.h"
 
