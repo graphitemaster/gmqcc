@@ -8,6 +8,9 @@ For install gmqcc do this:
 For install qcvm do this:
 # yum install qcvm
 
+For install gmqpak do this:
+# yum install gmqpak
+
 To use the spec files in this fedora directory you need the core
 development tools , building enviroment for the user, and
 the directory structure for it. If you don't already have these, issue
@@ -21,8 +24,7 @@ $ rpmdev-setuptree
 Prepare and build the RPMs.
 
 $ cp gmqcc.spec ~/rpmbuild/SPECS/
-$ wget https://github.com/graphitemaster/gmqcc/archive/0.2.9.tar.gz -o ~/rpmbuild/SOURCES/gmqcc-0.2.9.tar.gz
-$ wget https://raw.github.com/graphitemaster/gmqcc/master/distro/archlinux/release/build_fix.patch -o ~/rpmbuild/SPECS/build_fix.patch
+$ wget https://github.com/graphitemaster/gmqcc/archive/0.3.5.tar.gz -o ~/rpmbuild/SOURCES/gmqcc-0.3.5.tar.gz
 $ rpmbuild -ba ~/rpmbuild/SPECS/gmqcc.spec
 
 Now we have RPMs in ~/rpmbuild/RPMS/ and you can install it via yum.
