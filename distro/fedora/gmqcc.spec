@@ -1,10 +1,15 @@
 Name:           gmqcc
-Version:        0.3.0
+Version:        0.3.5
 Release:        2%{?dist}
 Summary:        Improved Quake C Compiler
 License:        MIT
 URL:            http://graphitemaster.github.io/gmqcc/
 Source0:        https://github.com/graphitemaster/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
+# fix build on big endian arches - stdlib.h required for exit()
+Patch0:         %{name}-0.3.5-stdlib.patch
+
+# tests fail on big endians
+ExclusiveArch:  %{ix86} x86_64 %{arm}
 
 %description
 Modern written-from-scratch compiler for the QuakeC language with
@@ -28,8 +33,9 @@ directories, or whole PAKs, as well as the opposite (creation of PAK files).
 
 %prep
 %setup -q
+%patch0 -p1
 echo '#!/bin/sh' > ./configure
-chmod +x ./configure
+chmod +x ./configure 
 
 # and for all for all of those switches they increase the runtime of the compile
 # making compiles of code slower
@@ -61,20 +67,28 @@ make check
 %files
 %doc LICENSE README AUTHORS CHANGES TODO
 %doc gmqcc.ini.example
-%{_mandir}/man1/gmqcc.1.gz
+%{_mandir}/man1/gmqcc.1*
 %{_bindir}/gmqcc
 
 %files -n qcvm
 %doc LICENSE README AUTHORS CHANGES TODO
-%{_mandir}/man1/qcvm.1.gz
+%{_mandir}/man1/qcvm.1*
 %{_bindir}/qcvm
 
 %files -n gmqpak
 %doc LICENSE README AUTHORS CHANGES TODO
-%{_mandir}/man1/gmqpak.1.gz
+%{_mandir}/man1/gmqpak.1*
 %{_bindir}/gmqpak
 
 %changelog
+* Sat Nov 16 2013 Dan Horák <dan[at]danny.cz> - 0.3.5-2
+- fix build on big endian arches
+- use the standard wildcarded filename for man pages
+- and make it Exclusive for little endians because tests fail on big endians
+
+* Thu Nov 14 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.5-1
+- 0.3.5 upstream release
+
 * Thu Sep 26 2013 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 0.3.0-2
 - Optimizing compile flags
 
