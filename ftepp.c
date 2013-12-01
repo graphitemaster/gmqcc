@@ -498,10 +498,29 @@ static bool ftepp_define_body(ftepp_t *ftepp, ppmacro *macro)
     return true;
 }
 
+static const char *ftepp_math_constants[][2] = {
+    { "M_E",        "2.7182818284590452354"  }, /* e          */
+    { "M_LOG2E",    "1.4426950408889634074"  }, /* log_2 e    */
+    { "M_LOG10E",   "0.43429448190325182765" }, /* log_10 e   */
+    { "M_LN2",      "0.69314718055994530942" }, /* log_e 2    */
+    { "M_LN10",     "2.30258509299404568402" }, /* log_e 10   */
+    { "M_PI",       "3.14159265358979323846" }, /* pi         */
+    { "M_PI_2",     "1.57079632679489661923" }, /* pi/2       */
+    { "M_PI_4",     "0.78539816339744830962" }, /* pi/4       */
+    { "M_1_PI",     "0.31830988618379067154" }, /* 1/pi       */
+    { "M_2_PI",     "0.63661977236758134308" }, /* 2/pi       */
+    { "M_2_SQRTPI", "1.12837916709551257390" }, /* 2/sqrt(pi) */
+    { "M_SQRT2",    "1.41421356237309504880" }, /* sqrt(2)    */
+    { "M_SQRT1_2",  "0.70710678118654752440" }, /* 1/sqrt(2)  */
+    { "M_TAU",      "6.28318530717958647692" }  /* pi*2       */
+};
+
 static bool ftepp_define(ftepp_t *ftepp)
 {
     ppmacro *macro = NULL;
     size_t l = ftepp_ctx(ftepp).line;
+    size_t i;
+    bool   mathconstant = false;
 
     (void)ftepp_next(ftepp);
     if (!ftepp_skipspace(ftepp))
@@ -511,7 +530,19 @@ static bool ftepp_define(ftepp_t *ftepp)
         case TOKEN_IDENT:
         case TOKEN_TYPENAME:
         case TOKEN_KEYWORD:
+            for (i = 0; i < GMQCC_ARRAY_COUNT(ftepp_math_constants); i++) {
+                if (!strcmp(ftepp_math_constants[i][0], ftepp_tokval(ftepp))) {
+                    mathconstant = true;
+                    break;
+                }
+            }
+
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+
+            /* ignore creating a math macro if one is already present */
+            if (macro && mathconstant)
+                break;
+
             if (macro && ftepp->output_on) {
                 if (ftepp_warn(ftepp, WARN_CPP, "redefining `%s`", ftepp_tokval(ftepp)))
                     return false;
@@ -1811,23 +1842,6 @@ void ftepp_add_macro(ftepp_t *ftepp, const char *name, const char *value) {
     vec_free  (create);
 }
 
-static const char *ftepp_math_constants[][2] = {
-    { "M_E",        "2.7182818284590452354"  }, /* e          */
-    { "M_LOG2E",    "1.4426950408889634074"  }, /* log_2 e    */
-    { "M_LOG10E",   "0.43429448190325182765" }, /* log_10 e   */
-    { "M_LN2",      "0.69314718055994530942" }, /* log_e 2    */
-    { "M_LN10",     "2.30258509299404568402" }, /* log_e 10   */
-    { "M_PI",       "3.14159265358979323846" }, /* pi         */
-    { "M_PI_2",     "1.57079632679489661923" }, /* pi/2       */
-    { "M_PI_4",     "0.78539816339744830962" }, /* pi/4       */
-    { "M_1_PI",     "0.31830988618379067154" }, /* 1/pi       */
-    { "M_2_PI",     "0.63661977236758134308" }, /* 2/pi       */
-    { "M_2_SQRTPI", "1.12837916709551257390" }, /* 2/sqrt(pi) */
-    { "M_SQRT2",    "1.41421356237309504880" }, /* sqrt(2)    */
-    { "M_SQRT1_2",  "0.70710678118654752440" }, /* 1/sqrt(2)  */
-    { "M_TAU",      "6.28318530717958647692" }  /* pi*2       */
-};
-
 ftepp_t *ftepp_create()
 {
     ftepp_t *ftepp;
@@ -1883,9 +1897,10 @@ ftepp_t *ftepp_create()
      */
     ftepp_add_macro(ftepp, "__NULL__", "nil");
 
-    /* add all the math constants */
+    /* add all the math constants if they can be */
     for (i = 0; i < GMQCC_ARRAY_COUNT(ftepp_math_constants); i++)
-        ftepp_add_macro(ftepp, ftepp_math_constants[i][0], ftepp_math_constants[i][1]);
+        if (!ftepp_macro_find(ftepp, ftepp_math_constants[i][0]))
+            ftepp_add_macro(ftepp, ftepp_math_constants[i][0], ftepp_math_constants[i][1]);
 
     return ftepp;
 }
