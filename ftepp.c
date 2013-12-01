@@ -530,19 +530,23 @@ static bool ftepp_define(ftepp_t *ftepp)
         case TOKEN_IDENT:
         case TOKEN_TYPENAME:
         case TOKEN_KEYWORD:
-            for (i = 0; i < GMQCC_ARRAY_COUNT(ftepp_math_constants); i++) {
-                if (!strcmp(ftepp_math_constants[i][0], ftepp_tokval(ftepp))) {
-                    mathconstant = true;
-                    break;
+            if (OPTS_FLAG(FTEPP_MATHDEFS)) {
+                for (i = 0; i < GMQCC_ARRAY_COUNT(ftepp_math_constants); i++) {
+                    if (!strcmp(ftepp_math_constants[i][0], ftepp_tokval(ftepp))) {
+                        mathconstant = true;
+                        break;
+                    }
                 }
             }
 
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
 
-            /* user defined ones take precedence */
-            if (macro && mathconstant) {
-                ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
-                macro = NULL;
+            if (OPTS_FLAG(FTEPP_MATHDEFS)) {
+                /* user defined ones take precedence */
+                if (macro && mathconstant) {
+                    ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
+                    macro = NULL;
+                }
             }
 
             if (macro && ftepp->output_on) {
