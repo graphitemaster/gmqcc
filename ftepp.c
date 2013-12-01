@@ -539,9 +539,11 @@ static bool ftepp_define(ftepp_t *ftepp)
 
             macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
 
-            /* ignore creating a math macro if one is already present */
-            if (macro && mathconstant)
-                break;
+            /* user defined ones take precedence */
+            if (macro && mathconstant) {
+                ftepp_macro_delete(ftepp, ftepp_tokval(ftepp));
+                macro = NULL;
+            }
 
             if (macro && ftepp->output_on) {
                 if (ftepp_warn(ftepp, WARN_CPP, "redefining `%s`", ftepp_tokval(ftepp)))
