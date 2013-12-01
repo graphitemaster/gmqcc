@@ -397,6 +397,26 @@ only the first component will be 0, while the other two will become
 the first to of the global return value. This behavior is odd and
 relying on it should be discouraged, and thus is not supported by
 gmqcc.
+.It Fl f Ns Cm ftepp-mathdefs
+Enable math constant definitions. This only works in combination
+with \'\-fftepp' and is currently not included by '\-std=fteqcc'.
+The following macros will be added:
+.Bd -literal -offset indent
+M_E
+M_LOG2E
+M_LOG10E
+M_LN2
+M_LN10
+M_PI
+M_PI_2
+M_PI_4
+M_1_PI
+M_2_PI
+M_2_SQRTPI
+M_SQRT2
+M_SQRT1_2
+M_TAU
+.Ed
 .It Fl f Ns Cm relaxed-switch
 Allow switch cases to use non constant variables.
 .It Fl f Ns Cm short-logic

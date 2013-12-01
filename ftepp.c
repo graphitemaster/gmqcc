@@ -1900,9 +1900,11 @@ ftepp_t *ftepp_create()
     ftepp_add_macro(ftepp, "__NULL__", "nil");
 
     /* add all the math constants if they can be */
-    for (i = 0; i < GMQCC_ARRAY_COUNT(ftepp_math_constants); i++)
-        if (!ftepp_macro_find(ftepp, ftepp_math_constants[i][0]))
-            ftepp_add_macro(ftepp, ftepp_math_constants[i][0], ftepp_math_constants[i][1]);
+    if (OPTS_FLAG(FTEPP_MATHDEFS)) {
+        for (i = 0; i < GMQCC_ARRAY_COUNT(ftepp_math_constants); i++)
+            if (!ftepp_macro_find(ftepp, ftepp_math_constants[i][0]))
+                ftepp_add_macro(ftepp, ftepp_math_constants[i][0], ftepp_math_constants[i][1]);
+    }
 
     return ftepp;
 }
