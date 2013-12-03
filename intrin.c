@@ -1901,31 +1901,82 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     return (ast_expression*)value;
 }
 
-#define LOG_VARIANT(NAME, BASE) \
-static ast_expression *intrin_##NAME(intrin_t *intrin) { \
-    ast_value    *value  = NULL; \
-    ast_call     *callln = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "__builtin_ln", #NAME)); \
-    ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT); \
-    ast_block    *body   = ast_block_new(intrin_ctx(intrin)); \
-    ast_function *func   = intrin_value(intrin, &value, #NAME, TYPE_FLOAT); \
-    vec_push(value->expression.params, arg1); \
-    vec_push(callln->params, (ast_expression*)arg1); \
-    vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, BASE)); \
-    vec_push(body->exprs, \
-        (ast_expression*)ast_return_new( \
-            intrin_ctx(intrin), \
-            (ast_expression*)callln \
-        ) \
-    ); \
-    vec_push(func->blocks, body); \
-    intrin_reg(intrin, value, func); \
-    return (ast_expression*)value; \
+static ast_expression *intrin_log_variant(intrin_t *intrin, const char *name, float base) {
+    ast_value    *value  = NULL;
+    ast_call     *callln = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "__builtin_ln", name));
+    ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
+    ast_block    *body   = ast_block_new(intrin_ctx(intrin));
+    ast_function *func   = intrin_value(intrin, &value, name, TYPE_FLOAT);
+
+    vec_push(value->expression.params, arg1);
+
+    vec_push(callln->params, (ast_expression*)arg1);
+    vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, base));
+
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)callln
+        )
+    );
+
+    vec_push(func->blocks, body);
+    intrin_reg(intrin, value, func);
+    return (ast_expression*)value;
 }
-LOG_VARIANT(log, 2.7182818284590452354)
-LOG_VARIANT(log10, 10)
-LOG_VARIANT(log2, 2)
-LOG_VARIANT(logb, 2) /* FLT_RADIX == 2 for now */
-#undef LOG_VARIANT
+
+static ast_expression *intrin_log(intrin_t *intrin) {
+    return intrin_log_variant(intrin, "log", 2.7182818284590452354);
+}
+static ast_expression *intrin_log10(intrin_t *intrin) {
+    return intrin_log_variant(intrin, "log10", 10);
+}
+static ast_expression *intrin_log2(intrin_t *intrin) {
+    return intrin_log_variant(intrin, "log2", 2);
+}
+static ast_expression *intrin_logb(intrin_t *intrin) {
+    /* FLT_RADIX == 2 for now */
+    return intrin_log_variant(intrin, "log2", 2);
+}
+
+static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, size_t instr) {
+    ast_value    *value    = NULL;
+    ast_call     *callpow  = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", name));
+    ast_value    *a        = ast_value_new(intrin_ctx(intrin), "a", TYPE_FLOAT);
+    ast_value    *b        = ast_value_new(intrin_ctx(intrin), "b", TYPE_FLOAT);
+    ast_block    *body     = ast_block_new(intrin_ctx(intrin));
+    ast_function *func     = intrin_value(intrin, &value, name, TYPE_FLOAT);
+
+    vec_push(value->expression.params, a);
+    vec_push(value->expression.params, b);
+
+    vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
+    vec_push(callpow->params, (ast_expression*)b);
+
+    vec_push(body->exprs,
+        (ast_expression*)ast_return_new(
+            intrin_ctx(intrin),
+            (ast_expression*)ast_binary_new(
+                intrin_ctx(intrin),
+                instr,
+                (ast_expression*)a,
+                (ast_expression*)callpow
+            )
+        )
+    );
+
+    vec_push(func->blocks, body);
+    intrin_reg(intrin, value, func);
+    return (ast_expression*)value;
+}
+
+static ast_expression *intrin_lshift(intrin_t *intrin) {
+    return intrin_shift_variant(intrin, "lshift", INSTR_MUL_F);
+}
+
+static ast_expression *intrin_rshift(intrin_t *intrin) {
+    return intrin_shift_variant(intrin, "rshift", INSTR_DIV_F);
+}
 
 /*
  * TODO: make static (and handle ast_type_string) here for the builtin
@@ -1955,6 +2006,8 @@ static const intrin_func_t intrinsics[] = {
     {&intrin_log10,            "__builtin_log10",            "log10",    1},
     {&intrin_log2,             "__builtin_log2",             "log2",     1},
     {&intrin_logb,             "__builtin_logb",             "logb",     1},
+    {&intrin_lshift,           "__builtin_lshift",           "",         2},
+    {&intrin_rshift,           "__builtin_rshift",           "",         2},
     {&intrin_epsilon,          "__builtin_epsilon",          "",         0},
     {&intrin_nan,              "__builtin_nan",              "",         0},
     {&intrin_inf,              "__builtin_inf",              "",         0},

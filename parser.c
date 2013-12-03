@@ -687,12 +687,44 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid2('<','<'):
         case opid2('>','>'):
-        case opid3('<','<','='):
-        case opid3('>','>','='):
-            if(!(out = fold_op(parser->fold, op, exprs))) {
-                compile_error(ast_ctx(exprs[0]), "Not Yet Implemented: bit-shifts");
+            if (NotSameType(TYPE_FLOAT)) {
+                compile_error(ctx, "invalid types used in expression: cannot perform shift between types %s and %s",
+                    type_name[exprs[0]->vtype],
+                    type_name[exprs[1]->vtype]);
                 return false;
             }
+
+            if (!(out = fold_op(parser->fold, op, exprs))) {
+                ast_expression *shift = intrin_func(parser->intrin, (op->id == opid2('<','<')) ? "__builtin_lshift" : "__builtin_rshift");
+                ast_call       *call  = ast_call_new(parser_ctx(parser), shift);
+                vec_push(call->params, exprs[0]);
+                vec_push(call->params, exprs[1]);
+                out = (ast_expression*)call;
+            }
+            break;
+
+        case opid3('<','<','='):
+        case opid3('>','>','='):
+            if (NotSameType(TYPE_FLOAT)) {
+                compile_error(ctx, "invalid types used in expression: cannot perform shift operation between types %s and %s",
+                    type_name[exprs[0]->vtype],
+                    type_name[exprs[1]->vtype]);
+                return false;
+            }
+
+            if(!(out = fold_op(parser->fold, op, exprs))) {
+                ast_expression *shift = intrin_func(parser->intrin, (op->id == opid3('<','<','=')) ? "__builtin_lshift" : "__builtin_rshift");
+                ast_call       *call  = ast_call_new(parser_ctx(parser), shift);
+                vec_push(call->params, exprs[0]);
+                vec_push(call->params, exprs[1]);
+                out = (ast_expression*)ast_store_new(
+                    parser_ctx(parser),
+                    INSTR_STORE_F,
+                    exprs[0],
+                    (ast_expression*)call
+                );
+            }
+
             break;
 
         case opid2('|','|'):

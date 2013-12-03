@@ -1233,12 +1233,16 @@ int lex_do(lex_file *lex)
         ch == '~' || ch == '^'    /* ~=, ~, ^                        */
     )  {
         lex_tokench(lex, ch);
-
         nextch = lex_getch(lex);
-        if ((nextch == '=' && ch != '<') ||
-            (nextch == ch  && ch != '!') ||
-            (nextch == '<' && ch == '>')) {
+
+        if ((nextch == '=' && ch != '<') || (nextch == '<' && ch == '>'))
             lex_tokench(lex, nextch);
+        else if (nextch == ch && ch != '!') {
+            lex_tokench(lex, nextch);
+            if ((thirdch = lex_getch(lex)) == '=')
+                lex_tokench(lex, thirdch);
+            else
+                lex_ungetch(lex, thirdch);
         } else if (ch == '<' && nextch == '=') {
             lex_tokench(lex, nextch);
             if ((thirdch = lex_getch(lex)) == '>')
