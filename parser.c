@@ -2862,6 +2862,14 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                     return false;
                 }
             }
+            else if (!strcmp(parser_tokval(parser), "final")) {
+                flags |= AST_FLAG_FINAL_DECL;
+                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                    parseerror(parser, "`final` attribute has no parameters, expected `]]`");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+            }
             else if (!strcmp(parser_tokval(parser), "alias") && !(flags & AST_FLAG_ALIAS)) {
                 flags   |= AST_FLAG_ALIAS;
                 *message = NULL;
@@ -2966,6 +2974,8 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
+        else if (!strcmp(parser_tokval(parser), "final"))
+            flags |= AST_FLAG_FINAL_DECL;
         else if (!had_const && !had_var && !had_noref && !had_attrib && !had_static && !flags) {
             return false;
         }
@@ -5289,6 +5299,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             retval = false;
                             goto cleanup;
                         }
+                        if (old->flags & AST_FLAG_FINAL_DECL) {
+                            parseerror(parser, "cannot redeclare variable `%s`, declared final here: %s:%i",
+                                       var->name, ast_ctx(old).file, ast_ctx(old).line);
+                            retval = false;
+                            goto cleanup;
+                        }
                         proto = (ast_value*)old;
                         if (!ast_istype(old, ast_value)) {
                             parseerror(parser, "internal error: not an ast_value");
@@ -5302,6 +5318,11 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             goto cleanup;
                         }
                         proto->expression.flags |= var->expression.flags;
+                        /* copy the context for finals,
+                         * so the error can show where it was actually made 'final'
+                         */
+                        if (proto->expression.flags & AST_FLAG_FINAL_DECL)
+                            ast_ctx(old) = ast_ctx(var);
                         ast_delete(var);
                         var = proto;
                     }

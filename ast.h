@@ -73,6 +73,8 @@ enum {
      */
     AST_FLAG_ARRAY_INIT    = 1 << 10,
 
+    AST_FLAG_FINAL_DECL    = 1 << 11,
+
     AST_FLAG_LAST,
     AST_FLAG_TYPE_MASK     = (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
 };
