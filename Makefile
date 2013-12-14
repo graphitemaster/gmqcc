@@ -143,6 +143,7 @@ install-doc:
 
 ansi.o: platform.h gmqcc.h opts.def
 util.o: gmqcc.h opts.def platform.h
+hash.o: gmqcc.h opts.def
 stat.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def platform.h
 opts.o: gmqcc.h opts.def

@@ -115,6 +115,7 @@ exec.o: gmqcc.h opts.def
 fold.o: ast.h ir.h gmqcc.h opts.def parser.h lexer.h
 fs.o: gmqcc.h opts.def platform.h
 ftepp.o: gmqcc.h opts.def lexer.h
+hash.o: gmqcc.h opts.def
 intrin.o: parser.h gmqcc.h opts.def lexer.h ast.h ir.h
 ir.o: gmqcc.h opts.def ir.h
 lexer.o: gmqcc.h opts.def lexer.h

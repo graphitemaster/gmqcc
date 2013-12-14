@@ -14,7 +14,7 @@ LDFLAGS +=
 LIBS    += -lm
 
 #common objects
-COMMON   = ansi.o util.o stat.o fs.o opts.o conout.o
+COMMON   = ansi.o util.o hash.o stat.o fs.o opts.o conout.o
 
 #objects
 OBJ_C = $(COMMON) main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o
