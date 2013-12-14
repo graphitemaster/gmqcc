@@ -349,7 +349,7 @@ static GMQCC_FORCEINLINE uint32_t hash_sse(const void *GMQCC_RESTRICT key, size_
 }
 #endif
 
-#if defined (__GNUC__) && defined(__i386__)
+#if defined (__GNUC__) && defined(__i386__) && !defined(__SSE__)
 /*
  * Emulate MSVC _cpuid intrinsic for GCC/MinGW/Clang, this will be used
  * to determine if we should use the SSE route.
