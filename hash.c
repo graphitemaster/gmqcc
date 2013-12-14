@@ -191,7 +191,7 @@ static GMQCC_FORCEINLINE void hash_native_process(uint32_t *ph1, uint32_t *carry
      * Alignment has been reached, deal with aligned blocks, specializing for
      * all possible carry counts.
      */
-    end = ptr + len / 4 * 4;
+    end = ptr + length / 4 * 4;
     switch (n) {
         case 0:
             for (; ptr < end; ptr += 4) {
