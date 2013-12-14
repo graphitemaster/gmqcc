@@ -68,11 +68,6 @@
  * Murmur3 comes in to save the day.
  */
 
-#ifdef __GNUC__
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wattributes"
-#endif
-
 /*
  * Some rotation tricks:
  *  MSVC one shaves off six instructions, where GCC optimized one for
@@ -454,7 +449,3 @@ size_t hash(const char *key) {
 #undef HASH_NATIVE_BLOCK
 #undef HASH_NATIVE_BYTES
 #undef HASH_NATIVE_SAFEREAD
-
-#ifdef __GNUC__
-#   pragma GCC diagnostic pop
-#endif
