@@ -252,7 +252,7 @@ static GMQCC_FORCEINLINE uint32_t hash_native_result(uint32_t hash, uint32_t car
     return hash;
 }
 
-static GMQCC_FORCEINLINE uint32_t hash_native(const void *GMQCC_RESTRICT key, size_t length) {
+static GMQCC_FORCEINLINE GMQCC_USED uint32_t hash_native(const void *GMQCC_RESTRICT key, size_t length) {
     uint32_t hash  = HASH_SEED;
     uint32_t carry = 0;
 
@@ -389,7 +389,7 @@ static uint32_t hash_entry(const void *GMQCC_RESTRICT key, size_t length) {
     }
 
     return (GMQCC_LIKELY(sse))
-                ? hash_sse(key, length);
+                ? hash_sse(key, length)
                 : hash_native(key, length);
 /*
  * Same as above but this time host compiler was defined with SSE support.
