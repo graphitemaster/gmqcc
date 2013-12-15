@@ -118,7 +118,6 @@ static GMQCC_FORCEINLINE uint32_t hash_murmur_mix32(uint32_t hash) {
         H  = HASH_ROTL32(H, 13);                       \
         H  = H * 5 + 0xE6546B64;                       \
     } while (0)
-
 #define HASH_MURMUR_BYTES(COUNT, H, C, N, PTR, LENGTH) \
     do {                                               \
         int i = COUNT;                                 \
@@ -131,6 +130,13 @@ static GMQCC_FORCEINLINE uint32_t hash_murmur_mix32(uint32_t hash) {
                 N = 0;                                 \
             }                                          \
         }                                              \
+    } while (0)
+#define HASH_MURMUR_TAIL(P, Z, H, C, N, PTR, LEN)      \
+    do {                                               \
+        LEN -= LEN/4*4;                                \
+        HASH_MURMUR_BYTES(LEN, H, C, N, PTR, LEN);     \
+        *P = H;                                        \
+        *Z = ((C) & ~0xFF) | (N);                      \
     } while (0)
 
 #if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_LITTLE
@@ -151,13 +157,7 @@ static GMQCC_FORCEINLINE void hash_murmur_process(uint32_t *ph1, uint32_t *carry
         uint32_t k1 = HASH_MURMUR_SAFEREAD(ptr);
         HASH_MURMUR_BLOCK(h1, k1);
     }
-
-    length -= length/4*4;
-
-    HASH_MURMUR_BYTES(length, h1, c, n, ptr, length);
-
-    *ph1   = h1;
-    *carry = (c & ~0xFF) | n;
+    HASH_MURMUR_TAIL(ph1, carry, h1, c, n, ptr, length);
 }
 #else
 static GMQCC_FORCEINLINE void hash_murmur_process(uint32_t *ph1, uint32_t *carry, const void *key, int length) {
@@ -196,12 +196,7 @@ static GMQCC_FORCEINLINE void hash_murmur_process(uint32_t *ph1, uint32_t *carry
         NEXT(3, 8,  24);
         #undef NEXT
     }
-    length -= length/4*4;
-
-    HASH_MURMUR_BYTES(length, h1, c, n, ptr, length);
-
-    *ph1   = h1;
-    *carry = (c & ~0xFF) | n;
+    HASH_MURMUR_TAIL(ph1, carry, h1, c, n, ptr, length);
 }
 #endif
 
@@ -242,3 +237,12 @@ size_t hash(const char *key) {
 
     return hash_murmur((const void *)key, s-a);
 }
+
+#undef HASH_ROTL32
+#undef HASH_MURMUR_MASK1
+#undef HASH_MURMUR_MASK2
+#undef HASH_MURMUR_SEED
+#undef HASH_MURMUR_SAFEREAD
+#undef HASH_MURMUR_BLOCK
+#undef HASH_MURMUR_BYTES
+#undef HASH_MURMUR_TAIL
