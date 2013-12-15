@@ -23,9 +23,21 @@
 #include "gmqcc.h"
 #include <limits.h>
 
+#if defined(_MSC_VER)
+#   define HASH_ROTL32(X, Y) _rotl((X), (Y))
+#elif defined (__GNUC__) && (defined(__i386__) || defined(__amd64__))
+    static GMQCC_FORCEINLINE uint32_t hash_rotl32(volatile uint32_t x, int8_t r) {
+        __asm__ __volatile__ ("roll %1,%0" : "+r"(x) : "c"(r));
+        return x;
+    }
+#   define HASH_ROTL32(X, Y) hash_rotl32((volatile uint32_t)(X), (Y))
+#else
+#   define HASH_ROTL32(X, Y) (((X) << (Y)) | ((X) >> (32 - (Y))))
+#endif
+
 /*
  * This is a version of the Murmur3 hashing function optimized for various
- * compilers/architectures. It uses the traditional Murmur2 mix stagin
+ * compilers/architectures. It uses the traditional Murmur2 mix staging
  * but fixes the mix staging inner loops.
  *
  * Murmur 2 contains an inner loop such as:
@@ -67,28 +79,7 @@
  * This means we have a 14.5% higher chance of collision. This is where
  * Murmur3 comes in to save the day.
  */
-
-/*
- * Some rotation tricks:
- *  MSVC one shaves off six instructions, where GCC optimized one for
- *  x86 and amd64 shaves off four instructions. Native methods are often
- *  optimized rather well at -O3, but not at -O2.
- */
-#if defined(_MSC_VER)
-#   define HASH_ROTL32(X, Y) _rotl((X), (Y))
-#else
-static GMQCC_FORCEINLINE uint32_t hash_rotl32(volatile uint32_t x, int8_t r) {
-#if defined (__GNUC__) && (defined(__i386__) || defined(__amd64__))
-    __asm__ __volatile__ ("roll %1,%0" : "+r"(x) : "c"(r));
-    return x;
-#else /* ! (defined(__GNUC__) && (defined(__i386__) || defined(__amd64__))) */
-    return (x << r) | (x >> (32 - r));
-#endif
-}
-#   define HASH_ROTL32(X, Y) hash_rotl32((volatile uint32_t)(X), (Y))
-#endif /* !(_MSC_VER) */
-
-static GMQCC_FORCEINLINE uint32_t hash_mix32(uint32_t hash) {
+static GMQCC_FORCEINLINE uint32_t hash_murmur_mix32(uint32_t hash) {
     hash ^= hash >> 16;
     hash *= 0x85EBCA6B;
     hash ^= hash >> 13;
@@ -102,33 +93,33 @@ static GMQCC_FORCEINLINE uint32_t hash_mix32(uint32_t hash) {
  * case senario for Murmur3:
  *  http://code.google.com/p/smhasher/
  */
-#define HASH_MASK1 0xCC9E2D51
-#define HASH_MASK2 0x1B873593
-#define HASH_SEED  0x9747B28C
+#define HASH_MURMUR_MASK1 0xCC9E2D51
+#define HASH_MURMUR_MASK2 0x1B873593
+#define HASH_MURMUR_SEED  0x9747B28C
 
 #if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_LITTLE
-#   define HASH_NATIVE_SAFEREAD(PTR) (*((uint32_t*)(PTR)))
+#   define HASH_MURMUR_SAFEREAD(PTR) (*((uint32_t*)(PTR)))
 #elif PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_BIG
 #   if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 3))
-#       define HASH_NATIVE_SAFEREAD(PTR) (__builtin_bswap32(*((uint32_t*)(PTR))))
+#       define HASH_MURMUR_SAFEREAD(PTR) (__builtin_bswap32(*((uint32_t*)(PTR))))
 #   endif
 #endif
 /* Process individual bytes at this point since the endianess isn't known. */
-#ifndef HASH_NATIVE_SAFEREAD
-#   define HASH_NATIVE_SAFEREAD(PTR) ((PTR)[0] | (PTR)[1] << 8 | (PTR)[2] << 16 | (PTR)[3] << 24)
+#ifndef HASH_MURMUR_SAFEREAD
+#   define HASH_MURMUR_SAFEREAD(PTR) ((PTR)[0] | (PTR)[1] << 8 | (PTR)[2] << 16 | (PTR)[3] << 24)
 #endif
 
-#define HASH_NATIVE_BLOCK(H, K)                        \
+#define HASH_MURMUR_BLOCK(H, K)                        \
     do {                                               \
-        K *= HASH_MASK1;                               \
+        K *= HASH_MURMUR_MASK1;                        \
         K  = HASH_ROTL32(K, 15);                       \
-        K *= HASH_MASK2;                               \
+        K *= HASH_MURMUR_MASK2;                        \
         H ^= K;                                        \
         H  = HASH_ROTL32(H, 13);                       \
         H  = H * 5 + 0xE6546B64;                       \
     } while (0)
 
-#define HASH_NATIVE_BYTES(COUNT, H, C, N, PTR, LENGTH) \
+#define HASH_MURMUR_BYTES(COUNT, H, C, N, PTR, LENGTH) \
     do {                                               \
         int i = COUNT;                                 \
         while (i--) {                                  \
@@ -136,175 +127,118 @@ static GMQCC_FORCEINLINE uint32_t hash_mix32(uint32_t hash) {
             N++;                                       \
             LENGTH--;                                  \
             if (N == 4) {                              \
-                HASH_NATIVE_BLOCK(H, C);               \
+                HASH_MURMUR_BLOCK(H, C);               \
                 N = 0;                                 \
             }                                          \
         }                                              \
     } while (0)
 
-/*
- * Highly unrolled at per-carry bit granularity instead of per-block granularity. This will achieve the
- * highest possible instruction level parallelism.
- */
-static GMQCC_FORCEINLINE void hash_native_process(uint32_t *ph1, uint32_t *carry, const void *key, int length) {
+#if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_LITTLE
+static GMQCC_FORCEINLINE void hash_murmur_process(uint32_t *ph1, uint32_t *carry, const void *key, int length) {
     uint32_t h1 = *ph1;
     uint32_t c  = *carry;
 
     const uint8_t *ptr = (uint8_t*)key;
     const uint8_t *end;
 
-    /* carry count from low 2 bits of carry value */
-    int n = c & 3;
-
-    /*
-     * Unaligned word accesses are safe in LE. Thus we can obtain a little
-     * more speed.
-     */
-#   if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_LITTLE
-    /* Consume carry bits */
+    int n  = c & 3;
     int it = (4 - n) & 3;
     if (it && it <= length)
-        HASH_NATIVE_BYTES(it, h1, c, n, ptr, length);
+        HASH_MURMUR_BYTES(it, h1, c, n, ptr, length);
 
-    /* word size chunk consumption */
     end = ptr + length/4*4;
     for (; ptr < end; ptr += 4) {
-        uint32_t k1 = HASH_NATIVE_SAFEREAD(ptr);
-        HASH_NATIVE_BLOCK(h1, k1);
+        uint32_t k1 = HASH_MURMUR_SAFEREAD(ptr);
+        HASH_MURMUR_BLOCK(h1, k1);
     }
-#   else
-    /*
-     * Unsafe to assume unaligned word accesses. Thus we'll need to consume
-     * to alignment then process in aligned block chunks.
-     */
-    uint32_t k1;
-    int it = -(long)ptr & 3;
-    if (it && it <= length)
-        HASH_NATIVE_BYTES(it, h1, c, n, ptr, length);
 
-    /*
-     * Alignment has been reached, deal with aligned blocks, specializing for
-     * all possible carry counts.
-     */
-    end = ptr + length / 4 * 4;
-    switch (n) {
-        case 0:
-            for (; ptr < end; ptr += 4) {
-                k1 = HASH_NATIVE_SAFEREAD(ptr);
-                HASH_NATIVE_BLOCK(h1, k1);
-            }
-            break;
-
-        case 1:
-            for (; ptr < end; ptr += 4) {
-                k1  = c >> 24;
-                c   = HASH_NATIVE_SAFEREAD(ptr);
-                k1 |= c << 8;
-                HASH_NATIVE_BLOCK(h1, k1);
-            }
-            break;
-
-        case 2:
-            for (; ptr < end; ptr += 4) {
-                k1  = c >> 16;
-                c   = HASH_NATIVE_SAFEREAD(ptr);
-                k1 |= c << 16;
-                HASH_NATIVE_BLOCK(h1, k1);
-            }
-            break;
-
-        case 3:
-            for (; ptr < end; ptr += 4) {
-                k1  = c >> 8;
-                c   = HASH_NATIVE_SAFEREAD(ptr);
-                k1 |= c << 24;
-                HASH_NATIVE_BLOCK(h1, k1);
-            }
-            break;
-    }
-#endif /* misaligned reads */
-
-    /*
-     * Advanced over 32-bit chunks, this can possibly leave 1..3 bytes of
-     * additional trailing content to process.
-     */
     length -= length/4*4;
 
-    HASH_NATIVE_BYTES(length, h1, c, n, ptr, length);
+    HASH_MURMUR_BYTES(length, h1, c, n, ptr, length);
 
     *ph1   = h1;
     *carry = (c & ~0xFF) | n;
 }
+#else
+static GMQCC_FORCEINLINE void hash_murmur_process(uint32_t *ph1, uint32_t *carry, const void *key, int length) {
+    uint32_t k1;
+    uint32_t h1 = *ph1;
+    uint32_t c  = *carry;
 
-static GMQCC_FORCEINLINE uint32_t hash_native_result(uint32_t hash, uint32_t carry, size_t length) {
+    const uint8_t *ptr = (uint8_t*)key;
+    const uint8_t *end;
+
+    int n  = c & 3;
+    int it = -(long)ptr & 3;
+    if (it && it <= length)
+        HASH_MURMUR_BYTES(it, h1, c, n, ptr, length);
+
+    end = ptr + length / 4 * 4;
+    switch (n) {
+        case 0:
+            for (; ptr < end; ptr += 4) {
+                k1 = HASH_MURMUR_SAFEREAD(ptr);
+                HASH_MURMUR_BLOCK(h1, k1);
+            }
+            break;
+
+#       define NEXT(N, RIGHT, LEFT)                  \
+            case N:                                  \
+                for (; ptr < end; ptr += 4) {        \
+                    k1  = c >> RIGHT;                \
+                    c   = HASH_MURMUR_SAFEREAD(ptr); \
+                    k1 |= c << LEFT;                 \
+                    HASH_MURMUR_BLOCK(h1, k1);       \
+                }                                    \
+                break
+        NEXT(1, 24, 8);
+        NEXT(2, 16, 16);
+        NEXT(3, 8,  24);
+        #undef NEXT
+    }
+    length -= length/4*4;
+
+    HASH_MURMUR_BYTES(length, h1, c, n, ptr, length);
+
+    *ph1   = h1;
+    *carry = (c & ~0xFF) | n;
+}
+#endif
+
+static GMQCC_FORCEINLINE uint32_t hash_murmur_result(uint32_t hash, uint32_t carry, size_t length) {
     uint32_t k1;
     int n = carry & 3;
     if (GMQCC_LIKELY(n)) {
         k1    = carry >> (4 - n) * 8;
-        k1   *= HASH_MASK1;
+        k1   *= HASH_MURMUR_MASK1;
         k1    = HASH_ROTL32(k1, 15);
-        k1   *= HASH_MASK2;
+        k1   *= HASH_MURMUR_MASK2;
         hash ^= k1;
     }
     hash ^= length;
-    hash  = hash_mix32(hash);
+    hash  = hash_murmur_mix32(hash);
 
     return hash;
 }
 
-static GMQCC_FORCEINLINE GMQCC_USED uint32_t hash_native(const void *GMQCC_RESTRICT key, size_t length) {
-    uint32_t hash  = HASH_SEED;
+static GMQCC_FORCEINLINE uint32_t hash_murmur(const void *GMQCC_RESTRICT key, size_t length) {
+    uint32_t hash  = HASH_MURMUR_SEED;
     uint32_t carry = 0;
-
-    /* Seperate calls for inliner to deal with */
-    hash_native_process(&hash, &carry, key, length);
-    return hash_native_result(hash, carry, length);
+    hash_murmur_process(&hash, &carry, key, length);
+    return hash_murmur_result(hash, carry, length);
 }
-
-static uint32_t hash_entry(const void *GMQCC_RESTRICT key, size_t length) {
-    return hash_native(key, length);
-}
-
-#define HASH_LEN_ALIGN      (sizeof(size_t))
-#define HASH_LEN_ONES       ((size_t)-1/UCHAR_MAX)
-#define HASH_LEN_HIGHS      (HASH_LEN_ONES * (UCHAR_MAX / 2 + 1))
-#define HASH_LEN_HASZERO(X) (((X)-HASH_LEN_ONES) & ~(X) & HASH_LEN_HIGHS)
 
 size_t hash(const char *key) {
     const char   *s = key;
     const char   *a = s;
     const size_t *w;
 
-    /* Align for fast staging */
-    for (; (uintptr_t)s % HASH_LEN_ALIGN; s++) {
-        /* Quick stage if terminated before alignment */
+    for (; (uintptr_t)s % sizeof(size_t); s++)
         if (!*s)
-            return hash_entry(key, s-a);
-    }
+            return hash_murmur((const void *)key, s-a);
 
-    /*
-     * Efficent staging of words for string length calculation, this is
-     * faster than ifunc resolver of strlen call.
-     *
-     * On a x64 this becomes literally two masks, and a quick skip through
-     * bytes along the string with the following masks:
-     *      movabs $0xFEFEFEFEFEFEFEFE,%r8
-     *      movabs $0x8080808080808080,%rsi
-     */
-    for (w = (const void *)s; !HASH_LEN_HASZERO(*w); w++);
-    for (s = (const void *)w; *s; s++);
+    for (w = (const size_t*)s; !((*w-(size_t)-1/UCHAR_MAX) & ~*w & ((size_t)-1/UCHAR_MAX) * (UCHAR_MAX / 2 + 1)); w++);
+    for (s = (const char *)w; *s; s++);
 
-    return hash_entry(key, s-a);
+    return hash_murmur((const void *)key, s-a);
 }
-
-#undef HASH_LEN_HASZERO
-#undef HASH_LEN_HIGHS
-#undef HASH_LEN_ONES
-#undef HASH_LEN_ALIGN
-#undef HASH_SEED
-#undef HASH_MASK2
-#undef HASH_MASK1
-#undef HASH_ROTL32
-#undef HASH_NATIVE_BLOCK
-#undef HASH_NATIVE_BYTES
-#undef HASH_NATIVE_SAFEREAD
