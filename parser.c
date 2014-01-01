@@ -2803,6 +2803,11 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 /* returns true when it was a variable qualifier, false otherwise!
  * on error, cvq is set to CV_WRONG
  */
+typedef struct {
+    const char *name;
+    size_t      flag;
+} attribute_t;
+
 static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *is_static, uint32_t *_flags, char **message)
 {
     bool had_const    = false;
@@ -2812,8 +2817,18 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
     bool had_static   = false;
     uint32_t flags    = 0;
 
-    *cvq = CV_NONE;
+    static attribute_t attributes[] = {
+        { "noreturn",   AST_FLAG_NORETURN   },
+        { "inline",     AST_FLAG_INLINE     },
+        { "eraseable",  AST_FLAG_ERASEABLE  },
+        { "accumulate", AST_FLAG_ACCUMULATE },
+        { "definite",   AST_FLAG_FINAL_DECL }
+    };
+
+   *cvq = CV_NONE;
+
     for (;;) {
+        size_t i;
         if (parser->tok == TOKEN_ATTRIBUTE_OPEN) {
             had_attrib = true;
             /* parse an attribute */
@@ -2822,50 +2837,28 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                 *cvq = CV_WRONG;
                 return false;
             }
-            if (!strcmp(parser_tokval(parser), "noreturn")) {
-                flags |= AST_FLAG_NORETURN;
-                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`noreturn` attribute has no parameters, expected `]]`");
-                    *cvq = CV_WRONG;
-                    return false;
+
+            for (i = 0; i < GMQCC_ARRAY_COUNT(attributes); i++) {
+                if (!strcmp(parser_tokval(parser), attributes[i].name)) {
+                    flags |= attributes[i].flag;
+                    if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
+                        parseerror(parser, "`%s` attribute has no parameters, expected `]]`",
+                            attributes[i].name);
+                        *cvq = CV_WRONG;
+                        return false;
+                    }
+                    break;
                 }
             }
-            else if (!strcmp(parser_tokval(parser), "noref")) {
+
+            if (i != GMQCC_ARRAY_COUNT(attributes))
+                goto leave;
+
+
+            if (!strcmp(parser_tokval(parser), "noref")) {
                 had_noref = true;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
                     parseerror(parser, "`noref` attribute has no parameters, expected `]]`");
-                    *cvq = CV_WRONG;
-                    return false;
-                }
-            }
-            else if (!strcmp(parser_tokval(parser), "inline")) {
-                flags |= AST_FLAG_INLINE;
-                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`inline` attribute has no parameters, expected `]]`");
-                    *cvq = CV_WRONG;
-                    return false;
-                }
-            }
-            else if (!strcmp(parser_tokval(parser), "eraseable")) {
-                flags |= AST_FLAG_ERASEABLE;
-                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`eraseable` attribute has no parameters, expected `]]`");
-                    *cvq = CV_WRONG;
-                    return false;
-                }
-            }
-            else if (!strcmp(parser_tokval(parser), "accumulate")) {
-                flags |= AST_FLAG_ACCUMULATE;
-                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`accumulate` attribute has no parameters, expected `]]`");
-                    *cvq = CV_WRONG;
-                    return false;
-                }
-            }
-            else if (!strcmp(parser_tokval(parser), "definite")) {
-                flags |= AST_FLAG_FINAL_DECL;
-                if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`definite` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
                     return false;
                 }
@@ -2979,6 +2972,8 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
         }
         else
             break;
+
+        leave:
         if (!parser_next(parser))
             goto onerr;
     }
