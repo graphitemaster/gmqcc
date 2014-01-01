@@ -2862,10 +2862,10 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                     return false;
                 }
             }
-            else if (!strcmp(parser_tokval(parser), "final")) {
+            else if (!strcmp(parser_tokval(parser), "definite")) {
                 flags |= AST_FLAG_FINAL_DECL;
                 if (!parser_next(parser) || parser->tok != TOKEN_ATTRIBUTE_CLOSE) {
-                    parseerror(parser, "`final` attribute has no parameters, expected `]]`");
+                    parseerror(parser, "`definite` attribute has no parameters, expected `]]`");
                     *cvq = CV_WRONG;
                     return false;
                 }
@@ -2974,8 +2974,6 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
             had_var = true;
         else if (!strcmp(parser_tokval(parser), "noref"))
             had_noref = true;
-        else if (!strcmp(parser_tokval(parser), "final"))
-            flags |= AST_FLAG_FINAL_DECL;
         else if (!had_const && !had_var && !had_noref && !had_attrib && !had_static && !flags) {
             return false;
         }
