@@ -1,3 +1,3 @@
 float here;
-final float here;
+[[last]] float here;
 float here;

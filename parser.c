@@ -2822,7 +2822,7 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
         { "inline",     AST_FLAG_INLINE     },
         { "eraseable",  AST_FLAG_ERASEABLE  },
         { "accumulate", AST_FLAG_ACCUMULATE },
-        { "definite",   AST_FLAG_FINAL_DECL }
+        { "last",       AST_FLAG_FINAL_DECL }
     };
 
    *cvq = CV_NONE;
