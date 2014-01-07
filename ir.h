@@ -48,6 +48,7 @@ enum {
     IR_FLAG_HAS_GOTO             = 1 << 2,
     IR_FLAG_INCLUDE_DEF          = 1 << 3,
     IR_FLAG_ERASEABLE            = 1 << 4,
+    IR_FLAG_BLOCK_COVERAGE       = 1 << 5,
 
     IR_FLAG_LAST,
     IR_FLAG_MASK_NO_OVERLAP      = (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED),
@@ -273,6 +274,7 @@ struct ir_builder_s {
     /* there should just be this one nil */
     ir_value    *nil;
     ir_value    *reserved_va_count;
+    ir_value    *coverage_func;
     /* some virtual instructions require temps, and their code is isolated
      * so that we don't need to keep track of their liveness.
      */

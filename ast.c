@@ -113,8 +113,10 @@ static void ast_expression_init(ast_expression *self,
     self->outr     = NULL;
     self->params   = NULL;
     self->count    = 0;
-    self->flags    = 0;
     self->varparam = NULL;
+    self->flags    = 0;
+    if (OPTS_OPTION_BOOL(OPTION_COVERAGE))
+        self->flags |= AST_FLAG_BLOCK_COVERAGE;
 }
 
 static void ast_expression_delete(ast_expression *self)
@@ -1430,6 +1432,8 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
         if (self->expression.flags & AST_FLAG_ERASEABLE)
             self->ir_v->flags |= IR_FLAG_ERASEABLE;
+        if (self->expression.flags & AST_FLAG_BLOCK_COVERAGE)
+            func->flags |= IR_FLAG_BLOCK_COVERAGE;
         /* The function is filled later on ast_function_codegen... */
         return true;
     }

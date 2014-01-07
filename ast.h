@@ -56,27 +56,37 @@ typedef struct ast_goto_s        ast_goto;
 typedef struct ast_argpipe_s     ast_argpipe;
 
 enum {
-    AST_FLAG_VARIADIC      = 1 << 0,
-    AST_FLAG_NORETURN      = 1 << 1,
-    AST_FLAG_INLINE        = 1 << 2,
-    AST_FLAG_INITIALIZED   = 1 << 3,
-    AST_FLAG_DEPRECATED    = 1 << 4,
-    AST_FLAG_INCLUDE_DEF   = 1 << 5,
-    AST_FLAG_IS_VARARG     = 1 << 6,
-    AST_FLAG_ALIAS         = 1 << 7,
-    AST_FLAG_ERASEABLE     = 1 << 8,
-    AST_FLAG_ACCUMULATE    = 1 << 9,
+    AST_FLAG_VARIADIC       = 1 << 0,
+    AST_FLAG_NORETURN       = 1 << 1,
+    AST_FLAG_INLINE         = 1 << 2,
+    AST_FLAG_INITIALIZED    = 1 << 3,
+    AST_FLAG_DEPRECATED     = 1 << 4,
+    AST_FLAG_INCLUDE_DEF    = 1 << 5,
+    AST_FLAG_IS_VARARG      = 1 << 6,
+    AST_FLAG_ALIAS          = 1 << 7,
+    AST_FLAG_ERASEABLE      = 1 << 8,
+    AST_FLAG_ACCUMULATE     = 1 << 9,
 
-    /*
-     * An array declared as []
+    /* An array declared as []
      * so that the size is taken from the initializer
      */
-    AST_FLAG_ARRAY_INIT    = 1 << 10,
+    AST_FLAG_ARRAY_INIT     = 1 << 10,
 
-    AST_FLAG_FINAL_DECL    = 1 << 11,
+    AST_FLAG_FINAL_DECL     = 1 << 11,
+
+    /* Several coverage options
+     * AST_FLAG_COVERAGE means there was an explicit [[coverage]] attribute,
+     * which will overwrite the default set via the commandline switches.
+     * BLOCK_COVERAGE inserts coverage() calls into every basic block.
+     * In the future there might be more options like tracking variable access
+     * by creating get/set wrapper functions.
+     */
+    AST_FLAG_COVERAGE       = 1 << 12,
+    AST_FLAG_BLOCK_COVERAGE = 1 << 13,
 
     AST_FLAG_LAST,
-    AST_FLAG_TYPE_MASK     = (AST_FLAG_VARIADIC | AST_FLAG_NORETURN)
+    AST_FLAG_TYPE_MASK      = (AST_FLAG_VARIADIC | AST_FLAG_NORETURN),
+    AST_FLAG_COVERAGE_MASK  = (AST_FLAG_BLOCK_COVERAGE)
 };
 
 enum {

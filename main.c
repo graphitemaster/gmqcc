@@ -85,6 +85,7 @@ static int usage(void) {
             "  -Ono-<name>            disable specific optimization\n"
             "  -Ohelp                 list optimizations\n");
     con_out("  -force-crc=num         force a specific checksum into the header\n");
+    con_out("  -coverage              add coverage support\n");
     return -1;
 }
 
@@ -278,6 +279,10 @@ static bool options_parse(int argc, char **argv) {
             }
             if (!strcmp(argv[0]+1, "nocolor")) {
                 con_color(0);
+                continue;
+            }
+            if (!strcmp(argv[0]+1, "coverage")) {
+                OPTS_OPTION_BOOL(OPTION_COVERAGE) = true;
                 continue;
             }
 

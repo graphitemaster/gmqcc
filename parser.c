@@ -2944,6 +2944,47 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
                     return false;
                 }
             }
+            else if (!strcmp(parser_tokval(parser), "coverage") && !(flags & AST_FLAG_COVERAGE)) {
+                flags |= AST_FLAG_COVERAGE;
+                if (!parser_next(parser)) {
+                    error_in_coverage:
+                    parseerror(parser, "parse error in coverage attribute");
+                    *cvq = CV_WRONG;
+                    return false;
+                }
+                if (parser->tok == '(') {
+                    if (!parser_next(parser)) {
+                        bad_coverage_arg:
+                        parseerror(parser, "invalid parameter for coverage() attribute\n"
+                                           "valid are: block");
+                        *cvq = CV_WRONG;
+                        return false;
+                    }
+                    if (parser->tok != ')') {
+                        do {
+                            if (parser->tok != TOKEN_IDENT)
+                                goto bad_coverage_arg;
+                            if (!strcmp(parser_tokval(parser), "block"))
+                                flags |= AST_FLAG_BLOCK_COVERAGE;
+                            else if (!strcmp(parser_tokval(parser), "none"))
+                                flags &= ~(AST_FLAG_COVERAGE_MASK);
+                            else
+                                goto bad_coverage_arg;
+                            if (!parser_next(parser))
+                                goto error_in_coverage;
+                            if (parser->tok == ',') {
+                                if (!parser_next(parser))
+                                    goto error_in_coverage;
+                            }
+                        } while (parser->tok != ')');
+                    }
+                    if (parser->tok != ')' || !parser_next(parser))
+                        goto error_in_coverage;
+                } else {
+                    /* without parameter [[coverage]] equals [[coverage(block)]] */
+                    flags |= AST_FLAG_BLOCK_COVERAGE;
+                }
+            }
             else
             {
                 /* Skip tokens until we hit a ]] */
@@ -5163,6 +5204,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
 
         var->cvq = qualifier;
+        if (qflags & AST_FLAG_COVERAGE) /* specified in QC, drop our default */
+            var->expression.flags &= ~(AST_FLAG_COVERAGE_MASK);
         var->expression.flags |= qflags;
 
         /*
@@ -6201,11 +6244,50 @@ void parser_cleanup(parser_t *parser)
     mem_d(parser);
 }
 
+static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
+    ast_expression *expr;
+    ast_value      *cov;
+    ast_function   *func;
+
+    if (!OPTS_OPTION_BOOL(OPTION_COVERAGE))
+        return true;
+
+    func = NULL;
+    for (size_t i = 0; i != vec_size(parser->functions); ++i) {
+        if (!strcmp(parser->functions[i]->name, "coverage")) {
+            func = parser->functions[i];
+            break;
+        }
+    }
+    if (!func) {
+        if (OPTS_OPTION_BOOL(OPTION_COVERAGE)) {
+            con_out("coverage support requested but no coverage() builtin declared\n");
+            ir_builder_delete(ir);
+            return false;
+        }
+        return true;
+    }
+
+    cov  = func->vtype;
+    expr = (ast_expression*)cov;
+
+    if (expr->vtype != TYPE_FUNCTION || vec_size(expr->params) != 0) {
+        char ty[1024];
+        ast_type_to_string(expr, ty, sizeof(ty));
+        con_out("invalid type for coverage(): %s\n", ty);
+        ir_builder_delete(ir);
+        return false;
+    }
+
+    ir->coverage_func = func->ir_func->value;
+    return true;
+}
+
 bool parser_finish(parser_t *parser, const char *output)
 {
-    size_t i;
-    ir_builder *ir;
-    bool retval = true;
+    size_t          i;
+    ir_builder     *ir;
+    bool            retval = true;
 
     if (compile_errors) {
         con_out("*** there were compile errors\n");
@@ -6285,6 +6367,10 @@ bool parser_finish(parser_t *parser, const char *output)
     }
     /* Now we can generate immediates */
     if (!fold_generate(parser->fold, ir))
+        return false;
+
+    /* before generating any functions we need to set the coverage_func */
+    if (!parser_set_coverage_func(parser, ir))
         return false;
 
     for (i = 0; i < vec_size(parser->globals); ++i) {
