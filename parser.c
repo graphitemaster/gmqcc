@@ -4407,6 +4407,7 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
         parseerror(parser, "failed to create accessor function value");
         return false;
     }
+    fval->expression.flags &= ~(AST_FLAG_COVERAGE_MASK);
 
     func = ast_function_new(ast_ctx(array), funcname, fval);
     if (!func) {
