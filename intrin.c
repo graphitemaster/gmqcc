@@ -1940,28 +1940,41 @@ static ast_expression *intrin_logb(intrin_t *intrin) {
 }
 
 static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, size_t instr) {
-    ast_value    *value    = NULL;
-    ast_call     *callpow  = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", name));
-    ast_value    *a        = ast_value_new(intrin_ctx(intrin), "a", TYPE_FLOAT);
-    ast_value    *b        = ast_value_new(intrin_ctx(intrin), "b", TYPE_FLOAT);
-    ast_block    *body     = ast_block_new(intrin_ctx(intrin));
-    ast_function *func     = intrin_value(intrin, &value, name, TYPE_FLOAT);
+    /*
+     * float [shift] (float a, float b) {
+     *   return floor(a [instr] pow(2, b));
+     */
+    ast_value    *value     = NULL;
+    ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", name));
+    ast_call     *callfloor = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "floor", name));
+    ast_value    *a         = ast_value_new(intrin_ctx(intrin), "a", TYPE_FLOAT);
+    ast_value    *b         = ast_value_new(intrin_ctx(intrin), "b", TYPE_FLOAT);
+    ast_block    *body      = ast_block_new(intrin_ctx(intrin));
+    ast_function *func      = intrin_value(intrin, &value, name, TYPE_FLOAT);
 
     vec_push(value->expression.params, a);
     vec_push(value->expression.params, b);
 
+    /* <callpow> = pow(2, b) */
     vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
     vec_push(callpow->params, (ast_expression*)b);
 
+    /* <callfloor> = floor(a [instr] <callpow>) */
+    vec_push(
+        callfloor->params,
+        (ast_expression*)ast_binary_new(
+            intrin_ctx(intrin),
+            instr,
+            (ast_expression*)a,
+            (ast_expression*)callpow
+        )
+    );
+
+    /* return <callfloor> */
     vec_push(body->exprs,
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
-            (ast_expression*)ast_binary_new(
-                intrin_ctx(intrin),
-                instr,
-                (ast_expression*)a,
-                (ast_expression*)callpow
-            )
+            (ast_expression*)callfloor
         )
     );
 
