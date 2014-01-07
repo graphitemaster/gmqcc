@@ -6246,6 +6246,7 @@ void parser_cleanup(parser_t *parser)
 }
 
 static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
+    size_t          i;
     ast_expression *expr;
     ast_value      *cov;
     ast_function   *func;
@@ -6254,7 +6255,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
         return true;
 
     func = NULL;
-    for (size_t i = 0; i != vec_size(parser->functions); ++i) {
+    for (i = 0; i != vec_size(parser->functions); ++i) {
         if (!strcmp(parser->functions[i]->name, "coverage")) {
             func = parser->functions[i];
             break;
