@@ -85,6 +85,7 @@ const char *util_instr_str[VINSTR_END] = {
             d[l] = (v << 32) | (v >> 32);
         }
         */
+        l *= 2;
         size_t i;
         for (i = 0; i < l; i += 2) {
             uint32_t v1 = d[i];
@@ -95,29 +96,29 @@ const char *util_instr_str[VINSTR_END] = {
     }
 #endif
 
-void util_endianswap(void *_data, size_t length, unsigned int typesize) {
+void util_endianswap(void *_data, size_t count, unsigned int typesize) {
 #   if PLATFORM_BYTE_ORDER == -1 /* runtime check */
     if (*((char*)&typesize))
         return;
 #else
-    /* prevent unused warnings */
-    (void) _data;
-    (void) length;
-    (void) typesize;
 
 #   if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_LITTLE
+        /* prevent unused warnings */
+        (void) _data;
+        (void) count;
+        (void) typesize;
         return;
 #   else
         switch (typesize) {
             case 1: return;
             case 2:
-                util_swap16((uint16_t*)_data, length);
+                util_swap16((uint16_t*)_data, count);
                 return;
             case 4:
-                util_swap32((uint32_t*)_data, length);
+                util_swap32((uint32_t*)_data, count);
                 return;
             case 8:
-                util_swap64((uint32_t*)_data, length<<1); /* swap64 operates on 32 bit words, thus scale to that length. */
+                util_swap64((uint32_t*)_data, count);
                 return;
 
             default:
