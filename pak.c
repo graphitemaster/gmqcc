@@ -145,7 +145,10 @@ static pak_file_t *pak_open_read(const char *file) {
 
     memset         (&pak->header, 0, sizeof(pak_header_t));
     fs_file_read   (&pak->header,    sizeof(pak_header_t), 1, pak->handle);
-    util_endianswap(&pak->header, 1, sizeof(pak_header_t));
+
+    util_tolittleendian(&pak->header.magic,  sizeof(pak->header.magic));
+    util_tolittleendian(&pak->header.diroff, sizeof(pak->header.diroff));
+    util_tolittleendian(&pak->header.dirlen, sizeof(pak->header.dirlen));
 
     /*
      * Every PAK file has "PACK" stored as FOURCC data in the
@@ -171,7 +174,10 @@ static pak_file_t *pak_open_read(const char *file) {
     for (itr = 0; itr < pak->header.dirlen / 64; itr++) {
         pak_directory_t dir;
         fs_file_read   (&dir,    sizeof(pak_directory_t), 1, pak->handle);
-        util_endianswap(&dir, 1, sizeof(pak_directory_t));
+
+        /* Don't translate name - it's just an array of bytes. */
+        util_tolittleendian(&dir.pos, sizeof(dir.pos));
+        util_tolittleendian(&dir.len, sizeof(dir.len));
 
         vec_push(pak->directories, dir);
     }
@@ -212,7 +218,7 @@ static pak_file_t *pak_open_write(const char *file) {
     pak->header.magic = PAK_FOURCC;
 
     /* on BE systems we need to swap the byte order of the FOURCC */
-    util_endianswap(&pak->header.magic, 1, sizeof(uint32_t));
+    util_tolittleendian(&pak->header.magic, sizeof(uint32_t));
 
     /*
      * We need to write out the header since files will be wrote out to
