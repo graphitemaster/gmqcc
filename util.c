@@ -111,16 +111,18 @@ void util_endianswap(void *_data, size_t length, unsigned int typesize) {
         switch (typesize) {
             case 1: return;
             case 2:
-                util_swap16((uint16_t*)_data, length>>1);
+                util_swap16((uint16_t*)_data, length);
                 return;
             case 4:
-                util_swap32((uint32_t*)_data, length>>2);
+                util_swap32((uint32_t*)_data, length);
                 return;
             case 8:
-                util_swap64((uint32_t*)_data, length>>3);
+                util_swap64((uint32_t*)_data, length<<1); /* swap64 operates on 32 bit words, thus scale to that length. */
                 return;
 
-            default: exit(EXIT_FAILURE); /* please blow the fuck up! */
+            default:
+                con_err ("util_endianswap: I don't know how to swap a %u byte structure!\n", typesize);
+                exit(EXIT_FAILURE); /* please blow the fuck up! */
         }
 #   endif
 #endif
