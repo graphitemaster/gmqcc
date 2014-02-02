@@ -213,11 +213,10 @@ void *stat_mem_allocate  (size_t, size_t, const char *, const char *);
 #define util_isprint(a) (((unsigned)(a)-0x20) < 0x5F)
 #define util_isspace(a) (((a) >= 9 && (a) <= 13) || (a) == ' ')
 
-bool  util_strupper (const char *);
-bool  util_strdigit (const char *);
+bool  util_strupper(const char *);
+bool  util_strdigit(const char *);
 
-void  util_tolittleendianarray  (void *, size_t, unsigned int);
-void  util_tolittleendian       (void *,         unsigned int);
+void  util_endianswap(void *, size_t, unsigned int);
 
 size_t util_strtocmd         (const char *, char *, size_t);
 size_t util_strtononcmd      (const char *, char *, size_t);

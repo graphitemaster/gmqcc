@@ -95,7 +95,7 @@ const char *util_instr_str[VINSTR_END] = {
     }
 #endif
 
-void util_tolittleendianarray(void *_data, size_t length, unsigned int typesize) {
+void util_endianswap(void *_data, size_t length, unsigned int typesize) {
 #   if PLATFORM_BYTE_ORDER == -1 /* runtime check */
     if (*((char*)&typesize))
         return;
@@ -121,15 +121,11 @@ void util_tolittleendianarray(void *_data, size_t length, unsigned int typesize)
                 return;
 
             default:
-                con_err ("util_tolittleendianarray: I don't know how to swap a %d byte structure!\n", typesize);
+                con_err ("util_endianswap: I don't know how to swap a %u byte structure!\n", typesize);
                 exit(EXIT_FAILURE); /* please blow the fuck up! */
         }
 #   endif
 #endif
-}
-
-void util_tolittleendian(void *_data, unsigned int typesize) {
-    util_tolittleendianarray(_data, 1, typesize);
 }
 
 /*
