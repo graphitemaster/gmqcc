@@ -117,7 +117,7 @@ void util_tolittleendianarray(void *_data, size_t length, unsigned int typesize)
                 util_swap32((uint32_t*)_data, length);
                 return;
             case 8:
-                util_swap64((uint32_t*)_data, length);
+                util_swap64((uint32_t*)_data, length<<1); /* swap64 operates on 32 bit words, thus scale to that length. */
                 return;
 
             default:
