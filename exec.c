@@ -66,6 +66,8 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
         return NULL;
     }
 
+    util_swap_header(&header);
+
     if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
         fs_file_close(file);
@@ -113,6 +115,12 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     read_data1(functions);
     read_data1(strings);
     read_data2(globals, 2); /* reserve more in case a RETURN using with the global at "the end" exists */
+
+    util_swap_statements (prog->code);
+    util_swap_defs_fields(prog->defs);
+    util_swap_defs_fields(prog->fields);
+    util_swap_functions  (prog->functions);
+    util_swap_globals    (prog->globals);
 
     fs_file_close(file);
 

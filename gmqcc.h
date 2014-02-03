@@ -627,6 +627,11 @@ enum {
 /* TODO: elide */
 extern const char *util_instr_str[VINSTR_END];
 
+void util_swap_header     (prog_header_t              *code_header);
+void util_swap_statements (prog_section_statement_t   *statements);
+void util_swap_defs_fields(prog_section_both_t        *section);
+void util_swap_functions  (prog_section_function_t    *functions);
+void util_swap_globals    (int32_t                    *globals);
 
 typedef float    qcfloat_t;
 typedef int32_t  qcint_t;

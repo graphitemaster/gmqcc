@@ -85,8 +85,8 @@ const char *util_instr_str[VINSTR_END] = {
             d[l] = (v << 32) | (v >> 32);
         }
         */
-        l *= 2;
         size_t i;
+        l *= 2;
         for (i = 0; i < l; i += 2) {
             uint32_t v1 = d[i];
             d[i] = d[i+1];
@@ -127,6 +127,64 @@ void util_endianswap(void *_data, size_t count, unsigned int typesize) {
         }
 #   endif
 #endif
+}
+
+void util_swap_header (prog_header_t *code_header) {
+    util_endianswap(&code_header->version,              1, sizeof(code_header->version));
+    util_endianswap(&code_header->crc16,                1, sizeof(code_header->crc16));
+    util_endianswap(&code_header->statements.offset,    1, sizeof(code_header->statements.offset));
+    util_endianswap(&code_header->statements.length,    1, sizeof(code_header->statements.length));
+    util_endianswap(&code_header->defs.offset,          1, sizeof(code_header->defs.offset));
+    util_endianswap(&code_header->defs.length,          1, sizeof(code_header->defs.length));
+    util_endianswap(&code_header->fields.offset,        1, sizeof(code_header->fields.offset));
+    util_endianswap(&code_header->fields.length,        1, sizeof(code_header->fields.length));
+    util_endianswap(&code_header->functions.offset,     1, sizeof(code_header->functions.offset));
+    util_endianswap(&code_header->functions.length,     1, sizeof(code_header->functions.length));
+    util_endianswap(&code_header->strings.offset,       1, sizeof(code_header->strings.offset));
+    util_endianswap(&code_header->strings.length,       1, sizeof(code_header->strings.length));
+    util_endianswap(&code_header->globals.offset,       1, sizeof(code_header->globals.offset));
+    util_endianswap(&code_header->globals.length,       1, sizeof(code_header->globals.length));
+    util_endianswap(&code_header->entfield,             1, sizeof(code_header->entfield));
+}
+
+void util_swap_statements (prog_section_statement_t *statements) {
+    size_t i;
+
+    for (i = 0; i < vec_size(statements); ++i) {
+        util_endianswap(&statements[i].opcode,  1, sizeof(statements[i].opcode));
+        util_endianswap(&statements[i].o1,      1, sizeof(statements[i].o1));
+        util_endianswap(&statements[i].o2,      1, sizeof(statements[i].o2));
+        util_endianswap(&statements[i].o3,      1, sizeof(statements[i].o3));
+    }
+}
+
+void util_swap_defs_fields (prog_section_both_t *section) {
+    size_t i;
+
+    for (i = 0; i < vec_size(section); ++i) {
+        util_endianswap(&section[i].type,   1, sizeof(section[i].type));
+        util_endianswap(&section[i].offset, 1, sizeof(section[i].offset));
+        util_endianswap(&section[i].name,   1, sizeof(section[i].name));
+    }
+}
+
+void util_swap_functions (prog_section_function_t* functions) {
+    size_t i;
+
+    for (i = 0; i < vec_size(functions); ++i) {
+        util_endianswap(&functions[i].entry,        1, sizeof(functions[i].entry));
+        util_endianswap(&functions[i].firstlocal,   1, sizeof(functions[i].firstlocal));
+        util_endianswap(&functions[i].locals,       1, sizeof(functions[i].locals));
+        util_endianswap(&functions[i].profile,      1, sizeof(functions[i].profile));
+        util_endianswap(&functions[i].name,         1, sizeof(functions[i].name));
+        util_endianswap(&functions[i].file,         1, sizeof(functions[i].file));
+        util_endianswap(&functions[i].nargs,        1, sizeof(functions[i].nargs));
+        /* Don't swap argsize[] - it's just a byte array, which Quake uses only as such. */
+    }
+}
+
+void util_swap_globals (int32_t * globals) {
+    util_endianswap(globals, vec_size(globals), sizeof(int32_t));
 }
 
 /*
