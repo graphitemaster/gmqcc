@@ -729,7 +729,7 @@ static GMQCC_INLINE ast_expression *fold_intrin_asinh(fold_t *fold, ast_value *a
     return fold_constgen_float(fold, asinhf(fold_immvalue_float(a)));
 }
 static GMQCC_INLINE ast_expression *fold_intrin_atanh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, atanhf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, (float)atanh(fold_immvalue_float(a)));
 }
 static GMQCC_INLINE ast_expression *fold_intrin_exp(fold_t *fold, ast_value *a) {
     return fold_constgen_float(fold, expf(fold_immvalue_float(a)));
