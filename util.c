@@ -168,7 +168,7 @@ void util_swap_defs_fields (prog_section_both_t *section) {
     }
 }
 
-void util_swap_functions (prog_section_function_t* functions) {
+void util_swap_functions (prog_section_function_t *functions) {
     size_t i;
 
     for (i = 0; i < vec_size(functions); ++i) {
@@ -183,7 +183,7 @@ void util_swap_functions (prog_section_function_t* functions) {
     }
 }
 
-void util_swap_globals (int32_t * globals) {
+void util_swap_globals (int32_t *globals) {
     util_endianswap(globals, vec_size(globals), sizeof(int32_t));
 }
 
