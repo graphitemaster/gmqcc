@@ -129,7 +129,7 @@ void util_endianswap(void *_data, size_t count, unsigned int typesize) {
 #endif
 }
 
-void util_swap_header (prog_header_t *code_header) {
+void util_swap_header(prog_header_t *code_header) {
     util_endianswap(&code_header->version,              1, sizeof(code_header->version));
     util_endianswap(&code_header->crc16,                1, sizeof(code_header->crc16));
     util_endianswap(&code_header->statements.offset,    1, sizeof(code_header->statements.offset));
@@ -147,7 +147,7 @@ void util_swap_header (prog_header_t *code_header) {
     util_endianswap(&code_header->entfield,             1, sizeof(code_header->entfield));
 }
 
-void util_swap_statements (prog_section_statement_t *statements) {
+void util_swap_statements(prog_section_statement_t *statements) {
     size_t i;
 
     for (i = 0; i < vec_size(statements); ++i) {
@@ -158,7 +158,7 @@ void util_swap_statements (prog_section_statement_t *statements) {
     }
 }
 
-void util_swap_defs_fields (prog_section_both_t *section) {
+void util_swap_defs_fields(prog_section_both_t *section) {
     size_t i;
 
     for (i = 0; i < vec_size(section); ++i) {
@@ -168,7 +168,7 @@ void util_swap_defs_fields (prog_section_both_t *section) {
     }
 }
 
-void util_swap_functions (prog_section_function_t *functions) {
+void util_swap_functions(prog_section_function_t *functions) {
     size_t i;
 
     for (i = 0; i < vec_size(functions); ++i) {
@@ -183,7 +183,7 @@ void util_swap_functions (prog_section_function_t *functions) {
     }
 }
 
-void util_swap_globals (int32_t *globals) {
+void util_swap_globals(int32_t *globals) {
     util_endianswap(globals, vec_size(globals), sizeof(int32_t));
 }
 
