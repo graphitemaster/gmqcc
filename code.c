@@ -260,59 +260,18 @@ static void code_create_header(code_t *code, prog_header_t *code_header, const c
     }
 
     /* ensure all data is in LE format */
-    util_endianswap(&code_header->version,              1, sizeof(code_header->version));
-    util_endianswap(&code_header->crc16,                1, sizeof(code_header->crc16));
-    util_endianswap(&code_header->statements.offset,    1, sizeof(code_header->statements.offset));
-    util_endianswap(&code_header->statements.length,    1, sizeof(code_header->statements.length));
-    util_endianswap(&code_header->defs.offset,          1, sizeof(code_header->defs.offset));
-    util_endianswap(&code_header->defs.length,          1, sizeof(code_header->defs.length));
-    util_endianswap(&code_header->fields.offset,        1, sizeof(code_header->fields.offset));
-    util_endianswap(&code_header->fields.length,        1, sizeof(code_header->fields.length));
-    util_endianswap(&code_header->functions.offset,     1, sizeof(code_header->functions.offset));
-    util_endianswap(&code_header->functions.length,     1, sizeof(code_header->functions.length));
-    util_endianswap(&code_header->strings.offset,       1, sizeof(code_header->strings.offset));
-    util_endianswap(&code_header->strings.length,       1, sizeof(code_header->strings.length));
-    util_endianswap(&code_header->globals.offset,       1, sizeof(code_header->globals.offset));
-    util_endianswap(&code_header->globals.length,       1, sizeof(code_header->globals.length));
-    util_endianswap(&code_header->entfield,             1, sizeof(code_header->entfield));
+    util_swap_header(code_header);
 
     /*
      * These are not part of the header but we ensure LE format here to save on duplicated
      * code.
      */
 
-    for (i = 0; i < vec_size(code->statements); ++i) {
-        util_endianswap(&code->statements[i].opcode,    1, sizeof(code->statements[i].opcode));
-        util_endianswap(&code->statements[i].o1,        1, sizeof(code->statements[i].o1));
-        util_endianswap(&code->statements[i].o2,        1, sizeof(code->statements[i].o2));
-        util_endianswap(&code->statements[i].o3,        1, sizeof(code->statements[i].o3));
-    }
-
-    for (i = 0; i < vec_size(code->defs); ++i) {
-        util_endianswap(&code->defs[i].type,   1, sizeof(code->defs[i].type));
-        util_endianswap(&code->defs[i].offset, 1, sizeof(code->defs[i].offset));
-        util_endianswap(&code->defs[i].name,   1, sizeof(code->defs[i].name));
-    }
-
-    for (i = 0; i < vec_size(code->fields); ++i) {
-        util_endianswap(&code->fields[i].type,   1, sizeof(code->fields[i].type));
-        util_endianswap(&code->fields[i].offset, 1, sizeof(code->fields[i].offset));
-        util_endianswap(&code->fields[i].name,   1, sizeof(code->fields[i].name));
-    }
-
-    for (i = 0; i < vec_size(code->functions); ++i) {
-        util_endianswap(&code->functions[i].entry,         1, sizeof(code->functions[i].entry));
-        util_endianswap(&code->functions[i].firstlocal,    1, sizeof(code->functions[i].firstlocal));
-        util_endianswap(&code->functions[i].locals,        1, sizeof(code->functions[i].locals));
-        util_endianswap(&code->functions[i].profile,       1, sizeof(code->functions[i].profile));
-        util_endianswap(&code->functions[i].name,          1, sizeof(code->functions[i].name));
-        util_endianswap(&code->functions[i].file,          1, sizeof(code->functions[i].file));
-        util_endianswap(&code->functions[i].nargs,         1, sizeof(code->functions[i].nargs));
-        /* Don't swap argsize[] - it's just a byte array, which Quake uses only as such. */
-    }
-
-    util_endianswap(code->globals, vec_size(code->globals), sizeof(int32_t));
-
+    util_swap_statements (code->statements);
+    util_swap_defs_fields(code->defs);
+    util_swap_defs_fields(code->fields);
+    util_swap_functions  (code->functions);
+    util_swap_globals    (code->globals);
 
     if (!OPTS_OPTION_BOOL(OPTION_QUIET)) {
         if (lnofile)
