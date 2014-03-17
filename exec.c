@@ -827,7 +827,7 @@ static int qc_pow(qc_program_t *prog) {
     CheckArgs(2);
     base = GetArg(0);
     exp = GetArg(1);
-    out._float = pow(base->_float, exp->_float);
+    out._float = powf(base->_float, exp->_float);
     Return(out);
     return 0;
 }
