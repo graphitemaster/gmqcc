@@ -822,6 +822,16 @@ static int qc_floor(qc_program_t *prog) {
     return 0;
 }
 
+static int qc_pow(qc_program_t *prog) {
+    qcany_t *base, *exp, out;
+    CheckArgs(2);
+    base = GetArg(0);
+    exp = GetArg(1);
+    out._float = pow(base->_float, exp->_float);
+    Return(out);
+    return 0;
+}
+
 static prog_builtin_t qc_builtins[] = {
     NULL,
     &qc_print,       /*   1   */
@@ -837,7 +847,8 @@ static prog_builtin_t qc_builtins[] = {
     &qc_strcmp,      /*   11  */
     &qc_normalize,   /*   12  */
     &qc_sqrt,        /*   13  */
-    &qc_floor        /*   14  */
+    &qc_floor,       /*   14  */
+    &qc_pow          /*   15  */
 };
 
 static const char *arg0 = NULL;
