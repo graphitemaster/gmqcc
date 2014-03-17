@@ -550,13 +550,13 @@ static GMQCC_INLINE ast_expression *fold_op_xor(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_lshift(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a, b) && isfloats(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)(((qcuint_t)(floorf(fold_immvalue_float(a) * powf(2.0f, fold_immvalue_float(b))))) & 0xFFFFFF));
+        return fold_constgen_float(fold, (qcfloat_t)(((qcuint_t)(floorf(fold_immvalue_float(a) * powf(2.0f, fold_immvalue_float(b)))))));
     return NULL;
 }
 
 static GMQCC_INLINE ast_expression *fold_op_rshift(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a, b) && isfloats(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)(((qcuint_t)(floorf(fold_immvalue_float(a) / powf(2.0f, fold_immvalue_float(b))))) & 0xFFFFFF));
+        return fold_constgen_float(fold, (qcfloat_t)(((qcuint_t)(floorf(fold_immvalue_float(a) / powf(2.0f, fold_immvalue_float(b)))))));
     return NULL;
 }
 
