@@ -17,11 +17,11 @@ base:
 	$(MAKE) -C archlinux/this/
 	$(MAKE) -C archlinux/this/ CARCH=i686
 	@echo "Building Slackware packages ..."
-	$(MAKE) -C win32/
-	$(MAKE) -C win64/
-	@echo "Building Windows packages ..."
 	$(MAKE) -C slackware/this/
 	$(MAKE) -C slackware/this/ CARCH=i686
+	@echo "Building Windows packages ..."
+	$(MAKE) -C win32/
+	$(MAKE) -C win64/
 	@mv deb/*.deb ./
 	@mv archlinux/this/*pkg.tar.xz ./
 	@mv win32/*.zip ./
