@@ -40,7 +40,8 @@ endif
 
 # do this last otherwise there is whitespace in the command output and
 # it makes my OCD act up
-CFLAGS += $(OPTIONAL)
+CFLAGS += $(OPTIONAL_CFLAGS)
+LDFLAGS += $(OPTIONAL_LDFLAGS)
 
 #we have duplicate object files when dealing with creating a simple list
 #for dependinces. To combat this we use some clever recrusive-make to

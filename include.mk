@@ -1,6 +1,5 @@
 # default directories and paths
 DESTDIR :=
-OPTIONAL:=
 PREFIX  := /usr/local
 BINDIR  := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
@@ -15,6 +14,10 @@ LIBS    += -lm
 
 #common objects
 COMMON   = ansi.o util.o hash.o stat.o fs.o opts.o conout.o
+
+#optional flags
+OPTIONAL_CFLAGS  :=
+OPTIONAL_LDFLAGS :=
 
 #objects
 OBJ_C = $(COMMON) main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o

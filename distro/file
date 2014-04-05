@@ -1,0 +1,462 @@
+
+[5;34;42mBuilding Debian packages ...[0;37;40m
+  [4;33;40m=> building 64-bit package[0;37;40m
+make -C deb/
+make[1]: Entering directory '/root/gmqcc/distro/deb'
+make -C ../.. clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc qcvm testsuite gmqpak *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+CFLAGS="" LDFLAGS="" \
+  make -C ../.. DESTDIR=distro/deb/gmqcc-`sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' ../../gmqcc.h` PREFIX=/usr strip install
+make[2]: Entering directory '/root/gmqcc'
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ansi.o ansi.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o util.o util.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o hash.o hash.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o stat.o stat.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o fs.o fs.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o opts.o opts.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o conout.o conout.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o main.o main.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o lexer.o lexer.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o parser.o parser.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o code.o code.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ast.o ast.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ir.o ir.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ftepp.o ftepp.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o utf8.o utf8.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o correct.o correct.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o fold.o fold.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o intrin.o intrin.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o exec.o exec.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o test.o test.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o pak.o pak.c
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/share/man/man1
+install    -m644  doc/gmqcc.1  distro/deb/gmqcc-0.3.6/usr/share/man/man1/
+install    -m644  doc/qcvm.1   distro/deb/gmqcc-0.3.6/usr/share/man/man1/
+install    -m644  doc/gmqpak.1 distro/deb/gmqcc-0.3.6/usr/share/man/man1/
+cc -o gmqpak ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o   
+cc -o testsuite ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o    -lm
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/bin
+install    -m755  gmqpak       distro/deb/gmqcc-0.3.6/usr/bin/gmqpak
+cc -o qcvm ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o    -lm
+cc -o gmqcc ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o    -lm
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/bin
+install    -m755  qcvm      distro/deb/gmqcc-0.3.6/usr/bin/qcvm
+strip gmqcc
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/bin
+strip qcvm
+install    -m755  gmqcc     distro/deb/gmqcc-0.3.6/usr/bin/gmqcc
+strip testsuite
+make[2]: Leaving directory '/root/gmqcc'
+make[1]: Leaving directory '/root/gmqcc/distro/deb'
+ 
+[4;33;40m=> building 32-bit package[0;37;40m
+make -C deb/ OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32
+make[1]: Entering directory '/root/gmqcc/distro/deb'
+make -C ../.. clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc qcvm testsuite gmqpak *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+CFLAGS="" LDFLAGS="" \
+  make -C ../.. DESTDIR=distro/deb/gmqcc-`sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' ../../gmqcc.h` PREFIX=/usr strip install
+make[2]: Entering directory '/root/gmqcc'
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ansi.o ansi.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o util.o util.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o hash.o hash.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o stat.o stat.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o fs.o fs.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o opts.o opts.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o conout.o conout.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o main.o main.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o lexer.o lexer.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o parser.o parser.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o code.o code.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ast.o ast.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ir.o ir.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ftepp.o ftepp.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o utf8.o utf8.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o correct.o correct.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o fold.o fold.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o intrin.o intrin.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o exec.o exec.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o test.o test.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o pak.o pak.c
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/share/man/man1
+install    -m644  doc/gmqcc.1  distro/deb/gmqcc-0.3.6/usr/share/man/man1/
+install    -m644  doc/qcvm.1   distro/deb/gmqcc-0.3.6/usr/share/man/man1/
+install    -m644  doc/gmqpak.1 distro/deb/gmqcc-0.3.6/usr/share/man/man1/
+cc -o gmqpak ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o   -m32
+cc -o testsuite ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o   -m32 -lm
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/bin
+install    -m755  gmqpak       distro/deb/gmqcc-0.3.6/usr/bin/gmqpak
+cc -o gmqcc ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o   -m32 -lm
+cc -o qcvm ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o   -m32 -lm
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/bin
+install -d -m755               distro/deb/gmqcc-0.3.6/usr/bin
+install    -m755  gmqcc     distro/deb/gmqcc-0.3.6/usr/bin/gmqcc
+install    -m755  qcvm      distro/deb/gmqcc-0.3.6/usr/bin/qcvm
+strip gmqcc
+strip qcvm
+strip testsuite
+make[2]: Leaving directory '/root/gmqcc'
+make[1]: Leaving directory '/root/gmqcc/distro/deb'
+
+[5;34;42mBuilding Archlinux packages ...[0;37;40m
+  [4;33;40m=> building 64-bit package[0;37;40m
+make -C archlinux/this/
+make[1]: Entering directory '/root/gmqcc/distro/archlinux/this'
+make -C ../../../ clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc qcvm testsuite gmqpak *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+CFLAGS="" LDFLAGS="" \
+  make -C ../../../ "DESTDIR=distro/archlinux/this/gmqcc-0.3.6-1-x86_64" "PREFIX=/usr" strip install
+make[2]: Entering directory '/root/gmqcc'
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ansi.o ansi.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o util.o util.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o hash.o hash.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o stat.o stat.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o fs.o fs.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o opts.o opts.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o conout.o conout.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o main.o main.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o lexer.o lexer.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o parser.o parser.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o code.o code.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ast.o ast.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ir.o ir.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ftepp.o ftepp.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o utf8.o utf8.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o correct.o correct.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o fold.o fold.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o intrin.o intrin.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o exec.o exec.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o test.o test.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o pak.o pak.c
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1
+install    -m644  doc/gmqcc.1  distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1/
+install    -m644  doc/qcvm.1   distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1/
+install    -m644  doc/gmqpak.1 distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1/
+cc -o gmqpak ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o   
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin
+install    -m755  gmqpak       distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin/gmqpak
+cc -o testsuite ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o    -lm
+cc -o gmqcc ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o    -lm
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin
+install    -m755  gmqcc     distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin/gmqcc
+cc -o qcvm ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o    -lm
+strip gmqcc
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin
+strip qcvm
+install    -m755  qcvm      distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin/qcvm
+strip testsuite
+make[2]: Leaving directory '/root/gmqcc'
+make[1]: Leaving directory '/root/gmqcc/distro/archlinux/this'
+ 
+[4;33;40m=> building 32-bit package[0;37;40m
+make -C archlinux/this/ OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32
+make[1]: Entering directory '/root/gmqcc/distro/archlinux/this'
+make -C ../../../ clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc qcvm testsuite gmqpak *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+CFLAGS="" LDFLAGS="" \
+  make -C ../../../ "DESTDIR=distro/archlinux/this/gmqcc-0.3.6-1-x86_64" "PREFIX=/usr" strip install
+make[2]: Entering directory '/root/gmqcc'
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ansi.o ansi.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o util.o util.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o hash.o hash.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o stat.o stat.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o fs.o fs.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o opts.o opts.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o conout.o conout.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o main.o main.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o lexer.o lexer.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o parser.o parser.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o code.o code.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ast.o ast.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ir.o ir.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ftepp.o ftepp.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o utf8.o utf8.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o correct.o correct.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o fold.o fold.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o intrin.o intrin.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o exec.o exec.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o test.o test.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o pak.o pak.c
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1
+install    -m644  doc/gmqcc.1  distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1/
+install    -m644  doc/qcvm.1   distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1/
+install    -m644  doc/gmqpak.1 distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/share/man/man1/
+cc -o gmqpak ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o   -m32
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin
+install    -m755  gmqpak       distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin/gmqpak
+cc -o testsuite ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o   -m32 -lm
+cc -o gmqcc ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o   -m32 -lm
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin
+install    -m755  gmqcc     distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin/gmqcc
+cc -o qcvm ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o   -m32 -lm
+strip gmqcc
+install -d -m755               distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin
+install    -m755  qcvm      distro/archlinux/this/gmqcc-0.3.6-1-x86_64/usr/bin/qcvm
+strip qcvm
+strip testsuite
+make[2]: Leaving directory '/root/gmqcc'
+make[1]: Leaving directory '/root/gmqcc/distro/archlinux/this'
+
+[5;34;42mBuilding Slackware packages ...[0;37;40m
+  [4;33;40m=> building 64-bit package[0;37;40m
+make -C slackware/this/
+make[1]: Entering directory '/root/gmqcc/distro/slackware/this'
+make -C ../../../ clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc qcvm testsuite gmqpak *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+CFLAGS="" LDFLAGS="" \
+  make -C ../../../ "DESTDIR=distro/slackware/this/gmqcc-0.3.6-x86_64" "PREFIX=/usr" strip install
+make[2]: Entering directory '/root/gmqcc'
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ansi.o ansi.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o util.o util.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o hash.o hash.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o stat.o stat.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o fs.o fs.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o opts.o opts.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o conout.o conout.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o main.o main.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o lexer.o lexer.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o parser.o parser.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o code.o code.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ast.o ast.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ir.o ir.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o ftepp.o ftepp.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o utf8.o utf8.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o correct.o correct.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o fold.o fold.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o intrin.o intrin.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o exec.o exec.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o test.o test.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""    -c -o pak.o pak.c
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1
+install    -m644  doc/gmqcc.1  distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1/
+install    -m644  doc/qcvm.1   distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1/
+install    -m644  doc/gmqpak.1 distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1/
+cc -o gmqpak ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o   
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin
+install    -m755  gmqpak       distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin/gmqpak
+cc -o testsuite ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o    -lm
+cc -o gmqcc ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o    -lm
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin
+install    -m755  gmqcc     distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin/gmqcc
+cc -o qcvm ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o    -lm
+strip gmqcc
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin
+strip qcvm
+install    -m755  qcvm      distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin/qcvm
+strip testsuite
+make[2]: Leaving directory '/root/gmqcc'
+gzip -9 gmqcc-0.3.6-x86_64/usr/share/man/man?/*.?
+strip -s gmqcc-0.3.6-x86_64/usr/bin/*
+mkdir gmqcc-0.3.6-x86_64/install
+cp slack-desc gmqcc-0.3.6-x86_64/install
+install/
+install/slack-desc
+usr/
+usr/share/
+usr/share/man/
+usr/share/man/man1/
+usr/share/man/man1/gmqcc.1.gz
+usr/share/man/man1/gmqpak.1.gz
+usr/share/man/man1/qcvm.1.gz
+usr/bin/
+usr/bin/gmqpak
+usr/bin/gmqcc
+usr/bin/qcvm
+make[1]: Leaving directory '/root/gmqcc/distro/slackware/this'
+ 
+[4;33;40m=> building 32-bit package[0;37;40m
+make -C slackware/this/ OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32
+make[1]: Entering directory '/root/gmqcc/distro/slackware/this'
+make -C ../../../ clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc qcvm testsuite gmqpak *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+CFLAGS="" LDFLAGS="" \
+  make -C ../../../ "DESTDIR=distro/slackware/this/gmqcc-0.3.6-x86_64" "PREFIX=/usr" strip install
+make[2]: Entering directory '/root/gmqcc'
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ansi.o ansi.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o util.o util.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o hash.o hash.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o stat.o stat.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o fs.o fs.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o opts.o opts.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o conout.o conout.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o main.o main.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o lexer.o lexer.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o parser.o parser.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o code.o code.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ast.o ast.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ir.o ir.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o ftepp.o ftepp.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o utf8.o utf8.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o correct.o correct.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o fold.o fold.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o intrin.o intrin.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o exec.o exec.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o test.o test.c
+cc  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\"" -m32   -c -o pak.o pak.c
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1
+install    -m644  doc/gmqcc.1  distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1/
+install    -m644  doc/qcvm.1   distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1/
+install    -m644  doc/gmqpak.1 distro/slackware/this/gmqcc-0.3.6-x86_64/usr/share/man/man1/
+cc -o gmqpak ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o   -m32
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin
+install    -m755  gmqpak       distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin/gmqpak
+cc -o testsuite ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o   -m32 -lm
+cc -o gmqcc ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o   -m32 -lm
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin
+install    -m755  gmqcc     distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin/gmqcc
+cc -o qcvm ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o   -m32 -lm
+strip gmqcc
+install -d -m755               distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin
+strip qcvm
+install    -m755  qcvm      distro/slackware/this/gmqcc-0.3.6-x86_64/usr/bin/qcvm
+strip testsuite
+make[2]: Leaving directory '/root/gmqcc'
+gzip -9 gmqcc-0.3.6-x86_64/usr/share/man/man?/*.?
+strip -s gmqcc-0.3.6-x86_64/usr/bin/*
+mkdir gmqcc-0.3.6-x86_64/install
+cp slack-desc gmqcc-0.3.6-x86_64/install
+install/
+install/slack-desc
+usr/
+usr/share/
+usr/share/man/
+usr/share/man/man1/
+usr/share/man/man1/gmqcc.1.gz
+usr/share/man/man1/gmqpak.1.gz
+usr/share/man/man1/qcvm.1.gz
+usr/bin/
+usr/bin/gmqpak
+usr/bin/gmqcc
+usr/bin/qcvm
+make[1]: Leaving directory '/root/gmqcc/distro/slackware/this'
+
+[5;34;42mBuilding Windows packages ...[0;37;40m
+  [4;33;40m=> building 64-bit package[0;37;40m
+make -C win64/
+make[1]: Entering directory '/root/gmqcc/distro/win64'
+make CC=x86_64-w64-mingw32-gcc UNAME=MINGW -C ../.. clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc.exe qcvm.exe testsuite.exe gmqpak.exe *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+make CC=x86_64-w64-mingw32-gcc UNAME=MINGW -C ../.. DESTDIR=distro/win64/gmqcc-`sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' ../../gmqcc.h` PREFIX=/ strip install
+make[2]: Entering directory '/root/gmqcc'
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ansi.o ansi.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o util.o util.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o hash.o hash.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o stat.o stat.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o fs.o fs.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o opts.o opts.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o conout.o conout.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o main.o main.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o lexer.o lexer.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o parser.o parser.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o code.o code.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ast.o ast.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ir.o ir.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ftepp.o ftepp.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o utf8.o utf8.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o correct.o correct.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o fold.o fold.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o intrin.o intrin.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o exec.o exec.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o test.o test.c
+x86_64-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o pak.o pak.c
+install -d -m755               distro/win64/gmqcc-0.3.6/man1
+x86_64-w64-mingw32-gcc -o gmqpak.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o  
+install    -m644  doc/gmqcc.1  distro/win64/gmqcc-0.3.6/man1/
+install    -m644  doc/qcvm.1   distro/win64/gmqcc-0.3.6/man1/
+install    -m644  doc/gmqpak.1 distro/win64/gmqcc-0.3.6/man1/
+x86_64-w64-mingw32-gcc -o testsuite.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o   -lm
+install -d -m755               distro/win64/gmqcc-0.3.6
+install    -m755  gmqpak.exe       distro/win64/gmqcc-0.3.6/gmqpak.exe
+x86_64-w64-mingw32-gcc -o qcvm.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o   -lm
+install -d -m755               distro/win64/gmqcc-0.3.6
+install    -m755  qcvm.exe      distro/win64/gmqcc-0.3.6/qcvm.exe
+x86_64-w64-mingw32-gcc -o gmqcc.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o   -lm
+strip gmqcc.exe
+install -d -m755               distro/win64/gmqcc-0.3.6
+install    -m755  gmqcc.exe     distro/win64/gmqcc-0.3.6/gmqcc.exe
+strip qcvm.exe
+strip testsuite.exe
+make[2]: Leaving directory '/root/gmqcc'
+  adding: gmqcc-0.3.6/ (stored 0%)
+  adding: gmqcc-0.3.6/gmqpak.exe (deflated 66%)
+  adding: gmqcc-0.3.6/doc/ (stored 0%)
+  adding: gmqcc-0.3.6/doc/gmqpak.pdf (deflated 41%)
+  adding: gmqcc-0.3.6/doc/qcvm.pdf (deflated 30%)
+  adding: gmqcc-0.3.6/doc/gmqcc.pdf (deflated 17%)
+  adding: gmqcc-0.3.6/qcvm.exe (deflated 67%)
+  adding: gmqcc-0.3.6/gmqcc.exe (deflated 70%)
+make[1]: Leaving directory '/root/gmqcc/distro/win64'
+ 
+[4;33;40m=> building 32-bit package[0;37;40m
+make -C win32/
+make[1]: Entering directory '/root/gmqcc/distro/win32'
+make CC=i686-w64-mingw32-gcc UNAME=MINGW -C ../.. clean
+make[2]: Entering directory '/root/gmqcc'
+rm -rf *.o gmqcc.exe qcvm.exe testsuite.exe gmqpak.exe *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+make[2]: Leaving directory '/root/gmqcc'
+make CC=i686-w64-mingw32-gcc UNAME=MINGW -C ../.. DESTDIR=distro/win32/gmqcc-`sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' ../../gmqcc.h`.`sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' ../../gmqcc.h` PREFIX=/ strip install
+make[2]: Entering directory '/root/gmqcc'
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ansi.o ansi.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o util.o util.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o hash.o hash.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o stat.o stat.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o fs.o fs.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o opts.o opts.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o conout.o conout.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o main.o main.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o lexer.o lexer.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o parser.o parser.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o code.o code.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ast.o ast.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ir.o ir.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o ftepp.o ftepp.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o utf8.o utf8.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o correct.o correct.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o fold.o fold.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o intrin.o intrin.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o exec.o exec.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o test.o test.c
+i686-w64-mingw32-gcc -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -Wmissing-prototypes -Wstrict-prototypes -pedantic-errors -DGMQCC_GITINFO="\"0.3.0-308-gfe14d1b\""  -DNVALGRIND   -c -o pak.o pak.c
+install -d -m755               distro/win32/gmqcc-0.3.6/man1
+install    -m644  doc/gmqcc.1  distro/win32/gmqcc-0.3.6/man1/
+install    -m644  doc/qcvm.1   distro/win32/gmqcc-0.3.6/man1/
+install    -m644  doc/gmqpak.1 distro/win32/gmqcc-0.3.6/man1/
+i686-w64-mingw32-gcc -o testsuite.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o test.o   -lm
+i686-w64-mingw32-gcc -o gmqpak.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o pak.o  
+install -d -m755               distro/win32/gmqcc-0.3.6
+install    -m755  gmqpak.exe       distro/win32/gmqcc-0.3.6/gmqpak.exe
+i686-w64-mingw32-gcc -o qcvm.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o exec.o   -lm
+install -d -m755               distro/win32/gmqcc-0.3.6
+install    -m755  qcvm.exe      distro/win32/gmqcc-0.3.6/qcvm.exe
+i686-w64-mingw32-gcc -o gmqcc.exe ansi.o util.o hash.o stat.o fs.o opts.o conout.o main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o   -lm
+strip gmqcc.exe
+install -d -m755               distro/win32/gmqcc-0.3.6
+install    -m755  gmqcc.exe     distro/win32/gmqcc-0.3.6/gmqcc.exe
+strip qcvm.exe
+strip testsuite.exe
+make[2]: Leaving directory '/root/gmqcc'
+  adding: gmqcc-0.3.6/ (stored 0%)
+  adding: gmqcc-0.3.6/gmqpak.exe (deflated 65%)
+  adding: gmqcc-0.3.6/doc/ (stored 0%)
+  adding: gmqcc-0.3.6/doc/gmqpak.pdf (deflated 40%)
+  adding: gmqcc-0.3.6/doc/qcvm.pdf (deflated 30%)
+  adding: gmqcc-0.3.6/doc/gmqcc.pdf (deflated 17%)
+  adding: gmqcc-0.3.6/qcvm.exe (deflated 65%)
+  adding: gmqcc-0.3.6/gmqcc.exe (deflated 68%)
+make[1]: Leaving directory '/root/gmqcc/distro/win32'
+
+[4;30;40mComplete

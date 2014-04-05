@@ -35,7 +35,7 @@ base:
 	@tar czf data.tar.gz -C $(DEBDIR)/ . --exclude=DEBIAN
 	@tar czf control.tar.gz -C $(DEBDIR)/DEBIAN/ .
 	@echo 2.0 > debian-binary
-	@ar r $(DEB) debian-binary control.tar.gz data.tar.gz
+	@ar r $(DEB) debian-binary control.tar.gz data.tar.gz 2>&1 >/dev/null
 	@rm -rf debian-binary control.tar.gz data.tar.gz $(DEBDIR)
 
 clean:

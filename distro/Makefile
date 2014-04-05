@@ -9,25 +9,58 @@ endif
 .NOTPARALLEL: base
 .NOTPARALLEL: upload
 
-base:
-	@echo "Building Debian packages ..."
-	$(MAKE) -C deb/
-	$(MAKE) -C deb/ CARCH=i686
-	@echo "Building Archlinux packages ..."
-	$(MAKE) -C archlinux/this/
-	$(MAKE) -C archlinux/this/ CARCH=i686
-	@echo "Building Slackware packages ..."
-	$(MAKE) -C slackware/this/
-	$(MAKE) -C slackware/this/ CARCH=i686
-	@echo "Building Windows packages ..."
-	$(MAKE) -C win32/
-	$(MAKE) -C win64/
-	@mv deb/*.deb ./
-	@mv archlinux/this/*pkg.tar.xz ./
-	@mv win32/*.zip ./
-	@mv win64/*.zip ./
-	@mv slackware/this/*.txz ./
+HEADER=\e[5;32;40m
+RESET=\e[0;37;40m
+INFO=\e[5;33;40m
 
+base:
+	@echo -e "\n$(HEADER)Building Debian packages ...$(RESET)"
+	@echo -e "   $(INFO)=> building 64-bit package$(RESET)"
+	@$(MAKE) -C deb/ >/dev/null
+	@echo -e "   $(INFO)=> building 32-bit package$(RESET)"
+	@$(MAKE) -C deb/ CARCH=i686 OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32 >/dev/null
+	
+	@echo -e "\n$(HEADER)Building ArchLinux packages ...$(RESET)"
+	@echo -e "   $(INFO)=> building 64-bit package$(RESET)"
+	@$(MAKE) -C archlinux/this/ >/dev/null
+	@echo -e "   $(INFO)=> building 32-bit package$(RESET)"
+	@$(MAKE) -C archlinux/this/ CARCH=i686 OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32 >/dev/null
+
+	@echo -e "\n$(HEADER)Building ArchBSD packages ...$(RESET)"
+	@echo -e "   $(INFO)=> building 64-bit package$(RESET)"
+	@$(MAKE) -C archbsd/this/ >/dev/null
+	@echo -e "   $(INFO)=> building 32-bit package$(RESET)"
+	@$(MAKE) -C archbsd/this/ CARCH=i686 OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32 >/dev/null
+	
+	@echo -e "\n$(HEADER)Building Slackware packages ...$(RESET)"
+	@echo -e "   $(INFO)=> building 64-bit package$(RESET)"
+	@$(MAKE) -C slackware/this/ >/dev/null
+	@echo -e "   $(INFO)=> building 32-bit package$(RESET)"
+	@$(MAKE) -C slackware/this/ CARCH=i686 OPTIONAL_CFLAGS=-m32 OPTIONAL_LDFLAGS=-m32 >/dev/null
+
+	@echo -e "\n$(HEADER)Building Fedora packages ...$(RESET)"
+	@echo -e "   $(INFO)=> building 64-bit package$(RESET)"
+	@$(MAKE) -C fedora/this/ >/dev/null
+
+	@echo -e "\n\$(HEADER)Building Windows packages ...$(RESET)"
+	@echo -e "   $(INFO)=> building 64-bit package$(RESET)"
+	@$(MAKE) -C win64/ >/dev/null
+	@echo -e "   $(INFO)=> building 32-bit package$(RESET)"
+	@$(MAKE) -C win32/ >/dev/null
+	
+	@rm -rf pkgs/
+	@mkdir pkgs/
+	@mv deb/*.deb ./pkgs/
+	@mv archlinux/this/*pkg.tar.xz ./pkgs/
+	@mv archbsd/this/*pkg.tar.xz ./pkgs/
+	@mv win32/*.zip ./pkgs/
+	@mv win64/*.zip ./pkgs/
+	@mv slackware/this/*.txz ./pkgs/
+	@mv fedora/this/*.rpm ./pkgs/
+	
+	@echo -e "\n\n$(HEADER)Completed:$(RESET)"
+	@find ./pkgs/ -type f -regex ".*/.*\.\(xz\|deb\|zip\|txz\|rpm\)" -exec echo -e "  $(INFO)=>$(RESET) {}" \;
+	
 upload:
 	@echo "APPKEY:76vh3q42hnvmzm3" > dropbox_config
 	@echo "APPSECRET:tmeecht2cmh72xa" >> dropbox_config
@@ -37,7 +70,7 @@ upload:
 	@wget -q "http://raw.github.com/andreafabrizi/Dropbox-Uploader/master/dropbox_uploader.sh"
 	@chmod +x dropbox_uploader.sh
 	@sed -i -e "s/~\/.dropbox_uploader/.\/dropbox_config/g" $$(basename $(DROPBOX))
-	@find . -type f -regex ".*/.*\.\(xz\|deb\|zip\|txz\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
+	@find ./pkgs -type f -regex ".*/.*\.\(xz\|deb\|zip\|txz\|rpm\)" -exec ./$$(basename $(DROPBOX)) upload {} \;
 	@rm dropbox_config dropbox_uploader.sh
 
 website:
@@ -53,11 +86,7 @@ website:
 	@git stash apply
 
 clean:
-	@rm -f *.deb
-	@rm -f *.pkg.tar.xz
-	@rm -f *.zip
-	@rm -f *.gen
+	@rm -rf pkgs/
 	@rm -f *.html
-	@rm -f *.txz
 
 all: base upload
