@@ -1,8 +1,8 @@
 include include.mk
 
 UNAME  ?= $(shell uname)
-CYGWIN  = $(findstring CYGWIN,  $(UNAME))
-MINGW   = $(findstring MINGW32, $(UNAME))
+CYGWIN  = $(findstring CYGWIN, $(UNAME))
+MINGW   = $(findstring MINGW,  $(UNAME))
 
 CFLAGS += -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes
 #turn on tons of warnings if clang is present
