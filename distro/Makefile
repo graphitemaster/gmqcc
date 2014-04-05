@@ -18,7 +18,7 @@ base:
 	$(MAKE) -C archlinux/this/ CARCH=i686
 	@echo "Building Slackware packages ..."
 	$(MAKE) -C win32/
-	$(MAKE) -C win64
+	$(MAKE) -C win64/
 	@echo "Building Windows packages ..."
 	$(MAKE) -C slackware/this/
 	$(MAKE) -C slackware/this/ CARCH=i686
