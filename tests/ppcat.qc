@@ -8,6 +8,6 @@ REDIR(CAT(hello, world), CAT(world, hello))
 SCONS(hello, world)
 
 #define FOO(X) X##X
-#define BAR(X) FOO(X)##FOO(X)
+#define BAR(X) FOO(X)FOO(X)
 
-REDIR(BAR(hello), BAR(world))
+REDIR(BAR(hello),BAR(world))

@@ -26,7 +26,7 @@
 
 #   define ALPHA(SEL) ALPHA_##SEL
 
-#   define ABC ALPHA(a)##ALPHA(b)##ALPHA(c)
+#   define ABC ALPHA(a)ALPHA(b)ALPHA(c)
 
     void() main = {
         if (ABC == "abc")
