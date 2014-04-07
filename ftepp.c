@@ -763,6 +763,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
     lex_file *inlex;
 
     bool      old_inmacro;
+    bool      strip = false;
 
     int nextok;
 
@@ -827,6 +828,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                     if (nextok == '#') {
                         /* raw concatenation */
                         ++o;
+                        strip = true;
                         break;
                     }
                     if ( (nextok == TOKEN_IDENT    ||
@@ -835,6 +837,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                         macro_params_find(macro, macro->output[o+1]->value, &pi))
                     {
                         ++o;
+                        
                         ftepp_stringify(ftepp, &params[pi]);
                         break;
                     }
@@ -845,7 +848,14 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 ftepp_out(ftepp, "\n", false);
                 break;
             default:
-                ftepp_out(ftepp, out->value, false);
+                buffer = out->value;
+                if (vec_size(macro->output) > o + 1 && macro->output[o+1]->token == '#')
+                    buffer++;
+                if (strip) {
+                    while (util_isspace(*buffer)) buffer++;
+                    strip = false;
+                }
+                ftepp_out(ftepp, buffer, false);
                 break;
         }
     }

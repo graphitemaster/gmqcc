@@ -1,12 +1,10 @@
 Name:           gmqcc
-Version:        0.3.5
+Version:        0.3.6
 Release:        2%{?dist}
 Summary:        Improved Quake C Compiler
 License:        MIT
 URL:            http://graphitemaster.github.io/gmqcc/
 Source0:        https://github.com/graphitemaster/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
-# fix build on big endian arches - stdlib.h required for exit()
-Patch0:         %{name}-0.3.5-stdlib.patch
 
 # tests fail on big endians
 ExclusiveArch:  %{ix86} x86_64 %{arm}
@@ -33,14 +31,13 @@ directories, or whole PAKs, as well as the opposite (creation of PAK files).
 
 %prep
 %setup -q
-%patch0 -p1
 echo '#!/bin/sh' > ./configure
 chmod +x ./configure 
 
 # and for all for all of those switches they increase the runtime of the compile
 # making compiles of code slower
 
-# we don't need compiel time buffer protection, we test with clangs address
+# we don't need compile time buffer protection, we test with clang's address
 # sanatizer and valgrind before releases
 %global optflags %(echo %{optflags} | sed 's/-D_FORTIFY_SOURCE=2 //')
 # there is no exceptions in C
@@ -49,9 +46,9 @@ chmod +x ./configure
 %global optflags %(echo %{optflags} | sed 's/-fstack-protector-strong //')
 # buffer overflow protection is unrequired since most (if not all) allocations
 # happen dynamically and we have our own memory allocator which checks this
-# (with valgrind integration), also clangs address santatizer cathes it as
+# (with valgrind integration), also clang's address santatizer cathes it as
 # for grecord-gcc-switches, that just adds pointless information to the binary
-# increasing it size
+# increasing its size
 %global optflags %(echo %{optflags} | sed 's/--param=ssp-buffer-size=4 //')
 
 %build

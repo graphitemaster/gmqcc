@@ -1,8 +1,8 @@
 include include.mk
 
 UNAME  ?= $(shell uname)
-CYGWIN  = $(findstring CYGWIN,  $(UNAME))
-MINGW   = $(findstring MINGW32, $(UNAME))
+CYGWIN  = $(findstring CYGWIN, $(UNAME))
+MINGW   = $(findstring MINGW,  $(UNAME))
 
 CFLAGS += -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes
 #turn on tons of warnings if clang is present
@@ -40,7 +40,8 @@ endif
 
 # do this last otherwise there is whitespace in the command output and
 # it makes my OCD act up
-CFLAGS += $(OPTIONAL)
+CFLAGS += $(OPTIONAL_CFLAGS)
+LDFLAGS += $(OPTIONAL_LDFLAGS)
 
 #we have duplicate object files when dealing with creating a simple list
 #for dependinces. To combat this we use some clever recrusive-make to

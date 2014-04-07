@@ -5,8 +5,9 @@ MAJOR   := $(shell sed -n -e '/GMQCC_VERSION_MAJOR/{s/.* .* //;p;q;}' $(HEADER))
 MINOR   := $(shell sed -n -e '/GMQCC_VERSION_MINOR/{s/.* .* //;p;q;}' $(HEADER))
 PATCH   := $(shell sed -n -e '/GMQCC_VERSION_PATCH/{s/.* .* //;p;q;}' $(HEADER))
 PKGREL  := 1
+SUFFIX  ?= archlinux
 CARCH   := $(shell uname -m)
-PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)-$(CARCH)
+PKGDIR  := gmqcc-$(MAJOR).$(MINOR).$(PATCH)-$(PKGREL)-$(CARCH)-$(SUFFIX)
 TARCOMP := -J
 PKG     := $(PKGDIR).pkg.tar.xz
 PKGINFO := $(PKGDIR)/.PKGINFO
@@ -14,11 +15,6 @@ DESTDIR := distro/archlinux/this
 CFLAGS  :=
 
 LIBC_DEPEND := glibc
-
-ifneq (, $(findstring i686, $(CARCH)))
-	CFLAGS += -m32
-	LDFLAGS += -m32
-endif
 
 base:
 	$(MAKE) -C $(BASEDIR) clean
@@ -45,8 +41,8 @@ base:
 	@bsdtar -C $(PKGDIR) -czf $(PKGDIR)/.MTREE \
 	    --format=mtree \
 	    --options='!all,use-set,type,uid,gid,mode,time,size,md5,sha256,link' \
-	    .PKGINFO usr/
-	@bsdtar $(TARCOMP) -cvf $(PKG) -C $(PKGDIR)/ .PKGINFO .MTREE usr/
+	    .PKGINFO usr/ 2>&1 >/dev/null
+	@bsdtar $(TARCOMP) -cvf $(PKG) -C $(PKGDIR)/ .PKGINFO .MTREE usr/ 2>&1 >/dev/null
 	@rm -rf $(PKGDIR)
 
 clean:
