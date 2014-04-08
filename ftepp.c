@@ -837,7 +837,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                         macro_params_find(macro, macro->output[o+1]->value, &pi))
                     {
                         ++o;
-                        
+
                         ftepp_stringify(ftepp, &params[pi]);
                         break;
                     }
