@@ -101,6 +101,8 @@ static void opts_setdefault(void) {
     opts_set(opts.flags, LEGACY_VECTOR_MATHS,            true);
     opts_set(opts.flags, DARKPLACES_STRING_TABLE_BUG,    true);
 
+    /* options */
+    OPTS_OPTION_U32(OPTION_STATE_FPS) = 10;
 }
 
 void opts_backup_non_Wall() {

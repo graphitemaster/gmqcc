@@ -170,6 +170,7 @@ bool GMQCC_WARN ir_block_create_store_op(ir_block*, lex_ctx_t, int op, ir_value 
 bool GMQCC_WARN ir_block_create_storep(ir_block*, lex_ctx_t, ir_value *target, ir_value *what);
 ir_value*       ir_block_create_load_from_ent(ir_block*, lex_ctx_t, const char *label, ir_value *ent, ir_value *field, int outype);
 ir_value*       ir_block_create_fieldaddress(ir_block*, lex_ctx_t, const char *label, ir_value *entity, ir_value *field);
+bool GMQCC_WARN ir_block_create_state_op(ir_block*, lex_ctx_t, ir_value *frame, ir_value *think);
 
 /* This is to create an instruction of the form
  * <outtype>%label := opcode a, b

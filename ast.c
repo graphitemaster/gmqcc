@@ -75,6 +75,7 @@ static void ast_binstore_delete(ast_binstore*);
 static bool ast_binstore_codegen(ast_binstore*, ast_function*, bool lvalue, ir_value**);
 static void ast_binary_delete(ast_binary*);
 static bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
+static bool ast_state_codegen(ast_state*, ast_function*, bool lvalue, ir_value**);
 
 /* It must not be possible to get here. */
 static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
@@ -970,6 +971,26 @@ void ast_goto_delete(ast_goto *self)
 void ast_goto_set_label(ast_goto *self, ast_label *label)
 {
     self->target = label;
+}
+
+ast_state* ast_state_new(lex_ctx_t ctx, ast_expression *frame, ast_expression *think)
+{
+    ast_instantiate(ast_state, ctx, ast_state_delete);
+    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_state_codegen);
+    self->framenum  = frame;
+    self->nextthink = think;
+    return self;
+}
+
+void ast_state_delete(ast_state *self)
+{
+    if (self->framenum)
+        ast_unref(self->framenum);
+    if (self->nextthink)
+        ast_unref(self->nextthink);
+
+    ast_expression_delete((ast_expression*)self);
+    mem_d(self);
 }
 
 ast_call* ast_call_new(lex_ctx_t ctx,
@@ -3344,6 +3365,44 @@ bool ast_goto_codegen(ast_goto *self, ast_function *func, bool lvalue, ir_value 
         ast_label_register_goto(self->target, self);
     }
 
+    return true;
+}
+
+#include <stdio.h>
+bool ast_state_codegen(ast_state *self, ast_function *func, bool lvalue, ir_value **out)
+{
+    ast_expression_codegen *cgen;
+
+    ir_value *frameval, *thinkval;
+
+    if (lvalue) {
+        compile_error(ast_ctx(self), "not an l-value (state operation)");
+        return false;
+    }
+    if (self->expression.outr) {
+        compile_error(ast_ctx(self), "internal error: ast_state cannot be reused!");
+        return false;
+    }
+    *out = NULL;
+
+    cgen = self->framenum->codegen;
+    if (!(*cgen)((ast_expression*)(self->framenum), func, false, &frameval))
+        return false;
+    if (!frameval)
+        return false;
+
+    cgen = self->nextthink->codegen;
+    if (!(*cgen)((ast_expression*)(self->nextthink), func, false, &thinkval))
+        return false;
+    if (!frameval)
+        return false;
+
+    if (!ir_block_create_state_op(func->curblock, ast_ctx(self), frameval, thinkval)) {
+        compile_error(ast_ctx(self), "failed to create STATE instruction");
+        return false;
+    }
+
+    self->expression.outr = (ir_value*)1;
     return true;
 }
 

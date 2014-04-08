@@ -4015,69 +4015,83 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     }
 
     if (has_frame_think) {
-        lex_ctx_t ctx;
-        ast_expression *self_frame;
-        ast_expression *self_nextthink;
-        ast_expression *self_think;
-        ast_expression *time_plus_1;
-        ast_store *store_frame;
-        ast_store *store_nextthink;
-        ast_store *store_think;
+        if (!OPTS_FLAG(EMULATE_STATE)) {
+            ast_state *state_op = ast_state_new(parser_ctx(parser), framenum, nextthink);
+            if (!ast_block_add_expr(block, (ast_expression*)state_op)) {
+                parseerror(parser, "failed to generate state op for [frame,think]");
+                ast_unref(nextthink);
+                ast_unref(framenum);
+                ast_delete(block);
+                return false;
+            }
+        } else {
+            /* emulate OP_STATE in code: */
+            lex_ctx_t ctx;
+            ast_expression *self_frame;
+            ast_expression *self_nextthink;
+            ast_expression *self_think;
+            ast_expression *time_plus_1;
+            ast_store *store_frame;
+            ast_store *store_nextthink;
+            ast_store *store_think;
 
-        ctx = parser_ctx(parser);
-        self_frame     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_frame);
-        self_nextthink = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_nextthink);
-        self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
+            float frame_delta = 1.0f / (float)OPTS_OPTION_U32(OPTION_STATE_FPS);
 
-        time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
-                         gbl_time, (ast_expression*)fold_constgen_float(parser->fold, 0.1f));
+            ctx = parser_ctx(parser);
+            self_frame     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_frame);
+            self_nextthink = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_nextthink);
+            self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
 
-        if (!self_frame || !self_nextthink || !self_think || !time_plus_1) {
-            if (self_frame)     ast_delete(self_frame);
-            if (self_nextthink) ast_delete(self_nextthink);
-            if (self_think)     ast_delete(self_think);
-            if (time_plus_1)    ast_delete(time_plus_1);
-            retval = false;
-        }
+            time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
+                             gbl_time, (ast_expression*)fold_constgen_float(parser->fold, frame_delta));
 
-        if (retval)
-        {
-            store_frame     = ast_store_new(ctx, INSTR_STOREP_F,   self_frame,     framenum);
-            store_nextthink = ast_store_new(ctx, INSTR_STOREP_F,   self_nextthink, time_plus_1);
-            store_think     = ast_store_new(ctx, INSTR_STOREP_FNC, self_think,     nextthink);
-
-            if (!store_frame) {
-                ast_delete(self_frame);
+            if (!self_frame || !self_nextthink || !self_think || !time_plus_1) {
+                if (self_frame)     ast_delete(self_frame);
+                if (self_nextthink) ast_delete(self_nextthink);
+                if (self_think)     ast_delete(self_think);
+                if (time_plus_1)    ast_delete(time_plus_1);
                 retval = false;
             }
-            if (!store_nextthink) {
-                ast_delete(self_nextthink);
-                retval = false;
-            }
-            if (!store_think) {
-                ast_delete(self_think);
-                retval = false;
-            }
-            if (!retval) {
-                if (store_frame)     ast_delete(store_frame);
-                if (store_nextthink) ast_delete(store_nextthink);
-                if (store_think)     ast_delete(store_think);
-                retval = false;
-            }
-            if (!ast_block_add_expr(block, (ast_expression*)store_frame) ||
-                !ast_block_add_expr(block, (ast_expression*)store_nextthink) ||
-                !ast_block_add_expr(block, (ast_expression*)store_think))
+
+            if (retval)
             {
-                retval = false;
-            }
-        }
+                store_frame     = ast_store_new(ctx, INSTR_STOREP_F,   self_frame,     framenum);
+                store_nextthink = ast_store_new(ctx, INSTR_STOREP_F,   self_nextthink, time_plus_1);
+                store_think     = ast_store_new(ctx, INSTR_STOREP_FNC, self_think,     nextthink);
 
-        if (!retval) {
-            parseerror(parser, "failed to generate code for [frame,think]");
-            ast_unref(nextthink);
-            ast_unref(framenum);
-            ast_delete(block);
-            return false;
+                if (!store_frame) {
+                    ast_delete(self_frame);
+                    retval = false;
+                }
+                if (!store_nextthink) {
+                    ast_delete(self_nextthink);
+                    retval = false;
+                }
+                if (!store_think) {
+                    ast_delete(self_think);
+                    retval = false;
+                }
+                if (!retval) {
+                    if (store_frame)     ast_delete(store_frame);
+                    if (store_nextthink) ast_delete(store_nextthink);
+                    if (store_think)     ast_delete(store_think);
+                    retval = false;
+                }
+                if (!ast_block_add_expr(block, (ast_expression*)store_frame) ||
+                    !ast_block_add_expr(block, (ast_expression*)store_nextthink) ||
+                    !ast_block_add_expr(block, (ast_expression*)store_think))
+                {
+                    retval = false;
+                }
+            }
+
+            if (!retval) {
+                parseerror(parser, "failed to generate code for [frame,think]");
+                ast_unref(nextthink);
+                ast_unref(framenum);
+                ast_delete(block);
+                return false;
+            }
         }
     }
 

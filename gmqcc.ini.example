@@ -310,6 +310,11 @@
     SORT_OPERANDS = false
 
 
+    #Emulate OP_STATE operations in code rather than using the instruction.
+    #The desired fps can be set via -state-fps=NUM, defaults to 10.
+
+    EMULATE_STATE = false
+
 
 [warnings]
     #Generate a warning about variables which are declared but never
