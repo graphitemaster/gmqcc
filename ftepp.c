@@ -852,7 +852,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 if (vec_size(macro->output) > o + 1 && macro->output[o+1]->token == '#')
                     buffer++;
                 if (strip) {
-                    while (util_isspace(*buffer)) buffer++;
+                    while (*buffer == ' ' || *buffer == '\t') buffer++;
                     strip = false;
                 }
                 ftepp_out(ftepp, buffer, false);

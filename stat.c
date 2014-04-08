@@ -27,6 +27,14 @@
 
 #include "gmqcc.h"
 
+typedef struct stat_mem_block_s stat_mem_block_t;
+
+#define IDENT_SIZE 4
+#define IDENT_VEC  "vec"
+#define IDENT_MEM  "mem"
+#define IDENT_VEC_TOP (sizeof(vector_t) + IDENT_SIZE)
+#define IDENT_MEM_TOP (sizeof(stat_mem_block_t) + IDENT_SIZE)
+
 /*
  * For the valgrind integration of our allocator. This allows us to have
  * more `accurate` valgrind output for our allocator, and also secures the
@@ -52,14 +60,14 @@
  */
 #define ST_SIZE 1024
 
-typedef struct stat_mem_block_s {
+struct stat_mem_block_s {
     const char              *file;
     size_t                   line;
     size_t                   size;
     const char              *expr;
     struct stat_mem_block_s *next;
     struct stat_mem_block_s *prev;
-} stat_mem_block_t;
+};
 
 typedef struct {
     size_t key;
@@ -121,8 +129,8 @@ static void stat_size_put(stat_size_table_t table, size_t key, size_t value) {
  * retrieved again with - 1. Where type is stat_mem_block_t*.
  */
 void *stat_mem_allocate(size_t size, size_t line, const char *file, const char *expr) {
-    stat_mem_block_t *info = (stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size);
-    void             *data = (void*)(info + 1);
+    stat_mem_block_t *info = (stat_mem_block_t*)malloc(size + IDENT_MEM_TOP);
+    void             *data = (void *)((char*)info + IDENT_MEM_TOP);
 
     if(GMQCC_UNLIKELY(!info))
         return NULL;
@@ -133,12 +141,15 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file, const char *
     info->expr = expr;
     info->prev = NULL;
     info->next = stat_mem_block_root;
+    
+    /* Write identifier */
+    memcpy(info + 1, IDENT_MEM, IDENT_SIZE);
 
     /* likely since it only happens once */
     if (GMQCC_LIKELY(stat_mem_block_root != NULL)) {
-        VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, IDENT_MEM_TOP);
         stat_mem_block_root->prev = info;
-        VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, IDENT_MEM_TOP);
     }
 
     stat_mem_block_root       = info;
@@ -149,23 +160,49 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file, const char *
     if (stat_mem_high > stat_mem_peak)
         stat_mem_peak = stat_mem_high;
 
-    VALGRIND_MALLOCLIKE_BLOCK(data, size, sizeof(stat_mem_block_t), 0);
+    VALGRIND_MALLOCLIKE_BLOCK(data, size, IDENT_MEM_TOP, 0);
     return data;
 }
 
-void stat_mem_deallocate(void *ptr) {
-    stat_mem_block_t *info = NULL;
-
+void stat_mem_deallocate(void *ptr, size_t line, const char *file) {
+    stat_mem_block_t *info  = NULL;
+    char             *ident = (char *)ptr - IDENT_SIZE;
+    
     if (GMQCC_UNLIKELY(!ptr))
         return;
 
-    info = ((stat_mem_block_t*)ptr - 1);
+    /* Validate usage */
+    VALGRIND_MAKE_MEM_DEFINED(ident, IDENT_SIZE);
+    if (!strcmp(ident, IDENT_VEC)) {
+        vector_t         *vec   = (vector_t*)((char *)ptr - IDENT_VEC_TOP);
+        stat_mem_block_t *block = (stat_mem_block_t*)((char *)vec - IDENT_MEM_TOP);
+        
+        VALGRIND_MAKE_MEM_DEFINED(block, sizeof(stat_mem_block_t));
+        con_err("internal warning: invalid use of mem_d:\n");
+        con_err("internal warning:    vector (used elements: %u, allocated elements: %u)\n",
+            (unsigned)vec->used,
+            (unsigned)vec->allocated
+        );
+        con_err("internal warning:    vector was last (re)allocated with (size: %u (bytes), at location: %s:%u)\n",
+            (unsigned)block->size,
+            block->file,
+            (unsigned)block->line
+        );
+        con_err("internal warning:    released with wrong routine at %s:%u\n", file, (unsigned)line);
+        con_err("internal warning:    forwarding to vec_free, please fix it\n");
+        VALGRIND_MAKE_MEM_NOACCESS(block, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(ident, IDENT_SIZE);
+        vec_free(ptr);
+        return;
+    }
+    VALGRIND_MAKE_MEM_NOACCESS(ident, IDENT_SIZE);
+    info = (stat_mem_block_t*)((char *)ptr - IDENT_MEM_TOP);
 
     /*
      * we need access to the redzone that represents the info block
      * so lets do that.
      */
-    VALGRIND_MAKE_MEM_DEFINED(info, sizeof(stat_mem_block_t));
+    VALGRIND_MAKE_MEM_DEFINED(info, IDENT_MEM_TOP);
 
     stat_mem_deallocated       += info->size;
     stat_mem_high              -= info->size;
@@ -173,17 +210,17 @@ void stat_mem_deallocate(void *ptr) {
 
     if (info->prev) {
         /* just need access for a short period */
-        VALGRIND_MAKE_MEM_DEFINED(info->prev, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_DEFINED(info->prev, IDENT_MEM_TOP);
         info->prev->next = info->next;
         /* don't need access anymore */
-        VALGRIND_MAKE_MEM_NOACCESS(info->prev, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(info->prev, IDENT_MEM_TOP);
     }
     if (info->next) {
         /* just need access for a short period */
-        VALGRIND_MAKE_MEM_DEFINED(info->next, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_DEFINED(info->next, IDENT_MEM_TOP);
         info->next->prev = info->prev;
         /* don't need access anymore */
-        VALGRIND_MAKE_MEM_NOACCESS(info->next, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(info->next, IDENT_MEM_TOP);
     }
 
     /* move ahead */
@@ -191,8 +228,8 @@ void stat_mem_deallocate(void *ptr) {
         stat_mem_block_root = info->next;
 
     free(info);
-    VALGRIND_MAKE_MEM_NOACCESS(info, sizeof(stat_mem_block_t));
-    VALGRIND_FREELIKE_BLOCK(ptr, sizeof(stat_mem_block_t));
+    VALGRIND_MAKE_MEM_NOACCESS(info, IDENT_MEM_TOP);
+    VALGRIND_FREELIKE_BLOCK(ptr, IDENT_MEM_TOP);
 }
 
 void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file, const char *expr) {
@@ -204,39 +241,43 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file,
 
     /* stay consistent with glibc */
     if (GMQCC_UNLIKELY(!size)) {
-        stat_mem_deallocate(ptr);
+        stat_mem_deallocate(ptr, line, file);
         return NULL;
     }
 
-    oldinfo = ((stat_mem_block_t*)ptr - 1);
-    newinfo = ((stat_mem_block_t*)malloc(sizeof(stat_mem_block_t) + size));
+    oldinfo = (stat_mem_block_t*)((char *)ptr - IDENT_MEM_TOP);
+    newinfo = (stat_mem_block_t*)malloc(size + IDENT_MEM_TOP);
 
     if (GMQCC_UNLIKELY(!newinfo)) {
-        stat_mem_deallocate(ptr);
+        stat_mem_deallocate(ptr, line, file);
         return NULL;
     }
 
-    VALGRIND_MALLOCLIKE_BLOCK(newinfo + 1, size, sizeof(stat_mem_block_t), 0);
+    VALGRIND_MALLOCLIKE_BLOCK((char *)newinfo + IDENT_MEM_TOP, size, IDENT_MEM_TOP, 0);
 
     /* we need access to the old info redzone */
-    VALGRIND_MAKE_MEM_DEFINED(oldinfo, sizeof(stat_mem_block_t));
+    VALGRIND_MAKE_MEM_DEFINED(oldinfo, IDENT_MEM_TOP);
 
-    memcpy(newinfo+1, oldinfo+1, oldinfo->size);
+    /* We need access to the new info redzone */
+    VALGRIND_MAKE_MEM_DEFINED(newinfo, IDENT_MEM_TOP);
+    memcpy((char *)(newinfo + 1), IDENT_MEM, IDENT_SIZE);
+    memcpy((char *)newinfo + IDENT_MEM_TOP, (char *)oldinfo + IDENT_MEM_TOP, oldinfo->size);
+    VALGRIND_MAKE_MEM_NOACCESS(newinfo, IDENT_MEM_TOP);
 
     if (oldinfo->prev) {
         /* just need access for a short period */
-        VALGRIND_MAKE_MEM_DEFINED(oldinfo->prev, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_DEFINED(oldinfo->prev, IDENT_MEM_TOP);
         oldinfo->prev->next = oldinfo->next;
         /* don't need access anymore */
-        VALGRIND_MAKE_MEM_NOACCESS(oldinfo->prev, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(oldinfo->prev, IDENT_MEM_TOP);
     }
 
     if (oldinfo->next) {
         /* just need access for a short period */
-        VALGRIND_MAKE_MEM_DEFINED(oldinfo->next, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_DEFINED(oldinfo->next, IDENT_MEM_TOP);
         oldinfo->next->prev = oldinfo->prev;
         /* don't need access anymore */
-        VALGRIND_MAKE_MEM_NOACCESS(oldinfo->next, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(oldinfo->next, IDENT_MEM_TOP);
     }
 
     /* move ahead */
@@ -244,7 +285,7 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file,
         stat_mem_block_root = oldinfo->next;
 
     /* we need access to the redzone for the newinfo block */
-    VALGRIND_MAKE_MEM_DEFINED(newinfo, sizeof(stat_mem_block_t));
+    VALGRIND_MAKE_MEM_DEFINED(newinfo, IDENT_MEM_TOP);
 
     newinfo->line = line;
     newinfo->size = size;
@@ -259,10 +300,10 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file,
      */
     if (GMQCC_LIKELY(stat_mem_block_root != NULL)) {
         /* we need access to the root */
-        VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_DEFINED(stat_mem_block_root, IDENT_MEM_TOP);
         stat_mem_block_root->prev = newinfo;
         /* kill access */
-        VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, sizeof(stat_mem_block_t));
+        VALGRIND_MAKE_MEM_NOACCESS(stat_mem_block_root, IDENT_MEM_TOP);
     }
 
     stat_mem_block_root = newinfo;
@@ -275,15 +316,15 @@ void *stat_mem_reallocate(void *ptr, size_t size, size_t line, const char *file,
      * we're finished with the redzones, lets kill the access
      * to them.
      */
-    VALGRIND_MAKE_MEM_NOACCESS(newinfo, sizeof(stat_mem_block_t));
-    VALGRIND_MAKE_MEM_NOACCESS(oldinfo, sizeof(stat_mem_block_t));
+    VALGRIND_MAKE_MEM_NOACCESS(newinfo, IDENT_MEM_TOP);
+    VALGRIND_MAKE_MEM_NOACCESS(oldinfo, IDENT_MEM_TOP);
 
     if (stat_mem_high > stat_mem_peak)
         stat_mem_peak = stat_mem_high;
 
     free(oldinfo);
-    VALGRIND_FREELIKE_BLOCK(ptr, sizeof(stat_mem_block_t));
-    return newinfo + 1;
+    VALGRIND_FREELIKE_BLOCK(ptr, IDENT_MEM_TOP);
+    return (char *)newinfo + IDENT_MEM_TOP;
 }
 
 /*
@@ -313,17 +354,17 @@ char *stat_mem_strdup(const char *src, size_t line, const char *file, bool empty
  * The reallocate function for resizing vectors.
  */
 void _util_vec_grow(void **a, size_t i, size_t s) {
-    vector_t          *d = vec_meta(*a);
+    vector_t          *d = (vector_t*)((char *)*a - IDENT_VEC_TOP);
     size_t             m = 0;
     stat_size_entry_t *e = NULL;
     void              *p = NULL;
 
     if (*a) {
         m = 2 * d->allocated + i;
-        p = mem_r(d, s * m + sizeof(vector_t));
+        p = mem_r(d, s * m + IDENT_VEC_TOP);
     } else {
         m = i + 1;
-        p = mem_a(s * m + sizeof(vector_t));
+        p = mem_a(s * m + IDENT_VEC_TOP);
         ((vector_t*)p)->used = 0;
         stat_used_vectors++;
     }
@@ -338,8 +379,30 @@ void _util_vec_grow(void **a, size_t i, size_t s) {
         stat_type_vectors++;
     }
 
-    *a = (vector_t*)p + 1;
-    vec_meta(*a)->allocated = m;
+    d = (vector_t*)p;
+    d->allocated = m;
+    memcpy(d + 1, IDENT_VEC, IDENT_SIZE);
+    *a = (void *)((char *)d + IDENT_VEC_TOP);
+}
+
+void _util_vec_delete(void *data, size_t line, const char *file) {
+    char *ident = (char *)data - IDENT_SIZE;
+    if (!strcmp(ident, IDENT_MEM)) {
+        stat_mem_block_t *block = (stat_mem_block_t*)((char *)data - IDENT_MEM_TOP);
+        VALGRIND_MAKE_MEM_DEFINED(block, sizeof(stat_mem_block_t));
+        con_err("internal warning: invalid use of vec_free:\n");
+        con_err("internal warning:    memory block last allocated (size: %u (bytes), at %s:%u)\n",
+            (unsigned)block->size,
+            block->file,
+            (unsigned)block->line);
+        con_err("internal warning:    released with with wrong routine at %s:%u\n", file, (unsigned)line);
+        con_err("internal warning:    forwarding to mem_d, please fix it\n");
+        VALGRIND_MAKE_MEM_NOACCESS(block, sizeof(stat_mem_block_t));
+        mem_d(data);
+        return;
+    }
+    /* forward */
+    stat_mem_deallocate((void*)(ident - sizeof(vector_t)), line, file);
 }
 
 /*

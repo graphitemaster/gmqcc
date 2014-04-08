@@ -180,12 +180,12 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 /* stat.c */
 void  stat_info          (void);
 char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
+void  stat_mem_deallocate(void *,       size_t,         const char *);
 void *stat_mem_reallocate(void *,       size_t, size_t, const char *, const char *);
-void  stat_mem_deallocate(void *);
 void *stat_mem_allocate  (size_t, size_t, const char *, const char *);
 
 #define mem_a(SIZE)              stat_mem_allocate  ((SIZE), __LINE__, __FILE__, #SIZE)
-#define mem_d(PTRN)              stat_mem_deallocate((void*)(PTRN))
+#define mem_d(PTRN)              stat_mem_deallocate((void*)(PTRN), __LINE__, __FILE__)
 #define mem_r(PTRN, SIZE)        stat_mem_reallocate((void*)(PTRN), (SIZE), __LINE__, __FILE__, #SIZE)
 #define mem_af(SIZE, FILE, LINE) stat_mem_allocate  ((SIZE), (LINE), (FILE), #SIZE)
 
@@ -258,6 +258,8 @@ typedef struct {
 
 /* hidden interface */
 void _util_vec_grow(void **a, size_t i, size_t s);
+void _util_vec_delete(void *vec, size_t line, const char *file);
+
 #define GMQCC_VEC_WILLGROW(X,Y) ( \
     ((!(X) || vec_meta(X)->used + Y >= vec_meta(X)->allocated)) ? \
         (void)_util_vec_grow(((void**)&(X)), (Y), sizeof(*(X))) : \
@@ -265,8 +267,8 @@ void _util_vec_grow(void **a, size_t i, size_t s);
 )
 
 /* exposed interface */
-#define vec_meta(A)       (((vector_t*)((void*)(A))) - 1)
-#define vec_free(A)       ((void)((A) ? (mem_d((void*)vec_meta(A)), (A) = NULL) : 0))
+#define vec_meta(A)       ((vector_t*)(((char *)(A)) - (sizeof(vector_t) + 4)))
+#define vec_free(A)       ((void)((A) ? (_util_vec_delete((void *)(A), __LINE__, __FILE__), (A) = NULL) : 0))
 #define vec_push(A,V)     (GMQCC_VEC_WILLGROW((A),1), (A)[vec_meta(A)->used++] = (V))
 #define vec_size(A)       ((A) ? vec_meta(A)->used : 0)
 #define vec_add(A,N)      (GMQCC_VEC_WILLGROW((A),(N)), vec_meta(A)->used += (N), &(A)[vec_meta(A)->used-(N)])
