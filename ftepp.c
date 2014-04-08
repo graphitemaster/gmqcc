@@ -849,10 +849,11 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                 break;
             default:
                 buffer = out->value;
-                if (vec_size(macro->output) > o + 1 && macro->output[o+1]->token == '#')
+                #define buffer_stripable(X) ((X) == ' ' || (X) == '\t')
+                if (vec_size(macro->output) > o + 1 && macro->output[o+1]->token == '#' && buffer_stripable(*buffer))
                     buffer++;
                 if (strip) {
-                    while (*buffer == ' ' || *buffer == '\t') buffer++;
+                    while (buffer_stripable(*buffer)) buffer++;
                     strip = false;
                 }
                 ftepp_out(ftepp, buffer, false);
