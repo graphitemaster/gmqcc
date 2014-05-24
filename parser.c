@@ -5842,7 +5842,6 @@ skipvar:
                     else
                     {
                         var->hasvalue = true;
-                        var->inexact  = ((ast_value*)cexp)->inexact;
                         if (cval->expression.vtype == TYPE_STRING)
                             var->constval.vstring = parser_strdup(cval->constval.vstring);
                         else if (cval->expression.vtype == TYPE_FIELD)
@@ -5872,6 +5871,14 @@ skipvar:
                 vec_free(sy.ops);
                 vec_free(sy.argc);
                 var->cvq = cvq;
+            }
+            /* a constant initialized to an inexact value should be marked inexact:
+             * const float x = <inexact>; should propagate the inexact flag
+             */
+            if (var->cvq == CV_CONST && var->expression.vtype == TYPE_FLOAT) {
+                cval = (ast_value*)cexp;
+                if (ast_istype(cexp, ast_value) && cval->hasvalue && cval->cvq == CV_CONST)
+                    var->inexact = cval->inexact;
             }
         }
 
