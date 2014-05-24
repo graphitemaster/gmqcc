@@ -820,6 +820,9 @@ static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloa
     sfloat_cast_t ca;
     sfloat_cast_t cb;
 
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        return false;
+
     s.roundingmode   = SFLOAT_ROUND_NEAREST_EVEN;
     s.tiny           = SFLOAT_TBEFORE;
     s.exceptionflags = 0;

@@ -310,6 +310,11 @@
     SORT_OPERANDS = false
 
 
+    #Turn on arithmetic exception tests in the compiler. In constant expressions
+    #which trigger exceptions like division by zero, overflow, underflow, etc,
+    #the following flag will produce diagnostics for what triggered that
+    #exception.
+    ARITHMETIC_EXCEPTIONS = false
 
 [warnings]
     #Generate a warning about variables which are declared but never

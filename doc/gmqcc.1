@@ -581,6 +581,11 @@ breaks decompilers, but causes the output file to be better compressible.
 In commutative instructions, always put the lower-numbered operand first.
 This shaves off 1 byte of entropy from all these instructions, reducing
 compressed size of the output file.
+.It Fl f Ns Cm arithmetic-exceptions
+Turn on arithmetic exception tests in the compiler. In constant expressions
+which trigger exceptions like division by zero, overflow, underflow, etc,
+the following flag will produce diagnostics for what triggered that
+exception.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds
