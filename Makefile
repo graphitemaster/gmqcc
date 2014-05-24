@@ -17,6 +17,7 @@ ifeq ($(CC), clang)
 	    -Wno-float-equal                   \
 	    -Wno-unknown-warning-option        \
 	    -Wno-cast-align                    \
+	    -Wno-assign-enum                   \
 	    -pedantic-errors
 else
 	ifneq ($(CC), g++)
