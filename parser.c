@@ -5842,6 +5842,7 @@ skipvar:
                     else
                     {
                         var->hasvalue = true;
+                        var->inexact  = ((ast_value*)cexp)->inexact;
                         if (cval->expression.vtype == TYPE_STRING)
                             var->constval.vstring = parser_strdup(cval->constval.vstring);
                         else if (cval->expression.vtype == TYPE_FIELD)

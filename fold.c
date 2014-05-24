@@ -692,7 +692,6 @@ ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value, bool inexact)
     out->hasvalue        = true;
     out->inexact         = inexact;
     out->constval.vfloat = value;
-    (void)inexact;
 
     vec_push(fold->imm_float, out);
 
@@ -923,11 +922,7 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
     if (isfloat(a)) {
         if (fold_can_2(a, b)) {
             bool inexact = fold_check_except_float(&sfloat_div, fold, a, b);
-            ast_expression *e;
-            con_out("inexact: %d (%x:%x)\n", inexact, a, b);
-            e = fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b), inexact);
-            con_out("%x\n", e);
-            return e;
+            return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b), inexact);
         } else if (fold_can_1(b)) {
             return (ast_expression*)ast_binary_new(
                 fold_ctx(fold),
@@ -1083,7 +1078,6 @@ static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_
         if (isfloat(a) && isfloat(b)) {
             float la = fold_immvalue_float(a);
             float lb = fold_immvalue_float(b);
-            con_out("CMP: %x:%x\n", a, b);
             fold_check_inexact_float(fold, a, b);
             return (ast_expression*)fold->imm_float[!(ne ? la == lb : la != lb)];
         } if (isvector(a) && isvector(b)) {
