@@ -48,11 +48,11 @@ typedef union {
 } sfloat_cast_t;
 
 typedef enum {
-    SFLOAT_INVALID   = 1 << 0,
-    SFLOAT_DIVBYZERO = 1 << 1,
-    SFLOAT_OVERFLOW  = 1 << 2,
-    SFLOAT_UNDERFLOW = 1 << 3,
-    SFLOAT_INEXACT   = 1 << 4
+    SFLOAT_INVALID   = 1,
+    SFLOAT_DIVBYZERO = 4,
+    SFLOAT_OVERFLOW  = 8,
+    SFLOAT_UNDERFLOW = 16,
+    SFLOAT_INEXACT   = 32
 } sfloat_exceptionflags_t;
 
 typedef enum {
@@ -692,6 +692,7 @@ ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value, bool inexact)
     out->hasvalue        = true;
     out->inexact         = inexact;
     out->constval.vfloat = value;
+    (void)inexact;
 
     vec_push(fold->imm_float, out);
 
@@ -820,7 +821,7 @@ static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloa
     sfloat_cast_t ca;
     sfloat_cast_t cb;
 
-    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS) && !OPTS_WARN(WARN_INEXACT_COMPARES))
         return false;
 
     s.roundingmode   = SFLOAT_ROUND_NEAREST_EVEN;
@@ -833,27 +834,26 @@ static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloa
     if (s.exceptionflags == 0)
         return false;
 
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        goto inexact_possible;
+
     if (s.exceptionflags & SFLOAT_DIVBYZERO)
         compile_error(fold_ctx(fold), "division by zero");
-#if 0
-    /*
-     * To be enabled once softfloat implementations for stuff like sqrt()
-     * exist
-     */
     if (s.exceptionflags & SFLOAT_INVALID)
-        compile_error(fold_ctx(fold), "invalid argument");
-#endif
-
+        compile_error(fold_ctx(fold), "undefined (inf)");
     if (s.exceptionflags & SFLOAT_OVERFLOW)
         compile_error(fold_ctx(fold), "arithmetic overflow");
     if (s.exceptionflags & SFLOAT_UNDERFLOW)
         compile_error(fold_ctx(fold), "arithmetic underflow");
 
-    return s.exceptionflags == SFLOAT_INEXACT;
+inexact_possible:
+    return s.exceptionflags & SFLOAT_INEXACT;
 }
 
 static bool fold_check_inexact_float(fold_t *fold, ast_value *a, ast_value *b) {
     lex_ctx_t ctx = fold_ctx(fold);
+    if (!OPTS_WARN(WARN_INEXACT_COMPARES))
+        return false;
     if (!a->inexact && !b->inexact)
         return false;
     return compile_warning(ctx, WARN_INEXACT_COMPARES, "inexact value in comparison");
@@ -923,7 +923,11 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
     if (isfloat(a)) {
         if (fold_can_2(a, b)) {
             bool inexact = fold_check_except_float(&sfloat_div, fold, a, b);
-            return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b), inexact);
+            ast_expression *e;
+            con_out("inexact: %d (%x:%x)\n", inexact, a, b);
+            e = fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b), inexact);
+            con_out("%x\n", e);
+            return e;
         } else if (fold_can_1(b)) {
             return (ast_expression*)ast_binary_new(
                 fold_ctx(fold),
@@ -1079,6 +1083,7 @@ static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_
         if (isfloat(a) && isfloat(b)) {
             float la = fold_immvalue_float(a);
             float lb = fold_immvalue_float(b);
+            con_out("CMP: %x:%x\n", a, b);
             fold_check_inexact_float(fold, a, b);
             return (ast_expression*)fold->imm_float[!(ne ? la == lb : la != lb)];
         } if (isvector(a) && isvector(b)) {
