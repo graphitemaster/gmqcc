@@ -1293,7 +1293,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         if ((fun->flags & AST_FLAG_VARIADIC) &&
             !(/*funval->cvq == CV_CONST && */ funval->hasvalue && funval->constval.vfunc->builtin))
         {
-            call->va_count = (ast_expression*)fold_constgen_float(parser->fold, (qcfloat_t)paramcount);
+            call->va_count = (ast_expression*)fold_constgen_float(parser->fold, (qcfloat_t)paramcount, false);
         }
     }
 
@@ -1548,14 +1548,14 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         return true;
     }
     else if (parser->tok == TOKEN_FLOATCONST) {
-        ast_expression *val = fold_constgen_float(parser->fold, (parser_token(parser)->constval.f));
+        ast_expression *val = fold_constgen_float(parser->fold, (parser_token(parser)->constval.f), false);
         if (!val)
             return false;
         vec_push(sy->out, syexp(parser_ctx(parser), val));
         return true;
     }
     else if (parser->tok == TOKEN_INTCONST || parser->tok == TOKEN_CHARCONST) {
-        ast_expression *val = fold_constgen_float(parser->fold, (qcfloat_t)(parser_token(parser)->constval.i));
+        ast_expression *val = fold_constgen_float(parser->fold, (qcfloat_t)(parser_token(parser)->constval.i), false);
         if (!val)
             return false;
         vec_push(sy->out, syexp(parser_ctx(parser), val));
@@ -4030,7 +4030,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
 
         time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
-                         gbl_time, (ast_expression*)fold_constgen_float(parser->fold, 0.1f));
+                         gbl_time, (ast_expression*)fold_constgen_float(parser->fold, 0.1f, false));
 
         if (!self_frame || !self_nextthink || !self_think || !time_plus_1) {
             if (self_frame)     ast_delete(self_frame);
@@ -4155,7 +4155,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             goto enderrfn;
         }
         func->varargs     = varargs;
-        func->fixedparams = (ast_value*)fold_constgen_float(parser->fold, vec_size(var->expression.params));
+        func->fixedparams = (ast_value*)fold_constgen_float(parser->fold, vec_size(var->expression.params), false);
     }
 
     parser->function = func;
@@ -4213,7 +4213,7 @@ static ast_expression *array_accessor_split(
 
     cmp = ast_binary_new(ctx, INSTR_LT,
                          (ast_expression*)index,
-                         (ast_expression*)fold_constgen_float(parser->fold, middle));
+                         (ast_expression*)fold_constgen_float(parser->fold, middle, false));
     if (!cmp) {
         ast_delete(left);
         ast_delete(right);
@@ -4246,7 +4246,7 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->vtype == TYPE_VECTOR)
             assignop = INSTR_STORE_V;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from));
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from, false));
         if (!subscript)
             return NULL;
 
@@ -4312,7 +4312,7 @@ static ast_expression *array_field_setter_node(
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->vtype == TYPE_VECTOR)
             assignop = INSTR_STOREP_V;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from));
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from, false));
         if (!subscript)
             return NULL;
 
@@ -4375,7 +4375,7 @@ static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast
         ast_return      *ret;
         ast_array_index *subscript;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from));
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from, false));
         if (!subscript)
             return NULL;
 

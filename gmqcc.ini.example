@@ -568,6 +568,12 @@
     BUILTINS = true
 
 
+    #When comparing an inexact value such as `1.0/3.0' the result is
+    #pathologically wrong. Enabling this will trigger a compiler warning
+    #on such expressions.
+    INEXACT_COMPARES = true
+
+
 [optimizations]
     #Some general peephole optimizations. For instance the code `a = b
     #+ c` typically generates 2 instructions, an ADD and a STORE. This

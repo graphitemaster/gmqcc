@@ -30,6 +30,409 @@
 #define FOLD_STRING_DOTRANSLATE_HTSIZE 1024
 
 /*
+ * The constant folder is also responsible for validating if the constant
+ * expressions produce valid results. We cannot trust the FPU control
+ * unit for these exceptions because setting FPU control words might not
+ * work. Systems can set and enforce FPU modes of operation. It's also valid
+ * for libc's to simply ignore FPU exceptions. For instance ARM CPUs in
+ * glibc. We implement some trivial and IEE 754 conformant functions which
+ * emulate those operations. This is an entierly optional compiler feature
+ * which shouldn't be enabled for anything other than performing strict
+ * passes on constant expressions since it's quite slow.
+ */
+typedef uint32_t sfloat_t;
+
+typedef union {
+    qcfloat_t f;
+    sfloat_t  s;
+} sfloat_cast_t;
+
+typedef enum {
+    SFLOAT_INVALID   = 1,
+    SFLOAT_DIVBYZERO = 4,
+    SFLOAT_OVERFLOW  = 8,
+    SFLOAT_UNDERFLOW = 16,
+    SFLOAT_INEXACT   = 32
+} sfloat_exceptionflags_t;
+
+typedef enum {
+    SFLOAT_ROUND_NEAREST_EVEN,
+    SFLOAT_ROUND_DOWN,
+    SFLOAT_ROUND_UP,
+    SFLOAT_ROUND_TO_ZERO
+} sfloat_roundingmode_t;
+
+typedef enum {
+    SFLOAT_TAFTER,
+    SFLOAT_TBEFORE
+} sfloat_tdetect_t;
+
+typedef struct {
+    sfloat_roundingmode_t   roundingmode;
+    sfloat_exceptionflags_t exceptionflags;
+    sfloat_tdetect_t        tiny;
+} sfloat_state_t;
+
+/* The value of a NaN */
+#define SFLOAT_NAN 0xFFC00000
+/* Count of leading zero bits before the most-significand 1 bit. */
+#define SFLOAT_CLZ(X, SUB) \
+    (__builtin_clz((X)) - (SUB))
+/* Test if NaN */
+#define SFLOAT_ISNAN(A) \
+    (0xFF000000 < (uint32_t)((A) << 1))
+/* Test if signaling NaN */
+#define SFLOAT_ISSNAN(A) \
+    (((((A) >> 22) & 0x1FF) == 0x1FE) && ((A) & 0x003FFFFF))
+/* Raise exception */
+#define SFLOAT_RAISE(STATE, FLAGS) \
+    ((STATE)->exceptionflags |= (FLAGS))
+/*
+ * Shifts `A' right `COUNT' bits. Non-zero bits are stored in LSB. Size
+ * sets the arbitrarly-large limit.
+ */
+#define SFLOAT_SHIFT(SIZE, A, COUNT, Z)                                      \
+    *(Z) = ((COUNT) == 0)                                                    \
+        ? 1                                                                  \
+        : (((COUNT) < (SIZE))                                                \
+            ? ((A) >> (COUNT)) | (((A) << ((-(COUNT)) & ((SIZE) - 1))) != 0) \
+            : ((A) != 0))
+/* Extract fractional component */
+#define SFLOAT_EXTRACT_FRAC(X) \
+    ((uint32_t)((X) & 0x007FFFFF))
+/* Extract exponent component */
+#define SFLOAT_EXTRACT_EXP(X) \
+    ((int16_t)((X) >> 23) & 0xFF)
+/* Extract sign bit */
+#define SFLOAT_EXTRACT_SIGN(X) \
+    ((X) >> 31)
+/* Normalize a subnormal */
+#define SFLOAT_SUBNORMALIZE(SA, Z, SZ) \
+    (void)(*(SZ) = (SA) << SFLOAT_CLZ((SA), 8), *(SZ) = 1 - SFLOAT_CLZ((SA), 8))
+/*
+ * Pack sign, exponent and significand and produce a float.
+ *
+ * Integer portions of the significand are added to the exponent. The
+ * exponent input should be one less than the result exponent whenever
+ * the significand is normalized since normalized significand will
+ * always have an integer portion of value one.
+ */
+#define SFLOAT_PACK(SIGN, EXP, SIG) \
+    (sfloat_t)((((uint32_t)(SIGN)) << 31) + (((uint32_t)(EXP)) << 23) + (SIG))
+
+/* Calculate NaN. If either operands are signaling then raise invalid */
+static sfloat_t sfloat_propagate_nan(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
+    bool isnan_a  = SFLOAT_ISNAN(a);
+    bool issnan_a = SFLOAT_ISSNAN(a);
+    bool isnan_b  = SFLOAT_ISNAN(b);
+    bool issnan_b = SFLOAT_ISSNAN(b);
+
+    a |= 0x00400000;
+    b |= 0x00400000;
+
+    if (issnan_a | issnan_b)
+        SFLOAT_RAISE(state, SFLOAT_INEXACT);
+    if (issnan_a) {
+        if (issnan_b)
+            goto larger;
+        return isnan_b ? b : a;
+    } else if (isnan_a) {
+        if (issnan_b | !isnan_b)
+            return a;
+larger:
+        if ((uint32_t)(a << 1) < (uint32_t)(b << 1)) return b;
+        if ((uint32_t)(b << 1) < (uint32_t)(a << 1)) return a;
+        return (a < b) ? a : b;
+    }
+    return b;
+}
+
+/* Round and pack */
+static sfloat_t SFLOAT_PACK_round(sfloat_state_t *state, bool sign_z, int16_t exp_z, uint32_t sig_z) {
+    sfloat_roundingmode_t mode      = state->roundingmode;
+    bool                  even      = !!(mode == SFLOAT_ROUND_NEAREST_EVEN);
+    unsigned char         increment = 0x40;
+    unsigned char         bits      = sig_z & 0x7F;
+
+    if (!even) {
+        if (mode == SFLOAT_ROUND_TO_ZERO)
+            increment = 0;
+        else {
+            increment = 0x7F;
+            if (sign_z) {
+                if (mode == SFLOAT_ROUND_UP)
+                    increment = 0;
+            } else {
+                if (mode == SFLOAT_ROUND_DOWN)
+                    increment = 0;
+            }
+        }
+    }
+
+    if (0xFD <= (uint16_t)exp_z) {
+        if ((0xFD < exp_z) || ((exp_z == 0xFD) && ((int32_t)(sig_z + increment) < 0))) {
+            SFLOAT_RAISE(state, SFLOAT_OVERFLOW | SFLOAT_INEXACT);
+            return SFLOAT_PACK(sign_z, 0xFF, 0) - (increment == 0);
+        }
+        if (exp_z < 0) {
+            /* Check for underflow */
+            bool tiny = (state->tiny == SFLOAT_TBEFORE) || (exp_z < -1) || (sig_z + increment < 0x80000000);
+            SFLOAT_SHIFT(32, sig_z, -exp_z, &sig_z);
+            exp_z = 0;
+            bits = sig_z & 0x7F;
+            if (tiny && bits)
+                SFLOAT_RAISE(state, SFLOAT_UNDERFLOW);
+        }
+    }
+
+    /*
+     * Significand has point between bits 30 and 29, 7 bits to the left of
+     * the usual place. This shifted significand has to be normalized
+     * or smaller, if it isn't the exponent must be zero, in which case
+     * no rounding occurs since the result will be a subnormal.
+     */
+    if (bits)
+        SFLOAT_RAISE(state, SFLOAT_INEXACT);
+    sig_z = (sig_z + increment) >> 7;
+    sig_z &= ~(((bits ^ 0x40) == 0) & even);
+    if (sig_z == 0)
+        exp_z = 0;
+    return SFLOAT_PACK(sign_z, exp_z, sig_z);
+}
+
+/* Normalized round and pack */
+static sfloat_t SFLOAT_PACK_normal(sfloat_state_t *state, bool sign_z, int16_t exp_z, uint32_t sig_z) {
+    unsigned char c = SFLOAT_CLZ(sig_z, 1);
+    return SFLOAT_PACK_round(state, sign_z, exp_z - c, sig_z << c);
+}
+
+static sfloat_t sfloat_add_impl(sfloat_state_t *state, sfloat_t a, sfloat_t b, bool sign_z) {
+    int16_t  exp_a = SFLOAT_EXTRACT_EXP(a);
+    int16_t  exp_b = SFLOAT_EXTRACT_EXP(b);
+    int16_t  exp_z = 0;
+    int16_t  exp_d = exp_a - exp_b;
+    uint32_t sig_a = SFLOAT_EXTRACT_FRAC(a) << 6;
+    uint32_t sig_b = SFLOAT_EXTRACT_FRAC(b) << 6;
+    uint32_t sig_z = 0;
+
+    if (0 < exp_d) {
+        if (exp_a == 0xFF)
+            return sig_a ? sfloat_propagate_nan(state, a, b) : a;
+        if (exp_b == 0)
+            --exp_d;
+        else
+            sig_b |= 0x20000000;
+        SFLOAT_SHIFT(32, sig_b, exp_d, &sig_b);
+        exp_z = exp_a;
+    } else if (exp_d < 0) {
+        if (exp_b == 0xFF)
+            return sig_b ? sfloat_propagate_nan(state, a, b) : SFLOAT_PACK(sign_z, 0xFF, 0);
+        if (exp_a == 0)
+            ++exp_d;
+        else
+            sig_a |= 0x20000000;
+        SFLOAT_SHIFT(32, sig_a, -exp_d, &sig_a);
+        exp_z = exp_b;
+    } else {
+        if (exp_a == 0xFF)
+            return (sig_a | sig_b) ? sfloat_propagate_nan(state, a, b) : a;
+        if (exp_a == 0)
+            return SFLOAT_PACK(sign_z, 0, (sig_a + sig_b) >> 6);
+        sig_z = 0x40000000 + sig_a + sig_b;
+        exp_z = exp_a;
+        goto end;
+    }
+    sig_a |= 0x20000000;
+    sig_z = (sig_a + sig_b) << 1;
+    --exp_z;
+    if ((int32_t)sig_z < 0) {
+        sig_z = sig_a + sig_b;
+        ++exp_z;
+    }
+end:
+    return SFLOAT_PACK_round(state, sign_z, exp_z, sig_z);
+}
+
+static sfloat_t sfloat_sub_impl(sfloat_state_t *state, sfloat_t a, sfloat_t b, bool sign_z) {
+    int16_t  exp_a = SFLOAT_EXTRACT_EXP(a);
+    int16_t  exp_b = SFLOAT_EXTRACT_EXP(b);
+    int16_t  exp_z = 0;
+    int16_t  exp_d = exp_a - exp_b;
+    uint32_t sig_a = SFLOAT_EXTRACT_FRAC(a) << 7;
+    uint32_t sig_b = SFLOAT_EXTRACT_FRAC(b) << 7;
+    uint32_t sig_z = 0;
+
+    if (0 < exp_d) goto exp_greater_a;
+    if (exp_d < 0) goto exp_greater_b;
+
+    if (exp_a == 0xFF) {
+        if (sig_a | sig_b)
+            return sfloat_propagate_nan(state, a, b);
+        SFLOAT_RAISE(state, SFLOAT_INVALID);
+        return SFLOAT_NAN;
+    }
+
+    if (exp_a == 0)
+        exp_a = exp_b = 1;
+
+    if (sig_b < sig_a) goto greater_a;
+    if (sig_a < sig_b) goto greater_b;
+
+    return SFLOAT_PACK(state->roundingmode == SFLOAT_ROUND_DOWN, 0, 0);
+
+exp_greater_b:
+    if (exp_b == 0xFF)
+        return (sig_b) ? sfloat_propagate_nan(state, a, b) : SFLOAT_PACK(sign_z ^ 1, 0xFF, 0);
+    if (exp_a == 0)
+        ++exp_d;
+    else
+        sig_a |= 0x40000000;
+    SFLOAT_SHIFT(32, sig_a, -exp_d, &sig_a);
+    sig_b |= 0x40000000;
+greater_b:
+    sig_z = sig_b - sig_a;
+    exp_z = exp_b;
+    sign_z ^= 1;
+    goto end;
+
+exp_greater_a:
+    if (exp_a == 0xFF)
+        return (sig_a) ? sfloat_propagate_nan(state, a, b) : a;
+    if (exp_b == 0)
+        --exp_d;
+    else
+        sig_b |= 0x40000000;
+    SFLOAT_SHIFT(32, sig_b, exp_d, &sig_b);
+    sig_a |= 0x40000000;
+greater_a:
+    sig_z = sig_a - sig_b;
+    exp_z = exp_a;
+
+end:
+    --exp_z;
+    return SFLOAT_PACK_normal(state, sign_z, exp_z, sig_z);
+}
+
+static GMQCC_INLINE sfloat_t sfloat_add(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
+    bool sign_a = SFLOAT_EXTRACT_SIGN(a);
+    bool sign_b = SFLOAT_EXTRACT_SIGN(b);
+    return (sign_a == sign_b) ? sfloat_add_impl(state, a, b, sign_a)
+                              : sfloat_sub_impl(state, a, b, sign_a);
+}
+
+static GMQCC_INLINE sfloat_t sfloat_sub(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
+    bool sign_a = SFLOAT_EXTRACT_SIGN(a);
+    bool sign_b = SFLOAT_EXTRACT_SIGN(b);
+    return (sign_a == sign_b) ? sfloat_sub_impl(state, a, b, sign_a)
+                              : sfloat_add_impl(state, a, b, sign_a);
+}
+
+static sfloat_t sfloat_mul(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
+    int16_t  exp_a   = SFLOAT_EXTRACT_EXP(a);
+    int16_t  exp_b   = SFLOAT_EXTRACT_EXP(b);
+    int16_t  exp_z   = 0;
+    uint32_t sig_a   = SFLOAT_EXTRACT_FRAC(a);
+    uint32_t sig_b   = SFLOAT_EXTRACT_FRAC(b);
+    uint32_t sig_z   = 0;
+    uint64_t sig_z64 = 0;
+    bool     sign_a  = SFLOAT_EXTRACT_SIGN(a);
+    bool     sign_b  = SFLOAT_EXTRACT_SIGN(b);
+    bool     sign_z  = sign_a ^ sign_b;
+
+    if (exp_a == 0xFF) {
+        if (sig_a || ((exp_b == 0xFF) && sig_b))
+            return sfloat_propagate_nan(state, a, b);
+        if ((exp_b | sig_b) == 0) {
+            SFLOAT_RAISE(state, SFLOAT_INVALID);
+            return SFLOAT_NAN;
+        }
+        return SFLOAT_PACK(sign_z, 0xFF, 0);
+    }
+    if (exp_b == 0xFF) {
+        if (sig_b)
+            return sfloat_propagate_nan(state, a, b);
+        if ((exp_a | sig_a) == 0) {
+            SFLOAT_RAISE(state, SFLOAT_INVALID);
+            return SFLOAT_NAN;
+        }
+        return SFLOAT_PACK(sign_z, 0xFF, 0);
+    }
+    if (exp_a == 0) {
+        if (sig_a == 0)
+            return SFLOAT_PACK(sign_z, 0, 0);
+        SFLOAT_SUBNORMALIZE(sig_a, &exp_a, &sig_a);
+    }
+    if (exp_b == 0) {
+        if (sig_b == 0)
+            return SFLOAT_PACK(sign_z, 0, 0);
+        SFLOAT_SUBNORMALIZE(sig_b, &exp_b, &sig_b);
+    }
+    exp_z = exp_a + exp_b - 0x7F;
+    sig_a = (sig_a | 0x00800000) << 7;
+    sig_b = (sig_b | 0x00800000) << 8;
+    SFLOAT_SHIFT(64, ((uint64_t)sig_a) * sig_b, 32, &sig_z64);
+    sig_z = sig_z64;
+    if (0 <= (int32_t)(sig_z << 1)) {
+        sig_z <<= 1;
+        --exp_z;
+    }
+    return SFLOAT_PACK_round(state, sign_z, exp_z, sig_z);
+}
+
+static sfloat_t sfloat_div(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
+    int16_t  exp_a   = SFLOAT_EXTRACT_EXP(a);
+    int16_t  exp_b   = SFLOAT_EXTRACT_EXP(b);
+    int16_t  exp_z   = 0;
+    uint32_t sig_a   = SFLOAT_EXTRACT_FRAC(a);
+    uint32_t sig_b   = SFLOAT_EXTRACT_FRAC(b);
+    uint32_t sig_z   = 0;
+    bool     sign_a  = SFLOAT_EXTRACT_SIGN(a);
+    bool     sign_b  = SFLOAT_EXTRACT_SIGN(b);
+    bool     sign_z  = sign_a ^ sign_b;
+
+    if (exp_a == 0xFF) {
+        if (sig_a)
+            return sfloat_propagate_nan(state, a, b);
+        if (exp_b == 0xFF) {
+            if (sig_b)
+                return sfloat_propagate_nan(state, a, b);
+            SFLOAT_RAISE(state, SFLOAT_INVALID);
+            return SFLOAT_NAN;
+        }
+        return SFLOAT_PACK(sign_z, 0xFF, 0);
+    }
+    if (exp_b == 0xFF)
+        return (sig_b) ? sfloat_propagate_nan(state, a, b) : SFLOAT_PACK(sign_z, 0, 0);
+    if (exp_b == 0) {
+        if (sig_b == 0) {
+            if ((exp_a | sig_a) == 0) {
+                SFLOAT_RAISE(state, SFLOAT_INVALID);
+                return SFLOAT_NAN;
+            }
+            SFLOAT_RAISE(state, SFLOAT_DIVBYZERO);
+            return SFLOAT_PACK(sign_z, 0xFF, 0);
+        }
+        SFLOAT_SUBNORMALIZE(sig_b, &exp_b, &sig_b);
+    }
+    if (exp_a == 0) {
+        if (sig_a == 0)
+            return SFLOAT_PACK(sign_z, 0, 0);
+        SFLOAT_SUBNORMALIZE(sig_a, &exp_a, &sig_a);
+    }
+    exp_z = exp_a - exp_b + 0x7D;
+    sig_a = (sig_a | 0x00800000) << 7;
+    sig_b = (sig_b | 0x00800000) << 8;
+    if (sig_b <= (sig_a + sig_a)) {
+        sig_a >>= 1;
+        ++exp_z;
+    }
+    sig_z = (((uint64_t)sig_a) << 32) / sig_b;
+    if ((sig_z & 0x3F) == 0)
+        sig_z |= ((uint64_t)sig_b * sig_z != ((uint64_t)sig_a) << 32);
+    return SFLOAT_PACK_round(state, sign_z, exp_z, sig_z);
+}
+
+/*
  * There is two stages to constant folding in GMQCC: there is the parse
  * stage constant folding, where, witht he help of the AST, operator
  * usages can be constant folded. Then there is the constant folding
@@ -227,10 +630,10 @@ fold_t *fold_init(parser_t *parser) {
      * prime the tables with common constant values at constant
      * locations.
      */
-    (void)fold_constgen_float (fold,  0.0f);
-    (void)fold_constgen_float (fold,  1.0f);
-    (void)fold_constgen_float (fold, -1.0f);
-    (void)fold_constgen_float (fold,  2.0f);
+    (void)fold_constgen_float (fold,  0.0f, false);
+    (void)fold_constgen_float (fold,  1.0f, false);
+    (void)fold_constgen_float (fold, -1.0f, false);
+    (void)fold_constgen_float (fold,  2.0f, false);
 
     (void)fold_constgen_vector(fold, vec3_create(0.0f, 0.0f, 0.0f));
     (void)fold_constgen_vector(fold, vec3_create(-1.0f, -1.0f, -1.0f));
@@ -275,7 +678,7 @@ void fold_cleanup(fold_t *fold) {
     mem_d(fold);
 }
 
-ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value) {
+ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value, bool inexact) {
     ast_value  *out = NULL;
     size_t      i;
 
@@ -287,6 +690,7 @@ ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value) {
     out                  = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_FLOAT);
     out->cvq             = CV_CONST;
     out->hasvalue        = true;
+    out->inexact         = inexact;
     out->constval.vfloat = value;
 
     vec_push(fold->imm_float, out);
@@ -372,7 +776,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
         out->node.keep             = false;
         ((ast_member*)out)->rvalue = true;
         if (x != -1.0f)
-            return (ast_expression*)ast_binary_new(fold_ctx(fold), INSTR_MUL_F, fold_constgen_float(fold, x), out);
+            return (ast_expression*)ast_binary_new(fold_ctx(fold), INSTR_MUL_F, fold_constgen_float(fold, x, false), out);
     }
     return NULL;
 }
@@ -381,7 +785,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
 static GMQCC_INLINE ast_expression *fold_op_neg(fold_t *fold, ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, -fold_immvalue_float(a));
+            return fold_constgen_float(fold, -fold_immvalue_float(a), false);
     } else if (isvector(a)) {
         if (fold_can_1(a))
             return fold_constgen_vector(fold, vec3_neg(fold_immvalue_vector(a)));
@@ -392,25 +796,72 @@ static GMQCC_INLINE ast_expression *fold_op_neg(fold_t *fold, ast_value *a) {
 static GMQCC_INLINE ast_expression *fold_op_not(fold_t *fold, ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, !fold_immvalue_float(a));
+            return fold_constgen_float(fold, !fold_immvalue_float(a), false);
     } else if (isvector(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, vec3_notf(fold_immvalue_vector(a)));
+            return fold_constgen_float(fold, vec3_notf(fold_immvalue_vector(a)), false);
     } else if (isstring(a)) {
         if (fold_can_1(a)) {
             if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
-                return fold_constgen_float(fold, !fold_immvalue_string(a));
+                return fold_constgen_float(fold, !fold_immvalue_string(a), false);
             else
-                return fold_constgen_float(fold, !fold_immvalue_string(a) || !*fold_immvalue_string(a));
+                return fold_constgen_float(fold, !fold_immvalue_string(a) || !*fold_immvalue_string(a), false);
         }
     }
     return NULL;
 }
 
+static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t),
+                                    fold_t    *fold,
+                                    ast_value *a,
+                                    ast_value *b)
+{
+    sfloat_state_t s;
+    sfloat_cast_t ca;
+    sfloat_cast_t cb;
+
+    s.roundingmode   = SFLOAT_ROUND_NEAREST_EVEN;
+    s.tiny           = SFLOAT_TBEFORE;
+    s.exceptionflags = 0;
+    ca.f             = fold_immvalue_float(a);
+    cb.f             = fold_immvalue_float(b);
+
+    callback(&s, ca.s, cb.s);
+    if (s.exceptionflags == 0)
+        return false;
+
+    if (s.exceptionflags & SFLOAT_DIVBYZERO)
+        compile_error(fold_ctx(fold), "division by zero");
+#if 0
+    /*
+     * To be enabled once softfloat implementations for stuff like sqrt()
+     * exist
+     */
+    if (s.exceptionflags & SFLOAT_INVALID)
+        compile_error(fold_ctx(fold), "invalid argument");
+#endif
+
+    if (s.exceptionflags & SFLOAT_OVERFLOW)
+        compile_error(fold_ctx(fold), "arithmetic overflow");
+    if (s.exceptionflags & SFLOAT_UNDERFLOW)
+        compile_error(fold_ctx(fold), "arithmetic underflow");
+
+    return s.exceptionflags == SFLOAT_INEXACT;
+}
+
+static bool fold_check_inexact_float(fold_t *fold, ast_value *a, ast_value *b) {
+    lex_ctx_t ctx = fold_ctx(fold);
+    if (!a->inexact && !b->inexact)
+        return false;
+    return compile_warning(ctx, WARN_INEXACT_COMPARES, "inexact value in comparison");
+}
+
 static GMQCC_INLINE ast_expression *fold_op_add(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
-        if (fold_can_2(a, b))
-            return fold_constgen_float(fold, fold_immvalue_float(a) + fold_immvalue_float(b));
+        if (fold_can_2(a, b)) {
+            bool inexact = fold_check_except_float(&sfloat_add, fold, a, b);
+            return fold_constgen_float(fold, fold_immvalue_float(a) + fold_immvalue_float(b), inexact);
+        }
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
             return fold_constgen_vector(fold, vec3_add(fold_immvalue_vector(a), fold_immvalue_vector(b)));
@@ -420,8 +871,10 @@ static GMQCC_INLINE ast_expression *fold_op_add(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_sub(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
-        if (fold_can_2(a, b))
-            return fold_constgen_float(fold, fold_immvalue_float(a) - fold_immvalue_float(b));
+        if (fold_can_2(a, b)) {
+            bool inexact = fold_check_except_float(&sfloat_sub, fold, a, b);
+            return fold_constgen_float(fold, fold_immvalue_float(a) - fold_immvalue_float(b), inexact);
+        }
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
             return fold_constgen_vector(fold, vec3_sub(fold_immvalue_vector(a), fold_immvalue_vector(b)));
@@ -435,8 +888,10 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
             if (fold_can_2(a, b))
                 return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a)));
         } else {
-            if (fold_can_2(a, b))
-                return fold_constgen_float(fold, fold_immvalue_float(a) * fold_immvalue_float(b));
+            if (fold_can_2(a, b)) {
+                bool inexact = fold_check_except_float(&sfloat_mul, fold, a, b);
+                return fold_constgen_float(fold, fold_immvalue_float(a) * fold_immvalue_float(b), inexact);
+            }
         }
     } else if (isvector(a)) {
         if (isfloat(b)) {
@@ -444,7 +899,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
                 return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
         } else {
             if (fold_can_2(a, b)) {
-                return fold_constgen_float(fold, vec3_mulvv(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+                return fold_constgen_float(fold, vec3_mulvv(fold_immvalue_vector(a), fold_immvalue_vector(b)), false);
             } else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && fold_can_1(a)) {
                 ast_expression *out;
                 if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(a), b, "xyz"))) return out;
@@ -464,13 +919,14 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
 static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b)) {
-            return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b));
+            bool inexact = fold_check_except_float(&sfloat_div, fold, a, b);
+            return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b), inexact);
         } else if (fold_can_1(b)) {
             return (ast_expression*)ast_binary_new(
                 fold_ctx(fold),
                 INSTR_MUL_F,
                 (ast_expression*)a,
-                fold_constgen_float(fold, 1.0f / fold_immvalue_float(b))
+                fold_constgen_float(fold, 1.0f / fold_immvalue_float(b), false)
             );
         }
     } else if (isvector(a)) {
@@ -482,7 +938,7 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
                 INSTR_MUL_VF,
                 (ast_expression*)a,
                 (fold_can_1(b))
-                    ? (ast_expression*)fold_constgen_float(fold, 1.0f / fold_immvalue_float(b))
+                    ? (ast_expression*)fold_constgen_float(fold, 1.0f / fold_immvalue_float(b), false)
                     : (ast_expression*)ast_binary_new(
                                             fold_ctx(fold),
                                             INSTR_DIV_F,
@@ -497,14 +953,14 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_mod(fold_t *fold, ast_value *a, ast_value *b) {
     return (fold_can_2(a, b))
-                ? fold_constgen_float(fold, fmod(fold_immvalue_float(a), fold_immvalue_float(b)))
+                ? fold_constgen_float(fold, fmod(fold_immvalue_float(a), fold_immvalue_float(b)), false)
                 : NULL;
 }
 
 static GMQCC_INLINE ast_expression *fold_op_bor(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) | ((qcint_t)fold_immvalue_float(b))));
+            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) | ((qcint_t)fold_immvalue_float(b))), false);
     } else {
         if (isvector(b)) {
             if (fold_can_2(a, b))
@@ -520,7 +976,7 @@ static GMQCC_INLINE ast_expression *fold_op_bor(fold_t *fold, ast_value *a, ast_
 static GMQCC_INLINE ast_expression *fold_op_band(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) & ((qcint_t)fold_immvalue_float(b))));
+            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) & ((qcint_t)fold_immvalue_float(b))), false);
     } else {
         if (isvector(b)) {
             if (fold_can_2(a, b))
@@ -536,7 +992,7 @@ static GMQCC_INLINE ast_expression *fold_op_band(fold_t *fold, ast_value *a, ast
 static GMQCC_INLINE ast_expression *fold_op_xor(fold_t *fold, ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) ^ ((qcint_t)fold_immvalue_float(b))));
+            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) ^ ((qcint_t)fold_immvalue_float(b))), false);
     } else {
         if (fold_can_2(a, b)) {
             if (isvector(b))
@@ -550,13 +1006,13 @@ static GMQCC_INLINE ast_expression *fold_op_xor(fold_t *fold, ast_value *a, ast_
 
 static GMQCC_INLINE ast_expression *fold_op_lshift(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a, b) && isfloats(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)floorf(fold_immvalue_float(a) * powf(2.0f, fold_immvalue_float(b))));
+        return fold_constgen_float(fold, (qcfloat_t)floorf(fold_immvalue_float(a) * powf(2.0f, fold_immvalue_float(b))), false);
     return NULL;
 }
 
 static GMQCC_INLINE ast_expression *fold_op_rshift(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a, b) && isfloats(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)floorf(fold_immvalue_float(a) / powf(2.0f, fold_immvalue_float(b))));
+        return fold_constgen_float(fold, (qcfloat_t)floorf(fold_immvalue_float(a) / powf(2.0f, fold_immvalue_float(b))), false);
     return NULL;
 }
 
@@ -573,7 +1029,8 @@ static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, as
                 ((expr) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
                         : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
                             ? 1
-                            : 0
+                            : 0,
+                false
             );
         }
     }
@@ -591,15 +1048,25 @@ static GMQCC_INLINE ast_expression *fold_op_tern(fold_t *fold, ast_value *a, ast
 
 static GMQCC_INLINE ast_expression *fold_op_exp(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)powf(fold_immvalue_float(a), fold_immvalue_float(b)));
+        return fold_constgen_float(fold, (qcfloat_t)powf(fold_immvalue_float(a), fold_immvalue_float(b)), false);
     return NULL;
 }
 
 static GMQCC_INLINE ast_expression *fold_op_lteqgt(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a,b)) {
+        fold_check_inexact_float(fold, a, b);
         if (fold_immvalue_float(a) <  fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[2];
         if (fold_immvalue_float(a) == fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[0];
         if (fold_immvalue_float(a) >  fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[1];
+    }
+    return NULL;
+}
+
+static GMQCC_INLINE ast_expression *fold_op_ltgt(fold_t *fold, ast_value *a, ast_value *b, bool lt) {
+    if (fold_can_2(a, b)) {
+        fold_check_inexact_float(fold, a, b);
+        return (lt) ? (ast_expression*)fold->imm_float[!!(fold_immvalue_float(a) < fold_immvalue_float(b))]
+                    : (ast_expression*)fold->imm_float[!!(fold_immvalue_float(a) > fold_immvalue_float(b))];
     }
     return NULL;
 }
@@ -609,6 +1076,7 @@ static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_
         if (isfloat(a) && isfloat(b)) {
             float la = fold_immvalue_float(a);
             float lb = fold_immvalue_float(b);
+            fold_check_inexact_float(fold, a, b);
             return (ast_expression*)fold->imm_float[!(ne ? la == lb : la != lb)];
         } if (isvector(a) && isvector(b)) {
             vec3_t la = fold_immvalue_vector(a);
@@ -622,7 +1090,7 @@ static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_
 static GMQCC_INLINE ast_expression *fold_op_bnot(fold_t *fold, ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, -1-fold_immvalue_float(a));
+            return fold_constgen_float(fold, -1-fold_immvalue_float(a), false);
     } else {
         if (isvector(a)) {
             if (fold_can_1(a))
@@ -685,6 +1153,8 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         fold_op_case(1, ('|'),         bor,    (fold, a, b));
         fold_op_case(1, ('&'),         band,   (fold, a, b));
         fold_op_case(1, ('^'),         xor,    (fold, a, b));
+        fold_op_case(1, ('<'),         ltgt,   (fold, a, b, true));
+        fold_op_case(1, ('>'),         ltgt,   (fold, a, b, false));
         fold_op_case(2, ('<', '<'),    lshift, (fold, a, b));
         fold_op_case(2, ('>', '>'),    rshift, (fold, a, b));
         fold_op_case(2, ('|', '|'),    andor,  (fold, a, b, true));
@@ -708,46 +1178,46 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
  * and a generic selection function.
  */
 static GMQCC_INLINE ast_expression *fold_intrin_isfinite(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isfinite(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, isfinite(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_isinf(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isinf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, isinf(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_isnan(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isnan(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, isnan(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_isnormal(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isnormal(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, isnormal(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_signbit(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, signbit(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, signbit(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intirn_acosh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, acoshf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, acoshf(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_asinh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, asinhf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, asinhf(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_atanh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, (float)atanh(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, (float)atanh(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_exp(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, expf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, expf(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_exp2(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, exp2f(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, exp2f(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_expm1(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, expm1f(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, expm1f(fold_immvalue_float(a)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_mod(fold_t *fold, ast_value *lhs, ast_value *rhs) {
-    return fold_constgen_float(fold, fmodf(fold_immvalue_float(lhs), fold_immvalue_float(rhs)));
+    return fold_constgen_float(fold, fmodf(fold_immvalue_float(lhs), fold_immvalue_float(rhs)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_pow(fold_t *fold, ast_value *lhs, ast_value *rhs) {
-    return fold_constgen_float(fold, powf(fold_immvalue_float(lhs), fold_immvalue_float(rhs)));
+    return fold_constgen_float(fold, powf(fold_immvalue_float(lhs), fold_immvalue_float(rhs)), false);
 }
 static GMQCC_INLINE ast_expression *fold_intrin_fabs(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, fabsf(fold_immvalue_float(a)));
+    return fold_constgen_float(fold, fabsf(fold_immvalue_float(a)), false);
 }
 
 

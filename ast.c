@@ -359,6 +359,7 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
     self->cvq      = CV_NONE;
     self->hasvalue = false;
     self->isimm    = false;
+    self->inexact  = false;
     self->uses     = 0;
     memset(&self->constval, 0, sizeof(self->constval));
     self->initlist = NULL;

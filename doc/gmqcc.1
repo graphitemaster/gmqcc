@@ -344,6 +344,10 @@ will search its intrinsics table for something that matches that
 function name by appending "__builtin_" to it. This behaviour may
 be unexpected, so enabling this will produce a diagnostic when
 such a function is resolved to a builtin.
+.It Fl W Ns Cm inexact-compares
+When comparing an inexact value such as `1.0/3.0' the result is
+pathologically wrong. Enabling this will trigger a compiler warning
+on such expressions.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds
