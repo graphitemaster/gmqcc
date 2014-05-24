@@ -48,11 +48,11 @@ typedef union {
 } sfloat_cast_t;
 
 typedef enum {
-    SFLOAT_INVALID   = 1,
-    SFLOAT_DIVBYZERO = 4,
-    SFLOAT_OVERFLOW  = 8,
-    SFLOAT_UNDERFLOW = 16,
-    SFLOAT_INEXACT   = 32
+    SFLOAT_INVALID   = 1 << 0,
+    SFLOAT_DIVBYZERO = 1 << 1,
+    SFLOAT_OVERFLOW  = 1 << 2,
+    SFLOAT_UNDERFLOW = 1 << 3,
+    SFLOAT_INEXACT   = 1 << 4
 } sfloat_exceptionflags_t;
 
 typedef enum {
