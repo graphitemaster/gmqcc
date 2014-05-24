@@ -5146,6 +5146,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     bool      wasarray  = false;
 
     ast_member *me[3] = { NULL, NULL, NULL };
+    ast_member *last_me[3] = { NULL, NULL, NULL };
 
     if (!localblock && is_static)
         parseerror(parser, "`static` qualifier is not supported in global scope");
@@ -5609,6 +5610,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
             }
         }
+        memcpy(last_me, me, sizeof(me));
         me[0] = me[1] = me[2] = NULL;
         cleanvar = false;
         /* Part 2.2
@@ -5816,15 +5818,44 @@ skipvar:
         } else {
             ast_expression *cexp;
             ast_value      *cval;
+            bool            folded_const = false;
 
             cexp = parse_expression_leave(parser, true, false, false);
             if (!cexp)
                 break;
+            cval = ast_istype(cexp, ast_value) ? (ast_value*)cexp : NULL;
 
-            if (!localblock || is_static) {
-                cval = (ast_value*)cexp;
+            /* deal with foldable constants: */
+            if (localblock &&
+                var->cvq == CV_CONST && cval && cval->hasvalue && cval->cvq == CV_CONST && !cval->isfield)
+            {
+                /* remove it from the current locals */
+                if (isvector) {
+                    for (i = 0; i < 3; ++i) {
+                        vec_pop(parser->_locals);
+                        vec_pop(localblock->collect);
+                    }
+                }
+                /* do sanity checking, this function really needs refactoring */
+                if (vec_last(parser->_locals) != (ast_expression*)var)
+                    parseerror(parser, "internal error: unexpected change in local variable handling");
+                else
+                    vec_pop(parser->_locals);
+                if (vec_last(localblock->locals) != var)
+                    parseerror(parser, "internal error: unexpected change in local variable handling (2)");
+                else
+                    vec_pop(localblock->locals);
+                /* push it to the to-be-generated globals */
+                vec_push(parser->globals, (ast_expression*)var);
+                if (isvector)
+                    for (i = 0; i < 3; ++i)
+                        vec_push(parser->globals, (ast_expression*)last_me[i]);
+                folded_const = true;
+            }
+
+            if (folded_const || !localblock || is_static) {
                 if (cval != parser->nil &&
-                    (!ast_istype(cval, ast_value) || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
+                    (!cval || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
                    )
                 {
                     parseerror(parser, "initializer is non constant");
@@ -5876,8 +5907,7 @@ skipvar:
              * const float x = <inexact>; should propagate the inexact flag
              */
             if (var->cvq == CV_CONST && var->expression.vtype == TYPE_FLOAT) {
-                cval = (ast_value*)cexp;
-                if (ast_istype(cexp, ast_value) && cval->hasvalue && cval->cvq == CV_CONST)
+                if (cval && cval->hasvalue && cval->cvq == CV_CONST)
                     var->inexact = cval->inexact;
             }
         }
