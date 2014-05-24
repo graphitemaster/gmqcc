@@ -58,7 +58,7 @@ const char *util_instr_str[VINSTR_END] = {
  * only required if big endian .. otherwise no need to swap
  * data.
  */
-#if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_BIG
+#if PLATFORM_BYTE_ORDER == GMQCC_BYTE_ORDER_BIG || PLATFORM_BYTE_ORDER == -1
     static GMQCC_INLINE void util_swap16(uint16_t *d, size_t l) {
         while (l--) {
             d[l] = (d[l] << 8) | (d[l] >> 8);
