@@ -29,6 +29,10 @@
 #define FOLD_STRING_UNTRANSLATE_HTSIZE 1024
 #define FOLD_STRING_DOTRANSLATE_HTSIZE 1024
 
+/* The options to use for inexact and arithmetic exceptions */
+#define FOLD_ROUNDING SFLOAT_ROUND_NEAREST_EVEN
+#define FOLD_TINYNESS SFLOAT_TBEFORE
+
 /*
  * The constant folder is also responsible for validating if the constant
  * expressions produce valid results. We cannot trust the FPU control
@@ -563,6 +567,11 @@ static GMQCC_INLINE void vec3_check_except(vec3_t     a,
                                            sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t))
 {
     vec3_soft_state_t state;
+    state.state[0].exceptionflags = 0;
+    state.state[0].roundingmode   = FOLD_ROUNDING;
+    state.state[0].tiny           = FOLD_TINYNESS;
+    memcpy(&state.state[1], &state.state[0], sizeof(sfloat_state_t) * 2);
+
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
         return;
 
@@ -945,8 +954,8 @@ static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloa
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS) && !OPTS_WARN(WARN_INEXACT_COMPARES))
         return false;
 
-    s.roundingmode   = SFLOAT_ROUND_NEAREST_EVEN;
-    s.tiny           = SFLOAT_TBEFORE;
+    s.roundingmode   = FOLD_ROUNDING;
+    s.tiny           = FOLD_TINYNESS;
     s.exceptionflags = 0;
     ca.f             = fold_immvalue_float(a);
     cb.f             = fold_immvalue_float(b);
