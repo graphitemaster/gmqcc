@@ -563,6 +563,9 @@ static GMQCC_INLINE void vec3_check_except(vec3_t     a,
                                            sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t))
 {
     vec3_soft_state_t state;
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        return;
+
     vec3_soft_eval(&state, callback, a, b);
     if (state.faults & VEC_COMP_X) sfloat_check(ctx, &state.state[0], "x");
     if (state.faults & VEC_COMP_Y) sfloat_check(ctx, &state.state[1], "y");
