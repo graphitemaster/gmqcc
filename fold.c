@@ -492,6 +492,12 @@ static GMQCC_INLINE void sfloat_check(lex_ctx_t ctx, sfloat_state_t *state, cons
         compile_error(ctx, "arithmetic underflow");
 }
 
+static GMQCC_INLINE void sfloat_init(sfloat_state_t *state) {
+    state->exceptionflags = 0;
+    state->roundingmode   = FOLD_ROUNDING;
+    state->tiny           = FOLD_TINYNESS;
+}
+
 /*
  * There is two stages to constant folding in GMQCC: there is the parse
  * stage constant folding, where, witht he help of the AST, operator
@@ -567,10 +573,9 @@ static GMQCC_INLINE void vec3_check_except(vec3_t     a,
                                            sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t))
 {
     vec3_soft_state_t state;
-    state.state[0].exceptionflags = 0;
-    state.state[0].roundingmode   = FOLD_ROUNDING;
-    state.state[0].tiny           = FOLD_TINYNESS;
-    memcpy(&state.state[1], &state.state[0], sizeof(sfloat_state_t) * 2);
+    sfloat_init(&state.state[0]);
+    sfloat_init(&state.state[1]);
+    sfloat_init(&state.state[2]);
 
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
         return;
@@ -663,12 +668,52 @@ static GMQCC_INLINE vec3_t vec3_not(vec3_t a) {
     return out;
 }
 
-static GMQCC_INLINE qcfloat_t vec3_mulvv(vec3_t a, vec3_t b) {
+static GMQCC_INLINE qcfloat_t vec3_mulvv(lex_ctx_t ctx, vec3_t a, vec3_t b) {
+    vec3_soft_t    sa = vec3_soft_convert(a);
+    vec3_soft_t    sb = vec3_soft_convert(b);
+    sfloat_state_t s[5];
+    sfloat_t       r[5];
+
+    sfloat_init(&s[0]);
+    sfloat_init(&s[1]);
+    sfloat_init(&s[2]);
+    sfloat_init(&s[3]);
+    sfloat_init(&s[4]);
+
+    r[0] = sfloat_mul(&s[0], sa.x.s, sb.x.s);
+    r[1] = sfloat_mul(&s[1], sa.y.s, sb.y.s);
+    r[2] = sfloat_mul(&s[2], sa.z.s, sb.z.s);
+    r[3] = sfloat_add(&s[3], r[0],   r[1]);
+    r[4] = sfloat_add(&s[4], r[3],   r[2]);
+
+    sfloat_check(ctx, &s[0], NULL);
+    sfloat_check(ctx, &s[1], NULL);
+    sfloat_check(ctx, &s[2], NULL);
+    sfloat_check(ctx, &s[3], NULL);
+    sfloat_check(ctx, &s[4], NULL);
+
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
-static GMQCC_INLINE vec3_t vec3_mulvf(vec3_t a, qcfloat_t b) {
-    vec3_t out;
+static GMQCC_INLINE vec3_t vec3_mulvf(lex_ctx_t ctx, vec3_t a, qcfloat_t b) {
+    vec3_t         out;
+    vec3_soft_t    sa = vec3_soft_convert(a);
+    sfloat_cast_t  sb;
+    sfloat_state_t s[3];
+
+    sb.f = b;
+    sfloat_init(&s[0]);
+    sfloat_init(&s[1]);
+    sfloat_init(&s[2]);
+
+    sfloat_mul(&s[0], sa.x.s, sb.s);
+    sfloat_mul(&s[1], sa.y.s, sb.s);
+    sfloat_mul(&s[2], sa.z.s, sb.s);
+
+    sfloat_check(ctx, &s[0], "x");
+    sfloat_check(ctx, &s[1], "y");
+    sfloat_check(ctx, &s[2], "z");
+
     out.x = a.x * b;
     out.y = a.y * b;
     out.z = a.z * b;
@@ -954,11 +999,9 @@ static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloa
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS) && !OPTS_WARN(WARN_INEXACT_COMPARES))
         return false;
 
-    s.roundingmode   = FOLD_ROUNDING;
-    s.tiny           = FOLD_TINYNESS;
-    s.exceptionflags = 0;
-    ca.f             = fold_immvalue_float(a);
-    cb.f             = fold_immvalue_float(b);
+    sfloat_init(&s);
+    ca.f = fold_immvalue_float(a);
+    cb.f = fold_immvalue_float(b);
 
     callback(&s, ca.s, cb.s);
     if (s.exceptionflags == 0)
@@ -1016,7 +1059,7 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
     if (isfloat(a)) {
         if (isvector(b)) {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(b), fold_immvalue_float(a)));
+                return fold_constgen_vector(fold, vec3_mulvf(fold_ctx(fold), fold_immvalue_vector(b), fold_immvalue_float(a)));
         } else {
             if (fold_can_2(a, b)) {
                 bool inexact = fold_check_except_float(&sfloat_mul, fold, a, b);
@@ -1026,10 +1069,10 @@ static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_
     } else if (isvector(a)) {
         if (isfloat(b)) {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
+                return fold_constgen_vector(fold, vec3_mulvf(fold_ctx(fold), fold_immvalue_vector(a), fold_immvalue_float(b)));
         } else {
             if (fold_can_2(a, b)) {
-                return fold_constgen_float(fold, vec3_mulvv(fold_immvalue_vector(a), fold_immvalue_vector(b)), false);
+                return fold_constgen_float(fold, vec3_mulvv(fold_ctx(fold), fold_immvalue_vector(a), fold_immvalue_vector(b)), false);
             } else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && fold_can_1(a)) {
                 ast_expression *out;
                 if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(a), b, "xyz"))) return out;
@@ -1061,7 +1104,7 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
         }
     } else if (isvector(a)) {
         if (fold_can_2(a, b)) {
-            return fold_constgen_vector(fold, vec3_mulvf(fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
+            return fold_constgen_vector(fold, vec3_mulvf(fold_ctx(fold), fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
         } else {
             return (ast_expression*)ast_binary_new(
                 fold_ctx(fold),
