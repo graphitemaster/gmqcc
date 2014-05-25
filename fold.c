@@ -465,6 +465,29 @@ static sfloat_t sfloat_div(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
     return SFLOAT_PACK_round(state, sign_z, exp_z, sig_z);
 }
 
+static GMQCC_INLINE void sfloat_check(lex_ctx_t ctx, sfloat_state_t *state, const char *vec) {
+    /* Exception comes from vector component */
+    if (vec) {
+        if (state->exceptionflags & SFLOAT_DIVBYZERO)
+            compile_error(ctx, "division by zero in `%s' component", vec);
+        if (state->exceptionflags & SFLOAT_INVALID)
+            compile_error(ctx, "undefined (inf) in `%s' component", vec);
+        if (state->exceptionflags & SFLOAT_OVERFLOW)
+            compile_error(ctx, "arithmetic overflow in `%s' component", vec);
+        if (state->exceptionflags & SFLOAT_UNDERFLOW)
+            compile_error(ctx, "arithmetic underflow in `%s' component", vec);
+            return;
+    }
+    if (state->exceptionflags & SFLOAT_DIVBYZERO)
+        compile_error(ctx, "division by zero");
+    if (state->exceptionflags & SFLOAT_INVALID)
+        compile_error(ctx, "undefined (inf)");
+    if (state->exceptionflags & SFLOAT_OVERFLOW)
+        compile_error(ctx, "arithmetic overflow");
+    if (state->exceptionflags & SFLOAT_UNDERFLOW)
+        compile_error(ctx, "arithmetic underflow");
+}
+
 /*
  * There is two stages to constant folding in GMQCC: there is the parse
  * stage constant folding, where, witht he help of the AST, operator
@@ -485,16 +508,79 @@ static sfloat_t sfloat_div(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
  *
  * TODO: gcc/clang hinting for autovectorization
  */
-static GMQCC_INLINE vec3_t vec3_add(vec3_t a, vec3_t b) {
+typedef enum {
+    VEC_COMP_X = 1 << 0,
+    VEC_COMP_Y = 1 << 1,
+    VEC_COMP_Z = 1 << 2
+} vec3_comp_t;
+
+typedef struct {
+    sfloat_cast_t x;
+    sfloat_cast_t y;
+    sfloat_cast_t z;
+} vec3_soft_t;
+
+typedef struct {
+    vec3_comp_t    faults;
+    sfloat_state_t state[3];
+} vec3_soft_state_t;
+
+static GMQCC_INLINE vec3_soft_t vec3_soft_convert(vec3_t vec) {
+    vec3_soft_t soft;
+    soft.x.f = vec.x;
+    soft.y.f = vec.y;
+    soft.z.f = vec.z;
+    return soft;
+}
+
+static GMQCC_INLINE bool vec3_soft_exception(vec3_soft_state_t *vstate, size_t index) {
+    sfloat_exceptionflags_t flags = vstate->state[index].exceptionflags;
+    if (flags & SFLOAT_DIVBYZERO) return true;
+    if (flags & SFLOAT_INVALID)   return true;
+    if (flags & SFLOAT_OVERFLOW)  return true;
+    if (flags & SFLOAT_UNDERFLOW) return true;
+    return false;
+}
+
+static GMQCC_INLINE void vec3_soft_eval(vec3_soft_state_t *state,
+                                        sfloat_t         (*callback)(sfloat_state_t *, sfloat_t, sfloat_t),
+                                        vec3_t             a,
+                                        vec3_t             b)
+{
+    vec3_soft_t sa = vec3_soft_convert(a);
+    vec3_soft_t sb = vec3_soft_convert(b);
+    callback(&state->state[0], sa.x.s, sb.x.s);
+    if (vec3_soft_exception(state, 0)) state->faults |= VEC_COMP_X;
+    callback(&state->state[1], sa.y.s, sb.y.s);
+    if (vec3_soft_exception(state, 1)) state->faults |= VEC_COMP_Y;
+    callback(&state->state[2], sa.z.s, sb.z.s);
+    if (vec3_soft_exception(state, 2)) state->faults |= VEC_COMP_Z;
+}
+
+static GMQCC_INLINE void vec3_check_except(vec3_t     a,
+                                           vec3_t     b,
+                                           lex_ctx_t  ctx,
+                                           sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t))
+{
+    vec3_soft_state_t state;
+    vec3_soft_eval(&state, callback, a, b);
+    if (state.faults & VEC_COMP_X) sfloat_check(ctx, &state.state[0], "x");
+    if (state.faults & VEC_COMP_Y) sfloat_check(ctx, &state.state[1], "y");
+    if (state.faults & VEC_COMP_Z) sfloat_check(ctx, &state.state[2], "z");
+}
+
+static GMQCC_INLINE vec3_t vec3_add(lex_ctx_t ctx, vec3_t a, vec3_t b) {
     vec3_t out;
+    vec3_check_except(a, b, ctx, &sfloat_add);
     out.x = a.x + b.x;
     out.y = a.y + b.y;
     out.z = a.z + b.z;
     return out;
 }
 
-static GMQCC_INLINE vec3_t vec3_sub(vec3_t a, vec3_t b) {
+static GMQCC_INLINE vec3_t vec3_sub(lex_ctx_t ctx, vec3_t a, vec3_t b) {
     vec3_t out;
+    vec3_check_except(a, b, ctx, &sfloat_sub);
     out.x = a.x - b.x;
     out.y = a.y - b.y;
     out.z = a.z - b.z;
@@ -869,14 +955,7 @@ static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloa
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
         goto inexact_possible;
 
-    if (s.exceptionflags & SFLOAT_DIVBYZERO)
-        compile_error(fold_ctx(fold), "division by zero");
-    if (s.exceptionflags & SFLOAT_INVALID)
-        compile_error(fold_ctx(fold), "undefined (inf)");
-    if (s.exceptionflags & SFLOAT_OVERFLOW)
-        compile_error(fold_ctx(fold), "arithmetic overflow");
-    if (s.exceptionflags & SFLOAT_UNDERFLOW)
-        compile_error(fold_ctx(fold), "arithmetic underflow");
+    sfloat_check(fold_ctx(fold), &s, NULL);
 
 inexact_possible:
     return s.exceptionflags & SFLOAT_INEXACT;
@@ -899,7 +978,9 @@ static GMQCC_INLINE ast_expression *fold_op_add(fold_t *fold, ast_value *a, ast_
         }
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_vector(fold, vec3_add(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+            return fold_constgen_vector(fold, vec3_add(fold_ctx(fold),
+                                                       fold_immvalue_vector(a),
+                                                       fold_immvalue_vector(b)));
     }
     return NULL;
 }
@@ -912,7 +993,9 @@ static GMQCC_INLINE ast_expression *fold_op_sub(fold_t *fold, ast_value *a, ast_
         }
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_vector(fold, vec3_sub(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+            return fold_constgen_vector(fold, vec3_sub(fold_ctx(fold),
+                                                       fold_immvalue_vector(a),
+                                                       fold_immvalue_vector(b)));
     }
     return NULL;
 }
