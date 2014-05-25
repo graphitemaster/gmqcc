@@ -73,11 +73,44 @@ typedef struct {
     sfloat_tdetect_t        tiny;
 } sfloat_state_t;
 
+/* Count of leading zero bits before the most-significand 1 bit. */
+#ifdef _MSC_VER
+/* MSVC has an intrinsic for this */
+    static GMQCC_INLINE uint32_t sfloat_clz(uint32_t x) {
+        int r = 0;
+        _BitScanForward(&r, x);
+        return r;
+    }
+#   define SFLOAT_CLZ(X, SUB) \
+        (sfloat_clz((X)) - (SUB))
+#elif defined(__GNUC__) || defined(__CLANG__)
+/* Clang and GCC have a builtin for this */
+#   define SFLOAT_CLZ(X, SUB) \
+        (__builtin_clz((X)) - (SUB))
+#else
+/* Native fallback */
+    static GMQCC_INLINE uint32_t sfloat_popcnt(uint32_t x) {
+        x -= ((x >> 1) & 0x55555555);
+        x  = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+        x  = (((x >> 4) + x) & 0x0F0F0F0F);
+        x += x >> 8;
+        x += x >> 16;
+        return x & 0x0000003F;
+    }
+    static GMQCC_INLINE uint32_t sfloat_clz(uint32_t x) {
+        x |= (x >> 1);
+        x |= (x >> 2);
+        x |= (x >> 4);
+        x |= (x >> 8);
+        x |= (x >> 16);
+        return 32 - sfloat_popcnt(x);
+    }
+#   define SFLOAT_CLZ(X, SUB) \
+        (sfloat_clz((X) - (SUB)))
+#endif
+
 /* The value of a NaN */
 #define SFLOAT_NAN 0xFFC00000
-/* Count of leading zero bits before the most-significand 1 bit. */
-#define SFLOAT_CLZ(X, SUB) \
-    (__builtin_clz((X)) - (SUB))
 /* Test if NaN */
 #define SFLOAT_ISNAN(A) \
     (0xFF000000 < (uint32_t)((A) << 1))
