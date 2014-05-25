@@ -5,6 +5,9 @@ BINDIR  := $(PREFIX)/bin
 DATADIR := $(PREFIX)/share
 MANDIR  := $(DATADIR)/man
 
+# default flags
+CFLAGS  += -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -O2
+
 # compiler
 CC      ?= clang
 
@@ -101,7 +104,12 @@ SPLINTFLAGS =                 \
     -observertrans            \
     -abstract                 \
     -statictrans              \
-    -castfcnptr
+    -castfcnptr               \
+    -shiftimplementation      \
+    -shiftnegative            \
+    -boolcompare              \
+    -infloops                 \
+    -sysunrecog
 
 #always the right rule
 default: all
@@ -118,13 +126,16 @@ uninstall:
 #style rule
 STYLE_MATCH = \( -name '*.[ch]' -or -name '*.def' -or -name '*.qc' \)
 
+# splint cannot parse the MSVC source
+SPLINT_MATCH = \( -name '*.[ch]' -and ! -name 'msvc.c' -and ! -path './doc/*' \)
+
 style:
 	find . -type f $(STYLE_MATCH) -exec sed -i 's/ *$$//' '{}' ';'
 	find . -type f $(STYLE_MATCH) -exec sed -i -e '$$a\' '{}' ';'
 	find . -type f $(STYLE_MATCH) -exec sed -i 's/\t/    /g' '{}' ';'
 
 splint:
-	@splint $(SPLINTFLAGS) *.c *.h
+	@splint $(SPLINTFLAGS) `find . -type f $(SPLINT_MATCH)`
 
 gource:
 	@gource $(GOURCEFLAGS)
