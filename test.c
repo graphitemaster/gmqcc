@@ -85,7 +85,7 @@ static fs_file_t **task_popen(const char *command, const char *mode) {
             while (*line != '\0' && *line != ' ' &&
                    *line != '\t' && *line != '\n') line++;
         }
-        vec_push(argv, '\0');
+        vec_push(argv, NULL);
     }
 
 

@@ -1537,6 +1537,26 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx_t ctx, int op, ir_value *t
     return true;
 }
 
+bool ir_block_create_state_op(ir_block *self, lex_ctx_t ctx, ir_value *frame, ir_value *think)
+{
+    ir_instr *in;
+    if (!ir_check_unreachable(self))
+        return false;
+
+    in = ir_instr_new(ctx, self, INSTR_STATE);
+    if (!in)
+        return false;
+
+    if (!ir_instr_op(in, 0, frame, false) ||
+        !ir_instr_op(in, 1, think, false))
+    {
+        ir_instr_delete(in);
+        return false;
+    }
+    vec_push(self->instr, in);
+    return true;
+}
+
 static bool ir_block_create_store(ir_block *self, lex_ctx_t ctx, ir_value *target, ir_value *what)
 {
     int op = 0;
@@ -3167,8 +3187,14 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
         }
 
         if (instr->opcode == INSTR_STATE) {
-            irerror(block->context, "TODO: state instruction");
-            return false;
+            stmt.opcode = instr->opcode;
+            if (instr->_ops[0])
+                stmt.o1.u1 = ir_value_code_addr(instr->_ops[0]);
+            if (instr->_ops[1])
+                stmt.o2.u1 = ir_value_code_addr(instr->_ops[1]);
+            stmt.o3.u1 = 0;
+            code_push_statement(code, &stmt, instr->context);
+            continue;
         }
 
         stmt.opcode = instr->opcode;

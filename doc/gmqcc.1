@@ -168,6 +168,11 @@ DEBUG OPTION. Print the code's intermediate representation after the
 optimization and finalization passes to stdout before generating the
 binary. The instructions will be enumerated, and values will contain a
 list of liferanges.
+.It Fl force-crc= Ns Ar CRC
+Force the produced progs file to use the specified CRC.
+.It Fl state-fps= Ns Ar NUM
+Activate \-femulate-state and set the emulated FPS to
+.Ar NUM Ns .
 .El
 .Sh COMPILE WARNINGS
 .Bl -tag -width Ds
@@ -577,6 +582,11 @@ breaks decompilers, but causes the output file to be better compressible.
 In commutative instructions, always put the lower-numbered operand first.
 This shaves off 1 byte of entropy from all these instructions, reducing
 compressed size of the output file.
+.It Fl f Ns Cm emulate-state
+Emulate OP_STATE operations in code rather than using the instruction.
+The desired fps can be set via -state-fps=NUM, defaults to 10.
+Specifying \-state-fps implicitly sets this flag. Defaults to off in all
+standards.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds

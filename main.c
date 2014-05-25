@@ -85,6 +85,7 @@ static int usage(void) {
             "  -Ono-<name>            disable specific optimization\n"
             "  -Ohelp                 list optimizations\n");
     con_out("  -force-crc=num         force a specific checksum into the header\n");
+    con_out("  -state-fps=num         emulate OP_STATE with the specified FPS\n");
     con_out("  -coverage              add coverage support\n");
     return -1;
 }
@@ -215,6 +216,11 @@ static bool options_parse(int argc, char **argv) {
 
                 OPTS_OPTION_BOOL(OPTION_FORCECRC)   = true;
                 OPTS_OPTION_U16 (OPTION_FORCED_CRC) = strtol(argarg, NULL, 0);
+                continue;
+            }
+            if (options_long_gcc("state-fps", &argc, &argv, &argarg)) {
+                OPTS_OPTION_U32(OPTION_STATE_FPS) = strtol(argarg, NULL, 0);
+                opts_set(opts.flags, EMULATE_STATE, true);
                 continue;
             }
             if (options_long_gcc("redirout", &argc, &argv, &redirout)) {
