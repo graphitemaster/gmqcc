@@ -765,6 +765,10 @@ static GMQCC_INLINE vec3_t vec3_cross(lex_ctx_t ctx, vec3_t a, vec3_t b) {
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
         goto end;
 
+    sa = vec3_soft_convert(a);
+    sb = vec3_soft_convert(b);
+
+    sfloat_init(&s[0]);
     sfloat_init(&s[1]);
     sfloat_init(&s[2]);
     sfloat_init(&s[3]);
