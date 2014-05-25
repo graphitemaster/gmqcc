@@ -573,12 +573,13 @@ static GMQCC_INLINE void vec3_check_except(vec3_t     a,
                                            sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t))
 {
     vec3_soft_state_t state;
-    sfloat_init(&state.state[0]);
-    sfloat_init(&state.state[1]);
-    sfloat_init(&state.state[2]);
 
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
         return;
+
+    sfloat_init(&state.state[0]);
+    sfloat_init(&state.state[1]);
+    sfloat_init(&state.state[2]);
 
     vec3_soft_eval(&state, callback, a, b);
     if (state.faults & VEC_COMP_X) sfloat_check(ctx, &state.state[0], "x");
@@ -669,10 +670,16 @@ static GMQCC_INLINE vec3_t vec3_not(vec3_t a) {
 }
 
 static GMQCC_INLINE qcfloat_t vec3_mulvv(lex_ctx_t ctx, vec3_t a, vec3_t b) {
-    vec3_soft_t    sa = vec3_soft_convert(a);
-    vec3_soft_t    sb = vec3_soft_convert(b);
+    vec3_soft_t    sa;
+    vec3_soft_t    sb;
     sfloat_state_t s[5];
     sfloat_t       r[5];
+
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        goto end;
+
+    sa = vec3_soft_convert(a);
+    sb = vec3_soft_convert(b);
 
     sfloat_init(&s[0]);
     sfloat_init(&s[1]);
@@ -692,15 +699,20 @@ static GMQCC_INLINE qcfloat_t vec3_mulvv(lex_ctx_t ctx, vec3_t a, vec3_t b) {
     sfloat_check(ctx, &s[3], NULL);
     sfloat_check(ctx, &s[4], NULL);
 
+end:
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
 static GMQCC_INLINE vec3_t vec3_mulvf(lex_ctx_t ctx, vec3_t a, qcfloat_t b) {
     vec3_t         out;
-    vec3_soft_t    sa = vec3_soft_convert(a);
+    vec3_soft_t    sa;
     sfloat_cast_t  sb;
     sfloat_state_t s[3];
 
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        goto end;
+
+    sa   = vec3_soft_convert(a);
     sb.f = b;
     sfloat_init(&s[0]);
     sfloat_init(&s[1]);
@@ -714,6 +726,7 @@ static GMQCC_INLINE vec3_t vec3_mulvf(lex_ctx_t ctx, vec3_t a, qcfloat_t b) {
     sfloat_check(ctx, &s[1], "y");
     sfloat_check(ctx, &s[2], "z");
 
+end:
     out.x = a.x * b;
     out.y = a.y * b;
     out.z = a.z * b;
@@ -742,8 +755,46 @@ static GMQCC_INLINE bool vec3_pbool(vec3_t a) {
     return (a.x || a.y || a.z);
 }
 
-static GMQCC_INLINE vec3_t vec3_cross(vec3_t a, vec3_t b) {
-    vec3_t out;
+static GMQCC_INLINE vec3_t vec3_cross(lex_ctx_t ctx, vec3_t a, vec3_t b) {
+    vec3_t         out;
+    vec3_soft_t    sa;
+    vec3_soft_t    sb;
+    sfloat_t       r[9];
+    sfloat_state_t s[9];
+
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        goto end;
+
+    sfloat_init(&s[1]);
+    sfloat_init(&s[2]);
+    sfloat_init(&s[3]);
+    sfloat_init(&s[4]);
+    sfloat_init(&s[5]);
+    sfloat_init(&s[6]);
+    sfloat_init(&s[7]);
+    sfloat_init(&s[8]);
+
+    r[0] = sfloat_mul(&s[0], sa.y.s, sb.z.s);
+    r[1] = sfloat_mul(&s[1], sa.z.s, sb.y.s);
+    r[2] = sfloat_mul(&s[2], sa.z.s, sb.x.s);
+    r[3] = sfloat_mul(&s[3], sa.x.s, sb.z.s);
+    r[4] = sfloat_mul(&s[4], sa.x.s, sb.y.s);
+    r[5] = sfloat_mul(&s[5], sa.y.s, sb.x.s);
+    r[6] = sfloat_sub(&s[6], r[0],   r[1]);
+    r[7] = sfloat_sub(&s[7], r[2],   r[3]);
+    r[8] = sfloat_sub(&s[8], r[4],   r[5]);
+
+    sfloat_check(ctx, &s[0], NULL);
+    sfloat_check(ctx, &s[1], NULL);
+    sfloat_check(ctx, &s[2], NULL);
+    sfloat_check(ctx, &s[3], NULL);
+    sfloat_check(ctx, &s[4], NULL);
+    sfloat_check(ctx, &s[5], NULL);
+    sfloat_check(ctx, &s[6], "x");
+    sfloat_check(ctx, &s[7], "y");
+    sfloat_check(ctx, &s[8], "z");
+
+end:
     out.x = a.y * b.z - a.z * b.y;
     out.y = a.z * b.x - a.x * b.z;
     out.z = a.x * b.y - a.y * b.x;
@@ -1275,7 +1326,9 @@ static GMQCC_INLINE ast_expression *fold_op_bnot(fold_t *fold, ast_value *a) {
 
 static GMQCC_INLINE ast_expression *fold_op_cross(fold_t *fold, ast_value *a, ast_value *b) {
     if (fold_can_2(a, b))
-        return fold_constgen_vector(fold, vec3_cross(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+        return fold_constgen_vector(fold, vec3_cross(fold_ctx(fold),
+                                                     fold_immvalue_vector(a),
+                                                     fold_immvalue_vector(b)));
     return NULL;
 }
 
