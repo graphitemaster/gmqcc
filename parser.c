@@ -1293,7 +1293,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         if ((fun->flags & AST_FLAG_VARIADIC) &&
             !(/*funval->cvq == CV_CONST && */ funval->hasvalue && funval->constval.vfunc->builtin))
         {
-            call->va_count = (ast_expression*)fold_constgen_float(parser->fold, (qcfloat_t)paramcount);
+            call->va_count = (ast_expression*)fold_constgen_float(parser->fold, (qcfloat_t)paramcount, false);
         }
     }
 
@@ -1548,14 +1548,14 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         return true;
     }
     else if (parser->tok == TOKEN_FLOATCONST) {
-        ast_expression *val = fold_constgen_float(parser->fold, (parser_token(parser)->constval.f));
+        ast_expression *val = fold_constgen_float(parser->fold, (parser_token(parser)->constval.f), false);
         if (!val)
             return false;
         vec_push(sy->out, syexp(parser_ctx(parser), val));
         return true;
     }
     else if (parser->tok == TOKEN_INTCONST || parser->tok == TOKEN_CHARCONST) {
-        ast_expression *val = fold_constgen_float(parser->fold, (qcfloat_t)(parser_token(parser)->constval.i));
+        ast_expression *val = fold_constgen_float(parser->fold, (qcfloat_t)(parser_token(parser)->constval.i), false);
         if (!val)
             return false;
         vec_push(sy->out, syexp(parser_ctx(parser), val));
@@ -4043,7 +4043,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
 
             time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
-                             gbl_time, (ast_expression*)fold_constgen_float(parser->fold, frame_delta));
+                             gbl_time, (ast_expression*)fold_constgen_float(parser->fold, frame_delta, false));
 
             if (!self_frame || !self_nextthink || !self_think || !time_plus_1) {
                 if (self_frame)     ast_delete(self_frame);
@@ -4169,7 +4169,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             goto enderrfn;
         }
         func->varargs     = varargs;
-        func->fixedparams = (ast_value*)fold_constgen_float(parser->fold, vec_size(var->expression.params));
+        func->fixedparams = (ast_value*)fold_constgen_float(parser->fold, vec_size(var->expression.params), false);
     }
 
     parser->function = func;
@@ -4227,7 +4227,7 @@ static ast_expression *array_accessor_split(
 
     cmp = ast_binary_new(ctx, INSTR_LT,
                          (ast_expression*)index,
-                         (ast_expression*)fold_constgen_float(parser->fold, middle));
+                         (ast_expression*)fold_constgen_float(parser->fold, middle, false));
     if (!cmp) {
         ast_delete(left);
         ast_delete(right);
@@ -4260,7 +4260,7 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->vtype == TYPE_VECTOR)
             assignop = INSTR_STORE_V;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from));
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from, false));
         if (!subscript)
             return NULL;
 
@@ -4326,7 +4326,7 @@ static ast_expression *array_field_setter_node(
         if (value->expression.vtype == TYPE_FIELD && value->expression.next->vtype == TYPE_VECTOR)
             assignop = INSTR_STOREP_V;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from));
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from, false));
         if (!subscript)
             return NULL;
 
@@ -4389,7 +4389,7 @@ static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast
         ast_return      *ret;
         ast_array_index *subscript;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from));
+        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)fold_constgen_float(parser->fold, from, false));
         if (!subscript)
             return NULL;
 
@@ -5160,6 +5160,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     bool      wasarray  = false;
 
     ast_member *me[3] = { NULL, NULL, NULL };
+    ast_member *last_me[3] = { NULL, NULL, NULL };
 
     if (!localblock && is_static)
         parseerror(parser, "`static` qualifier is not supported in global scope");
@@ -5623,6 +5624,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
             }
         }
+        memcpy(last_me, me, sizeof(me));
         me[0] = me[1] = me[2] = NULL;
         cleanvar = false;
         /* Part 2.2
@@ -5830,15 +5832,44 @@ skipvar:
         } else {
             ast_expression *cexp;
             ast_value      *cval;
+            bool            folded_const = false;
 
             cexp = parse_expression_leave(parser, true, false, false);
             if (!cexp)
                 break;
+            cval = ast_istype(cexp, ast_value) ? (ast_value*)cexp : NULL;
 
-            if (!localblock || is_static) {
-                cval = (ast_value*)cexp;
+            /* deal with foldable constants: */
+            if (localblock &&
+                var->cvq == CV_CONST && cval && cval->hasvalue && cval->cvq == CV_CONST && !cval->isfield)
+            {
+                /* remove it from the current locals */
+                if (isvector) {
+                    for (i = 0; i < 3; ++i) {
+                        vec_pop(parser->_locals);
+                        vec_pop(localblock->collect);
+                    }
+                }
+                /* do sanity checking, this function really needs refactoring */
+                if (vec_last(parser->_locals) != (ast_expression*)var)
+                    parseerror(parser, "internal error: unexpected change in local variable handling");
+                else
+                    vec_pop(parser->_locals);
+                if (vec_last(localblock->locals) != var)
+                    parseerror(parser, "internal error: unexpected change in local variable handling (2)");
+                else
+                    vec_pop(localblock->locals);
+                /* push it to the to-be-generated globals */
+                vec_push(parser->globals, (ast_expression*)var);
+                if (isvector)
+                    for (i = 0; i < 3; ++i)
+                        vec_push(parser->globals, (ast_expression*)last_me[i]);
+                folded_const = true;
+            }
+
+            if (folded_const || !localblock || is_static) {
                 if (cval != parser->nil &&
-                    (!ast_istype(cval, ast_value) || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
+                    (!cval || ((!cval->hasvalue || cval->cvq != CV_CONST) && !cval->isfield))
                    )
                 {
                     parseerror(parser, "initializer is non constant");
@@ -5885,6 +5916,13 @@ skipvar:
                 vec_free(sy.ops);
                 vec_free(sy.argc);
                 var->cvq = cvq;
+            }
+            /* a constant initialized to an inexact value should be marked inexact:
+             * const float x = <inexact>; should propagate the inexact flag
+             */
+            if (var->cvq == CV_CONST && var->expression.vtype == TYPE_FLOAT) {
+                if (cval && cval->hasvalue && cval->cvq == CV_CONST)
+                    var->inexact = cval->inexact;
             }
         }
 

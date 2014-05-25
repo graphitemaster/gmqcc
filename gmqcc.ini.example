@@ -316,6 +316,12 @@
     EMULATE_STATE = false
 
 
+    #Turn on arithmetic exception tests in the compiler. In constant expressions
+    #which trigger exceptions like division by zero, overflow, underflow, etc,
+    #the following flag will produce diagnostics for what triggered that
+    #exception.
+    ARITHMETIC_EXCEPTIONS = false
+
 [warnings]
     #Generate a warning about variables which are declared but never
     #used.  This can be avoided by adding the ‘noref’ keyword in front
@@ -571,6 +577,12 @@
     #such a function is resolved to a builtin.
 
     BUILTINS = true
+
+
+    #When comparing an inexact value such as `1.0/3.0' the result is
+    #pathologically wrong. Enabling this will trigger a compiler warning
+    #on such expressions.
+    INEXACT_COMPARES = true
 
 
 [optimizations]

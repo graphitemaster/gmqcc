@@ -93,6 +93,7 @@ static void opts_setdefault(void) {
     opts_set(opts.warn,  WARN_CONST_OVERWRITE,           true);
     opts_set(opts.warn,  WARN_DIRECTIVE_INMACRO,         true);
     opts_set(opts.warn,  WARN_BUILTINS,                  true);
+    opts_set(opts.warn,  WARN_INEXACT_COMPARES,          true);
 
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);

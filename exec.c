@@ -950,7 +950,7 @@ static void prog_main_setparams(qc_program_t *prog) {
     }
 }
 
-void prog_disasm_function(qc_program_t *prog, size_t id);
+static void prog_disasm_function(qc_program_t *prog, size_t id);
 
 int main(int argc, char **argv) {
     size_t      i;
@@ -1265,7 +1265,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void prog_disasm_function(qc_program_t *prog, size_t id) {
+static void prog_disasm_function(qc_program_t *prog, size_t id) {
     prog_section_function_t *fdef = prog->functions + id;
     prog_section_statement_t *st;
 

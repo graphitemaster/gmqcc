@@ -11,8 +11,6 @@ GITINFO  :=
     GITINFO != git describe --always
 .endif
 
-CFLAGS   +=  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes
-
 .if $(CC) == clang
     CFLAGS +=   -Weverything\
                 -Wno-padded\
@@ -22,6 +20,7 @@ CFLAGS   +=  -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes
                 -Wno-float-equal\
                 -Wno-unknown-warning-option\
                 -Wno-cast-align\
+                -Wno-assign-enum\
                 -pedantic-errors
 .else
 .    if $(CC) != g++

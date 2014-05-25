@@ -216,6 +216,7 @@ struct ast_value_s
     bool isfield; /* this declares a field */
     bool isimm;   /* an immediate, not just const */
     bool hasvalue;
+    bool inexact; /* inexact coming from folded expression */
     basic_value_t constval;
     /* for TYPE_ARRAY we have an optional vector
      * of constants when an initializer list

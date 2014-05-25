@@ -349,6 +349,10 @@ will search its intrinsics table for something that matches that
 function name by appending "__builtin_" to it. This behaviour may
 be unexpected, so enabling this will produce a diagnostic when
 such a function is resolved to a builtin.
+.It Fl W Ns Cm inexact-compares
+When comparing an inexact value such as `1.0/3.0' the result is
+pathologically wrong. Enabling this will trigger a compiler warning
+on such expressions.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds
@@ -587,6 +591,11 @@ Emulate OP_STATE operations in code rather than using the instruction.
 The desired fps can be set via -state-fps=NUM, defaults to 10.
 Specifying \-state-fps implicitly sets this flag. Defaults to off in all
 standards.
+.It Fl f Ns Cm arithmetic-exceptions
+Turn on arithmetic exception tests in the compiler. In constant expressions
+which trigger exceptions like division by zero, overflow, underflow, etc,
+the following flag will produce diagnostics for what triggered that
+exception.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds
