@@ -52,6 +52,7 @@ typedef union {
 } sfloat_cast_t;
 
 typedef enum {
+    SFLOAT_NOEXCEPT  = 0,
     SFLOAT_INVALID   = 1,
     SFLOAT_DIVBYZERO = 4,
     SFLOAT_OVERFLOW  = 8,
@@ -123,7 +124,7 @@ typedef struct {
     (((((A) >> 22) & 0x1FF) == 0x1FE) && ((A) & 0x003FFFFF))
 /* Raise exception */
 #define SFLOAT_RAISE(STATE, FLAGS) \
-    ((STATE)->exceptionflags |= (FLAGS))
+    ((STATE)->exceptionflags = (sfloat_exceptionflags_t)((STATE)->exceptionflags | (FLAGS)))
 /*
  * Shifts `A' right `COUNT' bits. Non-zero bits are stored in LSB. Size
  * sets the arbitrarly-large limit.
@@ -493,7 +494,7 @@ static GMQCC_INLINE void sfloat_check(lex_ctx_t ctx, sfloat_state_t *state, cons
 }
 
 static GMQCC_INLINE void sfloat_init(sfloat_state_t *state) {
-    state->exceptionflags = 0;
+    state->exceptionflags = SFLOAT_NOEXCEPT;
     state->roundingmode   = FOLD_ROUNDING;
     state->tiny           = FOLD_TINYNESS;
 }
@@ -560,11 +561,11 @@ static GMQCC_INLINE void vec3_soft_eval(vec3_soft_state_t *state,
     vec3_soft_t sa = vec3_soft_convert(a);
     vec3_soft_t sb = vec3_soft_convert(b);
     callback(&state->state[0], sa.x.s, sb.x.s);
-    if (vec3_soft_exception(state, 0)) state->faults |= VEC_COMP_X;
+    if (vec3_soft_exception(state, 0)) state->faults = (vec3_comp_t)(state->faults | VEC_COMP_X);
     callback(&state->state[1], sa.y.s, sb.y.s);
-    if (vec3_soft_exception(state, 1)) state->faults |= VEC_COMP_Y;
+    if (vec3_soft_exception(state, 1)) state->faults = (vec3_comp_t)(state->faults | VEC_COMP_Y);
     callback(&state->state[2], sa.z.s, sb.z.s);
-    if (vec3_soft_exception(state, 2)) state->faults |= VEC_COMP_Z;
+    if (vec3_soft_exception(state, 2)) state->faults = (vec3_comp_t)(state->faults | VEC_COMP_Z);
 }
 
 static GMQCC_INLINE void vec3_check_except(vec3_t     a,
