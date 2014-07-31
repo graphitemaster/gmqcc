@@ -4675,6 +4675,10 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 }
             }
         } else {
+            if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC && param->name[0] == '<') {
+                parseerror(parser, "parameter name omitted %s %d", param->name, vec_size(params));
+                goto on_error;
+            }
             vec_push(params, param);
             if (param->expression.vtype >= TYPE_VARIANT) {
                 char tname[1024]; /* typename is reserved in C++ */

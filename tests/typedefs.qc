@@ -1,5 +1,5 @@
-typedef void(...)     ptype;
-typedef string(float) funcsf;
+typedef void(...)       ptype;
+typedef string(float a) funcsf;
 
 ptype print = #1;
 funcsf ftos = #2;
