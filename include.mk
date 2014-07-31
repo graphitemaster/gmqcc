@@ -119,9 +119,9 @@ uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/gmqcc
 	rm -f $(DESTDIR)$(BINDIR)/qcvm
 	rm -f $(DESTDIR)$(BINDIR)/gmqpak
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqcc.1
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/qcvm.1
-	rm -f $(DESTDIR)$(MANDIR)/man1/doc/gmqpak.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/gmqcc.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/qcvm.1
+	rm -f $(DESTDIR)$(MANDIR)/man1/gmqpak.1
 
 #style rule
 STYLE_MATCH = \( -name '*.[ch]' -or -name '*.def' -or -name '*.qc' \)
