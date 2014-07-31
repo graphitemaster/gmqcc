@@ -1,4 +1,4 @@
-void nbva(float a, ...count) {
+void nbva(float a, string...count) {
     print("You gave me ", ftos(count), " additional parameters\n");
     print("First: ", ...(0, string), "\n");
     print("You chose: ", ...(a, string), "\n");

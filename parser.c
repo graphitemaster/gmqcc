@@ -4675,10 +4675,6 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 }
             }
         } else {
-            if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC && param->name[0] == '<') {
-                parseerror(parser, "parameter name omitted");
-                goto on_error;
-            }
             vec_push(params, param);
             if (param->expression.vtype >= TYPE_VARIANT) {
                 char tname[1024]; /* typename is reserved in C++ */
@@ -4697,11 +4693,16 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 }
                 if (parser->tok == TOKEN_IDENT) {
                     argcounter = util_strdup(parser_tokval(parser));
+                    ast_value_set_name(param, argcounter);
                     if (!parser_next(parser) || parser->tok != ')') {
                         parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                         goto on_error;
                     }
                 }
+            }
+            if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_FTEQCC && param->name[0] == '<') {
+                parseerror(parser, "parameter name omitted");
+                goto on_error;
             }
         }
     }
