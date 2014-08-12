@@ -4669,7 +4669,6 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
             }
             if (parser->tok == TOKEN_IDENT) {
                 argcounter = util_strdup(parser_tokval(parser));
-                ast_value_set_name(param, argcounter);
                 if (!parser_next(parser) || parser->tok != ')') {
                     parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                     goto on_error;
