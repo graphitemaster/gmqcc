@@ -3142,7 +3142,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         if (parser->tok == TOKEN_IDENT)
             typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (typevar || parser->tok == TOKEN_TYPENAME) {
-            if (!parse_variable(parser, block, false, CV_NONE, typevar, false, false, 0, NULL)) {
+            if (!parse_variable(parser, block, true, CV_NONE, typevar, false, false, 0, NULL)) {
                 ast_delete(switchnode);
                 return false;
             }
@@ -3154,7 +3154,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
                 ast_delete(switchnode);
                 return false;
             }
-            if (!parse_variable(parser, block, false, cvq, NULL, noref, is_static, qflags, NULL)) {
+            if (!parse_variable(parser, block, true, cvq, NULL, noref, is_static, qflags, NULL)) {
                 ast_delete(switchnode);
                 return false;
             }
@@ -3462,7 +3462,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, block, true, cvq, NULL, noref, is_static, qflags, vstring);
+        return parse_variable(parser, block, false, cvq, NULL, noref, is_static, qflags, vstring);
     }
     else if (parser->tok == TOKEN_KEYWORD)
     {
@@ -6001,7 +6001,7 @@ static bool parser_global_statement(parser_t *parser)
     {
         if (cvq == CV_WRONG)
             return false;
-        return parse_variable(parser, NULL, true, cvq, NULL, noref, is_static, qflags, vstring);
+        return parse_variable(parser, NULL, false, cvq, NULL, noref, is_static, qflags, vstring);
     }
     else if (parser->tok == TOKEN_IDENT && !strcmp(parser_tokval(parser), "enum"))
     {
