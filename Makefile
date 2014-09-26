@@ -17,7 +17,8 @@ ifeq ($(CC), clang)
 	    -Wno-unknown-warning-option        \
 	    -Wno-cast-align                    \
 	    -Wno-assign-enum                   \
-	    -pedantic-errors
+	    -pedantic-errors                   \
+	    -fsanitize=address -fno-omit-frame-pointer
 else
 	ifneq ($(CC), g++)
 		CFLAGS += -Wmissing-prototypes -Wstrict-prototypes
@@ -41,7 +42,7 @@ endif
 # do this last otherwise there is whitespace in the command output and
 # it makes my OCD act up
 CFLAGS += $(OPTIONAL_CFLAGS)
-LDFLAGS += $(OPTIONAL_LDFLAGS)
+LDFLAGS += $(OPTIONAL_LDFLAGS) -fsanitize=address -fno-omit-frame-pointer
 
 #we have duplicate object files when dealing with creating a simple list
 #for dependinces. To combat this we use some clever recrusive-make to

@@ -22,6 +22,7 @@
  */
 #include "gmqcc.h"
 #include <limits.h>
+#include <string.h>
 
 #if defined(_MSC_VER)
 #   define HASH_ROTL32(X, Y) _rotl((X), (Y))
@@ -224,6 +225,7 @@ static GMQCC_FORCEINLINE uint32_t hash_murmur(const void *GMQCC_RESTRICT key, si
 }
 
 size_t hash(const char *key) {
+#if 0
     const char   *s = key;
     const char   *a = s;
     const size_t *w;
@@ -236,6 +238,9 @@ size_t hash(const char *key) {
     for (s = (const char *)w; *s; s++);
 
     return hash_murmur((const void *)key, s-a);
+#else
+    return hash_murmur((const void *)key, strlen(key));
+#endif
 }
 
 #undef HASH_ROTL32
