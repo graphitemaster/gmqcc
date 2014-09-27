@@ -301,14 +301,16 @@ static GMQCC_FORCEINLINE uint32_t hash_murmur(const void *GMQCC_RESTRICT key, si
 #define STRLEN_ONES ((size_t)-1/UCHAR_MAX)
 #define STRLEN_HIGHS (STRLEN_ONES * (UCHAR_MAX/2+1))
 #define STRLEN_HASZERO(X) (((X)-STRLEN_ONES) & ~(X) & STRLEN_HIGHS)
-ASAN_DISABLE size_t hash(const char *key) {
+
+static ASAN_DISABLE size_t hash_strlen(const char *key) {
     const char *s = key;
     const char *a = s;
     const size_t *w;
 
     for (; (uintptr_t)s % STRLEN_ALIGN; s++) {
-        if (!*s)
-            return hash_murmur((const void *)key, s-a);
+        if (*s)
+            continue;
+        return s-a;
     }
 
     VALGRIND_MAKE_MEM_DEFINED(s, STRLEN_ALIGN);
@@ -321,12 +323,14 @@ ASAN_DISABLE size_t hash(const char *key) {
 
     /* It's not legal to access this area anymore */
     VALGRIND_MAKE_MEM_NOACCESS(s + 1, STRLEN_ALIGN);
-
-    return hash_murmur((const void *)key, s-a);
+    return s-a;
 }
 #else
-/* No way to disable asan instrumenting, use strlen. */
-size_t hash(const char *key) {
-    return hash_murmur((const void *)key, strlen(key));
+static GMQCC_INLINE size_t hash_strlen(const char *key) {
+    return strlen(key);
 }
-#endif /*! HAS_ASAN_DISABLE */
+#endif
+
+size_t hash(const char *key) {
+    return hash_murmur((const void *)key, hash_strlen(key));
+}
