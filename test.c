@@ -806,19 +806,21 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 } else {
                     /* Preprocessing (qcflags mean shit all here we don't allow them) */
                     if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s -o %s",
                             task_bins[TASK_COMPILE],
                             directories[i],
                             tmpl->sourcefile,
+                            tmpl->compileflags,
                             tmpl->tempfilename
                         );
                     } else {
-                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s %s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             defs,
                             directories[i],
                             tmpl->sourcefile,
+                            tmpl->compileflags,
                             tmpl->tempfilename
                         );
                     }

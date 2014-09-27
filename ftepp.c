@@ -734,6 +734,7 @@ static void ftepp_recursion_footer(ftepp_t *ftepp)
     ftepp_out(ftepp, "\n#pragma pop(line)\n", false);
 }
 
+static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params, bool resetline);
 static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
 {
     size_t   i;
@@ -742,8 +743,13 @@ static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
         out = param->tokens[i];
         if (out->token == TOKEN_EOL)
             ftepp_out(ftepp, "\n", false);
-        else
-            ftepp_out(ftepp, out->value, false);
+        else {
+            ppmacro *find = ftepp_macro_find(ftepp, out->value);
+            if (OPTS_FLAG(FTEPP_INDIRECT_EXPANSION) && find && !find->has_params)
+                ftepp_macro_expand(ftepp, find, NULL, false);
+            else
+                ftepp_out(ftepp, out->value, false);
+        }
     }
 }
 

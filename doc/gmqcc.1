@@ -426,6 +426,25 @@ M_SQRT2
 M_SQRT1_2
 M_TAU
 .Ed
+.It Fl f Ns Cm ftepp-indirect-expansion
+Enable indirect macro expansion. This only works in combination
+with '-fftepp' and is currently not included by '-std=fteqcc'.
+Enabling this behavior will allow the preprocessor to operate more
+like the standard C preprocessor in that it will allow arguments
+of macros which are macro-expanded to be substituted into the
+definition of the macro.
+.Pp
+As an example:
+.Bd -literal -offset indent
+#define STR1(x) #x
+#define STR2(x) STR1(x)
+#define THE_ANSWER 42
+#define THE_ANSWER_STR STR2(THE_ANSWER) /* "42" */
+
+.Ed
+With this enabled, an expansion of THE_ANSWER_STR will yield
+the string "42". With this disabled an expansion of THE_ANSWER_STR
+will yield "THE_ANSWER"
 .It Fl f Ns Cm relaxed-switch
 Allow switch cases to use non constant variables.
 .It Fl f Ns Cm short-logic

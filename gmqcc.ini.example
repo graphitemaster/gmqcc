@@ -84,6 +84,25 @@
     FTEPP_MATHDEFS = false
 
 
+    #Enable indirect macro expansion. This only works in combination
+    #with '-fftepp' and is currently not included by '-std=fteqcc'.
+    #Enabling this behavior will allow the preprocessor to operate more
+    #like the standard C preprocessor in that it will allow arguments
+    #of macros which are macro-expanded to be substituted into the
+    #definition of the macro. As an example:
+    #
+    #   #define STR1(x) #x
+    #   #define STR2(x) STR1(x)
+    #   #define THE_ANSWER 42
+    #   #define THE_ANSWER_STR STR2(THE_ANSWER) /* "42" */
+    #
+    #With this enabled, an expansion of THE_ANSWER_STR will yield
+    #the string "42". With this disabled an expansion of THE_ANSWER_STR
+    #will yield "THE_ANSWER"
+
+    FTEPP_INDIRECT_EXPANSION = false
+
+
     #Allow switch cases to use non constant variables.
 
     RELAXED_SWITCH = true
