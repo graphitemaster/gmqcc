@@ -511,6 +511,7 @@ static GMQCC_INLINE void sfloat_init(sfloat_state_t *state) {
 #define isfloat(X)      (((ast_expression*)(X))->vtype == TYPE_FLOAT)
 #define isvector(X)     (((ast_expression*)(X))->vtype == TYPE_VECTOR)
 #define isstring(X)     (((ast_expression*)(X))->vtype == TYPE_STRING)
+#define isarray(X)      (((ast_expression*)(X))->vtype == TYPE_ARRAY)
 #define isfloats(X,Y)   (isfloat  (X) && isfloat (Y))
 
 /*
@@ -1337,6 +1338,14 @@ static GMQCC_INLINE ast_expression *fold_op_cross(fold_t *fold, ast_value *a, as
     return NULL;
 }
 
+static GMQCC_INLINE ast_expression *fold_op_length(fold_t *fold, ast_value *a) {
+    if (fold_can_1(a) && isstring(a))
+        return fold_constgen_float(fold, strlen(fold_immvalue_string(a)), false);
+    if (isarray(a))
+        return fold_constgen_float(fold, vec_size(a->initlist), false);
+    return NULL;
+}
+
 ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
     ast_value      *a = (ast_value*)opexprs[0];
     ast_value      *b = (ast_value*)opexprs[1];
@@ -1374,29 +1383,30 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
             return e
 
     switch(info->id) {
-        fold_op_case(2, ('-', 'P'),    neg,    (fold, a));
-        fold_op_case(2, ('!', 'P'),    not,    (fold, a));
-        fold_op_case(1, ('+'),         add,    (fold, a, b));
-        fold_op_case(1, ('-'),         sub,    (fold, a, b));
-        fold_op_case(1, ('*'),         mul,    (fold, a, b));
-        fold_op_case(1, ('/'),         div,    (fold, a, b));
-        fold_op_case(1, ('%'),         mod,    (fold, a, b));
-        fold_op_case(1, ('|'),         bor,    (fold, a, b));
-        fold_op_case(1, ('&'),         band,   (fold, a, b));
-        fold_op_case(1, ('^'),         xor,    (fold, a, b));
-        fold_op_case(1, ('<'),         ltgt,   (fold, a, b, true));
-        fold_op_case(1, ('>'),         ltgt,   (fold, a, b, false));
-        fold_op_case(2, ('<', '<'),    lshift, (fold, a, b));
-        fold_op_case(2, ('>', '>'),    rshift, (fold, a, b));
-        fold_op_case(2, ('|', '|'),    andor,  (fold, a, b, true));
-        fold_op_case(2, ('&', '&'),    andor,  (fold, a, b, false));
-        fold_op_case(2, ('?', ':'),    tern,   (fold, a, b, c));
-        fold_op_case(2, ('*', '*'),    exp,    (fold, a, b));
-        fold_op_case(3, ('<','=','>'), lteqgt, (fold, a, b));
-        fold_op_case(2, ('!', '='),    cmp,    (fold, a, b, true));
-        fold_op_case(2, ('=', '='),    cmp,    (fold, a, b, false));
-        fold_op_case(2, ('~', 'P'),    bnot,   (fold, a));
-        fold_op_case(2, ('>', '<'),    cross,  (fold, a, b));
+        fold_op_case(2, ('-', 'P'),      neg,    (fold, a));
+        fold_op_case(2, ('!', 'P'),      not,    (fold, a));
+        fold_op_case(1, ('+'),           add,    (fold, a, b));
+        fold_op_case(1, ('-'),           sub,    (fold, a, b));
+        fold_op_case(1, ('*'),           mul,    (fold, a, b));
+        fold_op_case(1, ('/'),           div,    (fold, a, b));
+        fold_op_case(1, ('%'),           mod,    (fold, a, b));
+        fold_op_case(1, ('|'),           bor,    (fold, a, b));
+        fold_op_case(1, ('&'),           band,   (fold, a, b));
+        fold_op_case(1, ('^'),           xor,    (fold, a, b));
+        fold_op_case(1, ('<'),           ltgt,   (fold, a, b, true));
+        fold_op_case(1, ('>'),           ltgt,   (fold, a, b, false));
+        fold_op_case(2, ('<', '<'),      lshift, (fold, a, b));
+        fold_op_case(2, ('>', '>'),      rshift, (fold, a, b));
+        fold_op_case(2, ('|', '|'),      andor,  (fold, a, b, true));
+        fold_op_case(2, ('&', '&'),      andor,  (fold, a, b, false));
+        fold_op_case(2, ('?', ':'),      tern,   (fold, a, b, c));
+        fold_op_case(2, ('*', '*'),      exp,    (fold, a, b));
+        fold_op_case(3, ('<','=','>'),   lteqgt, (fold, a, b));
+        fold_op_case(2, ('!', '='),      cmp,    (fold, a, b, true));
+        fold_op_case(2, ('=', '='),      cmp,    (fold, a, b, false));
+        fold_op_case(2, ('~', 'P'),      bnot,   (fold, a));
+        fold_op_case(2, ('>', '<'),      cross,  (fold, a, b));
+        fold_op_case(3, ('l', 'e', 'n'), length, (fold, a));
     }
     #undef fold_op_case
     compile_error(fold_ctx(fold), "internal error: attempted to constant-fold for unsupported operator");

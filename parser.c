@@ -1145,6 +1145,22 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             out = (ast_expression*)asbinstore;
             break;
 
+        case opid3('l', 'e', 'n'):
+            if (exprs[0]->vtype != TYPE_STRING && exprs[0]->vtype != TYPE_ARRAY) {
+                ast_type_to_string(exprs[0], ty1, sizeof(ty1));
+                compile_error(ast_ctx(exprs[0]), "invalid type for length operator: %s", ty1);
+                return false;
+            }
+            /* strings must be const, arrays are statically sized */
+            if (exprs[0]->vtype == TYPE_STRING &&
+                !(((ast_value*)exprs[0])->hasvalue && ((ast_value*)exprs[0])->cvq == CV_CONST))
+            {
+                compile_error(ast_ctx(exprs[0]), "operand of length operator not a valid constant expression");
+                return false;
+            }
+            out = fold_op(parser->fold, op, exprs);
+            break;
+
         case opid2('~', 'P'):
             if (exprs[0]->vtype != TYPE_FLOAT && exprs[0]->vtype != TYPE_VECTOR) {
                 ast_type_to_string(exprs[0], ty1, sizeof(ty1));
