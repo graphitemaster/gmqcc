@@ -21,6 +21,8 @@ GITINFO  :=
                 -Wno-unknown-warning-option\
                 -Wno-cast-align\
                 -Wno-assign-enum\
+                -Wno-empty-body\
+                -Wno-date-time\
                 -pedantic-errors
 .else
 .    if $(CC) != g++

@@ -314,12 +314,12 @@ static ASAN_DISABLE size_t hash_strlen(const char *key) {
     }
 
     VALGRIND_MAKE_MEM_DEFINED(s, STRLEN_ALIGN);
-    for (w = (const void *)s; !STRLEN_HASZERO(*w); w++) {
+    for (w = (const size_t *)s; !STRLEN_HASZERO(*w); w++) {
         /* Make the next word legal to access */
         VALGRIND_MAKE_MEM_DEFINED(w + STRLEN_ALIGN, STRLEN_ALIGN);
     }
 
-    for (s = (const void *)w; *s; s++);
+    for (s = (const char *)w; *s; s++);
 
     /* It's not legal to access this area anymore */
     VALGRIND_MAKE_MEM_NOACCESS(s + 1, STRLEN_ALIGN);
