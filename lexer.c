@@ -681,7 +681,7 @@ static bool lex_finish_frames(lex_file *lex)
 static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 {
     utf8ch_t chr = 0;
-    int ch = 0;
+    int ch = 0, texttype = 0;
     int nextch;
     bool hex;
     bool oct;
@@ -716,13 +716,12 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             case '\\': break;
             case '\'': break;
             case '"':  break;
-            case 'a':  ch = '\a'; break;
-            case 'b':  ch = '\b'; break;
-            case 'r':  ch = '\r'; break;
-            case 'n':  ch = '\n'; break;
-            case 't':  ch = '\t'; break;
-            case 'f':  ch = '\f'; break;
-            case 'v':  ch = '\v'; break;
+            case 'a': ch = '\a'; break;
+            case 'r': ch = '\r'; break;
+            case 'n': ch = '\n'; break;
+            case 't': ch = '\t'; break;
+            case 'f': ch = '\f'; break;
+            case 'v': ch = '\v'; break;
             case 'x':
             case 'X':
                 /* same procedure as in fteqcc */
@@ -825,7 +824,15 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                 else
                     ch = chr;
                 break;
-            case '\n':  ch = '\n'; break;
+
+            /* high bit text */
+            case 'b': case 's':
+                texttype ^= 128;
+                continue;
+
+            case '\n':
+                ch = '\n';
+                break;
 
             default:
                 lexwarn(lex, WARN_UNKNOWN_CONTROL_SEQUENCE, "unrecognized control sequence: \\%c", ch);
@@ -833,7 +840,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
                 lex_tokench(lex, '\\');
             }
             /* add the character finally */
-            lex_tokench(lex, ch);
+            lex_tokench(lex, ch | texttype);
         }
         else
             lex_tokench(lex, ch);
