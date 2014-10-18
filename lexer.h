@@ -176,8 +176,8 @@ typedef struct {
 #define opid3(a,b,c) (((uint8_t)a<<16)|((uint8_t)b<<8)|(uint8_t)c)
 
 static const oper_info c_operators[] = {
-    { "(",      0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX, false}, /* paren expression - non function call */
-    { "length", 1, opid3('l','e','n'), ASSOC_RIGHT, 98, OP_PREFIX, true},
+    { "(",       0, opid1('('),         ASSOC_LEFT,  99, OP_PREFIX, false}, /* paren expression - non function call */
+    { "_length", 1, opid3('l','e','n'), ASSOC_RIGHT, 98, OP_PREFIX, true},
 
     { "++",     1, opid3('S','+','+'), ASSOC_LEFT,  17, OP_SUFFIX, false},
     { "--",     1, opid3('S','-','-'), ASSOC_LEFT,  17, OP_SUFFIX, false},

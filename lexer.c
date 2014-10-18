@@ -1308,28 +1308,6 @@ int lex_do(lex_file *lex)
         return (lex->tok.ttype = TOKEN_OPERATOR);
     }
 
-    /* length operator */
-    if (ch == 'l') {
-        if ((nextch = lex_getch(lex)) == 'e') {
-        if ((nextch = lex_getch(lex)) == 'n') {
-        if ((nextch = lex_getch(lex)) == 'g') {
-        if ((nextch = lex_getch(lex)) == 't') {
-        if ((nextch = lex_getch(lex)) == 'h') {
-            lex_tokench(lex, 'l');
-            lex_tokench(lex, 'e');
-            lex_tokench(lex, 'n');
-            lex_tokench(lex, 'g');
-            lex_tokench(lex, 't');
-            lex_tokench(lex, 'h');
-            lex_endtoken(lex);
-            return (lex->tok.ttype = TOKEN_OPERATOR);
-        } else lex_ungetch(lex, nextch);
-        } else lex_ungetch(lex, nextch);
-        } else lex_ungetch(lex, nextch);
-        } else lex_ungetch(lex, nextch);
-        } else lex_ungetch(lex, nextch);
-    }
-
     if (isident_start(ch))
     {
         const char *v;
@@ -1361,6 +1339,8 @@ int lex_do(lex_file *lex)
         } else if (!strcmp(v, "vector")) {
             lex->tok.ttype = TOKEN_TYPENAME;
             lex->tok.constval.t = TYPE_VECTOR;
+        } else if (!strcmp(v, "_length")) {
+            lex->tok.ttype = TOKEN_OPERATOR;
         } else {
             size_t kw;
             for (kw = 0; kw < GMQCC_ARRAY_COUNT(keywords_qc); ++kw) {
