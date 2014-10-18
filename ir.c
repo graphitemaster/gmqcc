@@ -1124,6 +1124,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
 /*  helper function */
 static ir_value* ir_builder_imm_float(ir_builder *self, float value, bool add_to_list) {
     ir_value *v = ir_value_var("#IMMEDIATE", store_global, TYPE_FLOAT);
+    v->flags |= IR_FLAG_ERASEABLE;
     v->hasvalue = true;
     v->cvq = CV_CONST;
     v->constval.vfloat = value;
