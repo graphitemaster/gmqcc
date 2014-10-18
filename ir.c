@@ -1121,6 +1121,18 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     return self;
 }
 
+/*  helper function */
+static ir_value* ir_builder_imm_float(ir_builder *self, float value, bool add_to_list) {
+    ir_value *v = ir_value_var("#IMMEDIATE", store_global, TYPE_FLOAT);
+    v->hasvalue = true;
+    v->constval.vfloat = value;
+
+    vec_push(self->globals, v);
+    if (add_to_list)
+        vec_push(self->const_floats, v);
+    return v;
+}
+
 ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
 {
     char     *name;
@@ -1206,9 +1218,11 @@ void ir_value_delete(ir_value* self)
         if (self->vtype == TYPE_STRING)
             mem_d((void*)self->constval.vstring);
     }
-    for (i = 0; i < 3; ++i) {
-        if (self->members[i])
-            ir_value_delete(self->members[i]);
+    if (!(self->flags & IR_FLAG_SPLIT_VECTOR)) {
+        for (i = 0; i < 3; ++i) {
+            if (self->members[i])
+                ir_value_delete(self->members[i]);
+        }
     }
     vec_free(self->reads);
     vec_free(self->writes);
@@ -3129,7 +3143,21 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
-                code_push_statement(code, &stmt, instr->context);
+
+                if (param->vtype == TYPE_VECTOR && (param->flags & IR_FLAG_SPLIT_VECTOR)) {
+                    /* fetch 3 separate floats */
+                    stmt.opcode = INSTR_STORE_F;
+                    stmt.o1.u1 = ir_value_code_addr(param->members[0]);
+                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o2.u1++;
+                    stmt.o1.u1 = ir_value_code_addr(param->members[1]);
+                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o2.u1++;
+                    stmt.o1.u1 = ir_value_code_addr(param->members[2]);
+                    code_push_statement(code, &stmt, instr->context);
+                }
+                else
+                    code_push_statement(code, &stmt, instr->context);
             }
             /* Now handle extparams */
             first = vec_size(instr->params);
@@ -3158,7 +3186,20 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     stmt.opcode = type_store_instr[param->vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = ir_value_code_addr(targetparam);
-                code_push_statement(code, &stmt, instr->context);
+                if (param->vtype == TYPE_VECTOR && (param->flags & IR_FLAG_SPLIT_VECTOR)) {
+                    /* fetch 3 separate floats */
+                    stmt.opcode = INSTR_STORE_F;
+                    stmt.o1.u1 = ir_value_code_addr(param->members[0]);
+                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o2.u1++;
+                    stmt.o1.u1 = ir_value_code_addr(param->members[1]);
+                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o2.u1++;
+                    stmt.o1.u1 = ir_value_code_addr(param->members[2]);
+                    code_push_statement(code, &stmt, instr->context);
+                }
+                else
+                    code_push_statement(code, &stmt, instr->context);
             }
 
             stmt.opcode = INSTR_CALL0 + vec_size(instr->params);
@@ -3635,6 +3676,10 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     prog_section_def_t def;
     bool               pushdef = opts.optimizeoff;
 
+    /* we don't generate split-vectors */
+    if (global->vtype == TYPE_VECTOR && (global->flags & IR_FLAG_SPLIT_VECTOR))
+        return true;
+
     def.type   = global->vtype;
     def.offset = vec_size(self->code->globals);
     def.name   = 0;
@@ -3885,11 +3930,112 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     return field->code.globaladdr >= 0;
 }
 
+static void ir_builder_collect_reusables(ir_builder *builder) {
+    size_t i;
+    ir_value **reusables = NULL;
+    for (i = 0; i < vec_size(builder->globals); ++i) {
+        ir_value *value = builder->globals[i];
+        if (value->vtype != TYPE_FLOAT || !value->hasvalue)
+            continue;
+        if (value->cvq == CV_CONST || (value->name && value->name[0] == '#')) {
+            vec_push(reusables, value);
+        }
+    }
+    builder->const_floats = reusables;
+}
+
+static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
+    size_t i, count;
+    ir_value* found[3] = { NULL, NULL, NULL };
+
+    /* must not be written to */
+    if (vec_size(vec->writes))
+        return;
+    /* must not be trying to access individual members */
+    if (vec->members[0] || vec->members[1] || vec->members[2])
+        return;
+    /* should be actually used otherwise it won't be generated anyway */
+    count = vec_size(vec->reads);
+    if (!count)
+        return;
+
+    /* may only be used directly as function parameters, so if we find some other instruction cancel */
+    for (i = 0; i != count; ++i) {
+        /* we only split vectors if they're used directly as parameter to a call only! */
+        ir_instr *user = vec->reads[i];
+        if ((user->opcode < INSTR_CALL0 || user->opcode > INSTR_CALL8) && user->opcode != VINSTR_NRCALL)
+            return;
+    }
+
+    vec->flags |= IR_FLAG_SPLIT_VECTOR;
+
+    /* find existing floats making up the split */
+    count = vec_size(self->const_floats);
+    for (i = 0; i != count; ++i) {
+        ir_value *c = self->const_floats[i];
+        if (!found[0] && c->constval.vfloat == vec->constval.vvec.x)
+            found[0] = c;
+        if (!found[1] && c->constval.vfloat == vec->constval.vvec.y)
+            found[1] = c;
+        if (!found[2] && c->constval.vfloat == vec->constval.vvec.z)
+            found[2] = c;
+        if (found[0] && found[1] && found[2])
+            break;
+    }
+
+    /* generate floats for not yet found components */
+    if (!found[0])
+        found[0] = ir_builder_imm_float(self, vec->constval.vvec.x, true);
+    if (!found[1]) {
+        if (vec->constval.vvec.y == vec->constval.vvec.x)
+            found[1] = found[0];
+        else
+            found[1] = ir_builder_imm_float(self, vec->constval.vvec.y, true);
+    }
+    if (!found[2]) {
+        if (vec->constval.vvec.z == vec->constval.vvec.x)
+            found[2] = found[0];
+        else if (vec->constval.vvec.z == vec->constval.vvec.y)
+            found[2] = found[1];
+        else
+            found[2] = ir_builder_imm_float(self, vec->constval.vvec.z, true);
+    }
+
+    /* the .members array should be safe to use here. */
+    vec->members[0] = found[0];
+    vec->members[1] = found[1];
+    vec->members[2] = found[2];
+
+    /* register the readers for these floats */
+    count = vec_size(vec->reads);
+    for (i = 0; i != count; ++i) {
+        vec_push(found[0]->reads, vec->reads[i]);
+        vec_push(found[1]->reads, vec->reads[i]);
+        vec_push(found[2]->reads, vec->reads[i]);
+    }
+}
+
+static void ir_builder_split_vectors(ir_builder *self) {
+    size_t i, count = vec_size(self->globals);
+    for (i = 0; i != count; ++i) {
+        ir_value *v = self->globals[i];
+        if (v->vtype != TYPE_VECTOR || !v->name || v->name[0] != '#')
+            continue;
+        ir_builder_split_vector(self, self->globals[i]);
+    }
+}
+
 bool ir_builder_generate(ir_builder *self, const char *filename)
 {
     prog_section_statement_t stmt;
     size_t i;
     char  *lnofile = NULL;
+
+    if (OPTS_FLAG(SPLIT_VECTOR_PARAMETERS)) {
+        ir_builder_collect_reusables(self);
+        if (vec_size(self->const_floats) > 0)
+            ir_builder_split_vectors(self);
+    }
 
     for (i = 0; i < vec_size(self->fields); ++i)
     {
@@ -3956,7 +4102,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     }
 
     if (vec_size(self->code->globals) >= 65536) {
-        irerror(vec_last(self->globals)->context, "This progs file would require more globals than the metadata can handle. Bailing out.");
+        irerror(vec_last(self->globals)->context, "This progs file would require more globals than the metadata can handle (%u). Bailing out.", (unsigned int)vec_size(self->code->globals));
         return false;
     }
 

@@ -43,12 +43,14 @@ typedef struct {
 } ir_life_entry_t;
 
 enum {
-    IR_FLAG_HAS_ARRAYS           = 1 << 0,
-    IR_FLAG_HAS_UNINITIALIZED    = 1 << 1,
-    IR_FLAG_HAS_GOTO             = 1 << 2,
-    IR_FLAG_INCLUDE_DEF          = 1 << 3,
-    IR_FLAG_ERASEABLE            = 1 << 4,
-    IR_FLAG_BLOCK_COVERAGE       = 1 << 5,
+    IR_FLAG_HAS_ARRAYS              = 1 << 0,
+    IR_FLAG_HAS_UNINITIALIZED       = 1 << 1,
+    IR_FLAG_HAS_GOTO                = 1 << 2,
+    IR_FLAG_INCLUDE_DEF             = 1 << 3,
+    IR_FLAG_ERASEABLE               = 1 << 4,
+    IR_FLAG_BLOCK_COVERAGE          = 1 << 5,
+
+    IR_FLAG_SPLIT_VECTOR            = 1 << 6,
 
     IR_FLAG_LAST,
     IR_FLAG_MASK_NO_OVERLAP      = (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED),
@@ -254,6 +256,7 @@ struct ir_builder_s {
     ir_function **functions;
     ir_value    **globals;
     ir_value    **fields;
+    ir_value    **const_floats; /* for reusing them in vector-splits, TODO: sort this or use a radix-tree */
 
     ht            htfunctions;
     ht            htglobals;
