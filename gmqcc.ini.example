@@ -341,6 +341,11 @@
     #exception.
     ARITHMETIC_EXCEPTIONS = false
 
+    #Split vector-literals which are only used dirctly as function parameters
+    #into 3 floats stored separately to reduce the number of globals at the
+    #expense of additional instructions.
+    SPLIT_VECTOR_PARAMETERS = false
+
 [warnings]
     #Generate a warning about variables which are declared but never
     #used.  This can be avoided by adding the ‘noref’ keyword in front

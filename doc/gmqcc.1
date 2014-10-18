@@ -615,6 +615,16 @@ Turn on arithmetic exception tests in the compiler. In constant expressions
 which trigger exceptions like division by zero, overflow, underflow, etc,
 the following flag will produce diagnostics for what triggered that
 exception.
+.It Fl f Ns Cm split-vector-parameters
+With this flag immediate vector literals which only ever appear as function
+parameters won't be stored as vector immediates. Instead, the 3 floats making
+up the vector will be copied separately. Essentially this turns a vector-store
+instruction into 3 float-store instructions for such cases. This increases
+code size but can dramatically reduce the amount of vector globals, which is
+after all limited to 64k. There's at least one known codebase where this
+lowers the number of globals from over 80k down to around 3k. In other code
+bases it doesn't reduce the globals at all but only increases code size.
+Just try it and see whether it helps you.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds
