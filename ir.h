@@ -47,7 +47,7 @@ enum {
     IR_FLAG_HAS_UNINITIALIZED       = 1 << 1,
     IR_FLAG_HAS_GOTO                = 1 << 2,
     IR_FLAG_INCLUDE_DEF             = 1 << 3,
-    IR_FLAG_ERASEABLE               = 1 << 4,
+    IR_FLAG_ERASABLE                = 1 << 4,
     IR_FLAG_BLOCK_COVERAGE          = 1 << 5,
 
     IR_FLAG_SPLIT_VECTOR            = 1 << 6,

@@ -1124,7 +1124,7 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
 /*  helper function */
 static ir_value* ir_builder_imm_float(ir_builder *self, float value, bool add_to_list) {
     ir_value *v = ir_value_var("#IMMEDIATE", store_global, TYPE_FLOAT);
-    v->flags |= IR_FLAG_ERASEABLE;
+    v->flags |= IR_FLAG_ERASABLE;
     v->hasvalue = true;
     v->cvq = CV_CONST;
     v->constval.vfloat = value;
@@ -3581,7 +3581,7 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
      * If there is no definition and the thing is eraseable, we can ignore
      * outputting the function to begin with.
      */
-    if (global->flags & IR_FLAG_ERASEABLE && irfun->code_function_def < 0) {
+    if (global->flags & IR_FLAG_ERASABLE && irfun->code_function_def < 0) {
         return true;
     }
 
@@ -3693,7 +3693,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
          * if we're eraseable and the function isn't referenced ignore outputting
          * the function.
          */
-        if (global->flags & IR_FLAG_ERASEABLE && vec_size(global->reads) == 0) {
+        if (global->flags & IR_FLAG_ERASABLE && vec_size(global->reads) == 0) {
             return true;
         }
 

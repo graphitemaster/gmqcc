@@ -1453,7 +1453,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
             self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
         if (self->expression.flags & AST_FLAG_ERASEABLE)
-            self->ir_v->flags |= IR_FLAG_ERASEABLE;
+            self->ir_v->flags |= IR_FLAG_ERASABLE;
         if (self->expression.flags & AST_FLAG_BLOCK_COVERAGE)
             func->flags |= IR_FLAG_BLOCK_COVERAGE;
         /* The function is filled later on ast_function_codegen... */
@@ -1501,7 +1501,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
                 self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
             if (self->expression.flags & AST_FLAG_ERASEABLE)
-                self->ir_v->flags |= IR_FLAG_ERASEABLE;
+                self->ir_v->flags |= IR_FLAG_ERASABLE;
 
             namelen = strlen(self->name);
             name    = (char*)mem_a(namelen + 16);
@@ -1536,7 +1536,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
                 self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
 
             if (self->expression.flags & AST_FLAG_ERASEABLE)
-                self->ir_v->flags |= IR_FLAG_ERASEABLE;
+                self->ir_v->flags |= IR_FLAG_ERASABLE;
         }
         return true;
     }
@@ -1570,7 +1570,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
             v->flags |= IR_FLAG_INCLUDE_DEF;
         if (self->expression.flags & AST_FLAG_ERASEABLE)
-            self->ir_v->flags |= IR_FLAG_ERASEABLE;
+            self->ir_v->flags |= IR_FLAG_ERASABLE;
 
         namelen = strlen(self->name);
         name    = (char*)mem_a(namelen + 16);
@@ -1615,7 +1615,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     if (self->expression.flags & AST_FLAG_INCLUDE_DEF)
         self->ir_v->flags |= IR_FLAG_INCLUDE_DEF;
     if (self->expression.flags & AST_FLAG_ERASEABLE)
-        self->ir_v->flags |= IR_FLAG_ERASEABLE;
+        self->ir_v->flags |= IR_FLAG_ERASABLE;
 
     /* initialize */
     if (self->hasvalue) {
