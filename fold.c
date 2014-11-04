@@ -470,6 +470,12 @@ static sfloat_t sfloat_div(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
     return SFLOAT_PACK_round(state, sign_z, exp_z, sig_z);
 }
 
+static sfloat_t sfloat_neg(sfloat_state_t *state, sfloat_t a) {
+    sfloat_cast_t neg;
+    neg.f = -1;
+    return sfloat_mul(state, a, neg.s);
+}
+
 static GMQCC_INLINE void sfloat_check(lex_ctx_t ctx, sfloat_state_t *state, const char *vec) {
     /* Exception comes from vector component */
     if (vec) {
@@ -607,8 +613,31 @@ static GMQCC_INLINE vec3_t vec3_sub(lex_ctx_t ctx, vec3_t a, vec3_t b) {
     return out;
 }
 
-static GMQCC_INLINE vec3_t vec3_neg(vec3_t a) {
-    vec3_t out;
+static GMQCC_INLINE vec3_t vec3_neg(lex_ctx_t ctx, vec3_t a) {
+    vec3_t         out;
+    sfloat_cast_t  v[3];
+    sfloat_state_t s[3];
+
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        goto end;
+
+    v[0].f = a.x;
+    v[1].f = a.y;
+    v[2].f = a.z;
+
+    sfloat_init(&s[0]);
+    sfloat_init(&s[1]);
+    sfloat_init(&s[2]);
+
+    sfloat_neg(&s[0], v[0].s);
+    sfloat_neg(&s[1], v[1].s);
+    sfloat_neg(&s[2], v[2].s);
+
+    sfloat_check(ctx, &s[0], NULL);
+    sfloat_check(ctx, &s[1], NULL);
+    sfloat_check(ctx, &s[2], NULL);
+
+end:
     out.x = -a.x;
     out.y = -a.y;
     out.z = -a.z;
@@ -977,6 +1006,58 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
     return (ast_expression*)out;
 }
 
+typedef union {
+    void     (*callback)(void);
+    sfloat_t (*binary)(sfloat_state_t *, sfloat_t, sfloat_t);
+    sfloat_t (*unary)(sfloat_state_t *, sfloat_t);
+} float_check_callback_t;
+
+static bool fold_check_except_float_impl(void     (*callback)(void),
+                                         fold_t    *fold,
+                                         ast_value *a,
+                                         ast_value *b)
+{
+    float_check_callback_t call;
+    sfloat_state_t s;
+    sfloat_cast_t ca;
+
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS) && !OPTS_WARN(WARN_INEXACT_COMPARES))
+        return false;
+
+    call.callback = callback;
+    sfloat_init(&s);
+    ca.f = fold_immvalue_float(a);
+    if (b) {
+        sfloat_cast_t cb;
+        cb.f = fold_immvalue_float(b);
+        call.binary(&s, ca.s, cb.s);
+    } else {
+        call.unary(&s, ca.s);
+    }
+
+    if (s.exceptionflags == 0)
+        return false;
+
+    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
+        goto inexact_possible;
+
+    sfloat_check(fold_ctx(fold), &s, NULL);
+
+inexact_possible:
+    return s.exceptionflags & SFLOAT_INEXACT;
+}
+
+#define fold_check_except_float(CALLBACK, FOLD, A, B) \
+    fold_check_except_float_impl(((void (*)(void))(CALLBACK)), (FOLD), (A), (B))
+
+static bool fold_check_inexact_float(fold_t *fold, ast_value *a, ast_value *b) {
+    lex_ctx_t ctx = fold_ctx(fold);
+    if (!OPTS_WARN(WARN_INEXACT_COMPARES))
+        return false;
+    if (!a->inexact && !b->inexact)
+        return false;
+    return compile_warning(ctx, WARN_INEXACT_COMPARES, "inexact value in comparison");
+}
 
 static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, ast_value *sel, const char *set) {
     /*
@@ -1017,11 +1098,14 @@ static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, as
 
 static GMQCC_INLINE ast_expression *fold_op_neg(fold_t *fold, ast_value *a) {
     if (isfloat(a)) {
-        if (fold_can_1(a))
-            return fold_constgen_float(fold, -fold_immvalue_float(a), false);
+        if (fold_can_1(a)) {
+            /* Negation can produce inexact as well */
+            bool inexact = fold_check_except_float(&sfloat_neg, fold, a, NULL);
+            return fold_constgen_float(fold, -fold_immvalue_float(a), inexact);
+        }
     } else if (isvector(a)) {
         if (fold_can_1(a))
-            return fold_constgen_vector(fold, vec3_neg(fold_immvalue_vector(a)));
+            return fold_constgen_vector(fold, vec3_neg(fold_ctx(fold), fold_immvalue_vector(a)));
     }
     return NULL;
 }
@@ -1042,44 +1126,6 @@ static GMQCC_INLINE ast_expression *fold_op_not(fold_t *fold, ast_value *a) {
         }
     }
     return NULL;
-}
-
-static bool fold_check_except_float(sfloat_t (*callback)(sfloat_state_t *, sfloat_t, sfloat_t),
-                                    fold_t    *fold,
-                                    ast_value *a,
-                                    ast_value *b)
-{
-    sfloat_state_t s;
-    sfloat_cast_t ca;
-    sfloat_cast_t cb;
-
-    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS) && !OPTS_WARN(WARN_INEXACT_COMPARES))
-        return false;
-
-    sfloat_init(&s);
-    ca.f = fold_immvalue_float(a);
-    cb.f = fold_immvalue_float(b);
-
-    callback(&s, ca.s, cb.s);
-    if (s.exceptionflags == 0)
-        return false;
-
-    if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
-        goto inexact_possible;
-
-    sfloat_check(fold_ctx(fold), &s, NULL);
-
-inexact_possible:
-    return s.exceptionflags & SFLOAT_INEXACT;
-}
-
-static bool fold_check_inexact_float(fold_t *fold, ast_value *a, ast_value *b) {
-    lex_ctx_t ctx = fold_ctx(fold);
-    if (!OPTS_WARN(WARN_INEXACT_COMPARES))
-        return false;
-    if (!a->inexact && !b->inexact)
-        return false;
-    return compile_warning(ctx, WARN_INEXACT_COMPARES, "inexact value in comparison");
 }
 
 static GMQCC_INLINE ast_expression *fold_op_add(fold_t *fold, ast_value *a, ast_value *b) {
