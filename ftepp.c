@@ -703,9 +703,9 @@ static void ftepp_stringify_token(ftepp_t *ftepp, pptoken *token)
                 ++ch;
             }
             break;
-        case TOKEN_WHITE:
+        /*case TOKEN_WHITE:
             ftepp_out(ftepp, " ", false);
-            break;
+            break;*/
         case TOKEN_EOL:
             ftepp_out(ftepp, "\\n", false);
             break;
