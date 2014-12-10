@@ -953,6 +953,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 }
             }
             (void)check_write_to(ctx, exprs[0]);
+            /* When we're a vector of part of an entity field we use STOREP */
+            if (ast_istype(exprs[0], ast_member) && ast_istype(((ast_member*)exprs[0])->owner, ast_entfield))
+                assignop = INSTR_STOREP_F;
             out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
             break;
         case opid3('+','+','P'):
