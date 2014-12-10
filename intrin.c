@@ -422,7 +422,7 @@ static ast_expression *intrin_atanh(intrin_t *intrin) {
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_MUL_F,
-            (ast_expression*)fold_constgen_float(intrin->fold, 0.5),
+            (ast_expression*)fold_constgen_float(intrin->fold, 0.5, false),
             (ast_expression*)calllog
         )
     );
@@ -496,7 +496,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
                 intrin_ctx(intrin),
                 INSTR_LT,
                 (ast_expression*)i,
-                (ast_expression*)fold_constgen_float(intrin->fold, 200.0f)
+                (ast_expression*)fold_constgen_float(intrin->fold, 200.0f, false)
             ),
             false,
             NULL,
@@ -1027,7 +1027,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                 intrin_ctx(intrin),
                 INSTR_GT,
                 (ast_expression*)callfabs,
-                (ast_expression*)fold_constgen_float(intrin->fold, QC_POW_EPSILON)
+                (ast_expression*)fold_constgen_float(intrin->fold, QC_POW_EPSILON, false)
             ),
             /* pre not */
             false,
@@ -1911,7 +1911,7 @@ static ast_expression *intrin_log_variant(intrin_t *intrin, const char *name, fl
     vec_push(value->expression.params, arg1);
 
     vec_push(callln->params, (ast_expression*)arg1);
-    vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, base));
+    vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, base, false));
 
     vec_push(body->exprs,
         (ast_expression*)ast_return_new(

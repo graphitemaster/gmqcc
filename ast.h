@@ -54,6 +54,7 @@ typedef struct ast_switch_s      ast_switch;
 typedef struct ast_label_s       ast_label;
 typedef struct ast_goto_s        ast_goto;
 typedef struct ast_argpipe_s     ast_argpipe;
+typedef struct ast_state_s       ast_state;
 
 enum {
     AST_FLAG_VARIADIC       = 1 << 0,
@@ -111,7 +112,8 @@ enum {
     TYPE_ast_switch,      /* 18 */
     TYPE_ast_label,       /* 19 */
     TYPE_ast_goto,        /* 20 */
-    TYPE_ast_argpipe      /* 21 */
+    TYPE_ast_argpipe,     /* 21 */
+    TYPE_ast_state        /* 22 */
 };
 
 #define ast_istype(x, t) ( ((ast_node*)x)->nodetype == (TYPE_##t) )
@@ -214,6 +216,7 @@ struct ast_value_s
     bool isfield; /* this declares a field */
     bool isimm;   /* an immediate, not just const */
     bool hasvalue;
+    bool inexact; /* inexact coming from folded expression */
     basic_value_t constval;
     /* for TYPE_ARRAY we have an optional vector
      * of constants when an initializer list
@@ -578,6 +581,19 @@ struct ast_goto_s
 
 ast_goto* ast_goto_new(lex_ctx_t ctx, const char *name);
 void ast_goto_set_label(ast_goto*, ast_label*);
+
+/* STATE node
+ *
+ * For frame/think state updates: void foo() [framenum, nextthink] {}
+ */
+struct ast_state_s
+{
+    ast_expression  expression;
+    ast_expression *framenum;
+    ast_expression *nextthink;
+};
+ast_state* ast_state_new(lex_ctx_t ctx, ast_expression *frame, ast_expression *think);
+void ast_state_delete(ast_state*);
 
 /* CALL node
  *

@@ -806,19 +806,21 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 } else {
                     /* Preprocessing (qcflags mean shit all here we don't allow them) */
                     if (tmpl->testflags && !strcmp(tmpl->testflags, "-no-defs")) {
-                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s -o %s",
                             task_bins[TASK_COMPILE],
                             directories[i],
                             tmpl->sourcefile,
+                            tmpl->compileflags,
                             tmpl->tempfilename
                         );
                     } else {
-                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s -o %s",
+                        util_snprintf(buf, sizeof(buf), "%s -E %s/%s %s/%s %s -o %s",
                             task_bins[TASK_COMPILE],
                             curdir,
                             defs,
                             directories[i],
                             tmpl->sourcefile,
+                            tmpl->compileflags,
                             tmpl->tempfilename
                         );
                     }
@@ -1100,6 +1102,7 @@ static size_t task_schedualize(size_t *pad) {
     size_t i        = 0;
     size_t j        = 0;
     size_t failed   = 0;
+    int    status   = 0;
 
     util_snprintf(space[0], sizeof(space[0]), "%d", (int)vec_size(task_tasks));
 
@@ -1167,7 +1170,9 @@ static size_t task_schedualize(size_t *pad) {
             continue;
         }
 
-        if (task_pclose(task_tasks[i].runhandles) != EXIT_SUCCESS && strcmp(task_tasks[i].tmpl->proceduretype, "-fail")) {
+        status = task_pclose(task_tasks[i].runhandles);
+        if ((!strcmp(task_tasks[i].tmpl->proceduretype, "-fail") && status == EXIT_SUCCESS)
+        ||  ( strcmp(task_tasks[i].tmpl->proceduretype, "-fail") && status == EXIT_FAILURE)) {
             con_out("failure:   `%s` %*s %*s\n",
                 task_tasks[i].tmpl->description,
                 (pad[0] + pad[1] - strlen(task_tasks[i].tmpl->description)) + (strlen(task_tasks[i].tmpl->rulesfile) - pad[1]),

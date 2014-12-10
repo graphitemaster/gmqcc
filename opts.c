@@ -93,6 +93,7 @@ static void opts_setdefault(void) {
     opts_set(opts.warn,  WARN_CONST_OVERWRITE,           true);
     opts_set(opts.warn,  WARN_DIRECTIVE_INMACRO,         true);
     opts_set(opts.warn,  WARN_BUILTINS,                  true);
+    opts_set(opts.warn,  WARN_INEXACT_COMPARES,          true);
 
     /* flags */
     opts_set(opts.flags, ADJUST_VECTOR_FIELDS,           true);
@@ -101,6 +102,8 @@ static void opts_setdefault(void) {
     opts_set(opts.flags, LEGACY_VECTOR_MATHS,            true);
     opts_set(opts.flags, DARKPLACES_STRING_TABLE_BUG,    true);
 
+    /* options */
+    OPTS_OPTION_U32(OPTION_STATE_FPS) = 10;
 }
 
 void opts_backup_non_Wall() {
@@ -193,9 +196,9 @@ void opts_setoptimlevel(unsigned int level) {
  * from a progs.src.
  */
 static char *opts_ini_rstrip(char *s) {
-    char *p = s + strlen(s);
-    while(p > s && util_isspace(*--p))
-        *p = '\0';
+    char *p = s + strlen(s) - 1;
+    while (p > s && util_isspace(*p))
+        *p = '\0', p--;
     return s;
 }
 
@@ -215,8 +218,9 @@ static char *opts_ini_next(const char *s, char c) {
 
 static size_t opts_ini_parse (
     fs_file_t *filehandle,
-    char *(*loadhandle)(const char *, const char *, const char *),
-    char **errorhandle
+    char *(*loadhandle)(const char *, const char *, const char *, char **),
+    char **errorhandle,
+    char **parse_file
 ) {
     size_t linesize;
     size_t lineno             = 1;
@@ -262,7 +266,7 @@ static size_t opts_ini_parse (
         } else if (*parse_beg && *parse_beg != ';') {
             /* not a comment, must be a name value pair :) */
             if (*(parse_end = opts_ini_next(parse_beg, '=')) != '=')
-                  parse_end = opts_ini_next(parse_beg, ':');
+                parse_end = opts_ini_next(parse_beg, ':');
 
             if (*parse_end == '=' || *parse_end == ':') {
                 *parse_end = '\0'; /* terminate bro */
@@ -276,8 +280,20 @@ static size_t opts_ini_parse (
                 util_strncpy(oldname_data, read_name, sizeof(oldname_data));
                 oldname_data[sizeof(oldname_data) - 1] ='\0';
 
-                if ((*errorhandle = loadhandle(section_data, read_name, read_value)) && !error)
+                if ((*errorhandle = loadhandle(section_data, read_name, read_value, parse_file)) && !error)
                     error = lineno;
+            } else if (!strcmp(section_data, "includes")) {
+                /* Includes are special */
+                if (*(parse_end = opts_ini_next(parse_beg, '=')) == '='
+                ||  *(parse_end = opts_ini_next(parse_beg, ':')) == ':') {
+                    static const char *invalid_include = "invalid use of include";
+                    vec_append(*errorhandle, strlen(invalid_include), invalid_include);
+                    error = lineno;
+                } else {
+                    read_name = opts_ini_rstrip(parse_beg);
+                    if ((*errorhandle = loadhandle(section_data, read_name, read_name, parse_file)) && !error)
+                        error = lineno;
+                }
             } else if (!error) {
                 /* otherwise set error to the current line number */
                 error = lineno;
@@ -287,6 +303,7 @@ static size_t opts_ini_parse (
     }
     mem_d(line);
     return error;
+
 }
 
 /*
@@ -298,7 +315,7 @@ static bool opts_ini_bool(const char *value) {
     return !!strtol(value, NULL, 10);
 }
 
-static char *opts_ini_load(const char *section, const char *name, const char *value) {
+static char *opts_ini_load(const char *section, const char *name, const char *value, char **parse_file) {
     char *error = NULL;
     bool  found = false;
 
@@ -309,6 +326,26 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
     #undef GMQCC_TYPE_FLAGS
     #undef GMQCC_TYPE_OPTIMIZATIONS
     #undef GMQCC_TYPE_WARNS
+
+    /* deal with includes */
+    if (!strcmp(section, "includes")) {
+        static const char *include_error_beg = "failed to open file `";
+        static const char *include_error_end = "' for inclusion";
+        fs_file_t *file = fs_file_open(value, "r");
+        found = true;
+        if (!file) {
+            vec_append(error, strlen(include_error_beg), include_error_beg);
+            vec_append(error, strlen(value), value);
+            vec_append(error, strlen(include_error_end), include_error_end);
+        } else {
+            if (opts_ini_parse(file, &opts_ini_load, &error, parse_file) != 0)
+                found = false;
+            /* Change the file name */
+            mem_d(*parse_file);
+            *parse_file = util_strdup(value);
+            fs_file_close(file);
+        }
+    }
 
     /* flags */
     #define GMQCC_TYPE_FLAGS
@@ -348,24 +385,29 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
 
     /* nothing was found ever! */
     if (!found) {
-        if (strcmp(section, "flags")         &&
-            strcmp(section, "warnings")      &&
+        if (strcmp(section, "includes") &&
+            strcmp(section, "flags")    &&
+            strcmp(section, "warnings") &&
             strcmp(section, "optimizations"))
         {
-            vec_append(error, 17,             "invalid section `");
+            static const char *invalid_section = "invalid_section `";
+            vec_append(error, strlen(invalid_section), invalid_section);
             vec_append(error, strlen(section), section);
-            vec_push  (error, '`');
-            vec_push  (error, '\0');
-        } else {
-            vec_append(error, 18,             "invalid variable `");
+            vec_push(error, '`');
+        } else if (strcmp(section, "includes")) {
+            static const char *invalid_variable = "invalid_variable `";
+            static const char *in_section = "` in section: `";
+            vec_append(error, strlen(invalid_variable), invalid_variable);
             vec_append(error, strlen(name), name);
-            vec_push  (error, '`');
-            vec_append(error, 14,              " in section: `");
+            vec_append(error, strlen(in_section), in_section);
             vec_append(error, strlen(section), section);
-            vec_push  (error, '`');
-            vec_push  (error, '\0');
+            vec_push(error, '`');
+        } else {
+            static const char *expected_something = "expected something";
+            vec_append(error, strlen(expected_something), expected_something);
         }
     }
+    vec_push(error, '\0');
     return error;
 }
 
@@ -380,6 +422,7 @@ void opts_ini_init(const char *file) {
      *  gmqcc.cfg
      */
     char       *error = NULL;
+    char       *parse_file = NULL;
     size_t     line;
     fs_file_t  *ini;
 
@@ -394,11 +437,13 @@ void opts_ini_init(const char *file) {
 
     con_out("found ini file `%s`\n", file);
 
-    if ((line = opts_ini_parse(ini, &opts_ini_load, &error)) != 0) {
+    parse_file = util_strdup(file);
+    if ((line = opts_ini_parse(ini, &opts_ini_load, &error, &parse_file)) != 0) {
         /* there was a parse error with the ini file */
-        con_printmsg(LVL_ERROR, file, line, 0 /*TODO: column for ini error*/, "error", error);
+        con_printmsg(LVL_ERROR, parse_file, line, 0 /*TODO: column for ini error*/, "error", error);
         vec_free(error);
     }
+    mem_d(parse_file);
 
     fs_file_close(ini);
 }

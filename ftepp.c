@@ -703,9 +703,9 @@ static void ftepp_stringify_token(ftepp_t *ftepp, pptoken *token)
                 ++ch;
             }
             break;
-        case TOKEN_WHITE:
+        /*case TOKEN_WHITE:
             ftepp_out(ftepp, " ", false);
-            break;
+            break;*/
         case TOKEN_EOL:
             ftepp_out(ftepp, "\\n", false);
             break;
@@ -734,6 +734,7 @@ static void ftepp_recursion_footer(ftepp_t *ftepp)
     ftepp_out(ftepp, "\n#pragma pop(line)\n", false);
 }
 
+static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *params, bool resetline);
 static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
 {
     size_t   i;
@@ -742,8 +743,13 @@ static void ftepp_param_out(ftepp_t *ftepp, macroparam *param)
         out = param->tokens[i];
         if (out->token == TOKEN_EOL)
             ftepp_out(ftepp, "\n", false);
-        else
-            ftepp_out(ftepp, out->value, false);
+        else {
+            ppmacro *find = ftepp_macro_find(ftepp, out->value);
+            if (OPTS_FLAG(FTEPP_INDIRECT_EXPANSION) && find && !find->has_params)
+                ftepp_macro_expand(ftepp, find, NULL, false);
+            else
+                ftepp_out(ftepp, out->value, false);
+        }
     }
 }
 
@@ -837,7 +843,7 @@ static bool ftepp_macro_expand(ftepp_t *ftepp, ppmacro *macro, macroparam *param
                         macro_params_find(macro, macro->output[o+1]->value, &pi))
                     {
                         ++o;
-                        
+
                         ftepp_stringify(ftepp, &params[pi]);
                         break;
                     }
@@ -1455,6 +1461,7 @@ static bool ftepp_include(ftepp_t *ftepp)
     lex_ctx_t ctx;
     char     lineno[128];
     char     *filename;
+    char     *parsename = NULL;
     char     *old_includename;
 
     (void)ftepp_next(ftepp);
@@ -1462,28 +1469,56 @@ static bool ftepp_include(ftepp_t *ftepp)
         return false;
 
     if (ftepp->token != TOKEN_STRINGCONST) {
-        ftepp_error(ftepp, "expected filename to include");
-        return false;
+        ppmacro *macro = ftepp_macro_find(ftepp, ftepp_tokval(ftepp));
+        if (macro) {
+            char *backup = ftepp->output_string;
+            ftepp->output_string = NULL;
+            if (ftepp_macro_expand(ftepp, macro, NULL, true)) {
+                parsename = util_strdup(ftepp->output_string);
+                vec_free(ftepp->output_string);
+                ftepp->output_string = backup;
+            } else {
+                ftepp->output_string = backup;
+                ftepp_error(ftepp, "expected filename to include");
+                return false;
+            }
+        } else if (OPTS_FLAG(FTEPP_PREDEFS)) {
+            /* Well it could be a predefine like __LINE__ */
+            char *(*predef)(ftepp_t*) = ftepp_predef(ftepp_tokval(ftepp));
+            if (predef) {
+                parsename = predef(ftepp);
+            } else {
+                ftepp_error(ftepp, "expected filename to include");
+                return false;
+            }
+        }
     }
 
     if (!ftepp->output_on) {
-        ftepp_next(ftepp);
+        (void)ftepp_next(ftepp);
         return true;
     }
 
+    if (parsename)
+        unescape(parsename, parsename);
+    else {
+        char *tokval = ftepp_tokval(ftepp);
+        unescape(tokval, tokval);
+        parsename = util_strdup(tokval);
+    }
+
     ctx = ftepp_ctx(ftepp);
-
-    unescape(ftepp_tokval(ftepp), ftepp_tokval(ftepp));
-
     ftepp_out(ftepp, "\n#pragma file(", false);
-    ftepp_out(ftepp, ftepp_tokval(ftepp), false);
+    ftepp_out(ftepp, parsename, false);
     ftepp_out(ftepp, ")\n#pragma line(1)\n", false);
 
-    filename = ftepp_include_find(ftepp, ftepp_tokval(ftepp));
+    filename = ftepp_include_find(ftepp, parsename);
     if (!filename) {
-        ftepp_error(ftepp, "failed to open include file `%s`", ftepp_tokval(ftepp));
+        ftepp_error(ftepp, "failed to open include file `%s`", parsename);
+        mem_d(parsename);
         return false;
     }
+    mem_d(parsename);
     inlex = lex_open(filename);
     if (!inlex) {
         ftepp_error(ftepp, "open failed on include file `%s`", filename);

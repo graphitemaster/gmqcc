@@ -127,7 +127,7 @@ ast_expression *parser_find_global(parser_t *parser, const char *name);
 /* fold.c */
 fold_t         *fold_init           (parser_t *);
 void            fold_cleanup        (fold_t *);
-ast_expression *fold_constgen_float (fold_t *, qcfloat_t);
+ast_expression *fold_constgen_float (fold_t *, qcfloat_t, bool);
 ast_expression *fold_constgen_vector(fold_t *, vec3_t);
 ast_expression *fold_constgen_string(fold_t *, const char *, bool);
 bool            fold_generate       (fold_t *, ir_builder *);

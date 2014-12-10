@@ -789,17 +789,17 @@ typedef struct {
 } qc_exec_stack_t;
 
 typedef struct qc_program_s {
-    char                    *filename;
+    char                     *filename;
     prog_section_statement_t *code;
     prog_section_def_t       *defs;
     prog_section_def_t       *fields;
     prog_section_function_t  *functions;
-    char                    *strings;
-    qcint_t                   *globals;
-    qcint_t                   *entitydata;
-    bool                    *entitypool;
+    char                     *strings;
+    qcint_t                  *globals;
+    qcint_t                  *entitydata;
+    bool                     *entitypool;
 
-    const char*             *function_stack;
+    const char*              *function_stack;
 
     uint16_t crc16;
 
@@ -825,6 +825,20 @@ typedef struct qc_program_s {
     size_t xflags;
 
     int    argc; /* current arg count for debugging */
+
+    /* cached fields */
+    struct {
+        qcint_t frame;
+        qcint_t nextthink;
+        qcint_t think;
+    } cached_fields;
+
+    struct {
+        qcint_t self;
+        qcint_t time;
+    } cached_globals;
+
+    bool supports_state; /* is INSTR_STATE supported? */
 } qc_program_t;
 
 qc_program_t*       prog_load      (const char *filename, bool ignoreversion);
@@ -973,7 +987,7 @@ typedef struct {
 
 extern opts_cmd_t opts;
 
-#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1<< (unsigned)((i)%32))))
+#define OPTS_GENERIC(f,i)    (!! (((f)[(i)/32]) & (1U << (unsigned)((i)%32))))
 
 #define OPTS_FLAG(i)         OPTS_GENERIC(opts.flags,        (i))
 #define OPTS_WARN(i)         OPTS_GENERIC(opts.warn,         (i))

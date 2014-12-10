@@ -55,7 +55,15 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
 {
     prog_header_t   header;
     qc_program_t   *prog;
+    size_t          i;
     fs_file_t      *file  = fs_file_open(filename, "rb");
+
+    /* we need all those in order to support INSTR_STATE: */
+    bool            has_self      = false,
+                    has_time      = false,
+                    has_think     = false,
+                    has_nextthink = false,
+                    has_frame     = false;
 
     if (!file)
         return NULL;
@@ -136,6 +144,36 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     vec_push(prog->entitypool, true);
     memset(vec_add(prog->entitydata, prog->entityfields), 0, prog->entityfields * sizeof(prog->entitydata[0]));
     prog->entities = 1;
+
+    /* cache some globals and fields from names */
+    for (i = 0; i < vec_size(prog->defs); ++i) {
+        const char *name = prog_getstring(prog, prog->defs[i].name);
+        if      (!strcmp(name, "self")) {
+            prog->cached_globals.self = prog->defs[i].offset;
+            has_self = true;
+        }
+        else if (!strcmp(name, "time")) {
+            prog->cached_globals.time = prog->defs[i].offset;
+            has_time = true;
+        }
+    }
+    for (i = 0; i < vec_size(prog->fields); ++i) {
+        const char *name = prog_getstring(prog, prog->fields[i].name);
+        if      (!strcmp(name, "think")) {
+            prog->cached_fields.think     = prog->fields[i].offset;
+            has_think = true;
+        }
+        else if (!strcmp(name, "nextthink")) {
+            prog->cached_fields.nextthink = prog->fields[i].offset;
+            has_nextthink = true;
+        }
+        else if (!strcmp(name, "frame")) {
+            prog->cached_fields.frame     = prog->fields[i].offset;
+            has_frame = true;
+        }
+    }
+    if (has_self && has_time && has_think && has_nextthink && has_frame)
+        prog->supports_state = true;
 
     return prog;
 
@@ -912,7 +950,7 @@ static void prog_main_setparams(qc_program_t *prog) {
     }
 }
 
-void prog_disasm_function(qc_program_t *prog, size_t id);
+static void prog_disasm_function(qc_program_t *prog, size_t id);
 
 int main(int argc, char **argv) {
     size_t      i;
@@ -1227,7 +1265,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void prog_disasm_function(qc_program_t *prog, size_t id) {
+static void prog_disasm_function(qc_program_t *prog, size_t id) {
     prog_section_function_t *fdef = prog->functions + id;
     prog_section_statement_t *st;
 
@@ -1574,8 +1612,24 @@ while (prog->vmerror == 0) {
             break;
 
         case INSTR_STATE:
-            qcvmerror(prog, "`%s` tried to execute a STATE operation", prog->filename);
+        {
+            qcfloat_t *nextthink;
+            qcfloat_t *time;
+            qcfloat_t *frame;
+            if (!prog->supports_state) {
+                qcvmerror(prog, "`%s` tried to execute a STATE operation but misses its defs!", prog->filename);
+                goto cleanup;
+            }
+            ed = prog_getedict(prog, prog->globals[prog->cached_globals.self]);
+            ((qcint_t*)ed)[prog->cached_fields.think] = OPB->function;
+
+            frame     = (qcfloat_t*)&((qcint_t*)ed)[prog->cached_fields.frame];
+            *frame    = OPA->_float;
+            nextthink = (qcfloat_t*)&((qcint_t*)ed)[prog->cached_fields.nextthink];
+            time      = (qcfloat_t*)(prog->globals + prog->cached_globals.time);
+            *nextthink = *time + 0.1;
             break;
+        }
 
         case INSTR_GOTO:
             st += st->o1.s1 - 1;    /* offset the s++ */

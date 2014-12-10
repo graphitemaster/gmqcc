@@ -62,6 +62,9 @@ int platform_vasprintf(char **dat, const char *fmt, va_list args) {
     len = vsnprintf(buf, sizeof(buf), fmt, cpy);
     va_end (cpy);
 
+    if (len < 0)
+        return len;
+
     if (len < (int)sizeof(buf)) {
         *dat = util_strdup(buf);
         return len;

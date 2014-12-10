@@ -4,8 +4,7 @@ UNAME  ?= $(shell uname)
 CYGWIN  = $(findstring CYGWIN, $(UNAME))
 MINGW   = $(findstring MINGW,  $(UNAME))
 
-CFLAGS += -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes
-#turn on tons of warnings if clang is present
+# turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
 	CFLAGS +=                              \
@@ -17,6 +16,9 @@ ifeq ($(CC), clang)
 	    -Wno-float-equal                   \
 	    -Wno-unknown-warning-option        \
 	    -Wno-cast-align                    \
+	    -Wno-assign-enum                   \
+	    -Wno-empty-body                    \
+	    -Wno-date-time                     \
 	    -pedantic-errors
 else
 	ifneq ($(CC), g++)

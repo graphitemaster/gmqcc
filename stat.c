@@ -141,7 +141,7 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file, const char *
     info->expr = expr;
     info->prev = NULL;
     info->next = stat_mem_block_root;
-    
+
     /* Write identifier */
     memcpy(info + 1, IDENT_MEM, IDENT_SIZE);
 
@@ -167,7 +167,7 @@ void *stat_mem_allocate(size_t size, size_t line, const char *file, const char *
 void stat_mem_deallocate(void *ptr, size_t line, const char *file) {
     stat_mem_block_t *info  = NULL;
     char             *ident = (char *)ptr - IDENT_SIZE;
-    
+
     if (GMQCC_UNLIKELY(!ptr))
         return;
 
@@ -176,7 +176,7 @@ void stat_mem_deallocate(void *ptr, size_t line, const char *file) {
     if (!strcmp(ident, IDENT_VEC)) {
         vector_t         *vec   = (vector_t*)((char *)ptr - IDENT_VEC_TOP);
         stat_mem_block_t *block = (stat_mem_block_t*)((char *)vec - IDENT_MEM_TOP);
-        
+
         VALGRIND_MAKE_MEM_DEFINED(block, sizeof(stat_mem_block_t));
         con_err("internal warning: invalid use of mem_d:\n");
         con_err("internal warning:    vector (used elements: %u, allocated elements: %u)\n",

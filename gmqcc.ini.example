@@ -84,6 +84,25 @@
     FTEPP_MATHDEFS = false
 
 
+    #Enable indirect macro expansion. This only works in combination
+    #with '-fftepp' and is currently not included by '-std=fteqcc'.
+    #Enabling this behavior will allow the preprocessor to operate more
+    #like the standard C preprocessor in that it will allow arguments
+    #of macros which are macro-expanded to be substituted into the
+    #definition of the macro. As an example:
+    #
+    #   #define STR1(x) #x
+    #   #define STR2(x) STR1(x)
+    #   #define THE_ANSWER 42
+    #   #define THE_ANSWER_STR STR2(THE_ANSWER) /* "42" */
+    #
+    #With this enabled, an expansion of THE_ANSWER_STR will yield
+    #the string "42". With this disabled an expansion of THE_ANSWER_STR
+    #will yield "THE_ANSWER"
+
+    FTEPP_INDIRECT_EXPANSION = false
+
+
     #Allow switch cases to use non constant variables.
 
     RELAXED_SWITCH = true
@@ -310,6 +329,22 @@
     SORT_OPERANDS = false
 
 
+    #Emulate OP_STATE operations in code rather than using the instruction.
+    #The desired fps can be set via -state-fps=NUM, defaults to 10.
+
+    EMULATE_STATE = false
+
+
+    #Turn on arithmetic exception tests in the compiler. In constant expressions
+    #which trigger exceptions like division by zero, overflow, underflow, etc,
+    #the following flag will produce diagnostics for what triggered that
+    #exception.
+    ARITHMETIC_EXCEPTIONS = false
+
+    #Split vector-literals which are only used dirctly as function parameters
+    #into 3 floats stored separately to reduce the number of globals at the
+    #expense of additional instructions.
+    SPLIT_VECTOR_PARAMETERS = false
 
 [warnings]
     #Generate a warning about variables which are declared but never
@@ -566,6 +601,12 @@
     #such a function is resolved to a builtin.
 
     BUILTINS = true
+
+
+    #When comparing an inexact value such as `1.0/3.0' the result is
+    #pathologically wrong. Enabling this will trigger a compiler warning
+    #on such expressions.
+    INEXACT_COMPARES = true
 
 
 [optimizations]

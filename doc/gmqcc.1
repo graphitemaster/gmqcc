@@ -168,6 +168,11 @@ DEBUG OPTION. Print the code's intermediate representation after the
 optimization and finalization passes to stdout before generating the
 binary. The instructions will be enumerated, and values will contain a
 list of liferanges.
+.It Fl force-crc= Ns Ar CRC
+Force the produced progs file to use the specified CRC.
+.It Fl state-fps= Ns Ar NUM
+Activate \-femulate-state and set the emulated FPS to
+.Ar NUM Ns .
 .El
 .Sh COMPILE WARNINGS
 .Bl -tag -width Ds
@@ -344,6 +349,10 @@ will search its intrinsics table for something that matches that
 function name by appending "__builtin_" to it. This behaviour may
 be unexpected, so enabling this will produce a diagnostic when
 such a function is resolved to a builtin.
+.It Fl W Ns Cm inexact-compares
+When comparing an inexact value such as `1.0/3.0' the result is
+pathologically wrong. Enabling this will trigger a compiler warning
+on such expressions.
 .El
 .Sh COMPILE FLAGS
 .Bl -tag -width Ds
@@ -417,6 +426,25 @@ M_SQRT2
 M_SQRT1_2
 M_TAU
 .Ed
+.It Fl f Ns Cm ftepp-indirect-expansion
+Enable indirect macro expansion. This only works in combination
+with '-fftepp' and is currently not included by '-std=fteqcc'.
+Enabling this behavior will allow the preprocessor to operate more
+like the standard C preprocessor in that it will allow arguments
+of macros which are macro-expanded to be substituted into the
+definition of the macro.
+.Pp
+As an example:
+.Bd -literal -offset indent
+#define STR1(x) #x
+#define STR2(x) STR1(x)
+#define THE_ANSWER 42
+#define THE_ANSWER_STR STR2(THE_ANSWER) /* "42" */
+
+.Ed
+With this enabled, an expansion of THE_ANSWER_STR will yield
+the string "42". With this disabled an expansion of THE_ANSWER_STR
+will yield "THE_ANSWER"
 .It Fl f Ns Cm relaxed-switch
 Allow switch cases to use non constant variables.
 .It Fl f Ns Cm short-logic
@@ -577,6 +605,26 @@ breaks decompilers, but causes the output file to be better compressible.
 In commutative instructions, always put the lower-numbered operand first.
 This shaves off 1 byte of entropy from all these instructions, reducing
 compressed size of the output file.
+.It Fl f Ns Cm emulate-state
+Emulate OP_STATE operations in code rather than using the instruction.
+The desired fps can be set via -state-fps=NUM, defaults to 10.
+Specifying \-state-fps implicitly sets this flag. Defaults to off in all
+standards.
+.It Fl f Ns Cm arithmetic-exceptions
+Turn on arithmetic exception tests in the compiler. In constant expressions
+which trigger exceptions like division by zero, overflow, underflow, etc,
+the following flag will produce diagnostics for what triggered that
+exception.
+.It Fl f Ns Cm split-vector-parameters
+With this flag immediate vector literals which only ever appear as function
+parameters won't be stored as vector immediates. Instead, the 3 floats making
+up the vector will be copied separately. Essentially this turns a vector-store
+instruction into 3 float-store instructions for such cases. This increases
+code size but can dramatically reduce the amount of vector globals, which is
+after all limited to 64k. There's at least one known codebase where this
+lowers the number of globals from over 80k down to around 3k. In other code
+bases it doesn't reduce the globals at all but only increases code size.
+Just try it and see whether it helps you.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds

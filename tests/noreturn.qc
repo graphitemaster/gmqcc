@@ -3,8 +3,7 @@
 #endif
 
 void   (...)            print     = #1;
-string (float)          ftos      = #2;
-
+string (float val)      ftos      = #2;
 
 NORETURN void error(...)  = #6;
 

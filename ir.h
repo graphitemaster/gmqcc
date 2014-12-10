@@ -43,12 +43,14 @@ typedef struct {
 } ir_life_entry_t;
 
 enum {
-    IR_FLAG_HAS_ARRAYS           = 1 << 0,
-    IR_FLAG_HAS_UNINITIALIZED    = 1 << 1,
-    IR_FLAG_HAS_GOTO             = 1 << 2,
-    IR_FLAG_INCLUDE_DEF          = 1 << 3,
-    IR_FLAG_ERASEABLE            = 1 << 4,
-    IR_FLAG_BLOCK_COVERAGE       = 1 << 5,
+    IR_FLAG_HAS_ARRAYS              = 1 << 0,
+    IR_FLAG_HAS_UNINITIALIZED       = 1 << 1,
+    IR_FLAG_HAS_GOTO                = 1 << 2,
+    IR_FLAG_INCLUDE_DEF             = 1 << 3,
+    IR_FLAG_ERASABLE                = 1 << 4,
+    IR_FLAG_BLOCK_COVERAGE          = 1 << 5,
+
+    IR_FLAG_SPLIT_VECTOR            = 1 << 6,
 
     IR_FLAG_LAST,
     IR_FLAG_MASK_NO_OVERLAP      = (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED),
@@ -170,6 +172,7 @@ bool GMQCC_WARN ir_block_create_store_op(ir_block*, lex_ctx_t, int op, ir_value 
 bool GMQCC_WARN ir_block_create_storep(ir_block*, lex_ctx_t, ir_value *target, ir_value *what);
 ir_value*       ir_block_create_load_from_ent(ir_block*, lex_ctx_t, const char *label, ir_value *ent, ir_value *field, int outype);
 ir_value*       ir_block_create_fieldaddress(ir_block*, lex_ctx_t, const char *label, ir_value *entity, ir_value *field);
+bool GMQCC_WARN ir_block_create_state_op(ir_block*, lex_ctx_t, ir_value *frame, ir_value *think);
 
 /* This is to create an instruction of the form
  * <outtype>%label := opcode a, b
@@ -253,6 +256,7 @@ struct ir_builder_s {
     ir_function **functions;
     ir_value    **globals;
     ir_value    **fields;
+    ir_value    **const_floats; /* for reusing them in vector-splits, TODO: sort this or use a radix-tree */
 
     ht            htfunctions;
     ht            htglobals;

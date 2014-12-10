@@ -1,7 +1,7 @@
 var float foo = 0;
 
 void funcall() {}
-void bar(string) {}
+void bar(string str) {}
 
 void main(string str) {
     string pl;

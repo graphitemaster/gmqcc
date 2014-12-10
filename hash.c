@@ -223,26 +223,114 @@ static GMQCC_FORCEINLINE uint32_t hash_murmur(const void *GMQCC_RESTRICT key, si
     return hash_murmur_result(hash, carry, length);
 }
 
-size_t hash(const char *key) {
-    const char   *s = key;
-    const char   *a = s;
+/*
+ * The following hash function implements it's own strlen to avoid using libc's
+ * which isn't always slow but isn't always fastest either.
+ *
+ * Some things to note about this strlen that are otherwise confusing to grasp
+ * at first is that it does intentionally depend on undefined behavior.
+ *
+ * The first step to the strlen is to ensure alignment before checking words,
+ * without this step we risk crossing a page boundry with the word check and
+ * that would cause a crash.
+ *
+ * The second step to the strlen contains intentional undefined behavior. When
+ * accessing a word of any size, the first byte of that word is accessible if
+ * and only if the whole word is accessible because words are aligned. This is
+ * indicated by the fact that size / alignment always divides the page size.
+ * One could argue that an architecture exists where size_t and alignment are
+ * different, if that were the case, the alignment will always assume to be the
+ * size of the type (size_t). So it's always safe in that regard.
+ *
+ * In other words, an aligned 2^n load cannot cross a page boundry unless
+ * n > log2(PAGE_SIZE). There are no known architectures which support such
+ * a wide load larger than PAGE_SIZE.
+ *
+ * Valgrind and address sanatizer may choke on this because they're strictly
+ * trying to find bugs, it's a false positive to assume this is a bug when it's
+ * intentional. To prevent these false positives, both things need to be taught
+ * about the intentional behavior; for address sanatizer this can be done with
+ * a compiler attribute, effectively preventing the function from being
+ * instrumented. Valgrind requires a little more work as there is no way to
+ * downright prevent a function from being instrumented, instead we can mark
+ * + sizeof(size_t) bytes ahead of each byte we're reading as we calculate
+ * the length of the string, then we can make that additional + sizeof(size_t)
+ * on the end undefined after the length has been calculated.
+ *
+ * If the compiler doesn't have the attribute to disable address sanatizer
+ * instrumentation we fall back to using libc's strlen instead. This isn't the
+ * best solution. On windows we can assume this method always because neither
+ * address sanatizer or valgrind exist.
+ */
+
+/* Some compilers expose this */
+#if defined(__has_feature)
+#   if __has_feature(address_sanitizer)
+#       define ASAN_DISABLE __attribute__((no_sanitize_address))
+#       define HAS_ASAN_DISABLE
+#   endif
+#endif
+
+/* If they don't try to find by version the attriubte was introduces */
+#if defined(__GNUC__) && __GNUC__ >= 4
+#   define ASAN_DISABLE __attribute__((no_sanitize_address))
+#   define HAS_ASAN_DISABLE
+#elif defined(__clang__) && __clang_major__ >= 3
+#   define ASAN_DISABLE __attribute__((no_sanatize_address))
+#   define HAS_ASAN_DISABLE
+/* On windows asan doesn't exist */
+#elif defined(_WIN32)
+#   define ASAN_DISABLE /* nothing */
+#   define HAS_ASAN_DISABLE
+#endif
+
+#ifndef HAS_ASAN_DISABLE
+#   include <string.h>
+#endif
+
+#ifndef NVALGRIND
+#   include <valgrind/valgrind.h>
+#   include <valgrind/memcheck.h>
+#else
+#   define VALGRIND_MAKE_MEM_DEFINED(PTR, REDZONE_SIZE)
+#   define VALGRIND_MAKE_MEM_NOACCESS(PTR, REDZONE_SIZE)
+#endif
+
+#ifdef HAS_ASAN_DISABLE
+#define STRLEN_ALIGN (sizeof(size_t))
+#define STRLEN_ONES ((size_t)-1/UCHAR_MAX)
+#define STRLEN_HIGHS (STRLEN_ONES * (UCHAR_MAX/2+1))
+#define STRLEN_HASZERO(X) (((X)-STRLEN_ONES) & ~(X) & STRLEN_HIGHS)
+
+static ASAN_DISABLE size_t hash_strlen(const char *key) {
+    const char *s = key;
+    const char *a = s;
     const size_t *w;
 
-    for (; (uintptr_t)s % sizeof(size_t); s++)
-        if (!*s)
-            return hash_murmur((const void *)key, s-a);
+    for (; (uintptr_t)s % STRLEN_ALIGN; s++) {
+        if (*s)
+            continue;
+        return s-a;
+    }
 
-    for (w = (const size_t*)s; !((*w-(size_t)-1/UCHAR_MAX) & ~*w & ((size_t)-1/UCHAR_MAX) * (UCHAR_MAX / 2 + 1)); w++);
+    VALGRIND_MAKE_MEM_DEFINED(s, STRLEN_ALIGN);
+    for (w = (const size_t *)s; !STRLEN_HASZERO(*w); w++) {
+        /* Make the next word legal to access */
+        VALGRIND_MAKE_MEM_DEFINED(w + STRLEN_ALIGN, STRLEN_ALIGN);
+    }
+
     for (s = (const char *)w; *s; s++);
 
-    return hash_murmur((const void *)key, s-a);
+    /* It's not legal to access this area anymore */
+    VALGRIND_MAKE_MEM_NOACCESS(s + 1, STRLEN_ALIGN);
+    return s-a;
 }
+#else
+static GMQCC_INLINE size_t hash_strlen(const char *key) {
+    return strlen(key);
+}
+#endif
 
-#undef HASH_ROTL32
-#undef HASH_MURMUR_MASK1
-#undef HASH_MURMUR_MASK2
-#undef HASH_MURMUR_SEED
-#undef HASH_MURMUR_SAFEREAD
-#undef HASH_MURMUR_BLOCK
-#undef HASH_MURMUR_BYTES
-#undef HASH_MURMUR_TAIL
+size_t hash(const char *key) {
+    return hash_murmur((const void *)key, hash_strlen(key));
+}
