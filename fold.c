@@ -34,15 +34,16 @@
 #define FOLD_TINYNESS SFLOAT_TBEFORE
 
 /*
- * The constant folder is also responsible for validating if the constant
- * expressions produce valid results. We cannot trust the FPU control
- * unit for these exceptions because setting FPU control words might not
- * work. Systems can set and enforce FPU modes of operation. It's also valid
- * for libc's to simply ignore FPU exceptions. For instance ARM CPUs in
- * glibc. We implement some trivial and IEE 754 conformant functions which
- * emulate those operations. This is an entierly optional compiler feature
- * which shouldn't be enabled for anything other than performing strict
- * passes on constant expressions since it's quite slow.
+ * Comparing float values is an unsafe operation when the operands to the
+ * comparison are floating point values that are inexact. For instance 1/3 is an
+ * inexact value. The FPU is meant to raise exceptions when these sorts of things
+ * happen, including division by zero, underflows and overflows. The C standard
+ * library provides us with the <fenv.h> header to gain access to the floating-
+ * point environment and lets us set the rounding mode and check for these exceptions.
+ * The problem is the standard C library allows an implementation to leave these
+ * stubbed out and does not require they be implemented. Furthermore, depending
+ * on implementations there is no control over the FPU. This is an IEE 754
+ * conforming implementation in software to compensate.
  */
 typedef uint32_t sfloat_t;
 
@@ -78,7 +79,7 @@ typedef struct {
     sfloat_tdetect_t        tiny;
 } sfloat_state_t;
 
-/* Count of leading zero bits before the most-significand 1 bit. */
+/* Counts the number of leading zero bits before the most-significand one bit. */
 #ifdef _MSC_VER
 /* MSVC has an intrinsic for this */
     static GMQCC_INLINE uint32_t sfloat_clz(uint32_t x) {
@@ -115,7 +116,7 @@ typedef struct {
 #endif
 
 /* The value of a NaN */
-#define SFLOAT_NAN 0xFFC00000
+#define SFLOAT_NAN 0xFFFFFFFF
 /* Test if NaN */
 #define SFLOAT_ISNAN(A) \
     (0xFF000000 < (uint32_t)((A) << 1))
@@ -126,8 +127,12 @@ typedef struct {
 #define SFLOAT_RAISE(STATE, FLAGS) \
     ((STATE)->exceptionflags = (sfloat_exceptionflags_t)((STATE)->exceptionflags | (FLAGS)))
 /*
- * Shifts `A' right `COUNT' bits. Non-zero bits are stored in LSB. Size
- * sets the arbitrarly-large limit.
+ * Shifts `A' right by the number of bits given in `COUNT'. If any non-zero bits
+ * are shifted off they are forced into the least significand bit of the result
+ * by setting it to one. As a result of this, the value of `COUNT' can be
+ * arbitrarily large; if `COUNT' is greater than 32, the result will be either
+ * zero or one, depending on whether `A' is a zero or non-zero. The result is
+ * stored into the value pointed by `Z'.
  */
 #define SFLOAT_SHIFT(SIZE, A, COUNT, Z)                                      \
     *(Z) = ((COUNT) == 0)                                                    \
@@ -135,6 +140,7 @@ typedef struct {
         : (((COUNT) < (SIZE))                                                \
             ? ((A) >> (COUNT)) | (((A) << ((-(COUNT)) & ((SIZE) - 1))) != 0) \
             : ((A) != 0))
+
 /* Extract fractional component */
 #define SFLOAT_EXTRACT_FRAC(X) \
     ((uint32_t)((X) & 0x007FFFFF))
@@ -144,21 +150,32 @@ typedef struct {
 /* Extract sign bit */
 #define SFLOAT_EXTRACT_SIGN(X) \
     ((X) >> 31)
-/* Normalize a subnormal */
-#define SFLOAT_SUBNORMALIZE(SA, Z, SZ) \
-    (void)(*(SZ) = (SA) << SFLOAT_CLZ((SA), 8), *(SZ) = 1 - SFLOAT_CLZ((SA), 8))
 /*
- * Pack sign, exponent and significand and produce a float.
+ * Normalizes the subnormal value represented by the denormalized significand
+ * `SA'. The normalized exponent and significand are stored at the locations
+ * pointed by `Z' and `SZ' respectively.
+ */
+#define SFLOAT_SUBNORMALIZE(SA, Z, SZ) \
+    (void)(*(SZ) = (SA) << SFLOAT_CLZ((SA), 8), *(Z) = 1 - SFLOAT_CLZ((SA), 8))
+/*
+ * Packs the sign `SIGN', exponent `EXP' and significand `SIG' into the value
+ * giving the result.
  *
- * Integer portions of the significand are added to the exponent. The
- * exponent input should be one less than the result exponent whenever
- * the significand is normalized since normalized significand will
- * always have an integer portion of value one.
+ * After the shifting into their proper positions, the fields are added together
+ * to form the result. This means any integer portion of `SIG' will be added
+ * to the exponent. Similarly, because a properly normalized significand will
+ * always have an integer portion equal to one, the exponent input `EXP' should
+ * be one less than the desired result exponent whenever the significant input
+ * `SIG' is a complete, normalized significand.
  */
 #define SFLOAT_PACK(SIGN, EXP, SIG) \
     (sfloat_t)((((uint32_t)(SIGN)) << 31) + (((uint32_t)(EXP)) << 23) + (SIG))
 
-/* Calculate NaN. If either operands are signaling then raise invalid */
+/*
+ * Takes two values `a' and `b', one of which is a NaN, and returns the appropriate
+ * NaN result. If either `a' or `b' is a signaling NaN than an invalid exception is
+ * raised.
+ */
 static sfloat_t sfloat_propagate_nan(sfloat_state_t *state, sfloat_t a, sfloat_t b) {
     bool isnan_a  = SFLOAT_ISNAN(a);
     bool issnan_a = SFLOAT_ISSNAN(a);
@@ -169,23 +186,33 @@ static sfloat_t sfloat_propagate_nan(sfloat_state_t *state, sfloat_t a, sfloat_t
     b |= 0x00400000;
 
     if (issnan_a | issnan_b)
-        SFLOAT_RAISE(state, SFLOAT_INEXACT);
-    if (issnan_a) {
-        if (issnan_b)
-            goto larger;
-        return isnan_b ? b : a;
-    } else if (isnan_a) {
-        if (issnan_b | !isnan_b)
-            return a;
-larger:
-        if ((uint32_t)(a << 1) < (uint32_t)(b << 1)) return b;
-        if ((uint32_t)(b << 1) < (uint32_t)(a << 1)) return a;
-        return (a < b) ? a : b;
-    }
+        SFLOAT_RAISE(state, SFLOAT_INVALID);
+    if (isnan_a)
+        return (issnan_a & isnan_b) ? b : a;
     return b;
 }
 
-/* Round and pack */
+/*
+ * Takes an abstract value having sign `sign_z', exponent `exp_z', and significand
+ * `sig_z' and returns the appropriate value corresponding to the abstract input.
+ *
+ * The abstract value is simply rounded and packed into the format. If the abstract
+ * input cannot be represented exactly an inexact exception is raised. If the
+ * abstract input is too large, the overflow and inexact exceptions are both raised
+ * and an infinity or maximal finite value is returned. If the abstract value is
+ * too small, the value is rounded to a subnormal and the underflow and inexact
+ * exceptions are only raised if the value cannot be represented exactly with
+ * a subnormal.
+ *
+ * The input significand `sig_z' has it's binary point between bits 30 and 29,
+ * this is seven bits to the left of its usual location. The shifted significand
+ * must be normalized or smaller than this. If it's not normalized then the exponent
+ * `exp_z' must be zero; in that case, the result returned is a subnormal number
+ * and is must not require rounding. In the more usual case where the significand
+ * is normalized, the exponent must be one less than the *true* exponent.
+ *
+ * The handling of underflow and overflow is otherwise in alignment with IEC/IEEE.
+ */
 static sfloat_t SFLOAT_PACK_round(sfloat_state_t *state, bool sign_z, int16_t exp_z, uint32_t sig_z) {
     sfloat_roundingmode_t mode      = state->roundingmode;
     bool                  even      = !!(mode == SFLOAT_ROUND_NEAREST_EVEN);
@@ -222,13 +249,6 @@ static sfloat_t SFLOAT_PACK_round(sfloat_state_t *state, bool sign_z, int16_t ex
                 SFLOAT_RAISE(state, SFLOAT_UNDERFLOW);
         }
     }
-
-    /*
-     * Significand has point between bits 30 and 29, 7 bits to the left of
-     * the usual place. This shifted significand has to be normalized
-     * or smaller, if it isn't the exponent must be zero, in which case
-     * no rounding occurs since the result will be a subnormal.
-     */
     if (bits)
         SFLOAT_RAISE(state, SFLOAT_INEXACT);
     sig_z = (sig_z + increment) >> 7;
@@ -238,12 +258,24 @@ static sfloat_t SFLOAT_PACK_round(sfloat_state_t *state, bool sign_z, int16_t ex
     return SFLOAT_PACK(sign_z, exp_z, sig_z);
 }
 
-/* Normalized round and pack */
+/*
+ * Takes an abstract value having sign `sign_z', exponent `exp_z' and significand
+ * `sig_z' and returns the appropriate value corresponding to the abstract input.
+ * This function is exactly like `PACK_round' except the significand does not have
+ * to be normalized.
+ *
+ * Bit 31 of the significand must be zero and the exponent must be one less than
+ * the *true* exponent.
+ */
 static sfloat_t SFLOAT_PACK_normal(sfloat_state_t *state, bool sign_z, int16_t exp_z, uint32_t sig_z) {
     unsigned char c = SFLOAT_CLZ(sig_z, 1);
     return SFLOAT_PACK_round(state, sign_z, exp_z - c, sig_z << c);
 }
 
+/*
+ * Returns the result of adding the absolute values of `a' and `b'. The sign
+ * `sign_z' is ignored if the result is a NaN.
+ */
 static sfloat_t sfloat_add_impl(sfloat_state_t *state, sfloat_t a, sfloat_t b, bool sign_z) {
     int16_t  exp_a = SFLOAT_EXTRACT_EXP(a);
     int16_t  exp_b = SFLOAT_EXTRACT_EXP(b);
@@ -291,6 +323,11 @@ end:
     return SFLOAT_PACK_round(state, sign_z, exp_z, sig_z);
 }
 
+/*
+ * Returns the result of subtracting the absolute values of `a' and `b'. If the
+ * sign `sign_z' is one, the difference is negated before being returned. The
+ * sign is ignored if the result is a NaN.
+ */
 static sfloat_t sfloat_sub_impl(sfloat_state_t *state, sfloat_t a, sfloat_t b, bool sign_z) {
     int16_t  exp_a = SFLOAT_EXTRACT_EXP(a);
     int16_t  exp_b = SFLOAT_EXTRACT_EXP(b);
