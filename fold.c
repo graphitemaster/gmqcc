@@ -52,6 +52,7 @@ typedef union {
     sfloat_t  s;
 } sfloat_cast_t;
 
+/* Exception flags */
 typedef enum {
     SFLOAT_NOEXCEPT  = 0,
     SFLOAT_INVALID   = 1,
@@ -61,6 +62,7 @@ typedef enum {
     SFLOAT_INEXACT   = 32
 } sfloat_exceptionflags_t;
 
+/* Rounding modes */
 typedef enum {
     SFLOAT_ROUND_NEAREST_EVEN,
     SFLOAT_ROUND_DOWN,
@@ -68,6 +70,7 @@ typedef enum {
     SFLOAT_ROUND_TO_ZERO
 } sfloat_roundingmode_t;
 
+/* Underflow tininess-detection mode */
 typedef enum {
     SFLOAT_TAFTER,
     SFLOAT_TBEFORE
@@ -544,7 +547,7 @@ static GMQCC_INLINE void sfloat_init(sfloat_state_t *state) {
 
 /*
  * There is two stages to constant folding in GMQCC: there is the parse
- * stage constant folding, where, witht he help of the AST, operator
+ * stage constant folding, where, with the help of the AST, operator
  * usages can be constant folded. Then there is the constant folding
  * in the IR for things like eliding if statements, can occur.
  *
@@ -1097,29 +1100,9 @@ static bool fold_check_inexact_float(fold_t *fold, ast_value *a, ast_value *b) {
 }
 
 static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, ast_value *sel, const char *set) {
-    /*
-     * vector-component constant folding works by matching the component sets
-     * to eliminate expensive operations on whole-vectors (3 components at runtime).
-     * to achive this effect in a clean manner this function generalizes the
-     * values through the use of a set paramater, which is used as an indexing method
-     * for creating the elided ast binary expression.
-     *
-     * Consider 'n 0 0' where y, and z need to be tested for 0, and x is
-     * used as the value in a binary operation generating an INSTR_MUL instruction,
-     * to acomplish the indexing of the correct component value we use set[0], set[1], set[2]
-     * as x, y, z, where the values of those operations return 'x', 'y', 'z'. Because
-     * of how ASCII works we can easily deliniate:
-     * vec.z is the same as set[2]-'x' for when set[2] is 'z', 'z'-'x' results in a
-     * literal value of 2, using this 2, we know that taking the address of vec->x (float)
-     * and indxing it with this literal will yeild the immediate address of that component
-     *
-     * Of course more work needs to be done to generate the correct index for the ast_member_new
-     * call, which is no problem: set[0]-'x' suffices that job.
-     */
     qcfloat_t x = (&vec.x)[set[0]-'x'];
     qcfloat_t y = (&vec.x)[set[1]-'x'];
     qcfloat_t z = (&vec.x)[set[2]-'x'];
-
     if (!y && !z) {
         ast_expression *out;
         ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
@@ -1497,8 +1480,8 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
 }
 
 /*
- * Constant folding for compiler intrinsics, simaler approach to operator
- * folding, primarly: individual functions for each intrinsics to fold,
+ * Constant folding for compiler intrinsics, similar approach to operator
+ * folding, primarily: individual functions for each intrinsics to fold,
  * and a generic selection function.
  */
 static GMQCC_INLINE ast_expression *fold_intrin_isfinite(fold_t *fold, ast_value *a) {
