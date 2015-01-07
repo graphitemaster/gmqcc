@@ -208,7 +208,7 @@ static sfloat_t sfloat_propagate_nan(sfloat_state_t *state, sfloat_t a, sfloat_t
  * this is seven bits to the left of its usual location. The shifted significand
  * must be normalized or smaller than this. If it's not normalized then the exponent
  * `exp_z' must be zero; in that case, the result returned is a subnormal number
- * and is must not require rounding. In the more usual case where the significand
+ * which must not require rounding. In the more usual case where the significand
  * is normalized, the exponent must be one less than the *true* exponent.
  *
  * The handling of underflow and overflow is otherwise in alignment with IEC/IEEE.
