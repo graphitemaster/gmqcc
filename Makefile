@@ -17,10 +17,10 @@ TBIN = testsuite
 all: $(CBIN) $(TBIN)
 
 $(CBIN): $(COBJS)
-	$(CC) $(LDFLAGS) $(COBJS) -o $@
+	$(CC) $(COBJS) $(LDFLAGS) -o $@
 
 $(TBIN): $(TOBJS)
-	$(CC) $(LDFLAGS) $(TOBJS) -o $@
+	$(CC) $(TOBJS) $(LDFLAGS) -o $@
 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
