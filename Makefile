@@ -2,9 +2,9 @@ CC ?= clang
 CFLAGS = -MD -std=gnu99 -Wall -Wextra -pedantic-errors -g3
 LDFLAGS = -lm
 
-CSRCS = ast.c code.c conout.c fold.c ftepp.c hash.c intrin.c ir.c lexer.c main.c opts.c parser.c stat.c utf8.c util.c
-TSRCS = conout.c hash.c opts.c stat.c test.c util.c
-VSRCS = exec.c hash.c stat.c util.c
+CSRCS = ast.c code.c conout.c fold.c ftepp.c intrin.c ir.c lexer.c main.c opts.c parser.c stat.c utf8.c util.c
+TSRCS = conout.c opts.c stat.c test.c util.c
+VSRCS = exec.c stat.c util.c
 
 COBJS = $(CSRCS:.c=.o)
 TOBJS = $(TSRCS:.c=.o)

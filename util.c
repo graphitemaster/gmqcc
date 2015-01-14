@@ -758,3 +758,16 @@ void util_seed(uint32_t value) {
         (void)util_rand();
 }
 
+size_t hash(const char *string) {
+    size_t hash = 0;
+    for(; *string; ++string) {
+        hash += *string;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += hash << 3;
+    hash ^= hash >> 11;
+    hash += hash << 15;
+    return hash;
+}
+
