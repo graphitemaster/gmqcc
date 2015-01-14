@@ -32,3 +32,5 @@ clean:
 	rm -f *.d
 	rm -f $(COBJS) $(CDEPS) $(CBIN)
 	rm -f $(TOBJS) $(TDEPS) $(TBIN)
+
+-include *.d

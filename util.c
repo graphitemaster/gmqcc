@@ -519,7 +519,7 @@ static const uint16_t util_crc16_table[8][256] = {{
 
 /* Non - Reflected */
 uint16_t util_crc16(uint16_t current, const char *GMQCC_RESTRICT k, size_t len) {
-    register uint16_t h = current;
+    uint16_t h = current;
 
     /* don't load twice */
     const uint8_t *GMQCC_RESTRICT data = (const uint8_t *GMQCC_RESTRICT)k;
