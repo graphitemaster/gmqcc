@@ -163,23 +163,9 @@ char *stat_mem_strdup(const char *, bool);
 #define mem_d(PTRN)              free((void*)PTRN)
 #define mem_r(PTRN, SIZE)        realloc((void*)PTRN, SIZE)
 
-/* TODO: rename to mem variations */
 #define util_strdup(SRC)         stat_mem_strdup((char*)(SRC), false)
 #define util_strdupe(SRC)        stat_mem_strdup((char*)(SRC), true)
 
-/* util.c */
-
-/*
- * Microsoft implements against the spec versions of ctype.h. Which
- * means what ever the current set locale is will render the actual
- * results of say isalpha('A') wrong for what ever retarded locale
- * is used. Simalerly these are also implemented inefficently on
- * some toolchains and end up becoming actual library calls. Perhaps
- * this is why tools like yacc provide their own? Regardless implementing
- * these as functions is equally as silly, the call overhead is not
- * justified when this could happen on every character from an input
- * stream. We provide our own as macros for absolute inlinability.
- */
 #define util_isalpha(a) ((((unsigned)(a)|32)-'a') < 26)
 #define util_isdigit(a) (((unsigned)(a)-'0') < 10)
 #define util_islower(a) (((unsigned)(a)-'a') < 26)
@@ -256,36 +242,6 @@ typedef struct hash_table_s {
     struct hash_node_t **table;
 } hash_table_t, *ht;
 
-/*
- * hashtable implementation:
- *
- * Note:
- *      This was designed for pointers:  you manage the life of the object yourself
- *      if you do use this for non-pointers please be warned that the object may not
- *      be valid if the duration of it exceeds (i.e on stack).  So you need to allocate
- *      yourself, or put those in global scope to ensure duration is for the whole
- *      runtime.
- *
- * util_htnew(size)                             -- to make a new hashtable
- * util_htset(table, key, value, sizeof(value)) -- to set something in the table
- * util_htget(table, key)                       -- to get something from the table
- * util_htdel(table)                            -- to delete the table
- *
- * example of use:
- *
- * ht    foo  = util_htnew(1024);
- * int   data = 100;
- * char *test = "hello world\n";
- * util_htset(foo, "foo", (void*)&data);
- * util_gtset(foo, "bar", (void*)test);
- *
- * printf("foo: %d, bar %s",
- *     *((int *)util_htget(foo, "foo")),
- *      ((char*)util_htget(foo, "bar"))
- * );
- *
- * util_htdel(foo);
- */
 hash_table_t *util_htnew (size_t size);
 void util_htrem(hash_table_t *ht, void (*callback)(void *data));
 void util_htset(hash_table_t *ht, const char *key, void *value);
@@ -378,34 +334,16 @@ typedef struct {
 #define OFS_PARM6     (OFS_PARM5 +3)
 #define OFS_PARM7     (OFS_PARM6 +3)
 
+typedef union {
+    int16_t s1;
+    uint16_t u1;
+} operand_t;
+
 typedef struct {
     uint16_t opcode;
-
-    /* operand 1 */
-    union {
-        int16_t  s1; /* signed   */
-        uint16_t u1; /* unsigned */
-    } o1;
-    /* operand 2 */
-    union {
-        int16_t  s1; /* signed   */
-        uint16_t u1; /* unsigned */
-    } o2;
-    /* operand 3 */
-    union {
-        int16_t  s1; /* signed   */
-        uint16_t u1; /* unsigned */
-    } o3;
-
-    /*
-     * This is the same as the structure in darkplaces
-     * {
-     *     unsigned short op;
-     *     short          a,b,c;
-     * }
-     * But this one is more sane to work with, and the
-     * type sizes are guranteed.
-     */
+    operand_t o1;
+    operand_t o2;
+    operand_t o3;
 } prog_section_statement_t;
 
 typedef struct {

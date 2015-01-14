@@ -1,15 +1,6 @@
 #include <string.h>
 #include "parser.h"
 
-/*
- * Provides all the "intrinsics" / "builtins" for GMQCC. These can do
- * a few things, they can provide fall back implementations for math
- * functions if the definitions don't exist for some given engine. Or
- * then can determine definitions for existing builtins, and simply
- * wrap back to them instead.  This is like a "portable" intrface that
- * is entered when -fintrin is used (causing all existing builtins to
- * be ignored by the compiler and instead interface through here.
- */
 #define intrin_ctx(I) parser_ctx((I)->parser)
 
 static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **out, const char *name, qcint_t vtype) {
