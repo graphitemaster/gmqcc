@@ -25,6 +25,7 @@
 #define GMQCC_HDR
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <time.h>
 
 #define GMQCC_VERSION_MAJOR 0
@@ -178,20 +179,16 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #define GMQCC_ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
 
 /* stat.c */
-void  stat_info          (void);
-char *stat_mem_strdup    (const char *, size_t,         const char *, bool);
-void  stat_mem_deallocate(void *,       size_t,         const char *);
-void *stat_mem_reallocate(void *,       size_t, size_t, const char *, const char *);
-void *stat_mem_allocate  (size_t, size_t, const char *, const char *);
+void  stat_info(void);
+char *stat_mem_strdup(const char *, bool);
 
-#define mem_a(SIZE)              stat_mem_allocate  ((SIZE), __LINE__, __FILE__, #SIZE)
-#define mem_d(PTRN)              stat_mem_deallocate((void*)(PTRN), __LINE__, __FILE__)
-#define mem_r(PTRN, SIZE)        stat_mem_reallocate((void*)(PTRN), (SIZE), __LINE__, __FILE__, #SIZE)
-#define mem_af(SIZE, FILE, LINE) stat_mem_allocate  ((SIZE), (LINE), (FILE), #SIZE)
+#define mem_a(SIZE)              malloc(SIZE)
+#define mem_d(PTRN)              free((void*)PTRN)
+#define mem_r(PTRN, SIZE)        realloc((void*)PTRN, SIZE)
 
 /* TODO: rename to mem variations */
-#define util_strdup(SRC)         stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, false)
-#define util_strdupe(SRC)        stat_mem_strdup((char*)(SRC), __LINE__, __FILE__, true)
+#define util_strdup(SRC)         stat_mem_strdup((char*)(SRC), false)
+#define util_strdupe(SRC)        stat_mem_strdup((char*)(SRC), true)
 
 /* util.c */
 
@@ -260,14 +257,14 @@ typedef struct {
 void _util_vec_grow(void **a, size_t i, size_t s);
 void _util_vec_delete(void *vec, size_t line, const char *file);
 
-#define GMQCC_VEC_WILLGROW(X,Y) ( \
+#define GMQCC_VEC_WILLGROW(X, Y) ( \
     ((!(X) || vec_meta(X)->used + Y >= vec_meta(X)->allocated)) ? \
         (void)_util_vec_grow(((void**)&(X)), (Y), sizeof(*(X))) : \
         (void)0                                                   \
 )
 
 /* exposed interface */
-#define vec_meta(A)       ((vector_t*)(((char *)(A)) - (sizeof(vector_t) + 4)))
+#define vec_meta(A)       ((vector_t*)(((char *)(A)) - sizeof(vector_t)))
 #define vec_free(A)       ((void)((A) ? (_util_vec_delete((void *)(A), __LINE__, __FILE__), (A) = NULL) : 0))
 #define vec_push(A,V)     (GMQCC_VEC_WILLGROW((A),1), (A)[vec_meta(A)->used++] = (V))
 #define vec_size(A)       ((A) ? vec_meta(A)->used : 0)
