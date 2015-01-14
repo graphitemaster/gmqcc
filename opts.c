@@ -59,7 +59,6 @@ opts_cmd_t   opts; /* command line options */
 
 static void opts_setdefault(void) {
     memset(&opts, 0, sizeof(opts_cmd_t));
-    OPTS_OPTION_BOOL(OPTION_CORRECTION) = true;
     OPTS_OPTION_STR(OPTION_PROGSRC)     = "progs.src";
 
     /* warnings */

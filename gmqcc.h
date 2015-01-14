@@ -359,27 +359,6 @@ fs_dir_t      *fs_dir_open    (const char *);
 int            fs_dir_close   (fs_dir_t *);
 fs_dirent_t   *fs_dir_read    (fs_dir_t *);
 
-
-/* correct.c */
-typedef struct correct_trie_s {
-    void                  *value;
-    struct correct_trie_s *entries;
-} correct_trie_t;
-
-correct_trie_t* correct_trie_new(void);
-
-typedef struct {
-    char   ***edits;
-    size_t  **lens;
-} correction_t;
-
-void  correct_del (correct_trie_t*, size_t **);
-void  correct_add (correct_trie_t*, size_t ***, const char *);
-char *correct_str (correction_t *, correct_trie_t*, const char *);
-void  correct_init(correction_t *);
-void  correct_free(correction_t *);
-
-
 /* code.c */
 
 /* Note: if you change the order, fix type_sizeof in ir.c */

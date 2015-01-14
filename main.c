@@ -498,14 +498,6 @@ static bool options_parse(int argc, char **argv) {
                         OPTS_OPTION_BOOL(OPTION_QUIET) = true;
                         break;
                     }
-                    else if (!strcmp(argv[0]+2, "correct")) {
-                        OPTS_OPTION_BOOL(OPTION_CORRECTION) = true;
-                        break;
-                    }
-                    else if (!strcmp(argv[0]+2, "no-correct")) {
-                        OPTS_OPTION_BOOL(OPTION_CORRECTION) = false;
-                        break;
-                    }
                     else if (!strcmp(argv[0]+2, "add-info")) {
                         OPTS_OPTION_BOOL(OPTION_ADD_INFO) = true;
                         break;

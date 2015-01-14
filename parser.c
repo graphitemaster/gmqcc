@@ -1653,9 +1653,6 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
 
 
             if (!var) {
-                char *correct = NULL;
-                size_t i;
-
                 /*
                  * sometimes people use preprocessing predefs without enabling them
                  * i've done this thousands of times already myself.  Lets check for
@@ -1666,34 +1663,6 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
                     return false;
                 }
 
-                /*
-                 * TODO: determine the best score for the identifier: be it
-                 * a variable, a field.
-                 *
-                 * We should also consider adding correction tables for
-                 * other things as well.
-                 */
-                if (OPTS_OPTION_BOOL(OPTION_CORRECTION) && strlen(parser_tokval(parser)) <= 16) {
-                    correction_t corr;
-                    correct_init(&corr);
-
-                    for (i = 0; i < vec_size(parser->correct_variables); i++) {
-                        correct = correct_str(&corr, parser->correct_variables[i], parser_tokval(parser));
-                        if (strcmp(correct, parser_tokval(parser))) {
-                            break;
-                        } else  {
-                            mem_d(correct);
-                            correct = NULL;
-                        }
-                    }
-                    correct_free(&corr);
-
-                    if (correct) {
-                        parseerror(parser, "unexpected identifier: %s (did you mean %s?)", parser_tokval(parser), correct);
-                        mem_d(correct);
-                        return false;
-                    }
-                }
                 parseerror(parser, "unexpected identifier: %s", parser_tokval(parser));
                 return false;
             }
@@ -2045,10 +2014,6 @@ static void parser_enterblock(parser_t *parser)
     vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
     vec_push(parser->_blocktypedefs, vec_size(parser->_typedefs));
     vec_push(parser->_block_ctx, parser_ctx(parser));
-
-    /* corrector */
-    vec_push(parser->correct_variables, correct_trie_new());
-    vec_push(parser->correct_variables_score, NULL);
 }
 
 static bool parser_leaveblock(parser_t *parser)
@@ -2062,11 +2027,8 @@ static bool parser_leaveblock(parser_t *parser)
     }
 
     util_htdel(vec_last(parser->variables));
-    correct_del(vec_last(parser->correct_variables), vec_last(parser->correct_variables_score));
 
     vec_pop(parser->variables);
-    vec_pop(parser->correct_variables);
-    vec_pop(parser->correct_variables_score);
     if (!vec_size(parser->_blocklocals)) {
         parseerror(parser, "internal error: parser_leaveblock with no block (2)");
         return false;
@@ -2101,26 +2063,12 @@ static void parser_addlocal(parser_t *parser, const char *name, ast_expression *
 {
     vec_push(parser->_locals, e);
     util_htset(vec_last(parser->variables), name, (void*)e);
-
-    /* corrector */
-    correct_add (
-         vec_last(parser->correct_variables),
-        &vec_last(parser->correct_variables_score),
-        name
-    );
 }
 
 static void parser_addglobal(parser_t *parser, const char *name, ast_expression *e)
 {
     vec_push(parser->globals, e);
     util_htset(parser->htglobals, name, e);
-
-    /* corrector */
-    correct_add (
-         parser->correct_variables[0],
-        &parser->correct_variables_score[0],
-        name
-    );
 }
 
 static ast_expression* process_condition(parser_t *parser, ast_expression *cond, bool *_ifnot)
@@ -5510,21 +5458,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        /*
-                         * add alias to aliases table and to corrector
-                         * so corrections can apply for aliases as well.
-                         */
                         util_htset(parser->aliases, var->name, find);
-
-                        /*
-                         * add to corrector so corrections can work
-                         * even for aliases too.
-                         */
-                        correct_add (
-                             vec_last(parser->correct_variables),
-                            &vec_last(parser->correct_variables_score),
-                            var->name
-                        );
 
                         /* generate aliases for vector components */
                         if (isvector) {
@@ -5541,26 +5475,6 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             mem_d(buffer[0]);
                             mem_d(buffer[1]);
                             mem_d(buffer[2]);
-
-                            /*
-                             * add to corrector so corrections can work
-                             * even for aliases too.
-                             */
-                            correct_add (
-                                 vec_last(parser->correct_variables),
-                                &vec_last(parser->correct_variables_score),
-                                me[0]->name
-                            );
-                            correct_add (
-                                 vec_last(parser->correct_variables),
-                                &vec_last(parser->correct_variables_score),
-                                me[1]->name
-                            );
-                            correct_add (
-                                 vec_last(parser->correct_variables),
-                                &vec_last(parser->correct_variables_score),
-                                me[2]->name
-                            );
                         }
                     }
                 }
@@ -5582,13 +5496,6 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
 
                     /* Add it to the local scope */
                     util_htset(vec_last(parser->variables), var->name, (void*)var);
-
-                    /* corrector */
-                    correct_add (
-                         vec_last(parser->correct_variables),
-                        &vec_last(parser->correct_variables_score),
-                        var->name
-                    );
 
                     /* now rename the global */
                     ln = strlen(var->name);
@@ -5620,13 +5527,6 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     if (isvector) {
                         for (i = 0; i < 3; ++i) {
                             util_htset(vec_last(parser->variables), me[i]->name, (void*)(me[i]));
-
-                            /* corrector */
-                            correct_add(
-                                 vec_last(parser->correct_variables),
-                                &vec_last(parser->correct_variables_score),
-                                me[i]->name
-                            );
 
                             vec_shrinkto(defname, prefix_len);
                             ln = strlen(me[i]->name);
@@ -6164,10 +6064,6 @@ parser_t *parser_create()
 
     parser->aliases = util_htnew(PARSER_HT_SIZE);
 
-    /* corrector */
-    vec_push(parser->correct_variables, correct_trie_new());
-    vec_push(parser->correct_variables_score, NULL);
-
     empty_ctx.file   = "<internal>";
     empty_ctx.line   = 0;
     empty_ctx.column = 0;
@@ -6279,13 +6175,6 @@ static void parser_remove_ast(parser_t *parser)
     vec_free(parser->variables);
     vec_free(parser->_blocklocals);
     vec_free(parser->_locals);
-
-    /* corrector */
-    for (i = 0; i < vec_size(parser->correct_variables); ++i) {
-        correct_del(parser->correct_variables[i], parser->correct_variables_score[i]);
-    }
-    vec_free(parser->correct_variables);
-    vec_free(parser->correct_variables_score);
 
     for (i = 0; i < vec_size(parser->_typedefs); ++i)
         ast_delete(parser->_typedefs[i]);

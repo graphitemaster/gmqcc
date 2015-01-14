@@ -23,7 +23,7 @@ OPTIONAL_CFLAGS  :=
 OPTIONAL_LDFLAGS :=
 
 #objects
-OBJ_C = $(COMMON) main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o correct.o fold.o intrin.o
+OBJ_C = $(COMMON) main.o lexer.o parser.o code.o ast.o ir.o ftepp.o utf8.o fold.o intrin.o
 OBJ_P = $(COMMON) pak.o
 OBJ_T = $(COMMON) test.o
 OBJ_X = $(COMMON) exec.o

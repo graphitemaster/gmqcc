@@ -92,10 +92,6 @@ struct parser_s {
     ht htglobals;
     ht *typedefs;
 
-    /* same as above but for the spelling corrector */
-    correct_trie_t  **correct_variables;
-    size_t         ***correct_variables_score;  /* vector of vector of size_t* */
-
     /* not to be used directly, we use the hash table */
     ast_expression **_locals;
     size_t          *_blocklocals;
