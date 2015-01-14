@@ -36,8 +36,7 @@ static int usage(void) {
     con_out("usage: %s [options] [files...]", app_name);
     con_out("options:\n"
             "  -h, --help             show this help message\n"
-            "  -debug                 turns on compiler debug messages\n"
-            "  -memchk                turns on compiler memory leak check\n");
+            "  -debug                 turns on compiler debug messages\n");
     con_out("  -o, --output=file      output file, defaults to progs.dat\n"
             "  -s filename            add a progs.src file to be used\n");
     con_out("  -E                     stop after preprocessing\n");
@@ -121,14 +120,13 @@ static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, cha
 static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
-    char  buffer[1024];
-    char *config      = NULL;
-    char *memdumpcols = NULL;
+    char buffer[1024];
+    char *config = NULL;
 
     while (!argend && argc > 1) {
         char *argarg;
         argitem item;
-        ppitem  macro;
+        ppitem macro;
 
         ++argv;
         --argc;
@@ -202,10 +200,6 @@ static bool options_parse(int argc, char **argv) {
                 config = argarg;
                 continue;
             }
-            if (options_long_gcc("memdumpcols", &argc, &argv, &memdumpcols)) {
-                OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = (uint16_t)strtol(memdumpcols, NULL, 10);
-                continue;
-            }
             if (options_long_gcc("progsrc", &argc, &argv, &argarg)) {
                 OPTS_OPTION_STR(OPTION_PROGSRC) = argarg;
                 continue;
@@ -244,10 +238,6 @@ static bool options_parse(int argc, char **argv) {
             }
             if (!strcmp(argv[0]+1, "dumpfin")) {
                 OPTS_OPTION_BOOL(OPTION_DUMPFIN) = true;
-                continue;
-            }
-            if (!strcmp(argv[0]+1, "memchk")) {
-                OPTS_OPTION_BOOL(OPTION_MEMCHK) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "nocolor")) {

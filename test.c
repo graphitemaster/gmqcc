@@ -1279,7 +1279,6 @@ int main(int argc, char **argv) {
     char *defs = NULL;
 
     con_init();
-    OPTS_OPTION_U16(OPTION_MEMDUMPCOLS) = 16;
 
     /*
      * Command line option parsing commences now We only need to support
@@ -1295,10 +1294,6 @@ int main(int argc, char **argv) {
 
             if (!strcmp(argv[0]+1, "debug")) {
                 OPTS_OPTION_BOOL(OPTION_DEBUG) = true;
-                continue;
-            }
-            if (!strcmp(argv[0]+1, "memchk")) {
-                OPTS_OPTION_BOOL(OPTION_MEMCHK) = true;
                 continue;
             }
             if (!strcmp(argv[0]+1, "nocolor")) {

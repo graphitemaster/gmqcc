@@ -112,7 +112,6 @@ void opts_init(const char *output, int standard, size_t arraysize) {
     OPTS_OPTION_STR(OPTION_OUTPUT)         = output;
     OPTS_OPTION_U32(OPTION_STANDARD)       = standard;
     OPTS_OPTION_U32(OPTION_MAX_ARRAY_SIZE) = arraysize;
-    OPTS_OPTION_U16(OPTION_MEMDUMPCOLS)    = 16;
 }
 
 static bool opts_setflag_all(const char *name, bool on, uint32_t *flags, const opts_flag_def_t *list, size_t listsize) {
