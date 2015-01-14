@@ -179,7 +179,6 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #define GMQCC_ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
 
 /* stat.c */
-void  stat_info(void);
 char *stat_mem_strdup(const char *, bool);
 
 #define mem_a(SIZE)              malloc(SIZE)

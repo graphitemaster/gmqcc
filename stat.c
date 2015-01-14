@@ -270,7 +270,3 @@ void util_htrm(hash_table_t *ht, const char *key, void (*cb)(void*)) {
 void util_htdel(hash_table_t *ht) {
     util_htrem(ht, NULL);
 }
-
-void stat_info() {
-}
-#undef ST_SIZE

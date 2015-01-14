@@ -791,7 +791,6 @@ cleanup:
         mem_d((void*)operators);
 
     lex_cleanup();
-    stat_info();
 
     if (!retval && compile_errors)
         retval = 1;
