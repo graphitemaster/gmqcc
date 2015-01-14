@@ -3,7 +3,7 @@ compiler:
   - gcc
   - clang
 # Change this to your needs
-script: make && make check
+script: make && make test
 notifications:
     irc:
         channels:
