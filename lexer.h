@@ -38,21 +38,8 @@ struct token_s {
         int       t; /* type */
     } constval;
 
-#if 0
-    struct token_s *next;
-    struct token_s *prev;
-#endif
-
     lex_ctx_t ctx;
 };
-
-#if 0
-token* token_new();
-void   token_delete(token*);
-token* token_copy(const token *cp);
-void   token_delete_all(token *t);
-token* token_copy_all(const token *cp);
-#endif
 
 /* Lexer
  *

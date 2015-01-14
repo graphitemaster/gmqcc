@@ -69,7 +69,7 @@ void _util_vec_grow(void **a, size_t i, size_t s) {
     *a = d + 1;
 }
 
-void _util_vec_delete(void *data, size_t line, const char *file) {
+void _util_vec_delete(void *data) {
     mem_d(vec_meta(data));
 }
 

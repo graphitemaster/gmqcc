@@ -253,7 +253,7 @@ typedef struct {
 
 /* hidden interface */
 void _util_vec_grow(void **a, size_t i, size_t s);
-void _util_vec_delete(void *vec, size_t line, const char *file);
+void _util_vec_delete(void *vec);
 
 #define GMQCC_VEC_WILLGROW(X, Y) ( \
     ((!(X) || vec_meta(X)->used + Y >= vec_meta(X)->allocated)) ? \
@@ -263,7 +263,7 @@ void _util_vec_delete(void *vec, size_t line, const char *file);
 
 /* exposed interface */
 #define vec_meta(A)       ((vector_t*)(((char *)(A)) - sizeof(vector_t)))
-#define vec_free(A)       ((void)((A) ? (_util_vec_delete((void *)(A), __LINE__, __FILE__), (A) = NULL) : 0))
+#define vec_free(A)       ((void)((A) ? (_util_vec_delete((void *)(A)), (A) = NULL) : 0))
 #define vec_push(A,V)     (GMQCC_VEC_WILLGROW((A),1), (A)[vec_meta(A)->used++] = (V))
 #define vec_size(A)       ((A) ? vec_meta(A)->used : 0)
 #define vec_add(A,N)      (GMQCC_VEC_WILLGROW((A),(N)), vec_meta(A)->used += (N), &(A)[vec_meta(A)->used-(N)])

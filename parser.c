@@ -426,18 +426,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
-            if (rotate_entfield_array_index_nodes(&out))
-            {
-#if 0
-                /* This is not broken in fteqcc anymore */
-                if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
-                    /* this error doesn't need to make us bail out */
-                    (void)!parsewarning(parser, WARN_EXTENSIONS,
-                                        "accessing array-field members of an entity without parenthesis\n"
-                                        " -> this is an extension from -std=gmqcc");
-                }
-#endif
-            }
+            rotate_entfield_array_index_nodes(&out);
             break;
 
         case opid1(','):
@@ -1915,10 +1904,6 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         else if (!wantop) {
             if (!parse_sya_operand(parser, &sy, with_labels))
                 goto onerr;
-#if 0
-            if (vec_size(sy.paren) && vec_last(sy.ops).isparen && vec_last(sy.paren) == PAREN_FUNC)
-                vec_last(sy.argc)++;
-#endif
             wantop = true;
         }
         else {
@@ -2521,13 +2506,6 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
 
     if (typevar || parser->tok == TOKEN_TYPENAME) {
-#if 0
-        if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
-            if (parsewarning(parser, WARN_EXTENSIONS,
-                             "current standard does not allow variable declarations in for-loop initializers"))
-                goto onerr;
-        }
-#endif
         if (!parse_variable(parser, block, true, CV_VAR, typevar, false, false, 0, NULL))
             goto onerr;
     }

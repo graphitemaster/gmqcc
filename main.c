@@ -145,8 +145,6 @@ static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
     char  buffer[1024];
-    char *redirout    = NULL;
-    char *redirerr    = NULL;
     char *config      = NULL;
     char *memdumpcols = NULL;
 

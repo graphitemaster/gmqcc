@@ -251,13 +251,7 @@ static pptoken *pptoken_make(ftepp_t *ftepp)
 {
     pptoken *token = (pptoken*)mem_a(sizeof(pptoken));
     token->token = ftepp->token;
-#if 0
-    if (token->token == TOKEN_WHITE)
-        token->value = util_strdup(" ");
-    else
-#else
-        token->value = util_strdup(ftepp_tokval(ftepp));
-#endif
+    token->value = util_strdup(ftepp_tokval(ftepp));
     memcpy(&token->constval, &ftepp->lex->tok.constval, sizeof(token->constval));
     return token;
 }
@@ -1754,10 +1748,6 @@ static bool ftepp_preprocess(ftepp_t *ftepp)
     {
         if (ftepp->token >= TOKEN_EOF)
             break;
-#if 0
-        newline = true;
-#endif
-
         switch (ftepp->token) {
             case TOKEN_KEYWORD:
             case TOKEN_IDENT:
