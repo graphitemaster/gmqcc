@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 
 #define GMQCC_VERSION_MAJOR 0
@@ -233,9 +234,7 @@ const char *util_strerror(int err);
 const struct tm *util_localtime(const time_t *timer);
 const char      *util_ctime    (const time_t *timer);
 
-typedef struct fs_file_s fs_file_t;
-
-bool             util_isatty(fs_file_t *);
+bool             util_isatty(FILE *);
 size_t           hash(const char *key);
 
 /*
@@ -326,34 +325,7 @@ int           util_snprintf(char *str, size_t, const char *fmt, ...);
 
 
 /* fs.c */
-#define FS_FILE_SEEK_SET  0
-#define FS_FILE_SEEK_CUR  1
-#define FS_FILE_SEEK_END  2
-#define FS_FILE_EOF      -1
-
-typedef struct fs_dir_s  fs_dir_t;
-/*typedef struct fs_file_s fs_file_t;*/
-typedef struct dirent    fs_dirent_t;
-
-void           fs_file_close  (fs_file_t *);
-int            fs_file_error  (fs_file_t *);
-int            fs_file_getc   (fs_file_t *);
-int            fs_file_printf (fs_file_t *, const char *, ...);
-int            fs_file_puts   (fs_file_t *, const char *);
-int            fs_file_seek   (fs_file_t *, long int, int);
-long           fs_file_tell   (fs_file_t *);
-int            fs_file_flush  (fs_file_t *);
-
-size_t         fs_file_read   (void *,        size_t, size_t, fs_file_t *);
-size_t         fs_file_write  (const void *,  size_t, size_t, fs_file_t *);
-
-fs_file_t     *fs_file_open   (const char *, const char *);
-int            fs_file_getline(char  **, size_t *, fs_file_t *);
-
-int            fs_dir_make    (const char *);
-fs_dir_t      *fs_dir_open    (const char *);
-int            fs_dir_close   (fs_dir_t *);
-fs_dirent_t   *fs_dir_read    (fs_dir_t *);
+int fs_file_getline(char  **, size_t *, FILE *);
 
 /* code.c */
 
@@ -676,8 +648,8 @@ enum {
     LVL_ERROR
 };
 
-fs_file_t *con_default_out(void);
-fs_file_t *con_default_err(void);
+FILE *con_default_out(void);
+FILE *con_default_err(void);
 
 void con_vprintmsg (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap);
 void con_printmsg  (int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...);
@@ -688,7 +660,6 @@ void con_close (void);
 void con_init  (void);
 void con_reset (void);
 void con_color (int);
-int  con_change(const char *, const char *);
 int  con_verr  (const char *, va_list);
 int  con_vout  (const char *, va_list);
 int  con_err   (const char *, ...);

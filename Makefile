@@ -1,5 +1,5 @@
 CC ?= clang
-CFLAGS = -MD -Wall -Wextra -pedantic-errors
+CFLAGS = -MD -std=gnu99 -Wall -Wextra -pedantic-errors -g3
 LDFLAGS = -lm
 
 CSRCS = ansi.c ast.c code.c conout.c fold.c fs.c ftepp.c hash.c intrin.c ir.c lexer.c main.c opts.c parser.c stat.c utf8.c util.c

@@ -1323,7 +1323,7 @@ static void unescape(const char *str, char *out) {
 
 static char *ftepp_include_find_path(const char *file, const char *pathfile)
 {
-    fs_file_t  *fp;
+    FILE *fp;
     char       *filename = NULL;
     const char *last_slash;
     size_t      len;
@@ -1343,9 +1343,9 @@ static char *ftepp_include_find_path(const char *file, const char *pathfile)
     memcpy(vec_add(filename, len+1), file, len);
     vec_last(filename) = 0;
 
-    fp = fs_file_open(filename, "rb");
+    fp = fopen(filename, "rb");
     if (fp) {
-        fs_file_close(fp);
+        fclose(fp);
         return filename;
     }
     vec_free(filename);

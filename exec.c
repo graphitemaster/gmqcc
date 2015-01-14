@@ -56,7 +56,7 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     prog_header_t   header;
     qc_program_t   *prog;
     size_t          i;
-    fs_file_t      *file  = fs_file_open(filename, "rb");
+    FILE      *file  = fopen(filename, "rb");
 
     /* we need all those in order to support INSTR_STATE: */
     bool            has_self      = false,
@@ -68,9 +68,9 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     if (!file)
         return NULL;
 
-    if (fs_file_read(&header, sizeof(header), 1, file) != 1) {
+    if (fread(&header, sizeof(header), 1, file) != 1) {
         loaderror("failed to read header from '%s'", filename);
-        fs_file_close(file);
+        fclose(file);
         return NULL;
     }
 
@@ -78,13 +78,13 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
 
     if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
-        fs_file_close(file);
+        fclose(file);
         return NULL;
     }
 
     prog = (qc_program_t*)mem_a(sizeof(qc_program_t));
     if (!prog) {
-        fs_file_close(file);
+        fclose(file);
         fprintf(stderr, "failed to allocate program data\n");
         return NULL;
     }
@@ -100,11 +100,11 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     }
 
 #define read_data(hdrvar, progvar, reserved)                           \
-    if (fs_file_seek(file, header.hdrvar.offset, SEEK_SET) != 0) {     \
+    if (fseek(file, header.hdrvar.offset, SEEK_SET) != 0) {            \
         loaderror("seek failed");                                      \
         goto error;                                                    \
     }                                                                  \
-    if (fs_file_read (                                                 \
+    if (fread(                                                         \
             vec_add(prog->progvar, header.hdrvar.length + reserved),   \
             sizeof(*prog->progvar),                                    \
             header.hdrvar.length,                                      \
@@ -130,7 +130,7 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     util_swap_functions  (prog->functions);
     util_swap_globals    (prog->globals);
 
-    fs_file_close(file);
+    fclose(file);
 
     /* profile counters */
     memset(vec_add(prog->profile, vec_size(prog->code)), 0, sizeof(prog->profile[0]) * vec_size(prog->code));
@@ -190,7 +190,7 @@ error:
     vec_free(prog->entitypool);
     mem_d(prog);
 
-    fs_file_close(file);
+    fclose(file);
     return NULL;
 }
 
@@ -397,7 +397,7 @@ static void trace_print_global(qc_program_t *prog, unsigned int glob, int vtype)
 done:
     if (len < (int)sizeof(spaces)-1) {
         spaces[sizeof(spaces)-1-len] = 0;
-        fs_file_puts((fs_file_t*)stdout, spaces);
+        fputs(spaces, stdout);
         spaces[sizeof(spaces)-1-len] = ' ';
     }
 }

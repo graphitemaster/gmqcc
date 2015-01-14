@@ -107,7 +107,7 @@ typedef struct {
 } frame_macro;
 
 typedef struct lex_file_s {
-    fs_file_t  *file;
+    FILE  *file;
     const char *open_string;
     size_t      open_string_length;
     size_t      open_string_pos;

@@ -23,21 +23,17 @@
 #include <stdio.h>
 #include "gmqcc.h"
 
-#define GMQCC_IS_STDOUT(X) ((fs_file_t*)((void*)X) == (fs_file_t*)stdout)
-#define GMQCC_IS_STDERR(X) ((fs_file_t*)((void*)X) == (fs_file_t*)stderr)
+#define GMQCC_IS_STDOUT(X) ((X) == stdout)
+#define GMQCC_IS_STDERR(X) ((X) == stderr)
 #define GMQCC_IS_DEFINE(X) (GMQCC_IS_STDERR(X) || GMQCC_IS_STDOUT(X))
 
 typedef struct {
-    fs_file_t *handle_err;
-    fs_file_t *handle_out;
-    int        color_err;
-    int        color_out;
+    FILE *handle_err;
+    FILE *handle_out;
+    int color_err;
+    int color_out;
 } con_t;
 
-/*
- * We use standard files as default. These can be changed at any time
- * with con_change(F, F)
- */
 static con_t console;
 
 /*
@@ -58,8 +54,8 @@ static void con_enablecolor(void) {
  * arguments.  This colorizes for windows as well via translate
  * step.
  */
-static int con_write(fs_file_t *handle, const char *fmt, va_list va) {
-    return vfprintf((FILE*)handle, fmt, va);
+static int con_write(FILE *handle, const char *fmt, va_list va) {
+    return vfprintf(handle, fmt, va);
 }
 
 /**********************************************************************
@@ -68,9 +64,9 @@ static int con_write(fs_file_t *handle, const char *fmt, va_list va) {
 
 void con_close() {
     if (!GMQCC_IS_DEFINE(console.handle_err))
-        fs_file_close(console.handle_err);
+        fclose(console.handle_err);
     if (!GMQCC_IS_DEFINE(console.handle_out))
-        fs_file_close(console.handle_out);
+        fclose(console.handle_out);
 }
 
 void con_color(int state) {
@@ -83,54 +79,26 @@ void con_color(int state) {
 }
 
 void con_init() {
-    console.handle_err = (fs_file_t*)stderr;
-    console.handle_out = (fs_file_t*)stdout;
+    console.handle_err = stderr;
+    console.handle_out = stdout;
     con_enablecolor();
 }
 
 void con_reset() {
     con_close();
-    con_init ();
-}
-
-/*
- * This is clever, say you want to change the console to use two
- * files for out/err.  You pass in two strings, it will properly
- * close the existing handles (if they're not std* handles) and
- * open them.  Now say you want TO use stdout and stderr, this
- * allows you to do that so long as you cast them to (char*).
- * Say you need stdout for out, but want a file for error, you can
- * do this too, just cast the stdout for (char*) and stick to a
- * string for the error file.
- */
-int con_change(const char *out, const char *err) {
-    con_close();
-
-    if (!out) out = (const char *)((!console.handle_out) ? (fs_file_t*)stdout : console.handle_out);
-    if (!err) err = (const char *)((!console.handle_err) ? (fs_file_t*)stderr : console.handle_err);
-
-    if (GMQCC_IS_DEFINE(out)) {
-        console.handle_out = (fs_file_t*)(GMQCC_IS_STDOUT(out) ? stdout : stderr);
-        con_enablecolor();
-    } else if (!(console.handle_out = fs_file_open(out, "w"))) return 0;
-
-    if (GMQCC_IS_DEFINE(err)) {
-        console.handle_err = (fs_file_t*)(GMQCC_IS_STDOUT(err) ? stdout : stderr);
-        con_enablecolor();
-    } else if (!(console.handle_err = fs_file_open(err, "w"))) return 0;
-
-    return 1;
+    con_init();
 }
 
 /*
  * Defaultizer because stdio.h shouldn't be used anywhere except here
  * and inside file.c To prevent mis-match of wrapper-interfaces.
  */
-fs_file_t *con_default_out() {
-    return (fs_file_t*)(console.handle_out = (fs_file_t*)stdout);
+FILE *con_default_out() {
+    return console.handle_out = stdout;
 }
-fs_file_t *con_default_err() {
-    return (fs_file_t*)(console.handle_err = (fs_file_t*)stderr);
+
+FILE *con_default_err() {
+    return console.handle_err = stderr;
 }
 
 int con_verr(const char *fmt, va_list va) {
@@ -145,20 +113,20 @@ int con_vout(const char *fmt, va_list va) {
  * to be used.
  */
 int con_err(const char *fmt, ...) {
-    va_list  va;
-    int      ln = 0;
+    va_list va;
+    int ln = 0;
     va_start(va, fmt);
     con_verr(fmt, va);
-    va_end  (va);
-    return   ln;
+    va_end(va);
+    return ln;
 }
 int con_out(const char *fmt, ...) {
-    va_list  va;
-    int      ln = 0;
+    va_list va;
+    int ln = 0;
     va_start(va, fmt);
     con_vout(fmt, va);
-    va_end  (va);
-    return   ln;
+    va_end (va);
+    return ln;
 }
 
 /*

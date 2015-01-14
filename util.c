@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#define GMQCC_PLATFORM_HEADER
 #include <stdlib.h>
+#include <string.h>
 #include "gmqcc.h"
 #include "platform.h"
 
@@ -586,62 +586,68 @@ size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
 
 int util_snprintf(char *str, size_t size, const char *fmt, ...) {
     va_list  arg;
-    int      ret;
-
+    int ret;
     va_start(arg, fmt);
-    ret = platform_vsnprintf(str, size, fmt, arg);
+    ret = vsnprintf(str, size, fmt, arg);
     va_end(arg);
-
     return ret;
 }
 
 int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
-    int      read;
-
+    int read;
     va_start(args, fmt);
     read = platform_vasprintf(ret, fmt, args);
-    va_end  (args);
-
+    va_end(args);
     return read;
 }
 
 int util_sscanf(const char *str, const char *format, ...) {
     va_list  args;
-    int      read;
-
+    int read;
     va_start(args, format);
-    read = platform_vsscanf(str, format, args);
+    read = vsscanf(str, format, args);
     va_end(args);
-
     return read;
 }
 
 char *util_strncpy(char *dest, const char *src, size_t n) {
-    return platform_strncpy(dest, src, n);
+    return strncpy(dest, src, n);
 }
+
 char *util_strncat(char *dest, const char *src, size_t n) {
-    return platform_strncat(dest, src, n);
+    return strncat(dest, src, n);
 }
+
 char *util_strcat(char *dest, const char *src) {
-    return platform_strcat(dest, src);
+    return strcat(dest, src);
 }
+
 const char *util_strerror(int err) {
-    return platform_strerror(err);
+    return strerror(err);
 }
 
 const struct tm *util_localtime(const time_t *timer) {
-    return platform_localtime(timer);
-}
-const char *util_ctime(const time_t *timer) {
-    return platform_ctime(timer);
+    return localtime(timer);
 }
 
-bool util_isatty(fs_file_t *file) {
-    if (file == (fs_file_t*)stdout) return !!platform_isatty(STDOUT_FILENO);
-    if (file == (fs_file_t*)stderr) return !!platform_isatty(STDERR_FILENO);
+const char *util_ctime(const time_t *timer) {
+    return ctime(timer);
+}
+
+#ifndef _WIN32
+#include <unistd.h>
+bool util_isatty(FILE *file) {
+    if (file == stdout) return !!isatty(STDOUT_FILENO);
+    if (file == stderr) return !!isatty(STDERR_FILENO);
     return false;
 }
+#else
+bool util_isatty(FILE *file) {
+    return false;
+}
+#endif
+
 /*
  * A small noncryptographic PRNG based on:
  * http://burtleburtle.net/bob/rand/smallprng.html

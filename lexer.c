@@ -99,7 +99,7 @@ static int lex_getch(lex_file *lex);
 lex_file* lex_open(const char *file)
 {
     lex_file  *lex;
-    fs_file_t *in = fs_file_open(file, "rb");
+    FILE *in = fopen(file, "rb");
     uint32_t   read;
 
     if (!in) {
@@ -109,7 +109,7 @@ lex_file* lex_open(const char *file)
 
     lex = (lex_file*)mem_a(sizeof(*lex));
     if (!lex) {
-        fs_file_close(in);
+        fclose(in);
         lexerror(NULL, "out of memory\n");
         return NULL;
     }
@@ -187,7 +187,7 @@ void lex_close(lex_file *lex)
         vec_free(lex->modelname);
 
     if (lex->file)
-        fs_file_close(lex->file);
+        fclose(lex->file);
 
     vec_free(lex->tok.value);
 
@@ -201,15 +201,15 @@ static int lex_fgetc(lex_file *lex)
 {
     if (lex->file) {
         lex->column++;
-        return fs_file_getc(lex->file);
+        return fgetc(lex->file);
     }
     if (lex->open_string) {
         if (lex->open_string_pos >= lex->open_string_length)
-            return FS_FILE_EOF;
+            return EOF;
         lex->column++;
         return lex->open_string[lex->open_string_pos++];
     }
-    return FS_FILE_EOF;
+    return EOF;
 }
 
 /* Get or put-back data
@@ -424,7 +424,7 @@ static bool lex_try_pragma(lex_file *lex)
         goto unroll;
 
     lex->line = line;
-    while (ch != '\n' && ch != FS_FILE_EOF)
+    while (ch != '\n' && ch != EOF)
         ch = lex_getch(lex);
     vec_free(command);
     vec_free(param);
@@ -504,7 +504,7 @@ static int lex_skipwhite(lex_file *lex, bool hadwhite)
     do
     {
         ch = lex_getch(lex);
-        while (ch != FS_FILE_EOF && util_isspace(ch)) {
+        while (ch != EOF && util_isspace(ch)) {
             if (ch == '\n') {
                 if (lex_try_pragma(lex))
                     continue;
@@ -540,7 +540,7 @@ static int lex_skipwhite(lex_file *lex, bool hadwhite)
                     lex_tokench(lex, ' ');
                 }
 
-                while (ch != FS_FILE_EOF && ch != '\n') {
+                while (ch != EOF && ch != '\n') {
                     if (lex->flags.preprocessing)
                         lex_tokench(lex, ' '); /* ch); */
                     ch = lex_getch(lex);
@@ -561,7 +561,7 @@ static int lex_skipwhite(lex_file *lex, bool hadwhite)
                     lex_tokench(lex, ' ');
                 }
 
-                while (ch != FS_FILE_EOF)
+                while (ch != EOF)
                 {
                     ch = lex_getch(lex);
                     if (ch == '*') {
@@ -590,7 +590,7 @@ static int lex_skipwhite(lex_file *lex, bool hadwhite)
             ch = '/';
             break;
         }
-    } while (ch != FS_FILE_EOF && util_isspace(ch));
+    } while (ch != EOF && util_isspace(ch));
 
     if (haswhite) {
         lex_endtoken(lex);
@@ -606,7 +606,7 @@ static bool GMQCC_WARN lex_finish_ident(lex_file *lex)
     int ch;
 
     ch = lex_getch(lex);
-    while (ch != FS_FILE_EOF && isident(ch))
+    while (ch != EOF && isident(ch))
     {
         lex_tokench(lex, ch);
         ch = lex_getch(lex);
@@ -626,7 +626,7 @@ static int lex_parse_frame(lex_file *lex)
     lex_token_new(lex);
 
     ch = lex_getch(lex);
-    while (ch != FS_FILE_EOF && ch != '\n' && util_isspace(ch))
+    while (ch != EOF && ch != '\n' && util_isspace(ch))
         ch = lex_getch(lex);
 
     if (ch == '\n')
@@ -688,7 +688,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
     char u8buf[8]; /* way more than enough */
     int  u8len, uc;
 
-    while (ch != FS_FILE_EOF)
+    while (ch != EOF)
     {
         ch = lex_getch(lex);
         if (ch == quote)
@@ -697,18 +697,18 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
         if (lex->flags.preprocessing && ch == '\\') {
             lex_tokench(lex, ch);
             ch = lex_getch(lex);
-            if (ch == FS_FILE_EOF) {
+            if (ch == EOF) {
                 lexerror(lex, "unexpected end of file");
-                lex_ungetch(lex, FS_FILE_EOF); /* next token to be TOKEN_EOF */
+                lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
                 return (lex->tok.ttype = TOKEN_ERROR);
             }
             lex_tokench(lex, ch);
         }
         else if (ch == '\\') {
             ch = lex_getch(lex);
-            if (ch == FS_FILE_EOF) {
+            if (ch == EOF) {
                 lexerror(lex, "unexpected end of file");
-                lex_ungetch(lex, FS_FILE_EOF); /* next token to be TOKEN_EOF */
+                lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
                 return (lex->tok.ttype = TOKEN_ERROR);
             }
 
@@ -846,7 +846,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
             lex_tokench(lex, ch);
     }
     lexerror(lex, "unexpected end of file within string constant");
-    lex_ungetch(lex, FS_FILE_EOF); /* next token to be TOKEN_EOF */
+    lex_ungetch(lex, EOF); /* next token to be TOKEN_EOF */
     return (lex->tok.ttype = TOKEN_ERROR);
 }
 
@@ -963,7 +963,7 @@ int lex_do(lex_file *lex)
     if (lex->eof)
         return (lex->tok.ttype = TOKEN_FATAL);
 
-    if (ch == FS_FILE_EOF) {
+    if (ch == EOF) {
         lex->eof = true;
         return (lex->tok.ttype = TOKEN_EOF);
     }
@@ -1000,7 +1000,7 @@ int lex_do(lex_file *lex)
         if (!strcmp(v, "framevalue"))
         {
             ch = lex_getch(lex);
-            while (ch != FS_FILE_EOF && util_isspace(ch) && ch != '\n')
+            while (ch != EOF && util_isspace(ch) && ch != '\n')
                 ch = lex_getch(lex);
 
             if (!util_isdigit(ch)) {
@@ -1080,7 +1080,7 @@ int lex_do(lex_file *lex)
             vec_free(lex->frames);
             /* skip line (fteqcc does it too) */
             ch = lex_getch(lex);
-            while (ch != FS_FILE_EOF && ch != '\n')
+            while (ch != EOF && ch != '\n')
                 ch = lex_getch(lex);
             return lex_do(lex);
         }
@@ -1094,7 +1094,7 @@ int lex_do(lex_file *lex)
         {
             /* skip line */
             ch = lex_getch(lex);
-            while (ch != FS_FILE_EOF && ch != '\n')
+            while (ch != EOF && ch != '\n')
                 ch = lex_getch(lex);
             return lex_do(lex);
         }

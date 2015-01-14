@@ -223,14 +223,6 @@ static bool options_parse(int argc, char **argv) {
                 opts_set(opts.flags, EMULATE_STATE, true);
                 continue;
             }
-            if (options_long_gcc("redirout", &argc, &argv, &redirout)) {
-                con_change(redirout, redirerr);
-                continue;
-            }
-            if (options_long_gcc("redirerr", &argc, &argv, &redirerr)) {
-                con_change(redirout, redirerr);
-                continue;
-            }
             if (options_long_gcc("config", &argc, &argv, &argarg)) {
                 config = argarg;
                 continue;
@@ -532,7 +524,7 @@ static bool options_parse(int argc, char **argv) {
 }
 
 /* returns the line number, or -1 on error */
-static bool progs_nextline(char **out, size_t *alen, fs_file_t *src) {
+static bool progs_nextline(char **out, size_t *alen, FILE *src) {
     int    len;
     char  *line;
     char  *start;
@@ -562,7 +554,7 @@ int main(int argc, char **argv) {
     int             retval           = 0;
     bool            operators_free   = false;
     bool            progs_src        = false;
-    fs_file_t       *outfile         = NULL;
+    FILE       *outfile         = NULL;
     struct parser_s *parser          = NULL;
     struct ftepp_s  *ftepp           = NULL;
 
@@ -626,7 +618,7 @@ int main(int argc, char **argv) {
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
         if (opts_output_wasset) {
-            outfile = fs_file_open(OPTS_OPTION_STR(OPTION_OUTPUT), "wb");
+            outfile = fopen(OPTS_OPTION_STR(OPTION_OUTPUT), "wb");
             if (!outfile) {
                 con_err("failed to open `%s` for writing\n", OPTS_OPTION_STR(OPTION_OUTPUT));
                 retval = 1;
@@ -667,14 +659,14 @@ int main(int argc, char **argv) {
     }
 
     if (!vec_size(items)) {
-        fs_file_t *src;
+        FILE *src;
         char      *line    = NULL;
         size_t     linelen = 0;
         bool       hasline = false;
 
         progs_src = true;
 
-        src = fs_file_open(OPTS_OPTION_STR(OPTION_PROGSRC), "rb");
+        src = fopen(OPTS_OPTION_STR(OPTION_PROGSRC), "rb");
         if (!src) {
             con_err("failed to open `%s` for reading\n", OPTS_OPTION_STR(OPTION_PROGSRC));
             retval = 1;
@@ -697,7 +689,7 @@ int main(int argc, char **argv) {
             }
         }
 
-        fs_file_close(src);
+        fclose(src);
         mem_d(line);
     }
 
@@ -729,7 +721,7 @@ int main(int argc, char **argv) {
                 }
                 out = ftepp_get(ftepp);
                 if (out)
-                    fs_file_printf(outfile, "%s", out);
+                    fprintf(outfile, "%s", out);
                 ftepp_flush(ftepp);
             }
             else {

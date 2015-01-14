@@ -216,7 +216,7 @@ static char *opts_ini_next(const char *s, char c) {
 }
 
 static size_t opts_ini_parse (
-    fs_file_t *filehandle,
+    FILE *filehandle,
     char *(*loadhandle)(const char *, const char *, const char *, char **),
     char **errorhandle,
     char **parse_file
@@ -234,7 +234,7 @@ static size_t opts_ini_parse (
     char *read_name;
     char *read_value;
 
-    while (fs_file_getline(&line, &linesize, filehandle) != FS_FILE_EOF) {
+    while (fs_file_getline(&line, &linesize, filehandle) != EOF) {
         parse_beg = line;
 
         /* handle BOM */
@@ -330,7 +330,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
     if (!strcmp(section, "includes")) {
         static const char *include_error_beg = "failed to open file `";
         static const char *include_error_end = "' for inclusion";
-        fs_file_t *file = fs_file_open(value, "r");
+        FILE *file = fopen(value, "r");
         found = true;
         if (!file) {
             vec_append(error, strlen(include_error_beg), include_error_beg);
@@ -342,7 +342,7 @@ static char *opts_ini_load(const char *section, const char *name, const char *va
             /* Change the file name */
             mem_d(*parse_file);
             *parse_file = util_strdup(value);
-            fs_file_close(file);
+            fclose(file);
         }
     }
 
@@ -423,15 +423,15 @@ void opts_ini_init(const char *file) {
     char       *error = NULL;
     char       *parse_file = NULL;
     size_t     line;
-    fs_file_t  *ini;
+    FILE  *ini;
 
     if (!file) {
         /* try ini */
-        if (!(ini = fs_file_open((file = "gmqcc.ini"), "r")))
+        if (!(ini = fopen((file = "gmqcc.ini"), "r")))
             /* try cfg */
-            if (!(ini = fs_file_open((file = "gmqcc.cfg"), "r")))
+            if (!(ini = fopen((file = "gmqcc.cfg"), "r")))
                 return;
-    } else if (!(ini = fs_file_open(file, "r")))
+    } else if (!(ini = fopen(file, "r")))
         return;
 
     con_out("found ini file `%s`\n", file);
@@ -444,5 +444,5 @@ void opts_ini_init(const char *file) {
     }
     mem_d(parse_file);
 
-    fs_file_close(ini);
+    fclose(ini);
 }
