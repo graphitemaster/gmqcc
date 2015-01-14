@@ -61,7 +61,6 @@ ifneq ("$(CYGWIN)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
-	PAK       = gmqpak.exe
 	CFLAGS   += -DNVALGRIND
 else
 ifneq ("$(MINGW)", "")
@@ -74,13 +73,11 @@ ifneq ("$(MINGW)", "")
 	QCVM      = qcvm.exe
 	GMQCC     = gmqcc.exe
 	TESTSUITE = testsuite.exe
-	PAK       = gmqpak.exe
 	CFLAGS   += -DNVALGRIND
 else
 	QCVM      = qcvm
 	GMQCC     = gmqcc
 	TESTSUITE = testsuite
-	PAK       = gmqpak
 endif
 endif
 
@@ -96,9 +93,6 @@ $(GMQCC): $(OBJ_C) $(OBJ_D)
 
 $(TESTSUITE): $(OBJ_T)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
-
-$(PAK): $(OBJ_P)
-	$(CC) -o $@ $^ $(LDFLAGS)
 
 all: $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK)
 
@@ -133,9 +127,6 @@ install-gmqcc: $(GMQCC)
 install-qcvm: $(QCVM)
 	install -d -m755               $(DESTDIR)$(BINDIR)
 	install    -m755  $(QCVM)      $(DESTDIR)$(BINDIR)/$(QCVM)
-install-gmqpak: $(PAK)
-	install -d -m755               $(DESTDIR)$(BINDIR)
-	install    -m755  $(PAK)       $(DESTDIR)$(BINDIR)/$(PAK)
 install-doc:
 	install -d -m755               $(DESTDIR)$(MANDIR)/man1
 	install    -m644  doc/gmqcc.1  $(DESTDIR)$(MANDIR)/man1/
@@ -151,7 +142,6 @@ stat.o: gmqcc.h opts.def
 fs.o: gmqcc.h opts.def platform.h
 opts.o: gmqcc.h opts.def
 conout.o: gmqcc.h opts.def
-pak.o: gmqcc.h opts.def
 test.o: gmqcc.h opts.def platform.h
 main.o: gmqcc.h opts.def lexer.h
 lexer.o: gmqcc.h opts.def lexer.h
