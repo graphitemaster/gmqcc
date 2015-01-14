@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "gmqcc.h"
-#include "platform.h"
 
 /*
  * Initially this was handled with a table in the gmqcc.h header, but
@@ -584,6 +583,36 @@ size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
     return util_strtransform(in, out, outsz, "_ ", 'a'-'A');
 }
 
+static int util_vasprintf(char **dat, const char *fmt, va_list args) {
+    int     ret;
+    int     len;
+    char   *tmp = NULL;
+    char    buf[128];
+    va_list cpy;
+
+    va_copy(cpy, args);
+    len = vsnprintf(buf, sizeof(buf), fmt, cpy);
+    va_end (cpy);
+
+    if (len < 0)
+        return len;
+
+    if (len < (int)sizeof(buf)) {
+        *dat = util_strdup(buf);
+        return len;
+    }
+
+    tmp = (char*)mem_a(len + 1);
+    if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
+        mem_d(tmp);
+        *dat = NULL;
+        return -1;
+    }
+
+    *dat = tmp;
+    return len;
+}
+
 int util_snprintf(char *str, size_t size, const char *fmt, ...) {
     va_list  arg;
     int ret;
@@ -597,7 +626,7 @@ int util_asprintf(char **ret, const char *fmt, ...) {
     va_list  args;
     int read;
     va_start(args, fmt);
-    read = platform_vasprintf(ret, fmt, args);
+    read = util_vasprintf(ret, fmt, args);
     va_end(args);
     return read;
 }
@@ -633,6 +662,50 @@ const struct tm *util_localtime(const time_t *timer) {
 
 const char *util_ctime(const time_t *timer) {
     return ctime(timer);
+}
+
+int util_getline(char **lineptr, size_t *n, FILE *stream) {
+    int   chr;
+    int   ret;
+    char *pos;
+
+    if (!lineptr || !n || !stream)
+        return -1;
+    if (!*lineptr) {
+        if (!(*lineptr = (char*)mem_a((*n=64))))
+            return -1;
+    }
+
+    chr = *n;
+    pos = *lineptr;
+
+    for (;;) {
+        int c = getc(stream);
+
+        if (chr < 2) {
+            *n += (*n > 16) ? *n : 64;
+            chr = *n + *lineptr - pos;
+            if (!(*lineptr = (char*)mem_r(*lineptr,*n)))
+                return -1;
+            pos = *n - chr + *lineptr;
+        }
+
+        if (ferror(stream))
+            return -1;
+        if (c == EOF) {
+            if (pos == *lineptr)
+                return -1;
+            else
+                break;
+        }
+
+        *pos++ = c;
+        chr--;
+        if (c == '\n')
+            break;
+    }
+    *pos = '\0';
+    return (ret = pos - *lineptr);
 }
 
 #ifndef _WIN32

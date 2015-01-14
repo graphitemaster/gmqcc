@@ -531,7 +531,7 @@ static bool progs_nextline(char **out, size_t *alen, FILE *src) {
     char  *end;
 
     line = *out;
-    len  = fs_file_getline(&line, alen, src);
+    len  = util_getline(&line, alen, src);
     if (len == -1)
         return false;
 

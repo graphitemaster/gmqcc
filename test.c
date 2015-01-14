@@ -309,7 +309,7 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
         return false;
 
     /* top down parsing */
-    while (fs_file_getline(&back, &size, fp) != EOF) {
+    while (util_getline(&back, &size, fp) != EOF) {
         /* skip whitespace */
         data = back;
         if (*data && (*data == ' ' || *data == '\t'))
@@ -932,7 +932,7 @@ static bool task_trymatch(size_t i, char ***line) {
         size_t size    = 0;
         size_t compare = 0;
 
-        while (fs_file_getline(&data, &size, execute) != EOF) {
+        while (util_getline(&data, &size, execute) != EOF) {
             if (!strcmp(data, "No main function found\n")) {
                 con_err("test failure: `%s` (No main function found) [%s]\n",
                     tmpl->description,
@@ -1066,7 +1066,7 @@ static size_t task_schedualize(size_t *pad) {
          * Read data from stdout first and pipe that stuff into a log file
          * then we do the same for stderr.
          */
-        while (fs_file_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
+        while (util_getline(&data, &size, task_tasks[i].runhandles[1]) != EOF) {
             fputs(data, task_tasks[i].stdoutlog);
 
             if (strstr(data, "failed to open file")) {
@@ -1074,7 +1074,7 @@ static size_t task_schedualize(size_t *pad) {
                 execute                = false;
             }
         }
-        while (fs_file_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
+        while (util_getline(&data, &size, task_tasks[i].runhandles[2]) != EOF) {
             /*
              * If a string contains an error we just dissalow execution
              * of it in the vm.

@@ -234,7 +234,7 @@ static size_t opts_ini_parse (
     char *read_name;
     char *read_value;
 
-    while (fs_file_getline(&line, &linesize, filehandle) != EOF) {
+    while (util_getline(&line, &linesize, filehandle) != EOF) {
         parse_beg = line;
 
         /* handle BOM */

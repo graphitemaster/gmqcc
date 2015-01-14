@@ -310,22 +310,17 @@ typedef struct hash_table_s {
  * util_htdel(foo);
  */
 hash_table_t *util_htnew (size_t size);
-void          util_htrem (hash_table_t *ht, void (*callback)(void *data));
-void          util_htset (hash_table_t *ht, const char *key, void *value);
-void          util_htdel (hash_table_t *ht);
-size_t        util_hthash(hash_table_t *ht, const char *key);
-void          util_htseth(hash_table_t *ht, const char *key, size_t hash, void *value);
-void          util_htrmh (hash_table_t *ht, const char *key, size_t bin, void (*cb)(void*));
-void          util_htrm  (hash_table_t *ht, const char *key, void (*cb)(void*));
-
-void         *util_htget (hash_table_t *ht, const char *key);
-void         *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
-
-int           util_snprintf(char *str, size_t, const char *fmt, ...);
-
-
-/* fs.c */
-int fs_file_getline(char  **, size_t *, FILE *);
+void util_htrem(hash_table_t *ht, void (*callback)(void *data));
+void util_htset(hash_table_t *ht, const char *key, void *value);
+void util_htdel(hash_table_t *ht);
+size_t util_hthash(hash_table_t *ht, const char *key);
+void util_htseth(hash_table_t *ht, const char *key, size_t hash, void *value);
+void util_htrmh(hash_table_t *ht, const char *key, size_t bin, void (*cb)(void*));
+void util_htrm(hash_table_t *ht, const char *key, void (*cb)(void*));
+void *util_htget(hash_table_t *ht, const char *key);
+void *util_htgeth(hash_table_t *ht, const char *key, size_t hash);
+int util_snprintf(char *str, size_t, const char *fmt, ...);
+int util_getline(char  **, size_t *, FILE *);
 
 /* code.c */
 
