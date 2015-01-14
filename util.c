@@ -45,21 +45,11 @@ const char *util_instr_str[VINSTR_END] = {
      * so let's go the safe way
      */
     static GMQCC_INLINE void util_swap64(uint32_t *d, size_t l) {
-        /*
         while (l--) {
             uint64_t v;
             v = ((d[l] << 8) & 0xFF00FF00FF00FF00) | ((d[l] >> 8) & 0x00FF00FF00FF00FF);
             v = ((v << 16) & 0xFFFF0000FFFF0000) | ((v >> 16) & 0x0000FFFF0000FFFF);
             d[l] = (v << 32) | (v >> 32);
-        }
-        */
-        size_t i;
-        l *= 2;
-        for (i = 0; i < l; i += 2) {
-            uint32_t v1 = d[i];
-            d[i] = d[i+1];
-            d[i+1] = v1;
-            util_swap32(d+i, 2);
         }
     }
 #endif
