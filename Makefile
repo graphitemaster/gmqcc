@@ -1,18 +1,48 @@
-CC ?= clang
-CFLAGS = -MD -std=gnu99 -Wall -Wextra -pedantic-errors -g3
-LDFLAGS = -lm
+CXX ?= clang++
+CXXFLAGS = \
+	-std=c++11 \
+	-Wall \
+	-Wextra \
+	-ffast-math \
+	-fno-exceptions \
+	-fno-rtti \
+	-MD
 
-CSRCS = ast.c code.c conout.c fold.c ftepp.c intrin.c ir.c lexer.c main.c opts.c parser.c stat.c utf8.c util.c
-TSRCS = conout.c opts.c stat.c test.c util.c
-VSRCS = exec.c stat.c util.c
+CSRCS = \
+	ast.cpp \
+	code.cpp \
+	conout.cpp \
+	fold.cpp \
+	ftepp.cpp \
+	intrin.cpp \
+	ir.cpp \
+	lexer.cpp \
+	main.cpp \
+	opts.cpp \
+	parser.cpp \
+	stat.cpp \
+	utf8.cpp \
+	util.cpp
 
-COBJS = $(CSRCS:.c=.o)
-TOBJS = $(TSRCS:.c=.o)
-VOBJS = $(VSRCS:.c=.o)
+TSRCS = \
+	conout.cpp \
+	opts.cpp \
+	stat.cpp \
+	test.cpp \
+	util.cpp
 
-CDEPS = $(CSRCS:.c=.d)
-TDEPS = $(TSRCS:.c=.d)
-VDEPS = $(VSRCS:.c=.d)
+VSRCS = \
+	exec.cpp \
+	stat.cpp \
+	util.cpp
+
+COBJS = $(CSRCS:.cpp=.o)
+TOBJS = $(TSRCS:.cpp=.o)
+VOBJS = $(VSRCS:.cpp=.o)
+
+CDEPS = $(CSRCS:.cpp=.d)
+TDEPS = $(TSRCS:.cpp=.d)
+VDEPS = $(VSRCS:.cpp=.d)
 
 CBIN = gmqcc
 TBIN = testsuite
@@ -21,16 +51,16 @@ VBIN = qcvm
 all: $(CBIN) $(TBIN) $(VBIN)
 
 $(CBIN): $(COBJS)
-	$(CC) $(COBJS) $(LDFLAGS) -o $@
+	$(CXX) $(COBJS) -o $@
 
 $(TBIN): $(TOBJS)
-	$(CC) $(TOBJS) $(LDFLAGS) -o $@
+	$(CXX) $(TOBJS) -o $@
 
 $(VBIN): $(VOBJS)
-	$(CC) $(VOBJS) $(LDFLAGS) -o $@
+	$(CXX) $(VOBJS) -o $@
 
-.c.o:
-	$(CC) -c $(CFLAGS) $< -o $@
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 test: $(CBIN) $(TBIN) $(VBIN)
 	@./$(TBIN)
