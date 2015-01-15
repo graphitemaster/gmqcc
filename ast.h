@@ -640,8 +640,8 @@ struct ast_function
 
     ir_function *ir_func;
     ir_block    *curblock;
-    ir_block    **breakblocks;
-    ir_block    **continueblocks;
+    std::vector<ir_block*> breakblocks;
+    std::vector<ir_block*> continueblocks;
 
     size_t       labelcount;
     /* in order for thread safety - for the optional

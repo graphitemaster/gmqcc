@@ -1181,9 +1181,6 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
     self->ir_func = NULL;
     self->curblock = NULL;
 
-    self->breakblocks    = NULL;
-    self->continueblocks = NULL;
-
     vtype->hasvalue = true;
     vtype->constval.vfunc = self;
 
@@ -1221,8 +1218,6 @@ void ast_function_delete(ast_function *self)
     vec_free(self->static_names);
     for (auto &it : self->blocks)
         ast_delete(it);
-    vec_free(self->breakblocks);
-    vec_free(self->continueblocks);
     if (self->varargs)
         ast_delete(self->varargs);
     if (self->argc)
@@ -2895,11 +2890,11 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         /* enter */
         func->curblock = bbody;
 
-        vec_push(func->breakblocks,    bbreak);
+        func->breakblocks.push_back(bbreak);
         if (bcontinue)
-            vec_push(func->continueblocks, bcontinue);
+            func->continueblocks.push_back(bcontinue);
         else
-            vec_push(func->continueblocks, bbody);
+            func->continueblocks.push_back(bbody);
 
         /* generate */
         if (self->body) {
@@ -2909,8 +2904,8 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         }
 
         end_bbody = func->curblock;
-        vec_pop(func->breakblocks);
-        vec_pop(func->continueblocks);
+        func->breakblocks.pop_back();
+        func->continueblocks.pop_back();
     }
 
     /* post-loop-condition */
@@ -3047,9 +3042,9 @@ bool ast_breakcont_codegen(ast_breakcont *self, ast_function *func, bool lvalue,
     self->expression.outr = (ir_value*)1;
 
     if (self->is_continue)
-        target = func->continueblocks[vec_size(func->continueblocks)-1-self->levels];
+        target = func->continueblocks[func->continueblocks.size()-1-self->levels];
     else
-        target = func->breakblocks[vec_size(func->breakblocks)-1-self->levels];
+        target = func->breakblocks[func->breakblocks.size()-1-self->levels];
 
     if (!target) {
         compile_error(ast_ctx(self), "%s is lacking a target block", (self->is_continue ? "continue" : "break"));
@@ -3113,7 +3108,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         return false;
 
     /* setup the break block */
-    vec_push(func->breakblocks, bout);
+    func->breakblocks.push_back(bout);
 
     /* Now create all cases */
     for (auto &it : self->cases) {
@@ -3218,7 +3213,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     func->curblock = bout;
 
     /* restore the break block */
-    vec_pop(func->breakblocks);
+    func->breakblocks.pop_back();
 
     /* Move 'bout' to the end, it's nicer */
     vec_remove(func->ir_func->blocks, bout_id, 1);
