@@ -858,7 +858,6 @@ static lex_ctx_t fold_ctx(fold_t *fold) {
     lex_ctx_t ctx;
     if (fold->parser->lex)
         return parser_ctx(fold->parser);
-
     memset(&ctx, 0, sizeof(ctx));
     return ctx;
 }
@@ -898,11 +897,8 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
 #define fold_immvalue_string(E) ((E)->constval.vstring)
 
 fold_t *fold_init(parser_t *parser) {
-    fold_t *fold                 = (fold_t*)mem_a(sizeof(fold_t));
-    fold->parser                 = parser;
-    fold->imm_float              = NULL;
-    fold->imm_vector             = NULL;
-    fold->imm_string             = NULL;
+    fold_t *fold = new fold_t;
+    fold->parser = parser;
     fold->imm_string_untranslate = util_htnew(FOLD_STRING_UNTRANSLATE_HTSIZE);
     fold->imm_string_dotranslate = util_htnew(FOLD_STRING_DOTRANSLATE_HTSIZE);
 
@@ -910,10 +906,10 @@ fold_t *fold_init(parser_t *parser) {
      * prime the tables with common constant values at constant
      * locations.
      */
-    (void)fold_constgen_float (fold,  0.0f, false);
-    (void)fold_constgen_float (fold,  1.0f, false);
-    (void)fold_constgen_float (fold, -1.0f, false);
-    (void)fold_constgen_float (fold,  2.0f, false);
+    (void)fold_constgen_float(fold,  0.0f, false);
+    (void)fold_constgen_float(fold,  1.0f, false);
+    (void)fold_constgen_float(fold, -1.0f, false);
+    (void)fold_constgen_float(fold,  2.0f, false);
 
     (void)fold_constgen_vector(fold, vec3_create(0.0f, 0.0f, 0.0f));
     (void)fold_constgen_vector(fold, vec3_create(-1.0f, -1.0f, -1.0f));
@@ -922,19 +918,15 @@ fold_t *fold_init(parser_t *parser) {
 }
 
 bool fold_generate(fold_t *fold, ir_builder *ir) {
-    /* generate globals for immediate folded values */
-    size_t     i;
+    // generate globals for immediate folded values
     ast_value *cur;
-
-    for (i = 0; i < vec_size(fold->imm_float);   ++i)
-        if (!ast_global_codegen ((cur = fold->imm_float[i]), ir, false)) goto err;
-    for (i = 0; i < vec_size(fold->imm_vector);  ++i)
-        if (!ast_global_codegen((cur = fold->imm_vector[i]), ir, false)) goto err;
-    for (i = 0; i < vec_size(fold->imm_string);  ++i)
-        if (!ast_global_codegen((cur = fold->imm_string[i]), ir, false)) goto err;
-
+    for (auto &it : fold->imm_float)
+        if (!ast_global_codegen((cur = it), ir, false)) goto err;
+    for (auto &it : fold->imm_vector)
+        if (!ast_global_codegen((cur = it), ir, false)) goto err;
+    for (auto &it : fold->imm_string)
+        if (!ast_global_codegen((cur = it), ir, false)) goto err;
     return true;
-
 err:
     con_out("failed to generate global %s\n", cur->name);
     ir_builder_delete(ir);
@@ -942,65 +934,51 @@ err:
 }
 
 void fold_cleanup(fold_t *fold) {
-    size_t i;
-
-    for (i = 0; i < vec_size(fold->imm_float);  ++i) ast_delete(fold->imm_float[i]);
-    for (i = 0; i < vec_size(fold->imm_vector); ++i) ast_delete(fold->imm_vector[i]);
-    for (i = 0; i < vec_size(fold->imm_string); ++i) ast_delete(fold->imm_string[i]);
-
-    vec_free(fold->imm_float);
-    vec_free(fold->imm_vector);
-    vec_free(fold->imm_string);
+    for (auto &it : fold->imm_float) ast_delete(it);
+    for (auto &it : fold->imm_vector) ast_delete(it);
+    for (auto &it : fold->imm_string) ast_delete(it);
 
     util_htdel(fold->imm_string_untranslate);
     util_htdel(fold->imm_string_dotranslate);
 
-    mem_d(fold);
+    delete fold;
 }
 
 ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value, bool inexact) {
-    ast_value  *out = NULL;
-    size_t      i;
+    for (auto &it : fold->imm_float)
+        if (!memcmp(&it->constval.vfloat, &value, sizeof(qcfloat_t)))
+            return (ast_expression*)it;
 
-    for (i = 0; i < vec_size(fold->imm_float); i++) {
-        if (!memcmp(&fold->imm_float[i]->constval.vfloat, &value, sizeof(qcfloat_t)))
-            return (ast_expression*)fold->imm_float[i];
-    }
-
-    out                  = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_FLOAT);
-    out->cvq             = CV_CONST;
-    out->hasvalue        = true;
-    out->inexact         = inexact;
+    ast_value *out  = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_FLOAT);
+    out->cvq = CV_CONST;
+    out->hasvalue = true;
+    out->inexact = inexact;
     out->constval.vfloat = value;
 
-    vec_push(fold->imm_float, out);
+    fold->imm_float.push_back(out);
 
     return (ast_expression*)out;
 }
 
 ast_expression *fold_constgen_vector(fold_t *fold, vec3_t value) {
-    ast_value *out;
-    size_t     i;
+    for (auto &it : fold->imm_vector)
+        if (vec3_cmp(it->constval.vvec, value))
+            return (ast_expression*)it;
 
-    for (i = 0; i < vec_size(fold->imm_vector); i++) {
-        if (vec3_cmp(fold->imm_vector[i]->constval.vvec, value))
-            return (ast_expression*)fold->imm_vector[i];
-    }
-
-    out                = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_VECTOR);
-    out->cvq           = CV_CONST;
-    out->hasvalue      = true;
+    ast_value *out = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_VECTOR);
+    out->cvq = CV_CONST;
+    out->hasvalue = true;
     out->constval.vvec = value;
 
-    vec_push(fold->imm_vector, out);
+    fold->imm_vector.push_back(out);
 
     return (ast_expression*)out;
 }
 
 ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool translate) {
     hash_table_t *table = (translate) ? fold->imm_string_untranslate : fold->imm_string_dotranslate;
-    ast_value    *out   = NULL;
-    size_t        hash  = util_hthash(table, str);
+    ast_value *out = NULL;
+    size_t hash = util_hthash(table, str);
 
     if ((out = (ast_value*)util_htgeth(table, str, hash)))
         return (ast_expression*)out;
@@ -1008,17 +986,18 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
     if (translate) {
         char name[32];
         util_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(fold->parser->translated++));
-        out                    = ast_value_new(parser_ctx(fold->parser), name, TYPE_STRING);
+        out = ast_value_new(parser_ctx(fold->parser), name, TYPE_STRING);
         out->expression.flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
-    } else
-        out                    = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_STRING);
+    } else {
+        out = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_STRING);
+    }
 
-    out->cvq              = CV_CONST;
-    out->hasvalue         = true;
-    out->isimm            = true;
+    out->cvq = CV_CONST;
+    out->hasvalue = true;
+    out->isimm = true;
     out->constval.vstring = parser_strdup(str);
 
-    vec_push(fold->imm_string, out);
+    fold->imm_string.push_back(out);
     util_htseth(table, str, hash, out);
 
     return (ast_expression*)out;

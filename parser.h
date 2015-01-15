@@ -9,9 +9,9 @@ struct intrin_t;
 
 struct fold_t {
     parser_t *parser;
-    ast_value **imm_float;              /* vector<ast_value*> */
-    ast_value **imm_vector;             /* vector<ast_value*> */
-    ast_value **imm_string;             /* vector<ast_value*> */
+    std::vector<ast_value*> imm_float;
+    std::vector<ast_value*> imm_vector;
+    std::vector<ast_value*> imm_string;
     hash_table_t *imm_string_untranslate; /* map<string, ast_value*> */
     hash_table_t *imm_string_dotranslate; /* map<string, ast_value*> */
 };
