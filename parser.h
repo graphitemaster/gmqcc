@@ -24,10 +24,10 @@ struct intrin_func_t {
 };
 
 struct intrin_t {
-    intrin_func_t  *intrinsics;              /* vector<intrin_func_t>   */
-    ast_expression **generated;              /* vector<ast_expression*> */
-    parser_t       *parser;
-    fold_t         *fold;
+    std::vector<intrin_func_t> intrinsics;
+    std::vector<ast_expression*> generated;
+    parser_t *parser;
+    fold_t *fold;
 };
 
 #define parser_ctx(p) ((p)->lex->tok.ctx)

@@ -2008,51 +2008,45 @@ static void intrin_error(intrin_t *intrin, const char *fmt, ...) {
 
 /* exposed */
 intrin_t *intrin_init(parser_t *parser) {
-    intrin_t *intrin = (intrin_t*)mem_a(sizeof(intrin_t));
-    size_t    i;
+    intrin_t *intrin = new intrin_t;
 
-    intrin->parser     = parser;
-    intrin->fold       = parser->fold;
-    intrin->intrinsics = NULL;
-    intrin->generated  = NULL;
+    intrin->parser = parser;
+    intrin->fold = parser->fold;
 
-    vec_append(intrin->intrinsics, GMQCC_ARRAY_COUNT(intrinsics), intrinsics);
-
-    /* populate with null pointers for tracking generation */
-    for (i = 0; i < GMQCC_ARRAY_COUNT(intrinsics); i++)
-        vec_push(intrin->generated, NULL);
+    for (auto &it : intrinsics) {
+        intrin->intrinsics.push_back(it);
+        intrin->generated.push_back(nullptr);
+    }
 
     return intrin;
 }
 
 void intrin_cleanup(intrin_t *intrin) {
-    vec_free(intrin->intrinsics);
-    vec_free(intrin->generated);
-    mem_d(intrin);
+    delete intrin;
 }
 
 ast_expression *intrin_fold(intrin_t *intrin, ast_value *value, ast_expression **exprs) {
-    size_t i;
     if (!value || !value->name)
         return NULL;
-    for (i = 0; i < vec_size(intrin->intrinsics); i++)
-        if (!strcmp(value->name, intrin->intrinsics[i].name))
-            return (vec_size(exprs) != intrin->intrinsics[i].args)
+    for (auto &it : intrin->intrinsics) {
+        if (!strcmp(value->name, it.name))
+            return (vec_size(exprs) != it.args)
                         ? NULL
                         : fold_intrin(intrin->fold, value->name + 10, exprs);
+    }
     return NULL;
 }
 
 static GMQCC_INLINE ast_expression *intrin_func_try(intrin_t *intrin, size_t offset, const char *compare) {
-    size_t i;
-    for (i = 0; i < vec_size(intrin->intrinsics); i++) {
-        if (strcmp(*(char **)((char *)&intrin->intrinsics[i] + offset), compare))
+    for (auto &it : intrin->intrinsics) {
+        const size_t index = &it - &intrin->intrinsics[0];
+        if (strcmp(*(char **)((char *)&it + offset), compare))
             continue;
-        if (intrin->generated[i])
-            return intrin->generated[i];
-        return intrin->generated[i] = intrin->intrinsics[i].intrin(intrin);
+        if (intrin->generated[index])
+            return intrin->generated[index];
+        return intrin->generated[index] = it.intrin(intrin);
     }
-    return NULL;
+    return nullptr;
 }
 
 static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, const char *from) {
