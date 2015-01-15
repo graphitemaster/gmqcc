@@ -58,10 +58,10 @@ struct parser_s {
     /* All the labels the function defined...
      * Should they be in ast_function instead?
      */
-    ast_label  **labels;
-    ast_goto   **gotos;
-    const char **breaks;
-    const char **continues;
+    std::vector<ast_label*> labels;
+    std::vector<ast_goto*> gotos;
+    std::vector<const char *> breaks;
+    std::vector<const char *> continues;
 
     /* A list of hashtables for each scope */
     ht *variables;

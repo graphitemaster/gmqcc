@@ -5,7 +5,8 @@ CXXFLAGS = \
 	-Wextra \
 	-fno-exceptions \
 	-fno-rtti \
-	-MD
+	-MD \
+	-g3
 
 CSRCS = \
 	ast.cpp \

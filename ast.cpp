@@ -1,3 +1,5 @@
+#include <new>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,6 +12,7 @@
     if (!self) {                                                    \
         return NULL;                                                \
     }                                                               \
+    new (self) T();                                                 \
     ast_node_init((ast_node*)self, ctx, TYPE_##T);                  \
     ( (ast_node*)self )->destroy = (ast_node_delete*)destroyfn
 
@@ -89,7 +92,6 @@ static void ast_expression_init(ast_expression *self,
     self->next     = NULL;
     self->outl     = NULL;
     self->outr     = NULL;
-    self->params   = NULL;
     self->count    = 0;
     self->varparam = NULL;
     self->flags    = 0;
@@ -99,13 +101,10 @@ static void ast_expression_init(ast_expression *self,
 
 static void ast_expression_delete(ast_expression *self)
 {
-    size_t i;
     if (self->next)
         ast_delete(self->next);
-    for (i = 0; i < vec_size(self->params); ++i) {
-        ast_delete(self->params[i]);
-    }
-    vec_free(self->params);
+    for (auto &it : self->params)
+        ast_delete(it);
     if (self->varparam)
         ast_delete(self->varparam);
 }
@@ -118,40 +117,38 @@ static void ast_expression_delete_full(ast_expression *self)
 
 ast_value* ast_value_copy(const ast_value *self)
 {
-    size_t i;
     const ast_expression *fromex;
-    ast_expression       *selfex;
+    ast_expression *selfex;
     ast_value *cp = ast_value_new(self->expression.node.context, self->name, self->expression.vtype);
     if (self->expression.next) {
         cp->expression.next = ast_type_copy(self->expression.node.context, self->expression.next);
     }
-    fromex   = &self->expression;
+    fromex = &self->expression;
     selfex = &cp->expression;
-    selfex->count    = fromex->count;
-    selfex->flags    = fromex->flags;
-    for (i = 0; i < vec_size(fromex->params); ++i) {
-        ast_value *v = ast_value_copy(fromex->params[i]);
-        vec_push(selfex->params, v);
+    selfex->count = fromex->count;
+    selfex->flags = fromex->flags;
+    for (auto &it : fromex->params) {
+        ast_value *v = ast_value_copy(it);
+        selfex->params.push_back(v);
     }
     return cp;
 }
 
 void ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
 {
-    size_t i;
     const ast_expression *fromex;
-    ast_expression       *selfex;
+    ast_expression *selfex;
     self->vtype = other->vtype;
     if (other->next) {
         self->next = (ast_expression*)ast_type_copy(ast_ctx(self), other->next);
     }
     fromex = other;
     selfex = self;
-    selfex->count    = fromex->count;
-    selfex->flags    = fromex->flags;
-    for (i = 0; i < vec_size(fromex->params); ++i) {
-        ast_value *v = ast_value_copy(fromex->params[i]);
-        vec_push(selfex->params, v);
+    selfex->count = fromex->count;
+    selfex->flags = fromex->flags;
+    for (auto &it : fromex->params) {
+        ast_value *v = ast_value_copy(it);
+        selfex->params.push_back(v);
     }
 }
 
@@ -167,7 +164,6 @@ static ast_expression* ast_shallow_type(lex_ctx_t ctx, int vtype)
 
 ast_expression* ast_type_copy(lex_ctx_t ctx, const ast_expression *ex)
 {
-    size_t i;
     const ast_expression *fromex;
     ast_expression       *selfex;
 
@@ -190,11 +186,11 @@ ast_expression* ast_type_copy(lex_ctx_t ctx, const ast_expression *ex)
         else
             selfex->next = NULL;
 
-        selfex->count    = fromex->count;
-        selfex->flags    = fromex->flags;
-        for (i = 0; i < vec_size(fromex->params); ++i) {
-            ast_value *v = ast_value_copy(fromex->params[i]);
-            vec_push(selfex->params, v);
+        selfex->count = fromex->count;
+        selfex->flags = fromex->flags;
+        for (auto &it : fromex->params) {
+            ast_value *v = ast_value_copy(it);
+            selfex->params.push_back(v);
         }
 
         return self;
@@ -210,16 +206,16 @@ bool ast_compare_type(ast_expression *a, ast_expression *b)
         return false;
     if (!a->next != !b->next)
         return false;
-    if (vec_size(a->params) != vec_size(b->params))
+    if (a->params.size() != b->params.size())
         return false;
     if ((a->flags & AST_FLAG_TYPE_MASK) !=
         (b->flags & AST_FLAG_TYPE_MASK) )
     {
         return false;
     }
-    if (vec_size(a->params)) {
+    if (a->params.size()) {
         size_t i;
-        for (i = 0; i < vec_size(a->params); ++i) {
+        for (i = 0; i < a->params.size(); ++i) {
             if (!ast_compare_type((ast_expression*)a->params[i],
                                   (ast_expression*)b->params[i]))
                 return false;
@@ -270,14 +266,14 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             pos = ast_type_to_string_impl(e->next, buf, bufsize, pos);
             if (pos + 2 >= bufsize)
                 goto full;
-            if (!vec_size(e->params)) {
+            if (e->params.empty()) {
                 buf[pos++] = '(';
                 buf[pos++] = ')';
                 return pos;
             }
             buf[pos++] = '(';
             pos = ast_type_to_string_impl((ast_expression*)(e->params[0]), buf, bufsize, pos);
-            for (i = 1; i < vec_size(e->params); ++i) {
+            for (i = 1; i < e->params.size(); ++i) {
                 if (pos + 2 >= bufsize)
                     goto full;
                 buf[pos++] = ',';
@@ -405,7 +401,7 @@ void ast_value_delete(ast_value* self)
 
 void ast_value_params_add(ast_value *self, ast_value *p)
 {
-    vec_push(self->expression.params, p);
+    self->expression.params.push_back(p);
 }
 
 bool ast_value_set_name(ast_value *self, const char *name)
@@ -908,7 +904,6 @@ ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined)
 
     self->name      = util_strdup(name);
     self->irblock   = NULL;
-    self->gotos     = NULL;
     self->undefined = undefined;
 
     return self;
@@ -917,14 +912,13 @@ ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined)
 void ast_label_delete(ast_label *self)
 {
     mem_d((void*)self->name);
-    vec_free(self->gotos);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
 
 static void ast_label_register_goto(ast_label *self, ast_goto *g)
 {
-    vec_push(self->gotos, g);
+   self->gotos.push_back(g);
 }
 
 ast_goto* ast_goto_new(lex_ctx_t ctx, const char *name)
@@ -1058,11 +1052,11 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
     char texp[1024];
     char tgot[1024];
     size_t i;
-    bool   retval = true;
-    const  ast_expression *func = self->func;
+    bool retval = true;
+    const ast_expression *func = self->func;
     size_t count = vec_size(self->params);
-    if (count > vec_size(func->params))
-        count = vec_size(func->params);
+    if (count > func->params.size())
+        count = func->params.size();
 
     for (i = 0; i < count; ++i) {
         if (ast_istype(self->params[i], ast_argpipe)) {
@@ -1085,7 +1079,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
         }
     }
     count = vec_size(self->params);
-    if (count > vec_size(func->params) && func->varparam) {
+    if (count > func->params.size() && func->varparam) {
         for (; i < count; ++i) {
             if (ast_istype(self->params[i], ast_argpipe)) {
                 /* warn about type safety instead */
@@ -1140,18 +1134,13 @@ ast_block* ast_block_new(lex_ctx_t ctx)
     ast_instantiate(ast_block, ctx, ast_block_delete);
     ast_expression_init((ast_expression*)self,
                         (ast_expression_codegen*)&ast_block_codegen);
-
-    self->locals  = NULL;
-    self->exprs   = NULL;
-    self->collect = NULL;
-
     return self;
 }
 
 bool ast_block_add_expr(ast_block *self, ast_expression *e)
 {
     ast_propagate_effects(self, e);
-    vec_push(self->exprs, e);
+    self->exprs.push_back(e);
     if (self->expression.next) {
         ast_delete(self->expression.next);
         self->expression.next = NULL;
@@ -1162,22 +1151,15 @@ bool ast_block_add_expr(ast_block *self, ast_expression *e)
 
 void ast_block_collect(ast_block *self, ast_expression *expr)
 {
-    vec_push(self->collect, expr);
+    self->collect.push_back(expr);
     expr->node.keep = true;
 }
 
 void ast_block_delete(ast_block *self)
 {
-    size_t i;
-    for (i = 0; i < vec_size(self->exprs); ++i)
-        ast_unref(self->exprs[i]);
-    vec_free(self->exprs);
-    for (i = 0; i < vec_size(self->locals); ++i)
-        ast_delete(self->locals[i]);
-    vec_free(self->locals);
-    for (i = 0; i < vec_size(self->collect); ++i)
-        ast_delete(self->collect[i]);
-    vec_free(self->collect);
+    for (auto &it : self->exprs) ast_unref(it);
+    for (auto &it : self->locals) ast_delete(it);
+    for (auto &it : self->collect) ast_delete(it);
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
 }
@@ -1826,14 +1808,13 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     /* fill the parameter list */
     ec = &self->vtype->expression;
-    for (i = 0; i < vec_size(ec->params); ++i)
-    {
-        if (ec->params[i]->expression.vtype == TYPE_FIELD)
-            vec_push(irf->params, ec->params[i]->expression.next->vtype);
+    for (auto &it : ec->params) {
+        if (it->expression.vtype == TYPE_FIELD)
+            vec_push(irf->params, it->expression.next->vtype);
         else
-            vec_push(irf->params, ec->params[i]->expression.vtype);
+            vec_push(irf->params, it->expression.vtype);
         if (!self->builtin) {
-            if (!ast_local_codegen(ec->params[i], self->ir_func, true))
+            if (!ast_local_codegen(it, self->ir_func, true))
                 return false;
         }
     }
@@ -1943,8 +1924,6 @@ static bool starts_a_label(ast_expression *ex)
  */
 bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    size_t i;
-
     /* We don't use this
      * Note: an ast-representation using the comma-operator
      * of the form: (a, b, c) = x should not assign to c...
@@ -1968,25 +1947,23 @@ bool ast_block_codegen(ast_block *self, ast_function *func, bool lvalue, ir_valu
     *out = NULL;
 
     /* generate locals */
-    for (i = 0; i < vec_size(self->locals); ++i)
-    {
-        if (!ast_local_codegen(self->locals[i], func->ir_func, false)) {
+    for (auto &it : self->locals) {
+        if (!ast_local_codegen(it, func->ir_func, false)) {
             if (OPTS_OPTION_BOOL(OPTION_DEBUG))
-                compile_error(ast_ctx(self), "failed to generate local `%s`", self->locals[i]->name);
+                compile_error(ast_ctx(self), "failed to generate local `%s`", it->name);
             return false;
         }
     }
 
-    for (i = 0; i < vec_size(self->exprs); ++i)
-    {
+    for (auto &it : self->exprs) {
         ast_expression_codegen *gen;
-        if (func->curblock->final && !starts_a_label(self->exprs[i])) {
-            if (compile_warning(ast_ctx(self->exprs[i]), WARN_UNREACHABLE_CODE, "unreachable statement"))
+        if (func->curblock->final && !starts_a_label(it)) {
+            if (compile_warning(ast_ctx(it), WARN_UNREACHABLE_CODE, "unreachable statement"))
                 return false;
             continue;
         }
-        gen = self->exprs[i]->codegen;
-        if (!(*gen)(self->exprs[i], func, false, out))
+        gen = it->codegen;
+        if (!(*gen)(it, func, false, out))
             return false;
     }
 
@@ -3271,7 +3248,6 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 
 bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_value **out)
 {
-    size_t i;
     ir_value *dummy;
 
     if (self->undefined) {
@@ -3300,8 +3276,8 @@ bool ast_label_codegen(ast_label *self, ast_function *func, bool lvalue, ir_valu
     func->curblock = self->irblock;
 
     /* Generate all the leftover gotos */
-    for (i = 0; i < vec_size(self->gotos); ++i) {
-        if (!ast_goto_codegen(self->gotos[i], func, false, &dummy))
+    for (auto &it : self->gotos) {
+        if (!ast_goto_codegen(it, func, false, &dummy))
             return false;
     }
 

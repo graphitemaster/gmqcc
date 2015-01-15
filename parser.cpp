@@ -80,11 +80,10 @@ static ast_expression* parser_find_field(parser_t *parser, const char *name)
 
 static ast_expression* parser_find_label(parser_t *parser, const char *name)
 {
-    size_t i;
-    for(i = 0; i < vec_size(parser->labels); i++)
-        if (!strcmp(parser->labels[i]->name, name))
-            return (ast_expression*)parser->labels[i];
-    return NULL;
+    for (auto &it : parser->labels)
+        if (!strcmp(it->name, name))
+            return (ast_expression*)it;
+    return nullptr;
 }
 
 ast_expression* parser_find_global(parser_t *parser, const char *name)
@@ -97,14 +96,13 @@ ast_expression* parser_find_global(parser_t *parser, const char *name)
 
 static ast_expression* parser_find_param(parser_t *parser, const char *name)
 {
-    size_t i;
     ast_value *fun;
     if (!parser->function)
         return NULL;
     fun = parser->function->vtype;
-    for (i = 0; i < vec_size(fun->expression.params); ++i) {
-        if (!strcmp(fun->expression.params[i]->name, name))
-            return (ast_expression*)(fun->expression.params[i]);
+    for (auto &it : fun->expression.params) {
+        if (!strcmp(it->name, name))
+            return (ast_expression*)it;
     }
     return NULL;
 }
@@ -341,7 +339,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         }
     }
 
-    if (blocks[0] && !vec_size(blocks[0]->exprs) && op->id != opid1(',')) {
+    if (blocks[0] && blocks[0]->exprs.empty() && op->id != opid1(',')) {
         compile_error(ctx, "internal error: operator cannot be applied on empty blocks");
         return false;
     }
@@ -1316,22 +1314,22 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                     ast_ctx(fun).line);
         }
 
-        if (vec_size(fun->params) != paramcount &&
+        if (fun->params.size() != paramcount &&
             !((fun->flags & AST_FLAG_VARIADIC) &&
-              vec_size(fun->params) < paramcount))
+              fun->params.size() < paramcount))
         {
-            const char *fewmany = (vec_size(fun->params) > paramcount) ? "few" : "many";
+            const char *fewmany = (fun->params.size() > paramcount) ? "few" : "many";
             if (fval)
                 return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
                                      "too %s parameters for call to %s: expected %i, got %i\n"
                                      " -> `%s` has been declared here: %s:%i",
-                                     fewmany, fval->name, (int)vec_size(fun->params), (int)paramcount,
+                                     fewmany, fval->name, (int)fun->params.size(), (int)paramcount,
                                      fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
             else
                 return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
                                      "too %s parameters for function call: expected %i, got %i\n"
                                      " -> it has been declared here: %s:%i",
-                                     fewmany, (int)vec_size(fun->params), (int)paramcount,
+                                     fewmany, (int)fun->params.size(), (int)paramcount,
                                      ast_ctx(fun).file, (int)ast_ctx(fun).line);
         }
     }
@@ -1586,7 +1584,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
             if (!with_labels) {
                 ast_label *lbl = ast_label_new(parser_ctx(parser), parser_tokval(parser), true);
                 var = (ast_expression*)lbl;
-                vec_push(parser->labels, lbl);
+                parser->labels.push_back(lbl);
             }
         }
         if (!var && !strcmp(parser_tokval(parser), "__FUNC__"))
@@ -2211,21 +2209,21 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
         return false;
     }
 
-    vec_push(parser->breaks, label);
-    vec_push(parser->continues, label);
+    parser->breaks.push_back(label);
+    parser->continues.push_back(label);
 
     rv = parse_while_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
+    if (parser->breaks.back() != label || parser->continues.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         ast_delete(*out);
         *out = NULL;
     }
     else {
-        vec_pop(parser->breaks);
-        vec_pop(parser->continues);
+        parser->breaks.pop_back();
+        parser->continues.pop_back();
     }
     return rv;
 }
@@ -2307,13 +2305,13 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
         }
     }
 
-    vec_push(parser->breaks, label);
-    vec_push(parser->continues, label);
+    parser->breaks.push_back(label);
+    parser->continues.push_back(label);
 
     rv = parse_dowhile_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
+    if (parser->breaks.back() != label || parser->continues.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         /*
@@ -2325,8 +2323,8 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
         *out = NULL;
     }
     else {
-        vec_pop(parser->breaks);
-        vec_pop(parser->continues);
+        parser->breaks.pop_back();
+        parser->continues.pop_back();
     }
     return rv;
 }
@@ -2437,21 +2435,21 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
         return false;
     }
 
-    vec_push(parser->breaks, label);
-    vec_push(parser->continues, label);
+    parser->breaks.push_back(label);
+    parser->continues.push_back(label);
 
     rv = parse_for_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->breaks) != label || vec_last(parser->continues) != label) {
+    if (parser->breaks.back() != label || parser->continues.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         ast_delete(*out);
         *out = NULL;
     }
     else {
-        vec_pop(parser->breaks);
-        vec_pop(parser->continues);
+        parser->breaks.pop_back();
+        parser->continues.pop_back();
     }
     return rv;
 }
@@ -2672,10 +2670,10 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
 static bool parse_break_continue(parser_t *parser, ast_block *block, ast_expression **out, bool is_continue)
 {
-    size_t       i;
+    size_t i;
     unsigned int levels = 0;
-    lex_ctx_t      ctx = parser_ctx(parser);
-    const char **loops = (is_continue ? parser->continues : parser->breaks);
+    lex_ctx_t ctx = parser_ctx(parser);
+    auto &loops = (is_continue ? parser->continues : parser->breaks);
 
     (void)block; /* not touching */
     if (!parser_next(parser)) {
@@ -2683,7 +2681,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
         return false;
     }
 
-    if (!vec_size(loops)) {
+    if (loops.empty()) {
         if (is_continue)
             parseerror(parser, "`continue` can only be used inside loops");
         else
@@ -2693,7 +2691,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     if (parser->tok == TOKEN_IDENT) {
         if (!OPTS_FLAG(LOOP_LABELS))
             parseerror(parser, "labeled loops not activated, try using -floop-labels");
-        i = vec_size(loops);
+        i = loops.size();
         while (i--) {
             if (loops[i] && !strcmp(loops[i], parser_tokval(parser)))
                 break;
@@ -2992,19 +2990,19 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
         return false;
     }
 
-    vec_push(parser->breaks, label);
+    parser->breaks.push_back(label);
 
     rv = parse_switch_go(parser, block, out);
     if (label)
         mem_d(label);
-    if (vec_last(parser->breaks) != label) {
+    if (parser->breaks.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
         ast_delete(*out);
         *out = NULL;
     }
     else {
-        vec_pop(parser->breaks);
+        parser->breaks.pop_back();
     }
     return rv;
 }
@@ -3263,7 +3261,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         ast_goto_set_label(gt, (ast_label*)lbl);
     }
     else
-        vec_push(parser->gotos, gt);
+        parser->gotos.push_back(gt);
 
     if (!parser_next(parser) || parser->tok != ';') {
         parseerror(parser, "semicolon expected after goto label");
@@ -3513,17 +3511,17 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         }
         else {
             label = ast_label_new(parser_ctx(parser), parser_tokval(parser), false);
-            vec_push(parser->labels, label);
+            parser->labels.push_back(label);
         }
         *out = (ast_expression*)label;
         if (!parser_next(parser)) {
             parseerror(parser, "parse error after label");
             return false;
         }
-        for (i = 0; i < vec_size(parser->gotos); ++i) {
+        for (i = 0; i < parser->gotos.size(); ++i) {
             if (!strcmp(parser->gotos[i]->name, label->name)) {
                 ast_goto_set_label(parser->gotos[i], label);
-                vec_remove(parser->gotos, i, 1);
+                parser->gotos.erase(parser->gotos.begin() + i);
                 --i;
             }
         }
@@ -3779,17 +3777,16 @@ static bool create_vector_members(ast_value *var, ast_member **me)
 
 static bool parse_function_body(parser_t *parser, ast_value *var)
 {
-    ast_block      *block = NULL;
-    ast_function   *func;
-    ast_function   *old;
-    size_t          parami;
+    ast_block *block = NULL;
+    ast_function *func;
+    ast_function *old;
 
     ast_expression *framenum  = NULL;
     ast_expression *nextthink = NULL;
     /* None of the following have to be deleted */
     ast_expression *fld_think = NULL, *fld_nextthink = NULL, *fld_frame = NULL;
     ast_expression *gbl_time = NULL, *gbl_self = NULL;
-    bool            has_frame_think;
+    bool has_frame_think;
 
     bool retval = true;
 
@@ -3801,7 +3798,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         return false;
     }
 
-    if (vec_size(parser->gotos) || vec_size(parser->labels)) {
+    if (parser->gotos.size() || parser->labels.size()) {
         parseerror(parser, "gotos/labels leaking");
         return false;
     }
@@ -4044,19 +4041,18 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     parser_enterblock(parser);
 
-    for (parami = 0; parami < vec_size(var->expression.params); ++parami) {
-        size_t     e;
-        ast_value *param = var->expression.params[parami];
+    for (auto &it : var->expression.params) {
+        size_t e;
         ast_member *me[3];
 
-        if (param->expression.vtype != TYPE_VECTOR &&
-            (param->expression.vtype != TYPE_FIELD ||
-             param->expression.next->vtype != TYPE_VECTOR))
+        if (it->expression.vtype != TYPE_VECTOR &&
+            (it->expression.vtype != TYPE_FIELD ||
+             it->expression.next->vtype != TYPE_VECTOR))
         {
             continue;
         }
 
-        if (!create_vector_members(param, me)) {
+        if (!create_vector_members(it, me)) {
             ast_block_delete(block);
             goto enderrfn;
         }
@@ -4092,7 +4088,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             goto enderrfn;
         }
         func->varargs     = varargs;
-        func->fixedparams = (ast_value*)fold_constgen_float(parser->fold, vec_size(var->expression.params), false);
+        func->fixedparams = (ast_value*)fold_constgen_float(parser->fold, var->expression.params.size(), false);
     }
 
     parser->function = func;
@@ -4394,8 +4390,8 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
         goto cleanup;
     }
     (void)!ast_value_set_name(value, "value"); /* not important */
-    vec_push(fval->expression.params, index);
-    vec_push(fval->expression.params, value);
+    fval->expression.params.push_back(index);
+    fval->expression.params.push_back(value);
 
     array->setter = fval;
     return fval;
@@ -4459,9 +4455,9 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         goto cleanup;
     }
     (void)!ast_value_set_name(value, "value"); /* not important */
-    vec_push(fval->expression.params, entity);
-    vec_push(fval->expression.params, index);
-    vec_push(fval->expression.params, value);
+    fval->expression.params.push_back(entity);
+    fval->expression.params.push_back(index);
+    fval->expression.params.push_back(value);
 
     root = array_field_setter_node(parser, array, entity, index, value, 0, array->expression.count);
     if (!root) {
@@ -4506,7 +4502,7 @@ static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *
         parseerror(parser, "failed to create locals for array accessor");
         goto cleanup;
     }
-    vec_push(fval->expression.params, index);
+    fval->expression.params.push_back(index);
 
     array->getter = fval;
     return fval;
@@ -4542,17 +4538,13 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
 
 static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 {
-    lex_ctx_t     ctx;
-    size_t      i;
-    ast_value **params;
-    ast_value  *param;
-    ast_value  *fval;
-    bool        first = true;
-    bool        variadic = false;
-    ast_value  *varparam = NULL;
-    char       *argcounter = NULL;
-
-    ctx = parser_ctx(parser);
+    lex_ctx_t ctx = parser_ctx(parser);
+    std::vector<ast_value *> params;
+    ast_value *fval;
+    bool first = true;
+    bool variadic = false;
+    ast_value *varparam = NULL;
+    char *argcounter = NULL;
 
     /* for the sake of less code we parse-in in this function */
     if (!parser_next(parser)) {
@@ -4560,8 +4552,6 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         parseerror(parser, "expected parameter list");
         return NULL;
     }
-
-    params = NULL;
 
     /* parse variables until we hit a closing paren */
     while (parser->tok != ')') {
@@ -4580,7 +4570,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         }
         first = false;
 
-        param = parse_typename(parser, NULL, NULL, &is_varargs);
+        ast_value *param = parse_typename(parser, NULL, NULL, &is_varargs);
         if (!param && !is_varargs)
             goto on_error;
         if (is_varargs) {
@@ -4598,7 +4588,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 }
             }
         } else {
-            vec_push(params, param);
+            params.push_back(param);
             if (param->expression.vtype >= TYPE_VARIANT) {
                 char tname[1024]; /* typename is reserved in C++ */
                 ast_type_to_string((ast_expression*)param, tname, sizeof(tname));
@@ -4608,8 +4598,8 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
             /* type-restricted varargs */
             if (parser->tok == TOKEN_DOTS) {
                 variadic = true;
-                varparam = vec_last(params);
-                vec_pop(params);
+                varparam = params.back();
+                params.pop_back();
                 if (!parser_next(parser) || (parser->tok != ')' && parser->tok != TOKEN_IDENT)) {
                     parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                     goto on_error;
@@ -4630,11 +4620,11 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         }
     }
 
-    if (vec_size(params) == 1 && params[0]->expression.vtype == TYPE_VOID)
-        vec_free(params);
+    if (params.size() == 1 && params[0]->expression.vtype == TYPE_VOID)
+        params.clear();
 
     /* sanity check */
-    if (vec_size(params) > 8 && OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
+    if (params.size() > 8 && OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC)
         (void)!parsewarning(parser, WARN_EXTENSIONS, "more than 8 parameters are not supported by this standard");
 
     /* parse-out */
@@ -4645,15 +4635,14 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 
     /* now turn 'var' into a function type */
     fval = ast_value_new(ctx, "<type()>", TYPE_FUNCTION);
-    fval->expression.next     = (ast_expression*)var;
+    fval->expression.next = (ast_expression*)var;
     if (variadic)
         fval->expression.flags |= AST_FLAG_VARIADIC;
     var = fval;
 
-    var->expression.params   = params;
+    var->expression.params = params;
     var->expression.varparam = (ast_expression*)varparam;
-    var->argcounter          = argcounter;
-    params = NULL;
+    var->argcounter = argcounter;
 
     return var;
 
@@ -4663,9 +4652,8 @@ on_error:
     if (varparam)
         ast_delete(varparam);
     ast_delete(var);
-    for (i = 0; i < vec_size(params); ++i)
-        ast_delete(params[i]);
-    vec_free(params);
+    for (auto &it : params)
+        ast_delete(it);
     return NULL;
 }
 
@@ -5255,7 +5243,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         goto cleanup;
                     }
                     /* we need the new parameter-names */
-                    for (i = 0; i < vec_size(proto->expression.params); ++i)
+                    for (i = 0; i < proto->expression.params.size(); ++i)
                         ast_value_set_name(proto->expression.params[i], var->expression.params[i]->name);
                     if (!parser_check_qualifiers(parser, var, proto)) {
                         retval = false;
@@ -5493,7 +5481,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     }
                     vec_free(defname);
                 } else {
-                    vec_push(localblock->locals, var);
+                    localblock->locals.push_back(var);
                     parser_addlocal(parser, var->name, (ast_expression*)var);
                     if (isvector) {
                         for (i = 0; i < 3; ++i) {
@@ -5704,10 +5692,8 @@ skipvar:
             if (!parse_function_body(parser, var))
                 break;
             ast_delete(basetype);
-            for (i = 0; i < vec_size(parser->gotos); ++i)
-                parseerror(parser, "undefined label: `%s`", parser->gotos[i]->name);
-            vec_free(parser->gotos);
-            vec_free(parser->labels);
+            for (auto &it : parser->gotos)
+                parseerror(parser, "undefined label: `%s`", it->name);
             return true;
         } else {
             ast_expression *cexp;
@@ -5727,7 +5713,7 @@ skipvar:
                 if (isvector) {
                     for (i = 0; i < 3; ++i) {
                         vec_pop(parser->_locals);
-                        vec_pop(localblock->collect);
+                        localblock->collect.pop_back();
                     }
                 }
                 /* do sanity checking, this function really needs refactoring */
@@ -5735,10 +5721,10 @@ skipvar:
                     parseerror(parser, "internal error: unexpected change in local variable handling");
                 else
                     vec_pop(parser->_locals);
-                if (vec_last(localblock->locals) != var)
+                if (localblock->locals.back() != var)
                     parseerror(parser, "internal error: unexpected change in local variable handling (2)");
                 else
-                    vec_pop(localblock->locals);
+                    localblock->locals.pop_back();
                 /* push it to the to-be-generated globals */
                 vec_push(parser->globals, (ast_expression*)var);
                 if (isvector)
@@ -6000,6 +5986,9 @@ parser_t *parser_create()
 
     memset(parser, 0, sizeof(*parser));
 
+    // TODO: remove
+    new (parser) parser_t();
+
     for (i = 0; i < operator_count; ++i) {
         if (operators[i].id == opid1('=')) {
             parser->assign_op = operators+i;
@@ -6141,11 +6130,6 @@ static void parser_remove_ast(parser_t *parser)
 
     vec_free(parser->_block_ctx);
 
-    vec_free(parser->labels);
-    vec_free(parser->gotos);
-    vec_free(parser->breaks);
-    vec_free(parser->continues);
-
     ast_value_delete(parser->nil);
 
     ast_value_delete(parser->const_vec[0]);
@@ -6194,7 +6178,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
     cov  = func->vtype;
     expr = (ast_expression*)cov;
 
-    if (expr->vtype != TYPE_FUNCTION || vec_size(expr->params) != 0) {
+    if (expr->vtype != TYPE_FUNCTION || expr->params.size()) {
         char ty[1024];
         ast_type_to_string(expr, ty, sizeof(ty));
         con_out("invalid type for coverage(): %s\n", ty);
@@ -6270,8 +6254,8 @@ bool parser_finish(parser_t *parser, const char *output)
     for (i = 0; i < vec_size(parser->functions); ++i) {
         ast_function *f = parser->functions[i];
         if (f->varargs) {
-            if (parser->max_param_count > vec_size(f->vtype->expression.params)) {
-                f->varargs->expression.count = parser->max_param_count - vec_size(f->vtype->expression.params);
+            if (parser->max_param_count > f->vtype->expression.params.size()) {
+                f->varargs->expression.count = parser->max_param_count - f->vtype->expression.params.size();
                 if (!parser_create_array_setter_impl(parser, f->varargs)) {
                     con_out("failed to generate vararg setter for %s\n", f->name);
                     ir_builder_delete(ir);

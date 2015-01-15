@@ -24,7 +24,7 @@ static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **out
 
 static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, ast_function *const func) {
     vec_push(intrin->parser->functions, func);
-    vec_push(intrin->parser->globals,   (ast_expression*)value);
+    vec_push(intrin->parser->globals, (ast_expression*)value);
 }
 
 #define QC_POW_EPSILON 0.00001f
@@ -60,7 +60,7 @@ static ast_expression *intrin_isfinite(intrin_t *intrin) {
     ast_block    *block     = ast_block_new(intrin_ctx(intrin));
 
     /* float x; */
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
 
     /* <callisnan> = isnan(x); */
     vec_push(callisnan->params, (ast_expression*)x);
@@ -69,7 +69,7 @@ static ast_expression *intrin_isfinite(intrin_t *intrin) {
     vec_push(callisinf->params, (ast_expression*)x);
 
     /* return (!<callisnan> || <callisinf>); */
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_unary_new(
@@ -102,7 +102,7 @@ static ast_expression *intrin_isinf(intrin_t *intrin) {
     ast_block    *body  = ast_block_new(intrin_ctx(intrin));
     ast_function *func  = intrin_value(intrin, &value, "isinf", TYPE_FLOAT);
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -129,7 +129,7 @@ static ast_expression *intrin_isinf(intrin_t *intrin) {
         )
     );
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
     vec_push(func->blocks, body);
 
     intrin_reg(intrin, value, func);
@@ -152,8 +152,8 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "isnan", TYPE_FLOAT);
 
-    vec_push(body->locals, local);
-    vec_push(body->exprs,
+    body->locals.push_back(local);
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -162,7 +162,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
         )
     );
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -174,7 +174,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
         )
     );
 
-    vec_push(value->expression.params, arg1);
+    value->expression.params.push_back(arg1);
     vec_push(func->blocks, body);
 
     intrin_reg(intrin, value, func);
@@ -194,11 +194,11 @@ static ast_expression *intrin_isnormal(intrin_t *intrin) {
     ast_block    *body          = ast_block_new(intrin_ctx(intrin));
     ast_function *func          = intrin_value(intrin, &value, "isnormal", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
     vec_push(callisfinite->params, (ast_expression*)x);
 
     /* return <callisfinite> */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)callisfinite
@@ -221,10 +221,10 @@ static ast_expression *intrin_signbit(intrin_t *intrin) {
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "signbit", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
 
     /* return (x < 0); */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_ternary_new(
@@ -259,7 +259,7 @@ static ast_expression *intrin_acosh(intrin_t *intrin) {
     ast_block    *body     = ast_block_new(intrin_ctx(intrin));
     ast_function *func     = intrin_value(intrin, &value, "acosh", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) - 1); */
     vec_push(callsqrt->params,
@@ -287,7 +287,7 @@ static ast_expression *intrin_acosh(intrin_t *intrin) {
     );
 
     /* return <calllog>; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)calllog
@@ -312,7 +312,7 @@ static ast_expression *intrin_asinh(intrin_t *intrin) {
     ast_block    *body     = ast_block_new(intrin_ctx(intrin));
     ast_function *func     = intrin_value(intrin, &value, "asinh", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) + 1); */
     vec_push(callsqrt->params,
@@ -340,7 +340,7 @@ static ast_expression *intrin_asinh(intrin_t *intrin) {
     );
 
     /* return <calllog>; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)calllog
@@ -364,7 +364,7 @@ static ast_expression *intrin_atanh(intrin_t *intrin) {
     ast_block    *body    = ast_block_new(intrin_ctx(intrin));
     ast_function *func    = intrin_value(intrin, &value, "atanh", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
 
     /* <callog> = log((1 + x) / (1 - x)); */
     vec_push(calllog->params,
@@ -387,7 +387,7 @@ static ast_expression *intrin_atanh(intrin_t *intrin) {
     );
 
     /* return 0.5 * <calllog>; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_MUL_F,
@@ -421,13 +421,14 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
     ast_block    *body  = ast_block_new(intrin_ctx(intrin));
     ast_function *func  = intrin_value(intrin, &value, "exp", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
-    vec_push(body->locals, sum);
-    vec_push(body->locals, acc);
-    vec_push(body->locals, i);
+    value->expression.params.push_back(x);
+
+    body->locals.push_back(sum);
+    body->locals.push_back(acc);
+    body->locals.push_back(i);
 
     /* sum = 1.0; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -437,7 +438,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
     );
 
     /* acc = 1.0; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -450,7 +451,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
      * for (i = 1; i < 200; ++i)
      *     sum += (acc *= x / i);
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             /* i = 1; */
@@ -501,7 +502,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
     );
 
     /* return sum; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)sum
@@ -526,13 +527,13 @@ static ast_expression *intrin_exp2(intrin_t *intrin) {
     ast_block    *body      = ast_block_new(intrin_ctx(intrin));
     ast_function *func      = intrin_value(intrin, &value, "exp2", TYPE_FLOAT);
 
-    vec_push(value->expression.params, arg1);
+    value->expression.params.push_back(arg1);
 
     vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
     vec_push(callpow->params, (ast_expression*)arg1);
 
     /* return <callpow> */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)callpow
@@ -557,13 +558,13 @@ static ast_expression *intrin_expm1(intrin_t *intrin) {
     ast_block    *body     = ast_block_new(intrin_ctx(intrin));
     ast_function *func     = intrin_value(intrin, &value, "expm1", TYPE_FLOAT);
 
-    vec_push(value->expression.params, x);
+    value->expression.params.push_back(x);
 
     /* <callexp> = exp(x); */
     vec_push(callexp->params, (ast_expression*)x);
 
     /* return <callexp> - 1; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -658,21 +659,21 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     ast_value *square     = ast_value_new(intrin_ctx(intrin), "square",     TYPE_FLOAT);
     ast_value *accumulate = ast_value_new(intrin_ctx(intrin), "accumulate", TYPE_FLOAT);
     ast_value *mid        = ast_value_new(intrin_ctx(intrin), "mid",        TYPE_FLOAT);
-    vec_push(body->locals, result);
-    vec_push(body->locals, low);
-    vec_push(body->locals, high);
-    vec_push(body->locals, square);
-    vec_push(body->locals, accumulate);
-    vec_push(body->locals, mid);
+    body->locals.push_back(result);
+    body->locals.push_back(low);
+    body->locals.push_back(high);
+    body->locals.push_back(square);
+    body->locals.push_back(accumulate);
+    body->locals.push_back(mid);
 
-    vec_push(value->expression.params, base);
-    vec_push(value->expression.params, exp);
+    value->expression.params.push_back(base);
+    value->expression.params.push_back(exp);
 
     /*
      * if (exp == 0.0)
      *     return 1;
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -693,7 +694,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      * if (exp == 1.0)
      *     return base;
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -724,7 +725,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      * if (exp < 0)
      *     return 1.0 / <callpow1>;
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -763,7 +764,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     return result * result;
      * }
      */
-    vec_push(expgt1->exprs,
+    expgt1->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -771,7 +772,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)callpow2
         )
     );
-    vec_push(expgt1->exprs,
+    expgt1->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -788,7 +789,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     <expgt1>
      * }
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -814,14 +815,14 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      * accumulate = square;
      * mid        = high / 2.0f;
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(intrin_ctx(intrin),
             INSTR_STORE_F,
             (ast_expression*)low,
             (ast_expression*)intrin->fold->imm_float[0]
         )
     );
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -830,7 +831,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
         )
     );
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -839,7 +840,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
         )
     );
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -847,7 +848,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)square
         )
     );
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -867,7 +868,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     accumulate *= square;
      * }
      */
-    vec_push(midltexp->exprs,
+    midltexp->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -875,7 +876,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)mid
         )
     );
-    vec_push(midltexp->exprs,
+    midltexp->exprs.push_back(
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -891,7 +892,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     accumulate *= (1.0 / square);
      * }
      */
-    vec_push(midltexpelse->exprs,
+    midltexpelse->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -899,7 +900,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)mid
         )
     );
-    vec_push(midltexpelse->exprs,
+    midltexpelse->exprs.push_back(
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -930,7 +931,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     mid = (low + high) / 2;
      * }
      */
-    vec_push(whileblock->exprs,
+    whileblock->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -938,7 +939,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)callsqrt2
         )
     );
-    vec_push(whileblock->exprs,
+    whileblock->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -951,7 +952,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             (ast_expression*)midltexpelse
         )
     );
-    vec_push(whileblock->exprs,
+    whileblock->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -986,7 +987,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      * while (<callfabs>  > epsilon)
      *     <whileblock>
      */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             /* init */
@@ -1012,7 +1013,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     );
 
     /* return accumulate */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)accumulate
@@ -1043,14 +1044,14 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
     ast_block    *body  = ast_block_new(intrin_ctx(intrin));
     ast_function *func  = intrin_value(intrin, &value, "mod", TYPE_FLOAT);
 
-    vec_push(value->expression.params, a);
-    vec_push(value->expression.params, b);
+    value->expression.params.push_back(a);
+    value->expression.params.push_back(b);
 
-    vec_push(body->locals, div);
-    vec_push(body->locals, sign);
+    body->locals.push_back(div);
+    body->locals.push_back(sign);
 
     /* div = a / b; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1065,7 +1066,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
     );
 
     /* sign = (div < 0.0f) ? -1 : 1; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1095,7 +1096,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
     );
 
     /* return a - b * sign * <call> */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -1134,7 +1135,7 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "fabs", TYPE_FLOAT);
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_ternary_new(
@@ -1155,7 +1156,8 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
         )
     );
 
-    vec_push(value->expression.params, arg1);
+    value->expression.params.push_back(arg1);
+
     vec_push(func->blocks, body);
 
     intrin_reg(intrin, value, func);
@@ -1176,10 +1178,10 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "epsilon", TYPE_FLOAT);
 
-    vec_push(body->locals, eps);
+    body->locals.push_back(eps);
 
     /* eps = 1.0f; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1188,7 +1190,7 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
         )
     );
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             NULL,
@@ -1223,7 +1225,7 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
     );
 
     /* return eps; */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)eps
@@ -1248,9 +1250,9 @@ static ast_expression *intrin_nan(intrin_t *intrin) {
     ast_function *func   = intrin_value(intrin, &value, "nan", TYPE_FLOAT);
     ast_block    *block  = ast_block_new(intrin_ctx(intrin));
 
-    vec_push(block->locals, x);
+    block->locals.push_back(x);
 
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1259,7 +1261,7 @@ static ast_expression *intrin_nan(intrin_t *intrin) {
         )
     );
 
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -1292,12 +1294,12 @@ static ast_expression *intrin_inf(intrin_t *intrin) {
     ast_block    *block  = ast_block_new(intrin_ctx(intrin));
     size_t        i;
 
-    vec_push(block->locals, x);
-    vec_push(block->locals, y);
+    block->locals.push_back(x);
+    block->locals.push_back(y);
 
     /* to keep code size down */
     for (i = 0; i <= 1; i++) {
-        vec_push(block->exprs,
+        block->exprs.push_back(
             (ast_expression*)ast_store_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1307,7 +1309,7 @@ static ast_expression *intrin_inf(intrin_t *intrin) {
         );
     }
 
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -1418,20 +1420,20 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     ast_function *func       = intrin_value(intrin, &value, "ln", TYPE_FLOAT);
     size_t        i;
 
-    vec_push(value->expression.params, power);
-    vec_push(value->expression.params, base);
+    value->expression.params.push_back(power);
+    value->expression.params.push_back(base);
 
-    vec_push(block->locals, whole);
-    vec_push(block->locals, nth);
-    vec_push(block->locals, sign);
-    vec_push(block->locals, eps);
-    vec_push(block->locals, A_i);
-    vec_push(block->locals, B_i);
-    vec_push(block->locals, A_iminus1);
-    vec_push(block->locals, B_iminus1);
+    block->locals.push_back(whole);
+    block->locals.push_back(nth);
+    block->locals.push_back(sign);
+    block->locals.push_back(eps);
+    block->locals.push_back(A_i);
+    block->locals.push_back(B_i);
+    block->locals.push_back(A_iminus1);
+    block->locals.push_back(B_iminus1);
 
     /* sign = 1.0f; */
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1441,7 +1443,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* eps = __builtin_epsilon(); */
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1462,7 +1464,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     for (i = 0; i <= 1; i++) {
         int j;
         for (j = 1; j >= 0; j--) {
-            vec_push(block->exprs,
+            block->exprs.push_back(
                 (ast_expression*)ast_store_new(
                     intrin_ctx(intrin),
                     INSTR_STORE_F,
@@ -1485,7 +1487,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * }
      */
     for (i = 0; i <= 1; i++) {
-        vec_push(((i) ? blt1 : plt1)->exprs,
+        ((i) ? blt1 : plt1)->exprs.push_back(
             (ast_expression*)ast_store_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1498,7 +1500,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
                 )
             )
         );
-        vec_push(plt1->exprs,
+        plt1->exprs.push_back(
             (ast_expression*)ast_binstore_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1519,7 +1521,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      *         <blt1>
      * }
      */
-    vec_push(plt1orblt1->exprs,
+    plt1orblt1->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -1550,7 +1552,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     for (i = 0; i <= 1; i++) {
-        vec_push(plt1orblt1->exprs,
+        plt1orblt1->exprs.push_back(
             (ast_expression*)ast_ifthen_new(
                 intrin_ctx(intrin),
                 (ast_expression*)ast_binary_new(
@@ -1565,11 +1567,11 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
         );
     }
 
-    vec_push(block->exprs, (ast_expression*)plt1orblt1);
+    block->exprs.push_back((ast_expression*)plt1orblt1);
 
 
     /* whole = power; */
-    vec_push(forloop->exprs,
+    forloop->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1579,7 +1581,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* nth = 0.0f; */
-    vec_push(forloop->exprs,
+    forloop->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1589,7 +1591,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* base2 = base; */
-    vec_push(whileloop->exprs,
+    whileloop->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1599,7 +1601,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* n2 = 1.0f; */
-    vec_push(whileloop->exprs,
+    whileloop->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1609,7 +1611,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* newbase2 = base2 * base2; */
-    vec_push(whileloop->exprs,
+    whileloop->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1624,12 +1626,12 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* while loop locals */
-    vec_push(whileloop->locals, base2);
-    vec_push(whileloop->locals, n2);
-    vec_push(whileloop->locals, newbase2);
+    whileloop->locals.push_back(base2);
+    whileloop->locals.push_back(n2);
+    whileloop->locals.push_back(newbase2);
 
     /* base2 = newbase2; */
-    vec_push(nestwhile->exprs,
+    nestwhile->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1639,7 +1641,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* n2 *= 2; */
-    vec_push(nestwhile->exprs,
+    nestwhile->exprs.push_back(
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1650,7 +1652,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* newbase2 *= newbase2; */
-    vec_push(nestwhile->exprs,
+    nestwhile->exprs.push_back(
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1661,7 +1663,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* while (whole >= newbase2) */
-    vec_push(whileloop->exprs,
+    whileloop->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             NULL,
@@ -1680,7 +1682,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* whole /= base2; */
-    vec_push(whileloop->exprs,
+    whileloop->exprs.push_back(
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1691,7 +1693,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* nth += n2; */
-    vec_push(whileloop->exprs,
+    whileloop->exprs.push_back(
         (ast_expression*)ast_binstore_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1702,7 +1704,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* while (whole >= base) */
-    vec_push(forloop->exprs,
+    forloop->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             NULL,
@@ -1720,12 +1722,12 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
         )
     );
 
-    vec_push(forloop->locals, b_iplus1);
-    vec_push(forloop->locals, A_iplus1);
-    vec_push(forloop->locals, B_iplus1);
+    forloop->locals.push_back(b_iplus1);
+    forloop->locals.push_back(A_iplus1);
+    forloop->locals.push_back(B_iplus1);
 
     /* b_iplus1 = nth; */
-    vec_push(forloop->exprs,
+    forloop->exprs.push_back(
         (ast_expression*)ast_store_new(
             intrin_ctx(intrin),
             INSTR_STORE_F,
@@ -1739,7 +1741,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * B_iplus1 = b_iplus1 * B_i + B_iminus1;
      */
     for (i = 0; i <= 1; i++) {
-        vec_push(forloop->exprs,
+        forloop->exprs.push_back(
             (ast_expression*)ast_store_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1764,7 +1766,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * B_iminus1 = B_i;
      */
     for (i = 0; i <= 1; i++) {
-        vec_push(forloop->exprs,
+        forloop->exprs.push_back(
             (ast_expression*)ast_store_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1779,7 +1781,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * B_i = B_iplus1;
      */
     for (i = 0; i <= 1; i++) {
-        vec_push(forloop->exprs,
+        forloop->exprs.push_back(
             (ast_expression*)ast_store_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1793,7 +1795,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * if (whole <= 1.0f + eps)
      *     break;
      */
-    vec_push(forloop->exprs,
+    forloop->exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -1821,7 +1823,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * base  = whole;
      */
     for (i = 0; i <= 1; i++) {
-        vec_push(forloop->exprs,
+        forloop->exprs.push_back(
             (ast_expression*)ast_store_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1832,7 +1834,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     }
 
     /* add the for loop block */
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             NULL,
@@ -1847,7 +1849,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     );
 
     /* return sign * A_i / B_il */
-    vec_push(block->exprs,
+    block->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)ast_binary_new(
@@ -1877,12 +1879,12 @@ static ast_expression *intrin_log_variant(intrin_t *intrin, const char *name, fl
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, name, TYPE_FLOAT);
 
-    vec_push(value->expression.params, arg1);
+    value->expression.params.push_back(arg1);
 
     vec_push(callln->params, (ast_expression*)arg1);
     vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, base, false));
 
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)callln
@@ -1921,8 +1923,8 @@ static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, 
     ast_block    *body      = ast_block_new(intrin_ctx(intrin));
     ast_function *func      = intrin_value(intrin, &value, name, TYPE_FLOAT);
 
-    vec_push(value->expression.params, a);
-    vec_push(value->expression.params, b);
+    value->expression.params.push_back(a);
+    value->expression.params.push_back(b);
 
     /* <callpow> = pow(2, b) */
     vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
@@ -1940,7 +1942,7 @@ static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, 
     );
 
     /* return <callfloor> */
-    vec_push(body->exprs,
+    body->exprs.push_back(
         (ast_expression*)ast_return_new(
             intrin_ctx(intrin),
             (ast_expression*)callfloor
