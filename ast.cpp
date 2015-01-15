@@ -1188,8 +1188,6 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
     self->argc             = NULL;
     self->fixedparams      = NULL;
     self->return_value     = NULL;
-
-    self->static_names     = NULL;
     self->static_count     = 0;
 
     return self;
@@ -1201,7 +1199,6 @@ cleanup:
 
 void ast_function_delete(ast_function *self)
 {
-    size_t i;
     if (self->name)
         mem_d((void*)self->name);
     if (self->vtype) {
@@ -1213,9 +1210,8 @@ void ast_function_delete(ast_function *self)
          */
         ast_unref(self->vtype);
     }
-    for (i = 0; i < vec_size(self->static_names); ++i)
-        mem_d(self->static_names[i]);
-    vec_free(self->static_names);
+    for (auto &it : self->static_names)
+        mem_d(it);
     for (auto &it : self->blocks)
         ast_delete(it);
     if (self->varargs)
@@ -3339,9 +3335,8 @@ bool ast_state_codegen(ast_state *self, ast_function *func, bool lvalue, ir_valu
 bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value **out)
 {
     ast_expression_codegen *cgen;
-    ir_value              **params;
-    ir_instr               *callinstr;
-    size_t i;
+    std::vector<ir_value*> params;
+    ir_instr *callinstr;
 
     ir_value *funval = NULL;
 
@@ -3362,17 +3357,15 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
     if (!funval)
         return false;
 
-    params = NULL;
-
     /* parameters */
     for (auto &it : self->params) {
         ir_value *param;
         cgen = it->codegen;
         if (!(*cgen)(it, func, false, &param))
-            goto error;
+            return false;
         if (!param)
-            goto error;
-        vec_push(params, param);
+            return false;
+        params.push_back(param);
     }
 
     /* varargs counter */
@@ -3393,20 +3386,15 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
                                      ast_function_label(func, "call"),
                                      funval, !!(self->func->flags & AST_FLAG_NORETURN));
     if (!callinstr)
-        goto error;
+        return false;
 
-    for (i = 0; i < vec_size(params); ++i) {
-        ir_call_param(callinstr, params[i]);
-    }
+    for (auto &it : params)
+        ir_call_param(callinstr, it);
 
     *out = ir_call_value(callinstr);
     self->expression.outr = *out;
 
     codegen_output_type(self, *out);
 
-    vec_free(params);
     return true;
-error:
-    vec_free(params);
-    return false;
 }

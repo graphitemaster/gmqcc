@@ -631,7 +631,7 @@ struct ast_function
     int builtin;
 
     /* list of used-up names for statics without the count suffix */
-    char **static_names;
+    std::vector<char*> static_names;
     /* number of static variables, by convention this includes the
      * ones without the count-suffix - remember this when dealing
      * with savegames. uint instead of size_t as %zu in printf is

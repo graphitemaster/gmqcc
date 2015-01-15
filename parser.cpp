@@ -5435,7 +5435,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                      * counter value.
                      * The counter is incremented either way.
                      */
-                    sn_size = vec_size(parser->function->static_names);
+                    sn_size = parser->function->static_names.size();
                     for (sn = 0; sn != sn_size; ++sn) {
                         if (strcmp(parser->function->static_names[sn], var->name) == 0)
                             break;
@@ -5447,7 +5447,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         mem_d(num);
                     }
                     else
-                        vec_push(parser->function->static_names, util_strdup(var->name));
+                        parser->function->static_names.push_back(util_strdup(var->name));
                     parser->function->static_count++;
                     ast_value_set_name(var, defname);
 
