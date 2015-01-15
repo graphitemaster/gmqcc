@@ -1923,24 +1923,16 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
         expr = NULL;
     } else
         expr = sy.out[0].out;
-    sy.out.clear();
-    sy.ops.clear();
     if (sy.paren.size()) {
         parseerror(parser, "internal error: vec_size(sy.paren) = %lu", (unsigned long)sy.paren.size());
         return NULL;
     }
-    sy.paren.clear();
-    sy.argc.clear();
     return expr;
 
 onerr:
     parser->lex->flags.noops = true;
     for (auto &it : sy.out)
         if (it.out) ast_unref(it.out);
-    sy.out.clear();
-    sy.ops.clear();
-    sy.paren.clear();
-    sy.argc.clear();
     return NULL;
 }
 
@@ -5772,9 +5764,6 @@ skipvar:
                     if (!ast_block_add_expr(localblock, (ast_expression*)sy.out[0].out))
                         break;
                 }
-                sy.out.clear();
-                sy.ops.clear();
-                sy.argc.clear();
                 var->cvq = cvq;
             }
             /* a constant initialized to an inexact value should be marked inexact:
