@@ -3,9 +3,9 @@
 #include "gmqcc.h"
 #include "lexer.h"
 #include "ast.h"
+#include "intrin.h"
 
 struct parser_t;
-struct intrin_t;
 
 struct fold_t {
     parser_t *parser;
@@ -16,23 +16,11 @@ struct fold_t {
     hash_table_t *imm_string_dotranslate; /* map<string, ast_value*> */
 };
 
-struct intrin_func_t {
-    ast_expression *(*intrin)(intrin_t *);
-    const char *name;
-    const char *alias;
-    size_t args;
-};
-
-struct intrin_t {
-    std::vector<intrin_func_t> intrinsics;
-    std::vector<ast_expression*> generated;
-    parser_t *parser;
-    fold_t *fold;
-};
-
 #define parser_ctx(p) ((p)->lex->tok.ctx)
 
 struct parser_t {
+    parser_t() { }
+
     lex_file *lex;
     int tok;
 
@@ -89,7 +77,7 @@ struct parser_t {
     size_t max_param_count;
 
     fold_t *fold;
-    intrin_t *intrin;
+    intrin m_intrin;
 };
 
 
@@ -110,12 +98,5 @@ ast_expression *fold_intrin         (fold_t *, const char      *, ast_expression
 ast_expression *fold_binary         (lex_ctx_t ctx, int, ast_expression *, ast_expression *);
 int             fold_cond_ifthen    (ir_value *, ast_function *, ast_ifthen  *);
 int             fold_cond_ternary   (ir_value *, ast_function *, ast_ternary *);
-
-/* intrin.c */
-intrin_t       *intrin_init            (parser_t *parser);
-void            intrin_cleanup         (intrin_t *intrin);
-ast_expression *intrin_fold            (intrin_t *intrin, ast_value *, ast_expression **);
-ast_expression *intrin_func            (intrin_t *intrin, const char *name);
-ast_expression *intrin_debug_typestring(intrin_t *intrin);
 
 #endif

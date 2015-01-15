@@ -588,7 +588,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             } else if (!(out = fold_op(parser->fold, op, exprs))) {
                 /* generate a call to __builtin_mod */
-                ast_expression *mod  = intrin_func(parser->intrin, "mod");
+                ast_expression *mod  = parser->m_intrin.func("mod");
                 ast_call       *call = nullptr;
                 if (!mod) return false; /* can return null for missing floor */
 
@@ -658,7 +658,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                ast_expression *shift = intrin_func(parser->intrin, (op->id == opid2('<','<')) ? "__builtin_lshift" : "__builtin_rshift");
+                ast_expression *shift = parser->m_intrin.func((op->id == opid2('<','<')) ? "__builtin_lshift" : "__builtin_rshift");
                 ast_call       *call  = ast_call_new(parser_ctx(parser), shift);
                 call->params.push_back(exprs[0]);
                 call->params.push_back(exprs[1]);
@@ -676,7 +676,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if(!(out = fold_op(parser->fold, op, exprs))) {
-                ast_expression *shift = intrin_func(parser->intrin, (op->id == opid3('<','<','=')) ? "__builtin_lshift" : "__builtin_rshift");
+                ast_expression *shift = parser->m_intrin.func((op->id == opid3('<','<','=')) ? "__builtin_lshift" : "__builtin_rshift");
                 ast_call       *call  = ast_call_new(parser_ctx(parser), shift);
                 call->params.push_back(exprs[0]);
                 call->params.push_back(exprs[1]);
@@ -755,7 +755,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
-                ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser->intrin, "pow"));
+                ast_call *gencall = ast_call_new(parser_ctx(parser), parser->m_intrin.func("pow"));
                 gencall->params.push_back(exprs[0]);
                 gencall->params.push_back(exprs[1]);
                 out = (ast_expression*)gencall;
@@ -1189,7 +1189,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
      * TODO handle this at the intrinsic level with an ast_intrinsic
      * node and codegen.
      */
-    if ((fun = sy->out[fid].out) == intrin_debug_typestring(parser->intrin)) {
+    if ((fun = sy->out[fid].out) == parser->m_intrin.debug_typestring()) {
         char ty[1024];
         if (fid+2 != sy->out.size() || sy->out.back().block) {
             parseerror(parser, "intrinsic __builtin_debug_typestring requires exactly 1 parameter");
@@ -1233,7 +1233,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         for (i = 0; i < paramcount; i++)
             vec_push(exprs, sy->out[fid+1 + i].out);
 
-        if (!(foldval = intrin_fold(parser->intrin, (ast_value*)fun, exprs))) {
+        if (!(foldval = parser->m_intrin.fold((ast_value*)fun, exprs))) {
             vec_free(exprs);
             goto fold_leave;
         }
@@ -1595,7 +1595,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
              * use the identifier as is.
              */
             if (!strncmp(parser_tokval(parser), "__builtin_", 10)) {
-                var = intrin_func(parser->intrin, parser_tokval(parser));
+                var = parser->m_intrin.func(parser_tokval(parser));
             }
 
             /*
@@ -1603,7 +1603,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
              * the first one masks for __builtin though, we emit warning here.
              */
             if (!var) {
-                if ((var = intrin_func(parser->intrin, parser_tokval(parser)))) {
+                if ((var = parser->m_intrin.func(parser_tokval(parser)))) {
                     (void)!compile_warning(
                         parser_ctx(parser),
                         WARN_BUILTINS,
@@ -6017,8 +6017,8 @@ parser_t *parser_create()
         parser->reserved_version = nullptr;
     }
 
-    parser->fold   = fold_init  (parser);
-    parser->intrin = intrin_init(parser);
+    parser->fold = fold_init(parser);
+    parser->m_intrin = intrin(parser);
     return parser;
 }
 
@@ -6116,7 +6116,6 @@ static void parser_remove_ast(parser_t *parser)
 
     util_htdel(parser->aliases);
     fold_cleanup(parser->fold);
-    intrin_cleanup(parser->intrin);
 }
 
 void parser_cleanup(parser_t *parser)
