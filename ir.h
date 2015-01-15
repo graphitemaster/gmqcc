@@ -8,11 +8,11 @@
  */
 typedef uint8_t ir_flag_t;
 
-typedef struct ir_value_s    ir_value;
-typedef struct ir_instr_s    ir_instr;
-typedef struct ir_block_s    ir_block;
-typedef struct ir_function_s ir_function;
-typedef struct ir_builder_s  ir_builder;
+struct ir_value;
+struct ir_instr;
+struct ir_block;
+struct ir_function;
+struct ir_builder;
 
 typedef struct {
     /* both inclusive */
@@ -35,7 +35,7 @@ enum {
     IR_FLAG_MASK_NO_LOCAL_TEMPS  = (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED)
 };
 
-struct ir_value_s {
+struct ir_value {
     char      *name;
     int        vtype;
     int        store;
@@ -98,32 +98,32 @@ bool            ir_value_lives(ir_value*, size_t);
 void            ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...));
 
 /* PHI data */
-typedef struct ir_phi_entry_s {
+struct ir_phi_entry_t {
     ir_value *value;
     ir_block *from;
-} ir_phi_entry_t;
+};
 
 /* instruction */
-struct ir_instr_s {
-    int        opcode;
-    lex_ctx_t  context;
-    ir_value* (_ops[3]);
-    ir_block* (bops[2]);
+struct ir_instr {
+    int opcode;
+    lex_ctx_t context;
+    ir_value *(_ops[3]);
+    ir_block *(bops[2]);
 
     ir_phi_entry_t *phi;
-    ir_value      **params;
+    ir_value **params;
 
     /* For the temp-allocation */
     size_t eid;
 
     /* For IFs */
-    bool   likely;
+    bool likely;
 
     ir_block *owner;
 };
 
 /* block */
-struct ir_block_s {
+struct ir_block {
     char      *label;
     lex_ctx_t  context;
     bool       final; /* once a jump is added we're done */
@@ -177,7 +177,7 @@ bool GMQCC_WARN ir_block_create_jump(ir_block*, lex_ctx_t, ir_block *to);
 bool GMQCC_WARN ir_block_create_goto(ir_block*, lex_ctx_t, ir_block *to);
 
 /* function */
-struct ir_function_s {
+struct ir_function {
     char      *name;
     int        outtype;
     int       *params;
@@ -229,7 +229,7 @@ ir_block*       ir_function_create_block(lex_ctx_t ctx, ir_function*, const char
 #define IR_HT_SIZE          1024
 #define IR_MAX_VINSTR_TEMPS 1
 
-struct ir_builder_s {
+struct ir_builder {
     char *name;
     ir_function **functions;
     ir_value    **globals;

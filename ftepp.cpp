@@ -7,54 +7,48 @@
 
 #define HT_MACROS 1024
 
-typedef struct {
+struct ppcondition {
     bool on;
     bool was_on;
     bool had_else;
-} ppcondition;
+};
 
-typedef struct {
-    int   token;
+struct pptoken {
+    int token;
     char *value;
     /* a copy from the lexer */
     union {
         vec3_t v;
-        int    i;
+        int i;
         double f;
-        int    t; /* type */
+        int t; /* type */
     } constval;
-} pptoken;
+};
 
-typedef struct {
+struct ppmacro {
     lex_ctx_t ctx;
-
-    char   *name;
-    char  **params;
+    char *name;
+    char **params;
     /* yes we need an extra flag since `#define FOO x` is not the same as `#define FOO() x` */
-    bool    has_params;
-    bool    variadic;
-
+    bool has_params;
+    bool variadic;
     pptoken **output;
-} ppmacro;
+};
 
-typedef struct ftepp_s {
-    lex_file    *lex;
-    int          token;
+struct ftepp_t {
+    lex_file *lex;
+    int token;
     unsigned int errors;
-
-    bool         output_on;
+    bool output_on;
     ppcondition *conditions;
-    /*ppmacro    **macros;*/
-    ht           macros;  /* hashtable<string, ppmacro*> */
-    char        *output_string;
-
-    char        *itemname;
-    char        *includename;
-    bool         in_macro;
-
+    ht macros;  /* hashtable<string, ppmacro*> */
+    char *output_string;
+    char *itemname;
+    char *includename;
+    bool in_macro;
     uint32_t predef_countval;
     uint32_t predef_randval;
-} ftepp_t;
+};
 
 /* __DATE__ */
 static char *ftepp_predef_date(ftepp_t *context) {

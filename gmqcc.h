@@ -496,7 +496,7 @@ typedef float    qcfloat_t;
 typedef int32_t  qcint_t;
 typedef uint32_t qcuint_t;
 
-typedef struct {
+struct code_t {
     prog_section_statement_t *statements;
     int                      *linenums;
     int                      *columnnums;
@@ -509,17 +509,17 @@ typedef struct {
     uint32_t                  entfields;
     ht                        string_cache;
     qcint_t                   string_cached_empty;
-} code_t;
+};
 
 /*
  * A shallow copy of a lex_file to remember where which ast node
  * came from.
  */
-typedef struct {
+struct lex_ctx_t {
     const char *file;
     size_t      line;
     size_t      column;
-} lex_ctx_t;
+};
 
 /*
  * code_write          -- writes out the compiled file
@@ -704,27 +704,27 @@ const char*         prog_getstring (qc_program_t *prog, qcint_t str);
 prog_section_def_t* prog_entfield  (qc_program_t *prog, qcint_t off);
 prog_section_def_t* prog_getdef    (qc_program_t *prog, qcint_t off);
 qcany_t*            prog_getedict  (qc_program_t *prog, qcint_t e);
-qcint_t               prog_tempstring(qc_program_t *prog, const char *_str);
+qcint_t             prog_tempstring(qc_program_t *prog, const char *_str);
 
 
 /* parser.c */
-struct parser_s;
-struct parser_s *parser_create        (void);
-bool             parser_compile_file  (struct parser_s *parser, const char *);
-bool             parser_compile_string(struct parser_s *parser, const char *, const char *, size_t);
-bool             parser_finish        (struct parser_s *parser, const char *);
-void             parser_cleanup       (struct parser_s *parser);
+struct parser_t;
+parser_t *parser_create(void);
+bool parser_compile_file(parser_t *parser, const char *);
+bool parser_compile_string(parser_t *parser, const char *, const char *, size_t);
+bool parser_finish(parser_t *parser, const char *);
+void parser_cleanup(parser_t *parser);
 
 /* ftepp.c */
-struct ftepp_s;
-struct ftepp_s *ftepp_create           (void);
-bool            ftepp_preprocess_file  (struct ftepp_s *ftepp, const char *filename);
-bool            ftepp_preprocess_string(struct ftepp_s *ftepp, const char *name, const char *str);
-void            ftepp_finish           (struct ftepp_s *ftepp);
-const char     *ftepp_get              (struct ftepp_s *ftepp);
-void            ftepp_flush            (struct ftepp_s *ftepp);
-void            ftepp_add_define       (struct ftepp_s *ftepp, const char *source, const char *name);
-void            ftepp_add_macro        (struct ftepp_s *ftepp, const char *name,   const char *value);
+struct ftepp_t;
+ftepp_t *ftepp_create           (void);
+bool ftepp_preprocess_file  (ftepp_t *ftepp, const char *filename);
+bool ftepp_preprocess_string(ftepp_t *ftepp, const char *name, const char *str);
+void ftepp_finish(ftepp_t *ftepp);
+const char *ftepp_get(ftepp_t *ftepp);
+void ftepp_flush(ftepp_t *ftepp);
+void ftepp_add_define(ftepp_t *ftepp, const char *source, const char *name);
+void ftepp_add_macro(ftepp_t *ftepp, const char *name,   const char *value);
 
 /* main.c */
 

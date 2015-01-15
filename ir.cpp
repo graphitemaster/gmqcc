@@ -199,7 +199,7 @@ static void            ir_gen_extparam      (ir_builder *ir);
 
 static bool            ir_builder_set_name(ir_builder *self, const char *name);
 
-static ir_function*    ir_function_new(struct ir_builder_s *owner, int returntype);
+static ir_function*    ir_function_new(ir_builder *owner, int returntype);
 static bool            ir_function_set_name(ir_function*, const char *name);
 static void            ir_function_delete(ir_function*);
 static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
@@ -207,7 +207,7 @@ static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(
 static ir_value*       ir_block_create_general_instr(ir_block *self, lex_ctx_t, const char *label,
                                         int op, ir_value *a, ir_value *b, int outype);
 static void            ir_block_delete(ir_block*);
-static ir_block*       ir_block_new(struct ir_function_s *owner, const char *label);
+static ir_block*       ir_block_new(ir_function *owner, const char *label);
 static bool GMQCC_WARN ir_block_create_store(ir_block*, lex_ctx_t, ir_value *target, ir_value *what);
 static bool            ir_block_set_label(ir_block*, const char *label);
 static void            ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));

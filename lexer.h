@@ -2,20 +2,15 @@
 #define GMQCC_LEXER_HDR
 #include "gmqcc.h"
 
-typedef struct token_s token;
-
-struct token_s {
+struct token {
     int ttype;
-
     char *value;
-
     union {
-        vec3_t    v;
-        int       i;
+        vec3_t v;
+        int i;
         qcfloat_t f;
-        int       t; /* type */
+        int t; /* type */
     } constval;
-
     lex_ctx_t ctx;
 };
 
@@ -66,12 +61,12 @@ enum {
     TOKEN_FATAL /* internal error, eg out of memory */
 };
 
-typedef struct {
+struct frame_macro {
     char *name;
-    int   value;
-} frame_macro;
+    int value;
+};
 
-typedef struct lex_file_s {
+struct lex_file {
     FILE  *file;
     const char *open_string;
     size_t      open_string_length;
@@ -101,7 +96,7 @@ typedef struct lex_file_s {
     char *modelname;
 
     size_t push_line;
-} lex_file;
+};
 
 lex_file* lex_open (const char *file);
 lex_file* lex_open_string(const char *str, size_t len, const char *name);
@@ -121,7 +116,7 @@ enum {
 #define OP_SUFFIX 1
 #define OP_PREFIX 2
 
-typedef struct {
+struct oper_info {
     const char   *op;
     unsigned int operands;
     unsigned int id;
@@ -129,7 +124,7 @@ typedef struct {
     signed int   prec;
     unsigned int flags;
     bool         folds;
-} oper_info;
+};
 
 /*
  * Explicit uint8_t casts since the left operand of shift operator cannot

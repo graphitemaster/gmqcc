@@ -5,12 +5,12 @@
 #define GMQCC_IS_STDERR(X) ((X) == stderr)
 #define GMQCC_IS_DEFINE(X) (GMQCC_IS_STDERR(X) || GMQCC_IS_STDOUT(X))
 
-typedef struct {
+struct con_t {
     FILE *handle_err;
     FILE *handle_out;
     int color_err;
     int color_out;
-} con_t;
+};
 
 static con_t console;
 

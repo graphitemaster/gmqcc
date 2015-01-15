@@ -633,10 +633,10 @@ const char *type_name[TYPE_COUNT] = {
     "noexpr"
 };
 
-typedef struct {
+struct qcvm_parameter {
     int         vtype;
     const char *value;
-} qcvm_parameter;
+};
 
 static qcvm_parameter *main_params = NULL;
 

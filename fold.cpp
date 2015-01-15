@@ -25,20 +25,20 @@
  */
 typedef uint32_t sfloat_t;
 
-typedef union {
+union sfloat_cast_t {
     qcfloat_t f;
     sfloat_t  s;
-} sfloat_cast_t;
+};
 
 /* Exception flags */
-typedef enum {
+enum sfloat_exceptionflags_t {
     SFLOAT_NOEXCEPT  = 0,
     SFLOAT_INVALID   = 1,
     SFLOAT_DIVBYZERO = 4,
     SFLOAT_OVERFLOW  = 8,
     SFLOAT_UNDERFLOW = 16,
     SFLOAT_INEXACT   = 32
-} sfloat_exceptionflags_t;
+};
 
 /* Rounding modes */
 typedef enum {

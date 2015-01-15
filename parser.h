@@ -4,26 +4,26 @@
 #include "lexer.h"
 #include "ast.h"
 
-typedef struct intrin_s intrin_t;
-typedef struct parser_s parser_t;
+struct parser_t;
+struct intrin_t;
 
-typedef struct {
-    struct parser_s *parser;
-    ast_value      **imm_float;              /* vector<ast_value*> */
-    ast_value      **imm_vector;             /* vector<ast_value*> */
-    ast_value      **imm_string;             /* vector<ast_value*> */
-    hash_table_t    *imm_string_untranslate; /* map<string, ast_value*> */
-    hash_table_t    *imm_string_dotranslate; /* map<string, ast_value*> */
-} fold_t;
+struct fold_t {
+    parser_t *parser;
+    ast_value **imm_float;              /* vector<ast_value*> */
+    ast_value **imm_vector;             /* vector<ast_value*> */
+    ast_value **imm_string;             /* vector<ast_value*> */
+    hash_table_t *imm_string_untranslate; /* map<string, ast_value*> */
+    hash_table_t *imm_string_dotranslate; /* map<string, ast_value*> */
+};
 
-typedef struct {
+struct intrin_func_t {
     ast_expression *(*intrin)(intrin_t *);
-    const char       *name;
-    const char       *alias;
-    size_t            args;
-} intrin_func_t;
+    const char *name;
+    const char *alias;
+    size_t args;
+};
 
-struct intrin_s {
+struct intrin_t {
     intrin_func_t  *intrinsics;              /* vector<intrin_func_t>   */
     ast_expression **generated;              /* vector<ast_expression*> */
     parser_t       *parser;
@@ -32,7 +32,7 @@ struct intrin_s {
 
 #define parser_ctx(p) ((p)->lex->tok.ctx)
 
-struct parser_s {
+struct parser_t {
     lex_file *lex;
     int      tok;
 

@@ -520,8 +520,8 @@ int main(int argc, char **argv) {
     bool            operators_free   = false;
     bool            progs_src        = false;
     FILE       *outfile         = NULL;
-    struct parser_s *parser          = NULL;
-    struct ftepp_s  *ftepp           = NULL;
+    parser_t *parser          = NULL;
+    ftepp_t  *ftepp           = NULL;
 
     app_name = argv[0];
     con_init ();
