@@ -7,12 +7,11 @@
 /* TODO: cleanup this whole file .. it's a fuckign mess */
 
 /* set by the standard */
-const oper_info *operators      = NULL;
-size_t           operator_count = 0;
-static bool      opts_output_wasset = false;
-
-typedef struct { char *filename; int   type;  } argitem;
-typedef struct { char *name;     char *value; } ppitem;
+const oper_info *operators = NULL;
+size_t operator_count = 0;
+static bool opts_output_wasset = false;
+struct argitem { char *filename; int type; };
+struct ppitem { char *name; char *value; };
 static argitem *items = NULL;
 static ppitem  *ppems = NULL;
 

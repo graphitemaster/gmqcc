@@ -145,10 +145,10 @@ static char *ftepp_predef_timestamp(ftepp_t *context) {
     return value;
 }
 
-typedef struct {
-    const char   *name;
-    char       *(*func)(ftepp_t *);
-} ftepp_predef_t;
+struct ftepp_predef_t {
+    const char *name;
+    char *(*func)(ftepp_t *);
+};
 
 static const ftepp_predef_t ftepp_predefs[] = {
     { "__LINE__",         &ftepp_predef_line        },
@@ -565,9 +565,9 @@ static bool ftepp_define(ftepp_t *ftepp)
  * this kind of parens. Curly braces or [] don't count towards the
  * paren-level.
  */
-typedef struct {
+struct macroparam {
     pptoken **tokens;
-} macroparam;
+};
 
 static void macroparam_clean(macroparam *self)
 {

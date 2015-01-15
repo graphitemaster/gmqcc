@@ -14,11 +14,11 @@ struct ir_block;
 struct ir_function;
 struct ir_builder;
 
-typedef struct {
+struct ir_life_entry_t {
     /* both inclusive */
     size_t start;
     size_t end;
-} ir_life_entry_t;
+};
 
 enum {
     IR_FLAG_HAS_ARRAYS              = 1 << 0,

@@ -16,13 +16,13 @@ static const char *task_bins[] = {
     "./qcvm"
 };
 
-typedef struct {
+struct popen_t {
     FILE *handles[3];
     int pipes[3];
     int stderr_fd;
     int stdout_fd;
     int pid;
-} popen_t;
+};
 
 static FILE **task_popen(const char *command, const char *mode) {
     int     inhandle  [2];
@@ -188,7 +188,7 @@ static int task_pclose(FILE **handles) {
  *      that need not be set), as well as missing tags, and error accordingly
  *      this will result in the task failing.
  */
-typedef struct {
+struct task_template_t {
     char  *description;
     char  *compileflags;
     char  *executeflags;
@@ -198,7 +198,7 @@ typedef struct {
     char **comparematch;
     char  *rulesfile;
     char  *testflags;
-} task_template_t;
+};
 
 /*
  * This is very much like a compiler code generator :-).  This generates
@@ -571,7 +571,7 @@ static void task_template_destroy(task_template_t *tmpl) {
  * Now comes the task manager, this system allows adding tasks in and out
  * of a task list.  This is the executor of the tasks essentially as well.
  */
-typedef struct {
+struct task_t {
     task_template_t *tmpl;
     FILE **runhandles;
     FILE *stderrlog;
@@ -579,7 +579,7 @@ typedef struct {
     char *stdoutlogfile;
     char *stderrlogfile;
     bool compiled;
-} task_t;
+};
 
 static task_t *task_tasks = NULL;
 

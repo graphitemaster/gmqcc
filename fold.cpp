@@ -41,24 +41,24 @@ enum sfloat_exceptionflags_t {
 };
 
 /* Rounding modes */
-typedef enum {
+enum sfloat_roundingmode_t {
     SFLOAT_ROUND_NEAREST_EVEN,
     SFLOAT_ROUND_DOWN,
     SFLOAT_ROUND_UP,
     SFLOAT_ROUND_TO_ZERO
-} sfloat_roundingmode_t;
+};
 
 /* Underflow tininess-detection mode */
-typedef enum {
+enum sfloat_tdetect_t {
     SFLOAT_TAFTER,
     SFLOAT_TBEFORE
-} sfloat_tdetect_t;
+};
 
-typedef struct {
-    sfloat_roundingmode_t   roundingmode;
+struct sfloat_state_t {
+    sfloat_roundingmode_t roundingmode;
     sfloat_exceptionflags_t exceptionflags;
-    sfloat_tdetect_t        tiny;
-} sfloat_state_t;
+    sfloat_tdetect_t tiny;
+};
 
 /* Counts the number of leading zero bits before the most-significand one bit. */
 #ifdef _MSC_VER
@@ -544,22 +544,22 @@ static GMQCC_INLINE void sfloat_init(sfloat_state_t *state) {
  *
  * TODO: gcc/clang hinting for autovectorization
  */
-typedef enum {
+enum vec3_comp_t {
     VEC_COMP_X = 1 << 0,
     VEC_COMP_Y = 1 << 1,
     VEC_COMP_Z = 1 << 2
-} vec3_comp_t;
+};
 
-typedef struct {
+struct vec3_soft_t {
     sfloat_cast_t x;
     sfloat_cast_t y;
     sfloat_cast_t z;
-} vec3_soft_t;
+};
 
-typedef struct {
-    vec3_comp_t    faults;
+struct vec3_soft_state_t {
+    vec3_comp_t faults;
     sfloat_state_t state[3];
-} vec3_soft_state_t;
+};
 
 static GMQCC_INLINE vec3_soft_t vec3_soft_convert(vec3_t vec) {
     vec3_soft_t soft;

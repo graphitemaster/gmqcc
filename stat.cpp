@@ -55,11 +55,11 @@ void _util_vec_delete(void *data) {
  * all around.  This is the internal interface, please look for
  * EXPOSED INTERFACE comment below
  */
-typedef struct hash_node_t {
-    char               *key;   /* the key for this node in table */
-    void               *value; /* pointer to the data as void*   */
-    struct hash_node_t *next;  /* next node (linked list)        */
-} hash_node_t;
+struct hash_node_t {
+    char *key;   /* the key for this node in table */
+    void *value; /* pointer to the data as void*   */
+    hash_node_t *next;  /* next node (linked list)        */
+};
 
 size_t hash(const char *key);
 

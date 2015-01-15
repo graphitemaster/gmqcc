@@ -2118,12 +2118,12 @@ void ir_function_enumerate(ir_function *self)
  * we can allocate their global-positions.
  * This is the counterpart to register-allocation in register machines.
  */
-typedef struct {
+struct function_allocator {
     ir_value **locals;
-    size_t    *sizes;
-    size_t    *positions;
-    bool      *unique;
-} function_allocator;
+    size_t *sizes;
+    size_t *positions;
+    bool *unique;
+};
 
 static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
 {

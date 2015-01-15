@@ -147,15 +147,14 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
     return NULL;
 }
 
-typedef struct
-{
+struct sy_elem {
     size_t etype; /* 0 = expression, others are operators */
-    bool            isparen;
-    size_t          off;
+    bool isparen;
+    size_t off;
     ast_expression *out;
-    ast_block      *block; /* for commas and function calls */
+    ast_block *block; /* for commas and function calls */
     lex_ctx_t ctx;
-} sy_elem;
+};
 
 enum {
     PAREN_EXPR,
@@ -164,13 +163,13 @@ enum {
     PAREN_TERNARY1,
     PAREN_TERNARY2
 };
-typedef struct
-{
+
+struct shunt {
     sy_elem        *out;
     sy_elem        *ops;
     size_t         *argc;
     unsigned int   *paren;
-} shunt;
+};
 
 static sy_elem syexp(lex_ctx_t ctx, ast_expression *v) {
     sy_elem e;
@@ -2724,10 +2723,10 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
 /* returns true when it was a variable qualifier, false otherwise!
  * on error, cvq is set to CV_WRONG
  */
-typedef struct {
+struct attribute_t {
     const char *name;
     size_t      flag;
-} attribute_t;
+};
 
 static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *noref, bool *is_static, uint32_t *_flags, char **message)
 {

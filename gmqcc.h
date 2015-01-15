@@ -207,12 +207,12 @@ size_t           hash(const char *key);
  * us to use the array [] to access individual elements from the vector
  * opposed to using set/get methods.
  */
-typedef struct {
+struct vector_t {
     size_t  allocated;
     size_t  used;
 
     /* can be extended now! whoot */
-} vector_t;
+};
 
 /* hidden interface */
 void _util_vec_grow(void **a, size_t i, size_t s);
@@ -300,12 +300,12 @@ extern const uint16_t type_eq_instr    [TYPE_COUNT];
 extern const uint16_t type_ne_instr    [TYPE_COUNT];
 extern const uint16_t type_not_instr   [TYPE_COUNT];
 
-typedef struct {
+struct prog_section_t {
     uint32_t offset;      /* Offset in file of where data begins  */
     uint32_t length;      /* Length of section (how many of)      */
-} prog_section_t;
+};
 
-typedef struct {
+struct prog_header_t {
     uint32_t       version;      /* Program version (6)     */
     uint16_t       crc16;
     uint16_t       skip;
@@ -317,7 +317,7 @@ typedef struct {
     prog_section_t strings;
     prog_section_t globals;
     uint32_t       entfield;     /* Number of entity fields */
-} prog_header_t;
+};
 
 /*
  * Each paramater incerements by 3 since vector types hold
@@ -334,19 +334,19 @@ typedef struct {
 #define OFS_PARM6     (OFS_PARM5 +3)
 #define OFS_PARM7     (OFS_PARM6 +3)
 
-typedef union {
+union operand_t {
     int16_t s1;
     uint16_t u1;
-} operand_t;
+};
 
-typedef struct {
+struct prog_section_statement_t {
     uint16_t opcode;
     operand_t o1;
     operand_t o2;
     operand_t o3;
-} prog_section_statement_t;
+};
 
-typedef struct {
+struct prog_section_both_t {
     /*
      * The types:
      * 0 = ev_void
@@ -362,7 +362,7 @@ typedef struct {
     uint16_t type;
     uint16_t offset;
     uint32_t name;
-} prog_section_both_t;
+};
 
 typedef prog_section_both_t prog_section_def_t;
 typedef prog_section_both_t prog_section_field_t;
@@ -371,7 +371,7 @@ typedef prog_section_both_t prog_section_field_t;
 #define DEF_SAVEGLOBAL (1<<15)
 #define DEF_TYPEMASK   ((1<<15)-1)
 
-typedef struct {
+struct prog_section_function_t {
     int32_t   entry;      /* in statement table for instructions  */
     uint32_t  firstlocal; /* First local in local table           */
     uint32_t  locals;     /* Total ints of params + locals        */
@@ -380,7 +380,7 @@ typedef struct {
     uint32_t  file;       /* file of the source file              */
     int32_t   nargs;      /* number of arguments                  */
     uint8_t   argsize[8]; /* size of arguments (keep 8 always?)   */
-} prog_section_function_t;
+};
 
 /*
  * Instructions
@@ -596,9 +596,9 @@ enum store_types {
     store_return  /* unassignable, at OFS_RETURN */
 };
 
-typedef struct {
+struct vec3_t {
     qcfloat_t x, y, z;
-} vec3_t;
+};
 
 /* exec.c */
 
@@ -635,16 +635,16 @@ enum {
 #define VMXF_TRACE   0x0001     /* trace: print statements before executing */
 #define VMXF_PROFILE 0x0002     /* profile: increment the profile counters */
 
-struct qc_program_s;
-typedef int (*prog_builtin_t)(struct qc_program_s *prog);
+struct qc_program_t;
+typedef int (*prog_builtin_t)(qc_program_t *prog);
 
-typedef struct {
-    qcint_t                    stmt;
-    size_t                   localsp;
+struct qc_exec_stack_t {
+    qcint_t stmt;
+    size_t localsp;
     prog_section_function_t *function;
-} qc_exec_stack_t;
+};
 
-typedef struct qc_program_s {
+struct qc_program_t {
     char                     *filename;
     prog_section_statement_t *code;
     prog_section_def_t       *defs;
@@ -695,7 +695,7 @@ typedef struct qc_program_s {
     } cached_globals;
 
     bool supports_state; /* is INSTR_STATE supported? */
-} qc_program_t;
+};
 
 qc_program_t*       prog_load      (const char *filename, bool ignoreversion);
 void                prog_delete    (qc_program_t *prog);
@@ -732,10 +732,10 @@ void ftepp_add_macro(ftepp_t *ftepp, const char *name,   const char *value);
 /* Helpers to allow for a whole lot of flags. Otherwise we'd limit
  * to 32 or 64 -f options...
  */
-typedef struct {
+struct longbit {
     size_t  idx; /* index into an array of 32 bit words */
     uint8_t bit; /* bit index for the 8 bit group idx points to */
-} longbit;
+};
 #define LONGBIT(bit) { ((bit)/32), ((bit)%32) }
 #define LONGBIT_SET(B, I) ((B).idx = (I)/32, (B).bit = ((I)%32))
 #else
@@ -750,10 +750,10 @@ int utf8_from(char *, utf8ch_t);
 int utf8_to(utf8ch_t *, const unsigned char *, size_t);
 
 /* opts.c */
-typedef struct {
+struct opts_flag_def_t {
     const char *name;
     longbit     bit;
-} opts_flag_def_t;
+};
 
 bool opts_setflag  (const char *, bool);
 bool opts_setwarn  (const char *, bool);
@@ -807,30 +807,27 @@ extern const unsigned int    opts_opt_oflag[COUNT_OPTIMIZATIONS+1];
 extern unsigned int          opts_optimizationcount[COUNT_OPTIMIZATIONS];
 
 /* other options: */
-typedef enum {
+enum {
     COMPILER_QCC,     /* circa  QuakeC */
     COMPILER_FTEQCC,  /* fteqcc QuakeC */
     COMPILER_QCCX,    /* qccx   QuakeC */
     COMPILER_GMQCC    /* this   QuakeC */
-} opts_std_t;
+};
 
-typedef struct {
+struct opt_value_t {
     union {
-        bool     b;
+        bool b;
         uint16_t u16;
         uint32_t u32;
-
         union {
-            char       *p;
+            char *p;
             const char *c;
         } str;
     } data;
-
     bool allocated;
-} opt_value_t;
+};
 
-
-typedef struct {
+struct opts_cmd_t {
     opt_value_t  options      [OPTION_COUNT];
     uint32_t     flags        [1 + (COUNT_FLAGS         / 32)];
     uint32_t     warn         [1 + (COUNT_WARNINGS      / 32)];
@@ -839,7 +836,7 @@ typedef struct {
     uint32_t     werror_backup[1 + (COUNT_WARNINGS      / 32)];
     uint32_t     optimization [1 + (COUNT_OPTIMIZATIONS / 32)];
     bool         optimizeoff; /* True when -O0 */
-} opts_cmd_t;
+};
 
 extern opts_cmd_t opts;
 
