@@ -34,17 +34,17 @@ struct intrin_t {
 
 struct parser_t {
     lex_file *lex;
-    int      tok;
+    int tok;
 
-    bool     ast_cleaned;
+    bool ast_cleaned;
 
-    ast_expression **globals;
-    ast_expression **fields;
-    ast_function **functions;
-    size_t         translated;
+    std::vector<ast_expression *> globals;
+    std::vector<ast_expression *> fields;
+    std::vector<ast_function *> functions;
+    size_t translated;
 
     /* must be deleted first, they reference immediates and values */
-    ast_value    **accessors;
+    std::vector<ast_value *> accessors;
 
     ast_value *nil;
     ast_value *reserved_version;
@@ -53,7 +53,7 @@ struct parser_t {
     size_t crc_fields;
 
     ast_function *function;
-    ht            aliases;
+    ht aliases;
 
     /* All the labels the function defined...
      * Should they be in ast_function instead?
@@ -71,10 +71,10 @@ struct parser_t {
 
     /* not to be used directly, we use the hash table */
     ast_expression **_locals;
-    size_t          *_blocklocals;
-    ast_value      **_typedefs;
-    size_t          *_blocktypedefs;
-    lex_ctx_t         *_block_ctx;
+    size_t *_blocklocals;
+    ast_value **_typedefs;
+    size_t *_blocktypedefs;
+    lex_ctx_t *_block_ctx;
 
     /* we store the '=' operator info */
     const oper_info *assign_op;
@@ -86,9 +86,9 @@ struct parser_t {
     bool noref;
 
     /* collected information */
-    size_t     max_param_count;
+    size_t max_param_count;
 
-    fold_t   *fold;
+    fold_t *fold;
     intrin_t *intrin;
 };
 

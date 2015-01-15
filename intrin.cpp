@@ -23,8 +23,8 @@ static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **out
 }
 
 static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, ast_function *const func) {
-    vec_push(intrin->parser->functions, func);
-    vec_push(intrin->parser->globals, (ast_expression*)value);
+    intrin->parser->functions.push_back(func);
+    intrin->parser->globals.push_back((ast_expression*)value);
 }
 
 #define QC_POW_EPSILON 0.00001f
@@ -2056,13 +2056,11 @@ static GMQCC_INLINE ast_expression *intrin_func_try(intrin_t *intrin, size_t off
 }
 
 static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, const char *from) {
-    size_t           i;
-    ast_expression  *find;
-
+    ast_expression *find;
     /* try current first */
     if ((find = parser_find_global(intrin->parser, name)) && ((ast_value*)find)->expression.vtype == TYPE_FUNCTION)
-        for (i = 0; i < vec_size(intrin->parser->functions); ++i)
-            if (((ast_value*)find)->name && !strcmp(intrin->parser->functions[i]->name, ((ast_value*)find)->name) && intrin->parser->functions[i]->builtin < 0)
+        for (auto &it : intrin->parser->functions)
+            if (((ast_value*)find)->name && !strcmp(it->name, ((ast_value*)find)->name) && it->builtin < 0)
                 return find;
     /* try name second */
     if ((find = intrin_func_try(intrin, offsetof(intrin_func_t, name),  name)))
