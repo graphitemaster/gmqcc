@@ -1,5 +1,6 @@
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
+#include <vector>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -486,29 +487,29 @@ enum {
 /* TODO: elide */
 extern const char *util_instr_str[VINSTR_END];
 
-void util_swap_header     (prog_header_t              *code_header);
-void util_swap_statements (prog_section_statement_t   *statements);
-void util_swap_defs_fields(prog_section_both_t        *section);
-void util_swap_functions  (prog_section_function_t    *functions);
-void util_swap_globals    (int32_t                    *globals);
+void util_swap_header(prog_header_t &code_header);
+void util_swap_statements(std::vector<prog_section_statement_t> &statements);
+void util_swap_defs_fields(std::vector<prog_section_both_t> &section);
+void util_swap_functions(std::vector<prog_section_function_t> &functions);
+void util_swap_globals(std::vector<int32_t> &globals);
 
-typedef float    qcfloat_t;
-typedef int32_t  qcint_t;
+typedef float qcfloat_t;
+typedef int32_t qcint_t;
 typedef uint32_t qcuint_t;
 
 struct code_t {
-    prog_section_statement_t *statements;
-    int                      *linenums;
-    int                      *columnnums;
-    prog_section_def_t       *defs;
-    prog_section_field_t     *fields;
-    prog_section_function_t  *functions;
-    int                      *globals;
-    char                     *chars;
-    uint16_t                  crc;
-    uint32_t                  entfields;
-    ht                        string_cache;
-    qcint_t                   string_cached_empty;
+    std::vector<prog_section_statement_t> statements;
+    std::vector<int> linenums;
+    std::vector<int> columnnums;
+    std::vector<prog_section_def_t> defs;
+    std::vector<prog_section_field_t> fields;
+    std::vector<prog_section_function_t> functions;
+    std::vector<int> globals;
+    std::vector<char> chars;
+    uint16_t crc;
+    uint32_t entfields;
+    ht string_cache;
+    qcint_t string_cached_empty;
 };
 
 /*
@@ -517,8 +518,8 @@ struct code_t {
  */
 struct lex_ctx_t {
     const char *file;
-    size_t      line;
-    size_t      column;
+    size_t line;
+    size_t column;
 };
 
 /*
@@ -645,17 +646,17 @@ struct qc_exec_stack_t {
 };
 
 struct qc_program_t {
-    char                     *filename;
-    prog_section_statement_t *code;
-    prog_section_def_t       *defs;
-    prog_section_def_t       *fields;
-    prog_section_function_t  *functions;
-    char                     *strings;
-    qcint_t                  *globals;
-    qcint_t                  *entitydata;
-    bool                     *entitypool;
+    char *filename;
+    std::vector<prog_section_statement_t> code;
+    std::vector<prog_section_def_t> defs;
+    std::vector<prog_section_def_t> fields;
+    std::vector<prog_section_function_t> functions;
+    std::vector<char> strings;
+    std::vector<qcint_t> globals;
+    qcint_t *entitydata;
+    bool *entitypool;
 
-    const char*              *function_stack;
+    const char* *function_stack;
 
     uint16_t crc16;
 

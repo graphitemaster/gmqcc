@@ -30,10 +30,9 @@ static void qcvmerror(qc_program_t *prog, const char *fmt, ...)
 
 qc_program_t* prog_load(const char *filename, bool skipversion)
 {
-    prog_header_t   header;
-    qc_program_t   *prog;
-    size_t          i;
-    FILE      *file  = fopen(filename, "rb");
+    prog_header_t header;
+    qc_program_t *prog;
+    FILE *file = fopen(filename, "rb");
 
     /* we need all those in order to support INSTR_STATE: */
     bool            has_self      = false,
@@ -51,7 +50,7 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
         return NULL;
     }
 
-    util_swap_header(&header);
+    util_swap_header(header);
 
     if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
@@ -81,9 +80,10 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
         loaderror("seek failed");                                      \
         goto error;                                                    \
     }                                                                  \
+    prog->progvar.resize(header.hdrvar.length + reserved);             \
     if (fread(                                                         \
-            vec_add(prog->progvar, header.hdrvar.length + reserved),   \
-            sizeof(*prog->progvar),                                    \
+            &prog->progvar[0],                                         \
+            sizeof(prog->progvar[0]),                                  \
             header.hdrvar.length,                                      \
             file                                                       \
         )!= header.hdrvar.length                                       \
@@ -101,21 +101,22 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     read_data1(strings);
     read_data2(globals, 2); /* reserve more in case a RETURN using with the global at "the end" exists */
 
-    util_swap_statements (prog->code);
+    util_swap_statements(prog->code);
     util_swap_defs_fields(prog->defs);
     util_swap_defs_fields(prog->fields);
-    util_swap_functions  (prog->functions);
-    util_swap_globals    (prog->globals);
+    util_swap_functions(prog->functions);
+    util_swap_globals(prog->globals);
 
     fclose(file);
 
     /* profile counters */
-    memset(vec_add(prog->profile, vec_size(prog->code)), 0, sizeof(prog->profile[0]) * vec_size(prog->code));
+    memset(vec_add(prog->profile, prog->code.size()), 0, sizeof(prog->profile[0]) * prog->code.size());
 
     /* Add tempstring area */
-    prog->tempstring_start = vec_size(prog->strings);
-    prog->tempstring_at    = vec_size(prog->strings);
-    memset(vec_add(prog->strings, 16*1024), 0, 16*1024);
+    prog->tempstring_start = prog->strings.size();
+    prog->tempstring_at = prog->strings.size();
+
+    prog->strings.resize(prog->strings.size() + 16*1024, '\0');
 
     /* spawn the world entity */
     vec_push(prog->entitypool, true);
@@ -123,29 +124,29 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     prog->entities = 1;
 
     /* cache some globals and fields from names */
-    for (i = 0; i < vec_size(prog->defs); ++i) {
-        const char *name = prog_getstring(prog, prog->defs[i].name);
-        if      (!strcmp(name, "self")) {
-            prog->cached_globals.self = prog->defs[i].offset;
+    for (auto &it : prog->defs) {
+        const char *name = prog_getstring(prog, it.name);
+        if (!strcmp(name, "self")) {
+            prog->cached_globals.self = it.offset;
             has_self = true;
         }
         else if (!strcmp(name, "time")) {
-            prog->cached_globals.time = prog->defs[i].offset;
+            prog->cached_globals.time = it.offset;
             has_time = true;
         }
     }
-    for (i = 0; i < vec_size(prog->fields); ++i) {
-        const char *name = prog_getstring(prog, prog->fields[i].name);
-        if      (!strcmp(name, "think")) {
-            prog->cached_fields.think     = prog->fields[i].offset;
+    for (auto &it : prog->fields) {
+        const char *name = prog_getstring(prog, it.name);
+        if (!strcmp(name, "think")) {
+            prog->cached_fields.think = it.offset;
             has_think = true;
         }
         else if (!strcmp(name, "nextthink")) {
-            prog->cached_fields.nextthink = prog->fields[i].offset;
+            prog->cached_fields.nextthink = it.offset;
             has_nextthink = true;
         }
         else if (!strcmp(name, "frame")) {
-            prog->cached_fields.frame     = prog->fields[i].offset;
+            prog->cached_fields.frame  = it.offset;
             has_frame = true;
         }
     }
@@ -157,12 +158,6 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
 error:
     if (prog->filename)
         mem_d(prog->filename);
-    vec_free(prog->code);
-    vec_free(prog->defs);
-    vec_free(prog->fields);
-    vec_free(prog->functions);
-    vec_free(prog->strings);
-    vec_free(prog->globals);
     vec_free(prog->entitydata);
     vec_free(prog->entitypool);
     mem_d(prog);
@@ -174,12 +169,6 @@ error:
 void prog_delete(qc_program_t *prog)
 {
     if (prog->filename) mem_d(prog->filename);
-    vec_free(prog->code);
-    vec_free(prog->defs);
-    vec_free(prog->fields);
-    vec_free(prog->functions);
-    vec_free(prog->strings);
-    vec_free(prog->globals);
     vec_free(prog->entitydata);
     vec_free(prog->entitypool);
     vec_free(prog->localstack);
@@ -194,29 +183,25 @@ void prog_delete(qc_program_t *prog)
 
 const char* prog_getstring(qc_program_t *prog, qcint_t str) {
     /* cast for return required for C++ */
-    if (str < 0 || str >= (qcint_t)vec_size(prog->strings))
+    if (str < 0 || str >= (qcint_t)prog->strings.size())
         return  "<<<invalid string>>>";
 
-    return prog->strings + str;
+    return &prog->strings[0] + str;
 }
 
 prog_section_def_t* prog_entfield(qc_program_t *prog, qcint_t off) {
-    size_t i;
-    for (i = 0; i < vec_size(prog->fields); ++i) {
-        if (prog->fields[i].offset == off)
-            return (prog->fields + i);
-    }
-    return NULL;
+    for (auto &it : prog->fields)
+        if (it.offset == off)
+            return &it;
+    return nullptr;
 }
 
 prog_section_def_t* prog_getdef(qc_program_t *prog, qcint_t off)
 {
-    size_t i;
-    for (i = 0; i < vec_size(prog->defs); ++i) {
-        if (prog->defs[i].offset == off)
-            return (prog->defs + i);
-    }
-    return NULL;
+    for (auto &it : prog->defs)
+        if (it.offset == off)
+            return &it;
+    return nullptr;
 }
 
 qcany_t* prog_getedict(qc_program_t *prog, qcint_t e) {
@@ -269,19 +254,19 @@ qcint_t prog_tempstring(qc_program_t *prog, const char *str) {
     size_t at = prog->tempstring_at;
 
     /* when we reach the end we start over */
-    if (at + len >= vec_size(prog->strings))
+    if (at + len >= prog->strings.size())
         at = prog->tempstring_start;
 
     /* when it doesn't fit, reallocate */
-    if (at + len >= vec_size(prog->strings))
+    if (at + len >= prog->strings.size())
     {
-        (void)vec_add(prog->strings, len+1);
-        memcpy(prog->strings + at, str, len+1);
+        prog->strings.resize(prog->strings.size() + len+1);
+        memcpy(&prog->strings[0] + at, str, len+1);
         return at;
     }
 
     /* when it fits, just copy */
-    memcpy(prog->strings + at, str, len+1);
+    memcpy(&prog->strings[0] + at, str, len+1);
     prog->tempstring_at += len+1;
     return at;
 }
@@ -498,13 +483,13 @@ static qcint_t prog_enterfunction(qc_program_t *prog, prog_section_function_t *f
         cur = prog->stack[vec_size(prog->stack)-1].function;
         if (cur)
         {
-            qcint_t *globals = prog->globals + cur->firstlocal;
+            qcint_t *globals = &prog->globals[0] + cur->firstlocal;
             vec_append(prog->localstack, cur->locals, globals);
         }
     }
 #else
     {
-        qcint_t *globals = prog->globals + func->firstlocal;
+        qcint_t *globals = &prog->globals[0] + func->firstlocal;
         vec_append(prog->localstack, func->locals, globals);
     }
 #endif
@@ -546,7 +531,7 @@ static qcint_t prog_leavefunction(qc_program_t *prog) {
     oldsp = prog->stack[vec_size(prog->stack)-1].localsp;
 #endif
     if (prev) {
-        qcint_t *globals = prog->globals + prev->firstlocal;
+        qcint_t *globals = &prog->globals[0] + prev->firstlocal;
         memcpy(globals, prog->localstack + oldsp, prev->locals * sizeof(prog->localstack[0]));
         /* vec_remove(prog->localstack, oldsp, vec_size(prog->localstack)-oldsp); */
         vec_shrinkto(prog->localstack, oldsp);
@@ -565,7 +550,7 @@ bool prog_exec(qc_program_t *prog, prog_section_function_t *func, size_t flags, 
     prog->vmerror = 0;
     prog->xflags = flags;
 
-    st = prog->code + prog_enterfunction(prog, func);
+    st = &prog->code[0] + prog_enterfunction(prog, func);
     --st;
     switch (flags)
     {
@@ -649,7 +634,7 @@ static qcvm_parameter *main_params = NULL;
     }                                                                          \
 } while (0)
 
-#define GetGlobal(idx) ((qcany_t*)(prog->globals + (idx)))
+#define GetGlobal(idx) ((qcany_t*)(&prog->globals[0] + (idx)))
 #define GetArg(num) GetGlobal(OFS_PARM0 + 3*(num))
 #define Return(any) *(GetGlobal(OFS_RETURN)) = (any)
 
@@ -657,7 +642,7 @@ static int qc_print(qc_program_t *prog) {
     size_t i;
     const char *laststr = NULL;
     for (i = 0; i < (size_t)prog->argc; ++i) {
-        qcany_t *str = (qcany_t*)(prog->globals + OFS_PARM0 + 3*i);
+        qcany_t *str = (qcany_t*)(&prog->globals[0] + OFS_PARM0 + 3*i);
         laststr = prog_getstring(prog, str->string);
         printf("%s", laststr);
     }
@@ -1108,18 +1093,18 @@ int main(int argc, char **argv) {
     if (opts_info) {
         printf("Program's system-checksum = 0x%04x\n", (unsigned int)prog->crc16);
         printf("Entity field space: %u\n", (unsigned int)prog->entityfields);
-        printf("Globals: %u\n", (unsigned int)vec_size(prog->globals));
+        printf("Globals: %zu\n", prog->globals.size());
         printf("Counts:\n"
-               "      code: %lu\n"
-               "      defs: %lu\n"
-               "    fields: %lu\n"
-               " functions: %lu\n"
-               "   strings: %lu\n",
-               (unsigned long)vec_size(prog->code),
-               (unsigned long)vec_size(prog->defs),
-               (unsigned long)vec_size(prog->fields),
-               (unsigned long)vec_size(prog->functions),
-               (unsigned long)vec_size(prog->strings));
+               "      code: %zu\n"
+               "      defs: %zu\n"
+               "    fields: %zu\n"
+               " functions: %zu\n"
+               "   strings: %zu\n",
+               prog->code.size(),
+               prog->defs.size(),
+               prog->fields.size(),
+               prog->functions.size(),
+               prog->strings.size());
     }
 
     if (opts_info) {
@@ -1129,7 +1114,7 @@ int main(int argc, char **argv) {
     for (i = 0; i < vec_size(dis_list); ++i) {
         size_t k;
         printf("Looking for `%s`\n", dis_list[i]);
-        for (k = 1; k < vec_size(prog->functions); ++k) {
+        for (k = 1; k < prog->functions.size(); ++k) {
             const char *name = prog_getstring(prog, prog->functions[k].name);
             if (!strcmp(name, dis_list[i])) {
                 prog_disasm_function(prog, k);
@@ -1138,34 +1123,34 @@ int main(int argc, char **argv) {
         }
     }
     if (opts_disasm) {
-        for (i = 1; i < vec_size(prog->functions); ++i)
+        for (i = 1; i < prog->functions.size(); ++i)
             prog_disasm_function(prog, i);
         return 0;
     }
     if (opts_printdefs) {
         const char *getstring = NULL;
-        for (i = 0; i < vec_size(prog->defs); ++i) {
+        for (auto &it : prog->defs) {
             printf("Global: %8s %-16s at %u%s",
-                   type_name[prog->defs[i].type & DEF_TYPEMASK],
-                   prog_getstring(prog, prog->defs[i].name),
-                   (unsigned int)prog->defs[i].offset,
-                   ((prog->defs[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
+                   type_name[it.type & DEF_TYPEMASK],
+                   prog_getstring(prog, it.name),
+                   (unsigned int)it.offset,
+                   ((it.type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
             if (opts_v) {
-                switch (prog->defs[i].type & DEF_TYPEMASK) {
+                switch (it.type & DEF_TYPEMASK) {
                     case TYPE_FLOAT:
-                        printf(" [init: %g]", ((qcany_t*)(prog->globals + prog->defs[i].offset))->_float);
+                        printf(" [init: %g]", ((qcany_t*)(&prog->globals[0] + it.offset))->_float);
                         break;
                     case TYPE_INTEGER:
-                        printf(" [init: %i]", (int)( ((qcany_t*)(prog->globals + prog->defs[i].offset))->_int ));
+                        printf(" [init: %i]", (int)( ((qcany_t*)(&prog->globals[0] + it.offset))->_int ));
                         break;
                     case TYPE_ENTITY:
                     case TYPE_FUNCTION:
                     case TYPE_FIELD:
                     case TYPE_POINTER:
-                        printf(" [init: %u]", (unsigned)( ((qcany_t*)(prog->globals + prog->defs[i].offset))->_int ));
+                        printf(" [init: %u]", (unsigned)( ((qcany_t*)(&prog->globals[0] + it.offset))->_int ));
                         break;
                     case TYPE_STRING:
-                        getstring = prog_getstring(prog, ((qcany_t*)(prog->globals + prog->defs[i].offset))->string);
+                        getstring = prog_getstring(prog, ((qcany_t*)(&prog->globals[0] + it.offset))->string);
                         printf(" [init: `");
                         print_escaped_string(getstring, strlen(getstring));
                         printf("`]\n");
@@ -1178,37 +1163,37 @@ int main(int argc, char **argv) {
         }
     }
     if (opts_printfields) {
-        for (i = 0; i < vec_size(prog->fields); ++i) {
-            printf("Field: %8s %-16s at %u%s\n",
-                   type_name[prog->fields[i].type],
-                   prog_getstring(prog, prog->fields[i].name),
-                   (unsigned int)prog->fields[i].offset,
-                   ((prog->fields[i].type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
+        for (auto &it : prog->fields) {
+            printf("Field: %8s %-16s at %d%s\n",
+                   type_name[it.type],
+                   prog_getstring(prog, it.name),
+                   it.offset,
+                   ((it.type & DEF_SAVEGLOBAL) ? " [SAVE]" : ""));
         }
     }
     if (opts_printfuns) {
-        for (i = 0; i < vec_size(prog->functions); ++i) {
+        for (auto &it : prog->functions) {
             int32_t a;
             printf("Function: %-16s taking %u parameters:(",
-                   prog_getstring(prog, prog->functions[i].name),
-                   (unsigned int)prog->functions[i].nargs);
-            for (a = 0; a < prog->functions[i].nargs; ++a) {
-                printf(" %i", prog->functions[i].argsize[a]);
+                   prog_getstring(prog, it.name),
+                   (unsigned int)it.nargs);
+            for (a = 0; a < it.nargs; ++a) {
+                printf(" %i", it.argsize[a]);
             }
             if (opts_v > 1) {
-                int32_t start = prog->functions[i].entry;
+                int32_t start = it.entry;
                 if (start < 0)
                     printf(") builtin %i\n", (int)-start);
                 else {
                     size_t funsize = 0;
-                    prog_section_statement_t *st = prog->code + start;
+                    prog_section_statement_t *st = &prog->code[0] + start;
                     for (;st->opcode != INSTR_DONE; ++st)
                         ++funsize;
-                    printf(") - %lu instructions", (unsigned long)funsize);
+                    printf(") - %zu instructions", funsize);
                     if (opts_v > 2) {
                         printf(" - locals: %i + %i\n",
-                               prog->functions[i].firstlocal,
-                               prog->functions[i].locals);
+                               it.firstlocal,
+                               it.locals);
                     }
                     else
                         printf("\n");
@@ -1216,15 +1201,15 @@ int main(int argc, char **argv) {
             }
             else if (opts_v) {
                 printf(") locals: %i + %i\n",
-                       prog->functions[i].firstlocal,
-                       prog->functions[i].locals);
+                       it.firstlocal,
+                       it.locals);
             }
             else
                 printf(")\n");
         }
     }
     if (!noexec) {
-        for (i = 1; i < vec_size(prog->functions); ++i) {
+        for (i = 1; i < prog->functions.size(); ++i) {
             const char *name = prog_getstring(prog, prog->functions[i].name);
             if (!strcmp(name, "main"))
                 fnmain = (qcint_t)i;
@@ -1243,7 +1228,7 @@ int main(int argc, char **argv) {
 }
 
 static void prog_disasm_function(qc_program_t *prog, size_t id) {
-    prog_section_function_t *fdef = prog->functions + id;
+    prog_section_function_t *fdef = &prog->functions[0] + id;
     prog_section_statement_t *st;
 
     if (fdef->entry < 0) {
@@ -1253,7 +1238,7 @@ static void prog_disasm_function(qc_program_t *prog, size_t id) {
     else
         printf("FUNCTION \"%s\"\n", prog_getstring(prog, fdef->name));
 
-    st = prog->code + fdef->entry;
+    st = &prog->code[0] + fdef->entry;
     while (st->opcode != INSTR_DONE) {
         prog_print_statement(prog, st);
         ++st;
@@ -1268,11 +1253,11 @@ static void prog_disasm_function(qc_program_t *prog, size_t id) {
  * sort of isn't, which makes it nicer looking.
  */
 
-#define OPA ( (qcany_t*) (prog->globals + st->o1.u1) )
-#define OPB ( (qcany_t*) (prog->globals + st->o2.u1) )
-#define OPC ( (qcany_t*) (prog->globals + st->o3.u1) )
+#define OPA ( (qcany_t*) (&prog->globals[0] + st->o1.u1) )
+#define OPB ( (qcany_t*) (&prog->globals[0] + st->o2.u1) )
+#define OPC ( (qcany_t*) (&prog->globals[0] + st->o3.u1) )
 
-#define GLOBAL(x) ( (qcany_t*) (prog->globals + (x)) )
+#define GLOBAL(x) ( (qcany_t*) (&prog->globals[0] + (x)) )
 
 /* to be consistent with current darkplaces behaviour */
 #if !defined(FLOAT_IS_TRUE_FOR_INT)
@@ -1287,7 +1272,7 @@ while (prog->vmerror == 0) {
     ++st;
 
 #if QCVM_PROFILE
-    prog->profile[st - prog->code]++;
+    prog->profile[st - &prog->code[0]]++;
 #endif
 
 #if QCVM_TRACE
@@ -1307,7 +1292,7 @@ while (prog->vmerror == 0) {
             GLOBAL(OFS_RETURN)->ivector[1] = OPA->ivector[1];
             GLOBAL(OFS_RETURN)->ivector[2] = OPA->ivector[2];
 
-            st = prog->code + prog_leavefunction(prog);
+            st = &prog->code[0] + prog_leavefunction(prog);
             if (!vec_size(prog->stack))
                 goto cleanup;
 
@@ -1561,7 +1546,7 @@ while (prog->vmerror == 0) {
             if (!OPA->function)
                 qcvmerror(prog, "NULL function in `%s`", prog->filename);
 
-            if(!OPA->function || OPA->function >= (qcint_t)vec_size(prog->functions))
+            if(!OPA->function || OPA->function >= (qcint_t)prog->functions.size())
             {
                 qcvmerror(prog, "CALL outside the program in `%s`", prog->filename);
                 goto cleanup;
@@ -1570,7 +1555,7 @@ while (prog->vmerror == 0) {
             newf = &prog->functions[OPA->function];
             newf->profile++;
 
-            prog->statement = (st - prog->code) + 1;
+            prog->statement = (st - &prog->code[0]) + 1;
 
             if (newf->entry < 0)
             {
@@ -1583,7 +1568,7 @@ while (prog->vmerror == 0) {
                               builtinnumber, prog->filename);
             }
             else
-                st = prog->code + prog_enterfunction(prog, newf) - 1; /* offset st++ */
+                st = &prog->code[0] + prog_enterfunction(prog, newf) - 1; /* offset st++ */
             if (prog->vmerror)
                 goto cleanup;
             break;
@@ -1603,7 +1588,7 @@ while (prog->vmerror == 0) {
             frame     = (qcfloat_t*)&((qcint_t*)ed)[prog->cached_fields.frame];
             *frame    = OPA->_float;
             nextthink = (qcfloat_t*)&((qcint_t*)ed)[prog->cached_fields.nextthink];
-            time      = (qcfloat_t*)(prog->globals + prog->cached_globals.time);
+            time      = (qcfloat_t*)(&prog->globals[0] + prog->cached_globals.time);
             *nextthink = *time + 0.1;
             break;
         }

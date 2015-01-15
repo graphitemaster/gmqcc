@@ -87,62 +87,56 @@ void util_endianswap(void *_data, size_t count, unsigned int typesize) {
 #endif
 }
 
-void util_swap_header(prog_header_t *code_header) {
-    util_endianswap(&code_header->version,              1, sizeof(code_header->version));
-    util_endianswap(&code_header->crc16,                1, sizeof(code_header->crc16));
-    util_endianswap(&code_header->statements.offset,    1, sizeof(code_header->statements.offset));
-    util_endianswap(&code_header->statements.length,    1, sizeof(code_header->statements.length));
-    util_endianswap(&code_header->defs.offset,          1, sizeof(code_header->defs.offset));
-    util_endianswap(&code_header->defs.length,          1, sizeof(code_header->defs.length));
-    util_endianswap(&code_header->fields.offset,        1, sizeof(code_header->fields.offset));
-    util_endianswap(&code_header->fields.length,        1, sizeof(code_header->fields.length));
-    util_endianswap(&code_header->functions.offset,     1, sizeof(code_header->functions.offset));
-    util_endianswap(&code_header->functions.length,     1, sizeof(code_header->functions.length));
-    util_endianswap(&code_header->strings.offset,       1, sizeof(code_header->strings.offset));
-    util_endianswap(&code_header->strings.length,       1, sizeof(code_header->strings.length));
-    util_endianswap(&code_header->globals.offset,       1, sizeof(code_header->globals.offset));
-    util_endianswap(&code_header->globals.length,       1, sizeof(code_header->globals.length));
-    util_endianswap(&code_header->entfield,             1, sizeof(code_header->entfield));
+void util_swap_header(prog_header_t &code_header) {
+    util_endianswap(&code_header.version,              1, sizeof(code_header.version));
+    util_endianswap(&code_header.crc16,                1, sizeof(code_header.crc16));
+    util_endianswap(&code_header.statements.offset,    1, sizeof(code_header.statements.offset));
+    util_endianswap(&code_header.statements.length,    1, sizeof(code_header.statements.length));
+    util_endianswap(&code_header.defs.offset,          1, sizeof(code_header.defs.offset));
+    util_endianswap(&code_header.defs.length,          1, sizeof(code_header.defs.length));
+    util_endianswap(&code_header.fields.offset,        1, sizeof(code_header.fields.offset));
+    util_endianswap(&code_header.fields.length,        1, sizeof(code_header.fields.length));
+    util_endianswap(&code_header.functions.offset,     1, sizeof(code_header.functions.offset));
+    util_endianswap(&code_header.functions.length,     1, sizeof(code_header.functions.length));
+    util_endianswap(&code_header.strings.offset,       1, sizeof(code_header.strings.offset));
+    util_endianswap(&code_header.strings.length,       1, sizeof(code_header.strings.length));
+    util_endianswap(&code_header.globals.offset,       1, sizeof(code_header.globals.offset));
+    util_endianswap(&code_header.globals.length,       1, sizeof(code_header.globals.length));
+    util_endianswap(&code_header.entfield,             1, sizeof(code_header.entfield));
 }
 
-void util_swap_statements(prog_section_statement_t *statements) {
-    size_t i;
-
-    for (i = 0; i < vec_size(statements); ++i) {
-        util_endianswap(&statements[i].opcode,  1, sizeof(statements[i].opcode));
-        util_endianswap(&statements[i].o1,      1, sizeof(statements[i].o1));
-        util_endianswap(&statements[i].o2,      1, sizeof(statements[i].o2));
-        util_endianswap(&statements[i].o3,      1, sizeof(statements[i].o3));
+void util_swap_statements(std::vector<prog_section_statement_t> &statements) {
+    for (auto &it : statements) {
+        util_endianswap(&it.opcode,  1, sizeof(it.opcode));
+        util_endianswap(&it.o1,      1, sizeof(it.o1));
+        util_endianswap(&it.o2,      1, sizeof(it.o2));
+        util_endianswap(&it.o3,      1, sizeof(it.o3));
     }
 }
 
-void util_swap_defs_fields(prog_section_both_t *section) {
-    size_t i;
-
-    for (i = 0; i < vec_size(section); ++i) {
-        util_endianswap(&section[i].type,   1, sizeof(section[i].type));
-        util_endianswap(&section[i].offset, 1, sizeof(section[i].offset));
-        util_endianswap(&section[i].name,   1, sizeof(section[i].name));
+void util_swap_defs_fields(std::vector<prog_section_both_t> &section) {
+    for (auto &it : section) {
+        util_endianswap(&it.type,   1, sizeof(it.type));
+        util_endianswap(&it.offset, 1, sizeof(it.offset));
+        util_endianswap(&it.name,   1, sizeof(it.name));
     }
 }
 
-void util_swap_functions(prog_section_function_t *functions) {
-    size_t i;
-
-    for (i = 0; i < vec_size(functions); ++i) {
-        util_endianswap(&functions[i].entry,        1, sizeof(functions[i].entry));
-        util_endianswap(&functions[i].firstlocal,   1, sizeof(functions[i].firstlocal));
-        util_endianswap(&functions[i].locals,       1, sizeof(functions[i].locals));
-        util_endianswap(&functions[i].profile,      1, sizeof(functions[i].profile));
-        util_endianswap(&functions[i].name,         1, sizeof(functions[i].name));
-        util_endianswap(&functions[i].file,         1, sizeof(functions[i].file));
-        util_endianswap(&functions[i].nargs,        1, sizeof(functions[i].nargs));
+void util_swap_functions(std::vector<prog_section_function_t> &functions) {
+    for (auto &it : functions) {
+        util_endianswap(&it.entry,        1, sizeof(it.entry));
+        util_endianswap(&it.firstlocal,   1, sizeof(it.firstlocal));
+        util_endianswap(&it.locals,       1, sizeof(it.locals));
+        util_endianswap(&it.profile,      1, sizeof(it.profile));
+        util_endianswap(&it.name,         1, sizeof(it.name));
+        util_endianswap(&it.file,         1, sizeof(it.file));
+        util_endianswap(&it.nargs,        1, sizeof(it.nargs));
         /* Don't swap argsize[] - it's just a byte array, which Quake uses only as such. */
     }
 }
 
-void util_swap_globals(int32_t *globals) {
-    util_endianswap(globals, vec_size(globals), sizeof(int32_t));
+void util_swap_globals(std::vector<int32_t> &globals) {
+    util_endianswap(&globals[0], globals.size(), sizeof(int32_t));
 }
 
 /*
