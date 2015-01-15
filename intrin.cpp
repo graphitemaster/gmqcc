@@ -85,7 +85,7 @@ static ast_expression *intrin_isfinite(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, block);
+    func->blocks.push_back(block);
     intrin_reg(intrin, value, func);
 
     return (ast_expression*)value;;
@@ -130,7 +130,7 @@ static ast_expression *intrin_isinf(intrin_t *intrin) {
     );
 
     value->expression.params.push_back(x);
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
 
     intrin_reg(intrin, value, func);
 
@@ -175,7 +175,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
     );
 
     value->expression.params.push_back(arg1);
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
 
     intrin_reg(intrin, value, func);
 
@@ -205,7 +205,7 @@ static ast_expression *intrin_isnormal(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -241,7 +241,7 @@ static ast_expression *intrin_signbit(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -294,7 +294,7 @@ static ast_expression *intrin_acosh(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -347,7 +347,7 @@ static ast_expression *intrin_asinh(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -396,7 +396,7 @@ static ast_expression *intrin_atanh(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -509,8 +509,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
-
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -540,8 +539,7 @@ static ast_expression *intrin_exp2(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
-
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -576,7 +574,7 @@ static ast_expression *intrin_expm1(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -1021,8 +1019,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     );
 
     /* } */
-    vec_push(func->blocks, body);
-
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -1118,9 +1115,8 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
-
     return (ast_expression*)value;
 }
 
@@ -1158,10 +1154,8 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
 
     value->expression.params.push_back(arg1);
 
-    vec_push(func->blocks, body);
-
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
-
     return (ast_expression*)value;
 }
 
@@ -1232,9 +1226,8 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
-
     return (ast_expression*)value;
 }
 
@@ -1273,9 +1266,8 @@ static ast_expression *intrin_nan(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, block);
+    func->blocks.push_back(block);
     intrin_reg(intrin, value, func);
-
     return (ast_expression*)value;
 }
 
@@ -1321,9 +1313,8 @@ static ast_expression *intrin_inf(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, block);
+    func->blocks.push_back(block);
     intrin_reg(intrin, value, func);
-
     return (ast_expression*)value;
 }
 
@@ -1866,9 +1857,8 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
         )
     );
 
-    vec_push(func->blocks, block);
+    func->blocks.push_back(block);
     intrin_reg(intrin, value, func);
-
     return (ast_expression*)value;
 }
 
@@ -1891,7 +1881,7 @@ static ast_expression *intrin_log_variant(intrin_t *intrin, const char *name, fl
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -1948,7 +1938,7 @@ static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, 
         )
     );
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }

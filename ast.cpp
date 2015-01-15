@@ -1177,7 +1177,6 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
 
     self->vtype  = vtype;
     self->name   = name ? util_strdup(name) : NULL;
-    self->blocks = NULL;
 
     self->labelcount = 0;
     self->builtin = 0;
@@ -1223,9 +1222,8 @@ void ast_function_delete(ast_function *self)
     for (i = 0; i < vec_size(self->static_names); ++i)
         mem_d(self->static_names[i]);
     vec_free(self->static_names);
-    for (i = 0; i < vec_size(self->blocks); ++i)
-        ast_delete(self->blocks[i]);
-    vec_free(self->blocks);
+    for (auto &it : self->blocks)
+        ast_delete(it);
     vec_free(self->breakblocks);
     vec_free(self->continueblocks);
     if (self->varargs)
@@ -1785,8 +1783,6 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     ast_expression         *ec;
     ast_expression_codegen *cgen;
 
-    size_t    i;
-
     (void)ir;
 
     irf = self->ir_func;
@@ -1825,7 +1821,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
             return false;
     }
 
-    if (!vec_size(self->blocks)) {
+    if (self->blocks.empty()) {
         compile_error(ast_ctx(self), "function `%s` has no body", self->name);
         return false;
     }
@@ -1860,9 +1856,9 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
         }
     }
 
-    for (i = 0; i < vec_size(self->blocks); ++i) {
-        cgen = self->blocks[i]->expression.codegen;
-        if (!(*cgen)((ast_expression*)self->blocks[i], self, false, &dummy))
+    for (auto &it : self->blocks) {
+        cgen = it->expression.codegen;
+        if (!(*cgen)((ast_expression*)it, self, false, &dummy))
             return false;
     }
 

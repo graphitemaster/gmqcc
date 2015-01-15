@@ -4096,7 +4096,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         goto enderrfn;
     }
 
-    vec_push(func->blocks, block);
+    func->blocks.push_back(block);
 
     parser->function = old;
     if (!parser_leaveblock(parser))
@@ -4356,7 +4356,7 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
         return false;
     }
 
-    vec_push(func->blocks, body);
+    func->blocks.push_back(body);
     *out = fval;
 
     parser->accessors.push_back(fval);
