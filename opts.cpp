@@ -14,21 +14,21 @@ const opts_flag_def_t opts_opt_list[COUNT_OPTIMIZATIONS+1] = {
 # define GMQCC_TYPE_OPTIMIZATIONS
 # define GMQCC_DEFINE_FLAG(NAME, MIN_O) { #NAME, LONGBIT(OPTIM_##NAME) },
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { nullptr, LONGBIT(0) }
 };
 
 const opts_flag_def_t opts_warn_list[COUNT_WARNINGS+1] = {
 # define GMQCC_TYPE_WARNS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(WARN_##X) },
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { nullptr, LONGBIT(0) }
 };
 
 const opts_flag_def_t opts_flag_list[COUNT_FLAGS+1] = {
 # define GMQCC_TYPE_FLAGS
 # define GMQCC_DEFINE_FLAG(X) { #X, LONGBIT(X) },
 #  include "opts.def"
-    { NULL, LONGBIT(0) }
+    { nullptr, LONGBIT(0) }
 };
 
 unsigned int opts_optimizationcount[COUNT_OPTIMIZATIONS];
@@ -200,7 +200,7 @@ static size_t opts_ini_parse (
     size_t linesize;
     size_t lineno             = 1;
     size_t error              = 0;
-    char  *line               = NULL;
+    char  *line               = nullptr;
     char   section_data[2048] = "";
     char   oldname_data[2048] = "";
 
@@ -287,11 +287,11 @@ static size_t opts_ini_parse (
 static bool opts_ini_bool(const char *value) {
     if (!strcmp(value, "true"))  return true;
     if (!strcmp(value, "false")) return false;
-    return !!strtol(value, NULL, 10);
+    return !!strtol(value, nullptr, 10);
 }
 
 static char *opts_ini_load(const char *section, const char *name, const char *value, char **parse_file) {
-    char *error = NULL;
+    char *error = nullptr;
     bool  found = false;
 
     /*
@@ -396,8 +396,8 @@ void opts_ini_init(const char *file) {
      *  gmqcc.ini
      *  gmqcc.cfg
      */
-    char       *error = NULL;
-    char       *parse_file = NULL;
+    char       *error = nullptr;
+    char       *parse_file = nullptr;
     size_t     line;
     FILE  *ini;
 

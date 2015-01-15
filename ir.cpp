@@ -291,19 +291,19 @@ ir_builder* ir_builder_new(const char *modulename)
 
     self = (ir_builder*)mem_a(sizeof(*self));
     if (!self)
-        return NULL;
+        return nullptr;
 
-    self->functions   = NULL;
-    self->globals     = NULL;
-    self->fields      = NULL;
-    self->filenames   = NULL;
-    self->filestrings = NULL;
+    self->functions   = nullptr;
+    self->globals     = nullptr;
+    self->fields      = nullptr;
+    self->filenames   = nullptr;
+    self->filestrings = nullptr;
     self->htglobals   = util_htnew(IR_HT_SIZE);
     self->htfields    = util_htnew(IR_HT_SIZE);
     self->htfunctions = util_htnew(IR_HT_SIZE);
 
-    self->extparams       = NULL;
-    self->extparam_protos = NULL;
+    self->extparams       = nullptr;
+    self->extparam_protos = nullptr;
 
     self->first_common_globaltemp = 0;
     self->max_globaltemps         = 0;
@@ -311,10 +311,10 @@ ir_builder* ir_builder_new(const char *modulename)
     self->max_locals              = 0;
 
     self->str_immediate = 0;
-    self->name = NULL;
+    self->name = nullptr;
     if (!ir_builder_set_name(self, modulename)) {
         mem_d(self);
-        return NULL;
+        return nullptr;
     }
 
     self->nil = ir_value_var("nil", store_value, TYPE_NIL);
@@ -329,8 +329,8 @@ ir_builder* ir_builder_new(const char *modulename)
         self->vinstr_temp[i]->cvq = CV_CONST;
     }
 
-    self->reserved_va_count = NULL;
-    self->coverage_func     = NULL;
+    self->reserved_va_count = nullptr;
+    self->coverage_func     = nullptr;
 
     self->code              = code_init();
 
@@ -389,14 +389,14 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
 {
     ir_function *fn = ir_builder_get_function(self, name);
     if (fn) {
-        return NULL;
+        return nullptr;
     }
 
     fn = ir_function_new(self, outtype);
     if (!ir_function_set_name(fn, name))
     {
         ir_function_delete(fn);
-        return NULL;
+        return nullptr;
     }
     vec_push(self->functions, fn);
     util_htset(self->htfunctions, name, fn);
@@ -404,7 +404,7 @@ ir_function* ir_builder_create_function(ir_builder *self, const char *name, int 
     fn->value = ir_builder_create_global(self, fn->name, TYPE_FUNCTION);
     if (!fn->value) {
         ir_function_delete(fn);
-        return NULL;
+        return nullptr;
     }
 
     fn->value->hasvalue = true;
@@ -428,7 +428,7 @@ ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype
     {
         ve = ir_builder_get_global(self, name);
         if (ve) {
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -455,7 +455,7 @@ ir_value* ir_builder_create_field(ir_builder *self, const char *name, int vtype)
 {
     ir_value *ve = ir_builder_get_field(self, name);
     if (ve) {
-        return NULL;
+        return nullptr;
     }
 
     ve = ir_value_var(name, store_global, TYPE_FIELD);
@@ -480,14 +480,14 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self = (ir_function*)mem_a(sizeof(*self));
 
     if (!self)
-        return NULL;
+        return nullptr;
 
     memset(self, 0, sizeof(*self));
 
-    self->name = NULL;
+    self->name = nullptr;
     if (!ir_function_set_name(self, "<@unnamed>")) {
         mem_d(self);
-        return NULL;
+        return nullptr;
     }
     self->flags = 0;
 
@@ -495,13 +495,13 @@ ir_function* ir_function_new(ir_builder* owner, int outtype)
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->outtype = outtype;
-    self->value = NULL;
+    self->value = nullptr;
     self->builtin = 0;
 
-    self->params = NULL;
-    self->blocks = NULL;
-    self->values = NULL;
-    self->locals = NULL;
+    self->params = nullptr;
+    self->blocks = nullptr;
+    self->values = nullptr;
+    self->locals = nullptr;
 
     self->max_varargs = 0;
 
@@ -581,7 +581,7 @@ ir_block* ir_function_create_block(lex_ctx_t ctx, ir_function *self, const char 
     vec_push(self->blocks, bn);
 
     if ((self->flags & IR_FLAG_BLOCK_COVERAGE) && self->owner->coverage_func)
-        (void)ir_block_create_call(bn, ctx, NULL, self->owner->coverage_func, false);
+        (void)ir_block_create_call(bn, ctx, nullptr, self->owner->coverage_func, false);
 
     return bn;
 }
@@ -716,7 +716,7 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
 
     for (b = 0; b < vec_size(self->blocks); ++b) {
         ir_value *funcval;
-        ir_instr *ret, *call, *store = NULL;
+        ir_instr *ret, *call, *store = nullptr;
         ir_block *block = self->blocks[b];
 
         if (!block->final || vec_size(block->instr) < 2)
@@ -861,7 +861,7 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
         vec_size(self->locals) &&
         self->locals[vec_size(self->locals)-1]->store != store_param) {
         irerror(self->context, "cannot add parameters after adding locals");
-        return NULL;
+        return nullptr;
     }
 
     ve = ir_value_var(name, (param ? store_param : store_local), vtype);
@@ -880,19 +880,19 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     ir_block *self = new ir_block;
     memset(self, 0, sizeof(*self));
 
-    self->label = NULL;
+    self->label = nullptr;
     if (name && !ir_block_set_label(self, name)) {
         mem_d(self);
-        return NULL;
+        return nullptr;
     }
     self->owner = owner;
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->final = false;
 
-    self->instr = NULL;
-    self->entries = NULL;
-    self->exits = NULL;
+    self->instr = nullptr;
+    self->entries = nullptr;
+    self->exits = nullptr;
 
     self->eid = 0;
     self->is_return = false;
@@ -943,11 +943,11 @@ static ir_instr* ir_instr_new(lex_ctx_t ctx, ir_block* owner, int op)
     self->owner = owner;
     self->context = ctx;
     self->opcode = op;
-    self->_ops[0] = NULL;
-    self->_ops[1] = NULL;
-    self->_ops[2] = NULL;
-    self->bops[0] = NULL;
-    self->bops[1] = NULL;
+    self->_ops[0] = nullptr;
+    self->_ops[1] = nullptr;
+    self->_ops[2] = nullptr;
+    self->bops[0] = nullptr;
+    self->bops[1] = nullptr;
     self->eid = 0;
     self->likely = true;
     return self;
@@ -980,9 +980,9 @@ static void ir_instr_delete(ir_instr *self)
         if (vec_ir_instr_find(it->reads, self, &idx))
             it->reads.erase(it->reads.begin() + idx);
     }
-    (void)!ir_instr_op(self, 0, NULL, false);
-    (void)!ir_instr_op(self, 1, NULL, false);
-    (void)!ir_instr_op(self, 2, NULL, false);
+    (void)!ir_instr_op(self, 0, nullptr, false);
+    (void)!ir_instr_op(self, 1, nullptr, false);
+    (void)!ir_instr_op(self, 2, nullptr, false);
     mem_d(self);
 }
 
@@ -1044,26 +1044,26 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->hasvalue = false;
     self->context.file = "<@no context>";
     self->context.line = 0;
-    self->name = NULL;
+    self->name = nullptr;
     if (name && !ir_value_set_name(self, name)) {
         irerror(self->context, "out of memory");
         mem_d(self);
-        return NULL;
+        return nullptr;
     }
 
     memset(&self->constval, 0, sizeof(self->constval));
     memset(&self->code,     0, sizeof(self->code));
 
-    self->members[0] = NULL;
-    self->members[1] = NULL;
-    self->members[2] = NULL;
-    self->memberof = NULL;
+    self->members[0] = nullptr;
+    self->members[1] = nullptr;
+    self->members[2] = nullptr;
+    self->memberof = nullptr;
 
     self->unique_life = false;
     self->locked = false;
     self->callparam  = false;
 
-    self->life = NULL;
+    self->life = nullptr;
     return self;
 }
 
@@ -1087,7 +1087,7 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     size_t len;
     ir_value *m;
     if (member >= 3)
-        return NULL;
+        return nullptr;
 
     if (self->members[member])
         return self->members[member];
@@ -1101,7 +1101,7 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
         name[len+2] = '\0';
     }
     else
-        name = NULL;
+        name = nullptr;
 
     if (self->vtype == TYPE_VECTOR)
     {
@@ -1109,7 +1109,7 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
         if (name)
             mem_d(name);
         if (!m)
-            return NULL;
+            return nullptr;
         m->context = self->context;
 
         self->members[member] = m;
@@ -1118,12 +1118,12 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     else if (self->vtype == TYPE_FIELD)
     {
         if (self->fieldtype != TYPE_VECTOR)
-            return NULL;
+            return nullptr;
         m = ir_value_var(name, self->store, TYPE_FIELD);
         if (name)
             mem_d(name);
         if (!m)
-            return NULL;
+            return nullptr;
         m->fieldtype = TYPE_FLOAT;
         m->context = self->context;
 
@@ -1133,7 +1133,7 @@ ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
     else
     {
         irerror(self->context, "invalid member access on %s", self->name);
-        return NULL;
+        return nullptr;
     }
 
     m->memberof = self;
@@ -1151,7 +1151,7 @@ static ir_value* ir_value_out(ir_function *owner, const char *name, int storetyp
 {
     ir_value *v = ir_value_var(name, storetype, vtype);
     if (!v)
-        return NULL;
+        return nullptr;
     ir_function_collect_value(owner, v);
     return v;
 }
@@ -1268,8 +1268,8 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
 {
     size_t i;
     const size_t vs = vec_size(self->life);
-    ir_life_entry_t *life = NULL;
-    ir_life_entry_t *before = NULL;
+    ir_life_entry_t *life = nullptr;
+    ir_life_entry_t *before = nullptr;
     ir_life_entry_t new_entry;
 
     /* Find the first range >= s */
@@ -1644,19 +1644,19 @@ ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, 
     ir_value *out;
     ir_instr *in;
     if (!ir_check_unreachable(self))
-        return NULL;
+        return nullptr;
     in = ir_instr_new(ctx, self, VINSTR_PHI);
     if (!in)
-        return NULL;
+        return nullptr;
     out = ir_value_out(self->owner, label, store_value, ot);
     if (!out) {
         ir_instr_delete(in);
-        return NULL;
+        return nullptr;
     }
     if (!ir_instr_op(in, 0, out, true)) {
         ir_instr_delete(in);
         ir_value_delete(out);
-        return NULL;
+        return nullptr;
     }
     vec_push(self->instr, in);
     return in;
@@ -1671,7 +1671,7 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 {
     ir_phi_entry_t pe;
 
-    if (!vec_ir_block_find(self->owner->entries, b, NULL)) {
+    if (!vec_ir_block_find(self->owner->entries, b, nullptr)) {
         /* Must not be possible to cause this, otherwise the AST
          * is doing something wrong.
          */
@@ -1691,10 +1691,10 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
     ir_value *out;
     ir_instr *in;
     if (!ir_check_unreachable(self))
-        return NULL;
+        return nullptr;
     in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
-        return NULL;
+        return nullptr;
     if (noreturn) {
         self->final = true;
         self->is_return = true;
@@ -1702,22 +1702,22 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
     out = ir_value_out(self->owner, label, (func->outtype == TYPE_VOID) ? store_return : store_value, func->outtype);
     if (!out) {
         ir_instr_delete(in);
-        return NULL;
+        return nullptr;
     }
     if (!ir_instr_op(in, 0, out, true) ||
         !ir_instr_op(in, 1, func, false))
     {
         ir_instr_delete(in);
         ir_value_delete(out);
-        return NULL;
+        return nullptr;
     }
     vec_push(self->instr, in);
     /*
     if (noreturn) {
-        if (!ir_block_create_return(self, ctx, NULL)) {
+        if (!ir_block_create_return(self, ctx, nullptr)) {
             compile_error(ctx, "internal error: failed to generate dummy-return instruction");
             ir_instr_delete(in);
-            return NULL;
+            return nullptr;
         }
     }
     */
@@ -1850,7 +1850,7 @@ ir_value* ir_block_create_binop(ir_block *self, lex_ctx_t ctx,
     };
     if (ot == TYPE_VOID) {
         /* The AST or parser were supposed to check this! */
-        return NULL;
+        return nullptr;
     }
 
     return ir_block_create_general_instr(self, ctx, label, opcode, left, right, ot);
@@ -1876,9 +1876,9 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
          * the operand for 0 already exists so we just source it from here.
          */
         case VINSTR_NEG_F:
-            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_F, NULL, operand, ot);
+            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_F, nullptr, operand, ot);
         case VINSTR_NEG_V:
-            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, NULL, operand, TYPE_VECTOR);
+            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, nullptr, operand, TYPE_VECTOR);
 
         default:
             ot = operand->vtype;
@@ -1886,11 +1886,11 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
     };
     if (ot == TYPE_VOID) {
         /* The AST or parser were supposed to check this! */
-        return NULL;
+        return nullptr;
     }
 
-    /* let's use the general instruction creator and pass NULL for OPB */
-    return ir_block_create_general_instr(self, ctx, label, opcode, operand, NULL, ot);
+    /* let's use the general instruction creator and pass nullptr for OPB */
+    return ir_block_create_general_instr(self, ctx, label, opcode, operand, nullptr, ot);
 }
 
 static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, const char *label,
@@ -1901,12 +1901,12 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
 
     out = ir_value_out(self->owner, label, store_value, outype);
     if (!out)
-        return NULL;
+        return nullptr;
 
     instr = ir_instr_new(ctx, self, op);
     if (!instr) {
         ir_value_delete(out);
-        return NULL;
+        return nullptr;
     }
 
     if (!ir_instr_op(instr, 0, out, true) ||
@@ -1922,7 +1922,7 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
 on_error:
     ir_instr_delete(instr);
     ir_value_delete(out);
-    return NULL;
+    return nullptr;
 }
 
 ir_value* ir_block_create_fieldaddress(ir_block *self, lex_ctx_t ctx, const char *label, ir_value *ent, ir_value *field)
@@ -1931,10 +1931,10 @@ ir_value* ir_block_create_fieldaddress(ir_block *self, lex_ctx_t ctx, const char
 
     /* Support for various pointer types todo if so desired */
     if (ent->vtype != TYPE_ENTITY)
-        return NULL;
+        return nullptr;
 
     if (field->vtype != TYPE_FIELD)
-        return NULL;
+        return nullptr;
 
     v = ir_block_create_general_instr(self, ctx, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
     v->fieldtype = field->fieldtype;
@@ -1945,11 +1945,11 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const cha
 {
     int op;
     if (ent->vtype != TYPE_ENTITY)
-        return NULL;
+        return nullptr;
 
     /* at some point we could redirect for TYPE_POINTER... but that could lead to carelessness */
     if (field->vtype != TYPE_FIELD)
-        return NULL;
+        return nullptr;
 
     switch (outype)
     {
@@ -1965,7 +1965,7 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const cha
 #endif
         default:
             irerror(self->context, "invalid type for ir_block_create_load_from_ent: %s", type_name[outype]);
-            return NULL;
+            return nullptr;
     }
 
     return ir_block_create_general_instr(self, ctx, label, op, ent, field, outype);
@@ -2169,14 +2169,14 @@ bool ir_function_allocate_locals(ir_function *self)
     if (!vec_size(self->locals) && !vec_size(self->values))
         return true;
 
-    globalloc.locals    = NULL;
-    globalloc.sizes     = NULL;
-    globalloc.positions = NULL;
-    globalloc.unique    = NULL;
-    lockalloc.locals    = NULL;
-    lockalloc.sizes     = NULL;
-    lockalloc.positions = NULL;
-    lockalloc.unique    = NULL;
+    globalloc.locals    = nullptr;
+    globalloc.sizes     = nullptr;
+    globalloc.positions = nullptr;
+    globalloc.unique    = nullptr;
+    lockalloc.locals    = nullptr;
+    lockalloc.sizes     = nullptr;
+    lockalloc.positions = nullptr;
+    lockalloc.unique    = nullptr;
 
     for (i = 0; i < vec_size(self->locals); ++i)
     {
@@ -2473,7 +2473,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                 if (value->memberof) {
                     value = value->memberof;
                     for (mem = 0; mem < 3; ++mem) {
-                        if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], NULL))
+                        if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], nullptr))
                             break;
                     }
                     if (mem == 3 && vec_ir_value_find(self->living, value, &idx)) {
@@ -2537,13 +2537,13 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
             /* read operands */
             if (read & (1<<o))
             {
-                if (!vec_ir_value_find(self->living, value, NULL))
+                if (!vec_ir_value_find(self->living, value, nullptr))
                     self->living.push_back(value);
                 /* reading adds the full vector */
-                if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
+                if (value->memberof && !vec_ir_value_find(self->living, value->memberof, nullptr))
                     self->living.push_back(value->memberof);
                 for (mem = 0; mem < 3; ++mem) {
-                    if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
+                    if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], nullptr))
                         self->living.push_back(value->members[mem]);
                 }
             }
@@ -2551,13 +2551,13 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
         /* PHI operands are always read operands */
         for (auto &it : instr->phi) {
             value = it.value;
-            if (!vec_ir_value_find(self->living, value, NULL))
+            if (!vec_ir_value_find(self->living, value, nullptr))
                 self->living.push_back(value);
             /* reading adds the full vector */
-            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
+            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, nullptr))
                 self->living.push_back(value->memberof);
             for (mem = 0; mem < 3; ++mem) {
-                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
+                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], nullptr))
                     self->living.push_back(value->members[mem]);
             }
         }
@@ -2570,13 +2570,13 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
         /* call params are read operands too */
         for (auto &it : instr->params) {
             value = it;
-            if (!vec_ir_value_find(self->living, value, NULL))
+            if (!vec_ir_value_find(self->living, value, nullptr))
                 self->living.push_back(value);
             /* reading adds the full vector */
-            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
+            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, nullptr))
                 self->living.push_back(value->memberof);
             for (mem = 0; mem < 3; ++mem) {
-                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
+                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], nullptr))
                     self->living.push_back(value->members[mem]);
             }
         }
@@ -2722,7 +2722,7 @@ static bool gen_global_pointer(code_t *code, ir_value *global)
         ir_value *target = global->constval.vpointer;
         if (!target) {
             irerror(global->context, "Invalid pointer constant: %s", global->name);
-            /* NULL pointers are pointing to the NULL constant, which also
+            /* nullptr pointers are pointing to the nullptr constant, which also
              * sits at address 0, but still has an ir_value for itself.
              */
             return false;
@@ -3856,7 +3856,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
 static void ir_builder_collect_reusables(ir_builder *builder) {
     size_t i;
-    ir_value **reusables = NULL;
+    ir_value **reusables = nullptr;
     for (i = 0; i < vec_size(builder->globals); ++i) {
         ir_value *value = builder->globals[i];
         if (value->vtype != TYPE_FLOAT || !value->hasvalue)
@@ -3870,7 +3870,7 @@ static void ir_builder_collect_reusables(ir_builder *builder) {
 
 static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
     size_t i, count;
-    ir_value* found[3] = { NULL, NULL, NULL };
+    ir_value* found[3] = { nullptr, nullptr, nullptr };
 
     /* must not be written to */
     if (vec->writes.size())
@@ -3953,7 +3953,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
 {
     prog_section_statement_t stmt;
     size_t i;
-    char  *lnofile = NULL;
+    char  *lnofile = nullptr;
 
     if (OPTS_FLAG(SPLIT_VECTOR_PARAMETERS)) {
         ir_builder_collect_reusables(self);
@@ -4260,7 +4260,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
                        int (*oprintf)(const char*, ...))
 {
     size_t i;
-    const char *comma = NULL;
+    const char *comma = nullptr;
 
     oprintf("%s (%i) ", ind, (int)in->eid);
 

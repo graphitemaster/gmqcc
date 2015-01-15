@@ -81,15 +81,15 @@ lex_file* lex_open(const char *file)
     uint32_t   read;
 
     if (!in) {
-        lexerror(NULL, "open failed: '%s'\n", file);
-        return NULL;
+        lexerror(nullptr, "open failed: '%s'\n", file);
+        return nullptr;
     }
 
     lex = (lex_file*)mem_a(sizeof(*lex));
     if (!lex) {
         fclose(in);
-        lexerror(NULL, "out of memory\n");
-        return NULL;
+        lexerror(nullptr, "out of memory\n");
+        return nullptr;
     }
 
     memset(lex, 0, sizeof(*lex));
@@ -124,13 +124,13 @@ lex_file* lex_open_string(const char *str, size_t len, const char *name)
 
     lex = (lex_file*)mem_a(sizeof(*lex));
     if (!lex) {
-        lexerror(NULL, "out of memory\n");
-        return NULL;
+        lexerror(nullptr, "out of memory\n");
+        return nullptr;
     }
 
     memset(lex, 0, sizeof(*lex));
 
-    lex->file = NULL;
+    lex->file = nullptr;
     lex->open_string        = str;
     lex->open_string_length = len;
     lex->open_string_pos    = 0;
@@ -329,9 +329,9 @@ static void lex_endtoken(lex_file *lex)
 static bool lex_try_pragma(lex_file *lex)
 {
     int ch;
-    char *pragma  = NULL;
-    char *command = NULL;
-    char *param   = NULL;
+    char *pragma  = nullptr;
+    char *command = nullptr;
+    char *param   = nullptr;
     size_t line;
 
     if (lex->flags.preprocessing)
@@ -396,7 +396,7 @@ static bool lex_try_pragma(lex_file *lex)
         vec_push(lex_filenames, lex->name);
     }
     else if (!strcmp(command, "line")) {
-        line = strtol(param, NULL, 0)-1;
+        line = strtol(param, nullptr, 0)-1;
     }
     else
         goto unroll;
@@ -899,9 +899,9 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
 
     lex_endtoken(lex);
     if (lex->tok.ttype == TOKEN_FLOATCONST)
-        lex->tok.constval.f = strtod(lex->tok.value, NULL);
+        lex->tok.constval.f = strtod(lex->tok.value, nullptr);
     else
-        lex->tok.constval.i = strtol(lex->tok.value, NULL, 0);
+        lex->tok.constval.i = strtol(lex->tok.value, nullptr, 0);
     return lex->tok.ttype;
 }
 
@@ -1042,11 +1042,11 @@ int lex_do(lex_file *lex)
                 frame_macro m;
                 m.value = lex->framevalue;
                 m.name = lex->modelname;
-                lex->modelname = NULL;
+                lex->modelname = nullptr;
                 vec_push(lex->frames, m);
             }
             lex->modelname = lex->tok.value;
-            lex->tok.value = NULL;
+            lex->tok.value = nullptr;
             return lex_do(lex);
         }
 

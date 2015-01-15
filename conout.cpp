@@ -16,7 +16,7 @@ static con_t console;
 
 /*
  * Enables color on output if supported.
- * NOTE: The support for checking colors is NULL.  On windows this will
+ * NOTE: The support for checking colors is nullptr.  On windows this will
  * always work, on *nix it depends if the term has colors.
  *
  * NOTE: This prevents colored output to piped stdout/err via isatty
@@ -138,7 +138,7 @@ static void con_vprintmsg_c(int level, const char *name, size_t line, size_t col
 }
 
 void con_vprintmsg(int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, va_list ap) {
-    con_vprintmsg_c(level, name, line, column, msgtype, msg, ap, NULL);
+    con_vprintmsg_c(level, name, line, column, msgtype, msg, ap, nullptr);
 }
 
 void con_printmsg(int level, const char *name, size_t line, size_t column, const char *msgtype, const char *msg, ...) {

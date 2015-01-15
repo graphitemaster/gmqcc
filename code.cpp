@@ -291,7 +291,7 @@ static void code_stats(const char *filename, const char *lnofile, code_t *code, 
 
 bool code_write(code_t *code, const char *filename, const char *lnofile) {
     prog_header_t code_header;
-    FILE *fp = NULL;
+    FILE *fp = nullptr;
 
     code_create_header(code, &code_header, filename, lnofile);
 
@@ -319,7 +319,7 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
         }
 
         fclose(fp);
-        fp = NULL;
+        fp = nullptr;
     }
 
     fp = fopen(filename, "wb");

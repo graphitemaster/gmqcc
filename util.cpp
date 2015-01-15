@@ -539,7 +539,7 @@ size_t util_optimizationtostr(const char *in, char *out, size_t outsz) {
 static int util_vasprintf(char **dat, const char *fmt, va_list args) {
     int     ret;
     int     len;
-    char   *tmp = NULL;
+    char   *tmp = nullptr;
     char    buf[128];
     va_list cpy;
 
@@ -558,7 +558,7 @@ static int util_vasprintf(char **dat, const char *fmt, va_list args) {
     tmp = (char*)mem_a(len + 1);
     if ((ret = vsnprintf(tmp, len + 1, fmt, args)) != len) {
         mem_d(tmp);
-        *dat = NULL;
+        *dat = nullptr;
         return -1;
     }
 

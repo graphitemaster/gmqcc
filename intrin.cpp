@@ -4,8 +4,8 @@
 #define intrin_ctx(I) parser_ctx((I)->parser)
 
 static GMQCC_INLINE ast_function *intrin_value(intrin_t *intrin, ast_value **out, const char *name, qcint_t vtype) {
-    ast_value    *value = NULL;
-    ast_function *func  = NULL;
+    ast_value    *value = nullptr;
+    ast_function *func  = nullptr;
     char          buffer[1024];
     char          stype [1024];
 
@@ -32,7 +32,7 @@ static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, as
 /*
  * since some intrinsics depend on each other there is the possibility
  * that an intrinsic will fail to get a 'depended' function that a
- * builtin needs, causing some dependency in the chain to have a NULL
+ * builtin needs, causing some dependency in the chain to have a nullptr
  * function. This will cause a segmentation fault at code generation,
  * even though an error was raised. To contiue to allow it (instead
  * of stopping compilation right away). We need to return from the
@@ -40,8 +40,8 @@ static GMQCC_INLINE void intrin_reg(intrin_t *intrin, ast_value *const value, as
  */
 static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, const char *from);
 static ast_expression *intrin_nullfunc(intrin_t *intrin) {
-    ast_value    *value = NULL;
-    ast_function *func  = intrin_value(intrin, &value, NULL, TYPE_VOID);
+    ast_value    *value = nullptr;
+    ast_function *func  = intrin_value(intrin, &value, nullptr, TYPE_VOID);
     intrin_reg(intrin, value, func);
     return (ast_expression*)value;
 }
@@ -52,7 +52,7 @@ static ast_expression *intrin_isfinite(intrin_t *intrin) {
      *     return !(isnan(x) || isinf(x));
      * }
      */
-    ast_value    *value     = NULL;
+    ast_value    *value     = nullptr;
     ast_value    *x         = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_function *func      = intrin_value(intrin, &value, "isfinite", TYPE_FLOAT);
     ast_call     *callisnan = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "isnan", "isfinite"));
@@ -97,7 +97,7 @@ static ast_expression *intrin_isinf(intrin_t *intrin) {
      *     return (x != 0.0) && (x + x == x);
      * }
      */
-    ast_value    *value = NULL;
+    ast_value    *value = nullptr;
     ast_value    *x     = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body  = ast_block_new(intrin_ctx(intrin));
     ast_function *func  = intrin_value(intrin, &value, "isinf", TYPE_FLOAT);
@@ -146,7 +146,7 @@ static ast_expression *intrin_isnan(intrin_t *intrin) {
      *   return (x != local);
      * }
      */
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x",     TYPE_FLOAT);
     ast_value    *local  = ast_value_new(intrin_ctx(intrin), "local", TYPE_FLOAT);
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
@@ -188,7 +188,7 @@ static ast_expression *intrin_isnormal(intrin_t *intrin) {
      *     return isfinite(x);
      * }
      */
-    ast_value    *value         = NULL;
+    ast_value    *value         = nullptr;
     ast_call     *callisfinite  = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "isfinite", "isnormal"));
     ast_value    *x             = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body          = ast_block_new(intrin_ctx(intrin));
@@ -216,7 +216,7 @@ static ast_expression *intrin_signbit(intrin_t *intrin) {
      *     return (x < 0);
      * }
      */
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_value    *x      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "signbit", TYPE_FLOAT);
@@ -252,7 +252,7 @@ static ast_expression *intrin_acosh(intrin_t *intrin) {
      *     return log(x + sqrt((x * x) - 1));
      * }
      */
-    ast_value    *value    = NULL;
+    ast_value    *value    = nullptr;
     ast_value    *x        = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_call     *calllog  = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "log", "acosh"));
     ast_call     *callsqrt = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "sqrt", "acosh"));
@@ -305,7 +305,7 @@ static ast_expression *intrin_asinh(intrin_t *intrin) {
      *     return log(x + sqrt((x * x) + 1));
      * }
      */
-    ast_value    *value    = NULL;
+    ast_value    *value    = nullptr;
     ast_value    *x        = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_call     *calllog  = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "log", "asinh"));
     ast_call     *callsqrt = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "sqrt", "asinh"));
@@ -358,7 +358,7 @@ static ast_expression *intrin_atanh(intrin_t *intrin) {
      *     return 0.5 * log((1 + x) / (1 - x))
      * }
      */
-    ast_value    *value   = NULL;
+    ast_value    *value   = nullptr;
     ast_value    *x       = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_call     *calllog = ast_call_new(intrin_ctx(intrin), intrin_func_self(intrin, "log", "atanh"));
     ast_block    *body    = ast_block_new(intrin_ctx(intrin));
@@ -413,7 +413,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
      *     return sum;
      * }
      */
-    ast_value    *value = NULL;
+    ast_value    *value = nullptr;
     ast_value    *x     = ast_value_new(intrin_ctx(intrin), "x",   TYPE_FLOAT);
     ast_value    *sum   = ast_value_new(intrin_ctx(intrin), "sum", TYPE_FLOAT);
     ast_value    *acc   = ast_value_new(intrin_ctx(intrin), "acc", TYPE_FLOAT);
@@ -469,7 +469,7 @@ static ast_expression *intrin_exp(intrin_t *intrin) {
                 (ast_expression*)fold_constgen_float(intrin->fold, 200.0f, false)
             ),
             false,
-            NULL,
+            nullptr,
             false,
             /* ++i; */
             (ast_expression*)ast_binstore_new(
@@ -520,7 +520,7 @@ static ast_expression *intrin_exp2(intrin_t *intrin) {
      *     return pow(2, x);
      * }
      */
-    ast_value    *value     = NULL;
+    ast_value    *value     = nullptr;
     ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", "exp2"));
     ast_value    *arg1      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body      = ast_block_new(intrin_ctx(intrin));
@@ -550,7 +550,7 @@ static ast_expression *intrin_expm1(intrin_t *intrin) {
      *     return exp(x) - 1;
      * }
      */
-    ast_value    *value    = NULL;
+    ast_value    *value    = nullptr;
     ast_call     *callexp  = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "exp", "expm1"));
     ast_value    *x        = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body     = ast_block_new(intrin_ctx(intrin));
@@ -621,7 +621,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
      *     return accumulate;
      * }
      */
-    ast_value    *value = NULL;
+    ast_value    *value = nullptr;
     ast_function *func = intrin_value(intrin, &value, "pow", TYPE_FLOAT);
 
     /* prepare some calls for later */
@@ -684,7 +684,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                 intrin_ctx(intrin),
                 (ast_expression*)intrin->fold->imm_float[1]
             ),
-            NULL
+            nullptr
         )
     );
 
@@ -705,7 +705,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                 intrin_ctx(intrin),
                 (ast_expression*)base
             ),
-            NULL
+            nullptr
         )
     );
 
@@ -741,7 +741,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                     (ast_expression*)callpow1
                 )
             ),
-            NULL
+            nullptr
         )
     );
 
@@ -797,7 +797,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
                 (ast_expression*)intrin->fold->imm_float[1]
             ),
             (ast_expression*)expgt1,
-            NULL
+            nullptr
         )
     );
 
@@ -989,7 +989,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
             /* init */
-            NULL,
+            nullptr,
             /* pre condition */
             (ast_expression*)ast_binary_new(
                 intrin_ctx(intrin),
@@ -1000,11 +1000,11 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
             /* pre not */
             false,
             /* post condition */
-            NULL,
+            nullptr,
             /* post not */
             false,
             /* increment expression */
-            NULL,
+            nullptr,
             /* code block */
             (ast_expression*)whileblock
         )
@@ -1032,7 +1032,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
      *     return a - b * sign * floor(sign * div);
      * }
      */
-    ast_value    *value = NULL;
+    ast_value    *value = nullptr;
     ast_call     *call  = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "floor", "mod"));
     ast_value    *a     = ast_value_new(intrin_ctx(intrin), "a",    TYPE_FLOAT);
     ast_value    *b     = ast_value_new(intrin_ctx(intrin), "b",    TYPE_FLOAT);
@@ -1126,7 +1126,7 @@ static ast_expression *intrin_fabs(intrin_t *intrin) {
      *     return x < 0 ? -x : x;
      * }
      */
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "fabs", TYPE_FLOAT);
@@ -1167,7 +1167,7 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
      *     return eps;
      * }
      */
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_value    *eps    = ast_value_new(intrin_ctx(intrin), "eps", TYPE_FLOAT);
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
     ast_function *func   = intrin_value(intrin, &value, "epsilon", TYPE_FLOAT);
@@ -1187,8 +1187,8 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
     body->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
-            NULL,
-            NULL,
+            nullptr,
+            nullptr,
             false,
             (ast_expression*)ast_binary_new(
                 intrin_ctx(intrin),
@@ -1207,7 +1207,7 @@ static ast_expression *intrin_epsilon(intrin_t *intrin) {
                 (ast_expression*)intrin->fold->imm_float[1]
             ),
             false,
-            NULL,
+            nullptr,
             (ast_expression*)ast_binstore_new(
                 intrin_ctx(intrin),
                 INSTR_STORE_F,
@@ -1238,7 +1238,7 @@ static ast_expression *intrin_nan(intrin_t *intrin) {
      *     return x / x;
      * }
      */
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_value    *x      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_function *func   = intrin_value(intrin, &value, "nan", TYPE_FLOAT);
     ast_block    *block  = ast_block_new(intrin_ctx(intrin));
@@ -1279,7 +1279,7 @@ static ast_expression *intrin_inf(intrin_t *intrin) {
      *     return x / y;
      * }
      */
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_value    *x      = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_value    *y      = ast_value_new(intrin_ctx(intrin), "y", TYPE_FLOAT);
     ast_function *func   = intrin_value(intrin, &value, "inf", TYPE_FLOAT);
@@ -1384,7 +1384,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
      * }
      */
 
-    ast_value    *value      = NULL;
+    ast_value    *value      = nullptr;
     ast_value    *power      = ast_value_new(intrin_ctx(intrin), "power",     TYPE_FLOAT);
     ast_value    *base       = ast_value_new(intrin_ctx(intrin), "base",      TYPE_FLOAT);
     ast_value    *whole      = ast_value_new(intrin_ctx(intrin), "whole",     TYPE_FLOAT);
@@ -1538,7 +1538,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
                     intrin_func_self(intrin, "__builtin_nan", "ln")
                 )
             ),
-            NULL
+            nullptr
         )
     );
 
@@ -1553,7 +1553,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
                     (ast_expression*)intrin->fold->imm_float[1]
                 ),
                 (ast_expression*)((i) ? blt1 : plt1),
-                NULL
+                nullptr
             )
         );
     }
@@ -1657,7 +1657,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     whileloop->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
-            NULL,
+            nullptr,
             (ast_expression*)ast_binary_new(
                 intrin_ctx(intrin),
                 INSTR_GE,
@@ -1665,9 +1665,9 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
                 (ast_expression*)newbase2
             ),
             false,
-            NULL,
+            nullptr,
             false,
-            NULL,
+            nullptr,
             (ast_expression*)nestwhile
         )
     );
@@ -1698,7 +1698,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     forloop->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
-            NULL,
+            nullptr,
             (ast_expression*)ast_binary_new(
                 intrin_ctx(intrin),
                 INSTR_GE,
@@ -1706,9 +1706,9 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
                 (ast_expression*)base
             ),
             false,
-            NULL,
+            nullptr,
             false,
-            NULL,
+            nullptr,
             (ast_expression*)whileloop
         )
     );
@@ -1805,7 +1805,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
                 false,
                 0
             ),
-            NULL
+            nullptr
         )
     );
 
@@ -1828,13 +1828,13 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
     block->exprs.push_back(
         (ast_expression*)ast_loop_new(
             intrin_ctx(intrin),
-            NULL,
-            /* for(; 1; ) ?? (can this be NULL too?) */
+            nullptr,
+            /* for(; 1; ) ?? (can this be nullptr too?) */
             (ast_expression*)intrin->fold->imm_float[1],
             false,
-            NULL,
+            nullptr,
             false,
-            NULL,
+            nullptr,
             (ast_expression*)forloop
         )
     );
@@ -1863,7 +1863,7 @@ static ast_expression *intrin_ln(intrin_t *intrin) {
 }
 
 static ast_expression *intrin_log_variant(intrin_t *intrin, const char *name, float base) {
-    ast_value    *value  = NULL;
+    ast_value    *value  = nullptr;
     ast_call     *callln = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "__builtin_ln", name));
     ast_value    *arg1   = ast_value_new(intrin_ctx(intrin), "x", TYPE_FLOAT);
     ast_block    *body   = ast_block_new(intrin_ctx(intrin));
@@ -1905,7 +1905,7 @@ static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, 
      * float [shift] (float a, float b) {
      *   return floor(a [instr] pow(2, b));
      */
-    ast_value    *value     = NULL;
+    ast_value    *value     = nullptr;
     ast_call     *callpow   = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "pow", name));
     ast_call     *callfloor = ast_call_new (intrin_ctx(intrin), intrin_func_self(intrin, "floor", name));
     ast_value    *a         = ast_value_new(intrin_ctx(intrin), "a", TYPE_FLOAT);
@@ -2017,14 +2017,14 @@ void intrin_cleanup(intrin_t *intrin) {
 
 ast_expression *intrin_fold(intrin_t *intrin, ast_value *value, ast_expression **exprs) {
     if (!value || !value->name)
-        return NULL;
+        return nullptr;
     for (auto &it : intrin->intrinsics) {
         if (!strcmp(value->name, it.name))
             return (vec_size(exprs) != it.args)
-                        ? NULL
+                        ? nullptr
                         : fold_intrin(intrin->fold, value->name + 10, exprs);
     }
-    return NULL;
+    return nullptr;
 }
 
 static GMQCC_INLINE ast_expression *intrin_func_try(intrin_t *intrin, size_t offset, const char *compare) {
@@ -2055,11 +2055,11 @@ static ast_expression *intrin_func_self(intrin_t *intrin, const char *name, cons
 
     if (from) {
         intrin_error(intrin, "need function `%s', compiler depends on it for `__builtin_%s'", name, from);
-        return intrin_func_self(intrin, "#nullfunc", NULL);
+        return intrin_func_self(intrin, "#nullfunc", nullptr);
     }
-    return NULL;
+    return nullptr;
 }
 
 ast_expression *intrin_func(intrin_t *intrin, const char *name) {
-    return intrin_func_self(intrin, name, NULL);
+    return intrin_func_self(intrin, name, nullptr);
 }

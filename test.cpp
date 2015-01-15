@@ -87,7 +87,7 @@ task_popen_error_2: close(outhandle[0]), close(outhandle[1]);
 task_popen_error_1: close(inhandle [0]), close(inhandle [1]);
 task_popen_error_0:
 
-    return NULL;
+    return nullptr;
 }
 
 static int task_pclose(FILE **handles) {
@@ -199,7 +199,7 @@ struct task_template_t {
 static bool task_template_generate(task_template_t *tmpl, char tag, const char *file, size_t line, char *value, size_t *pad) {
     size_t desclen = 0;
     size_t filelen = 0;
-    char **destval = NULL;
+    char **destval = nullptr;
 
     if (!tmpl)
         return false;
@@ -270,8 +270,8 @@ static bool task_template_generate(task_template_t *tmpl, char tag, const char *
 }
 
 static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *fp, size_t *pad) {
-    char  *data = NULL;
-    char  *back = NULL;
+    char  *data = nullptr;
+    char  *back = nullptr;
     size_t size = 0;
     size_t line = 1;
 
@@ -376,7 +376,7 @@ static bool task_template_parse(const char *file, task_template_t *tmpl, FILE *f
         /* update line and free old sata */
         line++;
         mem_d(back);
-        back = NULL;
+        back = nullptr;
     }
     if (back)
         mem_d(back);
@@ -395,22 +395,22 @@ static void task_template_nullify(task_template_t *tmpl) {
     if (!tmpl)
         return;
 
-    tmpl->description = NULL;
-    tmpl->proceduretype = NULL;
-    tmpl->compileflags = NULL;
-    tmpl->executeflags = NULL;
-    tmpl->sourcefile = NULL;
-    tmpl->tempfilename = NULL;
-    tmpl->rulesfile = NULL;
-    tmpl->testflags = NULL;
+    tmpl->description = nullptr;
+    tmpl->proceduretype = nullptr;
+    tmpl->compileflags = nullptr;
+    tmpl->executeflags = nullptr;
+    tmpl->sourcefile = nullptr;
+    tmpl->tempfilename = nullptr;
+    tmpl->rulesfile = nullptr;
+    tmpl->testflags = nullptr;
 }
 
 static task_template_t *task_template_compile(const char *file, const char *dir, size_t *pad) {
     /* a page should be enough */
     char             fullfile[4096];
     size_t           filepadd = 0;
-    FILE       *tempfile = NULL;
-    task_template_t *tmpl     = NULL;
+    FILE       *tempfile = nullptr;
+    task_template_t *tmpl     = nullptr;
 
     util_snprintf(fullfile, sizeof(fullfile), "%s/%s", dir, file);
 
@@ -524,7 +524,7 @@ failure:
         fclose(tempfile);
     mem_d(tmpl);
 
-    return NULL;
+    return nullptr;
 }
 
 static void task_template_destroy(task_template_t *tmpl) {
@@ -544,7 +544,7 @@ static void task_template_destroy(task_template_t *tmpl) {
         mem_d(it);
 
     /*
-     * Nullify all the template members otherwise NULL comparision
+     * Nullify all the template members otherwise nullptr comparision
      * checks will fail if tmpl pointer is reused.
      */
     mem_d(tmpl->tempfilename);
@@ -600,7 +600,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             directories.push_back(claim);
         } else {
             mem_d(claim);
-            claim = NULL;
+            claim = nullptr;
         }
     }
     closedir(dir);
@@ -629,7 +629,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
             if (strcmp(files->d_name + strlen(files->d_name) - 5, ".tmpl") == 0) {
                 task_template_t *tmpl = task_template_compile(files->d_name, it, pad);
                 char             buf[4096]; /* one page should be enough */
-                const char      *qcflags = NULL;
+                const char      *qcflags = nullptr;
                 task_t           task;
 
                 found ++;
@@ -642,7 +642,7 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                  * Generate a temportary file name for the output binary
                  * so we don't trample over an existing one.
                  */
-                tmpl->tempfilename = NULL;
+                tmpl->tempfilename = nullptr;
                 util_asprintf(&tmpl->tempfilename, "%s/TMPDAT.%s.dat", it, files->d_name);
 
                 /*
@@ -884,7 +884,7 @@ static bool task_trymatch(task_t &task, std::vector<char *> &line) {
      * and handle accordingly.
      */
     {
-        char  *data    = NULL;
+        char  *data    = nullptr;
         size_t size    = 0;
         size_t compare = 0;
 
@@ -941,7 +941,7 @@ static bool task_trymatch(task_t &task, std::vector<char *> &line) {
             line.push_back(data);
 
             /* reset */
-            data = NULL;
+            data = nullptr;
             size = 0;
         }
 
@@ -949,7 +949,7 @@ static bool task_trymatch(task_t &task, std::vector<char *> &line) {
             success = false;
 
         mem_d(data);
-        data = NULL;
+        data = nullptr;
     }
 
     if (process)
@@ -982,7 +982,7 @@ static const char *task_type(task_template_t *tmpl) {
 static size_t task_schedualize(size_t *pad) {
     char space[2][64];
     bool execute = false;
-    char *data = NULL;
+    char *data = nullptr;
     std::vector<char *> match;
     size_t size = 0;
     size_t i = 0;
@@ -1248,7 +1248,7 @@ static bool parsecmd(const char *optname, int *argc_, char ***argv_, char **out,
 
 int main(int argc, char **argv) {
     bool succeed  = false;
-    char *defs = NULL;
+    char *defs = nullptr;
 
     con_init();
 

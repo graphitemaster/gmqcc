@@ -7,13 +7,13 @@
 /* TODO: cleanup this whole file .. it's a fuckign mess */
 
 /* set by the standard */
-const oper_info *operators = NULL;
+const oper_info *operators = nullptr;
 size_t operator_count = 0;
 static bool opts_output_wasset = false;
 struct argitem { char *filename; int type; };
 struct ppitem { char *name; char *value; };
-static argitem *items = NULL;
-static ppitem  *ppems = NULL;
+static argitem *items = nullptr;
+static ppitem  *ppems = nullptr;
 
 #define TYPE_QC  0
 #define TYPE_ASM 1
@@ -120,7 +120,7 @@ static bool options_parse(int argc, char **argv) {
     bool argend = false;
     size_t itr;
     char buffer[1024];
-    char *config = NULL;
+    char *config = nullptr;
 
     while (!argend && argc > 1) {
         char *argarg;
@@ -187,11 +187,11 @@ static bool options_parse(int argc, char **argv) {
             if (options_long_gcc("force-crc", &argc, &argv, &argarg)) {
 
                 OPTS_OPTION_BOOL(OPTION_FORCECRC)   = true;
-                OPTS_OPTION_U16 (OPTION_FORCED_CRC) = strtol(argarg, NULL, 0);
+                OPTS_OPTION_U16 (OPTION_FORCED_CRC) = strtol(argarg, nullptr, 0);
                 continue;
             }
             if (options_long_gcc("state-fps", &argc, &argv, &argarg)) {
-                OPTS_OPTION_U32(OPTION_STATE_FPS) = strtol(argarg, NULL, 0);
+                OPTS_OPTION_U32(OPTION_STATE_FPS) = strtol(argarg, nullptr, 0);
                 opts_set(opts.flags, EMULATE_STATE, true);
                 continue;
             }
@@ -282,7 +282,7 @@ static bool options_parse(int argc, char **argv) {
 
                     if (!(argarg = strchr(argv[0] + 2, '='))) {
                         macro.name  = util_strdup(argv[0]+2);
-                        macro.value = NULL;
+                        macro.value = nullptr;
                     } else {
                         *argarg='\0'; /* terminate for name */
                         macro.name  = util_strdup(argv[0]+2);
@@ -383,7 +383,7 @@ static bool options_parse(int argc, char **argv) {
                         return false;
                     }
                     if (util_isdigit(argarg[0])) {
-                        uint32_t val = (uint32_t)strtol(argarg, NULL, 10);
+                        uint32_t val = (uint32_t)strtol(argarg, nullptr, 10);
                         OPTS_OPTION_U32(OPTION_O) = val;
                         opts_setoptimlevel(val);
                     } else {
@@ -518,9 +518,9 @@ int main(int argc, char **argv) {
     int             retval           = 0;
     bool            operators_free   = false;
     bool            progs_src        = false;
-    FILE       *outfile         = NULL;
-    parser_t *parser          = NULL;
-    ftepp_t  *ftepp           = NULL;
+    FILE       *outfile         = nullptr;
+    parser_t *parser          = nullptr;
+    ftepp_t  *ftepp           = nullptr;
 
     app_name = argv[0];
     con_init ();
@@ -624,7 +624,7 @@ int main(int argc, char **argv) {
 
     if (!vec_size(items)) {
         FILE *src;
-        char      *line    = NULL;
+        char      *line    = nullptr;
         size_t     linelen = 0;
         bool       hasline = false;
 
@@ -714,12 +714,12 @@ int main(int argc, char **argv) {
 
             if (progs_src) {
                 mem_d(items[itr].filename);
-                items[itr].filename = NULL;
+                items[itr].filename = nullptr;
             }
         }
 
         ftepp_finish(ftepp);
-        ftepp = NULL;
+        ftepp = nullptr;
         if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
             if (!parser_finish(parser, OPTS_OPTION_STR(OPTION_OUTPUT))) {
                 retval = 1;

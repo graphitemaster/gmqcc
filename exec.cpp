@@ -42,12 +42,12 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
                     has_frame     = false;
 
     if (!file)
-        return NULL;
+        return nullptr;
 
     if (fread(&header, sizeof(header), 1, file) != 1) {
         loaderror("failed to read header from '%s'", filename);
         fclose(file);
-        return NULL;
+        return nullptr;
     }
 
     util_swap_header(header);
@@ -55,14 +55,14 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     if (!skipversion && header.version != 6) {
         loaderror("header says this is a version %i progs, we need version 6\n", header.version);
         fclose(file);
-        return NULL;
+        return nullptr;
     }
 
     prog = (qc_program_t*)mem_a(sizeof(qc_program_t));
     if (!prog) {
         fclose(file);
         fprintf(stderr, "failed to allocate program data\n");
-        return NULL;
+        return nullptr;
     }
     memset(prog, 0, sizeof(*prog));
 
@@ -163,7 +163,7 @@ error:
     mem_d(prog);
 
     fclose(file);
-    return NULL;
+    return nullptr;
 }
 
 void prog_delete(qc_program_t *prog)
@@ -511,7 +511,7 @@ static qcint_t prog_enterfunction(qc_program_t *prog, prog_section_function_t *f
 }
 
 static qcint_t prog_leavefunction(qc_program_t *prog) {
-    prog_section_function_t *prev = NULL;
+    prog_section_function_t *prev = nullptr;
     size_t oldsp;
 
     qc_exec_stack_t st = vec_last(prog->stack);
@@ -623,7 +623,7 @@ struct qcvm_parameter {
     const char *value;
 };
 
-static qcvm_parameter *main_params = NULL;
+static qcvm_parameter *main_params = nullptr;
 
 #define CheckArgs(num) do {                                                    \
     if (prog->argc != (num)) {                                                 \
@@ -640,7 +640,7 @@ static qcvm_parameter *main_params = NULL;
 
 static int qc_print(qc_program_t *prog) {
     size_t i;
-    const char *laststr = NULL;
+    const char *laststr = nullptr;
     for (i = 0; i < (size_t)prog->argc; ++i) {
         qcany_t *str = (qcany_t*)(&prog->globals[0] + OFS_PARM0 + 3*i);
         laststr = prog_getstring(prog, str->string);
@@ -678,7 +678,7 @@ static int qc_stof(qc_program_t *prog) {
     qcany_t num;
     CheckArgs(1);
     str = GetArg(0);
-    num._float = (float)strtod(prog_getstring(prog, str->string), NULL);
+    num._float = (float)strtod(prog_getstring(prog, str->string), nullptr);
     Return(num);
     return 0;
 }
@@ -833,7 +833,7 @@ static int qc_pow(qc_program_t *prog) {
 }
 
 static prog_builtin_t qc_builtins[] = {
-    NULL,
+    nullptr,
     &qc_print,       /*   1   */
     &qc_ftos,        /*   2   */
     &qc_spawn,       /*   3   */
@@ -851,7 +851,7 @@ static prog_builtin_t qc_builtins[] = {
     &qc_pow          /*   15  */
 };
 
-static const char *arg0 = NULL;
+static const char *arg0 = nullptr;
 
 static void version(void) {
     printf("GMQCC-QCVM %d.%d.%d Built %s %s\n",
@@ -925,8 +925,8 @@ int main(int argc, char **argv) {
     bool        opts_disasm      = false;
     bool        opts_info        = false;
     bool        noexec           = false;
-    const char *progsfile        = NULL;
-    const char **dis_list        = NULL;
+    const char *progsfile        = nullptr;
+    const char **dis_list        = nullptr;
     int         opts_v           = 0;
 
     arg0 = argv[0];
@@ -1128,7 +1128,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (opts_printdefs) {
-        const char *getstring = NULL;
+        const char *getstring = nullptr;
         for (auto &it : prog->defs) {
             printf("Global: %8s %-16s at %u%s",
                    type_name[it.type & DEF_TYPEMASK],
@@ -1544,7 +1544,7 @@ while (prog->vmerror == 0) {
         case INSTR_CALL8:
             prog->argc = st->opcode - INSTR_CALL0;
             if (!OPA->function)
-                qcvmerror(prog, "NULL function in `%s`", prog->filename);
+                qcvmerror(prog, "nullptr function in `%s`", prog->filename);
 
             if(!OPA->function || OPA->function >= (qcint_t)prog->functions.size())
             {

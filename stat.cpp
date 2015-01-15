@@ -10,10 +10,10 @@
  */
 char *stat_mem_strdup(const char *src, bool empty) {
     size_t len = 0;
-    char *ptr = NULL;
+    char *ptr = nullptr;
 
     if (!src)
-        return NULL;
+        return nullptr;
 
     len = strlen(src);
     if ((!empty ? len : true) && (ptr = (char*)mem_a(len + 1))) {
@@ -30,7 +30,7 @@ char *stat_mem_strdup(const char *src, bool empty) {
 void _util_vec_grow(void **a, size_t i, size_t s) {
     vector_t *d = vec_meta(*a);
     size_t m = 0;
-    void *p = NULL;
+    void *p = nullptr;
 
     if (*a) {
         m = 2 * d->allocated + i;
@@ -70,15 +70,15 @@ size_t util_hthash(hash_table_t *ht, const char *key) {
 static hash_node_t *_util_htnewpair(const char *key, void *value) {
     hash_node_t *node;
     if (!(node = (hash_node_t*)mem_a(sizeof(hash_node_t))))
-        return NULL;
+        return nullptr;
 
     if (!(node->key = util_strdupe(key))) {
         mem_d(node);
-        return NULL;
+        return nullptr;
     }
 
     node->value = value;
-    node->next  = NULL;
+    node->next  = nullptr;
 
     return node;
 }
@@ -91,17 +91,17 @@ static hash_node_t *_util_htnewpair(const char *key, void *value) {
  * util_htdel(table)                            -- to delete the table
  */
 hash_table_t *util_htnew(size_t size) {
-    hash_table_t *hashtable = NULL;
+    hash_table_t *hashtable = nullptr;
 
     if (size < 1)
-        return NULL;
+        return nullptr;
 
     if (!(hashtable = (hash_table_t*)mem_a(sizeof(hash_table_t))))
-        return NULL;
+        return nullptr;
 
     if (!(hashtable->table = (hash_node_t**)mem_a(sizeof(hash_node_t*) * size))) {
         mem_d(hashtable);
-        return NULL;
+        return nullptr;
     }
 
     hashtable->size = size;
@@ -111,9 +111,9 @@ hash_table_t *util_htnew(size_t size) {
 }
 
 void util_htseth(hash_table_t *ht, const char *key, size_t bin, void *value) {
-    hash_node_t *newnode = NULL;
-    hash_node_t *next    = NULL;
-    hash_node_t *last    = NULL;
+    hash_node_t *newnode = nullptr;
+    hash_node_t *next    = nullptr;
+    hash_node_t *last    = nullptr;
 
     next = ht->table[bin];
 
@@ -149,7 +149,7 @@ void *util_htgeth(hash_table_t *ht, const char *key, size_t bin) {
         pair = pair->next;
 
     if (!pair || !pair->key || strcmp(key, pair->key) != 0)
-        return NULL;
+        return nullptr;
 
     return pair->value;
 }
@@ -178,7 +178,7 @@ void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
             if (cmp == 0)
                 return pair->value;
             if (cmp < 0)
-                return NULL;
+                return nullptr;
             pair = pair->next;
             continue;
         }
@@ -190,7 +190,7 @@ void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin) {
         }
         pair = pair->next;
     }
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -245,5 +245,5 @@ void util_htrm(hash_table_t *ht, const char *key, void (*cb)(void*)) {
 }
 
 void util_htdel(hash_table_t *ht) {
-    util_htrem(ht, NULL);
+    util_htrem(ht, nullptr);
 }

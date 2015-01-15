@@ -227,7 +227,7 @@ void _util_vec_delete(void *vec);
 
 /* exposed interface */
 #define vec_meta(A)       ((vector_t*)(((char *)(A)) - sizeof(vector_t)))
-#define vec_free(A)       ((void)((A) ? (_util_vec_delete((void *)(A)), (A) = NULL) : 0))
+#define vec_free(A)       ((void)((A) ? (_util_vec_delete((void *)(A)), (A) = nullptr) : 0))
 #define vec_push(A,V)     (GMQCC_VEC_WILLGROW((A),1), (A)[vec_meta(A)->used++] = (V))
 #define vec_size(A)       ((A) ? vec_meta(A)->used : 0)
 #define vec_add(A,N)      (GMQCC_VEC_WILLGROW((A),(N)), vec_meta(A)->used += (N), &(A)[vec_meta(A)->used-(N)])

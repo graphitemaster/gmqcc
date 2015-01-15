@@ -404,12 +404,12 @@ ast_store* ast_store_new(lex_ctx_t ctx, int op,
 
 /* If
  *
- * A general 'if then else' statement, either side can be NULL and will
- * thus be omitted. It is an error for *both* cases to be NULL at once.
+ * A general 'if then else' statement, either side can be nullptr and will
+ * thus be omitted. It is an error for *both* cases to be nullptr at once.
  *
  * During its 'codegen' it'll be changing the ast_function's block.
  *
- * An if is also an "expression". Its codegen will put NULL into the
+ * An if is also an "expression". Its codegen will put nullptr into the
  * output field though. For ternary expressions an ast_ternary will be
  * added.
  */
@@ -431,7 +431,7 @@ ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *
  * a PHI node.
  *
  * The other difference is that in an ast_ternary, NEITHER side
- * must be NULL, there's ALWAYS an else branch.
+ * must be nullptr, there's ALWAYS an else branch.
  *
  * This is the only ast_node beside ast_value which contains
  * an ir_value. Theoretically we don't need to remember it though.
