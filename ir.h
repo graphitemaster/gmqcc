@@ -36,50 +36,47 @@ enum {
 };
 
 struct ir_value {
-    char      *name;
-    int        vtype;
-    int        store;
-    lex_ctx_t  context;
-
-
-    int       fieldtype; /* even the IR knows the subtype of a field */
-    int       outtype;   /* and the output type of a function        */
-    int       cvq;       /* 'const' vs 'var' qualifier               */
+    char *name;
+    int vtype;
+    int store;
+    lex_ctx_t context;
+    int fieldtype; // even the IR knows the subtype of a field
+    int outtype;   // and the output type of a function
+    int cvq;       // 'const' vs 'var' qualifier
     ir_flag_t flags;
 
-    ir_instr **reads;
-    ir_instr **writes;
+    std::vector<ir_instr *> reads;
+    std::vector<ir_instr *> writes;
 
-    /* constantvalues */
+    // constant values
     bool hasvalue;
     union {
-        qcfloat_t   vfloat;
-        int         vint;
-        vec3_t      vvec;
-        int32_t     ivec[3];
-        char        *vstring;
-        ir_value    *vpointer;
+        qcfloat_t vfloat;
+        int vint;
+        vec3_t vvec;
+        int32_t ivec[3];
+        char *vstring;
+        ir_value *vpointer;
         ir_function *vfunc;
     } constval;
 
     struct {
         int32_t globaladdr;
         int32_t name;
-        int32_t local;         /* filled by the local-allocator     */
-        int32_t addroffset;    /* added for members                 */
-        int32_t fieldaddr;     /* to generate field-addresses early */
+        int32_t local;         // filled by the local-allocator
+        int32_t addroffset;    // added for members
+        int32_t fieldaddr;     // to generate field-addresses early
     } code;
 
-    /* for acessing vectors */
+    // for accessing vectors
     ir_value *members[3];
     ir_value *memberof;
 
-
-    bool unique_life;      /* arrays will never overlap with temps      */
-    bool locked;           /* temps living during a CALL must be locked */
+    bool unique_life;      // arrays will never overlap with temps
+    bool locked;           // temps living during a CALL must be locked
     bool callparam;
 
-    ir_life_entry_t *life; /* For the temp allocator */
+    ir_life_entry_t *life; // For the temp allocator
 };
 
 /*

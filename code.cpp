@@ -167,7 +167,6 @@ uint32_t code_genstring(code_t *code, const char *str) {
 
     CODE_HASH_LEAVE(existing) = code->chars.size();
     code->chars.insert(code->chars.end(), str, str + strlen(str) + 1);
-    //vec_append(code->chars, strlen(str)+1, str);
 
     util_htseth(code->string_cache, str, hash, CODE_HASH_ENTER(existing));
     return CODE_HASH_LEAVE(existing);

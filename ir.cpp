@@ -265,15 +265,14 @@ static bool GMQCC_WARN vec_ir_block_find(ir_block **vec, ir_block *what, size_t 
     return false;
 }
 
-static bool GMQCC_WARN vec_ir_instr_find(ir_instr **vec, ir_instr *what, size_t *idx)
+static bool GMQCC_WARN vec_ir_instr_find(std::vector<ir_instr *> &vec, ir_instr *what, size_t *idx)
 {
-    size_t i;
-    size_t len = vec_size(vec);
-    for (i = 0; i < len; ++i) {
-        if (vec[i] == what) {
-            if (idx) *idx = i;
-            return true;
-        }
+    for (auto &it : vec) {
+        if (it != what)
+            continue;
+        if (idx)
+            *idx = &it - &vec[0];
+        return true;
     }
     return false;
 }
@@ -640,7 +639,7 @@ static bool ir_function_pass_peephole(ir_function *self)
                     continue;
 
                 /* don't optimize out the temp if it's used later again */
-                if (vec_size(value->reads) != 1)
+                if (value->reads.size() != 1)
                     continue;
 
                 /* The very next store must use this value */
@@ -670,12 +669,8 @@ static bool ir_function_pass_peephole(ir_function *self)
                     ir_value *value;
                     value = inst->_ops[0];
 
-                    if (value->store != store_value ||
-                        vec_size(value->reads) != 1 ||
-                        value->reads[0] != inst)
-                    {
+                    if (value->store != store_value || value->reads.size() != 1 || value->reads[0] != inst)
                         break;
-                    }
 
                     inot = value->writes[0];
                     if (inot->_ops[0] != value ||
@@ -996,17 +991,17 @@ static void ir_instr_delete(ir_instr *self)
     for (i = 0; i < vec_size(self->phi); ++i) {
         size_t idx;
         if (vec_ir_instr_find(self->phi[i].value->writes, self, &idx))
-            vec_remove(self->phi[i].value->writes, idx, 1);
+            self->phi[i].value->writes.erase(self->phi[i].value->writes.begin() + idx);
         if (vec_ir_instr_find(self->phi[i].value->reads, self, &idx))
-            vec_remove(self->phi[i].value->reads, idx, 1);
+            self->phi[i].value->reads.erase(self->phi[i].value->reads.begin() + idx);
     }
     vec_free(self->phi);
     for (i = 0; i < vec_size(self->params); ++i) {
         size_t idx;
         if (vec_ir_instr_find(self->params[i]->writes, self, &idx))
-            vec_remove(self->params[i]->writes, idx, 1);
+            self->params[i]->writes.erase(self->params[i]->writes.begin() + idx);
         if (vec_ir_instr_find(self->params[i]->reads, self, &idx))
-            vec_remove(self->params[i]->reads, idx, 1);
+            self->params[i]->reads.erase(self->params[i]->reads.begin() + idx);
     }
     vec_free(self->params);
     (void)!ir_instr_op(self, 0, NULL, false);
@@ -1025,15 +1020,15 @@ static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
     if (self->_ops[op]) {
         size_t idx;
         if (writing && vec_ir_instr_find(self->_ops[op]->writes, self, &idx))
-            vec_remove(self->_ops[op]->writes, idx, 1);
+            self->_ops[op]->writes.erase(self->_ops[op]->writes.begin() + idx);
         else if (vec_ir_instr_find(self->_ops[op]->reads, self, &idx))
-            vec_remove(self->_ops[op]->reads, idx, 1);
+            self->_ops[op]->reads.erase(self->_ops[op]->reads.begin() + idx);
     }
     if (v) {
         if (writing)
-            vec_push(v->writes, self);
+            v->writes.push_back(self);
         else
-            vec_push(v->reads, self);
+            v->reads.push_back(self);
     }
     self->_ops[op] = v;
     return true;
@@ -1062,17 +1057,15 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
 {
     ir_value *self;
     self = (ir_value*)mem_a(sizeof(*self));
+    new (self) ir_value();
     self->vtype = vtype;
     self->fieldtype = TYPE_VOID;
     self->outtype = TYPE_VOID;
     self->store = storetype;
     self->flags = 0;
 
-    self->reads  = NULL;
-    self->writes = NULL;
-
-    self->cvq          = CV_NONE;
-    self->hasvalue     = false;
+    self->cvq = CV_NONE;
+    self->hasvalue = false;
     self->context.file = "<@no context>";
     self->context.line = 0;
     self->name = NULL;
@@ -1091,8 +1084,8 @@ ir_value* ir_value_var(const char *name, int storetype, int vtype)
     self->memberof = NULL;
 
     self->unique_life = false;
-    self->locked      = false;
-    self->callparam   = false;
+    self->locked = false;
+    self->callparam  = false;
 
     self->life = NULL;
     return self;
@@ -1114,8 +1107,8 @@ static ir_value* ir_builder_imm_float(ir_builder *self, float value, bool add_to
 
 ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
 {
-    char     *name;
-    size_t    len;
+    char *name;
+    size_t len;
     ir_value *m;
     if (member >= 3)
         return NULL;
@@ -1203,8 +1196,6 @@ void ir_value_delete(ir_value* self)
                 ir_value_delete(self->members[i]);
         }
     }
-    vec_free(self->reads);
-    vec_free(self->writes);
     vec_free(self->life);
     mem_d(self);
 }
@@ -1714,7 +1705,7 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 
     pe.value = v;
     pe.from = b;
-    vec_push(v->reads, self);
+    v->reads.push_back(self);
     vec_push(self->phi, pe);
 }
 
@@ -1765,7 +1756,7 @@ ir_value* ir_call_value(ir_instr *self)
 void ir_call_param(ir_instr* self, ir_value *v)
 {
     vec_push(self->params, v);
-    vec_push(v->reads, self);
+    v->reads.push_back(self);
 }
 
 /* binary op related code */
@@ -2042,16 +2033,11 @@ static bool ir_block_naive_phi(ir_block *self)
             ir_value *v = instr->phi[p].value;
             ir_block *b = instr->phi[p].from;
 
-            if (v->store == store_value &&
-                vec_size(v->reads) == 1 &&
-                vec_size(v->writes) == 1)
-            {
+            if (v->store == store_value && v->reads.size() == 1 && v->writes.size() == 1) {
                 /* replace the value */
                 if (!ir_instr_op(v->writes[0], 0, instr->_ops[0], true))
                     return false;
-            }
-            else
-            {
+            } else {
                 /* force a move instruction */
                 ir_instr *prevjump = vec_last(b->instr);
                 vec_pop(b->instr);
@@ -2254,13 +2240,13 @@ bool ir_function_allocate_locals(ir_function *self)
          * and it's not "locked", write it to the OFS_PARM directly.
          */
         if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES) && !v->locked && !v->unique_life) {
-            if (vec_size(v->reads) == 1 && vec_size(v->writes) == 1 &&
+            if (v->reads.size() == 1 && v->writes.size() == 1 &&
                 (v->reads[0]->opcode == VINSTR_NRCALL ||
                  (v->reads[0]->opcode >= INSTR_CALL0 && v->reads[0]->opcode <= INSTR_CALL8)
                 )
                )
             {
-                size_t    param;
+                size_t param;
                 ir_instr *call = v->reads[0];
                 if (!vec_ir_value_find(call->params, v, &param)) {
                     irerror(call->context, "internal error: unlocked parameter %s not found", v->name);
@@ -2287,8 +2273,7 @@ bool ir_function_allocate_locals(ir_function *self)
                 }
                 continue;
             }
-            if (vec_size(v->writes) == 1 && v->writes[0]->opcode == INSTR_CALL0)
-            {
+            if (v->writes.size() == 1 && v->writes[0]->opcode == INSTR_CALL0) {
                 v->store = store_return;
                 if (v->members[0]) v->members[0]->store = store_return;
                 if (v->members[1]) v->members[1]->store = store_return;
@@ -2674,11 +2659,11 @@ bool ir_function_calculate_liferanges(ir_function *self)
                 continue;
             self->flags |= IR_FLAG_HAS_UNINITIALIZED;
             /* find the instruction reading from it */
-            for (s = 0; s < vec_size(v->reads); ++s) {
+            for (s = 0; s < v->reads.size(); ++s) {
                 if (v->reads[s]->eid == v->life[0].end)
                     break;
             }
-            if (s < vec_size(v->reads)) {
+            if (s < v->reads.size()) {
                 if (irwarning(v->context, WARN_USED_UNINITIALIZED,
                               "variable `%s` may be used uninitialized in this function\n"
                               " -> %s:%i",
@@ -2692,11 +2677,11 @@ bool ir_function_calculate_liferanges(ir_function *self)
             }
             if (v->memberof) {
                 ir_value *vec = v->memberof;
-                for (s = 0; s < vec_size(vec->reads); ++s) {
+                for (s = 0; s < vec->reads.size(); ++s) {
                     if (vec->reads[s]->eid == v->life[0].end)
                         break;
                 }
-                if (s < vec_size(vec->reads)) {
+                if (s < vec->reads.size()) {
                     if (irwarning(v->context, WARN_USED_UNINITIALIZED,
                                   "variable `%s` may be used uninitialized in this function\n"
                                   " -> %s:%i",
@@ -3668,7 +3653,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
          * if we're eraseable and the function isn't referenced ignore outputting
          * the function.
          */
-        if (global->flags & IR_FLAG_ERASABLE && vec_size(global->reads) == 0) {
+        if (global->flags & IR_FLAG_ERASABLE && global->reads.empty()) {
             return true;
         }
 
@@ -3926,13 +3911,13 @@ static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
     ir_value* found[3] = { NULL, NULL, NULL };
 
     /* must not be written to */
-    if (vec_size(vec->writes))
+    if (vec->writes.size())
         return;
     /* must not be trying to access individual members */
     if (vec->members[0] || vec->members[1] || vec->members[2])
         return;
     /* should be actually used otherwise it won't be generated anyway */
-    count = vec_size(vec->reads);
+    count = vec->reads.size();
     if (!count)
         return;
 
@@ -3984,11 +3969,11 @@ static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
     vec->members[2] = found[2];
 
     /* register the readers for these floats */
-    count = vec_size(vec->reads);
+    count = vec->reads.size();
     for (i = 0; i != count; ++i) {
-        vec_push(found[0]->reads, vec->reads[i]);
-        vec_push(found[1]->reads, vec->reads[i]);
-        vec_push(found[2]->reads, vec->reads[i]);
+        found[0]->reads.push_back(vec->reads[i]);
+        found[1]->reads.push_back(vec->reads[i]);
+        found[2]->reads.push_back(vec->reads[i]);
     }
 }
 
