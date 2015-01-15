@@ -63,10 +63,10 @@ static ast_expression *intrin_isfinite(intrin_t *intrin) {
     value->expression.params.push_back(x);
 
     /* <callisnan> = isnan(x); */
-    vec_push(callisnan->params, (ast_expression*)x);
+    callisnan->params.push_back((ast_expression*)x);
 
     /* <callisinf> = isinf(x); */
-    vec_push(callisinf->params, (ast_expression*)x);
+    callisinf->params.push_back((ast_expression*)x);
 
     /* return (!<callisnan> || <callisinf>); */
     block->exprs.push_back(
@@ -195,7 +195,7 @@ static ast_expression *intrin_isnormal(intrin_t *intrin) {
     ast_function *func          = intrin_value(intrin, &value, "isnormal", TYPE_FLOAT);
 
     value->expression.params.push_back(x);
-    vec_push(callisfinite->params, (ast_expression*)x);
+    callisfinite->params.push_back((ast_expression*)x);
 
     /* return <callisfinite> */
     body->exprs.push_back(
@@ -262,7 +262,7 @@ static ast_expression *intrin_acosh(intrin_t *intrin) {
     value->expression.params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) - 1); */
-    vec_push(callsqrt->params,
+    callsqrt->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_SUB_F,
@@ -277,7 +277,7 @@ static ast_expression *intrin_acosh(intrin_t *intrin) {
     );
 
     /* <calllog> = log(x + <callsqrt>); */
-    vec_push(calllog->params,
+    calllog->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_ADD_F,
@@ -315,7 +315,7 @@ static ast_expression *intrin_asinh(intrin_t *intrin) {
     value->expression.params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) + 1); */
-    vec_push(callsqrt->params,
+    callsqrt->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_ADD_F,
@@ -330,7 +330,7 @@ static ast_expression *intrin_asinh(intrin_t *intrin) {
     );
 
     /* <calllog> = log(x + <callsqrt>); */
-    vec_push(calllog->params,
+    calllog->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_ADD_F,
@@ -367,7 +367,7 @@ static ast_expression *intrin_atanh(intrin_t *intrin) {
     value->expression.params.push_back(x);
 
     /* <callog> = log((1 + x) / (1 - x)); */
-    vec_push(calllog->params,
+    calllog->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_DIV_F,
@@ -529,8 +529,8 @@ static ast_expression *intrin_exp2(intrin_t *intrin) {
 
     value->expression.params.push_back(arg1);
 
-    vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
-    vec_push(callpow->params, (ast_expression*)arg1);
+    callpow->params.push_back((ast_expression*)intrin->fold->imm_float[3]);
+    callpow->params.push_back((ast_expression*)arg1);
 
     /* return <callpow> */
     body->exprs.push_back(
@@ -561,7 +561,7 @@ static ast_expression *intrin_expm1(intrin_t *intrin) {
     value->expression.params.push_back(x);
 
     /* <callexp> = exp(x); */
-    vec_push(callexp->params, (ast_expression*)x);
+    callexp->params.push_back((ast_expression*)x);
 
     /* return <callexp> - 1; */
     body->exprs.push_back(
@@ -712,8 +712,8 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     );
 
     /* <callpow1> = pow(base, -exp) */
-    vec_push(callpow1->params, (ast_expression*)base);
-    vec_push(callpow1->params,
+    callpow1->params.push_back((ast_expression*)base);
+    callpow1->params.push_back(
         (ast_expression*)ast_unary_new(
             intrin_ctx(intrin),
             VINSTR_NEG_F,
@@ -748,8 +748,8 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     );
 
     /* <callpow2> = pow(base, exp / 2) */
-    vec_push(callpow2->params, (ast_expression*)base);
-    vec_push(callpow2->params,
+    callpow2->params.push_back((ast_expression*)base);
+    callpow2->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_DIV_F,
@@ -806,7 +806,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     /*
      * <callsqrt1> = sqrt(base)
      */
-    vec_push(callsqrt1->params, (ast_expression*)base);
+    callsqrt1->params.push_back((ast_expression*)base);
 
     /*
      * low        = 0.0f;
@@ -918,7 +918,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     /*
      * <callsqrt2> = sqrt(square)
      */
-    vec_push(callsqrt2->params, (ast_expression*)square);
+    callsqrt2->params.push_back((ast_expression*)square);
 
     /*
      * <whileblock> = {
@@ -974,7 +974,7 @@ static ast_expression *intrin_pow(intrin_t *intrin) {
     /*
      * <callabs> = fabs(mid - exp)
      */
-    vec_push(callfabs->params,
+    callfabs->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_SUB_F,
@@ -1086,7 +1086,7 @@ static ast_expression *intrin_mod(intrin_t *intrin) {
     );
 
     /* floor(sign * div) */
-    vec_push(call->params,
+    call->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             INSTR_MUL_F,
@@ -1881,8 +1881,8 @@ static ast_expression *intrin_log_variant(intrin_t *intrin, const char *name, fl
 
     value->expression.params.push_back(arg1);
 
-    vec_push(callln->params, (ast_expression*)arg1);
-    vec_push(callln->params, (ast_expression*)fold_constgen_float(intrin->fold, base, false));
+    callln->params.push_back((ast_expression*)arg1);
+    callln->params.push_back((ast_expression*)fold_constgen_float(intrin->fold, base, false));
 
     body->exprs.push_back(
         (ast_expression*)ast_return_new(
@@ -1927,12 +1927,11 @@ static ast_expression *intrin_shift_variant(intrin_t *intrin, const char *name, 
     value->expression.params.push_back(b);
 
     /* <callpow> = pow(2, b) */
-    vec_push(callpow->params, (ast_expression*)intrin->fold->imm_float[3]);
-    vec_push(callpow->params, (ast_expression*)b);
+    callpow->params.push_back((ast_expression*)intrin->fold->imm_float[3]);
+    callpow->params.push_back((ast_expression*)b);
 
     /* <callfloor> = floor(a [instr] <callpow>) */
-    vec_push(
-        callfloor->params,
+    callfloor->params.push_back(
         (ast_expression*)ast_binary_new(
             intrin_ctx(intrin),
             instr,

@@ -978,7 +978,6 @@ ast_call* ast_call_new(lex_ctx_t ctx,
 
     ast_side_effects(self) = true;
 
-    self->params   = NULL;
     self->func     = funcexpr;
     self->va_count = NULL;
 
@@ -989,10 +988,8 @@ ast_call* ast_call_new(lex_ctx_t ctx,
 
 void ast_call_delete(ast_call *self)
 {
-    size_t i;
-    for (i = 0; i < vec_size(self->params); ++i)
-        ast_unref(self->params[i]);
-    vec_free(self->params);
+    for (auto &it : self->params)
+        ast_unref(it);
 
     if (self->func)
         ast_unref(self->func);
@@ -1054,7 +1051,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
     size_t i;
     bool retval = true;
     const ast_expression *func = self->func;
-    size_t count = vec_size(self->params);
+    size_t count = self->params.size();
     if (count > func->params.size())
         count = func->params.size();
 
@@ -1078,7 +1075,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
             retval = false;
         }
     }
-    count = vec_size(self->params);
+    count = self->params.size();
     if (count > func->params.size() && func->varparam) {
         for (; i < count; ++i) {
             if (ast_istype(self->params[i], ast_argpipe)) {
@@ -3389,13 +3386,10 @@ bool ast_call_codegen(ast_call *self, ast_function *func, bool lvalue, ir_value 
     params = NULL;
 
     /* parameters */
-    for (i = 0; i < vec_size(self->params); ++i)
-    {
+    for (auto &it : self->params) {
         ir_value *param;
-        ast_expression *expr = self->params[i];
-
-        cgen = expr->codegen;
-        if (!(*cgen)(expr, func, false, &param))
+        cgen = it->codegen;
+        if (!(*cgen)(it, func, false, &param))
             goto error;
         if (!param)
             goto error;

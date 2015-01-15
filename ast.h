@@ -586,7 +586,7 @@ struct ast_call
 {
     ast_expression expression;
     ast_expression *func;
-    ast_expression **params;
+    std::vector<ast_expression *> params;
     ast_expression *va_count;
 };
 ast_call* ast_call_new(lex_ctx_t ctx,

@@ -594,8 +594,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 if (!mod) return false; /* can return null for missing floor */
 
                 call = ast_call_new(parser_ctx(parser), mod);
-                vec_push(call->params, exprs[0]);
-                vec_push(call->params, exprs[1]);
+                call->params.push_back(exprs[0]);
+                call->params.push_back(exprs[1]);
 
                 out = (ast_expression*)call;
             }
@@ -661,8 +661,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_expression *shift = intrin_func(parser->intrin, (op->id == opid2('<','<')) ? "__builtin_lshift" : "__builtin_rshift");
                 ast_call       *call  = ast_call_new(parser_ctx(parser), shift);
-                vec_push(call->params, exprs[0]);
-                vec_push(call->params, exprs[1]);
+                call->params.push_back(exprs[0]);
+                call->params.push_back(exprs[1]);
                 out = (ast_expression*)call;
             }
             break;
@@ -679,8 +679,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if(!(out = fold_op(parser->fold, op, exprs))) {
                 ast_expression *shift = intrin_func(parser->intrin, (op->id == opid3('<','<','=')) ? "__builtin_lshift" : "__builtin_rshift");
                 ast_call       *call  = ast_call_new(parser_ctx(parser), shift);
-                vec_push(call->params, exprs[0]);
-                vec_push(call->params, exprs[1]);
+                call->params.push_back(exprs[0]);
+                call->params.push_back(exprs[1]);
                 out = (ast_expression*)ast_store_new(
                     parser_ctx(parser),
                     INSTR_STORE_F,
@@ -757,8 +757,8 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
             if (!(out = fold_op(parser->fold, op, exprs))) {
                 ast_call *gencall = ast_call_new(parser_ctx(parser), intrin_func(parser->intrin, "pow"));
-                vec_push(gencall->params, exprs[0]);
-                vec_push(gencall->params, exprs[1]);
+                gencall->params.push_back(exprs[0]);
+                gencall->params.push_back(exprs[1]);
                 out = (ast_expression*)gencall;
             }
             break;
@@ -1265,7 +1265,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     }
 
     for (i = 0; i < paramcount; ++i)
-        vec_push(call->params, sy->out[fid+1 + i].out);
+        call->params.push_back(sy->out[fid+1 + i].out);
     vec_shrinkby(sy->out, paramcount);
     (void)!ast_call_check_types(call, parser->function->vtype->expression.varparam);
     if (parser->max_param_count < paramcount)
