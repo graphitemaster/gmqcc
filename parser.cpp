@@ -1178,10 +1178,10 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     sy->argc.pop_back();
 
     if (sy->out.size() < fid) {
-        parseerror(parser, "internal error: broken function call%lu < %lu+%lu\n",
-                   (unsigned long)sy->out.size(),
-                   (unsigned long)fid,
-                   (unsigned long)paramcount);
+        parseerror(parser, "internal error: broken function call %zu < %zu+%zu\n",
+                   sy->out.size(),
+                   fid,
+                   paramcount);
         return false;
     }
 
@@ -1256,8 +1256,10 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         return false;
 
     if (fid+1 + paramcount != sy->out.size()) {
-        parseerror(parser, "internal error: parameter count mismatch: (%lu+1+%lu), %lu",
-                   (unsigned long)fid, (unsigned long)paramcount, (unsigned long)sy->out.size());
+        parseerror(parser, "internal error: parameter count mismatch: (%zu+1+%zu), %zu",
+                   fid,
+                   paramcount,
+                   sy->out.size());
         return false;
     }
 
@@ -1924,7 +1926,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
     } else
         expr = sy.out[0].out;
     if (sy.paren.size()) {
-        parseerror(parser, "internal error: vec_size(sy.paren) = %lu", (unsigned long)sy.paren.size());
+        parseerror(parser, "internal error: sy.paren.size() = %zu", sy.paren.size());
         return NULL;
     }
     return expr;
