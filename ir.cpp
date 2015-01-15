@@ -239,15 +239,14 @@ static bool GMQCC_WARN irwarning(lex_ctx_t ctx, int warntype, const char *fmt, .
  * Vector utility functions
  */
 
-static bool GMQCC_WARN vec_ir_value_find(ir_value **vec, const ir_value *what, size_t *idx)
+static bool GMQCC_WARN vec_ir_value_find(std::vector<ir_value *> &vec, const ir_value *what, size_t *idx)
 {
-    size_t i;
-    size_t len = vec_size(vec);
-    for (i = 0; i < len; ++i) {
-        if (vec[i] == what) {
-            if (idx) *idx = i;
-            return true;
-        }
+    for (auto &it : vec) {
+        if (it != what)
+            continue;
+        if (idx)
+            *idx = &it - &vec[0];
+        return true;
     }
     return false;
 }
@@ -779,7 +778,7 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
         block->final = false; /* open it back up */
 
         /* emite parameter-stores */
-        for (p = 0; p < vec_size(call->params); ++p) {
+        for (p = 0; p < call->params.size(); ++p) {
             /* assert(call->params_count <= self->locals_count); */
             if (!ir_block_create_store(block, call->context, self->locals[p], call->params[p])) {
                 irerror(call->context, "failed to create tailcall store instruction for parameter %i", (int)p);
@@ -878,11 +877,7 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
 
 ir_block* ir_block_new(ir_function* owner, const char *name)
 {
-    ir_block *self;
-    self = (ir_block*)mem_a(sizeof(*self));
-    if (!self)
-        return NULL;
-
+    ir_block *self = new ir_block;
     memset(self, 0, sizeof(*self));
 
     self->label = NULL;
@@ -895,15 +890,12 @@ ir_block* ir_block_new(ir_function* owner, const char *name)
     self->context.line = 0;
     self->final = false;
 
-    self->instr   = NULL;
+    self->instr = NULL;
     self->entries = NULL;
-    self->exits   = NULL;
+    self->exits = NULL;
 
     self->eid = 0;
     self->is_return = false;
-
-    self->living = NULL;
-
     self->generated = false;
 
     return self;
@@ -918,8 +910,7 @@ static void ir_block_delete_quick(ir_block* self)
     vec_free(self->instr);
     vec_free(self->entries);
     vec_free(self->exits);
-    vec_free(self->living);
-    mem_d(self);
+    delete self;
 }
 
 void ir_block_delete(ir_block* self)
@@ -931,8 +922,7 @@ void ir_block_delete(ir_block* self)
     vec_free(self->instr);
     vec_free(self->entries);
     vec_free(self->exits);
-    vec_free(self->living);
-    mem_d(self);
+    delete self;
 }
 
 bool ir_block_set_label(ir_block *self, const char *name)
@@ -949,11 +939,7 @@ bool ir_block_set_label(ir_block *self, const char *name)
 
 static ir_instr* ir_instr_new(lex_ctx_t ctx, ir_block* owner, int op)
 {
-    ir_instr *self;
-    self = (ir_instr*)mem_a(sizeof(*self));
-    if (!self)
-        return NULL;
-
+    ir_instr *self = new ir_instr;
     self->owner = owner;
     self->context = ctx;
     self->opcode = op;
@@ -962,48 +948,38 @@ static ir_instr* ir_instr_new(lex_ctx_t ctx, ir_block* owner, int op)
     self->_ops[2] = NULL;
     self->bops[0] = NULL;
     self->bops[1] = NULL;
-
-    self->phi    = NULL;
-    self->params = NULL;
-
     self->eid = 0;
-
     self->likely = true;
     return self;
 }
 
 static void ir_instr_delete_quick(ir_instr *self)
 {
-    vec_free(self->phi);
-    vec_free(self->params);
-    mem_d(self);
+    delete self;
 }
 
 static void ir_instr_delete(ir_instr *self)
 {
-    size_t i;
     /* The following calls can only delete from
      * vectors, we still want to delete this instruction
      * so ignore the return value. Since with the warn_unused_result attribute
      * gcc doesn't care about an explicit: (void)foo(); to ignore the result,
      * I have to improvise here and use if(foo());
      */
-    for (i = 0; i < vec_size(self->phi); ++i) {
+    for (auto &it : self->phi) {
         size_t idx;
-        if (vec_ir_instr_find(self->phi[i].value->writes, self, &idx))
-            self->phi[i].value->writes.erase(self->phi[i].value->writes.begin() + idx);
-        if (vec_ir_instr_find(self->phi[i].value->reads, self, &idx))
-            self->phi[i].value->reads.erase(self->phi[i].value->reads.begin() + idx);
+        if (vec_ir_instr_find(it.value->writes, self, &idx))
+            it.value->writes.erase(it.value->writes.begin() + idx);
+        if (vec_ir_instr_find(it.value->reads, self, &idx))
+            it.value->reads.erase(it.value->reads.begin() + idx);
     }
-    vec_free(self->phi);
-    for (i = 0; i < vec_size(self->params); ++i) {
+    for (auto &it : self->params) {
         size_t idx;
-        if (vec_ir_instr_find(self->params[i]->writes, self, &idx))
-            self->params[i]->writes.erase(self->params[i]->writes.begin() + idx);
-        if (vec_ir_instr_find(self->params[i]->reads, self, &idx))
-            self->params[i]->reads.erase(self->params[i]->reads.begin() + idx);
+        if (vec_ir_instr_find(it->writes, self, &idx))
+            it->writes.erase(it->writes.begin() + idx);
+        if (vec_ir_instr_find(it->reads, self, &idx))
+            it->reads.erase(it->reads.begin() + idx);
     }
-    vec_free(self->params);
     (void)!ir_instr_op(self, 0, NULL, false);
     (void)!ir_instr_op(self, 1, NULL, false);
     (void)!ir_instr_op(self, 2, NULL, false);
@@ -1706,7 +1682,7 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
     pe.value = v;
     pe.from = b;
     v->reads.push_back(self);
-    vec_push(self->phi, pe);
+    self->phi.push_back(pe);
 }
 
 /* call related code */
@@ -1755,7 +1731,7 @@ ir_value* ir_call_value(ir_instr *self)
 
 void ir_call_param(ir_instr* self, ir_value *v)
 {
-    vec_push(self->params, v);
+    self->params.push_back(v);
     v->reads.push_back(self);
 }
 
@@ -2014,7 +1990,7 @@ bool ir_function_naive_phi(ir_function *self)
 
 static bool ir_block_naive_phi(ir_block *self)
 {
-    size_t i, p; /*, w;*/
+    size_t i;
     /* FIXME: optionally, create_phi can add the phis
      * to a list so we don't need to loop through blocks
      * - anyway: "don't optimize YET"
@@ -2028,11 +2004,9 @@ static bool ir_block_naive_phi(ir_block *self)
         vec_remove(self->instr, i, 1);
         --i; /* NOTE: i+1 below */
 
-        for (p = 0; p < vec_size(instr->phi); ++p)
-        {
-            ir_value *v = instr->phi[p].value;
-            ir_block *b = instr->phi[p].from;
-
+        for (auto &it : instr->phi) {
+            ir_value *v = it.value;
+            ir_block *b = it.from;
             if (v->store == store_value && v->reads.size() == 1 && v->writes.size() == 1) {
                 /* replace the value */
                 if (!ir_instr_op(v->writes[0], 0, instr->_ops[0], true))
@@ -2389,29 +2363,21 @@ static void ir_op_read_write(int op, size_t *read, size_t *write)
     };
 }
 
-static bool ir_block_living_add_instr(ir_block *self, size_t eid)
-{
-    size_t       i;
-    const size_t vs = vec_size(self->living);
-    bool         changed = false;
-    for (i = 0; i != vs; ++i)
-    {
-        if (ir_value_life_merge(self->living[i], eid))
+static bool ir_block_living_add_instr(ir_block *self, size_t eid) {
+    bool changed = false;
+    for (auto &it : self->living)
+        if (ir_value_life_merge(it, eid))
             changed = true;
-    }
     return changed;
 }
 
-static bool ir_block_living_lock(ir_block *self)
-{
-    size_t i;
+static bool ir_block_living_lock(ir_block *self) {
     bool changed = false;
-    for (i = 0; i != vec_size(self->living); ++i)
-    {
-        if (!self->living[i]->locked) {
-            self->living[i]->locked = true;
-            changed = true;
-        }
+    for (auto &it : self->living) {
+        if (it->locked)
+            continue;
+        it->locked = true;
+        changed = true;
     }
     return changed;
 }
@@ -2420,7 +2386,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
 {
     ir_instr *instr;
     ir_value *value;
-    size_t i, o, p, mem, cnt;
+    size_t i, o, p, mem;
     /* bitmasks which operands are read from or written to */
     size_t read, write;
     char dbg_ind[16];
@@ -2428,16 +2394,14 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
     dbg_ind[1] = '0';
     (void)dbg_ind;
 
-    vec_free(self->living);
+    self->living.clear();
 
     p = vec_size(self->exits);
     for (i = 0; i < p; ++i) {
         ir_block *prev = self->exits[i];
-        cnt = vec_size(prev->living);
-        for (o = 0; o < cnt; ++o) {
-            if (!vec_ir_value_find(self->living, prev->living[o], NULL))
-                vec_push(self->living, prev->living[o]);
-        }
+        for (auto &it : prev->living)
+            if (!vec_ir_value_find(self->living, it, nullptr))
+                self->living.push_back(it);
     }
 
     i = vec_size(self->instr);
@@ -2494,15 +2458,15 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                      */
                     if (ir_value_life_merge(value, instr->eid))
                         *changed = true;
-                    /* Then remove */
-                    vec_remove(self->living, idx, 1);
+                    // Then remove
+                    self->living.erase(self->living.begin() + idx);
                 }
                 /* Removing a vector removes all members */
                 for (mem = 0; mem < 3; ++mem) {
                     if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], &idx)) {
                         if (ir_value_life_merge(value->members[mem], instr->eid))
                             *changed = true;
-                        vec_remove(self->living, idx, 1);
+                        self->living.erase(self->living.begin() + idx);
                     }
                 }
                 /* Removing the last member removes the vector */
@@ -2515,7 +2479,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                     if (mem == 3 && vec_ir_value_find(self->living, value, &idx)) {
                         if (ir_value_life_merge(value, instr->eid))
                             *changed = true;
-                        vec_remove(self->living, idx, 1);
+                        self->living.erase(self->living.begin() + idx);
                     }
                 }
             }
@@ -2574,28 +2538,27 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
             if (read & (1<<o))
             {
                 if (!vec_ir_value_find(self->living, value, NULL))
-                    vec_push(self->living, value);
+                    self->living.push_back(value);
                 /* reading adds the full vector */
                 if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
-                    vec_push(self->living, value->memberof);
+                    self->living.push_back(value->memberof);
                 for (mem = 0; mem < 3; ++mem) {
                     if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
-                        vec_push(self->living, value->members[mem]);
+                        self->living.push_back(value->members[mem]);
                 }
             }
         }
         /* PHI operands are always read operands */
-        for (p = 0; p < vec_size(instr->phi); ++p)
-        {
-            value = instr->phi[p].value;
+        for (auto &it : instr->phi) {
+            value = it.value;
             if (!vec_ir_value_find(self->living, value, NULL))
-                vec_push(self->living, value);
+                self->living.push_back(value);
             /* reading adds the full vector */
             if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
-                vec_push(self->living, value->memberof);
+                self->living.push_back(value->memberof);
             for (mem = 0; mem < 3; ++mem) {
                 if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
-                    vec_push(self->living, value->members[mem]);
+                    self->living.push_back(value->members[mem]);
             }
         }
 
@@ -2605,17 +2568,16 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                 *changed = true;
         }
         /* call params are read operands too */
-        for (p = 0; p < vec_size(instr->params); ++p)
-        {
-            value = instr->params[p];
+        for (auto &it : instr->params) {
+            value = it;
             if (!vec_ir_value_find(self->living, value, NULL))
-                vec_push(self->living, value);
+                self->living.push_back(value);
             /* reading adds the full vector */
             if (value->memberof && !vec_ir_value_find(self->living, value->memberof, NULL))
-                vec_push(self->living, value->memberof);
+                self->living.push_back(value->memberof);
             for (mem = 0; mem < 3; ++mem) {
                 if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], NULL))
-                    vec_push(self->living, value->members[mem]);
+                    self->living.push_back(value->members[mem]);
             }
         }
 
@@ -2651,8 +2613,8 @@ bool ir_function_calculate_liferanges(ir_function *self)
 
     if (vec_size(self->blocks)) {
         ir_block *block = self->blocks[0];
-        for (i = 0; i < vec_size(block->living); ++i) {
-            ir_value *v = block->living[i];
+        for (auto &it : block->living) {
+            ir_value *v = it;
             if (v->store != store_local)
                 continue;
             if (v->vtype == TYPE_VECTOR)
@@ -3087,7 +3049,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             size_t p, first;
             ir_value *retvalue;
 
-            first = vec_size(instr->params);
+            first = instr->params.size();
             if (first > 8)
                 first = 8;
             for (p = 0; p < first; ++p)
@@ -3124,7 +3086,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     code_push_statement(code, &stmt, instr->context);
             }
             /* Now handle extparams */
-            first = vec_size(instr->params);
+            first = instr->params.size();
             for (; p < first; ++p)
             {
                 ir_builder *ir = func->owner;
@@ -3166,7 +3128,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     code_push_statement(code, &stmt, instr->context);
             }
 
-            stmt.opcode = INSTR_CALL0 + vec_size(instr->params);
+            stmt.opcode = INSTR_CALL0 + instr->params.size();
             if (stmt.opcode > INSTR_CALL8)
                 stmt.opcode = INSTR_CALL8;
             stmt.o1.u1 = ir_value_code_addr(instr->_ops[1]);
@@ -4286,12 +4248,10 @@ void ir_block_dump(ir_block* b, char *ind,
 
 static void dump_phi(ir_instr *in, int (*oprintf)(const char*, ...))
 {
-    size_t i;
     oprintf("%s <- phi ", in->_ops[0]->name);
-    for (i = 0; i < vec_size(in->phi); ++i)
-    {
-        oprintf("([%s] : %s) ", in->phi[i].from->label,
-                                in->phi[i].value->name);
+    for (auto &it : in->phi) {
+        oprintf("([%s] : %s) ", it.from->label,
+                                it.value->name);
     }
     oprintf("\n");
 }
@@ -4317,7 +4277,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
             oprintf(" <- ");
     }
     if (in->opcode == INSTR_CALL0 || in->opcode == VINSTR_NRCALL) {
-        oprintf("CALL%i\t", vec_size(in->params));
+        oprintf("CALL%i\t", in->params.size());
     } else
         oprintf("%s\t", qc_opname(in->opcode));
 
@@ -4344,11 +4304,10 @@ void ir_instr_dump(ir_instr *in, char *ind,
     }
     if (in->bops[1])
         oprintf("%s[%s]", comma, in->bops[1]->label);
-    if (vec_size(in->params)) {
+    if (in->params.size()) {
         oprintf("\tparams: ");
-        for (i = 0; i != vec_size(in->params); ++i) {
-            oprintf("%s, ", in->params[i]->name);
-        }
+        for (auto &it : in->params)
+            oprintf("%s, ", it->name);
     }
     oprintf("\n");
     ind[strlen(ind)-1] = 0;

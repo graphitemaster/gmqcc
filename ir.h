@@ -107,13 +107,13 @@ struct ir_instr {
     ir_value *(_ops[3]);
     ir_block *(bops[2]);
 
-    ir_phi_entry_t *phi;
-    ir_value **params;
+    std::vector<ir_phi_entry_t> phi;
+    std::vector<ir_value *> params;
 
-    /* For the temp-allocation */
+    // For the temp-allocation
     size_t eid;
 
-    /* For IFs */
+    // For IFs
     bool likely;
 
     ir_block *owner;
@@ -121,23 +121,23 @@ struct ir_instr {
 
 /* block */
 struct ir_block {
-    char      *label;
-    lex_ctx_t  context;
-    bool       final; /* once a jump is added we're done */
+    char *label;
+    lex_ctx_t context;
+    bool final; /* once a jump is added we're done */
 
     ir_instr **instr;
     ir_block **entries;
     ir_block **exits;
-    ir_value **living;
+    std::vector<ir_value *> living;
 
     /* For the temp-allocation */
     size_t entry_id;
     size_t eid;
-    bool   is_return;
+    bool is_return;
 
     ir_function *owner;
 
-    bool   generated;
+    bool generated;
     size_t code_start;
 };
 
