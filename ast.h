@@ -623,15 +623,15 @@ bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
  */
 struct ast_function
 {
-    ast_node    node;
+    ast_node node;
 
-    ast_value  *vtype;
+    ast_value *vtype;
     const char *name;
 
     int builtin;
 
     /* list of used-up names for statics without the count suffix */
-    char       **static_names;
+    char **static_names;
     /* number of static variables, by convention this includes the
      * ones without the count-suffix - remember this when dealing
      * with savegames. uint instead of size_t as %zu in printf is
@@ -639,16 +639,16 @@ struct ast_function
     unsigned int static_count;
 
     ir_function *ir_func;
-    ir_block    *curblock;
+    ir_block *curblock;
     std::vector<ir_block*> breakblocks;
     std::vector<ir_block*> continueblocks;
 
-    size_t       labelcount;
+    size_t labelcount;
     /* in order for thread safety - for the optional
      * channel abesed multithreading... keeping a buffer
      * here to use in ast_function_label.
      */
-    char         labelbuf[64];
+    char labelbuf[64];
     std::vector<ast_block*> blocks;
     ast_value *varargs;
     ast_value *argc;
