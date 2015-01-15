@@ -5005,7 +5005,7 @@ static bool create_array_accessors(parser_t *parser, ast_value *var)
 static bool parse_array(parser_t *parser, ast_value *array)
 {
     size_t i;
-    if (array->initlist) {
+    if (array->initlist.size()) {
         parseerror(parser, "array already initialized elsewhere");
         return false;
     }
@@ -5023,7 +5023,7 @@ static bool parse_array(parser_t *parser, ast_value *array)
             parseerror(parser, "initializing element must be a compile time constant");
             return false;
         }
-        vec_push(array->initlist, v->constval);
+        array->initlist.push_back(v->constval);
         if (v->expression.vtype == TYPE_STRING) {
             array->initlist[i].vstring = util_strdupe(array->initlist[i].vstring);
             ++i;
@@ -5052,7 +5052,7 @@ static bool parse_array(parser_t *parser, ast_value *array)
             parseerror(parser, "array `%s' has already been initialized with %u elements",
                        array->name, (unsigned)array->expression.count);
         }
-        array->expression.count = vec_size(array->initlist);
+        array->expression.count = array->initlist.size();
         if (!create_array_accessors(parser, array))
             return false;
     }

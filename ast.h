@@ -174,13 +174,13 @@ struct ast_expression {
  * is like creating a 'float foo', foo serving as the type's name.
  */
 union basic_value_t {
-    qcfloat_t     vfloat;
-    int           vint;
-    vec3_t        vvec;
-    const char   *vstring;
-    int           ventity;
+    qcfloat_t vfloat;
+    int vint;
+    vec3_t vvec;
+    const char *vstring;
+    int ventity;
     ast_function *vfunc;
-    ast_value    *vfield;
+    ast_value *vfield;
 };
 
 struct ast_value
@@ -202,7 +202,7 @@ struct ast_value
      * of constants when an initializer list
      * was provided.
      */
-    basic_value_t *initlist;
+    std::vector<basic_value_t> initlist;
 
     /* usecount for the parser */
     size_t uses;

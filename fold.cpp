@@ -1365,7 +1365,7 @@ static GMQCC_INLINE ast_expression *fold_op_length(fold_t *fold, ast_value *a) {
     if (fold_can_1(a) && isstring(a))
         return fold_constgen_float(fold, strlen(fold_immvalue_string(a)), false);
     if (isarray(a))
-        return fold_constgen_float(fold, vec_size(a->initlist), false);
+        return fold_constgen_float(fold, a->initlist.size(), false);
     return NULL;
 }
 

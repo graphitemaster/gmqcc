@@ -336,7 +336,6 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
     self->inexact  = false;
     self->uses     = 0;
     memset(&self->constval, 0, sizeof(self->constval));
-    self->initlist = NULL;
 
     self->ir_v           = NULL;
     self->ir_values      = NULL;
@@ -381,18 +380,11 @@ void ast_value_delete(ast_value* self)
     if (self->desc)
         mem_d(self->desc);
 
-    if (self->initlist) {
-        if (self->expression.next->vtype == TYPE_STRING) {
-            /* strings are allocated, free them */
-            size_t i, len = vec_size(self->initlist);
-            /* in theory, len should be expression.count
-             * but let's not take any chances */
-            for (i = 0; i < len; ++i) {
-                if (self->initlist[i].vstring)
-                    mem_d(self->initlist[i].vstring);
-            }
-        }
-        vec_free(self->initlist);
+    // initlist imples an array which implies .next in the expression exists.
+    if (self->initlist.size() && self->expression.next->vtype == TYPE_STRING) {
+        for (auto &it : self->initlist)
+            if (it.vstring)
+                mem_d(it.vstring);
     }
 
     ast_expression_delete((ast_expression*)self);
@@ -1318,7 +1310,7 @@ bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_valu
 
 static bool ast_global_array_set(ast_value *self)
 {
-    size_t count = vec_size(self->initlist);
+    size_t count = self->initlist.size();
     size_t i;
 
     if (count > self->expression.count) {
@@ -1375,7 +1367,7 @@ static bool ast_global_array_set(ast_value *self)
 
 static bool check_array(ast_value *self, ast_value *array)
 {
-    if (array->expression.flags & AST_FLAG_ARRAY_INIT && !array->initlist) {
+    if (array->expression.flags & AST_FLAG_ARRAY_INIT && array->initlist.empty()) {
         compile_error(ast_ctx(self), "array without size: %s", self->name);
         return false;
     }
