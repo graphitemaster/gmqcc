@@ -864,7 +864,6 @@ ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op)
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_switch_codegen);
 
     self->operand = op;
-    self->cases   = NULL;
 
     ast_propagate_effects(self, op);
 
@@ -873,15 +872,13 @@ ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op)
 
 void ast_switch_delete(ast_switch *self)
 {
-    size_t i;
     ast_unref(self->operand);
 
-    for (i = 0; i < vec_size(self->cases); ++i) {
-        if (self->cases[i].value)
-            ast_unref(self->cases[i].value);
-        ast_unref(self->cases[i].code);
+    for (auto &it : self->cases) {
+        if (it.value)
+            ast_unref(it.value);
+        ast_unref(it.code);
     }
-    vec_free(self->cases);
 
     ast_expression_delete((ast_expression*)self);
     mem_d(self);
@@ -3078,7 +3075,6 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     ir_block *bout      = NULL;
     ir_block *bfall     = NULL;
     size_t    bout_id;
-    size_t    c;
 
     char      typestr[1024];
     uint16_t  cmpinstr;
@@ -3101,7 +3097,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     if (!(*cgen)((ast_expression*)(self->operand), func, false, &irop))
         return false;
 
-    if (!vec_size(self->cases))
+    if (self->cases.empty())
         return true;
 
     cmpinstr = type_eq_instr[irop->vtype];
@@ -3120,12 +3116,12 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     vec_push(func->breakblocks, bout);
 
     /* Now create all cases */
-    for (c = 0; c < vec_size(self->cases); ++c) {
+    for (auto &it : self->cases) {
         ir_value *cond, *val;
         ir_block *bcase, *bnot;
         size_t bnot_id;
 
-        ast_switch_case *swcase = &self->cases[c];
+        ast_switch_case *swcase = &it;
 
         if (swcase->value) {
             /* A regular case */

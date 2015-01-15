@@ -522,7 +522,7 @@ struct ast_switch
 {
     ast_expression expression;
     ast_expression *operand;
-    ast_switch_case *cases;
+    std::vector<ast_switch_case> cases;
 };
 
 ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op);

@@ -3142,7 +3142,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
             return false;
         }
         swcase.code = (ast_expression*)caseblock;
-        vec_push(switchnode->cases, swcase);
+        switchnode->cases.push_back(swcase);
         while (true) {
             ast_expression *expr;
             if (parser->tok == '}')
