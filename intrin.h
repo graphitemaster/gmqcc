@@ -2,7 +2,7 @@
 #define GMQCC_INTRIN_HDR
 #include "gmqcc.h"
 
-struct fold_t;
+struct fold;
 struct parser_t;
 
 struct ast_function;
@@ -23,7 +23,7 @@ struct intrin {
     intrin(parser_t *parser);
 
     ast_expression *debug_typestring();
-    ast_expression *fold(ast_value *val, ast_expression **exprs);
+    ast_expression *do_fold(ast_value *val, ast_expression **exprs);
     ast_expression *func_try(size_t offset, const char *compare);
     ast_expression *func_self(const char *name, const char *from);
     ast_expression *func(const char *name);
@@ -65,10 +65,9 @@ protected:
 
 private:
     parser_t *m_parser;
-    fold_t *m_fold;
+    fold *m_fold;
     std::vector<intrin_func_t> m_intrinsics;
     std::vector<ast_expression*> m_generated;
-
 };
 
 

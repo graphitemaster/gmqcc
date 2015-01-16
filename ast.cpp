@@ -5,7 +5,8 @@
 
 #include "gmqcc.h"
 #include "ast.h"
-#include "parser.h"
+#include "fold.h"
+//#include "parser.h"
 
 #define ast_instantiate(T, ctx, destroyfn)                          \
     T* self = (T*)mem_a(sizeof(T));                                 \
@@ -2560,7 +2561,7 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     ir_block *ontrue_endblock = nullptr;
     ir_block *onfalse_endblock = nullptr;
     ir_block *merge = nullptr;
-    int       fold  = 0;
+    int folded = 0;
 
     /* We don't output any value, thus also don't care about r/lvalue */
     (void)out;
@@ -2580,8 +2581,8 @@ bool ast_ifthen_codegen(ast_ifthen *self, ast_function *func, bool lvalue, ir_va
     cond = func->curblock;
 
     /* try constant folding away the condition */
-    if ((fold = fold_cond_ifthen(condval, func, self)) != -1)
-        return fold;
+    if ((folded = fold::cond_ifthen(condval, func, self)) != -1)
+        return folded;
 
     if (self->on_true) {
         /* create on-true block */
@@ -2663,7 +2664,7 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     ir_block *ontrue, *ontrue_out = nullptr;
     ir_block *onfalse, *onfalse_out = nullptr;
     ir_block *merge;
-    int       fold  = 0;
+    int folded = 0;
 
     /* Ternary can never create an lvalue... */
     if (lvalue)
@@ -2689,8 +2690,8 @@ bool ast_ternary_codegen(ast_ternary *self, ast_function *func, bool lvalue, ir_
     cond_out = func->curblock;
 
     /* try constant folding away the condition */
-    if ((fold = fold_cond_ternary(condval, func, self)) != -1)
-        return fold;
+    if ((folded = fold::cond_ternary(condval, func, self)) != -1)
+        return folded;
 
     /* create on-true block */
     ontrue = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "tern_T"));

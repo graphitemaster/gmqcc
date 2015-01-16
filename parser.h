@@ -2,19 +2,12 @@
 #define GMQCC_PARSER_HDR
 #include "gmqcc.h"
 #include "lexer.h"
-#include "ast.h"
+//#include "ast.h"
+
 #include "intrin.h"
+#include "fold.h"
 
 struct parser_t;
-
-struct fold_t {
-    parser_t *parser;
-    std::vector<ast_value*> imm_float;
-    std::vector<ast_value*> imm_vector;
-    std::vector<ast_value*> imm_string;
-    hash_table_t *imm_string_untranslate; /* map<string, ast_value*> */
-    hash_table_t *imm_string_dotranslate; /* map<string, ast_value*> */
-};
 
 #define parser_ctx(p) ((p)->lex->tok.ctx)
 
@@ -76,7 +69,7 @@ struct parser_t {
     /* collected information */
     size_t max_param_count;
 
-    fold_t *fold;
+    fold m_fold;
     intrin m_intrin;
 };
 
@@ -84,19 +77,5 @@ struct parser_t {
 /* parser.c */
 char           *parser_strdup     (const char *str);
 ast_expression *parser_find_global(parser_t *parser, const char *name);
-
-/* fold.c */
-fold_t         *fold_init           (parser_t *);
-void            fold_cleanup        (fold_t *);
-ast_expression *fold_constgen_float (fold_t *, qcfloat_t, bool);
-ast_expression *fold_constgen_vector(fold_t *, vec3_t);
-ast_expression *fold_constgen_string(fold_t *, const char *, bool);
-bool            fold_generate       (fold_t *, ir_builder *);
-ast_expression *fold_op             (fold_t *, const oper_info *, ast_expression **);
-ast_expression *fold_intrin         (fold_t *, const char      *, ast_expression **);
-
-ast_expression *fold_binary         (lex_ctx_t ctx, int, ast_expression *, ast_expression *);
-int             fold_cond_ifthen    (ir_value *, ast_function *, ast_ifthen  *);
-int             fold_cond_ternary   (ir_value *, ast_function *, ast_ternary *);
 
 #endif

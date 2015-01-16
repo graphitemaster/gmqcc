@@ -1,7 +1,10 @@
 #include <string.h>
 #include <math.h>
 
+#include "fold.h"
 #include "ast.h"
+#include "ir.h"
+
 #include "parser.h"
 
 #define FOLD_STRING_UNTRANSLATE_HTSIZE 1024
@@ -27,7 +30,7 @@ typedef uint32_t sfloat_t;
 
 union sfloat_cast_t {
     qcfloat_t f;
-    sfloat_t  s;
+    sfloat_t s;
 };
 
 /* Exception flags */
@@ -854,15 +857,27 @@ end:
     return out;
 }
 
-static lex_ctx_t fold_ctx(fold_t *fold) {
+qcfloat_t fold::immvalue_float(ast_value *value) {
+    return value->constval.vfloat;
+}
+
+vec3_t fold::immvalue_vector(ast_value *value) {
+    return value->constval.vvec;
+}
+
+const char *fold::immvalue_string(ast_value *value) {
+    return value->constval.vstring;
+}
+
+lex_ctx_t fold::ctx() {
     lex_ctx_t ctx;
-    if (fold->parser->lex)
-        return parser_ctx(fold->parser);
+    if (m_parser->lex)
+        return parser_ctx(m_parser);
     memset(&ctx, 0, sizeof(ctx));
     return ctx;
 }
 
-static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
+bool fold::immediate_true(ast_value *v) {
     switch (v->expression.vtype) {
         case TYPE_FLOAT:
             return !!v->constval.vfloat;
@@ -879,7 +894,7 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
                 return true;
             return !!v->constval.vstring[0];
         default:
-            compile_error(fold_ctx(fold), "internal error: fold_immediate_true on invalid type");
+            compile_error(ctx(), "internal error: fold_immediate_true on invalid type");
             break;
     }
     return !!v->constval.vfunc;
@@ -892,39 +907,34 @@ static GMQCC_INLINE bool fold_immediate_true(fold_t *fold, ast_value *v) {
 
 #define fold_can_2(X, Y) (fold_can_1(X) && fold_can_1(Y))
 
-#define fold_immvalue_float(E)  ((E)->constval.vfloat)
-#define fold_immvalue_vector(E) ((E)->constval.vvec)
-#define fold_immvalue_string(E) ((E)->constval.vstring)
-
-fold_t *fold_init(parser_t *parser) {
-    fold_t *fold = new fold_t;
-    fold->parser = parser;
-    fold->imm_string_untranslate = util_htnew(FOLD_STRING_UNTRANSLATE_HTSIZE);
-    fold->imm_string_dotranslate = util_htnew(FOLD_STRING_DOTRANSLATE_HTSIZE);
-
-    /*
-     * prime the tables with common constant values at constant
-     * locations.
-     */
-    (void)fold_constgen_float(fold,  0.0f, false);
-    (void)fold_constgen_float(fold,  1.0f, false);
-    (void)fold_constgen_float(fold, -1.0f, false);
-    (void)fold_constgen_float(fold,  2.0f, false);
-
-    (void)fold_constgen_vector(fold, vec3_create(0.0f, 0.0f, 0.0f));
-    (void)fold_constgen_vector(fold, vec3_create(-1.0f, -1.0f, -1.0f));
-
-    return fold;
+fold::fold()
+    : m_parser(nullptr)
+{
 }
 
-bool fold_generate(fold_t *fold, ir_builder *ir) {
+fold::fold(parser_t *parser)
+    : m_parser(parser)
+{
+    m_imm_string_untranslate = util_htnew(FOLD_STRING_UNTRANSLATE_HTSIZE);
+    m_imm_string_dotranslate = util_htnew(FOLD_STRING_DOTRANSLATE_HTSIZE);
+
+    constgen_float(0.0f, false);
+    constgen_float(1.0f, false);
+    constgen_float(-1.0f, false);
+    constgen_float(2.0f, false);
+
+    constgen_vector(vec3_create(0.0f, 0.0f, 0.0f));
+    constgen_vector(vec3_create(-1.0f, -1.0f, -1.0f));
+}
+
+bool fold::generate(ir_builder *ir) {
     // generate globals for immediate folded values
     ast_value *cur;
-    for (auto &it : fold->imm_float)
+    for (auto &it : m_imm_float)
         if (!ast_global_codegen((cur = it), ir, false)) goto err;
-    for (auto &it : fold->imm_vector)
+    for (auto &it : m_imm_vector)
         if (!ast_global_codegen((cur = it), ir, false)) goto err;
-    for (auto &it : fold->imm_string)
+    for (auto &it : m_imm_string)
         if (!ast_global_codegen((cur = it), ir, false)) goto err;
     return true;
 err:
@@ -933,50 +943,51 @@ err:
     return false;
 }
 
-void fold_cleanup(fold_t *fold) {
-    for (auto &it : fold->imm_float) ast_delete(it);
-    for (auto &it : fold->imm_vector) ast_delete(it);
-    for (auto &it : fold->imm_string) ast_delete(it);
+fold::~fold() {
+// TODO: parser lifetime so this is called when it should be
+#if 0
+    for (auto &it : m_imm_float) ast_delete(it);
+    for (auto &it : m_imm_vector) ast_delete(it);
+    for (auto &it : m_imm_string) ast_delete(it);
 
-    util_htdel(fold->imm_string_untranslate);
-    util_htdel(fold->imm_string_dotranslate);
-
-    delete fold;
+    util_htdel(m_imm_string_untranslate);
+    util_htdel(m_imm_string_dotranslate);
+#endif
 }
 
-ast_expression *fold_constgen_float(fold_t *fold, qcfloat_t value, bool inexact) {
-    for (auto &it : fold->imm_float)
+ast_expression *fold::constgen_float(qcfloat_t value, bool inexact) {
+    for (auto &it : m_imm_float)
         if (!memcmp(&it->constval.vfloat, &value, sizeof(qcfloat_t)))
             return (ast_expression*)it;
 
-    ast_value *out  = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_FLOAT);
+    ast_value *out  = ast_value_new(ctx(), "#IMMEDIATE", TYPE_FLOAT);
     out->cvq = CV_CONST;
     out->hasvalue = true;
     out->inexact = inexact;
     out->constval.vfloat = value;
 
-    fold->imm_float.push_back(out);
+    m_imm_float.push_back(out);
 
     return (ast_expression*)out;
 }
 
-ast_expression *fold_constgen_vector(fold_t *fold, vec3_t value) {
-    for (auto &it : fold->imm_vector)
+ast_expression *fold::constgen_vector(vec3_t value) {
+    for (auto &it : m_imm_vector)
         if (vec3_cmp(it->constval.vvec, value))
             return (ast_expression*)it;
 
-    ast_value *out = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_VECTOR);
+    ast_value *out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_VECTOR);
     out->cvq = CV_CONST;
     out->hasvalue = true;
     out->constval.vvec = value;
 
-    fold->imm_vector.push_back(out);
+    m_imm_vector.push_back(out);
 
     return (ast_expression*)out;
 }
 
-ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool translate) {
-    hash_table_t *table = (translate) ? fold->imm_string_untranslate : fold->imm_string_dotranslate;
+ast_expression *fold::constgen_string(const char *str, bool translate) {
+    hash_table_t *table = translate ? m_imm_string_untranslate : m_imm_string_dotranslate;
     ast_value *out = nullptr;
     size_t hash = util_hthash(table, str);
 
@@ -985,11 +996,11 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
 
     if (translate) {
         char name[32];
-        util_snprintf(name, sizeof(name), "dotranslate_%lu", (unsigned long)(fold->parser->translated++));
-        out = ast_value_new(parser_ctx(fold->parser), name, TYPE_STRING);
+        util_snprintf(name, sizeof(name), "dotranslate_%zu", m_parser->translated++);
+        out = ast_value_new(ctx(), name, TYPE_STRING);
         out->expression.flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
     } else {
-        out = ast_value_new(fold_ctx(fold), "#IMMEDIATE", TYPE_STRING);
+        out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_STRING);
     }
 
     out->cvq = CV_CONST;
@@ -997,23 +1008,19 @@ ast_expression *fold_constgen_string(fold_t *fold, const char *str, bool transla
     out->isimm = true;
     out->constval.vstring = parser_strdup(str);
 
-    fold->imm_string.push_back(out);
+    m_imm_string.push_back(out);
     util_htseth(table, str, hash, out);
 
     return (ast_expression*)out;
 }
 
 typedef union {
-    void     (*callback)(void);
+    void (*callback)(void);
     sfloat_t (*binary)(sfloat_state_t *, sfloat_t, sfloat_t);
     sfloat_t (*unary)(sfloat_state_t *, sfloat_t);
 } float_check_callback_t;
 
-static bool fold_check_except_float_impl(void     (*callback)(void),
-                                         fold_t    *fold,
-                                         ast_value *a,
-                                         ast_value *b)
-{
+bool fold::check_except_float_impl(void (*callback)(void), ast_value *a, ast_value *b) {
     float_check_callback_t call;
     sfloat_state_t s;
     sfloat_cast_t ca;
@@ -1023,10 +1030,10 @@ static bool fold_check_except_float_impl(void     (*callback)(void),
 
     call.callback = callback;
     sfloat_init(&s);
-    ca.f = fold_immvalue_float(a);
+    ca.f = immvalue_float(a);
     if (b) {
         sfloat_cast_t cb;
-        cb.f = fold_immvalue_float(b);
+        cb.f = immvalue_float(b);
         call.binary(&s, ca.s, cb.s);
     } else {
         call.unary(&s, ca.s);
@@ -1038,164 +1045,163 @@ static bool fold_check_except_float_impl(void     (*callback)(void),
     if (!OPTS_FLAG(ARITHMETIC_EXCEPTIONS))
         goto inexact_possible;
 
-    sfloat_check(fold_ctx(fold), &s, nullptr);
+    sfloat_check(ctx(), &s, nullptr);
 
 inexact_possible:
     return s.exceptionflags & SFLOAT_INEXACT;
 }
 
-#define fold_check_except_float(CALLBACK, FOLD, A, B) \
-    fold_check_except_float_impl(((void (*)(void))(CALLBACK)), (FOLD), (A), (B))
+#define check_except_float(CALLBACK, A, B) \
+    check_except_float_impl(((void (*)(void))(CALLBACK)), (A), (B))
 
-static bool fold_check_inexact_float(fold_t *fold, ast_value *a, ast_value *b) {
-    lex_ctx_t ctx = fold_ctx(fold);
+bool fold::check_inexact_float(ast_value *a, ast_value *b) {
     if (!OPTS_WARN(WARN_INEXACT_COMPARES))
         return false;
     if (!a->inexact && !b->inexact)
         return false;
-    return compile_warning(ctx, WARN_INEXACT_COMPARES, "inexact value in comparison");
+    return compile_warning(ctx(), WARN_INEXACT_COMPARES, "inexact value in comparison");
 }
 
-static GMQCC_INLINE ast_expression *fold_op_mul_vec(fold_t *fold, vec3_t vec, ast_value *sel, const char *set) {
+ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
     qcfloat_t x = (&vec.x)[set[0]-'x'];
     qcfloat_t y = (&vec.x)[set[1]-'x'];
     qcfloat_t z = (&vec.x)[set[2]-'x'];
     if (!y && !z) {
         ast_expression *out;
         ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
-        out                        = (ast_expression*)ast_member_new(fold_ctx(fold), (ast_expression*)sel, set[0]-'x', nullptr);
-        out->node.keep             = false;
+        out = (ast_expression*)ast_member_new(ctx(), (ast_expression*)sel, set[0]-'x', nullptr);
+        out->node.keep = false;
         ((ast_member*)out)->rvalue = true;
         if (x != -1.0f)
-            return (ast_expression*)ast_binary_new(fold_ctx(fold), INSTR_MUL_F, fold_constgen_float(fold, x, false), out);
+            return (ast_expression*)ast_binary_new(ctx(), INSTR_MUL_F, constgen_float(x, false), out);
     }
     return nullptr;
 }
 
 
-static GMQCC_INLINE ast_expression *fold_op_neg(fold_t *fold, ast_value *a) {
+ast_expression *fold::op_neg(ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a)) {
             /* Negation can produce inexact as well */
-            bool inexact = fold_check_except_float(&sfloat_neg, fold, a, nullptr);
-            return fold_constgen_float(fold, -fold_immvalue_float(a), inexact);
+            bool inexact = check_except_float(&sfloat_neg, a, nullptr);
+            return constgen_float(-immvalue_float(a), inexact);
         }
     } else if (isvector(a)) {
         if (fold_can_1(a))
-            return fold_constgen_vector(fold, vec3_neg(fold_ctx(fold), fold_immvalue_vector(a)));
+            return constgen_vector(vec3_neg(ctx(), immvalue_vector(a)));
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_not(fold_t *fold, ast_value *a) {
+ast_expression *fold::op_not(ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, !fold_immvalue_float(a), false);
+            return constgen_float(!immvalue_float(a), false);
     } else if (isvector(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, vec3_notf(fold_immvalue_vector(a)), false);
+            return constgen_float(vec3_notf(immvalue_vector(a)), false);
     } else if (isstring(a)) {
         if (fold_can_1(a)) {
             if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
-                return fold_constgen_float(fold, !fold_immvalue_string(a), false);
+                return constgen_float(!immvalue_string(a), false);
             else
-                return fold_constgen_float(fold, !fold_immvalue_string(a) || !*fold_immvalue_string(a), false);
+                return constgen_float(!immvalue_string(a) || !*immvalue_string(a), false);
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_add(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_add(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b)) {
-            bool inexact = fold_check_except_float(&sfloat_add, fold, a, b);
-            return fold_constgen_float(fold, fold_immvalue_float(a) + fold_immvalue_float(b), inexact);
+            bool inexact = check_except_float(&sfloat_add, a, b);
+            return constgen_float(immvalue_float(a) + immvalue_float(b), inexact);
         }
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_vector(fold, vec3_add(fold_ctx(fold),
-                                                       fold_immvalue_vector(a),
-                                                       fold_immvalue_vector(b)));
+            return constgen_vector(vec3_add(ctx(),
+                                                       immvalue_vector(a),
+                                                       immvalue_vector(b)));
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_sub(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_sub(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b)) {
-            bool inexact = fold_check_except_float(&sfloat_sub, fold, a, b);
-            return fold_constgen_float(fold, fold_immvalue_float(a) - fold_immvalue_float(b), inexact);
+            bool inexact = check_except_float(&sfloat_sub, a, b);
+            return constgen_float(immvalue_float(a) - immvalue_float(b), inexact);
         }
     } else if (isvector(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_vector(fold, vec3_sub(fold_ctx(fold),
-                                                       fold_immvalue_vector(a),
-                                                       fold_immvalue_vector(b)));
+            return constgen_vector(vec3_sub(ctx(),
+                                                       immvalue_vector(a),
+                                                       immvalue_vector(b)));
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_mul(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_mul(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (isvector(b)) {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_mulvf(fold_ctx(fold), fold_immvalue_vector(b), fold_immvalue_float(a)));
+                return constgen_vector(vec3_mulvf(ctx(), immvalue_vector(b), immvalue_float(a)));
         } else {
             if (fold_can_2(a, b)) {
-                bool inexact = fold_check_except_float(&sfloat_mul, fold, a, b);
-                return fold_constgen_float(fold, fold_immvalue_float(a) * fold_immvalue_float(b), inexact);
+                bool inexact = check_except_float(&sfloat_mul, a, b);
+                return constgen_float(immvalue_float(a) * immvalue_float(b), inexact);
             }
         }
     } else if (isvector(a)) {
         if (isfloat(b)) {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_mulvf(fold_ctx(fold), fold_immvalue_vector(a), fold_immvalue_float(b)));
+                return constgen_vector(vec3_mulvf(ctx(), immvalue_vector(a), immvalue_float(b)));
         } else {
             if (fold_can_2(a, b)) {
-                return fold_constgen_float(fold, vec3_mulvv(fold_ctx(fold), fold_immvalue_vector(a), fold_immvalue_vector(b)), false);
+                return constgen_float(vec3_mulvv(ctx(), immvalue_vector(a), immvalue_vector(b)), false);
             } else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && fold_can_1(a)) {
                 ast_expression *out;
-                if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(a), b, "xyz"))) return out;
-                if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(a), b, "yxz"))) return out;
-                if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(a), b, "zxy"))) return out;
+                if ((out = op_mul_vec(immvalue_vector(a), b, "xyz"))) return out;
+                if ((out = op_mul_vec(immvalue_vector(a), b, "yxz"))) return out;
+                if ((out = op_mul_vec(immvalue_vector(a), b, "zxy"))) return out;
             } else if (OPTS_OPTIMIZATION(OPTIM_VECTOR_COMPONENTS) && fold_can_1(b)) {
                 ast_expression *out;
-                if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(b), a, "xyz"))) return out;
-                if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(b), a, "yxz"))) return out;
-                if ((out = fold_op_mul_vec(fold, fold_immvalue_vector(b), a, "zxy"))) return out;
+                if ((out = op_mul_vec(immvalue_vector(b), a, "xyz"))) return out;
+                if ((out = op_mul_vec(immvalue_vector(b), a, "yxz"))) return out;
+                if ((out = op_mul_vec(immvalue_vector(b), a, "zxy"))) return out;
             }
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_div(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b)) {
-            bool inexact = fold_check_except_float(&sfloat_div, fold, a, b);
-            return fold_constgen_float(fold, fold_immvalue_float(a) / fold_immvalue_float(b), inexact);
+            bool inexact = check_except_float(&sfloat_div, a, b);
+            return constgen_float(immvalue_float(a) / immvalue_float(b), inexact);
         } else if (fold_can_1(b)) {
             return (ast_expression*)ast_binary_new(
-                fold_ctx(fold),
+                ctx(),
                 INSTR_MUL_F,
                 (ast_expression*)a,
-                fold_constgen_float(fold, 1.0f / fold_immvalue_float(b), false)
+                constgen_float(1.0f / immvalue_float(b), false)
             );
         }
     } else if (isvector(a)) {
         if (fold_can_2(a, b)) {
-            return fold_constgen_vector(fold, vec3_mulvf(fold_ctx(fold), fold_immvalue_vector(a), 1.0f / fold_immvalue_float(b)));
+            return constgen_vector(vec3_mulvf(ctx(), immvalue_vector(a), 1.0f / immvalue_float(b)));
         } else {
             return (ast_expression*)ast_binary_new(
-                fold_ctx(fold),
+                ctx(),
                 INSTR_MUL_VF,
                 (ast_expression*)a,
                 (fold_can_1(b))
-                    ? (ast_expression*)fold_constgen_float(fold, 1.0f / fold_immvalue_float(b), false)
+                    ? (ast_expression*)constgen_float(1.0f / immvalue_float(b), false)
                     : (ast_expression*)ast_binary_new(
-                                            fold_ctx(fold),
+                                            ctx(),
                                             INSTR_DIV_F,
-                                            (ast_expression*)fold->imm_float[1],
+                                            (ast_expression*)m_imm_float[1],
                                             (ast_expression*)b
                     )
             );
@@ -1204,83 +1210,82 @@ static GMQCC_INLINE ast_expression *fold_op_div(fold_t *fold, ast_value *a, ast_
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_mod(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_mod(ast_value *a, ast_value *b) {
     return (fold_can_2(a, b))
-                ? fold_constgen_float(fold, fmod(fold_immvalue_float(a), fold_immvalue_float(b)), false)
+                ? constgen_float(fmod(immvalue_float(a), immvalue_float(b)), false)
                 : nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_bor(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_bor(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) | ((qcint_t)fold_immvalue_float(b))), false);
+            return constgen_float((qcfloat_t)(((qcint_t)immvalue_float(a)) | ((qcint_t)immvalue_float(b))), false);
     } else {
         if (isvector(b)) {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_or(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+                return constgen_vector(vec3_or(immvalue_vector(a), immvalue_vector(b)));
         } else {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_orvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
+                return constgen_vector(vec3_orvf(immvalue_vector(a), immvalue_float(b)));
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_band(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_band(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) & ((qcint_t)fold_immvalue_float(b))), false);
+            return constgen_float((qcfloat_t)(((qcint_t)immvalue_float(a)) & ((qcint_t)immvalue_float(b))), false);
     } else {
         if (isvector(b)) {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_and(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+                return constgen_vector(vec3_and(immvalue_vector(a), immvalue_vector(b)));
         } else {
             if (fold_can_2(a, b))
-                return fold_constgen_vector(fold, vec3_andvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
+                return constgen_vector(vec3_andvf(immvalue_vector(a), immvalue_float(b)));
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_xor(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_xor(ast_value *a, ast_value *b) {
     if (isfloat(a)) {
         if (fold_can_2(a, b))
-            return fold_constgen_float(fold, (qcfloat_t)(((qcint_t)fold_immvalue_float(a)) ^ ((qcint_t)fold_immvalue_float(b))), false);
+            return constgen_float((qcfloat_t)(((qcint_t)immvalue_float(a)) ^ ((qcint_t)immvalue_float(b))), false);
     } else {
         if (fold_can_2(a, b)) {
             if (isvector(b))
-                return fold_constgen_vector(fold, vec3_xor(fold_immvalue_vector(a), fold_immvalue_vector(b)));
+                return constgen_vector(vec3_xor(immvalue_vector(a), immvalue_vector(b)));
             else
-                return fold_constgen_vector(fold, vec3_xorvf(fold_immvalue_vector(a), fold_immvalue_float(b)));
+                return constgen_vector(vec3_xorvf(immvalue_vector(a), immvalue_float(b)));
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_lshift(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_lshift(ast_value *a, ast_value *b) {
     if (fold_can_2(a, b) && isfloats(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)floorf(fold_immvalue_float(a) * powf(2.0f, fold_immvalue_float(b))), false);
+        return constgen_float((qcfloat_t)floorf(immvalue_float(a) * powf(2.0f, immvalue_float(b))), false);
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_rshift(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_rshift(ast_value *a, ast_value *b) {
     if (fold_can_2(a, b) && isfloats(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)floorf(fold_immvalue_float(a) / powf(2.0f, fold_immvalue_float(b))), false);
+        return constgen_float((qcfloat_t)floorf(immvalue_float(a) / powf(2.0f, immvalue_float(b))), false);
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, ast_value *b, float expr) {
+ast_expression *fold::op_andor(ast_value *a, ast_value *b, float expr) {
     if (fold_can_2(a, b)) {
         if (OPTS_FLAG(PERL_LOGIC)) {
             if (expr)
-                return (fold_immediate_true(fold, a)) ? (ast_expression*)a : (ast_expression*)b;
+                return immediate_true(a) ? (ast_expression*)a : (ast_expression*)b;
             else
-                return (fold_immediate_true(fold, a)) ? (ast_expression*)b : (ast_expression*)a;
+                return immediate_true(a) ? (ast_expression*)b : (ast_expression*)a;
         } else {
-            return fold_constgen_float (
-                fold,
-                ((expr) ? (fold_immediate_true(fold, a) || fold_immediate_true(fold, b))
-                        : (fold_immediate_true(fold, a) && fold_immediate_true(fold, b)))
+            return constgen_float(
+                ((expr) ? (immediate_true(a) || immediate_true(b))
+                        : (immediate_true(a) && immediate_true(b)))
                             ? 1
                             : 0,
                 false
@@ -1290,89 +1295,89 @@ static GMQCC_INLINE ast_expression *fold_op_andor(fold_t *fold, ast_value *a, as
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_tern(fold_t *fold, ast_value *a, ast_value *b, ast_value *c) {
+ast_expression *fold::op_tern(ast_value *a, ast_value *b, ast_value *c) {
     if (fold_can_1(a)) {
-        return fold_immediate_true(fold, a)
+        return immediate_true(a)
                     ? (ast_expression*)b
                     : (ast_expression*)c;
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_exp(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_exp(ast_value *a, ast_value *b) {
     if (fold_can_2(a, b))
-        return fold_constgen_float(fold, (qcfloat_t)powf(fold_immvalue_float(a), fold_immvalue_float(b)), false);
+        return constgen_float((qcfloat_t)powf(immvalue_float(a), immvalue_float(b)), false);
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_lteqgt(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_lteqgt(ast_value *a, ast_value *b) {
     if (fold_can_2(a,b)) {
-        fold_check_inexact_float(fold, a, b);
-        if (fold_immvalue_float(a) <  fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[2];
-        if (fold_immvalue_float(a) == fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[0];
-        if (fold_immvalue_float(a) >  fold_immvalue_float(b)) return (ast_expression*)fold->imm_float[1];
+        check_inexact_float(a, b);
+        if (immvalue_float(a) <  immvalue_float(b)) return (ast_expression*)m_imm_float[2];
+        if (immvalue_float(a) == immvalue_float(b)) return (ast_expression*)m_imm_float[0];
+        if (immvalue_float(a) >  immvalue_float(b)) return (ast_expression*)m_imm_float[1];
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_ltgt(fold_t *fold, ast_value *a, ast_value *b, bool lt) {
+ast_expression *fold::op_ltgt(ast_value *a, ast_value *b, bool lt) {
     if (fold_can_2(a, b)) {
-        fold_check_inexact_float(fold, a, b);
-        return (lt) ? (ast_expression*)fold->imm_float[!!(fold_immvalue_float(a) < fold_immvalue_float(b))]
-                    : (ast_expression*)fold->imm_float[!!(fold_immvalue_float(a) > fold_immvalue_float(b))];
+        check_inexact_float(a, b);
+        return (lt) ? (ast_expression*)m_imm_float[!!(immvalue_float(a) < immvalue_float(b))]
+                    : (ast_expression*)m_imm_float[!!(immvalue_float(a) > immvalue_float(b))];
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_value *b, bool ne) {
+ast_expression *fold::op_cmp(ast_value *a, ast_value *b, bool ne) {
     if (fold_can_2(a, b)) {
         if (isfloat(a) && isfloat(b)) {
-            float la = fold_immvalue_float(a);
-            float lb = fold_immvalue_float(b);
-            fold_check_inexact_float(fold, a, b);
-            return (ast_expression*)fold->imm_float[!(ne ? la == lb : la != lb)];
+            float la = immvalue_float(a);
+            float lb = immvalue_float(b);
+            check_inexact_float(a, b);
+            return (ast_expression*)m_imm_float[!(ne ? la == lb : la != lb)];
         } if (isvector(a) && isvector(b)) {
-            vec3_t la = fold_immvalue_vector(a);
-            vec3_t lb = fold_immvalue_vector(b);
-            return (ast_expression*)fold->imm_float[!(ne ? vec3_cmp(la, lb) : !vec3_cmp(la, lb))];
+            vec3_t la = immvalue_vector(a);
+            vec3_t lb = immvalue_vector(b);
+            return (ast_expression*)m_imm_float[!(ne ? vec3_cmp(la, lb) : !vec3_cmp(la, lb))];
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_bnot(fold_t *fold, ast_value *a) {
+ast_expression *fold::op_bnot(ast_value *a) {
     if (isfloat(a)) {
         if (fold_can_1(a))
-            return fold_constgen_float(fold, -1-fold_immvalue_float(a), false);
+            return constgen_float(-1-immvalue_float(a), false);
     } else {
         if (isvector(a)) {
             if (fold_can_1(a))
-                return fold_constgen_vector(fold, vec3_not(fold_immvalue_vector(a)));
+                return constgen_vector(vec3_not(immvalue_vector(a)));
         }
     }
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_cross(fold_t *fold, ast_value *a, ast_value *b) {
+ast_expression *fold::op_cross(ast_value *a, ast_value *b) {
     if (fold_can_2(a, b))
-        return fold_constgen_vector(fold, vec3_cross(fold_ctx(fold),
-                                                     fold_immvalue_vector(a),
-                                                     fold_immvalue_vector(b)));
+        return constgen_vector(vec3_cross(ctx(),
+                                          immvalue_vector(a),
+                                          immvalue_vector(b)));
     return nullptr;
 }
 
-static GMQCC_INLINE ast_expression *fold_op_length(fold_t *fold, ast_value *a) {
+ast_expression *fold::op_length(ast_value *a) {
     if (fold_can_1(a) && isstring(a))
-        return fold_constgen_float(fold, strlen(fold_immvalue_string(a)), false);
+        return constgen_float(strlen(immvalue_string(a)), false);
     if (isarray(a))
-        return fold_constgen_float(fold, a->initlist.size(), false);
+        return constgen_float(a->initlist.size(), false);
     return nullptr;
 }
 
-ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **opexprs) {
-    ast_value      *a = (ast_value*)opexprs[0];
-    ast_value      *b = (ast_value*)opexprs[1];
-    ast_value      *c = (ast_value*)opexprs[2];
+ast_expression *fold::op(const oper_info *info, ast_expression **opexprs) {
+    ast_value *a = (ast_value*)opexprs[0];
+    ast_value *b = (ast_value*)opexprs[1];
+    ast_value *c = (ast_value*)opexprs[2];
     ast_expression *e = nullptr;
 
     /* can a fold operation be applied to this operator usage? */
@@ -1384,55 +1389,46 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         case 2: if(!b) return nullptr;
         case 1:
         if(!a) {
-            compile_error(fold_ctx(fold), "internal error: fold_op no operands to fold\n");
+            compile_error(ctx(), "internal error: fold_op no operands to fold\n");
             return nullptr;
         }
     }
 
-    /*
-     * we could use a boolean and default case but ironically gcc produces
-     * invalid broken assembly from that operation. clang/tcc get it right,
-     * but interestingly ignore compiling this to a jump-table when I do that,
-     * this happens to be the most efficent method, since you have per-level
-     * granularity on the pointer check happening only for the case you check
-     * it in. Opposed to the default method which would involve a boolean and
-     * pointer check after wards.
-     */
     #define fold_op_case(ARGS, ARGS_OPID, OP, ARGS_FOLD)    \
         case opid##ARGS ARGS_OPID:                          \
-            if ((e = fold_op_##OP ARGS_FOLD)) {             \
+            if ((e = op_##OP ARGS_FOLD)) {                  \
                 ++opts_optimizationcount[OPTIM_CONST_FOLD]; \
             }                                               \
             return e
 
     switch(info->id) {
-        fold_op_case(2, ('-', 'P'),      neg,    (fold, a));
-        fold_op_case(2, ('!', 'P'),      not,    (fold, a));
-        fold_op_case(1, ('+'),           add,    (fold, a, b));
-        fold_op_case(1, ('-'),           sub,    (fold, a, b));
-        fold_op_case(1, ('*'),           mul,    (fold, a, b));
-        fold_op_case(1, ('/'),           div,    (fold, a, b));
-        fold_op_case(1, ('%'),           mod,    (fold, a, b));
-        fold_op_case(1, ('|'),           bor,    (fold, a, b));
-        fold_op_case(1, ('&'),           band,   (fold, a, b));
-        fold_op_case(1, ('^'),           xor,    (fold, a, b));
-        fold_op_case(1, ('<'),           ltgt,   (fold, a, b, true));
-        fold_op_case(1, ('>'),           ltgt,   (fold, a, b, false));
-        fold_op_case(2, ('<', '<'),      lshift, (fold, a, b));
-        fold_op_case(2, ('>', '>'),      rshift, (fold, a, b));
-        fold_op_case(2, ('|', '|'),      andor,  (fold, a, b, true));
-        fold_op_case(2, ('&', '&'),      andor,  (fold, a, b, false));
-        fold_op_case(2, ('?', ':'),      tern,   (fold, a, b, c));
-        fold_op_case(2, ('*', '*'),      exp,    (fold, a, b));
-        fold_op_case(3, ('<','=','>'),   lteqgt, (fold, a, b));
-        fold_op_case(2, ('!', '='),      cmp,    (fold, a, b, true));
-        fold_op_case(2, ('=', '='),      cmp,    (fold, a, b, false));
-        fold_op_case(2, ('~', 'P'),      bnot,   (fold, a));
-        fold_op_case(2, ('>', '<'),      cross,  (fold, a, b));
-        fold_op_case(3, ('l', 'e', 'n'), length, (fold, a));
+        fold_op_case(2, ('-', 'P'),      neg,    (a));
+        fold_op_case(2, ('!', 'P'),      not,    (a));
+        fold_op_case(1, ('+'),           add,    (a, b));
+        fold_op_case(1, ('-'),           sub,    (a, b));
+        fold_op_case(1, ('*'),           mul,    (a, b));
+        fold_op_case(1, ('/'),           div,    (a, b));
+        fold_op_case(1, ('%'),           mod,    (a, b));
+        fold_op_case(1, ('|'),           bor,    (a, b));
+        fold_op_case(1, ('&'),           band,   (a, b));
+        fold_op_case(1, ('^'),           xor,    (a, b));
+        fold_op_case(1, ('<'),           ltgt,   (a, b, true));
+        fold_op_case(1, ('>'),           ltgt,   (a, b, false));
+        fold_op_case(2, ('<', '<'),      lshift, (a, b));
+        fold_op_case(2, ('>', '>'),      rshift, (a, b));
+        fold_op_case(2, ('|', '|'),      andor,  (a, b, true));
+        fold_op_case(2, ('&', '&'),      andor,  (a, b, false));
+        fold_op_case(2, ('?', ':'),      tern,   (a, b, c));
+        fold_op_case(2, ('*', '*'),      exp,    (a, b));
+        fold_op_case(3, ('<','=','>'),   lteqgt, (a, b));
+        fold_op_case(2, ('!', '='),      cmp,    (a, b, true));
+        fold_op_case(2, ('=', '='),      cmp,    (a, b, false));
+        fold_op_case(2, ('~', 'P'),      bnot,   (a));
+        fold_op_case(2, ('>', '<'),      cross,  (a, b));
+        fold_op_case(3, ('l', 'e', 'n'), length, (a));
     }
     #undef fold_op_case
-    compile_error(fold_ctx(fold), "internal error: attempted to constant-fold for unsupported operator");
+    compile_error(ctx(), "internal error: attempted to constant-fold for unsupported operator");
     return nullptr;
 }
 
@@ -1441,69 +1437,68 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
  * folding, primarily: individual functions for each intrinsics to fold,
  * and a generic selection function.
  */
-static GMQCC_INLINE ast_expression *fold_intrin_isfinite(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isfinite(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_isfinite(ast_value *a) {
+    return constgen_float(isfinite(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_isinf(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isinf(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_isinf(ast_value *a) {
+    return constgen_float(isinf(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_isnan(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isnan(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_isnan(ast_value *a) {
+    return constgen_float(isnan(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_isnormal(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, isnormal(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_isnormal(ast_value *a) {
+    return constgen_float(isnormal(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_signbit(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, signbit(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_signbit(ast_value *a) {
+    return constgen_float(signbit(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intirn_acosh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, acoshf(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_acosh(ast_value *a) {
+    return constgen_float(acoshf(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_asinh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, asinhf(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_asinh(ast_value *a) {
+    return constgen_float(asinhf(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_atanh(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, (float)atanh(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_atanh(ast_value *a) {
+    return constgen_float((float)atanh(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_exp(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, expf(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_exp(ast_value *a) {
+    return constgen_float(expf(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_exp2(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, exp2f(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_exp2(ast_value *a) {
+    return constgen_float(exp2f(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_expm1(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, expm1f(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_expm1(ast_value *a) {
+    return constgen_float(expm1f(immvalue_float(a)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_mod(fold_t *fold, ast_value *lhs, ast_value *rhs) {
-    return fold_constgen_float(fold, fmodf(fold_immvalue_float(lhs), fold_immvalue_float(rhs)), false);
+ast_expression *fold::intrinsic_mod(ast_value *lhs, ast_value *rhs) {
+    return constgen_float(fmodf(immvalue_float(lhs), immvalue_float(rhs)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_pow(fold_t *fold, ast_value *lhs, ast_value *rhs) {
-    return fold_constgen_float(fold, powf(fold_immvalue_float(lhs), fold_immvalue_float(rhs)), false);
+ast_expression *fold::intrinsic_pow(ast_value *lhs, ast_value *rhs) {
+    return constgen_float(powf(immvalue_float(lhs), immvalue_float(rhs)), false);
 }
-static GMQCC_INLINE ast_expression *fold_intrin_fabs(fold_t *fold, ast_value *a) {
-    return fold_constgen_float(fold, fabsf(fold_immvalue_float(a)), false);
+ast_expression *fold::intrinsic_fabs(ast_value *a) {
+    return constgen_float(fabsf(immvalue_float(a)), false);
 }
 
-
-ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **arg) {
+ast_expression *fold::intrinsic(const char *intrinsic, ast_expression **arg) {
     ast_expression *ret = nullptr;
-    ast_value      *a   = (ast_value*)arg[0];
-    ast_value      *b   = (ast_value*)arg[1];
+    ast_value *a = (ast_value*)arg[0];
+    ast_value *b = (ast_value*)arg[1];
 
-    if (!strcmp(intrin, "isfinite")) ret = fold_intrin_isfinite(fold, a);
-    if (!strcmp(intrin, "isinf"))    ret = fold_intrin_isinf(fold, a);
-    if (!strcmp(intrin, "isnan"))    ret = fold_intrin_isnan(fold, a);
-    if (!strcmp(intrin, "isnormal")) ret = fold_intrin_isnormal(fold, a);
-    if (!strcmp(intrin, "signbit"))  ret = fold_intrin_signbit(fold, a);
-    if (!strcmp(intrin, "acosh"))    ret = fold_intirn_acosh(fold, a);
-    if (!strcmp(intrin, "asinh"))    ret = fold_intrin_asinh(fold, a);
-    if (!strcmp(intrin, "atanh"))    ret = fold_intrin_atanh(fold, a);
-    if (!strcmp(intrin, "exp"))      ret = fold_intrin_exp(fold, a);
-    if (!strcmp(intrin, "exp2"))     ret = fold_intrin_exp2(fold, a);
-    if (!strcmp(intrin, "expm1"))    ret = fold_intrin_expm1(fold, a);
-    if (!strcmp(intrin, "mod"))      ret = fold_intrin_mod(fold, a, b);
-    if (!strcmp(intrin, "pow"))      ret = fold_intrin_pow(fold, a, b);
-    if (!strcmp(intrin, "fabs"))     ret = fold_intrin_fabs(fold, a);
+    if (!strcmp(intrinsic, "isfinite")) ret = intrinsic_isfinite(a);
+    if (!strcmp(intrinsic, "isinf"))    ret = intrinsic_isinf(a);
+    if (!strcmp(intrinsic, "isnan"))    ret = intrinsic_isnan(a);
+    if (!strcmp(intrinsic, "isnormal")) ret = intrinsic_isnormal(a);
+    if (!strcmp(intrinsic, "signbit"))  ret = intrinsic_signbit(a);
+    if (!strcmp(intrinsic, "acosh"))    ret = intrinsic_acosh(a);
+    if (!strcmp(intrinsic, "asinh"))    ret = intrinsic_asinh(a);
+    if (!strcmp(intrinsic, "atanh"))    ret = intrinsic_atanh(a);
+    if (!strcmp(intrinsic, "exp"))      ret = intrinsic_exp(a);
+    if (!strcmp(intrinsic, "exp2"))     ret = intrinsic_exp2(a);
+    if (!strcmp(intrinsic, "expm1"))    ret = intrinsic_expm1(a);
+    if (!strcmp(intrinsic, "mod"))      ret = intrinsic_mod(a, b);
+    if (!strcmp(intrinsic, "pow"))      ret = intrinsic_pow(a, b);
+    if (!strcmp(intrinsic, "fabs"))     ret = intrinsic_fabs(a);
 
     if (ret)
         ++opts_optimizationcount[OPTIM_CONST_FOLD];
@@ -1521,22 +1516,27 @@ ast_expression *fold_intrin(fold_t *fold, const char *intrin, ast_expression **a
 #undef isfloat
 #undef isstring
 #undef isvector
-#undef fold_immvalue_float
-#undef fold_immvalue_string
-#undef fold_immvalue_vector
+#undef fold__immvalue_float
+#undef fold__immvalue_string
+#undef fold__immvalue_vector
 #undef fold_can_1
 #undef fold_can_2
 
 #define isfloat(X)              ((X)->vtype == TYPE_FLOAT)
 /*#define isstring(X)             ((X)->vtype == TYPE_STRING)*/
 /*#define isvector(X)             ((X)->vtype == TYPE_VECTOR)*/
-#define fold_immvalue_float(X)  ((X)->constval.vfloat)
-#define fold_immvalue_vector(X) ((X)->constval.vvec)
-/*#define fold_immvalue_string(X) ((X)->constval.vstring)*/
 #define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
 /*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
 
-static ast_expression *fold_superfluous(ast_expression *left, ast_expression *right, int op) {
+qcfloat_t fold::immvalue_float(ir_value *value) {
+    return value->constval.vfloat;
+}
+
+vec3_t fold::immvalue_vector(ir_value *value) {
+    return value->constval.vvec;
+}
+
+ast_expression *fold::superfluous(ast_expression *left, ast_expression *right, int op) {
     ast_expression *swapped = nullptr; /* using this as bool */
     ast_value *load;
 
@@ -1554,7 +1554,7 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
             if (swapped)
                 return nullptr;
         case INSTR_MUL_F:
-            if (fold_immvalue_float(load) == 1.0f) {
+            if (immvalue_float(load) == 1.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 ast_unref(right);
                 return left;
@@ -1566,7 +1566,7 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
             if (swapped)
                 return nullptr;
         case INSTR_ADD_F:
-            if (fold_immvalue_float(load) == 0.0f) {
+            if (immvalue_float(load) == 0.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 ast_unref(right);
                 return left;
@@ -1574,7 +1574,7 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
             break;
 
         case INSTR_MUL_V:
-            if (vec3_cmp(fold_immvalue_vector(load), vec3_create(1, 1, 1))) {
+            if (vec3_cmp(immvalue_vector(load), vec3_create(1, 1, 1))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 ast_unref(right);
                 return left;
@@ -1585,7 +1585,7 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
             if (swapped)
                 return nullptr;
         case INSTR_ADD_V:
-            if (vec3_cmp(fold_immvalue_vector(load), vec3_create(0, 0, 0))) {
+            if (vec3_cmp(immvalue_vector(load), vec3_create(0, 0, 0))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 ast_unref(right);
                 return left;
@@ -1596,20 +1596,20 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
     return nullptr;
 }
 
-ast_expression *fold_binary(lex_ctx_t ctx, int op, ast_expression *left, ast_expression *right) {
-    ast_expression *ret = fold_superfluous(left, right, op);
+ast_expression *fold::binary(lex_ctx_t ctx, int op, ast_expression *left, ast_expression *right) {
+    ast_expression *ret = superfluous(left, right, op);
     if (ret)
         return ret;
     return (ast_expression*)ast_binary_new(ctx, op, left, right);
 }
 
-static GMQCC_INLINE int fold_cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
+int fold::cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
     if (isfloat(condval) && fold_can_1(condval) && OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
         ast_expression_codegen *cgen;
         ir_block               *elide;
         ir_value               *dummy;
-        bool                    istrue  = (fold_immvalue_float(condval) != 0.0f && branch->on_true);
-        bool                    isfalse = (fold_immvalue_float(condval) == 0.0f && branch->on_false);
+        bool                    istrue  = (immvalue_float(condval) != 0.0f && branch->on_true);
+        bool                    isfalse = (immvalue_float(condval) == 0.0f && branch->on_false);
         ast_expression         *path    = (istrue)  ? branch->on_true  :
                                           (isfalse) ? branch->on_false : nullptr;
         if (!path) {
@@ -1638,10 +1638,10 @@ static GMQCC_INLINE int fold_cond(ir_value *condval, ast_function *func, ast_ift
     return -1; /* nothing done */
 }
 
-int fold_cond_ternary(ir_value *condval, ast_function *func, ast_ternary *branch) {
-    return fold_cond(condval, func, (ast_ifthen*)branch);
+int fold::cond_ternary(ir_value *condval, ast_function *func, ast_ternary *branch) {
+    return cond(condval, func, (ast_ifthen*)branch);
 }
 
-int fold_cond_ifthen(ir_value *condval, ast_function *func, ast_ifthen *branch) {
-    return fold_cond(condval, func, branch);
+int fold::cond_ifthen(ir_value *condval, ast_function *func, ast_ifthen *branch) {
+    return cond(condval, func, branch);
 }

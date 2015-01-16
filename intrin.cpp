@@ -1,4 +1,7 @@
 #include <string.h>
+
+#include "ast.h"
+#include "fold.h"
 #include "parser.h"
 
 lex_ctx_t intrin::ctx() const {
@@ -104,7 +107,7 @@ ast_expression *intrin::isinf_() {
                     ctx(),
                     INSTR_NE_F,
                     (ast_expression*)x,
-                    (ast_expression*)m_fold->imm_float[0]
+                    (ast_expression*)m_fold->m_imm_float[0]
                 ),
                 (ast_expression*)ast_binary_new(
                     ctx(),
@@ -225,10 +228,10 @@ ast_expression *intrin::signbit_() {
                     ctx(),
                     INSTR_LT,
                     (ast_expression*)x,
-                    (ast_expression*)m_fold->imm_float[0]
+                    (ast_expression*)m_fold->m_imm_float[0]
                 ),
-                (ast_expression*)m_fold->imm_float[1],
-                (ast_expression*)m_fold->imm_float[0]
+                (ast_expression*)m_fold->m_imm_float[1],
+                (ast_expression*)m_fold->m_imm_float[0]
             )
         )
     );
@@ -264,7 +267,7 @@ ast_expression *intrin::acosh_() {
                 (ast_expression*)x,
                 (ast_expression*)x
             ),
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -317,7 +320,7 @@ ast_expression *intrin::asinh_() {
                 (ast_expression*)x,
                 (ast_expression*)x
             ),
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -366,13 +369,13 @@ ast_expression *intrin::atanh_() {
             (ast_expression*)ast_binary_new(
                 ctx(),
                 INSTR_ADD_F,
-                (ast_expression*)m_fold->imm_float[1],
+                (ast_expression*)m_fold->m_imm_float[1],
                 (ast_expression*)x
             ),
             (ast_expression*)ast_binary_new(
                 ctx(),
                 INSTR_SUB_F,
-                (ast_expression*)m_fold->imm_float[1],
+                (ast_expression*)m_fold->m_imm_float[1],
                 (ast_expression*)x
             )
         )
@@ -383,7 +386,7 @@ ast_expression *intrin::atanh_() {
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_MUL_F,
-            (ast_expression*)fold_constgen_float(m_fold, 0.5, false),
+            (ast_expression*)m_fold->constgen_float(0.5, false),
             (ast_expression*)calllog
         )
     );
@@ -425,7 +428,7 @@ ast_expression *intrin::exp_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)sum,
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -435,7 +438,7 @@ ast_expression *intrin::exp_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)acc,
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -451,14 +454,14 @@ ast_expression *intrin::exp_() {
                 ctx(),
                 INSTR_STORE_F,
                 (ast_expression*)i,
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             ),
             /* i < 200; */
             (ast_expression*)ast_binary_new(
                 ctx(),
                 INSTR_LT,
                 (ast_expression*)i,
-                (ast_expression*)fold_constgen_float(m_fold, 200.0f, false)
+                (ast_expression*)m_fold->constgen_float(200.0f, false)
             ),
             false,
             nullptr,
@@ -469,7 +472,7 @@ ast_expression *intrin::exp_() {
                 INSTR_STORE_F,
                 INSTR_ADD_F,
                 (ast_expression*)i,
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             ),
             /* sum += (acc *= (x / i)) */
             (ast_expression*)ast_binstore_new(
@@ -520,7 +523,7 @@ ast_expression *intrin::exp2_() {
 
     val->expression.params.push_back(arg1);
 
-    callpow->params.push_back((ast_expression*)m_fold->imm_float[3]);
+    callpow->params.push_back((ast_expression*)m_fold->m_imm_float[3]);
     callpow->params.push_back((ast_expression*)arg1);
 
     /* return <callpow> */
@@ -561,7 +564,7 @@ ast_expression *intrin::expm1_() {
                 ctx(),
                 INSTR_SUB_F,
                 (ast_expression*)callexp,
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             )
         )
     );
@@ -670,11 +673,11 @@ ast_expression *intrin::pow_() {
                 ctx(),
                 INSTR_EQ_F,
                 (ast_expression*)exp,
-                (ast_expression*)m_fold->imm_float[0]
+                (ast_expression*)m_fold->m_imm_float[0]
             ),
             (ast_expression*)ast_return_new(
                 ctx(),
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             ),
             nullptr
         )
@@ -691,7 +694,7 @@ ast_expression *intrin::pow_() {
                 ctx(),
                 INSTR_EQ_F,
                 (ast_expression*)exp,
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             ),
             (ast_expression*)ast_return_new(
                 ctx(),
@@ -722,14 +725,14 @@ ast_expression *intrin::pow_() {
                 ctx(),
                 INSTR_LT,
                 (ast_expression*)exp,
-                (ast_expression*)m_fold->imm_float[0]
+                (ast_expression*)m_fold->m_imm_float[0]
             ),
             (ast_expression*)ast_return_new(
                 ctx(),
                 (ast_expression*)ast_binary_new(
                     ctx(),
                     INSTR_DIV_F,
-                    (ast_expression*)m_fold->imm_float[1],
+                    (ast_expression*)m_fold->m_imm_float[1],
                     (ast_expression*)callpow1
                 )
             ),
@@ -744,7 +747,7 @@ ast_expression *intrin::pow_() {
             ctx(),
             INSTR_DIV_F,
             (ast_expression*)exp,
-            (ast_expression*)m_fold->imm_float[3] /* 2.0f */
+            (ast_expression*)m_fold->m_imm_float[3] /* 2.0f */
         )
     );
 
@@ -786,7 +789,7 @@ ast_expression *intrin::pow_() {
                 ctx(),
                 INSTR_GE,
                 (ast_expression*)exp,
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             ),
             (ast_expression*)expgt1,
             nullptr
@@ -809,7 +812,7 @@ ast_expression *intrin::pow_() {
         (ast_expression*)ast_store_new(ctx(),
             INSTR_STORE_F,
             (ast_expression*)low,
-            (ast_expression*)m_fold->imm_float[0]
+            (ast_expression*)m_fold->m_imm_float[0]
         )
     );
     body->exprs.push_back(
@@ -817,7 +820,7 @@ ast_expression *intrin::pow_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)high,
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -847,7 +850,7 @@ ast_expression *intrin::pow_() {
                 ctx(),
                 INSTR_DIV_F,
                 (ast_expression*)high,
-                (ast_expression*)m_fold->imm_float[3] /* 2.0f */
+                (ast_expression*)m_fold->m_imm_float[3] /* 2.0f */
             )
         )
     );
@@ -899,7 +902,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)ast_binary_new(
                 ctx(),
                 INSTR_DIV_F,
-                (ast_expression*)m_fold->imm_float[1],
+                (ast_expression*)m_fold->m_imm_float[1],
                 (ast_expression*)square
             )
         )
@@ -956,7 +959,7 @@ ast_expression *intrin::pow_() {
                     (ast_expression*)low,
                     (ast_expression*)high
                 ),
-                (ast_expression*)m_fold->imm_float[3] /* 2.0f */
+                (ast_expression*)m_fold->m_imm_float[3] /* 2.0f */
             )
         )
     );
@@ -987,7 +990,7 @@ ast_expression *intrin::pow_() {
                 ctx(),
                 INSTR_GT,
                 (ast_expression*)callfabs,
-                (ast_expression*)fold_constgen_float(m_fold, QC_POW_EPSILON, false)
+                (ast_expression*)m_fold->constgen_float(QC_POW_EPSILON, false)
             ),
             /* pre not */
             false,
@@ -1066,10 +1069,10 @@ ast_expression *intrin::mod_() {
                     ctx(),
                     INSTR_LT,
                     (ast_expression*)div,
-                    (ast_expression*)m_fold->imm_float[0]
+                    (ast_expression*)m_fold->m_imm_float[0]
                 ),
-                (ast_expression*)m_fold->imm_float[2],
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[2],
+                (ast_expression*)m_fold->m_imm_float[1]
             )
         )
     );
@@ -1132,7 +1135,7 @@ ast_expression *intrin::fabs_() {
                     ctx(),
                     INSTR_LE,
                     (ast_expression*)arg1,
-                    (ast_expression*)m_fold->imm_float[0]
+                    (ast_expression*)m_fold->m_imm_float[0]
                 ),
                 (ast_expression*)ast_unary_new(
                     ctx(),
@@ -1172,7 +1175,7 @@ ast_expression *intrin::epsilon_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)eps,
-            (ast_expression*)m_fold->imm_float[0]
+            (ast_expression*)m_fold->m_imm_float[0]
         )
     );
 
@@ -1188,15 +1191,15 @@ ast_expression *intrin::epsilon_() {
                 (ast_expression*)ast_binary_new(
                     ctx(),
                     INSTR_ADD_F,
-                    (ast_expression*)m_fold->imm_float[1],
+                    (ast_expression*)m_fold->m_imm_float[1],
                     (ast_expression*)ast_binary_new(
                         ctx(),
                         INSTR_MUL_F,
                         (ast_expression*)eps,
-                        (ast_expression*)m_fold->imm_float[3] /* 2.0f */
+                        (ast_expression*)m_fold->m_imm_float[3] /* 2.0f */
                     )
                 ),
-                (ast_expression*)m_fold->imm_float[1]
+                (ast_expression*)m_fold->m_imm_float[1]
             ),
             false,
             nullptr,
@@ -1205,7 +1208,7 @@ ast_expression *intrin::epsilon_() {
                 INSTR_STORE_F,
                 INSTR_DIV_F,
                 (ast_expression*)eps,
-                (ast_expression*)m_fold->imm_float[3] /* 2.0f */
+                (ast_expression*)m_fold->m_imm_float[3] /* 2.0f */
             )
         )
     );
@@ -1242,7 +1245,7 @@ ast_expression *intrin::nan_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)x,
-            (ast_expression*)m_fold->imm_float[0]
+            (ast_expression*)m_fold->m_imm_float[0]
         )
     );
 
@@ -1288,7 +1291,7 @@ ast_expression *intrin::inf_() {
                 ctx(),
                 INSTR_STORE_F,
                 (ast_expression*)((i == 0) ? x : y),
-                (ast_expression*)m_fold->imm_float[i]
+                (ast_expression*)m_fold->m_imm_float[i]
             )
         );
     }
@@ -1421,7 +1424,7 @@ ast_expression *intrin::ln_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)sign,
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -1453,7 +1456,7 @@ ast_expression *intrin::ln_() {
                     INSTR_STORE_F,
                     (ast_expression*)((j) ? ((i) ? B_iminus1 : A_i)
                                           : ((i) ? A_iminus1 : B_i)),
-                    (ast_expression*)m_fold->imm_float[j]
+                    (ast_expression*)m_fold->m_imm_float[j]
                 )
             );
         }
@@ -1478,7 +1481,7 @@ ast_expression *intrin::ln_() {
                 (ast_expression*)ast_binary_new(
                     ctx(),
                     INSTR_DIV_F,
-                    (ast_expression*)m_fold->imm_float[1],
+                    (ast_expression*)m_fold->m_imm_float[1],
                     (ast_expression*)((i) ? base : power)
                 )
             )
@@ -1489,7 +1492,7 @@ ast_expression *intrin::ln_() {
                 INSTR_STORE_F,
                 INSTR_MUL_F,
                 (ast_expression*)sign,
-                (ast_expression*)m_fold->imm_float[2]
+                (ast_expression*)m_fold->m_imm_float[2]
             )
         );
     }
@@ -1514,13 +1517,13 @@ ast_expression *intrin::ln_() {
                     ctx(),
                     INSTR_LE,
                     (ast_expression*)power,
-                    (ast_expression*)m_fold->imm_float[0]
+                    (ast_expression*)m_fold->m_imm_float[0]
                 ),
                 (ast_expression*)ast_binary_new(
                     ctx(),
                     INSTR_LE,
                     (ast_expression*)base,
-                    (ast_expression*)m_fold->imm_float[0]
+                    (ast_expression*)m_fold->m_imm_float[0]
                 )
             ),
             (ast_expression*)ast_return_new(
@@ -1542,7 +1545,7 @@ ast_expression *intrin::ln_() {
                     ctx(),
                     INSTR_LT,
                     (ast_expression*)((i) ? base : power),
-                    (ast_expression*)m_fold->imm_float[1]
+                    (ast_expression*)m_fold->m_imm_float[1]
                 ),
                 (ast_expression*)((i) ? blt1 : plt1),
                 nullptr
@@ -1569,7 +1572,7 @@ ast_expression *intrin::ln_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)nth,
-            (ast_expression*)m_fold->imm_float[0]
+            (ast_expression*)m_fold->m_imm_float[0]
         )
     );
 
@@ -1589,7 +1592,7 @@ ast_expression *intrin::ln_() {
             ctx(),
             INSTR_STORE_F,
             (ast_expression*)n2,
-            (ast_expression*)m_fold->imm_float[1]
+            (ast_expression*)m_fold->m_imm_float[1]
         )
     );
 
@@ -1630,7 +1633,7 @@ ast_expression *intrin::ln_() {
             INSTR_STORE_F,
             INSTR_MUL_F,
             (ast_expression*)n2,
-            (ast_expression*)m_fold->imm_float[3] /* 2.0f */
+            (ast_expression*)m_fold->m_imm_float[3] /* 2.0f */
         )
     );
 
@@ -1788,7 +1791,7 @@ ast_expression *intrin::ln_() {
                 (ast_expression*)ast_binary_new(
                     ctx(),
                     INSTR_ADD_F,
-                    (ast_expression*)m_fold->imm_float[1],
+                    (ast_expression*)m_fold->m_imm_float[1],
                     (ast_expression*)eps
                 )
             ),
@@ -1822,7 +1825,7 @@ ast_expression *intrin::ln_() {
             ctx(),
             nullptr,
             /* for(; 1; ) ?? (can this be nullptr too?) */
-            (ast_expression*)m_fold->imm_float[1],
+            (ast_expression*)m_fold->m_imm_float[1],
             false,
             nullptr,
             false,
@@ -1864,7 +1867,7 @@ ast_expression *intrin::log_variant(const char *name, float base) {
     val->expression.params.push_back(arg1);
 
     callln->params.push_back((ast_expression*)arg1);
-    callln->params.push_back((ast_expression*)fold_constgen_float(m_fold, base, false));
+    callln->params.push_back((ast_expression*)m_fold->constgen_float(base, false));
 
     body->exprs.push_back(
         (ast_expression*)ast_return_new(
@@ -1909,7 +1912,7 @@ ast_expression *intrin::shift_variant(const char *name, size_t instr) {
     val->expression.params.push_back(b);
 
     /* <callpow> = pow(2, b) */
-    callpow->params.push_back((ast_expression*)m_fold->imm_float[3]);
+    callpow->params.push_back((ast_expression*)m_fold->m_imm_float[3]);
     callpow->params.push_back((ast_expression*)b);
 
     /* <callfloor> = floor(a [instr] <callpow>) */
@@ -1957,7 +1960,7 @@ ast_expression *intrin::debug_typestring() {
 
 intrin::intrin(parser_t *parser)
     : m_parser(parser)
-    , m_fold(parser->fold)
+    , m_fold(&parser->m_fold)
 {
     static const intrin_func_t intrinsics[] = {
         {&intrin::isfinite_,        "__builtin_isfinite",         "isfinite", 1},
@@ -1994,7 +1997,7 @@ intrin::intrin(parser_t *parser)
     }
 }
 
-ast_expression *intrin::fold(ast_value *val, ast_expression **exprs) {
+ast_expression *intrin::do_fold(ast_value *val, ast_expression **exprs) {
     if (!val || !val->name)
         return nullptr;
     static constexpr size_t kPrefixLength = 10; // "__builtin_"
@@ -2002,7 +2005,7 @@ ast_expression *intrin::fold(ast_value *val, ast_expression **exprs) {
         if (!strcmp(val->name, it.name))
             return (vec_size(exprs) != it.args)
                         ? nullptr
-                        : fold_intrin(m_fold, val->name + kPrefixLength, exprs);
+                        : m_fold->intrinsic(val->name + kPrefixLength, exprs);
     }
     return nullptr;
 }
