@@ -55,7 +55,7 @@ ast_expression *intrin::isfinite_() {
     ast_block    *block     = ast_block_new(ctx());
 
     /* float x; */
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     /* <callisnan> = isnan(x); */
     callisnan->params.push_back((ast_expression*)x);
@@ -124,7 +124,7 @@ ast_expression *intrin::isinf_() {
         )
     );
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
     func->blocks.push_back(body);
 
     reg(val, func);
@@ -169,7 +169,7 @@ ast_expression *intrin::isnan_() {
         )
     );
 
-    val->expression.params.push_back(arg1);
+    val->expression.type_params.push_back(arg1);
     func->blocks.push_back(body);
 
     reg(val, func);
@@ -189,7 +189,7 @@ ast_expression *intrin::isnormal_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "isnormal", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
     callisfinite->params.push_back((ast_expression*)x);
 
     /* return <callisfinite> */
@@ -216,7 +216,7 @@ ast_expression *intrin::signbit_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "signbit", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     /* return (x < 0); */
     body->exprs.push_back(
@@ -254,7 +254,7 @@ ast_expression *intrin::acosh_() {
     ast_block    *body     = ast_block_new(ctx());
     ast_function *func     = value(&val, "acosh", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) - 1); */
     callsqrt->params.push_back(
@@ -307,7 +307,7 @@ ast_expression *intrin::asinh_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "asinh", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) + 1); */
     callsqrt->params.push_back(
@@ -359,7 +359,7 @@ ast_expression *intrin::atanh_() {
     ast_block    *body    = ast_block_new(ctx());
     ast_function *func    = value(&val, "atanh", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     /* <callog> = log((1 + x) / (1 - x)); */
     calllog->params.push_back(
@@ -416,7 +416,7 @@ ast_expression *intrin::exp_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "exp", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     body->locals.push_back(sum);
     body->locals.push_back(acc);
@@ -521,7 +521,7 @@ ast_expression *intrin::exp2_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "exp2", TYPE_FLOAT);
 
-    val->expression.params.push_back(arg1);
+    val->expression.type_params.push_back(arg1);
 
     callpow->params.push_back((ast_expression*)m_fold->m_imm_float[3]);
     callpow->params.push_back((ast_expression*)arg1);
@@ -551,7 +551,7 @@ ast_expression *intrin::expm1_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "expm1", TYPE_FLOAT);
 
-    val->expression.params.push_back(x);
+    val->expression.type_params.push_back(x);
 
     /* <callexp> = exp(x); */
     callexp->params.push_back((ast_expression*)x);
@@ -659,8 +659,8 @@ ast_expression *intrin::pow_() {
     body->locals.push_back(accumulate);
     body->locals.push_back(mid);
 
-    val->expression.params.push_back(base);
-    val->expression.params.push_back(exp);
+    val->expression.type_params.push_back(base);
+    val->expression.type_params.push_back(exp);
 
     /*
      * if (exp == 0.0)
@@ -1036,8 +1036,8 @@ ast_expression *intrin::mod_() {
     ast_block    *body  = ast_block_new(ctx());
     ast_function *func  = value(&val, "mod", TYPE_FLOAT);
 
-    val->expression.params.push_back(a);
-    val->expression.params.push_back(b);
+    val->expression.type_params.push_back(a);
+    val->expression.type_params.push_back(b);
 
     body->locals.push_back(div);
     body->locals.push_back(sign);
@@ -1147,7 +1147,7 @@ ast_expression *intrin::fabs_() {
         )
     );
 
-    val->expression.params.push_back(arg1);
+    val->expression.type_params.push_back(arg1);
 
     func->blocks.push_back(body);
     reg(val, func);
@@ -1406,8 +1406,8 @@ ast_expression *intrin::ln_() {
     ast_function *func = value(&val, "ln", TYPE_FLOAT);
     size_t i;
 
-    val->expression.params.push_back(power);
-    val->expression.params.push_back(base);
+    val->expression.type_params.push_back(power);
+    val->expression.type_params.push_back(base);
 
     block->locals.push_back(whole);
     block->locals.push_back(nth);
@@ -1864,7 +1864,7 @@ ast_expression *intrin::log_variant(const char *name, float base) {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, name, TYPE_FLOAT);
 
-    val->expression.params.push_back(arg1);
+    val->expression.type_params.push_back(arg1);
 
     callln->params.push_back((ast_expression*)arg1);
     callln->params.push_back((ast_expression*)m_fold->constgen_float(base, false));
@@ -1908,8 +1908,8 @@ ast_expression *intrin::shift_variant(const char *name, size_t instr) {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, name, TYPE_FLOAT);
 
-    val->expression.params.push_back(a);
-    val->expression.params.push_back(b);
+    val->expression.type_params.push_back(a);
+    val->expression.type_params.push_back(b);
 
     /* <callpow> = pow(2, b) */
     callpow->params.push_back((ast_expression*)m_fold->m_imm_float[3]);

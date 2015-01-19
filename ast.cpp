@@ -104,7 +104,7 @@ static void ast_expression_delete(ast_expression *self)
 {
     if (self->next)
         ast_delete(self->next);
-    for (auto &it : self->params)
+    for (auto &it : self->type_params)
         ast_delete(it);
     if (self->varparam)
         ast_delete(self->varparam);
@@ -128,9 +128,9 @@ ast_value* ast_value_copy(const ast_value *self)
     selfex = &cp->expression;
     selfex->count = fromex->count;
     selfex->flags = fromex->flags;
-    for (auto &it : fromex->params) {
+    for (auto &it : fromex->type_params) {
         ast_value *v = ast_value_copy(it);
-        selfex->params.push_back(v);
+        selfex->type_params.push_back(v);
     }
     return cp;
 }
@@ -147,9 +147,9 @@ void ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     selfex = self;
     selfex->count = fromex->count;
     selfex->flags = fromex->flags;
-    for (auto &it : fromex->params) {
+    for (auto &it : fromex->type_params) {
         ast_value *v = ast_value_copy(it);
-        selfex->params.push_back(v);
+        selfex->type_params.push_back(v);
     }
 }
 
@@ -189,9 +189,9 @@ ast_expression* ast_type_copy(lex_ctx_t ctx, const ast_expression *ex)
 
         selfex->count = fromex->count;
         selfex->flags = fromex->flags;
-        for (auto &it : fromex->params) {
+        for (auto &it : fromex->type_params) {
             ast_value *v = ast_value_copy(it);
-            selfex->params.push_back(v);
+            selfex->type_params.push_back(v);
         }
 
         return self;
@@ -207,18 +207,18 @@ bool ast_compare_type(ast_expression *a, ast_expression *b)
         return false;
     if (!a->next != !b->next)
         return false;
-    if (a->params.size() != b->params.size())
+    if (a->type_params.size() != b->type_params.size())
         return false;
     if ((a->flags & AST_FLAG_TYPE_MASK) !=
         (b->flags & AST_FLAG_TYPE_MASK) )
     {
         return false;
     }
-    if (a->params.size()) {
+    if (a->type_params.size()) {
         size_t i;
-        for (i = 0; i < a->params.size(); ++i) {
-            if (!ast_compare_type((ast_expression*)a->params[i],
-                                  (ast_expression*)b->params[i]))
+        for (i = 0; i < a->type_params.size(); ++i) {
+            if (!ast_compare_type((ast_expression*)a->type_params[i],
+                                  (ast_expression*)b->type_params[i]))
                 return false;
         }
     }
@@ -267,19 +267,19 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
             pos = ast_type_to_string_impl(e->next, buf, bufsize, pos);
             if (pos + 2 >= bufsize)
                 goto full;
-            if (e->params.empty()) {
+            if (e->type_params.empty()) {
                 buf[pos++] = '(';
                 buf[pos++] = ')';
                 return pos;
             }
             buf[pos++] = '(';
-            pos = ast_type_to_string_impl((ast_expression*)(e->params[0]), buf, bufsize, pos);
-            for (i = 1; i < e->params.size(); ++i) {
+            pos = ast_type_to_string_impl((ast_expression*)(e->type_params[0]), buf, bufsize, pos);
+            for (i = 1; i < e->type_params.size(); ++i) {
                 if (pos + 2 >= bufsize)
                     goto full;
                 buf[pos++] = ',';
                 buf[pos++] = ' ';
-                pos = ast_type_to_string_impl((ast_expression*)(e->params[i]), buf, bufsize, pos);
+                pos = ast_type_to_string_impl((ast_expression*)(e->type_params[i]), buf, bufsize, pos);
             }
             if (pos + 1 >= bufsize)
                 goto full;
@@ -394,7 +394,7 @@ void ast_value_delete(ast_value* self)
 
 void ast_value_params_add(ast_value *self, ast_value *p)
 {
-    self->expression.params.push_back(p);
+    self->expression.type_params.push_back(p);
 }
 
 bool ast_value_set_name(ast_value *self, const char *name)
@@ -1042,8 +1042,8 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
     bool retval = true;
     const ast_expression *func = self->func;
     size_t count = self->params.size();
-    if (count > func->params.size())
-        count = func->params.size();
+    if (count > func->type_params.size())
+        count = func->type_params.size();
 
     for (i = 0; i < count; ++i) {
         if (ast_istype(self->params[i], ast_argpipe)) {
@@ -1052,13 +1052,13 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
                 compile_error(ast_ctx(self), "argpipe must be the last parameter to a function call");
                 return false;
             }
-            if (!ast_call_check_vararg(self, va_type, (ast_expression*)func->params[i]))
+            if (!ast_call_check_vararg(self, va_type, (ast_expression*)func->type_params[i]))
                 retval = false;
         }
-        else if (!ast_compare_type(self->params[i], (ast_expression*)(func->params[i])))
+        else if (!ast_compare_type(self->params[i], (ast_expression*)(func->type_params[i])))
         {
             ast_type_to_string(self->params[i], tgot, sizeof(tgot));
-            ast_type_to_string((ast_expression*)func->params[i], texp, sizeof(texp));
+            ast_type_to_string((ast_expression*)func->type_params[i], texp, sizeof(texp));
             compile_error(ast_ctx(self), "invalid type for parameter %u in function call: expected %s, got %s",
                      (unsigned int)(i+1), texp, tgot);
             /* we don't immediately return */
@@ -1066,7 +1066,7 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
         }
     }
     count = self->params.size();
-    if (count > func->params.size() && func->varparam) {
+    if (count > func->type_params.size() && func->varparam) {
         for (; i < count; ++i) {
             if (ast_istype(self->params[i], ast_argpipe)) {
                 /* warn about type safety instead */
@@ -1782,7 +1782,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     /* fill the parameter list */
     ec = &self->function_type->expression;
-    for (auto &it : ec->params) {
+    for (auto &it : ec->type_params) {
         if (it->expression.vtype == TYPE_FIELD)
             vec_push(irf->params, it->expression.next->vtype);
         else

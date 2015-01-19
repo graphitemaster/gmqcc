@@ -149,7 +149,7 @@ struct ast_expression : ast_node {
     ast_expression         *next;
     /* arrays get a member-count */
     size_t                  count;
-    std::vector<ast_value*> params;
+    std::vector<ast_value*> type_params;
 
     ast_flag_t              flags;
     /* void foo(string...) gets varparam set as a restriction

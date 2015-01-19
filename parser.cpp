@@ -103,7 +103,7 @@ static ast_expression* parser_find_param(parser_t *parser, const char *name)
     if (!parser->function)
         return nullptr;
     fun = parser->function->function_type;
-    for (auto &it : fun->expression.params) {
+    for (auto &it : fun->expression.type_params) {
         if (!strcmp(it->name, name))
             return (ast_expression*)it;
     }
@@ -1316,22 +1316,22 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                     ast_ctx(fun).line);
         }
 
-        if (fun->params.size() != paramcount &&
+        if (fun->type_params.size() != paramcount &&
             !((fun->flags & AST_FLAG_VARIADIC) &&
-              fun->params.size() < paramcount))
+              fun->type_params.size() < paramcount))
         {
-            const char *fewmany = (fun->params.size() > paramcount) ? "few" : "many";
+            const char *fewmany = (fun->type_params.size() > paramcount) ? "few" : "many";
             if (fval)
                 return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
                                      "too %s parameters for call to %s: expected %i, got %i\n"
                                      " -> `%s` has been declared here: %s:%i",
-                                     fewmany, fval->name, (int)fun->params.size(), (int)paramcount,
+                                     fewmany, fval->name, (int)fun->type_params.size(), (int)paramcount,
                                      fval->name, ast_ctx(fun).file, (int)ast_ctx(fun).line);
             else
                 return !parsewarning(parser, WARN_INVALID_PARAMETER_COUNT,
                                      "too %s parameters for function call: expected %i, got %i\n"
                                      " -> it has been declared here: %s:%i",
-                                     fewmany, (int)fun->params.size(), (int)paramcount,
+                                     fewmany, (int)fun->type_params.size(), (int)paramcount,
                                      ast_ctx(fun).file, (int)ast_ctx(fun).line);
         }
     }
@@ -4032,7 +4032,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     parser_enterblock(parser);
 
-    for (auto &it : var->expression.params) {
+    for (auto &it : var->expression.type_params) {
         size_t e;
         ast_member *me[3];
 
@@ -4079,7 +4079,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             goto enderrfn;
         }
         func->varargs     = varargs;
-        func->fixedparams = (ast_value*)parser->m_fold.constgen_float(var->expression.params.size(), false);
+        func->fixedparams = (ast_value*)parser->m_fold.constgen_float(var->expression.type_params.size(), false);
     }
 
     parser->function = func;
@@ -4381,8 +4381,8 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
         goto cleanup;
     }
     (void)!ast_value_set_name(value, "value"); /* not important */
-    fval->expression.params.push_back(index);
-    fval->expression.params.push_back(value);
+    fval->expression.type_params.push_back(index);
+    fval->expression.type_params.push_back(value);
 
     array->setter = fval;
     return fval;
@@ -4398,8 +4398,8 @@ static bool parser_create_array_setter_impl(parser_t *parser, ast_value *array)
 {
     ast_expression *root = nullptr;
     root = array_setter_node(parser, array,
-                             array->setter->expression.params[0],
-                             array->setter->expression.params[1],
+                             array->setter->expression.type_params[0],
+                             array->setter->expression.type_params[1],
                              0, array->expression.count);
     if (!root) {
         parseerror(parser, "failed to build accessor search tree");
@@ -4446,9 +4446,9 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
         goto cleanup;
     }
     (void)!ast_value_set_name(value, "value"); /* not important */
-    fval->expression.params.push_back(entity);
-    fval->expression.params.push_back(index);
-    fval->expression.params.push_back(value);
+    fval->expression.type_params.push_back(entity);
+    fval->expression.type_params.push_back(index);
+    fval->expression.type_params.push_back(value);
 
     root = array_field_setter_node(parser, array, entity, index, value, 0, array->expression.count);
     if (!root) {
@@ -4493,7 +4493,7 @@ static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *
         parseerror(parser, "failed to create locals for array accessor");
         goto cleanup;
     }
-    fval->expression.params.push_back(index);
+    fval->expression.type_params.push_back(index);
 
     array->getter = fval;
     return fval;
@@ -4508,7 +4508,7 @@ static bool parser_create_array_getter_impl(parser_t *parser, ast_value *array)
 {
     ast_expression *root = nullptr;
 
-    root = array_getter_node(parser, array, array->getter->expression.params[0], 0, array->expression.count);
+    root = array_getter_node(parser, array, array->getter->expression.type_params[0], 0, array->expression.count);
     if (!root) {
         parseerror(parser, "failed to build accessor search tree");
         return false;
@@ -4631,7 +4631,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         fval->expression.flags |= AST_FLAG_VARIADIC;
     var = fval;
 
-    var->expression.params = params;
+    var->expression.type_params = params;
     var->expression.varparam = (ast_expression*)varparam;
     var->argcounter = argcounter;
 
@@ -5234,8 +5234,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         goto cleanup;
                     }
                     /* we need the new parameter-names */
-                    for (i = 0; i < proto->expression.params.size(); ++i)
-                        ast_value_set_name(proto->expression.params[i], var->expression.params[i]->name);
+                    for (i = 0; i < proto->expression.type_params.size(); ++i)
+                        ast_value_set_name(proto->expression.type_params[i], var->expression.type_params[i]->name);
                     if (!parser_check_qualifiers(parser, var, proto)) {
                         retval = false;
                         if (proto->desc)
@@ -6153,7 +6153,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
     cov  = func->function_type;
     expr = (ast_expression*)cov;
 
-    if (expr->vtype != TYPE_FUNCTION || expr->params.size()) {
+    if (expr->vtype != TYPE_FUNCTION || expr->type_params.size()) {
         char ty[1024];
         ast_type_to_string(expr, ty, sizeof(ty));
         con_out("invalid type for coverage(): %s\n", ty);
@@ -6226,8 +6226,8 @@ bool parser_finish(parser_t *parser, const char *output)
      */
     for (auto &f : parser->functions) {
         if (f->varargs) {
-            if (parser->max_param_count > f->function_type->expression.params.size()) {
-                f->varargs->expression.count = parser->max_param_count - f->function_type->expression.params.size();
+            if (parser->max_param_count > f->function_type->expression.type_params.size()) {
+                f->varargs->expression.count = parser->max_param_count - f->function_type->expression.type_params.size();
                 if (!parser_create_array_setter_impl(parser, f->varargs)) {
                     con_out("failed to generate vararg setter for %s\n", f->name);
                     ir_builder_delete(ir);
