@@ -67,12 +67,12 @@ static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
 }
 
 /* Initialize main ast node aprts */
-static void ast_node_init(ast_node *self, lex_ctx_t ctx, int nodetype)
+static void ast_node_init(ast_node *self, lex_ctx_t ctx, int node_type)
 {
     self->context = ctx;
-    self->destroy = &_ast_node_destroy;
-    self->keep    = false;
-    self->nodetype = nodetype;
+    self->destroy      = &_ast_node_destroy;
+    self->keep_node    = false;
+    self->node_type    = node_type;
     self->side_effects = false;
 }
 
@@ -325,7 +325,7 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
                         (ast_expression_codegen*)&ast_value_codegen);
-    self->expression.node.keep = true; /* keep */
+    self->expression.node.keep_node = true; /* keep */
 
     self->name = name ? util_strdup(name) : nullptr;
     self->expression.vtype = t;
@@ -617,7 +617,7 @@ ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int fi
     }
 
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_member_codegen);
-    self->expression.node.keep = true; /* keep */
+    self->expression.node.keep_node = true; /* keep */
 
     if (owner->vtype == TYPE_VECTOR) {
         self->expression.vtype = TYPE_FLOAT;
@@ -642,7 +642,7 @@ ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int fi
 
 void ast_member_delete(ast_member *self)
 {
-    /* The owner is always an ast_value, which has .keep=true,
+    /* The owner is always an ast_value, which has .keep_node=true,
      * also: ast_members are usually deleted after the owner, thus
      * this will cause invalid access
     ast_unref(self->owner);
@@ -1139,7 +1139,7 @@ bool ast_block_add_expr(ast_block *self, ast_expression *e)
 void ast_block_collect(ast_block *self, ast_expression *expr)
 {
     self->collect.push_back(expr);
-    expr->node.keep = true;
+    expr->node.keep_node = true;
 }
 
 void ast_block_delete(ast_block *self)

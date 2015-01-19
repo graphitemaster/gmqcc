@@ -1070,7 +1070,7 @@ ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
         ast_expression *out;
         ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
         out = (ast_expression*)ast_member_new(ctx(), (ast_expression*)sel, set[0]-'x', nullptr);
-        out->node.keep = false;
+        out->node.keep_node = false;
         ((ast_member*)out)->rvalue = true;
         if (x != -1.0f)
             return (ast_expression*)ast_binary_new(ctx(), INSTR_MUL_F, constgen_float(x, false), out);

@@ -93,7 +93,7 @@ enum {
     TYPE_ast_state        /* 22 */
 };
 
-#define ast_istype(x, t) ( ((ast_node*)x)->nodetype == (TYPE_##t) )
+#define ast_istype(x, t) ( ((ast_node*)x)->node_type == (TYPE_##t) )
 #define ast_ctx(node) (((ast_node*)(node))->context)
 #define ast_side_effects(node) (((ast_node*)(node))->side_effects)
 
@@ -106,20 +106,20 @@ struct ast_node
     lex_ctx_t context;
     /* I don't feel comfortable using keywords like 'delete' as names... */
     ast_node_delete *destroy;
-    int              nodetype;
-    /* keep: if a node contains this node, 'keep'
+    int              node_type;
+    /* keep_node: if a node contains this node, 'keep_node'
      * prevents its dtor from destroying this node as well.
      */
-    bool             keep;
+    bool             keep_node;
     bool             side_effects;
 };
 
 #define ast_delete(x) (*( ((ast_node*)(x))->destroy ))((ast_node*)(x))
-#define ast_unref(x) do                \
-{                                      \
-    if (! (((ast_node*)(x))->keep) ) { \
-        ast_delete(x);                 \
-    }                                  \
+#define ast_unref(x) do                     \
+{                                           \
+    if (! (((ast_node*)(x))->keep_node) ) { \
+        ast_delete(x);                      \
+    }                                       \
 } while(0)
 
 /* Expression interface
