@@ -624,7 +624,7 @@ struct ast_function
 {
     ast_node node;
 
-    ast_value *vtype;
+    ast_value  *function_type;
     const char *name;
 
     int builtin;

@@ -102,7 +102,7 @@ static ast_expression* parser_find_param(parser_t *parser, const char *name)
     ast_value *fun;
     if (!parser->function)
         return nullptr;
-    fun = parser->function->vtype;
+    fun = parser->function->function_type;
     for (auto &it : fun->expression.params) {
         if (!strcmp(it->name, name))
             return (ast_expression*)it;
@@ -1269,7 +1269,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     for (i = 0; i < paramcount; ++i)
         call->params.push_back(sy->out[fid+1 + i].out);
     sy->out.erase(sy->out.end() - paramcount, sy->out.end());
-    (void)!ast_call_check_types(call, parser->function->vtype->expression.varparam);
+    (void)!ast_call_check_types(call, parser->function->function_type->expression.varparam);
     if (parser->max_param_count < paramcount)
         parser->max_param_count = paramcount;
 
@@ -1405,7 +1405,7 @@ static ast_expression* parse_vararg_do(parser_t *parser)
 {
     ast_expression *idx, *out;
     ast_value      *typevar;
-    ast_value      *funtype = parser->function->vtype;
+    ast_value      *funtype = parser->function->function_type;
     lex_ctx_t         ctx     = parser_ctx(parser);
 
     if (!parser->function->varargs) {
@@ -2562,7 +2562,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
     ast_expression *var      = nullptr;
     ast_return     *ret      = nullptr;
     ast_value      *retval   = parser->function->return_value;
-    ast_value      *expected = parser->function->vtype;
+    ast_value      *expected = parser->function->function_type;
 
     lex_ctx_t ctx = parser_ctx(parser);
 
@@ -6150,7 +6150,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
         return true;
     }
 
-    cov  = func->vtype;
+    cov  = func->function_type;
     expr = (ast_expression*)cov;
 
     if (expr->vtype != TYPE_FUNCTION || expr->params.size()) {
@@ -6226,8 +6226,8 @@ bool parser_finish(parser_t *parser, const char *output)
      */
     for (auto &f : parser->functions) {
         if (f->varargs) {
-            if (parser->max_param_count > f->vtype->expression.params.size()) {
-                f->varargs->expression.count = parser->max_param_count - f->vtype->expression.params.size();
+            if (parser->max_param_count > f->function_type->expression.params.size()) {
+                f->varargs->expression.count = parser->max_param_count - f->function_type->expression.params.size();
                 if (!parser_create_array_setter_impl(parser, f->varargs)) {
                     con_out("failed to generate vararg setter for %s\n", f->name);
                     ir_builder_delete(ir);

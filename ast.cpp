@@ -366,7 +366,7 @@ void ast_value_delete(ast_value* self)
             break;
         case TYPE_FUNCTION:
             /* unlink us from the function node */
-            self->constval.vfunc->vtype = nullptr;
+            self->constval.vfunc->function_type = nullptr;
             break;
         /* NOTE: delete function? currently collected in
          * the parser structure
@@ -1173,8 +1173,8 @@ ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype
         goto cleanup;
     }
 
-    self->vtype  = vtype;
-    self->name   = name ? util_strdup(name) : nullptr;
+    self->function_type = vtype;
+    self->name          = name ? util_strdup(name) : nullptr;
 
     self->labelcount = 0;
     self->builtin = 0;
@@ -1202,14 +1202,14 @@ void ast_function_delete(ast_function *self)
 {
     if (self->name)
         mem_d((void*)self->name);
-    if (self->vtype) {
-        /* ast_value_delete(self->vtype); */
-        self->vtype->hasvalue = false;
-        self->vtype->constval.vfunc = nullptr;
+    if (self->function_type) {
+        /* ast_value_delete(self->function_type); */
+        self->function_type->hasvalue = false;
+        self->function_type->constval.vfunc = nullptr;
         /* We use unref - if it was stored in a global table it is supposed
          * to be deleted from *there*
          */
-        ast_unref(self->vtype);
+        ast_unref(self->function_type);
     }
     for (auto &it : self->static_names)
         mem_d(it);
@@ -1781,7 +1781,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     }
 
     /* fill the parameter list */
-    ec = &self->vtype->expression;
+    ec = &self->function_type->expression;
     for (auto &it : ec->params) {
         if (it->expression.vtype == TYPE_FIELD)
             vec_push(irf->params, it->expression.next->vtype);
@@ -1854,8 +1854,8 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
     /* TODO: check return types */
     if (!self->curblock->final)
     {
-        if (!self->vtype->expression.next ||
-            self->vtype->expression.next->vtype == TYPE_VOID)
+        if (!self->function_type->expression.next ||
+            self->function_type->expression.next->vtype == TYPE_VOID)
         {
             return ir_block_create_return(self->curblock, ast_ctx(self), nullptr);
         }
