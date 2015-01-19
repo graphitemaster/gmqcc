@@ -4631,7 +4631,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
         fval->expression.flags |= AST_FLAG_VARIADIC;
     var = fval;
 
-    var->expression.type_params = params;
+    var->expression.type_params = move(params);
     var->expression.varparam = (ast_expression*)varparam;
     var->argcounter = argcounter;
 
