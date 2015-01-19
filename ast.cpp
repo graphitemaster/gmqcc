@@ -120,9 +120,9 @@ ast_value* ast_value_copy(const ast_value *self)
 {
     const ast_expression *fromex;
     ast_expression *selfex;
-    ast_value *cp = ast_value_new(self->expression.node.context, self->name, self->expression.vtype);
+    ast_value *cp = ast_value_new(self->expression.context, self->name, self->expression.vtype);
     if (self->expression.next) {
-        cp->expression.next = ast_type_copy(self->expression.node.context, self->expression.next);
+        cp->expression.next = ast_type_copy(self->expression.context, self->expression.next);
     }
     fromex = &self->expression;
     selfex = &cp->expression;
@@ -325,7 +325,7 @@ ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
                         (ast_expression_codegen*)&ast_value_codegen);
-    self->expression.node.keep_node = true; /* keep */
+    self->expression.keep_node = true; /* keep */
 
     self->name = name ? util_strdup(name) : nullptr;
     self->expression.vtype = t;
@@ -617,7 +617,7 @@ ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int fi
     }
 
     ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_member_codegen);
-    self->expression.node.keep_node = true; /* keep */
+    self->expression.keep_node = true; /* keep */
 
     if (owner->vtype == TYPE_VECTOR) {
         self->expression.vtype = TYPE_FLOAT;
@@ -1139,7 +1139,7 @@ bool ast_block_add_expr(ast_block *self, ast_expression *e)
 void ast_block_collect(ast_block *self, ast_expression *expr)
 {
     self->collect.push_back(expr);
-    expr->node.keep_node = true;
+    expr->keep_node = true;
 }
 
 void ast_block_delete(ast_block *self)

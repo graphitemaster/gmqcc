@@ -1245,7 +1245,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
          * Blub: what sorts of unreffing and resizing of
          * sy->out should I be doing here?
          */
-        sy->out[fid] = syexp(foldval->node.context, foldval);
+        sy->out[fid] = syexp(foldval->context, foldval);
         sy->out.erase(sy->out.end() - paramcount, sy->out.end());
         vec_free(exprs);
 
@@ -1283,7 +1283,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     }
 
     /* overwrite fid, the function, with a call */
-    sy->out[fid] = syexp(call->expression.node.context, (ast_expression*)call);
+    sy->out[fid] = syexp(call->expression.context, (ast_expression*)call);
 
     if (fun->vtype != TYPE_FUNCTION) {
         parseerror(parser, "not a function (%s)", type_name[fun->vtype]);

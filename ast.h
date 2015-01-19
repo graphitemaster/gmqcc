@@ -141,10 +141,9 @@ typedef bool ast_expression_codegen(ast_expression*,
  * type `expression`, so the ast_ident's codegen would search for
  * variables through the environment (or functions, constants...).
  */
-struct ast_expression {
+struct ast_expression : ast_node {
     ast_expression() {}
 
-    ast_node                node;
     ast_expression_codegen *codegen;
     int                     vtype;
     ast_expression         *next;
