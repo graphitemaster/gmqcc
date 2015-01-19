@@ -878,7 +878,7 @@ lex_ctx_t fold::ctx() {
 }
 
 bool fold::immediate_true(ast_value *v) {
-    switch (v->expression.vtype) {
+    switch (v->vtype) {
         case TYPE_FLOAT:
             return !!v->constval.vfloat;
         case TYPE_INTEGER:
@@ -998,7 +998,7 @@ ast_expression *fold::constgen_string(const char *str, bool translate) {
         char name[32];
         util_snprintf(name, sizeof(name), "dotranslate_%zu", m_parser->translated++);
         out = ast_value_new(ctx(), name, TYPE_STRING);
-        out->expression.flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
+        out->flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
     } else {
         out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_STRING);
     }

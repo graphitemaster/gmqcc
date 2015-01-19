@@ -182,10 +182,8 @@ union basic_value_t {
     ast_value *vfield;
 };
 
-struct ast_value
+struct ast_value : ast_expression
 {
-    ast_expression expression;
-
     const char *name;
     const char *desc;
 
@@ -252,9 +250,8 @@ enum ast_binary_ref {
  *
  * A value-returning binary expression.
  */
-struct ast_binary
+struct ast_binary : ast_expression
 {
-    ast_expression expression;
     int op;
     ast_expression *left;
     ast_expression *right;
@@ -271,9 +268,8 @@ ast_binary* ast_binary_new(lex_ctx_t    ctx,
  * An assignment including a binary expression with the source as left operand.
  * Eg. a += b; is a binstore { INSTR_STORE, INSTR_ADD, a, b }
  */
-struct ast_binstore
+struct ast_binstore : ast_expression
 {
-    ast_expression expression;
     int opstore;
     int opbin;
     ast_expression *dest;
@@ -291,9 +287,8 @@ ast_binstore* ast_binstore_new(lex_ctx_t    ctx,
  *
  * Regular unary expressions: not,neg
  */
-struct ast_unary
+struct ast_unary : ast_expression
 {
-    ast_expression expression;
     int op;
     ast_expression *operand;
 };
@@ -307,9 +302,8 @@ ast_unary* ast_unary_new(lex_ctx_t ctx,
  * will refuse to create further instructions.
  * This should be honored by the parser.
  */
-struct ast_return
+struct ast_return : ast_expression
 {
-    ast_expression expression;
     ast_expression *operand;
 };
 ast_return* ast_return_new(lex_ctx_t ctx,
@@ -328,9 +322,8 @@ ast_return* ast_return_new(lex_ctx_t ctx,
  * For this we will have to extend the codegen() functions with
  * a flag saying whether or not we need an L or an R-value.
  */
-struct ast_entfield
+struct ast_entfield : ast_expression
 {
-    ast_expression expression;
     /* The entity can come from an expression of course. */
     ast_expression *entity;
     /* As can the field, it just must result in a value of TYPE_FIELD */
@@ -344,9 +337,8 @@ ast_entfield* ast_entfield_new_force(lex_ctx_t ctx, ast_expression *entity, ast_
  * For now used for vectors. If we get structs or unions
  * we can have them handled here as well.
  */
-struct ast_member
+struct ast_member : ast_expression
 {
-    ast_expression expression;
     ast_expression *owner;
     unsigned int field;
     const char *name;
@@ -367,9 +359,8 @@ bool ast_member_set_name(ast_member*, const char *name);
  * In any case, accessing an element via a compiletime-constant index will
  * result in quick access to that variable.
  */
-struct ast_array_index
+struct ast_array_index : ast_expression
 {
-    ast_expression expression;
     ast_expression *array;
     ast_expression *index;
 };
@@ -379,9 +370,8 @@ ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_e
  *
  * copy all varargs starting from a specific index
  */
-struct ast_argpipe
+struct ast_argpipe : ast_expression
 {
-    ast_expression expression;
     ast_expression *index;
 };
 ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index);
@@ -391,9 +381,8 @@ ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index);
  * Stores left<-right and returns left.
  * Specialized binary expression node
  */
-struct ast_store
+struct ast_store : ast_expression
 {
-    ast_expression expression;
     int op;
     ast_expression *dest;
     ast_expression *source;
@@ -412,9 +401,8 @@ ast_store* ast_store_new(lex_ctx_t ctx, int op,
  * output field though. For ternary expressions an ast_ternary will be
  * added.
  */
-struct ast_ifthen
+struct ast_ifthen : ast_expression
 {
-    ast_expression expression;
     ast_expression *cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
@@ -435,9 +423,8 @@ ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *
  * This is the only ast_node beside ast_value which contains
  * an ir_value. Theoretically we don't need to remember it though.
  */
-struct ast_ternary
+struct ast_ternary : ast_expression
 {
-    ast_expression expression;
     ast_expression *cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *on_true;
@@ -468,9 +455,8 @@ continue:      // a 'continue' will jump here
     {inc};
 }
  */
-struct ast_loop
+struct ast_loop : ast_expression
 {
-    ast_expression expression;
     ast_expression *initexpr;
     ast_expression *precond;
     ast_expression *postcond;
@@ -494,10 +480,9 @@ ast_loop* ast_loop_new(lex_ctx_t ctx,
 
 /* Break/Continue
  */
-struct ast_breakcont
+struct ast_breakcont : ast_expression
 {
-    ast_expression expression;
-    bool is_continue;
+    bool         is_continue;
     unsigned int levels;
 };
 ast_breakcont* ast_breakcont_new(lex_ctx_t ctx, bool iscont, unsigned int levels);
@@ -517,9 +502,8 @@ struct ast_switch_case {
     ast_expression *code;
 };
 
-struct ast_switch
+struct ast_switch : ast_expression
 {
-    ast_expression expression;
     ast_expression *operand;
     std::vector<ast_switch_case> cases;
 };
@@ -530,9 +514,8 @@ ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op);
  *
  * Introduce a label which can be used together with 'goto'
  */
-struct ast_label
+struct ast_label : ast_expression
 {
-    ast_expression expression;
     const char *name;
     ir_block *irblock;
     std::vector<ast_goto*> gotos;
@@ -547,9 +530,8 @@ ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined);
  *
  * Go to a label, the label node is filled in at a later point!
  */
-struct ast_goto
+struct ast_goto : ast_expression
 {
-    ast_expression expression;
     const char *name;
     ast_label *target;
     ir_block *irblock_from;
@@ -562,9 +544,8 @@ void ast_goto_set_label(ast_goto*, ast_label*);
  *
  * For frame/think state updates: void foo() [framenum, nextthink] {}
  */
-struct ast_state
+struct ast_state : ast_expression
 {
-    ast_expression expression;
     ast_expression *framenum;
     ast_expression *nextthink;
 };
@@ -581,9 +562,8 @@ void ast_state_delete(ast_state*);
  * Additionally it contains a list of ast_expressions as parameters.
  * Since calls can return values, an ast_call is also an ast_expression.
  */
-struct ast_call
+struct ast_call : ast_expression
 {
-    ast_expression expression;
     ast_expression *func;
     std::vector<ast_expression *> params;
     ast_expression *va_count;
@@ -595,11 +575,9 @@ bool ast_call_check_types(ast_call*, ast_expression *this_func_va_type);
 /* Blocks
  *
  */
-struct ast_block
+struct ast_block : ast_expression
 {
-    ast_expression expression;
-
-    std::vector<ast_value*> locals;
+    std::vector<ast_value*>      locals;
     std::vector<ast_expression*> exprs;
     std::vector<ast_expression*> collect;
 };
