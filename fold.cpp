@@ -939,7 +939,7 @@ bool fold::generate(ir_builder *ir) {
     return true;
 err:
     con_out("failed to generate global %s\n", cur->name);
-    ir_builder_delete(ir);
+    delete ir;
     return false;
 }
 

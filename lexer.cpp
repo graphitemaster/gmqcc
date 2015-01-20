@@ -65,7 +65,7 @@ static void lex_token_new(lex_file *lex)
     if (lex->tok.value)
         vec_shrinkto(lex->tok.value, 0);
 
-    lex->tok.constval.t  = 0;
+    lex->tok.constval.t  = TYPE_VOID;
     lex->tok.ctx.line    = lex->sline;
     lex->tok.ctx.file    = lex->name;
     lex->tok.ctx.column  = lex->column;

@@ -36,12 +36,19 @@ enum {
 };
 
 struct ir_value {
-    char *name;
-    int vtype;
-    int store;
+    ir_value(std::string&& name, store_type storetype, qc_type vtype);
+    ~ir_value();
+
+    void* operator new(std::size_t); // to use mem_a
+    void operator delete(void*); // to use mem_d
+
+    std::string name;
+
+    qc_type vtype;
+    store_type store;
     lex_ctx_t context;
-    int fieldtype; // even the IR knows the subtype of a field
-    int outtype;   // and the output type of a function
+    qc_type fieldtype; // even the IR knows the subtype of a field
+    qc_type outtype;   // and the output type of a function
     int cvq;       // 'const' vs 'var' qualifier
     ir_flag_t flags;
 
@@ -51,12 +58,12 @@ struct ir_value {
     // constant values
     bool hasvalue;
     union {
-        qcfloat_t vfloat;
-        int vint;
-        vec3_t vvec;
-        int32_t ivec[3];
-        char *vstring;
-        ir_value *vpointer;
+        qcfloat_t    vfloat;
+        int          vint;
+        vec3_t       vvec;
+        int32_t      ivec[3];
+        char        *vstring;
+        ir_value    *vpointer;
         ir_function *vfunc;
     } constval;
 
@@ -76,7 +83,7 @@ struct ir_value {
     bool locked;           // temps living during a CALL must be locked
     bool callparam;
 
-    ir_life_entry_t *life; // For the temp allocator
+    std::vector<ir_life_entry_t> life; // For the temp allocator
 };
 
 /*
@@ -84,7 +91,6 @@ struct ir_value {
  * if a result of an operation: the function should store
  * it to remember to delete it / garbage collect it
  */
-void            ir_value_delete(ir_value*);
 ir_value*       ir_value_vector_member(ir_value*, unsigned int member);
 bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
 bool GMQCC_WARN ir_value_set_func(ir_value*, int f);
@@ -121,38 +127,44 @@ struct ir_instr {
 
 /* block */
 struct ir_block {
-    char *label;
-    lex_ctx_t context;
-    bool final; /* once a jump is added we're done */
+    void* operator new(std::size_t);
+    void operator delete(void*);
 
-    ir_instr **instr;
-    ir_block **entries;
-    ir_block **exits;
+    ir_block(ir_function *owner, const std::string& name);
+    ~ir_block();
+
+    ir_function *owner;
+    std::string label;
+
+    lex_ctx_t context;
+    bool final = false; /* once a jump is added we're done */
+
+    ir_instr **instr = nullptr;
+    ir_block **entries = nullptr;
+    ir_block **exits = nullptr;
     std::vector<ir_value *> living;
 
     /* For the temp-allocation */
-    size_t entry_id;
-    size_t eid;
-    bool is_return;
+    size_t entry_id  = 0;
+    size_t eid       = 0;
+    bool   is_return = false;
 
-    ir_function *owner;
-
-    bool generated;
-    size_t code_start;
+    bool generated = false;
+    size_t code_start = 0;
 };
 
 ir_value*       ir_block_create_binop(ir_block*, lex_ctx_t, const char *label, int op, ir_value *left, ir_value *right);
 ir_value*       ir_block_create_unary(ir_block*, lex_ctx_t, const char *label, int op, ir_value *operand);
 bool GMQCC_WARN ir_block_create_store_op(ir_block*, lex_ctx_t, int op, ir_value *target, ir_value *what);
 bool GMQCC_WARN ir_block_create_storep(ir_block*, lex_ctx_t, ir_value *target, ir_value *what);
-ir_value*       ir_block_create_load_from_ent(ir_block*, lex_ctx_t, const char *label, ir_value *ent, ir_value *field, int outype);
+ir_value*       ir_block_create_load_from_ent(ir_block*, lex_ctx_t, const char *label, ir_value *ent, ir_value *field, qc_type outype);
 ir_value*       ir_block_create_fieldaddress(ir_block*, lex_ctx_t, const char *label, ir_value *entity, ir_value *field);
 bool GMQCC_WARN ir_block_create_state_op(ir_block*, lex_ctx_t, ir_value *frame, ir_value *think);
 
 /* This is to create an instruction of the form
  * <outtype>%label := opcode a, b
  */
-ir_instr* ir_block_create_phi(ir_block*, lex_ctx_t, const char *label, int vtype);
+ir_instr* ir_block_create_phi(ir_block*, lex_ctx_t, const char *label, qc_type vtype);
 ir_value* ir_phi_value(ir_instr*);
 void ir_phi_add(ir_instr*, ir_block *b, ir_value *v);
 ir_instr* ir_block_create_call(ir_block*, lex_ctx_t, const char *label, ir_value *func, bool noreturn);
@@ -175,27 +187,36 @@ bool GMQCC_WARN ir_block_create_goto(ir_block*, lex_ctx_t, ir_block *to);
 
 /* function */
 struct ir_function {
-    char      *name;
-    int        outtype;
-    int       *params;
-    ir_block **blocks;
-    ir_flag_t  flags;
-    int        builtin;
+    void* operator new(std::size_t);
+    void operator delete(void*);
+
+    ir_function(ir_builder *owner, qc_type returntype);
+    ~ir_function();
+
+    ir_builder *owner;
+
+    std::string name;
+    qc_type     outtype;
+    int        *params  = nullptr;
+    ir_flag_t   flags   = 0;
+    int         builtin = 0;
+
+    std::vector<std::unique_ptr<ir_block>> blocks;
 
     /*
      * values generated from operations
      * which might get optimized away, so anything
      * in there needs to be deleted in the dtor.
      */
-    ir_value **values;
-    ir_value **locals;     /* locally defined variables */
-    ir_value *value;
+    std::vector<std::unique_ptr<ir_value>> values;
+    std::vector<std::unique_ptr<ir_value>> locals;     /* locally defined variables */
+    ir_value *value = nullptr;
 
-    size_t allocated_locals;
-    size_t globaltemps;
+    size_t allocated_locals = 0;
+    size_t globaltemps      = 0;
 
-    ir_block*  first;
-    ir_block*  last;
+    ir_block*  first = nullptr;
+    ir_block*  last  = nullptr;
 
     lex_ctx_t  context;
 
@@ -206,19 +227,17 @@ struct ir_function {
      *
      * remember the ID:
      */
-    qcint_t code_function_def;
+    qcint_t code_function_def = -1;
 
     /* for temp allocation */
-    size_t run_id;
-
-    ir_builder *owner;
+    size_t run_id = 0;
 
     /* vararg support: */
-    size_t max_varargs;
+    size_t max_varargs = 0;
 };
 
 
-ir_value*       ir_function_create_local(ir_function *self, const char *name, int vtype, bool param);
+ir_value*       ir_function_create_local(ir_function *self, const std::string& name, qc_type vtype, bool param);
 bool GMQCC_WARN ir_function_finalize(ir_function*);
 ir_block*       ir_function_create_block(lex_ctx_t ctx, ir_function*, const char *label);
 
@@ -227,33 +246,42 @@ ir_block*       ir_function_create_block(lex_ctx_t ctx, ir_function*, const char
 #define IR_MAX_VINSTR_TEMPS 1
 
 struct ir_builder {
-    char *name;
-    ir_function **functions;
-    ir_value    **globals;
-    ir_value    **fields;
-    ir_value    **const_floats; /* for reusing them in vector-splits, TODO: sort this or use a radix-tree */
+    void* operator new(std::size_t);
+    void operator delete(void*);
+    ir_builder(const std::string& modulename);
+    ~ir_builder();
+
+    std::string name;
+    std::vector<std::unique_ptr<ir_function>> functions;
+    std::vector<std::unique_ptr<ir_value>>    globals;
+    std::vector<std::unique_ptr<ir_value>>    fields;
+    // for reusing them in vector-splits, TODO: sort this or use a radix-tree
+    std::vector<ir_value*>                    const_floats;
 
     ht            htfunctions;
     ht            htglobals;
     ht            htfields;
 
-    ir_value    **extparams;
-    ir_value    **extparam_protos;
+    std::vector<std::unique_ptr<ir_value>> extparams;
+    std::vector<std::unique_ptr<ir_value>> extparam_protos;
 
-    /* the highest func->allocated_locals */
-    size_t        max_locals;
-    size_t        max_globaltemps;
-    uint32_t      first_common_local;
-    uint32_t      first_common_globaltemp;
+    // the highest func->allocated_locals
+    size_t        max_locals              = 0;
+    size_t        max_globaltemps         = 0;
+    uint32_t      first_common_local      = 0;
+    uint32_t      first_common_globaltemp = 0;
 
-    const char **filenames;
-    qcint_t     *filestrings;
-    /* we cache the #IMMEDIATE string here */
-    qcint_t      str_immediate;
-    /* there should just be this one nil */
+    std::vector<const char*> filenames;
+    std::vector<qcint_t>     filestrings;
+
+    // we cache the #IMMEDIATE string here
+    qcint_t      str_immediate = 0;
+
+    // there should just be this one nil
     ir_value    *nil;
-    ir_value    *reserved_va_count;
-    ir_value    *coverage_func;
+    ir_value    *reserved_va_count = nullptr;
+    ir_value    *coverage_func = nullptr;
+
     /* some virtual instructions require temps, and their code is isolated
      * so that we don't need to keep track of their liveness.
      */
@@ -263,11 +291,9 @@ struct ir_builder {
     code_t      *code;
 };
 
-ir_builder*  ir_builder_new(const char *modulename);
-void         ir_builder_delete(ir_builder*);
-ir_function* ir_builder_create_function(ir_builder*, const char *name, int outtype);
-ir_value*    ir_builder_create_global(ir_builder*, const char *name, int vtype);
-ir_value*    ir_builder_create_field(ir_builder*, const char *name, int vtype);
+ir_function* ir_builder_create_function(ir_builder*, const std::string& name, qc_type outtype);
+ir_value*    ir_builder_create_global(ir_builder*, const std::string& name, qc_type vtype);
+ir_value*    ir_builder_create_field(ir_builder*, const std::string& name, qc_type vtype);
 ir_value*    ir_builder_get_va_count(ir_builder*);
 bool         ir_builder_generate(ir_builder *self, const char *filename);
 void         ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));

@@ -1,6 +1,10 @@
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
 #include <vector>
+#include <string>
+#include <utility>
+#include <memory>
+using std::move;
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -259,7 +263,7 @@ int util_getline(char  **, size_t *, FILE *);
 /* code.c */
 
 /* Note: if you change the order, fix type_sizeof in ir.c */
-enum {
+enum qc_type {
     TYPE_VOID     ,
     TYPE_STRING   ,
     TYPE_FLOAT    ,
@@ -589,7 +593,7 @@ void            compile_show_werrors(void);
 
 /* ir.c */
 /* TODO: cleanup */
-enum store_types {
+enum store_type {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */
     store_param,  /* parameters, they are locals with a fixed position */

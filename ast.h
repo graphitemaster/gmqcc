@@ -145,7 +145,7 @@ struct ast_expression : ast_node {
     ast_expression() {}
 
     ast_expression_codegen *codegen;
-    int                     vtype;
+    qc_type                 vtype;
     ast_expression         *next;
     /* arrays get a member-count */
     size_t                  count;
@@ -173,13 +173,13 @@ struct ast_expression : ast_node {
  * is like creating a 'float foo', foo serving as the type's name.
  */
 union basic_value_t {
-    qcfloat_t vfloat;
-    int vint;
-    vec3_t vvec;
-    const char *vstring;
-    int ventity;
+    qcfloat_t     vfloat;
+    int           vint;
+    vec3_t        vvec;
+    const char   *vstring;
+    int           ventity;
     ast_function *vfunc;
-    ast_value *vfield;
+    ast_value    *vfield;
 };
 
 struct ast_value : ast_expression
@@ -216,7 +216,7 @@ struct ast_value : ast_expression
     bool intrinsic; /* true if associated with intrinsic */
 };
 
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int qctype);
+ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type qctype);
 ast_value* ast_value_copy(const ast_value *self);
 /* This will NOT delete an underlying ast_function */
 void ast_value_delete(ast_value*);

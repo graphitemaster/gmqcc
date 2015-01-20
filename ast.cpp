@@ -151,7 +151,7 @@ void ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
     }
 }
 
-static ast_expression* ast_shallow_type(lex_ctx_t ctx, int vtype)
+static ast_expression* ast_shallow_type(lex_ctx_t ctx, qc_type vtype)
 {
     ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
     ast_expression_init(self, nullptr);
@@ -318,7 +318,7 @@ void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize)
 }
 
 static bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out);
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, int t)
+ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type t)
 {
     ast_instantiate(ast_value, ctx, ast_value_delete);
     ast_expression_init((ast_expression*)self,
@@ -1407,7 +1407,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
             size_t  namelen;
 
             ast_expression *elemtype;
-            int             vtype;
+            qc_type         vtype;
             ast_value      *array = (ast_value*)fieldtype;
 
             if (!ast_istype(fieldtype, ast_value)) {
@@ -1480,7 +1480,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
         size_t  namelen;
 
         ast_expression *elemtype = self->next;
-        int vtype = elemtype->vtype;
+        qc_type vtype = elemtype->vtype;
 
         if (self->flags & AST_FLAG_ARRAY_INIT && !self->count) {
             compile_error(ast_ctx(self), "array `%s' has no size", self->name);
@@ -1595,7 +1595,7 @@ bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield)
     return true;
 
 error: /* clean up */
-    if(v) ir_value_delete(v);
+    if (v) delete v;
     return false;
 }
 
@@ -1622,7 +1622,7 @@ static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
         size_t  namelen;
 
         ast_expression *elemtype = self->next;
-        int vtype = elemtype->vtype;
+        qc_type vtype = elemtype->vtype;
 
         func->flags |= IR_FLAG_HAS_ARRAYS;
 
@@ -1710,7 +1710,7 @@ static bool ast_local_codegen(ast_value *self, ir_function *func, bool param)
     return true;
 
 error: /* clean up */
-    ir_value_delete(v);
+    delete v;
     return false;
 }
 
@@ -1729,7 +1729,7 @@ bool ast_generate_accessors(ast_value *self, ir_builder *ir)
             compile_error(ast_ctx(self), "internal error: not all array values have been generated for `%s`", self->name);
             return false;
         }
-        if (self->ir_values[i]->life) {
+        if (!self->ir_values[i]->life.empty()) {
             compile_error(ast_ctx(self), "internal error: function containing `%s` already generated", self->name);
             return false;
         }
@@ -1756,9 +1756,8 @@ bool ast_generate_accessors(ast_value *self, ir_builder *ir)
             return false;
         }
     }
-    for (i = 0; i < self->count; ++i) {
-        vec_free(self->ir_values[i]->life);
-    }
+    for (i = 0; i < self->count; ++i)
+        self->ir_values[i]->life.clear();
     opts_set(opts.warn, WARN_USED_UNINITIALIZED, warn);
     return true;
 }
@@ -1867,7 +1866,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
             }
             else if (compile_warning(ast_ctx(self), WARN_MISSING_RETURN_VALUES,
                                 "control reaches end of non-void function (`%s`) via %s",
-                                self->name, self->curblock->label))
+                                self->name, self->curblock->label.c_str()))
             {
                 return false;
             }
@@ -2069,7 +2068,7 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         size_t    merge_id;
 
         /* prepare end-block */
-        merge_id = vec_size(func->ir_func->blocks);
+        merge_id = func->ir_func->blocks.size();
         merge    = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "sce_merge"));
 
         /* generate the left expression */
@@ -2106,8 +2105,8 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         if (!ir_block_create_jump(func->curblock, ast_ctx(self), merge))
             return false;
 
-        vec_remove(func->ir_func->blocks, merge_id, 1);
-        vec_push(func->ir_func->blocks, merge);
+        func->ir_func->blocks.erase(func->ir_func->blocks.begin() + merge_id);
+        func->ir_func->blocks.emplace_back(merge);
 
         func->curblock = merge;
         phi = ir_block_create_phi(func->curblock, ast_ctx(self),
@@ -2868,7 +2867,7 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
         bpostcond = end_bpostcond = nullptr;
     }
 
-    bout_id = vec_size(func->ir_func->blocks);
+    bout_id = func->ir_func->blocks.size();
     bout = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "after_loop"));
     if (!bout)
         return false;
@@ -3012,8 +3011,8 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     }
 
     /* Move 'bout' to the end */
-    vec_remove(func->ir_func->blocks, bout_id, 1);
-    vec_push(func->ir_func->blocks, bout);
+    func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bout_id);
+    func->ir_func->blocks.emplace_back(bout);
 
     return true;
 }
@@ -3096,7 +3095,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
         return false;
     }
 
-    bout_id = vec_size(func->ir_func->blocks);
+    bout_id = func->ir_func->blocks.size();
     bout = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "after_switch"));
     if (!bout)
         return false;
@@ -3124,7 +3123,7 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
                 return false;
 
             bcase = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "case"));
-            bnot_id = vec_size(func->ir_func->blocks);
+            bnot_id = func->ir_func->blocks.size();
             bnot = ir_function_create_block(ast_ctx(self), func->ir_func, ast_function_label(func, "not_case"));
             if (!bcase || !bnot)
                 return false;
@@ -3152,8 +3151,8 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 
             /* enter the else and move it down */
             func->curblock = bnot;
-            vec_remove(func->ir_func->blocks, bnot_id, 1);
-            vec_push(func->ir_func->blocks, bnot);
+            func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bnot_id);
+            func->ir_func->blocks.emplace_back(bnot);
         } else {
             /* The default case */
             /* Remember where to fall through from: */
@@ -3210,8 +3209,8 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     func->breakblocks.pop_back();
 
     /* Move 'bout' to the end, it's nicer */
-    vec_remove(func->ir_func->blocks, bout_id, 1);
-    vec_push(func->ir_func->blocks, bout);
+    func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bout_id);
+    func->ir_func->blocks.emplace_back(bout);
 
     return true;
 }

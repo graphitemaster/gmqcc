@@ -8,7 +8,7 @@ lex_ctx_t intrin::ctx() const {
     return parser_ctx(m_parser);
 }
 
-ast_function *intrin::value(ast_value **out, const char *name, qcint_t vtype) {
+ast_function *intrin::value(ast_value **out, const char *name, qc_type vtype) {
     ast_value *value = nullptr;
     ast_function *func  = nullptr;
     char buffer[1024];

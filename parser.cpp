@@ -6144,7 +6144,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
     if (!func) {
         if (OPTS_OPTION_BOOL(OPTION_COVERAGE)) {
             con_out("coverage support requested but no coverage() builtin declared\n");
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
         return true;
@@ -6157,7 +6157,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
         char ty[1024];
         ast_type_to_string(expr, ty, sizeof(ty));
         con_out("invalid type for coverage(): %s\n", ty);
-        ir_builder_delete(ir);
+        delete ir;
         return false;
     }
 
@@ -6175,7 +6175,7 @@ bool parser_finish(parser_t *parser, const char *output)
         return false;
     }
 
-    ir = ir_builder_new("gmqcc_out");
+    ir = new ir_builder("gmqcc_out");
     if (!ir) {
         con_out("failed to allocate builder\n");
         return false;
@@ -6190,7 +6190,7 @@ bool parser_finish(parser_t *parser, const char *output)
         field->hasvalue = false;
         if (!ast_global_codegen((ast_value*)field, ir, true)) {
             con_out("failed to generate field %s\n", field->name);
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
         if (hasvalue) {
@@ -6217,7 +6217,7 @@ bool parser_finish(parser_t *parser, const char *output)
         }
         if (!ast_global_codegen(asvalue, ir, false)) {
             con_out("failed to generate global %s\n", asvalue->name);
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
     }
@@ -6230,12 +6230,12 @@ bool parser_finish(parser_t *parser, const char *output)
                 f->varargs->count = parser->max_param_count - f->function_type->type_params.size();
                 if (!parser_create_array_setter_impl(parser, f->varargs)) {
                     con_out("failed to generate vararg setter for %s\n", f->name);
-                    ir_builder_delete(ir);
+                    delete ir;
                     return false;
                 }
                 if (!parser_create_array_getter_impl(parser, f->varargs)) {
                     con_out("failed to generate vararg getter for %s\n", f->name);
-                    ir_builder_delete(ir);
+                    delete ir;
                     return false;
                 }
             } else {
@@ -6267,7 +6267,7 @@ bool parser_finish(parser_t *parser, const char *output)
                                        asvalue->name);
         }
         if (!ast_generate_accessors(asvalue, ir)) {
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
     }
@@ -6278,7 +6278,7 @@ bool parser_finish(parser_t *parser, const char *output)
         if (asvalue->vtype != TYPE_ARRAY)
             continue;
         if (!ast_generate_accessors(asvalue, ir)) {
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
     }
@@ -6286,13 +6286,13 @@ bool parser_finish(parser_t *parser, const char *output)
         !ast_global_codegen(parser->reserved_version, ir, false))
     {
         con_out("failed to generate reserved::version");
-        ir_builder_delete(ir);
+        delete ir;
         return false;
     }
     for (auto &f : parser->functions) {
         if (!ast_function_codegen(f, ir)) {
             con_out("failed to generate function %s\n", f->name);
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
     }
@@ -6304,7 +6304,7 @@ bool parser_finish(parser_t *parser, const char *output)
     for (auto &it : parser->functions) {
         if (!ir_function_finalize(it->ir_func)) {
             con_out("failed to finalize function %s\n", it->name);
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
     }
@@ -6322,10 +6322,10 @@ bool parser_finish(parser_t *parser, const char *output)
 
         if (!ir_builder_generate(ir, output)) {
             con_out("*** failed to generate output file\n");
-            ir_builder_delete(ir);
+            delete ir;
             return false;
         }
     }
-    ir_builder_delete(ir);
+    delete ir;
     return retval;
 }
