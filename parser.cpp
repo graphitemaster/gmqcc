@@ -2480,17 +2480,19 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         initexpr = parse_expression_leave(parser, false, false, false);
         if (!initexpr)
             goto onerr;
-
         /* move on to condition */
         if (parser->tok != ';') {
             parseerror(parser, "expected semicolon after for-loop initializer");
             goto onerr;
         }
-
         if (!parser_next(parser)) {
             parseerror(parser, "expected for-loop condition");
             goto onerr;
         }
+    }
+    else if (!parser_next(parser)) {
+        parseerror(parser, "expected for-loop condition");
+        goto onerr;
     }
 
     /* parse the condition */
@@ -5685,6 +5687,8 @@ skipvar:
             ast_delete(basetype);
             for (auto &it : parser->gotos)
                 parseerror(parser, "undefined label: `%s`", it->name);
+            parser->gotos.clear();
+            parser->labels.clear();
             return true;
         } else {
             ast_expression *cexp;
