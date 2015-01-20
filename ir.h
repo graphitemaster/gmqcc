@@ -108,19 +108,25 @@ struct ir_phi_entry_t {
 
 /* instruction */
 struct ir_instr {
+    void* operator new(std::size_t);
+    void operator delete(void*);
+
+    ir_instr(lex_ctx_t, ir_block *owner, int opcode);
+    ~ir_instr();
+
     int opcode;
     lex_ctx_t context;
-    ir_value *(_ops[3]);
-    ir_block *(bops[2]);
+    ir_value *(_ops[3]) = { nullptr, nullptr, nullptr };
+    ir_block *(bops[2]) = { nullptr, nullptr };
 
     std::vector<ir_phi_entry_t> phi;
     std::vector<ir_value *> params;
 
     // For the temp-allocation
-    size_t eid;
+    size_t eid = 0;
 
     // For IFs
-    bool likely;
+    bool likely = true;
 
     ir_block *owner;
 };
@@ -262,8 +268,9 @@ struct ir_builder {
     ht            htglobals;
     ht            htfields;
 
-    std::vector<std::unique_ptr<ir_value>> extparams;
+    // extparams' ir_values reference the ones from extparam_protos
     std::vector<std::unique_ptr<ir_value>> extparam_protos;
+    std::vector<ir_value*>                 extparams;
 
     // the highest func->allocated_locals
     size_t        max_locals              = 0;
@@ -288,7 +295,7 @@ struct ir_builder {
     ir_value    *vinstr_temp[IR_MAX_VINSTR_TEMPS];
 
     /* code generator */
-    code_t      *code;
+    std::unique_ptr<code_t> code;
 };
 
 ir_function* ir_builder_create_function(ir_builder*, const std::string& name, qc_type outtype);

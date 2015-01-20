@@ -203,7 +203,6 @@ static bool GMQCC_WARN ir_block_create_store(ir_block*, lex_ctx_t, ir_value *tar
 static void            ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
 static bool            ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
-static void            ir_instr_delete(ir_instr*);
 static void            ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 /* error functions */
 
@@ -285,7 +284,8 @@ void ir_builder::operator delete(void *ptr)
 }
 
 ir_builder::ir_builder(const std::string& modulename)
-: name(modulename)
+: name(modulename),
+  code(new code_t)
 {
     htglobals   = util_htnew(IR_HT_SIZE);
     htfields    = util_htnew(IR_HT_SIZE);
@@ -302,8 +302,6 @@ ir_builder::ir_builder(const std::string& modulename)
         vinstr_temp[i] = new ir_value("vinstr_temp", store_value, TYPE_NOEXPR);
         vinstr_temp[i]->cvq = CV_CONST;
     }
-
-    code = code_init();
 }
 
 ir_builder::~ir_builder()
@@ -321,7 +319,8 @@ ir_builder::~ir_builder()
         delete vinstr_temp[i];
     }
 
-    code_cleanup(code);
+    extparams.clear();
+    extparam_protos.clear();
 }
 
 static ir_function* ir_builder_get_function(ir_builder *self, const char *name)
@@ -527,7 +526,7 @@ static bool ir_function_pass_peephole(ir_function *self)
                 (void)!ir_instr_op(oper, 0, store->_ops[0], true);
 
                 vec_remove(block->instr, i, 1);
-                ir_instr_delete(store);
+                delete store;
             }
             else if (inst->opcode == VINSTR_COND)
             {
@@ -569,7 +568,7 @@ static bool ir_function_pass_peephole(ir_function *self)
                         return false;
                     }
                     vec_remove(tmp->instr, inotid, 1);
-                    ir_instr_delete(inot);
+                    delete inot;
                     /* swap ontrue/onfalse */
                     tmp = inst->bops[0];
                     inst->bops[0] = inst->bops[1];
@@ -627,7 +626,7 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 call->_ops[0] = store->_ops[0];
                 vec_remove(block->instr, vec_size(block->instr) - 2, 1);
-                ir_instr_delete(store);
+                delete store;
             }
             else
                 continue;
@@ -664,8 +663,8 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
             return false;
         }
 
-        ir_instr_delete(call);
-        ir_instr_delete(ret);
+        delete call;
+        delete ret;
     }
 
     return true;
@@ -767,7 +766,7 @@ ir_block::ir_block(ir_function* owner, const std::string& name)
 ir_block::~ir_block()
 {
     for (size_t i = 0; i != vec_size(instr); ++i)
-        ir_instr_delete(instr[i]);
+        delete instr[i];
     vec_free(instr);
     vec_free(entries);
     vec_free(exits);
@@ -786,53 +785,52 @@ static void ir_block_delete_quick(ir_block* self)
  *IR Instructions
  */
 
-static ir_instr* ir_instr_new(lex_ctx_t ctx, ir_block* owner, int op)
+void* ir_instr::operator new(std::size_t bytes) {
+  return mem_a(bytes);
+}
+
+void ir_instr::operator delete(void *data) {
+    mem_d(data);
+}
+
+ir_instr::ir_instr(lex_ctx_t ctx, ir_block* owner_, int op)
+: opcode(op),
+  context(ctx),
+  owner(owner_)
 {
-    ir_instr *self = new ir_instr;
-    self->owner = owner;
-    self->context = ctx;
-    self->opcode = op;
-    self->_ops[0] = nullptr;
-    self->_ops[1] = nullptr;
-    self->_ops[2] = nullptr;
-    self->bops[0] = nullptr;
-    self->bops[1] = nullptr;
-    self->eid = 0;
-    self->likely = true;
-    return self;
+}
+
+ir_instr::~ir_instr()
+{
+    // The following calls can only delete from
+    // vectors, we still want to delete this instruction
+    // so ignore the return value. Since with the warn_unused_result attribute
+    // gcc doesn't care about an explicit: (void)foo(); to ignore the result,
+    // I have to improvise here and use if(foo());
+    for (auto &it : phi) {
+        size_t idx;
+        if (vec_ir_instr_find(it.value->writes, this, &idx))
+            it.value->writes.erase(it.value->writes.begin() + idx);
+        if (vec_ir_instr_find(it.value->reads, this, &idx))
+            it.value->reads.erase(it.value->reads.begin() + idx);
+    }
+    for (auto &it : params) {
+        size_t idx;
+        if (vec_ir_instr_find(it->writes, this, &idx))
+            it->writes.erase(it->writes.begin() + idx);
+        if (vec_ir_instr_find(it->reads, this, &idx))
+            it->reads.erase(it->reads.begin() + idx);
+    }
+    (void)!ir_instr_op(this, 0, nullptr, false);
+    (void)!ir_instr_op(this, 1, nullptr, false);
+    (void)!ir_instr_op(this, 2, nullptr, false);
 }
 
 static void ir_instr_delete_quick(ir_instr *self)
 {
+    self->phi.clear();
+    self->params.clear();
     delete self;
-}
-
-static void ir_instr_delete(ir_instr *self)
-{
-    /* The following calls can only delete from
-     * vectors, we still want to delete this instruction
-     * so ignore the return value. Since with the warn_unused_result attribute
-     * gcc doesn't care about an explicit: (void)foo(); to ignore the result,
-     * I have to improvise here and use if(foo());
-     */
-    for (auto &it : self->phi) {
-        size_t idx;
-        if (vec_ir_instr_find(it.value->writes, self, &idx))
-            it.value->writes.erase(it.value->writes.begin() + idx);
-        if (vec_ir_instr_find(it.value->reads, self, &idx))
-            it.value->reads.erase(it.value->reads.begin() + idx);
-    }
-    for (auto &it : self->params) {
-        size_t idx;
-        if (vec_ir_instr_find(it->writes, self, &idx))
-            it->writes.erase(it->writes.begin() + idx);
-        if (vec_ir_instr_find(it->reads, self, &idx))
-            it->reads.erase(it->reads.begin() + idx);
-    }
-    (void)!ir_instr_op(self, 0, nullptr, false);
-    (void)!ir_instr_op(self, 1, nullptr, false);
-    (void)!ir_instr_op(self, 2, nullptr, false);
-    mem_d(self);
 }
 
 static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
@@ -1119,7 +1117,7 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
         {
             /* merge */
             before->end = life_found->end;
-            self->life.erase(self->life.begin()+1);
+            self->life.erase(self->life.begin()+i);
             return true;
         }
         if (before->end + 1 == s)
@@ -1297,14 +1295,14 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx_t ctx, int op, ir_value *t
         return false;
     }
 
-    in = ir_instr_new(ctx, self, op);
+    in = new ir_instr(ctx, self, op);
     if (!in)
         return false;
 
     if (!ir_instr_op(in, 0, target, (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC)) ||
         !ir_instr_op(in, 1, what, false))
     {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
     vec_push(self->instr, in);
@@ -1317,14 +1315,14 @@ bool ir_block_create_state_op(ir_block *self, lex_ctx_t ctx, ir_value *frame, ir
     if (!ir_check_unreachable(self))
         return false;
 
-    in = ir_instr_new(ctx, self, INSTR_STATE);
+    in = new ir_instr(ctx, self, INSTR_STATE);
     if (!in)
         return false;
 
     if (!ir_instr_op(in, 0, frame, false) ||
         !ir_instr_op(in, 1, think, false))
     {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
     vec_push(self->instr, in);
@@ -1387,12 +1385,12 @@ bool ir_block_create_return(ir_block *self, lex_ctx_t ctx, ir_value *v)
     self->final = true;
 
     self->is_return = true;
-    in = ir_instr_new(ctx, self, INSTR_RETURN);
+    in = new ir_instr(ctx, self, INSTR_RETURN);
     if (!in)
         return false;
 
     if (v && !ir_instr_op(in, 0, v, false)) {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
 
@@ -1407,13 +1405,13 @@ bool ir_block_create_if(ir_block *self, lex_ctx_t ctx, ir_value *v,
     if (!ir_check_unreachable(self))
         return false;
     self->final = true;
-    /*in = ir_instr_new(ctx, self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));*/
-    in = ir_instr_new(ctx, self, VINSTR_COND);
+    /*in = new ir_instr(ctx, self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));*/
+    in = new ir_instr(ctx, self, VINSTR_COND);
     if (!in)
         return false;
 
     if (!ir_instr_op(in, 0, v, false)) {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
 
@@ -1435,7 +1433,7 @@ bool ir_block_create_jump(ir_block *self, lex_ctx_t ctx, ir_block *to)
     if (!ir_check_unreachable(self))
         return false;
     self->final = true;
-    in = ir_instr_new(ctx, self, VINSTR_JUMP);
+    in = new ir_instr(ctx, self, VINSTR_JUMP);
     if (!in)
         return false;
 
@@ -1459,16 +1457,16 @@ ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, 
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return nullptr;
-    in = ir_instr_new(ctx, self, VINSTR_PHI);
+    in = new ir_instr(ctx, self, VINSTR_PHI);
     if (!in)
         return nullptr;
     out = ir_value_out(self->owner, label, store_value, ot);
     if (!out) {
-        ir_instr_delete(in);
+        delete in;
         return nullptr;
     }
     if (!ir_instr_op(in, 0, out, true)) {
-        ir_instr_delete(in);
+        delete in;
         return nullptr;
     }
     vec_push(self->instr, in);
@@ -1485,9 +1483,8 @@ void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
     ir_phi_entry_t pe;
 
     if (!vec_ir_block_find(self->owner->entries, b, nullptr)) {
-        /* Must not be possible to cause this, otherwise the AST
-         * is doing something wrong.
-         */
+        // Must not be possible to cause this, otherwise the AST
+        // is doing something wrong.
         irerror(self->context, "Invalid entry block for PHI");
         exit(EXIT_FAILURE);
     }
@@ -1505,7 +1502,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return nullptr;
-    in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
+    in = new ir_instr(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
         return nullptr;
     if (noreturn) {
@@ -1514,13 +1511,13 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
     }
     out = ir_value_out(self->owner, label, (func->outtype == TYPE_VOID) ? store_return : store_value, func->outtype);
     if (!out) {
-        ir_instr_delete(in);
+        delete in;
         return nullptr;
     }
     if (!ir_instr_op(in, 0, out, true) ||
         !ir_instr_op(in, 1, func, false))
     {
-        ir_instr_delete(in);
+        delete in;
         return nullptr;
     }
     vec_push(self->instr, in);
@@ -1528,7 +1525,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
     if (noreturn) {
         if (!ir_block_create_return(self, ctx, nullptr)) {
             compile_error(ctx, "internal error: failed to generate dummy-return instruction");
-            ir_instr_delete(in);
+            delete in;
             return nullptr;
         }
     }
@@ -1715,7 +1712,7 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
     if (!out)
         return nullptr;
 
-    instr = ir_instr_new(ctx, self, op);
+    instr = new ir_instr(ctx, self, op);
     if (!instr) {
         return nullptr;
     }
@@ -1731,7 +1728,7 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
 
     return out;
 on_error:
-    ir_instr_delete(instr);
+    delete instr;
     return nullptr;
 }
 
@@ -1830,7 +1827,7 @@ static bool ir_block_naive_phi(ir_block *self)
                 b->final = true;
             }
         }
-        ir_instr_delete(instr);
+        delete instr;
     }
     return true;
 }
@@ -2190,12 +2187,8 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
     ir_instr *instr;
     ir_value *value;
     size_t i, o, p, mem;
-    /* bitmasks which operands are read from or written to */
+    // bitmasks which operands are read from or written to
     size_t read, write;
-    char dbg_ind[16];
-    dbg_ind[0] = '#';
-    dbg_ind[1] = '0';
-    (void)dbg_ind;
 
     self->living.clear();
 
@@ -2397,21 +2390,17 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
 
 bool ir_function_calculate_liferanges(ir_function *self)
 {
-    size_t i, s;
-    bool changed;
-
     /* parameters live at 0 */
-    for (i = 0; i < vec_size(self->params); ++i)
+    for (size_t i = 0; i < vec_size(self->params); ++i)
         if (!ir_value_life_merge(self->locals[i].get(), 0))
             compile_error(self->context, "internal error: failed value-life merging");
 
+    bool changed;
     do {
         self->run_id++;
         changed = false;
-        i = self->blocks.size();
-        while (i--) {
-            ir_block_life_propagate(self->blocks[i].get(), &changed);
-        }
+        for (auto i = self->blocks.rbegin(); i != self->blocks.rend(); ++i)
+            ir_block_life_propagate(i->get(), &changed);
     } while (changed);
 
     if (self->blocks.size()) {
@@ -2424,7 +2413,8 @@ bool ir_function_calculate_liferanges(ir_function *self)
                 continue;
             self->flags |= IR_FLAG_HAS_UNINITIALIZED;
             /* find the instruction reading from it */
-            for (s = 0; s < v->reads.size(); ++s) {
+            size_t s = 0;
+            for (; s < v->reads.size(); ++s) {
                 if (v->reads[s]->eid == v->life[0].end)
                     break;
             }
@@ -2902,7 +2892,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 if (p-8 >= ir->extparams.size())
                     ir_gen_extparam(ir);
 
-                targetparam = ir->extparams[p-8].get();
+                targetparam = ir->extparams[p-8];
 
                 stmt.opcode = INSTR_STORE_F;
                 stmt.o3.u1 = 0;
@@ -3069,7 +3059,7 @@ static qcint_t ir_builder_filestring(ir_builder *ir, const char *filename)
             return i;
     }
 
-    str = code_genstring(ir->code, filename);
+    str = code_genstring(ir->code.get(), filename);
     ir->filenames.push_back(filename);
     ir->filestrings.push_back(str);
     return str;
@@ -3137,7 +3127,7 @@ static void ir_gen_extparam(ir_builder *ir)
     else
         global = ir->extparam_protos[ir->extparams.size()].get();
 
-    def.name = code_genstring(ir->code, global->name.c_str());
+    def.name = code_genstring(ir->code.get(), global->name.c_str());
     def.type = TYPE_VECTOR;
     def.offset = ir->code->globals.size();
 
@@ -3168,7 +3158,7 @@ static bool gen_function_extparam_copy(code_t *code, ir_function *self)
         if (ext >= ir->extparams.size())
             ir_gen_extparam(ir);
 
-        ir_value *ep = ir->extparams[ext].get();
+        ir_value *ep = ir->extparams[ext];
 
         stmt.opcode = type_store_instr[self->locals[i]->vtype];
         if (self->locals[i]->vtype == TYPE_FIELD &&
@@ -3210,7 +3200,7 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
         while (ext >= ir->extparams.size())
             ir_gen_extparam(ir);
 
-        ep = ir->extparams[ext].get();
+        ep = ir->extparams[ext];
 
         stmt.o1.u1 = ir_value_code_addr(ep);
         stmt.o2.u1 = ir_value_code_addr(self->locals[i].get());
@@ -3315,15 +3305,15 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
         irerror(irfun->context, "Failed to generate locals for function %s", irfun->name.c_str());
         return false;
     }
-    if (!gen_function_extparam_copy(ir->code, irfun)) {
+    if (!gen_function_extparam_copy(ir->code.get(), irfun)) {
         irerror(irfun->context, "Failed to generate extparam-copy code for function %s", irfun->name.c_str());
         return false;
     }
-    if (irfun->max_varargs && !gen_function_varargs_copy(ir->code, irfun)) {
+    if (irfun->max_varargs && !gen_function_varargs_copy(ir->code.get(), irfun)) {
         irerror(irfun->context, "Failed to generate vararg-copy code for function %s", irfun->name.c_str());
         return false;
     }
-    if (!gen_function_code(ir->code, irfun)) {
+    if (!gen_function_code(ir->code.get(), irfun)) {
         irerror(irfun->context, "Failed to generate code for function %s", irfun->name.c_str());
         return false;
     }
@@ -3426,11 +3416,11 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         if (pushdef) {
             if (global->name[0] == '#') {
                 if (!self->str_immediate)
-                    self->str_immediate = code_genstring(self->code, "IMMEDIATE");
+                    self->str_immediate = code_genstring(self->code.get(), "IMMEDIATE");
                 def.name = global->code.name = self->str_immediate;
             }
             else
-                def.name = global->code.name = code_genstring(self->code, global->name.c_str());
+                def.name = global->code.name = code_genstring(self->code.get(), global->name.c_str());
         }
         else
             def.name   = 0;
@@ -3438,9 +3428,9 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
             def.offset = ir_value_code_addr(global);
             self->code->defs.push_back(def);
             if (global->vtype == TYPE_VECTOR)
-                gen_vector_defs(self->code, def, global->name.c_str());
+                gen_vector_defs(self->code.get(), def, global->name.c_str());
             else if (global->vtype == TYPE_FIELD && global->fieldtype == TYPE_VECTOR)
-                gen_vector_defs(self->code, def, global->name.c_str());
+                gen_vector_defs(self->code.get(), def, global->name.c_str());
             return true;
         }
     }
@@ -3475,14 +3465,14 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         return true;
     case TYPE_POINTER:
         if (pushdef) self->code->defs.push_back(def);
-        return gen_global_pointer(self->code, global);
+        return gen_global_pointer(self->code.get(), global);
     case TYPE_FIELD:
         if (pushdef) {
             self->code->defs.push_back(def);
             if (global->fieldtype == TYPE_VECTOR)
-                gen_vector_defs(self->code, def, global->name.c_str());
+                gen_vector_defs(self->code.get(), def, global->name.c_str());
         }
-        return gen_global_field(self->code, global);
+        return gen_global_field(self->code.get(), global);
     case TYPE_ENTITY:
         /* fall through */
     case TYPE_FLOAT:
@@ -3504,7 +3494,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         ir_value_code_setaddr(global, self->code->globals.size());
         if (global->hasvalue) {
-            uint32_t load = code_genstring(self->code, global->constval.vstring);
+            uint32_t load = code_genstring(self->code.get(), global->constval.vstring);
             self->code->globals.push_back(load);
         } else {
             self->code->globals.push_back(0);
@@ -3540,7 +3530,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         if (pushdef) {
             self->code->defs.push_back(def);
             def.type &= ~DEF_SAVEGLOBAL;
-            gen_vector_defs(self->code, def, global->name.c_str());
+            gen_vector_defs(self->code.get(), def, global->name.c_str());
         }
         return global->code.globaladdr >= 0;
     }
@@ -3607,7 +3597,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
         memcpy(name+1, field->name.c_str(), len); // no strncpy - we used strlen above
         name[len+1] = 0;
 
-        def.name = code_genstring(self->code, name);
+        def.name = code_genstring(self->code.get(), name);
         fld.name = def.name + 1; /* we reuse that string table entry */
     } else {
         /* in plain QC, there cannot be a global with the same name,
@@ -3615,7 +3605,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
          * FIXME: fteqcc should create a global as well
          * check if it actually uses the same name. Probably does
          */
-        def.name = code_genstring(self->code, field->name.c_str());
+        def.name = code_genstring(self->code.get(), field->name.c_str());
         fld.name = def.name;
     }
 
@@ -3642,8 +3632,8 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     }
 
     if (field->fieldtype == TYPE_VECTOR) {
-        gen_vector_defs  (self->code, def, field->name.c_str());
-        gen_vector_fields(self->code, fld, field->name.c_str());
+        gen_vector_defs  (self->code.get(), def, field->name.c_str());
+        gen_vector_fields(self->code.get(), fld, field->name.c_str());
     }
 
     return field->code.globaladdr >= 0;
@@ -3729,8 +3719,12 @@ static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
 }
 
 static void ir_builder_split_vectors(ir_builder *self) {
-    for (auto& gp : self->globals) {
-        ir_value *v = gp.get();
+    // member values may be added to self->globals during this operation, but
+    // no new vectors will be added, we need to iterate via an index as
+    // c++ iterators would be invalidated
+    const size_t count = self->globals.size();
+    for (size_t i = 0; i != count; ++i) {
+        ir_value *v = self->globals[i].get();
         if (v->vtype != TYPE_VECTOR || !v->name.length() || v->name[0] != '#')
             continue;
         ir_builder_split_vector(self, v);
@@ -3749,7 +3743,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
     }
 
     for (auto& fp : self->fields)
-        ir_builder_prepare_field(self->code, fp.get());
+        ir_builder_prepare_field(self->code.get(), fp.get());
 
     for (auto& gp : self->globals) {
         ir_value *global = gp.get();
@@ -3832,7 +3826,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         last.line   = self->code->linenums.back();
         last.column = self->code->columnnums.back();
 
-        code_push_statement(self->code, &stmt, last);
+        code_push_statement(self->code.get(), &stmt, last);
     }
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY))
@@ -3856,7 +3850,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (!code_write(self->code, filename, lnofile)) {
+    if (!code_write(self->code.get(), filename, lnofile)) {
         vec_free(lnofile);
         return false;
     }

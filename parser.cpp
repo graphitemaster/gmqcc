@@ -4088,7 +4088,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         goto enderrfn;
     }
 
-    func->blocks.push_back(block);
+    func->blocks.emplace_back(block);
 
     parser->function = old;
     if (!parser_leaveblock(parser))
@@ -4348,7 +4348,7 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
         return false;
     }
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     *out = fval;
 
     parser->accessors.push_back(fval);
@@ -4405,7 +4405,7 @@ static bool parser_create_array_setter_impl(parser_t *parser, ast_value *array)
         parseerror(parser, "failed to build accessor search tree");
         return false;
     }
-    if (!ast_block_add_expr(array->setter->constval.vfunc->blocks[0], root)) {
+    if (!ast_block_add_expr(array->setter->constval.vfunc->blocks[0].get(), root)) {
         ast_delete(root);
         return false;
     }
@@ -4457,7 +4457,7 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
     }
 
     array->setter = fval;
-    return ast_block_add_expr(func->blocks[0], root);
+    return ast_block_add_expr(func->blocks[0].get(), root);
 cleanup:
     if (entity) ast_delete(entity);
     if (index)  ast_delete(index);
@@ -4513,7 +4513,7 @@ static bool parser_create_array_getter_impl(parser_t *parser, ast_value *array)
         parseerror(parser, "failed to build accessor search tree");
         return false;
     }
-    if (!ast_block_add_expr(array->getter->constval.vfunc->blocks[0], root)) {
+    if (!ast_block_add_expr(array->getter->constval.vfunc->blocks[0].get(), root)) {
         ast_delete(root);
         return false;
     }
@@ -6123,6 +6123,7 @@ static void parser_remove_ast(parser_t *parser)
 void parser_cleanup(parser_t *parser)
 {
     parser_remove_ast(parser);
+    parser->~parser_t();
     mem_d(parser);
 }
 

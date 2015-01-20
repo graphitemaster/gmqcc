@@ -80,7 +80,7 @@ ast_expression *intrin::isfinite_() {
         )
     );
 
-    func->blocks.push_back(block);
+    func->blocks.emplace_back(block);
     reg(val, func);
 
     return (ast_expression*)val;;
@@ -125,7 +125,7 @@ ast_expression *intrin::isinf_() {
     );
 
     val->type_params.push_back(x);
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
 
     reg(val, func);
 
@@ -170,7 +170,7 @@ ast_expression *intrin::isnan_() {
     );
 
     val->type_params.push_back(arg1);
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
 
     reg(val, func);
 
@@ -200,7 +200,7 @@ ast_expression *intrin::isnormal_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -236,7 +236,7 @@ ast_expression *intrin::signbit_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -289,7 +289,7 @@ ast_expression *intrin::acosh_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -342,7 +342,7 @@ ast_expression *intrin::asinh_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -391,7 +391,7 @@ ast_expression *intrin::atanh_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -504,7 +504,7 @@ ast_expression *intrin::exp_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -534,7 +534,7 @@ ast_expression *intrin::exp2_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -569,7 +569,7 @@ ast_expression *intrin::expm1_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1014,7 +1014,7 @@ ast_expression *intrin::pow_() {
     );
 
     /* } */
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1110,7 +1110,7 @@ ast_expression *intrin::mod_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1149,7 +1149,7 @@ ast_expression *intrin::fabs_() {
 
     val->type_params.push_back(arg1);
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1221,7 +1221,7 @@ ast_expression *intrin::epsilon_() {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1261,7 +1261,7 @@ ast_expression *intrin::nan_() {
         )
     );
 
-    func->blocks.push_back(block);
+    func->blocks.emplace_back(block);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1308,7 +1308,7 @@ ast_expression *intrin::inf_() {
         )
     );
 
-    func->blocks.push_back(block);
+    func->blocks.emplace_back(block);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1852,7 +1852,7 @@ ast_expression *intrin::ln_() {
         )
     );
 
-    func->blocks.push_back(block);
+    func->blocks.emplace_back(block);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1876,7 +1876,7 @@ ast_expression *intrin::log_variant(const char *name, float base) {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1933,7 +1933,7 @@ ast_expression *intrin::shift_variant(const char *name, size_t instr) {
         )
     );
 
-    func->blocks.push_back(body);
+    func->blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }

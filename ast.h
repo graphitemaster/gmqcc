@@ -626,7 +626,7 @@ struct ast_function
      * here to use in ast_function_label.
      */
     char labelbuf[64];
-    std::vector<ast_block*> blocks;
+    std::vector<std::unique_ptr<ast_block>> blocks;
     ast_value *varargs;
     ast_value *argc;
     ast_value *fixedparams;

@@ -76,7 +76,7 @@ static FILE **task_popen(const char *command, const char *mode) {
         dup2(errhandle[1], 2);
 
         execvp(argv[0], &argv[0]);
-        exit(EXIT_FAILURE);
+        exit(95);
     } else {
         /* fork failed */
         goto task_popen_error_3;
@@ -98,11 +98,17 @@ static int task_pclose(FILE **handles) {
     close(data->pipes[1]); /* stdout */
     close(data->pipes[2]); /* stderr */
 
-    waitpid(data->pid, &status, 0);
+    if (data->pid != waitpid(data->pid, &status, 0)) {
+      abort();
+    }
+    if (!WIFEXITED(status))
+      return -1;
+    if (WIFSIGNALED(status))
+      con_out("got signaled!\n");
 
     mem_d(data);
 
-    return status;
+    return status ? 1 : 0;
 }
 
 #define TASK_COMPILE    0
@@ -997,6 +1003,10 @@ static size_t task_schedualize(size_t *pad) {
         util_snprintf(space[1], sizeof(space[1]), "%d", (int)(i));
 
         con_out("test #%u %*s", i, strlen(space[0]) - strlen(space[1]), "");
+            //con_out("[[%*s]]",
+            //    (pad[0] + pad[1] - strlen(it.tmpl->description)) + (strlen(it.tmpl->rulesfile) - pad[1]),
+            //    it.tmpl->rulesfile);
+            //fflush(stdout);
 
         /*
          * Generate a task from thin air if it requires execution in
@@ -1057,6 +1067,16 @@ static size_t task_schedualize(size_t *pad) {
         }
 
         status = task_pclose(it.runhandles);
+        if (status != 0 && status != 1) {
+            con_out("compiler failure (returned: %i):   `%s` %*s\n",
+                status,
+                it.tmpl->description,
+                (pad[0] + pad[1] - strlen(it.tmpl->description)) + (strlen(it.tmpl->rulesfile) - pad[1]),
+                it.tmpl->rulesfile
+            );
+            failed++;
+            continue;
+        }
         if ((!strcmp(it.tmpl->proceduretype, "-fail") && status == EXIT_SUCCESS)
         ||  ( strcmp(it.tmpl->proceduretype, "-fail") && status == EXIT_FAILURE)) {
             con_out("failure:   `%s` %*s %*s\n",

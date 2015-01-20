@@ -8,6 +8,8 @@
 #include "fold.h"
 //#include "parser.h"
 
+#include "algo.h"
+
 #define ast_instantiate(T, ctx, destroyfn)                          \
     T* self = (T*)mem_a(sizeof(T));                                 \
     if (!self) {                                                    \
@@ -387,6 +389,7 @@ void ast_value_delete(ast_value* self)
     }
 
     ast_expression_delete((ast_expression*)self);
+    self->~ast_value();
     mem_d(self);
 }
 
@@ -1211,8 +1214,9 @@ void ast_function_delete(ast_function *self)
     }
     for (auto &it : self->static_names)
         mem_d(it);
-    for (auto &it : self->blocks)
-        ast_delete(it);
+    // FIXME::DELME:: unique_ptr used on ast_block
+    //for (auto &it : self->blocks)
+    //    ast_delete(it);
     if (self->varargs)
         ast_delete(self->varargs);
     if (self->argc)
@@ -1844,7 +1848,7 @@ bool ast_function_codegen(ast_function *self, ir_builder *ir)
 
     for (auto &it : self->blocks) {
         cgen = it->codegen;
-        if (!(*cgen)((ast_expression*)it, self, false, &dummy))
+        if (!(*cgen)(it.get(), self, false, &dummy))
             return false;
     }
 
@@ -2105,8 +2109,12 @@ bool ast_binary_codegen(ast_binary *self, ast_function *func, bool lvalue, ir_va
         if (!ir_block_create_jump(func->curblock, ast_ctx(self), merge))
             return false;
 
-        func->ir_func->blocks.erase(func->ir_func->blocks.begin() + merge_id);
-        func->ir_func->blocks.emplace_back(merge);
+        algo::shiftback(func->ir_func->blocks.begin() + merge_id,
+                        func->ir_func->blocks.end());
+        // FIXME::DELME::
+        //func->ir_func->blocks[merge_id].release();
+        //func->ir_func->blocks.erase(func->ir_func->blocks.begin() + merge_id);
+        //func->ir_func->blocks.emplace_back(merge);
 
         func->curblock = merge;
         phi = ir_block_create_phi(func->curblock, ast_ctx(self),
@@ -3011,8 +3019,12 @@ bool ast_loop_codegen(ast_loop *self, ast_function *func, bool lvalue, ir_value 
     }
 
     /* Move 'bout' to the end */
-    func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bout_id);
-    func->ir_func->blocks.emplace_back(bout);
+    algo::shiftback(func->ir_func->blocks.begin() + bout_id,
+                    func->ir_func->blocks.end());
+    // FIXME::DELME::
+    //func->ir_func->blocks[bout_id].release(); // it's a vector<unique_ptr<>>
+    //func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bout_id);
+    //func->ir_func->blocks.emplace_back(bout);
 
     return true;
 }
@@ -3151,8 +3163,12 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
 
             /* enter the else and move it down */
             func->curblock = bnot;
-            func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bnot_id);
-            func->ir_func->blocks.emplace_back(bnot);
+            algo::shiftback(func->ir_func->blocks.begin() + bnot_id,
+                            func->ir_func->blocks.end());
+            // FIXME::DELME::
+            //func->ir_func->blocks[bnot_id].release();
+            //func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bnot_id);
+            //func->ir_func->blocks.emplace_back(bnot);
         } else {
             /* The default case */
             /* Remember where to fall through from: */
@@ -3209,8 +3225,12 @@ bool ast_switch_codegen(ast_switch *self, ast_function *func, bool lvalue, ir_va
     func->breakblocks.pop_back();
 
     /* Move 'bout' to the end, it's nicer */
-    func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bout_id);
-    func->ir_func->blocks.emplace_back(bout);
+    algo::shiftback(func->ir_func->blocks.begin() + bout_id,
+                    func->ir_func->blocks.end());
+    // FIXME::DELME::
+    //func->ir_func->blocks[bout_id].release();
+    //func->ir_func->blocks.erase(func->ir_func->blocks.begin() + bout_id);
+    //func->ir_func->blocks.emplace_back(bout);
 
     return true;
 }
