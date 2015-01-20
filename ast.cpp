@@ -467,6 +467,7 @@ void ast_binary_delete(ast_binary *self)
     if (self->refs & AST_REF_RIGHT) ast_unref(self->right);
 
     ast_expression_delete((ast_expression*)self);
+    self->~ast_binary();
     mem_d(self);
 }
 
@@ -495,6 +496,7 @@ void ast_binstore_delete(ast_binstore *self)
         ast_unref(self->dest);
     ast_unref(self->source);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_binstore();
     mem_d(self);
 }
 
@@ -540,6 +542,7 @@ void ast_unary_delete(ast_unary *self)
 {
     if (self->operand) ast_unref(self->operand);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_unary();
     mem_d(self);
 }
 
@@ -561,6 +564,7 @@ void ast_return_delete(ast_return *self)
     if (self->operand)
         ast_unref(self->operand);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_return();
     mem_d(self);
 }
 
@@ -599,6 +603,7 @@ void ast_entfield_delete(ast_entfield *self)
     ast_unref(self->entity);
     ast_unref(self->field);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_entfield();
     mem_d(self);
 }
 
@@ -653,6 +658,7 @@ void ast_member_delete(ast_member *self)
     */
     ast_expression_delete((ast_expression*)self);
     mem_d(self->name);
+    self->~ast_member();
     mem_d(self);
 }
 
@@ -721,6 +727,7 @@ void ast_argpipe_delete(ast_argpipe *self)
     if (self->index)
         ast_unref(self->index);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_argpipe();
     mem_d(self);
 }
 
@@ -754,6 +761,7 @@ void ast_ifthen_delete(ast_ifthen *self)
     if (self->on_false)
         ast_unref(self->on_false);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_ifthen();
     mem_d(self);
 }
 
@@ -791,6 +799,7 @@ void ast_ternary_delete(ast_ternary *self)
     if (self->on_true)  ast_unref(self->on_true);
     if (self->on_false) ast_unref(self->on_false);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_ternary();
     mem_d(self);
 }
 
@@ -840,6 +849,7 @@ void ast_loop_delete(ast_loop *self)
     if (self->body)
         ast_unref(self->body);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_loop();
     mem_d(self);
 }
 
@@ -857,6 +867,7 @@ ast_breakcont* ast_breakcont_new(lex_ctx_t ctx, bool iscont, unsigned int levels
 void ast_breakcont_delete(ast_breakcont *self)
 {
     ast_expression_delete((ast_expression*)self);
+    self->~ast_breakcont();
     mem_d(self);
 }
 
@@ -883,6 +894,7 @@ void ast_switch_delete(ast_switch *self)
     }
 
     ast_expression_delete((ast_expression*)self);
+    self->~ast_switch();
     mem_d(self);
 }
 
@@ -904,6 +916,7 @@ void ast_label_delete(ast_label *self)
 {
     mem_d((void*)self->name);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_label();
     mem_d(self);
 }
 
@@ -928,6 +941,7 @@ void ast_goto_delete(ast_goto *self)
 {
     mem_d((void*)self->name);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_goto();
     mem_d(self);
 }
 
@@ -953,6 +967,7 @@ void ast_state_delete(ast_state *self)
         ast_unref(self->nextthink);
 
     ast_expression_delete((ast_expression*)self);
+    self->~ast_state();
     mem_d(self);
 }
 
@@ -989,6 +1004,7 @@ void ast_call_delete(ast_call *self)
         ast_unref(self->va_count);
 
     ast_expression_delete((ast_expression*)self);
+    self->~ast_call();
     mem_d(self);
 }
 
@@ -1114,6 +1130,7 @@ void ast_store_delete(ast_store *self)
     ast_unref(self->dest);
     ast_unref(self->source);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_store();
     mem_d(self);
 }
 
@@ -1149,6 +1166,7 @@ void ast_block_delete(ast_block *self)
     for (auto &it : self->locals) ast_delete(it);
     for (auto &it : self->collect) ast_delete(it);
     ast_expression_delete((ast_expression*)self);
+    self->~ast_block();
     mem_d(self);
 }
 
@@ -1225,6 +1243,7 @@ void ast_function_delete(ast_function *self)
         ast_unref(self->fixedparams);
     if (self->return_value)
         ast_unref(self->return_value);
+    self->~ast_function();
     mem_d(self);
 }
 
