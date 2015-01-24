@@ -18,10 +18,10 @@ ast_function *intrin::value(ast_value **out, const char *name, qc_type vtype) {
     util_snprintf(stype,  sizeof(stype),   "<%s>",        type_name[vtype]);
 
     value = ast_value_new(ctx(), buffer, TYPE_FUNCTION);
-    value->intrinsic = true;
-    value->next = (ast_expression*)ast_value_new(ctx(), stype, vtype);
+    value->m_intrinsic = true;
+    value->m_next = (ast_expression*)ast_value_new(ctx(), stype, vtype);
     func = ast_function_new(ctx(), buffer, value);
-    value->flags |= AST_FLAG_ERASEABLE;
+    value->m_flags |= AST_FLAG_ERASEABLE;
 
     *out = value;
     return func;
@@ -55,16 +55,16 @@ ast_expression *intrin::isfinite_() {
     ast_block    *block     = ast_block_new(ctx());
 
     /* float x; */
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
     /* <callisnan> = isnan(x); */
-    callisnan->params.push_back((ast_expression*)x);
+    callisnan->m_params.push_back((ast_expression*)x);
 
     /* <callisinf> = isinf(x); */
-    callisinf->params.push_back((ast_expression*)x);
+    callisinf->m_params.push_back((ast_expression*)x);
 
     /* return (!<callisnan> || <callisinf>); */
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_unary_new(
@@ -80,7 +80,7 @@ ast_expression *intrin::isfinite_() {
         )
     );
 
-    func->blocks.emplace_back(block);
+    func->m_blocks.emplace_back(block);
     reg(val, func);
 
     return (ast_expression*)val;;
@@ -97,7 +97,7 @@ ast_expression *intrin::isinf_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "isinf", TYPE_FLOAT);
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -124,8 +124,8 @@ ast_expression *intrin::isinf_() {
         )
     );
 
-    val->type_params.push_back(x);
-    func->blocks.emplace_back(body);
+    val->m_type_params.push_back(x);
+    func->m_blocks.emplace_back(body);
 
     reg(val, func);
 
@@ -147,8 +147,8 @@ ast_expression *intrin::isnan_() {
     ast_block *body  = ast_block_new(ctx());
     ast_function *func = value(&val, "isnan", TYPE_FLOAT);
 
-    body->locals.push_back(local);
-    body->exprs.push_back(
+    body->m_locals.push_back(local);
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -157,7 +157,7 @@ ast_expression *intrin::isnan_() {
         )
     );
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -169,8 +169,8 @@ ast_expression *intrin::isnan_() {
         )
     );
 
-    val->type_params.push_back(arg1);
-    func->blocks.emplace_back(body);
+    val->m_type_params.push_back(arg1);
+    func->m_blocks.emplace_back(body);
 
     reg(val, func);
 
@@ -189,18 +189,18 @@ ast_expression *intrin::isnormal_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "isnormal", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
-    callisfinite->params.push_back((ast_expression*)x);
+    val->m_type_params.push_back(x);
+    callisfinite->m_params.push_back((ast_expression*)x);
 
     /* return <callisfinite> */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)callisfinite
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -216,10 +216,10 @@ ast_expression *intrin::signbit_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "signbit", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
     /* return (x < 0); */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_ternary_new(
@@ -236,7 +236,7 @@ ast_expression *intrin::signbit_() {
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -254,10 +254,10 @@ ast_expression *intrin::acosh_() {
     ast_block    *body     = ast_block_new(ctx());
     ast_function *func     = value(&val, "acosh", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) - 1); */
-    callsqrt->params.push_back(
+    callsqrt->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_SUB_F,
@@ -272,7 +272,7 @@ ast_expression *intrin::acosh_() {
     );
 
     /* <calllog> = log(x + <callsqrt>); */
-    calllog->params.push_back(
+    calllog->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_ADD_F,
@@ -282,14 +282,14 @@ ast_expression *intrin::acosh_() {
     );
 
     /* return <calllog>; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)calllog
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -307,10 +307,10 @@ ast_expression *intrin::asinh_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "asinh", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
     /* <callsqrt> = sqrt((x * x) + 1); */
-    callsqrt->params.push_back(
+    callsqrt->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_ADD_F,
@@ -325,7 +325,7 @@ ast_expression *intrin::asinh_() {
     );
 
     /* <calllog> = log(x + <callsqrt>); */
-    calllog->params.push_back(
+    calllog->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_ADD_F,
@@ -335,14 +335,14 @@ ast_expression *intrin::asinh_() {
     );
 
     /* return <calllog>; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)calllog
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -359,10 +359,10 @@ ast_expression *intrin::atanh_() {
     ast_block    *body    = ast_block_new(ctx());
     ast_function *func    = value(&val, "atanh", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
     /* <callog> = log((1 + x) / (1 - x)); */
-    calllog->params.push_back(
+    calllog->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_DIV_F,
@@ -382,7 +382,7 @@ ast_expression *intrin::atanh_() {
     );
 
     /* return 0.5 * <calllog>; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_MUL_F,
@@ -391,7 +391,7 @@ ast_expression *intrin::atanh_() {
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -416,14 +416,14 @@ ast_expression *intrin::exp_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "exp", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
-    body->locals.push_back(sum);
-    body->locals.push_back(acc);
-    body->locals.push_back(i);
+    body->m_locals.push_back(sum);
+    body->m_locals.push_back(acc);
+    body->m_locals.push_back(i);
 
     /* sum = 1.0; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -433,7 +433,7 @@ ast_expression *intrin::exp_() {
     );
 
     /* acc = 1.0; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -446,7 +446,7 @@ ast_expression *intrin::exp_() {
      * for (i = 1; i < 200; ++i)
      *     sum += (acc *= x / i);
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_loop_new(
             ctx(),
             /* i = 1; */
@@ -497,14 +497,14 @@ ast_expression *intrin::exp_() {
     );
 
     /* return sum; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)sum
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -521,20 +521,20 @@ ast_expression *intrin::exp2_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "exp2", TYPE_FLOAT);
 
-    val->type_params.push_back(arg1);
+    val->m_type_params.push_back(arg1);
 
-    callpow->params.push_back((ast_expression*)m_fold->m_imm_float[3]);
-    callpow->params.push_back((ast_expression*)arg1);
+    callpow->m_params.push_back((ast_expression*)m_fold->m_imm_float[3]);
+    callpow->m_params.push_back((ast_expression*)arg1);
 
     /* return <callpow> */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)callpow
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -551,13 +551,13 @@ ast_expression *intrin::expm1_() {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, "expm1", TYPE_FLOAT);
 
-    val->type_params.push_back(x);
+    val->m_type_params.push_back(x);
 
     /* <callexp> = exp(x); */
-    callexp->params.push_back((ast_expression*)x);
+    callexp->m_params.push_back((ast_expression*)x);
 
     /* return <callexp> - 1; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -569,7 +569,7 @@ ast_expression *intrin::expm1_() {
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -652,21 +652,21 @@ ast_expression *intrin::pow_() {
     ast_value *square     = ast_value_new(ctx(), "square",     TYPE_FLOAT);
     ast_value *accumulate = ast_value_new(ctx(), "accumulate", TYPE_FLOAT);
     ast_value *mid        = ast_value_new(ctx(), "mid",        TYPE_FLOAT);
-    body->locals.push_back(result);
-    body->locals.push_back(low);
-    body->locals.push_back(high);
-    body->locals.push_back(square);
-    body->locals.push_back(accumulate);
-    body->locals.push_back(mid);
+    body->m_locals.push_back(result);
+    body->m_locals.push_back(low);
+    body->m_locals.push_back(high);
+    body->m_locals.push_back(square);
+    body->m_locals.push_back(accumulate);
+    body->m_locals.push_back(mid);
 
-    val->type_params.push_back(base);
-    val->type_params.push_back(exp);
+    val->m_type_params.push_back(base);
+    val->m_type_params.push_back(exp);
 
     /*
      * if (exp == 0.0)
      *     return 1;
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -687,7 +687,7 @@ ast_expression *intrin::pow_() {
      * if (exp == 1.0)
      *     return base;
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -705,8 +705,8 @@ ast_expression *intrin::pow_() {
     );
 
     /* <callpow1> = pow(base, -exp) */
-    callpow1->params.push_back((ast_expression*)base);
-    callpow1->params.push_back(
+    callpow1->m_params.push_back((ast_expression*)base);
+    callpow1->m_params.push_back(
         (ast_expression*)ast_unary_new(
             ctx(),
             VINSTR_NEG_F,
@@ -718,7 +718,7 @@ ast_expression *intrin::pow_() {
      * if (exp < 0)
      *     return 1.0 / <callpow1>;
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -741,8 +741,8 @@ ast_expression *intrin::pow_() {
     );
 
     /* <callpow2> = pow(base, exp / 2) */
-    callpow2->params.push_back((ast_expression*)base);
-    callpow2->params.push_back(
+    callpow2->m_params.push_back((ast_expression*)base);
+    callpow2->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_DIV_F,
@@ -757,7 +757,7 @@ ast_expression *intrin::pow_() {
      *     return result * result;
      * }
      */
-    expgt1->exprs.push_back(
+    expgt1->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -765,7 +765,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)callpow2
         )
     );
-    expgt1->exprs.push_back(
+    expgt1->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -782,7 +782,7 @@ ast_expression *intrin::pow_() {
      *     <expgt1>
      * }
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -799,7 +799,7 @@ ast_expression *intrin::pow_() {
     /*
      * <callsqrt1> = sqrt(base)
      */
-    callsqrt1->params.push_back((ast_expression*)base);
+    callsqrt1->m_params.push_back((ast_expression*)base);
 
     /*
      * low        = 0.0f;
@@ -808,14 +808,14 @@ ast_expression *intrin::pow_() {
      * accumulate = square;
      * mid        = high / 2.0f;
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(ctx(),
             INSTR_STORE_F,
             (ast_expression*)low,
             (ast_expression*)m_fold->m_imm_float[0]
         )
     );
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -824,7 +824,7 @@ ast_expression *intrin::pow_() {
         )
     );
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -833,7 +833,7 @@ ast_expression *intrin::pow_() {
         )
     );
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -841,7 +841,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)square
         )
     );
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -861,7 +861,7 @@ ast_expression *intrin::pow_() {
      *     accumulate *= square;
      * }
      */
-    midltexp->exprs.push_back(
+    midltexp->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -869,7 +869,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)mid
         )
     );
-    midltexp->exprs.push_back(
+    midltexp->m_exprs.push_back(
         (ast_expression*)ast_binstore_new(
             ctx(),
             INSTR_STORE_F,
@@ -885,7 +885,7 @@ ast_expression *intrin::pow_() {
      *     accumulate *= (1.0 / square);
      * }
      */
-    midltexpelse->exprs.push_back(
+    midltexpelse->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -893,7 +893,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)mid
         )
     );
-    midltexpelse->exprs.push_back(
+    midltexpelse->m_exprs.push_back(
         (ast_expression*)ast_binstore_new(
             ctx(),
             INSTR_STORE_F,
@@ -911,7 +911,7 @@ ast_expression *intrin::pow_() {
     /*
      * <callsqrt2> = sqrt(square)
      */
-    callsqrt2->params.push_back((ast_expression*)square);
+    callsqrt2->m_params.push_back((ast_expression*)square);
 
     /*
      * <whileblock> = {
@@ -924,7 +924,7 @@ ast_expression *intrin::pow_() {
      *     mid = (low + high) / 2;
      * }
      */
-    whileblock->exprs.push_back(
+    whileblock->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -932,7 +932,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)callsqrt2
         )
     );
-    whileblock->exprs.push_back(
+    whileblock->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -945,7 +945,7 @@ ast_expression *intrin::pow_() {
             (ast_expression*)midltexpelse
         )
     );
-    whileblock->exprs.push_back(
+    whileblock->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -967,7 +967,7 @@ ast_expression *intrin::pow_() {
     /*
      * <callabs> = fabs(mid - exp)
      */
-    callfabs->params.push_back(
+    callfabs->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_SUB_F,
@@ -980,7 +980,7 @@ ast_expression *intrin::pow_() {
      * while (<callfabs>  > epsilon)
      *     <whileblock>
      */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_loop_new(
             ctx(),
             /* init */
@@ -1006,7 +1006,7 @@ ast_expression *intrin::pow_() {
     );
 
     /* return accumulate */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)accumulate
@@ -1014,7 +1014,7 @@ ast_expression *intrin::pow_() {
     );
 
     /* } */
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1036,14 +1036,14 @@ ast_expression *intrin::mod_() {
     ast_block    *body  = ast_block_new(ctx());
     ast_function *func  = value(&val, "mod", TYPE_FLOAT);
 
-    val->type_params.push_back(a);
-    val->type_params.push_back(b);
+    val->m_type_params.push_back(a);
+    val->m_type_params.push_back(b);
 
-    body->locals.push_back(div);
-    body->locals.push_back(sign);
+    body->m_locals.push_back(div);
+    body->m_locals.push_back(sign);
 
     /* div = a / b; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1058,7 +1058,7 @@ ast_expression *intrin::mod_() {
     );
 
     /* sign = (div < 0.0f) ? -1 : 1; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1078,7 +1078,7 @@ ast_expression *intrin::mod_() {
     );
 
     /* floor(sign * div) */
-    call->params.push_back(
+    call->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             INSTR_MUL_F,
@@ -1088,7 +1088,7 @@ ast_expression *intrin::mod_() {
     );
 
     /* return a - b * sign * <call> */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -1110,7 +1110,7 @@ ast_expression *intrin::mod_() {
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1126,7 +1126,7 @@ ast_expression *intrin::fabs_() {
     ast_block    *body   = ast_block_new(ctx());
     ast_function *func   = value(&val, "fabs", TYPE_FLOAT);
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_ternary_new(
@@ -1147,9 +1147,9 @@ ast_expression *intrin::fabs_() {
         )
     );
 
-    val->type_params.push_back(arg1);
+    val->m_type_params.push_back(arg1);
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1167,10 +1167,10 @@ ast_expression *intrin::epsilon_() {
     ast_block    *body   = ast_block_new(ctx());
     ast_function *func   = value(&val, "epsilon", TYPE_FLOAT);
 
-    body->locals.push_back(eps);
+    body->m_locals.push_back(eps);
 
     /* eps = 1.0f; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1179,7 +1179,7 @@ ast_expression *intrin::epsilon_() {
         )
     );
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_loop_new(
             ctx(),
             nullptr,
@@ -1214,14 +1214,14 @@ ast_expression *intrin::epsilon_() {
     );
 
     /* return eps; */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)eps
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1238,9 +1238,9 @@ ast_expression *intrin::nan_() {
     ast_function *func   = value(&val, "nan", TYPE_FLOAT);
     ast_block    *block  = ast_block_new(ctx());
 
-    block->locals.push_back(x);
+    block->m_locals.push_back(x);
 
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1249,7 +1249,7 @@ ast_expression *intrin::nan_() {
         )
     );
 
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -1261,7 +1261,7 @@ ast_expression *intrin::nan_() {
         )
     );
 
-    func->blocks.emplace_back(block);
+    func->m_blocks.emplace_back(block);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1281,12 +1281,12 @@ ast_expression *intrin::inf_() {
     ast_block    *block  = ast_block_new(ctx());
     size_t        i;
 
-    block->locals.push_back(x);
-    block->locals.push_back(y);
+    block->m_locals.push_back(x);
+    block->m_locals.push_back(y);
 
     /* to keep code size down */
     for (i = 0; i <= 1; i++) {
-        block->exprs.push_back(
+        block->m_exprs.push_back(
             (ast_expression*)ast_store_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1296,7 +1296,7 @@ ast_expression *intrin::inf_() {
         );
     }
 
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -1308,7 +1308,7 @@ ast_expression *intrin::inf_() {
         )
     );
 
-    func->blocks.emplace_back(block);
+    func->m_blocks.emplace_back(block);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1406,20 +1406,20 @@ ast_expression *intrin::ln_() {
     ast_function *func = value(&val, "ln", TYPE_FLOAT);
     size_t i;
 
-    val->type_params.push_back(power);
-    val->type_params.push_back(base);
+    val->m_type_params.push_back(power);
+    val->m_type_params.push_back(base);
 
-    block->locals.push_back(whole);
-    block->locals.push_back(nth);
-    block->locals.push_back(sign);
-    block->locals.push_back(eps);
-    block->locals.push_back(A_i);
-    block->locals.push_back(B_i);
-    block->locals.push_back(A_iminus1);
-    block->locals.push_back(B_iminus1);
+    block->m_locals.push_back(whole);
+    block->m_locals.push_back(nth);
+    block->m_locals.push_back(sign);
+    block->m_locals.push_back(eps);
+    block->m_locals.push_back(A_i);
+    block->m_locals.push_back(B_i);
+    block->m_locals.push_back(A_iminus1);
+    block->m_locals.push_back(B_iminus1);
 
     /* sign = 1.0f; */
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1429,7 +1429,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* eps = __builtin_epsilon(); */
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1450,7 +1450,7 @@ ast_expression *intrin::ln_() {
     for (i = 0; i <= 1; i++) {
         int j;
         for (j = 1; j >= 0; j--) {
-            block->exprs.push_back(
+            block->m_exprs.push_back(
                 (ast_expression*)ast_store_new(
                     ctx(),
                     INSTR_STORE_F,
@@ -1473,7 +1473,7 @@ ast_expression *intrin::ln_() {
      * }
      */
     for (i = 0; i <= 1; i++) {
-        ((i) ? blt1 : plt1)->exprs.push_back(
+        ((i) ? blt1 : plt1)->m_exprs.push_back(
             (ast_expression*)ast_store_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1486,7 +1486,7 @@ ast_expression *intrin::ln_() {
                 )
             )
         );
-        plt1->exprs.push_back(
+        plt1->m_exprs.push_back(
             (ast_expression*)ast_binstore_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1507,7 +1507,7 @@ ast_expression *intrin::ln_() {
      *         <blt1>
      * }
      */
-    plt1orblt1->exprs.push_back(
+    plt1orblt1->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -1538,7 +1538,7 @@ ast_expression *intrin::ln_() {
     );
 
     for (i = 0; i <= 1; i++) {
-        plt1orblt1->exprs.push_back(
+        plt1orblt1->m_exprs.push_back(
             (ast_expression*)ast_ifthen_new(
                 ctx(),
                 (ast_expression*)ast_binary_new(
@@ -1553,11 +1553,11 @@ ast_expression *intrin::ln_() {
         );
     }
 
-    block->exprs.push_back((ast_expression*)plt1orblt1);
+    block->m_exprs.push_back((ast_expression*)plt1orblt1);
 
 
     /* whole = power; */
-    forloop->exprs.push_back(
+    forloop->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1567,7 +1567,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* nth = 0.0f; */
-    forloop->exprs.push_back(
+    forloop->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1577,7 +1577,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* base2 = base; */
-    whileloop->exprs.push_back(
+    whileloop->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1587,7 +1587,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* n2 = 1.0f; */
-    whileloop->exprs.push_back(
+    whileloop->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1597,7 +1597,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* newbase2 = base2 * base2; */
-    whileloop->exprs.push_back(
+    whileloop->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1612,12 +1612,12 @@ ast_expression *intrin::ln_() {
     );
 
     /* while loop locals */
-    whileloop->locals.push_back(base2);
-    whileloop->locals.push_back(n2);
-    whileloop->locals.push_back(newbase2);
+    whileloop->m_locals.push_back(base2);
+    whileloop->m_locals.push_back(n2);
+    whileloop->m_locals.push_back(newbase2);
 
     /* base2 = newbase2; */
-    nestwhile->exprs.push_back(
+    nestwhile->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1627,7 +1627,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* n2 *= 2; */
-    nestwhile->exprs.push_back(
+    nestwhile->m_exprs.push_back(
         (ast_expression*)ast_binstore_new(
             ctx(),
             INSTR_STORE_F,
@@ -1638,7 +1638,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* newbase2 *= newbase2; */
-    nestwhile->exprs.push_back(
+    nestwhile->m_exprs.push_back(
         (ast_expression*)ast_binstore_new(
             ctx(),
             INSTR_STORE_F,
@@ -1649,7 +1649,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* while (whole >= newbase2) */
-    whileloop->exprs.push_back(
+    whileloop->m_exprs.push_back(
         (ast_expression*)ast_loop_new(
             ctx(),
             nullptr,
@@ -1668,7 +1668,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* whole /= base2; */
-    whileloop->exprs.push_back(
+    whileloop->m_exprs.push_back(
         (ast_expression*)ast_binstore_new(
             ctx(),
             INSTR_STORE_F,
@@ -1679,7 +1679,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* nth += n2; */
-    whileloop->exprs.push_back(
+    whileloop->m_exprs.push_back(
         (ast_expression*)ast_binstore_new(
             ctx(),
             INSTR_STORE_F,
@@ -1690,7 +1690,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* while (whole >= base) */
-    forloop->exprs.push_back(
+    forloop->m_exprs.push_back(
         (ast_expression*)ast_loop_new(
             ctx(),
             nullptr,
@@ -1708,12 +1708,12 @@ ast_expression *intrin::ln_() {
         )
     );
 
-    forloop->locals.push_back(b_iplus1);
-    forloop->locals.push_back(A_iplus1);
-    forloop->locals.push_back(B_iplus1);
+    forloop->m_locals.push_back(b_iplus1);
+    forloop->m_locals.push_back(A_iplus1);
+    forloop->m_locals.push_back(B_iplus1);
 
     /* b_iplus1 = nth; */
-    forloop->exprs.push_back(
+    forloop->m_exprs.push_back(
         (ast_expression*)ast_store_new(
             ctx(),
             INSTR_STORE_F,
@@ -1727,7 +1727,7 @@ ast_expression *intrin::ln_() {
      * B_iplus1 = b_iplus1 * B_i + B_iminus1;
      */
     for (i = 0; i <= 1; i++) {
-        forloop->exprs.push_back(
+        forloop->m_exprs.push_back(
             (ast_expression*)ast_store_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1752,7 +1752,7 @@ ast_expression *intrin::ln_() {
      * B_iminus1 = B_i;
      */
     for (i = 0; i <= 1; i++) {
-        forloop->exprs.push_back(
+        forloop->m_exprs.push_back(
             (ast_expression*)ast_store_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1767,7 +1767,7 @@ ast_expression *intrin::ln_() {
      * B_i = B_iplus1;
      */
     for (i = 0; i <= 1; i++) {
-        forloop->exprs.push_back(
+        forloop->m_exprs.push_back(
             (ast_expression*)ast_store_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1781,7 +1781,7 @@ ast_expression *intrin::ln_() {
      * if (whole <= 1.0f + eps)
      *     break;
      */
-    forloop->exprs.push_back(
+    forloop->m_exprs.push_back(
         (ast_expression*)ast_ifthen_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -1809,7 +1809,7 @@ ast_expression *intrin::ln_() {
      * base  = whole;
      */
     for (i = 0; i <= 1; i++) {
-        forloop->exprs.push_back(
+        forloop->m_exprs.push_back(
             (ast_expression*)ast_store_new(
                 ctx(),
                 INSTR_STORE_F,
@@ -1820,7 +1820,7 @@ ast_expression *intrin::ln_() {
     }
 
     /* add the for loop block */
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_loop_new(
             ctx(),
             nullptr,
@@ -1835,7 +1835,7 @@ ast_expression *intrin::ln_() {
     );
 
     /* return sign * A_i / B_il */
-    block->exprs.push_back(
+    block->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)ast_binary_new(
@@ -1852,7 +1852,7 @@ ast_expression *intrin::ln_() {
         )
     );
 
-    func->blocks.emplace_back(block);
+    func->m_blocks.emplace_back(block);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1864,19 +1864,19 @@ ast_expression *intrin::log_variant(const char *name, float base) {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, name, TYPE_FLOAT);
 
-    val->type_params.push_back(arg1);
+    val->m_type_params.push_back(arg1);
 
-    callln->params.push_back((ast_expression*)arg1);
-    callln->params.push_back((ast_expression*)m_fold->constgen_float(base, false));
+    callln->m_params.push_back((ast_expression*)arg1);
+    callln->m_params.push_back((ast_expression*)m_fold->constgen_float(base, false));
 
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)callln
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1908,15 +1908,15 @@ ast_expression *intrin::shift_variant(const char *name, size_t instr) {
     ast_block *body = ast_block_new(ctx());
     ast_function *func = value(&val, name, TYPE_FLOAT);
 
-    val->type_params.push_back(a);
-    val->type_params.push_back(b);
+    val->m_type_params.push_back(a);
+    val->m_type_params.push_back(b);
 
     /* <callpow> = pow(2, b) */
-    callpow->params.push_back((ast_expression*)m_fold->m_imm_float[3]);
-    callpow->params.push_back((ast_expression*)b);
+    callpow->m_params.push_back((ast_expression*)m_fold->m_imm_float[3]);
+    callpow->m_params.push_back((ast_expression*)b);
 
     /* <callfloor> = floor(a [instr] <callpow>) */
-    callfloor->params.push_back(
+    callfloor->m_params.push_back(
         (ast_expression*)ast_binary_new(
             ctx(),
             instr,
@@ -1926,14 +1926,14 @@ ast_expression *intrin::shift_variant(const char *name, size_t instr) {
     );
 
     /* return <callfloor> */
-    body->exprs.push_back(
+    body->m_exprs.push_back(
         (ast_expression*)ast_return_new(
             ctx(),
             (ast_expression*)callfloor
         )
     );
 
-    func->blocks.emplace_back(body);
+    func->m_blocks.emplace_back(body);
     reg(val, func);
     return (ast_expression*)val;
 }
@@ -1998,14 +1998,14 @@ intrin::intrin(parser_t *parser)
 }
 
 ast_expression *intrin::do_fold(ast_value *val, ast_expression **exprs) {
-    if (!val || !val->name)
+    if (!val || !val->m_name)
         return nullptr;
     static constexpr size_t kPrefixLength = 10; // "__builtin_"
     for (auto &it : m_intrinsics) {
-        if (!strcmp(val->name, it.name))
+        if (!strcmp(val->m_name, it.name))
             return (vec_size(exprs) != it.args)
                         ? nullptr
-                        : m_fold->intrinsic(val->name + kPrefixLength, exprs);
+                        : m_fold->intrinsic(val->m_name + kPrefixLength, exprs);
     }
     return nullptr;
 }
@@ -2025,9 +2025,9 @@ ast_expression *intrin::func_try(size_t offset, const char *compare) {
 ast_expression *intrin::func_self(const char *name, const char *from) {
     ast_expression *find;
     /* try current first */
-    if ((find = parser_find_global(m_parser, name)) && ((ast_value*)find)->vtype == TYPE_FUNCTION)
+    if ((find = parser_find_global(m_parser, name)) && ((ast_value*)find)->m_vtype == TYPE_FUNCTION)
         for (auto &it : m_parser->functions)
-            if (((ast_value*)find)->name && !strcmp(it->name, ((ast_value*)find)->name) && it->builtin < 0)
+            if (((ast_value*)find)->m_name && !strcmp(it->m_name, ((ast_value*)find)->m_name) && it->m_builtin < 0)
                 return find;
     /* try name second */
     if ((find = func_try(offsetof(intrin_func_t, name),  name)))

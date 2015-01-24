@@ -535,10 +535,10 @@ static GMQCC_INLINE void sfloat_init(sfloat_state_t *state) {
  * This file is thus, split into two parts.
  */
 
-#define isfloat(X)      (((ast_expression*)(X))->vtype == TYPE_FLOAT)
-#define isvector(X)     (((ast_expression*)(X))->vtype == TYPE_VECTOR)
-#define isstring(X)     (((ast_expression*)(X))->vtype == TYPE_STRING)
-#define isarray(X)      (((ast_expression*)(X))->vtype == TYPE_ARRAY)
+#define isfloat(X)      (((ast_expression*)(X))->m_vtype == TYPE_FLOAT)
+#define isvector(X)     (((ast_expression*)(X))->m_vtype == TYPE_VECTOR)
+#define isstring(X)     (((ast_expression*)(X))->m_vtype == TYPE_STRING)
+#define isarray(X)      (((ast_expression*)(X))->m_vtype == TYPE_ARRAY)
 #define isfloats(X,Y)   (isfloat  (X) && isfloat (Y))
 
 /*
@@ -858,15 +858,15 @@ end:
 }
 
 qcfloat_t fold::immvalue_float(ast_value *value) {
-    return value->constval.vfloat;
+    return value->m_constval.vfloat;
 }
 
 vec3_t fold::immvalue_vector(ast_value *value) {
-    return value->constval.vvec;
+    return value->m_constval.vvec;
 }
 
 const char *fold::immvalue_string(ast_value *value) {
-    return value->constval.vstring;
+    return value->m_constval.vstring;
 }
 
 lex_ctx_t fold::ctx() {
@@ -878,32 +878,32 @@ lex_ctx_t fold::ctx() {
 }
 
 bool fold::immediate_true(ast_value *v) {
-    switch (v->vtype) {
+    switch (v->m_vtype) {
         case TYPE_FLOAT:
-            return !!v->constval.vfloat;
+            return !!v->m_constval.vfloat;
         case TYPE_INTEGER:
-            return !!v->constval.vint;
+            return !!v->m_constval.vint;
         case TYPE_VECTOR:
             if (OPTS_FLAG(CORRECT_LOGIC))
-                return vec3_pbool(v->constval.vvec);
-            return !!(v->constval.vvec.x);
+                return vec3_pbool(v->m_constval.vvec);
+            return !!(v->m_constval.vvec.x);
         case TYPE_STRING:
-            if (!v->constval.vstring)
+            if (!v->m_constval.vstring)
                 return false;
             if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
                 return true;
-            return !!v->constval.vstring[0];
+            return !!v->m_constval.vstring[0];
         default:
             compile_error(ctx(), "internal error: fold_immediate_true on invalid type");
             break;
     }
-    return !!v->constval.vfunc;
+    return !!v->m_constval.vfunc;
 }
 
 /* Handy macros to determine if an ast_value can be constant folded. */
 #define fold_can_1(X)  \
-    (ast_istype(((ast_expression*)(X)), ast_value) && (X)->hasvalue && ((X)->cvq == CV_CONST) && \
-                ((ast_expression*)(X))->vtype != TYPE_FUNCTION)
+    (ast_istype(((ast_expression*)(X)), ast_value) && (X)->m_hasvalue && ((X)->m_cvq == CV_CONST) && \
+                ((ast_expression*)(X))->m_vtype != TYPE_FUNCTION)
 
 #define fold_can_2(X, Y) (fold_can_1(X) && fold_can_1(Y))
 
@@ -938,7 +938,7 @@ bool fold::generate(ir_builder *ir) {
         if (!ast_global_codegen((cur = it), ir, false)) goto err;
     return true;
 err:
-    con_out("failed to generate global %s\n", cur->name);
+    con_out("failed to generate global %s\n", cur->m_name);
     delete ir;
     return false;
 }
@@ -957,14 +957,14 @@ fold::~fold() {
 
 ast_expression *fold::constgen_float(qcfloat_t value, bool inexact) {
     for (auto &it : m_imm_float)
-        if (!memcmp(&it->constval.vfloat, &value, sizeof(qcfloat_t)))
+        if (!memcmp(&it->m_constval.vfloat, &value, sizeof(qcfloat_t)))
             return (ast_expression*)it;
 
     ast_value *out  = ast_value_new(ctx(), "#IMMEDIATE", TYPE_FLOAT);
-    out->cvq = CV_CONST;
-    out->hasvalue = true;
-    out->inexact = inexact;
-    out->constval.vfloat = value;
+    out->m_cvq = CV_CONST;
+    out->m_hasvalue = true;
+    out->m_inexact = inexact;
+    out->m_constval.vfloat = value;
 
     m_imm_float.push_back(out);
 
@@ -973,13 +973,13 @@ ast_expression *fold::constgen_float(qcfloat_t value, bool inexact) {
 
 ast_expression *fold::constgen_vector(vec3_t value) {
     for (auto &it : m_imm_vector)
-        if (vec3_cmp(it->constval.vvec, value))
+        if (vec3_cmp(it->m_constval.vvec, value))
             return (ast_expression*)it;
 
     ast_value *out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_VECTOR);
-    out->cvq = CV_CONST;
-    out->hasvalue = true;
-    out->constval.vvec = value;
+    out->m_cvq = CV_CONST;
+    out->m_hasvalue = true;
+    out->m_constval.vvec = value;
 
     m_imm_vector.push_back(out);
 
@@ -998,15 +998,15 @@ ast_expression *fold::constgen_string(const char *str, bool translate) {
         char name[32];
         util_snprintf(name, sizeof(name), "dotranslate_%zu", m_parser->translated++);
         out = ast_value_new(ctx(), name, TYPE_STRING);
-        out->flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
+        out->m_flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
     } else {
         out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_STRING);
     }
 
-    out->cvq = CV_CONST;
-    out->hasvalue = true;
-    out->isimm = true;
-    out->constval.vstring = parser_strdup(str);
+    out->m_cvq = CV_CONST;
+    out->m_hasvalue = true;
+    out->m_isimm = true;
+    out->m_constval.vstring = parser_strdup(str);
 
     m_imm_string.push_back(out);
     util_htseth(table, str, hash, out);
@@ -1057,7 +1057,7 @@ inexact_possible:
 bool fold::check_inexact_float(ast_value *a, ast_value *b) {
     if (!OPTS_WARN(WARN_INEXACT_COMPARES))
         return false;
-    if (!a->inexact && !b->inexact)
+    if (!a->m_inexact && !b->m_inexact)
         return false;
     return compile_warning(ctx(), WARN_INEXACT_COMPARES, "inexact value in comparison");
 }
@@ -1070,8 +1070,8 @@ ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
         ast_expression *out;
         ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
         out = (ast_expression*)ast_member_new(ctx(), (ast_expression*)sel, set[0]-'x', nullptr);
-        out->keep_node = false;
-        ((ast_member*)out)->rvalue = true;
+        out->m_keep_node = false;
+        ((ast_member*)out)->m_rvalue = true;
         if (x != -1.0f)
             return (ast_expression*)ast_binary_new(ctx(), INSTR_MUL_F, constgen_float(x, false), out);
     }
@@ -1370,7 +1370,7 @@ ast_expression *fold::op_length(ast_value *a) {
     if (fold_can_1(a) && isstring(a))
         return constgen_float(strlen(immvalue_string(a)), false);
     if (isarray(a))
-        return constgen_float(a->initlist.size(), false);
+        return constgen_float(a->m_initlist.size(), false);
     return nullptr;
 }
 
@@ -1522,18 +1522,18 @@ ast_expression *fold::intrinsic(const char *intrinsic, ast_expression **arg) {
 #undef fold_can_1
 #undef fold_can_2
 
-#define isfloat(X)              ((X)->vtype == TYPE_FLOAT)
-/*#define isstring(X)             ((X)->vtype == TYPE_STRING)*/
-/*#define isvector(X)             ((X)->vtype == TYPE_VECTOR)*/
-#define fold_can_1(X)           ((X)->hasvalue && (X)->cvq == CV_CONST)
+#define isfloat(X)              ((X)->m_vtype == TYPE_FLOAT)
+/*#define isstring(X)             ((X)->m_vtype == TYPE_STRING)*/
+/*#define isvector(X)             ((X)->m_vtype == TYPE_VECTOR)*/
+#define fold_can_1(X)           ((X)->m_hasvalue && (X)->m_cvq == CV_CONST)
 /*#define fold_can_2(X,Y)         (fold_can_1(X) && fold_can_1(Y))*/
 
 qcfloat_t fold::immvalue_float(ir_value *value) {
-    return value->constval.vfloat;
+    return value->m_constval.vfloat;
 }
 
 vec3_t fold::immvalue_vector(ir_value *value) {
-    return value->constval.vvec;
+    return value->m_constval.vvec;
 }
 
 ast_expression *fold::superfluous(ast_expression *left, ast_expression *right, int op) {
@@ -1608,10 +1608,10 @@ int fold::cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
         ast_expression_codegen *cgen;
         ir_block               *elide;
         ir_value               *dummy;
-        bool                    istrue  = (immvalue_float(condval) != 0.0f && branch->on_true);
-        bool                    isfalse = (immvalue_float(condval) == 0.0f && branch->on_false);
-        ast_expression         *path    = (istrue)  ? branch->on_true  :
-                                          (isfalse) ? branch->on_false : nullptr;
+        bool                    istrue  = (immvalue_float(condval) != 0.0f && branch->m_on_true);
+        bool                    isfalse = (immvalue_float(condval) == 0.0f && branch->m_on_false);
+        ast_expression         *path    = (istrue)  ? branch->m_on_true  :
+                                          (isfalse) ? branch->m_on_false : nullptr;
         if (!path) {
             /*
              * no path to take implies that the evaluation is if(0) and there
@@ -1621,17 +1621,17 @@ int fold::cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
             return true;
         }
 
-        if (!(elide = ir_function_create_block(ast_ctx(branch), func->ir_func, ast_function_label(func, ((istrue) ? "ontrue" : "onfalse")))))
+        if (!(elide = ir_function_create_block(branch->m_context, func->m_ir_func, ast_function_label(func, ((istrue) ? "ontrue" : "onfalse")))))
             return false;
-        if (!(*(cgen = path->codegen))((ast_expression*)path, func, false, &dummy))
+        if (!(*(cgen = path->m_codegen))((ast_expression*)path, func, false, &dummy))
             return false;
-        if (!ir_block_create_jump(func->curblock, ast_ctx(branch), elide))
+        if (!ir_block_create_jump(func->m_curblock, branch->m_context, elide))
             return false;
         /*
          * now the branch has been eliminated and the correct block for the constant evaluation
          * is expanded into the current block for the function.
          */
-        func->curblock = elide;
+        func->m_curblock = elide;
         ++opts_optimizationcount[OPTIM_CONST_FOLD_DCE];
         return true;
     }
