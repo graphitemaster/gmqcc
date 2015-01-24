@@ -428,10 +428,8 @@ ir_function::ir_function(ir_builder* owner_, qc_type outtype_)
   name("<@unnamed>"),
   outtype(outtype_)
 {
-    owner = owner;
     context.file = "<@no context>";
     context.line = 0;
-    outtype = outtype;
 }
 
 ir_function::~ir_function()
