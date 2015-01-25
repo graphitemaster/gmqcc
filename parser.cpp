@@ -4376,7 +4376,7 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
     fval->m_next = (ast_expression*)ast_value_new(array->m_context, "<void>", TYPE_VOID);
 
     index = ast_value_new(array->m_context, "index", TYPE_FLOAT);
-    value = ast_value_copy((ast_value*)array->m_next);
+    value = ast_value_from_type((ast_value*)array->m_next);
 
     if (!index || !value) {
         parseerror(parser, "failed to create locals for array accessor");
@@ -4442,7 +4442,7 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
 
     entity = ast_value_new(array->m_context, "entity", TYPE_ENTITY);
     index  = ast_value_new(array->m_context, "index",  TYPE_FLOAT);
-    value  = ast_value_copy((ast_value*)array->m_next);
+    value  = ast_value_from_type((ast_value*)array->m_next);
     if (!entity || !index || !value) {
         parseerror(parser, "failed to create locals for array accessor");
         goto cleanup;
@@ -4790,7 +4790,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
     /* generate the basic type value */
     if (cached_typedef) {
-        var = ast_value_copy(cached_typedef);
+        var = ast_value_from_type(cached_typedef);
         ast_value_set_name(var, "<type(from_def)>");
     } else
         var = ast_value_new(ctx, "<type>", parser_token(parser)->constval.t);
@@ -4826,7 +4826,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
     /* store the base if requested */
     if (storebase) {
-        *storebase = ast_value_copy(var);
+        *storebase = ast_value_from_type(var);
         if (isfield) {
             tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
             tmp->m_next = (ast_expression*)*storebase;
@@ -5795,7 +5795,7 @@ another:
                 parseerror(parser, "expected another variable");
                 break;
             }
-            var = ast_value_copy(basetype);
+            var = ast_value_from_type(basetype);
             cleanvar = true;
             ast_value_set_name(var, parser_tokval(parser));
             if (!parser_next(parser)) {

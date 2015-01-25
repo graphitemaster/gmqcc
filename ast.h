@@ -101,28 +101,31 @@ typedef void ast_node_delete(ast_node*);
 
 struct ast_node
 {
-    //ast_node() = delete;
-    //ast_node(lex_ctx_t, int nodetype);
-    //virtual ~ast_node();
+    ast_node() = delete;
+    ast_node(lex_ctx_t, int nodetype);
+    virtual ~ast_node();
 
     lex_ctx_t m_context;
     /* I don't feel comfortable using keywords like 'delete' as names... */
-    ast_node_delete *m_destroy;
     int              m_node_type;
     /* keep_node: if a node contains this node, 'keep_node'
      * prevents its dtor from destroying this node as well.
      */
     bool             m_keep_node;
     bool             m_side_effects;
+
+    void propagate_side_effects(ast_node *other) const;
 };
 
-#define ast_delete(x) ( (x)->m_destroy((x)) )
 #define ast_unref(x) do        \
 {                              \
     if (! (x)->m_keep_node ) { \
-        ast_delete(x);         \
+        delete (x);            \
     }                          \
 } while(0)
+
+enum class ast_copy_type_t { value };
+static const ast_copy_type_t ast_copy_type = ast_copy_type_t::value;
 
 /* Expression interface
  *
@@ -144,27 +147,36 @@ typedef bool ast_expression_codegen(ast_expression*,
  * variables through the environment (or functions, constants...).
  */
 struct ast_expression : ast_node {
-    ast_expression() {}
+    ast_expression() = delete;
+    ast_expression(lex_ctx_t ctx, int nodetype, qc_type vtype);
+    ast_expression(lex_ctx_t ctx, int nodetype);
+    ~ast_expression();
+    ast_expression(ast_copy_type_t, int nodetype, const ast_expression&);
+    ast_expression(ast_copy_type_t, const ast_expression&);
 
-    ast_expression_codegen *m_codegen;
-    qc_type                 m_vtype;
-    ast_expression         *m_next;
+    static ast_expression *shallow_type(lex_ctx_t ctx, qc_type vtype);
+
+    bool compare_type(const ast_expression &other) const;
+    void adopt_type(const ast_expression &other);
+
+    qc_type                 m_vtype = TYPE_VOID;
+    ast_expression         *m_next = nullptr;
     /* arrays get a member-count */
-    size_t                  m_count;
-    std::vector<ast_value*> m_type_params;
+    size_t                  m_count = 0;
+    std::vector<std::unique_ptr<ast_value>> m_type_params;
 
-    ast_flag_t              m_flags;
+    ast_flag_t              m_flags = 0;
     /* void foo(string...) gets varparam set as a restriction
      * for variadic parameters
      */
-    ast_expression         *m_varparam;
+    ast_expression         *m_varparam = nullptr;
     /* The codegen functions should store their output values
      * so we can call it multiple times without re-evaluating.
      * Store lvalue and rvalue seperately though. So that
      * ast_entfield for example can generate both if required.
      */
-    ir_value               *m_outl;
-    ir_value               *m_outr;
+    ir_value               *m_outl = nullptr;
+    ir_value               *m_outr = nullptr;
 };
 
 /* Value
@@ -186,16 +198,26 @@ union basic_value_t {
 
 struct ast_value : ast_expression
 {
-    const char *m_name;
-    const char *m_desc;
+    ast_value() = delete;
+    ast_value(lex_ctx_t ctx, const std::string &name, qc_type qctype);
+    ~ast_value();
 
-    const char *m_argcounter;
+    ast_value(ast_copy_type_t, const ast_expression&, const std::string&);
+    ast_value(ast_copy_type_t, const ast_value&);
+    ast_value(ast_copy_type_t, const ast_value&, const std::string&);
 
-    int m_cvq;     /* const/var qualifier */
-    bool m_isfield; /* this declares a field */
-    bool m_isimm;   /* an immediate, not just const */
-    bool m_hasvalue;
-    bool m_inexact; /* inexact coming from folded expression */
+    void add_param(ast_value*);
+
+    std::string m_name;
+    std::string m_desc;
+
+    const char *m_argcounter = nullptr;
+
+    int m_cvq = CV_NONE;     /* const/var qualifier */
+    bool m_isfield = false; /* this declares a field */
+    bool m_isimm = false;   /* an immediate, not just const */
+    bool m_hasvalue = false;
+    bool m_inexact = false; /* inexact coming from folded expression */
     basic_value_t m_constval;
     /* for TYPE_ARRAY we have an optional vector
      * of constants when an initializer list
@@ -204,41 +226,23 @@ struct ast_value : ast_expression
     std::vector<basic_value_t> m_initlist;
 
     /* usecount for the parser */
-    size_t m_uses;
+    size_t m_uses = 0;
 
-    ir_value *m_ir_v;
-    ir_value **m_ir_values;
-    size_t m_ir_value_count;
+    ir_value *m_ir_v = nullptr;
+    ir_value **m_ir_values = nullptr;
+    size_t m_ir_value_count = 0;
 
     /* ONLY for arrays in progs version up to 6 */
-    ast_value *m_setter;
-    ast_value *m_getter;
+    ast_value *m_setter = nullptr;
+    ast_value *m_getter = nullptr;
 
 
-    bool m_intrinsic; /* true if associated with intrinsic */
+    bool m_intrinsic = false; /* true if associated with intrinsic */
 };
-
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type qctype);
-ast_value* ast_value_copy(const ast_value *self);
-/* This will NOT delete an underlying ast_function */
-void ast_value_delete(ast_value*);
-
-bool ast_value_set_name(ast_value*, const char *name);
-
-/*
-bool ast_value_codegen(ast_value*, ast_function*, bool lvalue, ir_value**);
-bool ast_local_codegen(ast_value *self, ir_function *func, bool isparam);
-*/
 
 bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield);
 
-void ast_value_params_add(ast_value*, ast_value*);
-
-bool ast_compare_type(ast_expression *a, ast_expression *b);
-ast_expression* ast_type_copy(lex_ctx_t ctx, const ast_expression *ex);
-#define ast_type_adopt(a, b) ast_type_adopt_impl((ast_expression*)(a), (ast_expression*)(b))
-void ast_type_adopt_impl(ast_expression *self, const ast_expression *other);
-void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize);
+void ast_type_to_string(const ast_expression *e, char *buf, size_t bufsize);
 
 enum ast_binary_ref {
     AST_REF_NONE  = 0,
@@ -254,16 +258,16 @@ enum ast_binary_ref {
  */
 struct ast_binary : ast_expression
 {
+    ast_binary() = delete;
+    ast_binary(lex_ctx_t ctx, int op, ast_expression *l, ast_expression *r);
+    ~ast_binary();
+
     int m_op;
     ast_expression *m_left;
     ast_expression *m_right;
     ast_binary_ref m_refs;
     bool m_right_first;
 };
-ast_binary* ast_binary_new(lex_ctx_t    ctx,
-                           int        op,
-                           ast_expression *left,
-                           ast_expression *right);
 
 /* Binstore
  *
@@ -272,6 +276,10 @@ ast_binary* ast_binary_new(lex_ctx_t    ctx,
  */
 struct ast_binstore : ast_expression
 {
+    ast_binstore() = delete;
+    ast_binstore(lex_ctx_t ctx, int storeop, int mathop, ast_expression *l, ast_expression *r);
+    ~ast_binstore();
+
     int m_opstore;
     int m_opbin;
     ast_expression *m_dest;
@@ -291,12 +299,14 @@ ast_binstore* ast_binstore_new(lex_ctx_t    ctx,
  */
 struct ast_unary : ast_expression
 {
+    ast_unary() = delete;
+    ~ast_unary();
     int m_op;
     ast_expression *m_operand;
+    static ast_unary* make(lex_ctx_t ctx, int op, ast_expression *expr);
+private:
+    ast_unary(lex_ctx_t ctx, int op, ast_expression *expr);
 };
-ast_unary* ast_unary_new(lex_ctx_t ctx,
-                         int op,
-                         ast_expression *expr);
 
 /* Return
  *
@@ -306,10 +316,11 @@ ast_unary* ast_unary_new(lex_ctx_t ctx,
  */
 struct ast_return : ast_expression
 {
+    ast_return() = delete;
+    ast_return(lex_ctx_t ctx, ast_expression *expr);
+    ~ast_return();
     ast_expression *m_operand;
 };
-ast_return* ast_return_new(lex_ctx_t ctx,
-                           ast_expression *expr);
 
 /* Entity-field
  *
@@ -326,13 +337,15 @@ ast_return* ast_return_new(lex_ctx_t ctx,
  */
 struct ast_entfield : ast_expression
 {
-    /* The entity can come from an expression of course. */
+    ast_entfield() = delete;
+    ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field);
+    ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype);
+    ~ast_entfield();
+    // The entity can come from an expression of course.
     ast_expression *m_entity;
-    /* As can the field, it just must result in a value of TYPE_FIELD */
+    // As can the field, it just must result in a value of TYPE_FIELD
     ast_expression *m_field;
 };
-ast_entfield* ast_entfield_new(lex_ctx_t ctx, ast_expression *entity, ast_expression *field);
-ast_entfield* ast_entfield_new_force(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype);
 
 /* Member access:
  *

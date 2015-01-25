@@ -57,174 +57,162 @@ static void ast_binary_delete(ast_binary*);
 static bool ast_binary_codegen(ast_binary*, ast_function*, bool lvalue, ir_value**);
 static bool ast_state_codegen(ast_state*, ast_function*, bool lvalue, ir_value**);
 
-/* It must not be possible to get here. */
-static GMQCC_NORETURN void _ast_node_destroy(ast_node *self)
+/* Initialize main ast node aprts */
+ast_node::ast_node(lex_ctx_t ctx, int node_type)
+: m_context(ctx),
+  m_node_type(node_type),
+  m_keep_node(false),
+  m_side_effects(false)
 {
-    (void)self;
-    con_err("ast node missing destroy()\n");
-    exit(EXIT_FAILURE);
 }
 
-/* Initialize main ast node aprts */
-static void ast_node_init(ast_node *self, lex_ctx_t ctx, int node_type)
+ast_node::~ast_node()
 {
-    self->m_context = ctx;
-    self->m_destroy      = &_ast_node_destroy;
-    self->m_keep_node    = false;
-    self->m_node_type    = node_type;
-    self->m_side_effects = false;
 }
 
 /* weight and side effects */
-static void _ast_propagate_effects(ast_node *self, ast_node *other)
+void ast_node::propagate_side_effects(ast_node *other) const
 {
-    if (other->m_side_effects)
-      self->m_side_effects = true;
+    other->m_side_effects = m_side_effects;
 }
-#define ast_propagate_effects(s,o) _ast_propagate_effects(((ast_node*)(s)), ((ast_node*)(o)))
 
 /* General expression initialization */
-static void ast_expression_init(ast_expression *self,
-                                ast_expression_codegen *codegen)
+ast_expression::ast_expression(lex_ctx_t ctx, int nodetype, qc_type type)
+: ast_node(ctx, nodetype),
+  m_vtype(type)
 {
-    self->m_codegen  = codegen;
-    self->m_vtype    = TYPE_VOID;
-    self->m_next     = nullptr;
-    self->m_outl     = nullptr;
-    self->m_outr     = nullptr;
-    self->m_count    = 0;
-    self->m_varparam = nullptr;
-    self->m_flags    = 0;
     if (OPTS_OPTION_BOOL(OPTION_COVERAGE))
-        self->m_flags |= AST_FLAG_BLOCK_COVERAGE;
+        m_flags |= AST_FLAG_BLOCK_COVERAGE;
+}
+ast_expression::ast_expression(lex_ctx_t ctx, int nodetype)
+: ast_expression(ctx, nodetype, TYPE_VOID)
+{}
+
+ast_expression::~ast_expression()
+{
+    if (m_next)
+        delete m_next;
+    if (m_varparam)
+        delete m_varparam;
 }
 
-static void ast_expression_delete(ast_expression *self)
+ast_expression::ast_expression(ast_copy_type_t, int nodetype, const ast_expression &other)
+: ast_expression(other.m_context, nodetype)
 {
-    if (self->m_next)
-        ast_delete(self->m_next);
-    for (auto &it : self->m_type_params)
-        ast_delete(it);
-    if (self->m_varparam)
-        ast_delete(self->m_varparam);
+    m_vtype = other.m_vtype;
+    m_count = other.m_count;
+    m_flags = other.m_flags;
+    if (other.m_next)
+        m_next = new ast_expression(ast_copy_type, TYPE_ast_expression, *other.m_next);
+    m_type_params.reserve(other.m_type_params.size());
+    for (auto &it : other.m_type_params)
+        m_type_params.emplace_back(new ast_value(ast_copy_type, *it));
 }
 
-static void ast_expression_delete_full(ast_expression *self)
-{
-    ast_expression_delete(self);
-    mem_d(self);
+ast_expression::ast_expression(ast_copy_type_t, const ast_expression &other)
+: ast_expression(other.m_context, TYPE_ast_expression)
+{}
+
+ast_expression *ast_expression::shallow_type(lex_ctx_t ctx, qc_type vtype) {
+    auto expr = new ast_expression(ctx, TYPE_ast_expression);
+    expr->m_vtype = vtype;
+    return expr;
 }
 
-ast_value* ast_value_copy(const ast_value *self)
+void ast_expression::adopt_type(const ast_expression &other)
 {
-    ast_value *cp = ast_value_new(self->m_context, self->m_name, self->m_vtype);
-    if (self->m_next) {
-        cp->m_next = ast_type_copy(self->m_context, self->m_next);
-    }
-    const ast_expression *fromex = self;
-    ast_expression *selfex = cp;
-    selfex->m_count = fromex->m_count;
-    selfex->m_flags = fromex->m_flags;
-    for (auto &it : fromex->m_type_params) {
-        ast_value *v = ast_value_copy(it);
-        selfex->m_type_params.push_back(v);
-    }
-    return cp;
+    m_vtype = other.m_vtype;
+    if (other.m_next)
+        m_next = new ast_expression(ast_copy_type, TYPE_ast_expression, *other.m_next);
+    m_count = other.m_count;
+    m_flags = other.m_flags;
+    m_type_params.clear();
+    m_type_params.reserve(other.m_type_params.size());
+    for (auto &it : other.m_type_params)
+        m_type_params.emplace_back(new ast_value(ast_copy_type, *it));
 }
 
-void ast_type_adopt_impl(ast_expression *self, const ast_expression *other)
+bool ast_expression::compare_type(const ast_expression &other) const
 {
-    const ast_expression *fromex;
-    ast_expression *selfex;
-    self->m_vtype = other->m_vtype;
-    if (other->m_next) {
-        self->m_next = (ast_expression*)ast_type_copy(self->m_context, other->m_next);
-    }
-    fromex = other;
-    selfex = self;
-    selfex->m_count = fromex->m_count;
-    selfex->m_flags = fromex->m_flags;
-    for (auto &it : fromex->m_type_params) {
-        ast_value *v = ast_value_copy(it);
-        selfex->m_type_params.push_back(v);
-    }
-}
-
-static ast_expression* ast_shallow_type(lex_ctx_t ctx, qc_type vtype)
-{
-    ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
-    ast_expression_init(self, nullptr);
-    self->m_codegen = nullptr;
-    self->m_next    = nullptr;
-    self->m_vtype   = vtype;
-    return self;
-}
-
-ast_expression* ast_type_copy(lex_ctx_t ctx, const ast_expression *ex)
-{
-    const ast_expression *fromex;
-    ast_expression       *selfex;
-
-    if (!ex)
-        return nullptr;
-    else
-    {
-        ast_instantiate(ast_expression, ctx, ast_expression_delete_full);
-        ast_expression_init(self, nullptr);
-
-        fromex = ex;
-        selfex = self;
-
-        /* This may never be codegen()d */
-        selfex->m_codegen = nullptr;
-
-        selfex->m_vtype = fromex->m_vtype;
-        if (fromex->m_next)
-            selfex->m_next = ast_type_copy(ctx, fromex->m_next);
-        else
-            selfex->m_next = nullptr;
-
-        selfex->m_count = fromex->m_count;
-        selfex->m_flags = fromex->m_flags;
-        for (auto &it : fromex->m_type_params) {
-            ast_value *v = ast_value_copy(it);
-            selfex->m_type_params.push_back(v);
-        }
-
-        return self;
-    }
-}
-
-bool ast_compare_type(ast_expression *a, ast_expression *b)
-{
-    if (a->m_vtype == TYPE_NIL ||
-        b->m_vtype == TYPE_NIL)
+    if (m_vtype == TYPE_NIL ||
+        other.m_vtype == TYPE_NIL)
         return true;
-    if (a->m_vtype != b->m_vtype)
+    if (m_vtype != other.m_vtype)
         return false;
-    if (!a->m_next != !b->m_next)
+    if (!m_next != !other.m_next)
         return false;
-    if (a->m_type_params.size() != b->m_type_params.size())
+    if (m_type_params.size() != other.m_type_params.size())
         return false;
-    if ((a->m_flags & AST_FLAG_TYPE_MASK) !=
-        (b->m_flags & AST_FLAG_TYPE_MASK) )
+    if ((m_flags & AST_FLAG_TYPE_MASK) !=
+        (other.m_flags & AST_FLAG_TYPE_MASK) )
     {
         return false;
     }
-    if (a->m_type_params.size()) {
+    if (m_type_params.size()) {
         size_t i;
-        for (i = 0; i < a->m_type_params.size(); ++i) {
-            if (!ast_compare_type((ast_expression*)a->m_type_params[i],
-                                  (ast_expression*)b->m_type_params[i]))
+        for (i = 0; i < m_type_params.size(); ++i) {
+            if (!m_type_params[i]->compare_type(*other.m_type_params[i]))
                 return false;
         }
     }
-    if (a->m_next)
-        return ast_compare_type(a->m_next, b->m_next);
+    if (m_next)
+        return m_next->compare_type(*other.m_next);
     return true;
 }
 
-static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsize, size_t pos)
+ast_value::ast_value(ast_copy_type_t, const ast_value &other, const std::string &name)
+: ast_value(ast_copy_type, static_cast<const ast_expression&>(other), name)
+{}
+
+ast_value::ast_value(ast_copy_type_t, const ast_value &other)
+: ast_value(ast_copy_type, static_cast<const ast_expression&>(other), other.m_name)
+{}
+
+ast_value::ast_value(ast_copy_type_t, const ast_expression &other, const std::string &name)
+: ast_expression(ast_copy_type, other),
+  m_name(name)
+{}
+
+ast_value::ast_value(lex_ctx_t ctx, const std::string &name, qc_type t)
+: ast_expression(ctx, TYPE_ast_value, t),
+  m_name(name)
+{
+    m_keep_node = true; // keep values, always
+    memset(&m_constval, 0, sizeof(m_constval));
+}
+
+ast_value::~ast_value()
+{
+    if (m_argcounter)
+        mem_d((void*)m_argcounter);
+    if (m_hasvalue) {
+        switch (m_vtype)
+        {
+        case TYPE_STRING:
+            mem_d((void*)m_constval.vstring);
+            break;
+        case TYPE_FUNCTION:
+            // unlink us from the function node
+            m_constval.vfunc->m_function_type = nullptr;
+            break;
+        // NOTE: delete function? currently collected in
+        // the parser structure
+        default:
+            break;
+        }
+    }
+    if (m_ir_values)
+        mem_d(m_ir_values);
+
+    // initlist imples an array which implies .next in the expression exists.
+    if (m_initlist.size() && m_next->m_vtype == TYPE_STRING) {
+        for (auto &it : m_initlist)
+            if (it.vstring)
+                mem_d(it.vstring);
+    }
+}
+
+static size_t ast_type_to_string_impl(const ast_expression *e, char *buf, size_t bufsize, size_t pos)
 {
     const char *typestr;
     size_t typelen;
@@ -270,13 +258,13 @@ static size_t ast_type_to_string_impl(ast_expression *e, char *buf, size_t bufsi
                 return pos;
             }
             buf[pos++] = '(';
-            pos = ast_type_to_string_impl((ast_expression*)(e->m_type_params[0]), buf, bufsize, pos);
+            pos = ast_type_to_string_impl(e->m_type_params[0].get(), buf, bufsize, pos);
             for (i = 1; i < e->m_type_params.size(); ++i) {
                 if (pos + 2 >= bufsize)
                     goto full;
                 buf[pos++] = ',';
                 buf[pos++] = ' ';
-                pos = ast_type_to_string_impl((ast_expression*)(e->m_type_params[i]), buf, bufsize, pos);
+                pos = ast_type_to_string_impl(e->m_type_params[i].get(), buf, bufsize, pos);
             }
             if (pos + 1 >= bufsize)
                 goto full;
@@ -310,105 +298,24 @@ full:
     return bufsize;
 }
 
-void ast_type_to_string(ast_expression *e, char *buf, size_t bufsize)
+void ast_type_to_string(const ast_expression *e, char *buf, size_t bufsize)
 {
     size_t pos = ast_type_to_string_impl(e, buf, bufsize-1, 0);
     buf[pos] = 0;
 }
 
-static bool ast_value_codegen(ast_value *self, ast_function *func, bool lvalue, ir_value **out);
-ast_value* ast_value_new(lex_ctx_t ctx, const char *name, qc_type t)
+void ast_value::add_param(ast_value *p)
 {
-    ast_instantiate(ast_value, ctx, ast_value_delete);
-    ast_expression_init((ast_expression*)self,
-                        (ast_expression_codegen*)&ast_value_codegen);
-    self->m_keep_node = true; /* keep */
-
-    self->m_name = name ? util_strdup(name) : nullptr;
-    self->m_vtype    = t;
-    self->m_next     = nullptr;
-    self->m_isfield  = false;
-    self->m_cvq      = CV_NONE;
-    self->m_hasvalue = false;
-    self->m_isimm    = false;
-    self->m_inexact  = false;
-    self->m_uses     = 0;
-    memset(&self->m_constval, 0, sizeof(self->m_constval));
-
-    self->m_ir_v           = nullptr;
-    self->m_ir_values      = nullptr;
-    self->m_ir_value_count = 0;
-
-    self->m_setter = nullptr;
-    self->m_getter = nullptr;
-    self->m_desc   = nullptr;
-
-    self->m_argcounter = nullptr;
-    self->m_intrinsic = false;
-
-    return self;
+    m_type_params.emplace_back(p);
 }
 
-void ast_value_delete(ast_value* self)
+ast_binary::ast_binary(lex_ctx_t ctx, int op,
+                       ast_expression* left, ast_expression* right)
+: ast_expression(ctx, TYPE_ast_binary),
+  m_op(op),
+  // m_left/m_right happen after the peephole step right below
+  m_right_first(false)
 {
-    if (self->m_name)
-        mem_d((void*)self->m_name);
-    if (self->m_argcounter)
-        mem_d((void*)self->m_argcounter);
-    if (self->m_hasvalue) {
-        switch (self->m_vtype)
-        {
-        case TYPE_STRING:
-            mem_d((void*)self->m_constval.vstring);
-            break;
-        case TYPE_FUNCTION:
-            /* unlink us from the function node */
-            self->m_constval.vfunc->m_function_type = nullptr;
-            break;
-        /* NOTE: delete function? currently collected in
-         * the parser structure
-         */
-        default:
-            break;
-        }
-    }
-    if (self->m_ir_values)
-        mem_d(self->m_ir_values);
-
-    if (self->m_desc)
-        mem_d(self->m_desc);
-
-    // initlist imples an array which implies .next in the expression exists.
-    if (self->m_initlist.size() && self->m_next->m_vtype == TYPE_STRING) {
-        for (auto &it : self->m_initlist)
-            if (it.vstring)
-                mem_d(it.vstring);
-    }
-
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_value();
-    mem_d(self);
-}
-
-void ast_value_params_add(ast_value *self, ast_value *p)
-{
-    self->m_type_params.push_back(p);
-}
-
-bool ast_value_set_name(ast_value *self, const char *name)
-{
-    if (self->m_name)
-        mem_d((void*)self->m_name);
-    self->m_name = util_strdup(name);
-    return !!self->m_name;
-}
-
-ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
-                           ast_expression* left, ast_expression* right)
-{
-    ast_instantiate(ast_binary, ctx, ast_binary_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binary_codegen);
-
     if (ast_istype(right, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         ast_unary      *unary  = ((ast_unary*)right);
         ast_expression *normal = unary->m_operand;
@@ -427,86 +334,61 @@ ast_binary* ast_binary_new(lex_ctx_t ctx, int op,
         }
     }
 
-    self->m_op = op;
-    self->m_left = left;
-    self->m_right = right;
-    self->m_right_first = false;
+    m_left = left;
+    m_right = right;
 
-    ast_propagate_effects(self, left);
-    ast_propagate_effects(self, right);
+    propagate_side_effects(left);
+    propagate_side_effects(right);
 
     if (op >= INSTR_EQ_F && op <= INSTR_GT)
-        self->m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_FLOAT;
     else if (op == INSTR_AND || op == INSTR_OR) {
         if (OPTS_FLAG(PERL_LOGIC))
-            ast_type_adopt(self, right);
+            adopt_type(*right);
         else
-            self->m_vtype = TYPE_FLOAT;
+            m_vtype = TYPE_FLOAT;
     }
     else if (op == INSTR_BITAND || op == INSTR_BITOR)
-        self->m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_FLOAT;
     else if (op == INSTR_MUL_VF || op == INSTR_MUL_FV)
-        self->m_vtype = TYPE_VECTOR;
+        m_vtype = TYPE_VECTOR;
     else if (op == INSTR_MUL_V)
-        self->m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_FLOAT;
     else
-        self->m_vtype = left->m_vtype;
+        m_vtype = left->m_vtype;
 
-    /* references all */
-    self->m_refs = AST_REF_ALL;
-
-    return self;
+    // references all
+    m_refs = AST_REF_ALL;
 }
 
-void ast_binary_delete(ast_binary *self)
+ast_binary::~ast_binary()
 {
-    if (self->m_refs & AST_REF_LEFT)  ast_unref(self->m_left);
-    if (self->m_refs & AST_REF_RIGHT) ast_unref(self->m_right);
-
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_binary();
-    mem_d(self);
+    if (m_refs & AST_REF_LEFT)  ast_unref(m_left);
+    if (m_refs & AST_REF_RIGHT) ast_unref(m_right);
 }
 
-ast_binstore* ast_binstore_new(lex_ctx_t ctx, int storop, int op,
-                               ast_expression* left, ast_expression* right)
+ast_binstore::ast_binstore(lex_ctx_t ctx, int storop, int mathop,
+                           ast_expression* left, ast_expression* right)
+: ast_expression(ctx, TYPE_ast_binstore),
+  m_opstore(storop),
+  m_opbin(mathop),
+  m_dest(left),
+  m_source(right),
+  m_keep_dest(false)
 {
-    ast_instantiate(ast_binstore, ctx, ast_binstore_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_binstore_codegen);
-
-    self->m_side_effects = true;
-
-    self->m_opstore = storop;
-    self->m_opbin   = op;
-    self->m_dest    = left;
-    self->m_source  = right;
-
-    self->m_keep_dest = false;
-
-    ast_type_adopt(self, left);
-    return self;
+    m_side_effects = true;
+    adopt_type(*left);
 }
 
-void ast_binstore_delete(ast_binstore *self)
+ast_binstore::~ast_binstore()
 {
-    if (!self->m_keep_dest)
-        ast_unref(self->m_dest);
-    ast_unref(self->m_source);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_binstore();
-    mem_d(self);
+    if (!m_keep_dest)
+        ast_unref(m_dest);
+    ast_unref(m_source);
 }
 
-ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
-                         ast_expression *expr)
+ast_unary* ast_unary::make(lex_ctx_t ctx, int op, ast_expression *expr)
 {
-    ast_instantiate(ast_unary, ctx, ast_unary_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_unary_codegen);
-
-    self->m_op      = op;
-    self->m_operand = expr;
-
-
     if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         ast_unary *prev = (ast_unary*)((ast_unary*)expr)->m_operand;
 
@@ -515,93 +397,76 @@ ast_unary* ast_unary_new(lex_ctx_t ctx, int op,
             prev = (ast_unary*)((ast_unary*)expr)->m_operand;
 
         if (ast_istype(prev, ast_unary)) {
-            ast_expression_delete((ast_expression*)self);
-            mem_d(self);
             ++opts_optimizationcount[OPTIM_PEEPHOLE];
             return prev;
         }
     }
 
-    ast_propagate_effects(self, expr);
+    return new ast_unary(ctx, op, expr);
+}
 
+ast_unary::ast_unary(lex_ctx_t ctx, int op, ast_expression *expr)
+: ast_expression(ctx, TYPE_ast_unary),
+  m_op(op),
+  m_operand(expr)
+{
+    propagate_side_effects(expr);
     if ((op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) || op == VINSTR_NEG_F) {
-        self->m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_FLOAT;
     } else if (op == VINSTR_NEG_V) {
-        self->m_vtype = TYPE_VECTOR;
+        m_vtype = TYPE_VECTOR;
     } else {
         compile_error(ctx, "cannot determine type of unary operation %s", util_instr_str[op]);
     }
-
-    return self;
 }
 
-void ast_unary_delete(ast_unary *self)
+ast_unary::~ast_unary()
 {
-    if (self->m_operand) ast_unref(self->m_operand);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_unary();
-    mem_d(self);
+    if (m_operand)
+        ast_unref(m_operand);
 }
 
-ast_return* ast_return_new(lex_ctx_t ctx, ast_expression *expr)
+ast_return::ast_return(lex_ctx_t ctx, ast_expression *expr)
+: ast_expression(ctx, TYPE_ast_return),
+  m_operand(expr)
 {
-    ast_instantiate(ast_return, ctx, ast_return_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_return_codegen);
-
-    self->m_operand = expr;
-
     if (expr)
-        ast_propagate_effects(self, expr);
-
-    return self;
+        propagate_side_effects(expr);
 }
 
-void ast_return_delete(ast_return *self)
+ast_return::~ast_return()
 {
-    if (self->m_operand)
-        ast_unref(self->m_operand);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_return();
-    mem_d(self);
+    if (m_operand)
+        ast_unref(m_operand);
 }
 
-ast_entfield* ast_entfield_new(lex_ctx_t ctx, ast_expression *entity, ast_expression *field)
+ast_entfield::ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field)
+: ast_entfield(ctx, entity, field, field->m_next)
 {
-    if (field->m_vtype != TYPE_FIELD) {
-        compile_error(ctx, "ast_entfield_new with expression not of type field");
-        return nullptr;
-    }
-    return ast_entfield_new_force(ctx, entity, field, field->m_next);
+    if (field->m_vtype != TYPE_FIELD)
+        compile_error(ctx, "ast_entfield with expression not of type field");
 }
 
-ast_entfield* ast_entfield_new_force(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
+ast_entfield::ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
+: ast_expression(ctx, TYPE_ast_entfield),
+  m_entity(entity),
+  m_field(field)
 {
-    ast_instantiate(ast_entfield, ctx, ast_entfield_delete);
+    propagate_side_effects(*m_entity);
+    propagate_side_effects(*m_field);
 
     if (!outtype) {
-        mem_d(self);
-        /* Error: field has no type... */
-        return nullptr;
+        compile_error(ctx, "ast_entfield: field has no type");
+        m_vtype = TYPE_VOID;
     }
-
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_entfield_codegen);
-
-    self->m_entity = entity;
-    self->m_field  = field;
-    ast_propagate_effects(self, entity);
-    ast_propagate_effects(self, field);
-
-    ast_type_adopt(self, outtype);
-    return self;
+    else
+        adopt_type(*outtype);
 }
 
-void ast_entfield_delete(ast_entfield *self)
+ast_entfield::~ast_entfield()
 {
-    ast_unref(self->m_entity);
-    ast_unref(self->m_field);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_entfield();
-    mem_d(self);
+    ast_unref(m_entity);
+    ast_unref(m_field);
 }
 
 ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const char *name)
@@ -632,7 +497,7 @@ ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int fi
 
     self->m_rvalue = false;
     self->m_owner  = owner;
-    ast_propagate_effects(self, owner);
+    self->propagate_side_effects(owner);
 
     self->m_field = field;
     if (name)
@@ -683,8 +548,8 @@ ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_e
 
     self->m_array = array;
     self->m_index = index;
-    ast_propagate_effects(self, array);
-    ast_propagate_effects(self, index);
+    self->propagate_side_effects(array);
+    self->propagate_side_effects(index);
 
     ast_type_adopt(self, outtype);
     if (array->m_vtype == TYPE_FIELD && outtype->m_vtype == TYPE_ARRAY) {
@@ -741,11 +606,11 @@ ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *
     self->m_cond     = cond;
     self->m_on_true  = ontrue;
     self->m_on_false = onfalse;
-    ast_propagate_effects(self, cond);
+    self->propagate_side_effects(cond);
     if (ontrue)
-        ast_propagate_effects(self, ontrue);
+        self->propagate_side_effects(ontrue);
     if (onfalse)
-        ast_propagate_effects(self, onfalse);
+        self->propagate_side_effects(onfalse);
 
     return self;
 }
@@ -776,9 +641,9 @@ ast_ternary* ast_ternary_new(lex_ctx_t ctx, ast_expression *cond, ast_expression
     self->m_cond     = cond;
     self->m_on_true  = ontrue;
     self->m_on_false = onfalse;
-    ast_propagate_effects(self, cond);
-    ast_propagate_effects(self, ontrue);
-    ast_propagate_effects(self, onfalse);
+    self->propagate_side_effects(cond);
+    self->propagate_side_effects(ontrue);
+    self->propagate_side_effects(onfalse);
 
     if (ontrue->m_vtype == TYPE_NIL)
         exprtype = onfalse;
@@ -820,15 +685,15 @@ ast_loop* ast_loop_new(lex_ctx_t ctx,
     self->m_post_not  = post_not;
 
     if (initexpr)
-        ast_propagate_effects(self, initexpr);
+        self->propagate_side_effects(initexpr);
     if (precond)
-        ast_propagate_effects(self, precond);
+        self->propagate_side_effects(precond);
     if (postcond)
-        ast_propagate_effects(self, postcond);
+        self->propagate_side_effects(postcond);
     if (increment)
-        ast_propagate_effects(self, increment);
+        self->propagate_side_effects(increment);
     if (body)
-        ast_propagate_effects(self, body);
+        self->propagate_side_effects(body);
 
     return self;
 }
@@ -875,7 +740,7 @@ ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op)
 
     self->m_operand = op;
 
-    ast_propagate_effects(self, op);
+    self->propagate_side_effects(op);
 
     return self;
 }
@@ -1141,7 +1006,7 @@ ast_block* ast_block_new(lex_ctx_t ctx)
 
 bool ast_block_add_expr(ast_block *self, ast_expression *e)
 {
-    ast_propagate_effects(self, e);
+    self->propagate_side_effects(e);
     self->m_exprs.push_back(e);
     if (self->m_next) {
         ast_delete(self->m_next);
