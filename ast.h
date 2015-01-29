@@ -354,15 +354,18 @@ struct ast_entfield : ast_expression
  */
 struct ast_member : ast_expression
 {
+    static ast_member *make(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const std::string &name);
+    ~ast_member();
+
     ast_expression *m_owner;
     unsigned int m_field;
-    const char *m_name;
+    std::string m_name;
     bool m_rvalue;
-};
-ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const char *name);
-void ast_member_delete(ast_member*);
-bool ast_member_set_name(ast_member*, const char *name);
 
+private:
+    ast_member() = delete;
+    ast_member(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const std::string &name);
+};
 
 /* Array index access:
  *
@@ -376,10 +379,14 @@ bool ast_member_set_name(ast_member*, const char *name);
  */
 struct ast_array_index : ast_expression
 {
+    static ast_array_index* make(lex_ctx_t ctx, ast_expression *array, ast_expression *index);
+    ~ast_array_index();
     ast_expression *m_array;
     ast_expression *m_index;
+private:
+    ast_array_index() = delete;
+    ast_array_index(lex_ctx_t ctx, ast_expression *array, ast_expression *index);
 };
-ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_expression *index);
 
 /* Vararg pipe node:
  *
@@ -387,9 +394,11 @@ ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_e
  */
 struct ast_argpipe : ast_expression
 {
+    ast_argpipe() = delete;
+    ast_argpipe(lex_ctx_t ctx, ast_expression *index);
+    ~ast_argpipe();
     ast_expression *m_index;
 };
-ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index);
 
 /* Store
  *
@@ -398,12 +407,13 @@ ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index);
  */
 struct ast_store : ast_expression
 {
+    ast_store() = delete;
+    ast_store(lex_ctx_t ctx, int op, ast_expression *d, ast_expression *s);
+    ~ast_store();
     int m_op;
     ast_expression *m_dest;
     ast_expression *m_source;
 };
-ast_store* ast_store_new(lex_ctx_t ctx, int op,
-                         ast_expression *d, ast_expression *s);
 
 /* If
  *
@@ -418,12 +428,14 @@ ast_store* ast_store_new(lex_ctx_t ctx, int op,
  */
 struct ast_ifthen : ast_expression
 {
+    ast_ifthen() = delete;
+    ast_ifthen(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
+    ~ast_ifthen();
     ast_expression *m_cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *m_on_true;
     ast_expression *m_on_false;
 };
-ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
 
 /* Ternary expressions...
  *
@@ -440,12 +452,14 @@ ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *
  */
 struct ast_ternary : ast_expression
 {
+    ast_ternary() = delete;
+    ast_ternary(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
+    ~ast_ternary();
     ast_expression *m_cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *m_on_true;
     ast_expression *m_on_false;
 };
-ast_ternary* ast_ternary_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
 
 /* A general loop node
  *
@@ -472,6 +486,14 @@ continue:      // a 'continue' will jump here
  */
 struct ast_loop : ast_expression
 {
+    ast_loop() = delete;
+    ast_loop(lex_ctx_t ctx,
+             ast_expression *initexpr,
+             ast_expression *precond, bool pre_not,
+             ast_expression *postcond, bool post_not,
+             ast_expression *increment,
+             ast_expression *body);
+    ~ast_loop();
     ast_expression *m_initexpr;
     ast_expression *m_precond;
     ast_expression *m_postcond;
@@ -486,12 +508,6 @@ struct ast_loop : ast_expression
     bool m_pre_not;
     bool m_post_not;
 };
-ast_loop* ast_loop_new(lex_ctx_t ctx,
-                       ast_expression *initexpr,
-                       ast_expression *precond, bool pre_not,
-                       ast_expression *postcond, bool post_not,
-                       ast_expression *increment,
-                       ast_expression *body);
 
 /* Break/Continue
  */

@@ -59,10 +59,10 @@ static bool ast_state_codegen(ast_state*, ast_function*, bool lvalue, ir_value**
 
 /* Initialize main ast node aprts */
 ast_node::ast_node(lex_ctx_t ctx, int node_type)
-: m_context(ctx),
-  m_node_type(node_type),
-  m_keep_node(false),
-  m_side_effects(false)
+    : m_context(ctx)
+    , m_node_type(node_type)
+    , m_keep_node(false)
+    , m_side_effects(false)
 {
 }
 
@@ -78,14 +78,14 @@ void ast_node::propagate_side_effects(ast_node *other) const
 
 /* General expression initialization */
 ast_expression::ast_expression(lex_ctx_t ctx, int nodetype, qc_type type)
-: ast_node(ctx, nodetype),
-  m_vtype(type)
+    : ast_node(ctx, nodetype)
+    , m_vtype(type)
 {
     if (OPTS_OPTION_BOOL(OPTION_COVERAGE))
         m_flags |= AST_FLAG_BLOCK_COVERAGE;
 }
 ast_expression::ast_expression(lex_ctx_t ctx, int nodetype)
-: ast_expression(ctx, nodetype, TYPE_VOID)
+    : ast_expression(ctx, nodetype, TYPE_VOID)
 {}
 
 ast_expression::~ast_expression()
@@ -97,7 +97,7 @@ ast_expression::~ast_expression()
 }
 
 ast_expression::ast_expression(ast_copy_type_t, int nodetype, const ast_expression &other)
-: ast_expression(other.m_context, nodetype)
+    : ast_expression(other.m_context, nodetype)
 {
     m_vtype = other.m_vtype;
     m_count = other.m_count;
@@ -110,7 +110,7 @@ ast_expression::ast_expression(ast_copy_type_t, int nodetype, const ast_expressi
 }
 
 ast_expression::ast_expression(ast_copy_type_t, const ast_expression &other)
-: ast_expression(other.m_context, TYPE_ast_expression)
+    : ast_expression(other.m_context, TYPE_ast_expression)
 {}
 
 ast_expression *ast_expression::shallow_type(lex_ctx_t ctx, qc_type vtype) {
@@ -161,21 +161,21 @@ bool ast_expression::compare_type(const ast_expression &other) const
 }
 
 ast_value::ast_value(ast_copy_type_t, const ast_value &other, const std::string &name)
-: ast_value(ast_copy_type, static_cast<const ast_expression&>(other), name)
+    : ast_value(ast_copy_type, static_cast<const ast_expression&>(other), name)
 {}
 
 ast_value::ast_value(ast_copy_type_t, const ast_value &other)
-: ast_value(ast_copy_type, static_cast<const ast_expression&>(other), other.m_name)
+    : ast_value(ast_copy_type, static_cast<const ast_expression&>(other), other.m_name)
 {}
 
 ast_value::ast_value(ast_copy_type_t, const ast_expression &other, const std::string &name)
-: ast_expression(ast_copy_type, other),
-  m_name(name)
+    : ast_expression(ast_copy_type, other)
+    , m_name(name)
 {}
 
 ast_value::ast_value(lex_ctx_t ctx, const std::string &name, qc_type t)
-: ast_expression(ctx, TYPE_ast_value, t),
-  m_name(name)
+    : ast_expression(ctx, TYPE_ast_value, t)
+    , m_name(name)
 {
     m_keep_node = true; // keep values, always
     memset(&m_constval, 0, sizeof(m_constval));
@@ -311,10 +311,10 @@ void ast_value::add_param(ast_value *p)
 
 ast_binary::ast_binary(lex_ctx_t ctx, int op,
                        ast_expression* left, ast_expression* right)
-: ast_expression(ctx, TYPE_ast_binary),
-  m_op(op),
-  // m_left/m_right happen after the peephole step right below
-  m_right_first(false)
+    : ast_expression(ctx, TYPE_ast_binary)
+    , m_op(op)
+    // m_left/m_right happen after the peephole step right below
+    , m_right_first(false)
 {
     if (ast_istype(right, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         ast_unary      *unary  = ((ast_unary*)right);
@@ -369,12 +369,12 @@ ast_binary::~ast_binary()
 
 ast_binstore::ast_binstore(lex_ctx_t ctx, int storop, int mathop,
                            ast_expression* left, ast_expression* right)
-: ast_expression(ctx, TYPE_ast_binstore),
-  m_opstore(storop),
-  m_opbin(mathop),
-  m_dest(left),
-  m_source(right),
-  m_keep_dest(false)
+    : ast_expression(ctx, TYPE_ast_binstore)
+    , m_opstore(storop)
+    , m_opbin(mathop)
+    , m_dest(left)
+    , m_source(right)
+    , m_keep_dest(false)
 {
     m_side_effects = true;
     adopt_type(*left);
@@ -406,9 +406,9 @@ ast_unary* ast_unary::make(lex_ctx_t ctx, int op, ast_expression *expr)
 }
 
 ast_unary::ast_unary(lex_ctx_t ctx, int op, ast_expression *expr)
-: ast_expression(ctx, TYPE_ast_unary),
-  m_op(op),
-  m_operand(expr)
+    : ast_expression(ctx, TYPE_ast_unary)
+    , m_op(op)
+    , m_operand(expr)
 {
     propagate_side_effects(expr);
     if ((op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) || op == VINSTR_NEG_F) {
@@ -427,8 +427,8 @@ ast_unary::~ast_unary()
 }
 
 ast_return::ast_return(lex_ctx_t ctx, ast_expression *expr)
-: ast_expression(ctx, TYPE_ast_return),
-  m_operand(expr)
+    : ast_expression(ctx, TYPE_ast_return)
+    , m_operand(expr)
 {
     if (expr)
         propagate_side_effects(expr);
@@ -441,19 +441,19 @@ ast_return::~ast_return()
 }
 
 ast_entfield::ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field)
-: ast_entfield(ctx, entity, field, field->m_next)
+    : ast_entfield(ctx, entity, field, field->m_next)
 {
     if (field->m_vtype != TYPE_FIELD)
         compile_error(ctx, "ast_entfield with expression not of type field");
 }
 
 ast_entfield::ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype)
-: ast_expression(ctx, TYPE_ast_entfield),
-  m_entity(entity),
-  m_field(field)
+    : ast_expression(ctx, TYPE_ast_entfield)
+    , m_entity(entity)
+    , m_field(field)
 {
-    propagate_side_effects(*m_entity);
-    propagate_side_effects(*m_field);
+    propagate_side_effects(m_entity);
+    propagate_side_effects(m_field);
 
     if (!outtype) {
         compile_error(ctx, "ast_entfield: field has no type");
@@ -469,250 +469,211 @@ ast_entfield::~ast_entfield()
     ast_unref(m_field);
 }
 
-ast_member* ast_member_new(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const char *name)
+ast_member *ast_member::make(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const std::string &name)
 {
-    ast_instantiate(ast_member, ctx, ast_member_delete);
     if (field >= 3) {
-        mem_d(self);
+        compile_error(ctx, "ast_member: invalid field (>=3): %u", field);
         return nullptr;
     }
-
     if (owner->m_vtype != TYPE_VECTOR &&
-        owner->m_vtype != TYPE_FIELD) {
+        owner->m_vtype != TYPE_FIELD)
+    {
         compile_error(ctx, "member-access on an invalid owner of type %s", type_name[owner->m_vtype]);
-        mem_d(self);
         return nullptr;
     }
+    return new ast_member(ctx, owner, field, name);
+}
 
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_member_codegen);
-    self->m_keep_node = true; /* keep */
+ast_member::ast_member(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const std::string &name)
+    : ast_expression(ctx, TYPE_ast_member)
+    , m_owner(owner)
+    , m_field(field)
+    , m_name(name)
+    , m_rvalue(false)
+{
+    m_keep_node = true;
 
-    if (owner->m_vtype == TYPE_VECTOR) {
-        self->m_vtype = TYPE_FLOAT;
-        self->m_next  = nullptr;
+    if (m_owner->m_vtype == TYPE_VECTOR) {
+        m_vtype = TYPE_FLOAT;
+        m_next  = nullptr;
     } else {
-        self->m_vtype = TYPE_FIELD;
-        self->m_next = ast_shallow_type(ctx, TYPE_FLOAT);
+        m_vtype = TYPE_FIELD;
+        m_next = ast_shallow_type(ctx, TYPE_FLOAT);
     }
 
-    self->m_rvalue = false;
-    self->m_owner  = owner;
-    self->propagate_side_effects(owner);
-
-    self->m_field = field;
-    if (name)
-        self->m_name = util_strdup(name);
-    else
-        self->m_name = nullptr;
-
-    return self;
+    propagate_side_effects(owner);
 }
 
-void ast_member_delete(ast_member *self)
+ast_member::~ast_member()
 {
-    /* The owner is always an ast_value, which has .keep_node=true,
-     * also: ast_members are usually deleted after the owner, thus
-     * this will cause invalid access
-    ast_unref(self->m_owner);
-     * once we allow (expression).x to access a vector-member, we need
-     * to change this: preferably by creating an alternate ast node for this
-     * purpose that is not garbage-collected.
-    */
-    ast_expression_delete((ast_expression*)self);
-    mem_d(self->m_name);
-    self->~ast_member();
-    mem_d(self);
+    // The owner is always an ast_value, which has .keep_node=true,
+    // also: ast_members are usually deleted after the owner, thus
+    // this will cause invalid access
+        //ast_unref(self->m_owner);
+    // once we allow (expression).x to access a vector-member, we need
+    // to change this: preferably by creating an alternate ast node for this
+    // purpose that is not garbage-collected.
 }
 
-bool ast_member_set_name(ast_member *self, const char *name)
+ast_array_index* ast_array_index::make(lex_ctx_t ctx, ast_expression *array, ast_expression *index)
 {
-    if (self->m_name)
-        mem_d((void*)self->m_name);
-    self->m_name = util_strdup(name);
-    return !!self->m_name;
-}
-
-ast_array_index* ast_array_index_new(lex_ctx_t ctx, ast_expression *array, ast_expression *index)
-{
-    ast_expression *outtype;
-    ast_instantiate(ast_array_index, ctx, ast_array_index_delete);
-
-    outtype = array->m_next;
+    ast_expression *outtype = array->m_next;
     if (!outtype) {
-        mem_d(self);
-        /* Error: field has no type... */
+        // field has no type
         return nullptr;
     }
 
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_array_index_codegen);
+    return new ast_array_index(ctx, array, index);
+}
 
-    self->m_array = array;
-    self->m_index = index;
-    self->propagate_side_effects(array);
-    self->propagate_side_effects(index);
+ast_array_index::ast_array_index(lex_ctx_t ctx, ast_expression *array, ast_expression *index)
+    : ast_expression(ctx, TYPE_ast_array_index)
+    , m_array(array)
+    , m_index(index)
+{
+    propagate_side_effects(array);
+    propagate_side_effects(index);
 
-    ast_type_adopt(self, outtype);
+    ast_expression *outtype = m_array->m_next;
+    adopt_type(*outtype);
+
     if (array->m_vtype == TYPE_FIELD && outtype->m_vtype == TYPE_ARRAY) {
-        if (self->m_vtype != TYPE_ARRAY) {
-            compile_error(self->m_context, "array_index node on type");
-            ast_array_index_delete(self);
-            return nullptr;
-        }
-        self->m_array = outtype;
-        self->m_vtype = TYPE_FIELD;
+        // FIXME: investigate - this is not possible after adopt_type
+        //if (m_vtype != TYPE_ARRAY) {
+        //    compile_error(self->m_context, "array_index node on type");
+        //    ast_array_index_delete(self);
+        //    return nullptr;
+        //}
+
+        m_array = outtype;
+        m_vtype = TYPE_FIELD;
     }
-
-    return self;
 }
 
-void ast_array_index_delete(ast_array_index *self)
+ast_array_index::~ast_array_index()
 {
-    if (self->m_array)
-        ast_unref(self->m_array);
-    if (self->m_index)
-        ast_unref(self->m_index);
-    ast_expression_delete((ast_expression*)self);
-    mem_d(self);
+    if (m_array)
+        ast_unref(m_array);
+    if (m_index)
+        ast_unref(m_index);
 }
 
-ast_argpipe* ast_argpipe_new(lex_ctx_t ctx, ast_expression *index)
+ast_argpipe::ast_argpipe(lex_ctx_t ctx, ast_expression *index)
+    : ast_expression(ctx, TYPE_ast_argpipe)
+    , m_index(index)
 {
-    ast_instantiate(ast_argpipe, ctx, ast_argpipe_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_argpipe_codegen);
-    self->m_index = index;
-    self->m_vtype = TYPE_NOEXPR;
-    return self;
+    m_vtype = TYPE_NOEXPR;
 }
 
-void ast_argpipe_delete(ast_argpipe *self)
+ast_argpipe::~ast_argpipe()
 {
-    if (self->m_index)
-        ast_unref(self->m_index);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_argpipe();
-    mem_d(self);
+    if (m_index)
+        ast_unref(m_index);
 }
 
-ast_ifthen* ast_ifthen_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+ast_store::ast_store(lex_ctx_t ctx, int op, ast_expression *dest, ast_expression *source)
+    : ast_expression(ctx, TYPE_ast_store)
+    , m_op(op)
+    , m_dest(dest)
+    , m_source(source)
 {
-    ast_instantiate(ast_ifthen, ctx, ast_ifthen_delete);
-    if (!ontrue && !onfalse) {
-        /* because it is invalid */
-        mem_d(self);
-        return nullptr;
-    }
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_ifthen_codegen);
+    m_side_effects = true;
+    adopt_type(*dest);
+}
 
-    self->m_cond     = cond;
-    self->m_on_true  = ontrue;
-    self->m_on_false = onfalse;
-    self->propagate_side_effects(cond);
+ast_store::~ast_store()
+{
+    ast_unref(m_dest);
+    ast_unref(m_source);
+}
+
+ast_ifthen::ast_ifthen(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+    : ast_expression(ctx, TYPE_ast_ifthen)
+    , m_cond(cond)
+    , m_on_true(ontrue)
+    , m_on_false(onfalse)
+{
+    propagate_side_effects(cond);
     if (ontrue)
-        self->propagate_side_effects(ontrue);
+        propagate_side_effects(ontrue);
     if (onfalse)
-        self->propagate_side_effects(onfalse);
-
-    return self;
+        propagate_side_effects(onfalse);
 }
 
-void ast_ifthen_delete(ast_ifthen *self)
+ast_ifthen::~ast_ifthen()
 {
-    ast_unref(self->m_cond);
-    if (self->m_on_true)
-        ast_unref(self->m_on_true);
-    if (self->m_on_false)
-        ast_unref(self->m_on_false);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_ifthen();
-    mem_d(self);
+    ast_unref(m_cond);
+    if (m_on_true)
+        ast_unref(m_on_true);
+    if (m_on_false)
+        ast_unref(m_on_false);
 }
 
-ast_ternary* ast_ternary_new(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+ast_ternary::ast_ternary(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse)
+    : ast_expression(ctx, TYPE_ast_ternary)
+    , m_cond(cond)
+    , m_on_true(ontrue)
+    , m_on_false(onfalse)
 {
-    ast_expression *exprtype = ontrue;
-    ast_instantiate(ast_ternary, ctx, ast_ternary_delete);
-    /* This time NEITHER must be nullptr */
-    if (!ontrue || !onfalse) {
-        mem_d(self);
-        return nullptr;
-    }
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_ternary_codegen);
-
-    self->m_cond     = cond;
-    self->m_on_true  = ontrue;
-    self->m_on_false = onfalse;
-    self->propagate_side_effects(cond);
-    self->propagate_side_effects(ontrue);
-    self->propagate_side_effects(onfalse);
+    propagate_side_effects(cond);
+    propagate_side_effects(ontrue);
+    propagate_side_effects(onfalse);
 
     if (ontrue->m_vtype == TYPE_NIL)
-        exprtype = onfalse;
-    ast_type_adopt(self, exprtype);
-
-    return self;
+        adopt_type(onfalse);
+    else
+        adopt_type(ontrue);
 }
 
-void ast_ternary_delete(ast_ternary *self)
+ast_ternary::~ast_ternary()
 {
     /* the if()s are only there because computed-gotos can set them
      * to nullptr
      */
-    if (self->m_cond)     ast_unref(self->m_cond);
-    if (self->m_on_true)  ast_unref(self->m_on_true);
-    if (self->m_on_false) ast_unref(self->m_on_false);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_ternary();
-    mem_d(self);
+    if (m_cond)     ast_unref(m_cond);
+    if (m_on_true)  ast_unref(m_on_true);
+    if (m_on_false) ast_unref(m_on_false);
 }
 
-ast_loop* ast_loop_new(lex_ctx_t ctx,
-                       ast_expression *initexpr,
-                       ast_expression *precond, bool pre_not,
-                       ast_expression *postcond, bool post_not,
-                       ast_expression *increment,
-                       ast_expression *body)
+ast_loop::ast_loop(lex_ctx_t ctx,
+                   ast_expression *initexpr,
+                   ast_expression *precond, bool pre_not,
+                   ast_expression *postcond, bool post_not,
+                   ast_expression *increment,
+                   ast_expression *body)
+    , ast_expression(ctx, TYPE_ast_loop)
+    , m_initexpr(initexpr)
+    , m_precond(precond)
+    , m_postcond(postcond)
+    , m_increment(increment)
+    , m_body(body)
+    , m_pre_not(pre_not)
+    , m_post_not(post_not)
 {
-    ast_instantiate(ast_loop, ctx, ast_loop_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_loop_codegen);
-
-    self->m_initexpr  = initexpr;
-    self->m_precond   = precond;
-    self->m_postcond  = postcond;
-    self->m_increment = increment;
-    self->m_body      = body;
-
-    self->m_pre_not   = pre_not;
-    self->m_post_not  = post_not;
-
     if (initexpr)
-        self->propagate_side_effects(initexpr);
+        propagate_side_effects(initexpr);
     if (precond)
-        self->propagate_side_effects(precond);
+        propagate_side_effects(precond);
     if (postcond)
-        self->propagate_side_effects(postcond);
+        propagate_side_effects(postcond);
     if (increment)
-        self->propagate_side_effects(increment);
+        propagate_side_effects(increment);
     if (body)
-        self->propagate_side_effects(body);
-
-    return self;
+        propagate_side_effects(body);
 }
 
-void ast_loop_delete(ast_loop *self)
+ast_loop::~ast_loop()
 {
-    if (self->m_initexpr)
-        ast_unref(self->m_initexpr);
-    if (self->m_precond)
-        ast_unref(self->m_precond);
-    if (self->m_postcond)
-        ast_unref(self->m_postcond);
-    if (self->m_increment)
-        ast_unref(self->m_increment);
-    if (self->m_body)
-        ast_unref(self->m_body);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_loop();
-    mem_d(self);
+    if (m_initexpr)
+        ast_unref(m_initexpr);
+    if (m_precond)
+        ast_unref(m_precond);
+    if (m_postcond)
+        ast_unref(m_postcond);
+    if (m_increment)
+        ast_unref(m_increment);
+    if (m_body)
+        ast_unref(m_body);
 }
 
 ast_breakcont* ast_breakcont_new(lex_ctx_t ctx, bool iscont, unsigned int levels)
@@ -968,32 +929,6 @@ bool ast_call_check_types(ast_call *self, ast_expression *va_type)
         }
     }
     return retval;
-}
-
-ast_store* ast_store_new(lex_ctx_t ctx, int op,
-                         ast_expression *dest, ast_expression *source)
-{
-    ast_instantiate(ast_store, ctx, ast_store_delete);
-    ast_expression_init((ast_expression*)self, (ast_expression_codegen*)&ast_store_codegen);
-
-    self->m_side_effects = true;
-
-    self->m_op = op;
-    self->m_dest = dest;
-    self->m_source = source;
-
-    ast_type_adopt(self, dest);
-
-    return self;
-}
-
-void ast_store_delete(ast_store *self)
-{
-    ast_unref(self->m_dest);
-    ast_unref(self->m_source);
-    ast_expression_delete((ast_expression*)self);
-    self->~ast_store();
-    mem_d(self);
 }
 
 ast_block* ast_block_new(lex_ctx_t ctx)
