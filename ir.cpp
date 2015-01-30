@@ -3433,6 +3433,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         ir_value_code_setaddr(global, self->m_code->globals.size());
         if (global->m_hasvalue) {
+            if (global->m_cvq == CV_CONST && global->m_reads.empty())
+                return true;
             iptr = (int32_t*)&global->m_constval.ivec[0];
             self->m_code->globals.push_back(*iptr);
         } else {
@@ -3448,6 +3450,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         ir_value_code_setaddr(global, self->m_code->globals.size());
         if (global->m_hasvalue) {
+            if (global->m_cvq == CV_CONST && global->m_reads.empty())
+                return true;
             uint32_t load = code_genstring(self->m_code.get(), global->m_constval.vstring);
             self->m_code->globals.push_back(load);
         } else {
