@@ -2599,6 +2599,11 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
             parseerror(parser, "expected for-loop condition");
             goto onerr;
         }
+    } else {
+        if (!parser_next(parser)) {
+            parseerror(parser, "expected for-loop condition");
+            goto onerr;
+        }
     }
 
     /* parse the condition */
@@ -2607,7 +2612,6 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         if (!cond)
             goto onerr;
     }
-
     /* move on to incrementor */
     if (parser->tok != ';') {
         parseerror(parser, "expected semicolon after for-loop initializer");
