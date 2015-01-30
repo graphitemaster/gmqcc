@@ -1335,11 +1335,15 @@ ast_expression *fold::op_cmp(ast_value *a, ast_value *b, bool ne) {
             float la = immvalue_float(a);
             float lb = immvalue_float(b);
             check_inexact_float(a, b);
-            return (ast_expression*)m_imm_float[!(ne ? la == lb : la != lb)];
-        } if (isvector(a) && isvector(b)) {
+            return (ast_expression*)m_imm_float[ne ? la != lb : la == lb];
+        } else if (isvector(a) && isvector(b)) {
             vec3_t la = immvalue_vector(a);
             vec3_t lb = immvalue_vector(b);
-            return (ast_expression*)m_imm_float[!(ne ? vec3_cmp(la, lb) : !vec3_cmp(la, lb))];
+            bool compare = vec3_cmp(la, lb);
+            return (ast_expression*)m_imm_float[ne ? !compare : compare];
+        } else if (isstring(a) && isstring(b)) {
+            bool compare = !strcmp(immvalue_string(a), immvalue_string(b));
+            return (ast_expression*)m_imm_float[ne ? !compare : compare];
         }
     }
     return nullptr;
