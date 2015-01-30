@@ -3772,6 +3772,8 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         ir_value_code_setaddr(global, vec_size(self->code->globals));
         if (global->hasvalue) {
+            if (global->cvq == CV_CONST && !vec_size(global->reads))
+                return true;
             iptr = (int32_t*)&global->constval.ivec[0];
             vec_push(self->code->globals, *iptr);
         } else {
@@ -3787,7 +3789,10 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     {
         ir_value_code_setaddr(global, vec_size(self->code->globals));
         if (global->hasvalue) {
-            uint32_t load = code_genstring(self->code, global->constval.vstring);
+            uint32_t load;
+            if (global->cvq == CV_CONST && !vec_size(global->reads))
+                return true;
+            load = code_genstring(self->code, global->constval.vstring);
             vec_push(self->code->globals, load);
         } else {
             vec_push(self->code->globals, 0);
