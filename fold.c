@@ -1373,11 +1373,15 @@ static GMQCC_INLINE ast_expression *fold_op_cmp(fold_t *fold, ast_value *a, ast_
             float la = fold_immvalue_float(a);
             float lb = fold_immvalue_float(b);
             fold_check_inexact_float(fold, a, b);
-            return (ast_expression*)fold->imm_float[!(ne ? la == lb : la != lb)];
-        } if (isvector(a) && isvector(b)) {
+            return (ast_expression*)fold->imm_float[ne ? la != lb : la == lb];
+        } else if (isvector(a) && isvector(b)) {
             vec3_t la = fold_immvalue_vector(a);
             vec3_t lb = fold_immvalue_vector(b);
-            return (ast_expression*)fold->imm_float[!(ne ? vec3_cmp(la, lb) : !vec3_cmp(la, lb))];
+            bool compare = vec3_cmp(la, lb);
+            return (ast_expression*)fold->imm_float[ne ? !compare : compare];
+        } else if (isstring(a) && isstring(b)) {
+            bool compare = !strcmp(fold_immvalue_string(a), fold_immvalue_string(b));
+            return (ast_expression*)fold->imm_float[ne ? !compare : compare];
         }
     }
     return NULL;
