@@ -734,6 +734,8 @@ static bool task_propagate(const char *curdir, size_t *pad, const char *defs) {
                 const char      *qcflags = NULL;
                 task_t           task;
 
+                memset(&task, 0, sizeof(task));
+
                 found ++;
                 if (!tmpl) {
                     con_err("error compiling task template: %s\n", files->d_name);
