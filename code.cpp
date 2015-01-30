@@ -106,35 +106,39 @@ void code_pop_statement(code_t *code)
     code->columnnums.pop_back();
 }
 
-code_t *code_init() {
+void *code_t::operator new(std::size_t bytes) {
+  return mem_a(bytes);
+}
+
+void code_t::operator delete(void *ptr) {
+  mem_d(ptr);
+}
+
+code_t::code_t()
+{
     static lex_ctx_t                empty_ctx       = {0, 0, 0};
     static prog_section_function_t  empty_function  = {0,0,0,0,0,0,0,{0,0,0,0,0,0,0,0}};
     static prog_section_statement_t empty_statement = {0,{0},{0},{0}};
     static prog_section_def_t       empty_def       = {0, 0, 0};
 
-    code_t *code       = (code_t*)mem_a(sizeof(code_t));
-    int     i          = 0;
+    string_cache = util_htnew(OPTS_OPTIMIZATION(OPTIM_OVERLAP_STRINGS) ? 0x100 : 1024);
 
-    memset(code, 0, sizeof(code_t));
-    code->entfields    = 0;
-    code->string_cache = util_htnew(OPTS_OPTIMIZATION(OPTIM_OVERLAP_STRINGS) ? 0x100 : 1024);
+    // The way progs.dat is suppose to work is odd, there needs to be
+    // some null (empty) statements, functions, and 28 globals
+    globals.insert(globals.begin(), 28, 0);
 
-    /*
-     * The way progs.dat is suppose to work is odd, there needs to be
-     * some null (empty) statements, functions, and 28 globals
-     */
-    for(; i < 28; i++)
-        code->globals.push_back(0);
+    chars.push_back('\0');
+    functions.push_back(empty_function);
 
-    code->chars.push_back('\0');
-    code->functions.push_back(empty_function);
+    code_push_statement(this, &empty_statement, empty_ctx);
 
-    code_push_statement(code, &empty_statement, empty_ctx);
+    defs.push_back(empty_def);
+    fields.push_back(empty_def);
+}
 
-    code->defs.push_back(empty_def);
-    code->fields.push_back(empty_def);
-
-    return code;
+code_t::~code_t()
+{
+    util_htdel(string_cache);
 }
 
 void *code_util_str_htgeth(hash_table_t *ht, const char *key, size_t bin);
@@ -341,9 +345,4 @@ bool code_write(code_t *code, const char *filename, const char *lnofile) {
     fclose(fp);
     code_stats(filename, lnofile, code, &code_header);
     return true;
-}
-
-void code_cleanup(code_t *code) {
-    util_htdel(code->string_cache);
-    mem_d(code);
 }

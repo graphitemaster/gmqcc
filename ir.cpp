@@ -190,30 +190,19 @@ const uint16_t type_not_instr[TYPE_COUNT] = {
 };
 
 /* protos */
-static ir_value*       ir_value_var(const char *name, int st, int vtype);
-static bool            ir_value_set_name(ir_value*, const char *name);
 static void            ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
 
 static ir_value*       ir_gen_extparam_proto(ir_builder *ir);
 static void            ir_gen_extparam      (ir_builder *ir);
 
-static bool            ir_builder_set_name(ir_builder *self, const char *name);
-
-static ir_function*    ir_function_new(ir_builder *owner, int returntype);
-static bool            ir_function_set_name(ir_function*, const char *name);
-static void            ir_function_delete(ir_function*);
 static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 
 static ir_value*       ir_block_create_general_instr(ir_block *self, lex_ctx_t, const char *label,
-                                        int op, ir_value *a, ir_value *b, int outype);
-static void            ir_block_delete(ir_block*);
-static ir_block*       ir_block_new(ir_function *owner, const char *label);
+                                                     int op, ir_value *a, ir_value *b, qc_type outype);
 static bool GMQCC_WARN ir_block_create_store(ir_block*, lex_ctx_t, ir_value *target, ir_value *what);
-static bool            ir_block_set_label(ir_block*, const char *label);
 static void            ir_block_dump(ir_block*, char *ind, int (*oprintf)(const char*,...));
 
 static bool            ir_instr_op(ir_instr*, int op, ir_value *value, bool writing);
-static void            ir_instr_delete(ir_instr*);
 static void            ir_instr_dump(ir_instr* in, char *ind, int (*oprintf)(const char*,...));
 /* error functions */
 
@@ -284,184 +273,124 @@ static void ir_block_delete_quick(ir_block* self);
 static void ir_instr_delete_quick(ir_instr *self);
 static void ir_function_delete_quick(ir_function *self);
 
-ir_builder* ir_builder_new(const char *modulename)
+ir_builder::ir_builder(const std::string& modulename)
+: m_name(modulename),
+  m_code(new code_t)
 {
-    ir_builder* self;
-    size_t      i;
+    m_htglobals   = util_htnew(IR_HT_SIZE);
+    m_htfields    = util_htnew(IR_HT_SIZE);
+    m_htfunctions = util_htnew(IR_HT_SIZE);
 
-    self = (ir_builder*)mem_a(sizeof(*self));
-    if (!self)
-        return nullptr;
+    m_nil = new ir_value("nil", store_value, TYPE_NIL);
+    m_nil->m_cvq = CV_CONST;
 
-    self->functions   = nullptr;
-    self->globals     = nullptr;
-    self->fields      = nullptr;
-    self->filenames   = nullptr;
-    self->filestrings = nullptr;
-    self->htglobals   = util_htnew(IR_HT_SIZE);
-    self->htfields    = util_htnew(IR_HT_SIZE);
-    self->htfunctions = util_htnew(IR_HT_SIZE);
-
-    self->extparams       = nullptr;
-    self->extparam_protos = nullptr;
-
-    self->first_common_globaltemp = 0;
-    self->max_globaltemps         = 0;
-    self->first_common_local      = 0;
-    self->max_locals              = 0;
-
-    self->str_immediate = 0;
-    self->name = nullptr;
-    if (!ir_builder_set_name(self, modulename)) {
-        mem_d(self);
-        return nullptr;
-    }
-
-    self->nil = ir_value_var("nil", store_value, TYPE_NIL);
-    self->nil->cvq = CV_CONST;
-
-    for (i = 0; i != IR_MAX_VINSTR_TEMPS; ++i) {
+    for (size_t i = 0; i != IR_MAX_VINSTR_TEMPS; ++i) {
         /* we write to them, but they're not supposed to be used outside the IR, so
          * let's not allow the generation of ir_instrs which use these.
          * So it's a constant noexpr.
          */
-        self->vinstr_temp[i] = ir_value_var("vinstr_temp", store_value, TYPE_NOEXPR);
-        self->vinstr_temp[i]->cvq = CV_CONST;
+        m_vinstr_temp[i] = new ir_value("vinstr_temp", store_value, TYPE_NOEXPR);
+        m_vinstr_temp[i]->m_cvq = CV_CONST;
     }
-
-    self->reserved_va_count = nullptr;
-    self->coverage_func     = nullptr;
-
-    self->code              = code_init();
-
-    return self;
 }
 
-void ir_builder_delete(ir_builder* self)
+ir_builder::~ir_builder()
 {
-    size_t i;
-    util_htdel(self->htglobals);
-    util_htdel(self->htfields);
-    util_htdel(self->htfunctions);
-    mem_d((void*)self->name);
-    for (i = 0; i != vec_size(self->functions); ++i) {
-        ir_function_delete_quick(self->functions[i]);
-    }
-    vec_free(self->functions);
-    for (i = 0; i != vec_size(self->extparams); ++i) {
-        ir_value_delete(self->extparams[i]);
-    }
-    vec_free(self->extparams);
-    vec_free(self->extparam_protos);
-    for (i = 0; i != vec_size(self->globals); ++i) {
-        ir_value_delete(self->globals[i]);
-    }
-    vec_free(self->globals);
-    for (i = 0; i != vec_size(self->fields); ++i) {
-        ir_value_delete(self->fields[i]);
-    }
-    ir_value_delete(self->nil);
-    for (i = 0; i != IR_MAX_VINSTR_TEMPS; ++i) {
-        ir_value_delete(self->vinstr_temp[i]);
-    }
-    vec_free(self->fields);
-    vec_free(self->filenames);
-    vec_free(self->filestrings);
+    util_htdel(m_htglobals);
+    util_htdel(m_htfields);
+    util_htdel(m_htfunctions);
+    for (auto& f : m_functions)
+        ir_function_delete_quick(f.release());
+    m_functions.clear(); // delete them now before deleting the rest:
 
-    code_cleanup(self->code);
-    mem_d(self);
-}
+    delete m_nil;
 
-bool ir_builder_set_name(ir_builder *self, const char *name)
-{
-    if (self->name)
-        mem_d((void*)self->name);
-    self->name = util_strdup(name);
-    return !!self->name;
+    for (size_t i = 0; i != IR_MAX_VINSTR_TEMPS; ++i) {
+        delete m_vinstr_temp[i];
+    }
+
+    m_extparams.clear();
+    m_extparam_protos.clear();
 }
 
 static ir_function* ir_builder_get_function(ir_builder *self, const char *name)
 {
-    return (ir_function*)util_htget(self->htfunctions, name);
+    return (ir_function*)util_htget(self->m_htfunctions, name);
 }
 
-ir_function* ir_builder_create_function(ir_builder *self, const char *name, int outtype)
+ir_function* ir_builder_create_function(ir_builder *self, const std::string& name, qc_type outtype)
 {
-    ir_function *fn = ir_builder_get_function(self, name);
+    ir_function *fn = ir_builder_get_function(self, name.c_str());
     if (fn) {
         return nullptr;
     }
 
-    fn = ir_function_new(self, outtype);
-    if (!ir_function_set_name(fn, name))
-    {
-        ir_function_delete(fn);
-        return nullptr;
-    }
-    vec_push(self->functions, fn);
-    util_htset(self->htfunctions, name, fn);
+    fn = new ir_function(self, outtype);
+    fn->m_name = name;
+    self->m_functions.emplace_back(fn);
+    util_htset(self->m_htfunctions, name.c_str(), fn);
 
-    fn->value = ir_builder_create_global(self, fn->name, TYPE_FUNCTION);
-    if (!fn->value) {
-        ir_function_delete(fn);
+    fn->m_value = ir_builder_create_global(self, fn->m_name, TYPE_FUNCTION);
+    if (!fn->m_value) {
+        delete fn;
         return nullptr;
     }
 
-    fn->value->hasvalue = true;
-    fn->value->outtype = outtype;
-    fn->value->constval.vfunc = fn;
-    fn->value->context = fn->context;
+    fn->m_value->m_hasvalue = true;
+    fn->m_value->m_outtype = outtype;
+    fn->m_value->m_constval.vfunc = fn;
+    fn->m_value->m_context = fn->m_context;
 
     return fn;
 }
 
 static ir_value* ir_builder_get_global(ir_builder *self, const char *name)
 {
-    return (ir_value*)util_htget(self->htglobals, name);
+    return (ir_value*)util_htget(self->m_htglobals, name);
 }
 
-ir_value* ir_builder_create_global(ir_builder *self, const char *name, int vtype)
+ir_value* ir_builder_create_global(ir_builder *self, const std::string& name, qc_type vtype)
 {
     ir_value *ve;
 
     if (name[0] != '#')
     {
-        ve = ir_builder_get_global(self, name);
+        ve = ir_builder_get_global(self, name.c_str());
         if (ve) {
             return nullptr;
         }
     }
 
-    ve = ir_value_var(name, store_global, vtype);
-    vec_push(self->globals, ve);
-    util_htset(self->htglobals, name, ve);
+    ve = new ir_value(std::string(name), store_global, vtype);
+    self->m_globals.emplace_back(ve);
+    util_htset(self->m_htglobals, name.c_str(), ve);
     return ve;
 }
 
 ir_value* ir_builder_get_va_count(ir_builder *self)
 {
-    if (self->reserved_va_count)
-        return self->reserved_va_count;
-    return (self->reserved_va_count = ir_builder_create_global(self, "reserved:va_count", TYPE_FLOAT));
+    if (self->m_reserved_va_count)
+        return self->m_reserved_va_count;
+    return (self->m_reserved_va_count = ir_builder_create_global(self, "reserved:va_count", TYPE_FLOAT));
 }
 
 static ir_value* ir_builder_get_field(ir_builder *self, const char *name)
 {
-    return (ir_value*)util_htget(self->htfields, name);
+    return (ir_value*)util_htget(self->m_htfields, name);
 }
 
 
-ir_value* ir_builder_create_field(ir_builder *self, const char *name, int vtype)
+ir_value* ir_builder_create_field(ir_builder *self, const std::string& name, qc_type vtype)
 {
-    ir_value *ve = ir_builder_get_field(self, name);
+    ir_value *ve = ir_builder_get_field(self, name.c_str());
     if (ve) {
         return nullptr;
     }
 
-    ve = ir_value_var(name, store_global, TYPE_FIELD);
-    ve->fieldtype = vtype;
-    vec_push(self->fields, ve);
-    util_htset(self->htfields, name, ve);
+    ve = new ir_value(std::string(name), store_global, TYPE_FIELD);
+    ve->m_fieldtype = vtype;
+    self->m_fields.emplace_back(ve);
+    util_htset(self->m_htfields, name.c_str(), ve);
     return ve;
 }
 
@@ -474,114 +403,39 @@ static void ir_function_enumerate(ir_function*);
 static bool ir_function_calculate_liferanges(ir_function*);
 static bool ir_function_allocate_locals(ir_function*);
 
-ir_function* ir_function_new(ir_builder* owner, int outtype)
+ir_function::ir_function(ir_builder* owner_, qc_type outtype_)
+: m_owner(owner_),
+  m_name("<@unnamed>"),
+  m_outtype(outtype_)
 {
-    ir_function *self;
-    self = (ir_function*)mem_a(sizeof(*self));
-
-    if (!self)
-        return nullptr;
-
-    memset(self, 0, sizeof(*self));
-
-    self->name = nullptr;
-    if (!ir_function_set_name(self, "<@unnamed>")) {
-        mem_d(self);
-        return nullptr;
-    }
-    self->flags = 0;
-
-    self->owner = owner;
-    self->context.file = "<@no context>";
-    self->context.line = 0;
-    self->outtype = outtype;
-    self->value = nullptr;
-    self->builtin = 0;
-
-    self->params = nullptr;
-    self->blocks = nullptr;
-    self->values = nullptr;
-    self->locals = nullptr;
-
-    self->max_varargs = 0;
-
-    self->code_function_def = -1;
-    self->allocated_locals = 0;
-    self->globaltemps      = 0;
-
-    self->run_id = 0;
-    return self;
+    m_context.file = "<@no context>";
+    m_context.line = 0;
 }
 
-bool ir_function_set_name(ir_function *self, const char *name)
+ir_function::~ir_function()
 {
-    if (self->name)
-        mem_d((void*)self->name);
-    self->name = util_strdup(name);
-    return !!self->name;
 }
 
 static void ir_function_delete_quick(ir_function *self)
 {
-    size_t i;
-    mem_d((void*)self->name);
-
-    for (i = 0; i != vec_size(self->blocks); ++i)
-        ir_block_delete_quick(self->blocks[i]);
-    vec_free(self->blocks);
-
-    vec_free(self->params);
-
-    for (i = 0; i != vec_size(self->values); ++i)
-        ir_value_delete(self->values[i]);
-    vec_free(self->values);
-
-    for (i = 0; i != vec_size(self->locals); ++i)
-        ir_value_delete(self->locals[i]);
-    vec_free(self->locals);
-
-    /* self->value is deleted by the builder */
-
-    mem_d(self);
-}
-
-void ir_function_delete(ir_function *self)
-{
-    size_t i;
-    mem_d((void*)self->name);
-
-    for (i = 0; i != vec_size(self->blocks); ++i)
-        ir_block_delete(self->blocks[i]);
-    vec_free(self->blocks);
-
-    vec_free(self->params);
-
-    for (i = 0; i != vec_size(self->values); ++i)
-        ir_value_delete(self->values[i]);
-    vec_free(self->values);
-
-    for (i = 0; i != vec_size(self->locals); ++i)
-        ir_value_delete(self->locals[i]);
-    vec_free(self->locals);
-
-    /* self->value is deleted by the builder */
-
-    mem_d(self);
+    for (auto& b : self->m_blocks)
+        ir_block_delete_quick(b.release());
+    delete self;
 }
 
 static void ir_function_collect_value(ir_function *self, ir_value *v)
 {
-    vec_push(self->values, v);
+    self->m_values.emplace_back(v);
 }
 
 ir_block* ir_function_create_block(lex_ctx_t ctx, ir_function *self, const char *label)
 {
-    ir_block* bn = ir_block_new(self, label);
-    bn->context = ctx;
-    vec_push(self->blocks, bn);
+    ir_block* bn = new ir_block(self, label ? std::string(label) : std::string());
+    bn->m_context = ctx;
+    self->m_blocks.emplace_back(bn);
 
-    if ((self->flags & IR_FLAG_BLOCK_COVERAGE) && self->owner->coverage_func)
-        (void)ir_block_create_call(bn, ctx, nullptr, self->owner->coverage_func, false);
+    if ((self->m_flags & IR_FLAG_BLOCK_COVERAGE) && self->m_owner->m_coverage_func)
+        (void)ir_block_create_call(bn, ctx, nullptr, self->m_owner->m_coverage_func, false);
 
     return bn;
 }
@@ -599,19 +453,15 @@ static bool instr_is_operation(uint16_t op)
 
 static bool ir_function_pass_peephole(ir_function *self)
 {
-    size_t b;
-
-    for (b = 0; b < vec_size(self->blocks); ++b) {
-        size_t    i;
-        ir_block *block = self->blocks[b];
-
-        for (i = 0; i < vec_size(block->instr); ++i) {
+    for (auto& bp : self->m_blocks) {
+        ir_block *block = bp.get();
+        for (size_t i = 0; i < vec_size(block->m_instr); ++i) {
             ir_instr *inst;
-            inst = block->instr[i];
+            inst = block->m_instr[i];
 
             if (i >= 1 &&
-                (inst->opcode >= INSTR_STORE_F &&
-                 inst->opcode <= INSTR_STORE_FNC))
+                (inst->m_opcode >= INSTR_STORE_F &&
+                 inst->m_opcode <= INSTR_STORE_FNC))
             {
                 ir_instr *store;
                 ir_instr *oper;
@@ -619,44 +469,44 @@ static bool ir_function_pass_peephole(ir_function *self)
 
                 store = inst;
 
-                oper  = block->instr[i-1];
-                if (!instr_is_operation(oper->opcode))
+                oper  = block->m_instr[i-1];
+                if (!instr_is_operation(oper->m_opcode))
                     continue;
 
                 /* Don't change semantics of MUL_VF in engines where these may not alias. */
                 if (OPTS_FLAG(LEGACY_VECTOR_MATHS)) {
-                    if (oper->opcode == INSTR_MUL_VF && oper->_ops[2]->memberof == oper->_ops[1])
+                    if (oper->m_opcode == INSTR_MUL_VF && oper->_m_ops[2]->m_memberof == oper->_m_ops[1])
                         continue;
-                    if (oper->opcode == INSTR_MUL_FV && oper->_ops[1]->memberof == oper->_ops[2])
+                    if (oper->m_opcode == INSTR_MUL_FV && oper->_m_ops[1]->m_memberof == oper->_m_ops[2])
                         continue;
                 }
 
-                value = oper->_ops[0];
+                value = oper->_m_ops[0];
 
                 /* only do it for SSA values */
-                if (value->store != store_value)
+                if (value->m_store != store_value)
                     continue;
 
                 /* don't optimize out the temp if it's used later again */
-                if (value->reads.size() != 1)
+                if (value->m_reads.size() != 1)
                     continue;
 
                 /* The very next store must use this value */
-                if (value->reads[0] != store)
+                if (value->m_reads[0] != store)
                     continue;
 
                 /* And of course the store must _read_ from it, so it's in
                  * OP 1 */
-                if (store->_ops[1] != value)
+                if (store->_m_ops[1] != value)
                     continue;
 
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                (void)!ir_instr_op(oper, 0, store->_ops[0], true);
+                (void)!ir_instr_op(oper, 0, store->_m_ops[0], true);
 
-                vec_remove(block->instr, i, 1);
-                ir_instr_delete(store);
+                vec_remove(block->m_instr, i, 1);
+                delete store;
             }
-            else if (inst->opcode == VINSTR_COND)
+            else if (inst->m_opcode == VINSTR_COND)
             {
                 /* COND on a value resulting from a NOT could
                  * remove the NOT and swap its operands
@@ -666,17 +516,17 @@ static bool ir_function_pass_peephole(ir_function *self)
                     size_t    inotid;
                     ir_instr *inot;
                     ir_value *value;
-                    value = inst->_ops[0];
+                    value = inst->_m_ops[0];
 
-                    if (value->store != store_value || value->reads.size() != 1 || value->reads[0] != inst)
+                    if (value->m_store != store_value || value->m_reads.size() != 1 || value->m_reads[0] != inst)
                         break;
 
-                    inot = value->writes[0];
-                    if (inot->_ops[0] != value ||
-                        inot->opcode < INSTR_NOT_F ||
-                        inot->opcode > INSTR_NOT_FNC ||
-                        inot->opcode == INSTR_NOT_V || /* can't do these */
-                        inot->opcode == INSTR_NOT_S)
+                    inot = value->m_writes[0];
+                    if (inot->_m_ops[0] != value ||
+                        inot->m_opcode < INSTR_NOT_F ||
+                        inot->m_opcode > INSTR_NOT_FNC ||
+                        inot->m_opcode == INSTR_NOT_V || /* can't do these */
+                        inot->m_opcode == INSTR_NOT_S)
                     {
                         break;
                     }
@@ -684,23 +534,23 @@ static bool ir_function_pass_peephole(ir_function *self)
                     /* count */
                     ++opts_optimizationcount[OPTIM_PEEPHOLE];
                     /* change operand */
-                    (void)!ir_instr_op(inst, 0, inot->_ops[1], false);
+                    (void)!ir_instr_op(inst, 0, inot->_m_ops[1], false);
                     /* remove NOT */
-                    tmp = inot->owner;
-                    for (inotid = 0; inotid < vec_size(tmp->instr); ++inotid) {
-                        if (tmp->instr[inotid] == inot)
+                    tmp = inot->m_owner;
+                    for (inotid = 0; inotid < vec_size(tmp->m_instr); ++inotid) {
+                        if (tmp->m_instr[inotid] == inot)
                             break;
                     }
-                    if (inotid >= vec_size(tmp->instr)) {
-                        compile_error(inst->context, "sanity-check failed: failed to find instruction to optimize out");
+                    if (inotid >= vec_size(tmp->m_instr)) {
+                        compile_error(inst->m_context, "sanity-check failed: failed to find instruction to optimize out");
                         return false;
                     }
-                    vec_remove(tmp->instr, inotid, 1);
-                    ir_instr_delete(inot);
+                    vec_remove(tmp->m_instr, inotid, 1);
+                    delete inot;
                     /* swap ontrue/onfalse */
-                    tmp = inst->bops[0];
-                    inst->bops[0] = inst->bops[1];
-                    inst->bops[1] = tmp;
+                    tmp = inst->m_bops[0];
+                    inst->m_bops[0] = inst->m_bops[1];
+                    inst->m_bops[1] = tmp;
                 }
                 continue;
             }
@@ -712,86 +562,87 @@ static bool ir_function_pass_peephole(ir_function *self)
 
 static bool ir_function_pass_tailrecursion(ir_function *self)
 {
-    size_t b, p;
+    size_t p;
 
-    for (b = 0; b < vec_size(self->blocks); ++b) {
+    for (auto& bp : self->m_blocks) {
+        ir_block *block = bp.get();
+
         ir_value *funcval;
         ir_instr *ret, *call, *store = nullptr;
-        ir_block *block = self->blocks[b];
 
-        if (!block->final || vec_size(block->instr) < 2)
+        if (!block->m_final || vec_size(block->m_instr) < 2)
             continue;
 
-        ret = block->instr[vec_size(block->instr)-1];
-        if (ret->opcode != INSTR_DONE && ret->opcode != INSTR_RETURN)
+        ret = block->m_instr[vec_size(block->m_instr)-1];
+        if (ret->m_opcode != INSTR_DONE && ret->m_opcode != INSTR_RETURN)
             continue;
 
-        call = block->instr[vec_size(block->instr)-2];
-        if (call->opcode >= INSTR_STORE_F && call->opcode <= INSTR_STORE_FNC) {
+        call = block->m_instr[vec_size(block->m_instr)-2];
+        if (call->m_opcode >= INSTR_STORE_F && call->m_opcode <= INSTR_STORE_FNC) {
             /* account for the unoptimized
              * CALL
              * STORE %return, %tmp
              * RETURN %tmp
              * version
              */
-            if (vec_size(block->instr) < 3)
+            if (vec_size(block->m_instr) < 3)
                 continue;
 
             store = call;
-            call = block->instr[vec_size(block->instr)-3];
+            call = block->m_instr[vec_size(block->m_instr)-3];
         }
 
-        if (call->opcode < INSTR_CALL0 || call->opcode > INSTR_CALL8)
+        if (call->m_opcode < INSTR_CALL0 || call->m_opcode > INSTR_CALL8)
             continue;
 
         if (store) {
             /* optimize out the STORE */
-            if (ret->_ops[0]   &&
-                ret->_ops[0]   == store->_ops[0] &&
-                store->_ops[1] == call->_ops[0])
+            if (ret->_m_ops[0]   &&
+                ret->_m_ops[0]   == store->_m_ops[0] &&
+                store->_m_ops[1] == call->_m_ops[0])
             {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
-                call->_ops[0] = store->_ops[0];
-                vec_remove(block->instr, vec_size(block->instr) - 2, 1);
-                ir_instr_delete(store);
+                call->_m_ops[0] = store->_m_ops[0];
+                vec_remove(block->m_instr, vec_size(block->m_instr) - 2, 1);
+                delete store;
             }
             else
                 continue;
         }
 
-        if (!call->_ops[0])
+        if (!call->_m_ops[0])
             continue;
 
-        funcval = call->_ops[1];
+        funcval = call->_m_ops[1];
         if (!funcval)
             continue;
-        if (funcval->vtype != TYPE_FUNCTION || funcval->constval.vfunc != self)
+        if (funcval->m_vtype != TYPE_FUNCTION || funcval->m_constval.vfunc != self)
             continue;
 
         /* now we have a CALL and a RET, check if it's a tailcall */
-        if (ret->_ops[0] && call->_ops[0] != ret->_ops[0])
+        if (ret->_m_ops[0] && call->_m_ops[0] != ret->_m_ops[0])
             continue;
 
         ++opts_optimizationcount[OPTIM_TAIL_RECURSION];
-        vec_shrinkby(block->instr, 2);
+        vec_shrinkby(block->m_instr, 2);
 
-        block->final = false; /* open it back up */
+        block->m_final = false; /* open it back up */
 
         /* emite parameter-stores */
-        for (p = 0; p < call->params.size(); ++p) {
+        for (p = 0; p < call->m_params.size(); ++p) {
             /* assert(call->params_count <= self->locals_count); */
-            if (!ir_block_create_store(block, call->context, self->locals[p], call->params[p])) {
-                irerror(call->context, "failed to create tailcall store instruction for parameter %i", (int)p);
+            if (!ir_block_create_store(block, call->m_context, self->m_locals[p].get(), call->m_params[p])) {
+                irerror(call->m_context, "failed to create tailcall store instruction for parameter %i", (int)p);
                 return false;
             }
         }
-        if (!ir_block_create_jump(block, call->context, self->blocks[0])) {
-            irerror(call->context, "failed to create tailcall jump");
+        if (!ir_block_create_jump(block, call->m_context, self->m_blocks[0].get())) {
+            irerror(call->m_context, "failed to create tailcall jump");
             return false;
         }
 
-        ir_instr_delete(call);
-        ir_instr_delete(ret);
+        delete call;
+        delete ret;
     }
 
     return true;
@@ -799,44 +650,42 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
 
 bool ir_function_finalize(ir_function *self)
 {
-    size_t i;
-
-    if (self->builtin)
+    if (self->m_builtin)
         return true;
 
     if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         if (!ir_function_pass_peephole(self)) {
-            irerror(self->context, "generic optimization pass broke something in `%s`", self->name);
+            irerror(self->m_context, "generic optimization pass broke something in `%s`", self->m_name.c_str());
             return false;
         }
     }
 
     if (OPTS_OPTIMIZATION(OPTIM_TAIL_RECURSION)) {
         if (!ir_function_pass_tailrecursion(self)) {
-            irerror(self->context, "tail-recursion optimization pass broke something in `%s`", self->name);
+            irerror(self->m_context, "tail-recursion optimization pass broke something in `%s`", self->m_name.c_str());
             return false;
         }
     }
 
     if (!ir_function_naive_phi(self)) {
-        irerror(self->context, "internal error: ir_function_naive_phi failed");
+        irerror(self->m_context, "internal error: ir_function_naive_phi failed");
         return false;
     }
 
-    for (i = 0; i < vec_size(self->locals); ++i) {
-        ir_value *v = self->locals[i];
-        if (v->vtype == TYPE_VECTOR ||
-            (v->vtype == TYPE_FIELD && v->outtype == TYPE_VECTOR))
+    for (auto& lp : self->m_locals) {
+        ir_value *v = lp.get();
+        if (v->m_vtype == TYPE_VECTOR ||
+            (v->m_vtype == TYPE_FIELD && v->m_outtype == TYPE_VECTOR))
         {
             ir_value_vector_member(v, 0);
             ir_value_vector_member(v, 1);
             ir_value_vector_member(v, 2);
         }
     }
-    for (i = 0; i < vec_size(self->values); ++i) {
-        ir_value *v = self->values[i];
-        if (v->vtype == TYPE_VECTOR ||
-            (v->vtype == TYPE_FIELD && v->outtype == TYPE_VECTOR))
+    for (auto& vp : self->m_values) {
+        ir_value *v = vp.get();
+        if (v->m_vtype == TYPE_VECTOR ||
+            (v->m_vtype == TYPE_FIELD && v->m_outtype == TYPE_VECTOR))
         {
             ir_value_vector_member(v, 0);
             ir_value_vector_member(v, 1);
@@ -853,21 +702,22 @@ bool ir_function_finalize(ir_function *self)
     return true;
 }
 
-ir_value* ir_function_create_local(ir_function *self, const char *name, int vtype, bool param)
+ir_value* ir_function_create_local(ir_function *self, const std::string& name, qc_type vtype, bool param)
 {
     ir_value *ve;
 
     if (param &&
-        vec_size(self->locals) &&
-        self->locals[vec_size(self->locals)-1]->store != store_param) {
-        irerror(self->context, "cannot add parameters after adding locals");
+        !self->m_locals.empty() &&
+        self->m_locals.back()->m_store != store_param)
+    {
+        irerror(self->m_context, "cannot add parameters after adding locals");
         return nullptr;
     }
 
-    ve = ir_value_var(name, (param ? store_param : store_local), vtype);
+    ve = new ir_value(std::string(name), (param ? store_param : store_local), vtype);
     if (param)
-        ve->locked = true;
-    vec_push(self->locals, ve);
+        ve->m_locked = true;
+    self->m_locals.emplace_back(ve);
     return ve;
 }
 
@@ -875,138 +725,97 @@ ir_value* ir_function_create_local(ir_function *self, const char *name, int vtyp
  *IR Block
  */
 
-ir_block* ir_block_new(ir_function* owner, const char *name)
+ir_block::ir_block(ir_function* owner, const std::string& name)
+: m_owner(owner),
+  m_label(name)
 {
-    ir_block *self = new ir_block;
-    memset(self, 0, sizeof(*self));
+    m_context.file = "<@no context>";
+    m_context.line = 0;
+}
 
-    self->label = nullptr;
-    if (name && !ir_block_set_label(self, name)) {
-        mem_d(self);
-        return nullptr;
-    }
-    self->owner = owner;
-    self->context.file = "<@no context>";
-    self->context.line = 0;
-    self->final = false;
-
-    self->instr = nullptr;
-    self->entries = nullptr;
-    self->exits = nullptr;
-
-    self->eid = 0;
-    self->is_return = false;
-    self->generated = false;
-
-    return self;
+ir_block::~ir_block()
+{
+    for (size_t i = 0; i != vec_size(m_instr); ++i)
+        delete m_instr[i];
+    vec_free(m_instr);
+    vec_free(m_entries);
+    vec_free(m_exits);
 }
 
 static void ir_block_delete_quick(ir_block* self)
 {
     size_t i;
-    if (self->label) mem_d(self->label);
-    for (i = 0; i != vec_size(self->instr); ++i)
-        ir_instr_delete_quick(self->instr[i]);
-    vec_free(self->instr);
-    vec_free(self->entries);
-    vec_free(self->exits);
+    for (i = 0; i != vec_size(self->m_instr); ++i)
+        ir_instr_delete_quick(self->m_instr[i]);
+    vec_free(self->m_instr);
     delete self;
-}
-
-void ir_block_delete(ir_block* self)
-{
-    size_t i;
-    if (self->label) mem_d(self->label);
-    for (i = 0; i != vec_size(self->instr); ++i)
-        ir_instr_delete(self->instr[i]);
-    vec_free(self->instr);
-    vec_free(self->entries);
-    vec_free(self->exits);
-    delete self;
-}
-
-bool ir_block_set_label(ir_block *self, const char *name)
-{
-    if (self->label)
-        mem_d((void*)self->label);
-    self->label = util_strdup(name);
-    return !!self->label;
 }
 
 /***********************************************************************
  *IR Instructions
  */
 
-static ir_instr* ir_instr_new(lex_ctx_t ctx, ir_block* owner, int op)
+ir_instr::ir_instr(lex_ctx_t ctx, ir_block* owner_, int op)
+: m_opcode(op),
+  m_context(ctx),
+  m_owner(owner_)
 {
-    ir_instr *self = new ir_instr;
-    self->owner = owner;
-    self->context = ctx;
-    self->opcode = op;
-    self->_ops[0] = nullptr;
-    self->_ops[1] = nullptr;
-    self->_ops[2] = nullptr;
-    self->bops[0] = nullptr;
-    self->bops[1] = nullptr;
-    self->eid = 0;
-    self->likely = true;
-    return self;
+}
+
+ir_instr::~ir_instr()
+{
+    // The following calls can only delete from
+    // vectors, we still want to delete this instruction
+    // so ignore the return value. Since with the warn_unused_result attribute
+    // gcc doesn't care about an explicit: (void)foo(); to ignore the result,
+    // I have to improvise here and use if(foo());
+    for (auto &it : m_phi) {
+        size_t idx;
+        if (vec_ir_instr_find(it.value->m_writes, this, &idx))
+            it.value->m_writes.erase(it.value->m_writes.begin() + idx);
+        if (vec_ir_instr_find(it.value->m_reads, this, &idx))
+            it.value->m_reads.erase(it.value->m_reads.begin() + idx);
+    }
+    for (auto &it : m_params) {
+        size_t idx;
+        if (vec_ir_instr_find(it->m_writes, this, &idx))
+            it->m_writes.erase(it->m_writes.begin() + idx);
+        if (vec_ir_instr_find(it->m_reads, this, &idx))
+            it->m_reads.erase(it->m_reads.begin() + idx);
+    }
+    (void)!ir_instr_op(this, 0, nullptr, false);
+    (void)!ir_instr_op(this, 1, nullptr, false);
+    (void)!ir_instr_op(this, 2, nullptr, false);
 }
 
 static void ir_instr_delete_quick(ir_instr *self)
 {
+    self->m_phi.clear();
+    self->m_params.clear();
     delete self;
-}
-
-static void ir_instr_delete(ir_instr *self)
-{
-    /* The following calls can only delete from
-     * vectors, we still want to delete this instruction
-     * so ignore the return value. Since with the warn_unused_result attribute
-     * gcc doesn't care about an explicit: (void)foo(); to ignore the result,
-     * I have to improvise here and use if(foo());
-     */
-    for (auto &it : self->phi) {
-        size_t idx;
-        if (vec_ir_instr_find(it.value->writes, self, &idx))
-            it.value->writes.erase(it.value->writes.begin() + idx);
-        if (vec_ir_instr_find(it.value->reads, self, &idx))
-            it.value->reads.erase(it.value->reads.begin() + idx);
-    }
-    for (auto &it : self->params) {
-        size_t idx;
-        if (vec_ir_instr_find(it->writes, self, &idx))
-            it->writes.erase(it->writes.begin() + idx);
-        if (vec_ir_instr_find(it->reads, self, &idx))
-            it->reads.erase(it->reads.begin() + idx);
-    }
-    (void)!ir_instr_op(self, 0, nullptr, false);
-    (void)!ir_instr_op(self, 1, nullptr, false);
-    (void)!ir_instr_op(self, 2, nullptr, false);
-    mem_d(self);
 }
 
 static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
 {
-    if (v && v->vtype == TYPE_NOEXPR) {
-        irerror(self->context, "tried to use a NOEXPR value");
+    if (v && v->m_vtype == TYPE_NOEXPR) {
+        irerror(self->m_context, "tried to use a NOEXPR value");
         return false;
     }
 
-    if (self->_ops[op]) {
+    if (self->_m_ops[op]) {
         size_t idx;
-        if (writing && vec_ir_instr_find(self->_ops[op]->writes, self, &idx))
-            self->_ops[op]->writes.erase(self->_ops[op]->writes.begin() + idx);
-        else if (vec_ir_instr_find(self->_ops[op]->reads, self, &idx))
-            self->_ops[op]->reads.erase(self->_ops[op]->reads.begin() + idx);
+        if (writing && vec_ir_instr_find(self->_m_ops[op]->m_writes, self, &idx))
+            self->_m_ops[op]->m_writes.erase(self->_m_ops[op]->m_writes.begin() + idx);
+        else if (vec_ir_instr_find(self->_m_ops[op]->m_reads, self, &idx))
+            self->_m_ops[op]->m_reads.erase(self->_m_ops[op]->m_reads.begin() + idx);
     }
     if (v) {
         if (writing)
-            v->writes.push_back(self);
+            v->m_writes.push_back(self);
         else
-            v->reads.push_back(self);
+            v->m_reads.push_back(self);
     }
-    self->_ops[op] = v;
+    self->_m_ops[op] = v;
     return true;
 }
 
@@ -1016,239 +825,202 @@ static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
 
 static void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
 {
-    self->code.globaladdr = gaddr;
-    if (self->members[0]) self->members[0]->code.globaladdr = gaddr;
-    if (self->members[1]) self->members[1]->code.globaladdr = gaddr;
-    if (self->members[2]) self->members[2]->code.globaladdr = gaddr;
+    self->m_code.globaladdr = gaddr;
+    if (self->m_members[0]) self->m_members[0]->m_code.globaladdr = gaddr;
+    if (self->m_members[1]) self->m_members[1]->m_code.globaladdr = gaddr;
+    if (self->m_members[2]) self->m_members[2]->m_code.globaladdr = gaddr;
 }
 
 static int32_t ir_value_code_addr(const ir_value *self)
 {
-    if (self->store == store_return)
-        return OFS_RETURN + self->code.addroffset;
-    return self->code.globaladdr + self->code.addroffset;
+    if (self->m_store == store_return)
+        return OFS_RETURN + self->m_code.addroffset;
+    return self->m_code.globaladdr + self->m_code.addroffset;
 }
 
-ir_value* ir_value_var(const char *name, int storetype, int vtype)
+ir_value::ir_value(std::string&& name_, store_type store_, qc_type vtype_)
+: m_name(move(name_)),
+  m_vtype(vtype_),
+  m_store(store_)
 {
-    ir_value *self;
-    self = (ir_value*)mem_a(sizeof(*self));
-    new (self) ir_value();
-    self->vtype = vtype;
-    self->fieldtype = TYPE_VOID;
-    self->outtype = TYPE_VOID;
-    self->store = storetype;
-    self->flags = 0;
+    m_fieldtype = TYPE_VOID;
+    m_outtype = TYPE_VOID;
+    m_flags = 0;
 
-    self->cvq = CV_NONE;
-    self->hasvalue = false;
-    self->context.file = "<@no context>";
-    self->context.line = 0;
-    self->name = nullptr;
-    if (name && !ir_value_set_name(self, name)) {
-        irerror(self->context, "out of memory");
-        mem_d(self);
-        return nullptr;
-    }
+    m_cvq          = CV_NONE;
+    m_hasvalue     = false;
+    m_context.file = "<@no context>";
+    m_context.line = 0;
 
-    memset(&self->constval, 0, sizeof(self->constval));
-    memset(&self->code,     0, sizeof(self->code));
+    memset(&m_constval, 0, sizeof(m_constval));
+    memset(&m_code,     0, sizeof(m_code));
 
-    self->members[0] = nullptr;
-    self->members[1] = nullptr;
-    self->members[2] = nullptr;
-    self->memberof = nullptr;
+    m_members[0] = nullptr;
+    m_members[1] = nullptr;
+    m_members[2] = nullptr;
+    m_memberof = nullptr;
 
-    self->unique_life = false;
-    self->locked = false;
-    self->callparam  = false;
-
-    self->life = nullptr;
-    return self;
+    m_unique_life = false;
+    m_locked = false;
+    m_callparam  = false;
 }
+
+ir_value::~ir_value()
+{
+    size_t i;
+    if (m_hasvalue) {
+        if (m_vtype == TYPE_STRING)
+            mem_d((void*)m_constval.vstring);
+    }
+    if (!(m_flags & IR_FLAG_SPLIT_VECTOR)) {
+        for (i = 0; i < 3; ++i) {
+            if (m_members[i])
+                delete m_members[i];
+        }
+    }
+}
+
 
 /*  helper function */
 static ir_value* ir_builder_imm_float(ir_builder *self, float value, bool add_to_list) {
-    ir_value *v = ir_value_var("#IMMEDIATE", store_global, TYPE_FLOAT);
-    v->flags |= IR_FLAG_ERASABLE;
-    v->hasvalue = true;
-    v->cvq = CV_CONST;
-    v->constval.vfloat = value;
+    ir_value *v = new ir_value("#IMMEDIATE", store_global, TYPE_FLOAT);
+    v->m_flags |= IR_FLAG_ERASABLE;
+    v->m_hasvalue = true;
+    v->m_cvq = CV_CONST;
+    v->m_constval.vfloat = value;
 
-    vec_push(self->globals, v);
+    self->m_globals.emplace_back(v);
     if (add_to_list)
-        vec_push(self->const_floats, v);
+        self->m_const_floats.emplace_back(v);
     return v;
 }
 
 ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
 {
-    char *name;
-    size_t len;
+    std::string name;
     ir_value *m;
     if (member >= 3)
         return nullptr;
 
-    if (self->members[member])
-        return self->members[member];
+    if (self->m_members[member])
+        return self->m_members[member];
 
-    if (self->name) {
-        len = strlen(self->name);
-        name = (char*)mem_a(len + 3);
-        memcpy(name, self->name, len);
-        name[len+0] = '_';
-        name[len+1] = 'x' + member;
-        name[len+2] = '\0';
+    if (!self->m_name.empty()) {
+        char member_name[3] = { '_', char('x' + member), 0 };
+        name = self->m_name + member_name;
     }
-    else
-        name = nullptr;
 
-    if (self->vtype == TYPE_VECTOR)
+    if (self->m_vtype == TYPE_VECTOR)
     {
-        m = ir_value_var(name, self->store, TYPE_FLOAT);
-        if (name)
-            mem_d(name);
+        m = new ir_value(move(name), self->m_store, TYPE_FLOAT);
         if (!m)
             return nullptr;
-        m->context = self->context;
+        m->m_context = self->m_context;
 
-        self->members[member] = m;
-        m->code.addroffset = member;
+        self->m_members[member] = m;
+        m->m_code.addroffset = member;
     }
-    else if (self->vtype == TYPE_FIELD)
+    else if (self->m_vtype == TYPE_FIELD)
     {
-        if (self->fieldtype != TYPE_VECTOR)
+        if (self->m_fieldtype != TYPE_VECTOR)
             return nullptr;
-        m = ir_value_var(name, self->store, TYPE_FIELD);
-        if (name)
-            mem_d(name);
+        m = new ir_value(move(name), self->m_store, TYPE_FIELD);
         if (!m)
             return nullptr;
-        m->fieldtype = TYPE_FLOAT;
-        m->context = self->context;
+        m->m_fieldtype = TYPE_FLOAT;
+        m->m_context = self->m_context;
 
-        self->members[member] = m;
-        m->code.addroffset = member;
+        self->m_members[member] = m;
+        m->m_code.addroffset = member;
     }
     else
     {
-        irerror(self->context, "invalid member access on %s", self->name);
+        irerror(self->m_context, "invalid member access on %s", self->m_name.c_str());
         return nullptr;
     }
 
-    m->memberof = self;
+    m->m_memberof = self;
     return m;
 }
 
 static GMQCC_INLINE size_t ir_value_sizeof(const ir_value *self)
 {
-    if (self->vtype == TYPE_FIELD && self->fieldtype == TYPE_VECTOR)
+    if (self->m_vtype == TYPE_FIELD && self->m_fieldtype == TYPE_VECTOR)
         return type_sizeof_[TYPE_VECTOR];
-    return type_sizeof_[self->vtype];
+    return type_sizeof_[self->m_vtype];
 }
 
-static ir_value* ir_value_out(ir_function *owner, const char *name, int storetype, int vtype)
+static ir_value* ir_value_out(ir_function *owner, const char *name, store_type storetype, qc_type vtype)
 {
-    ir_value *v = ir_value_var(name, storetype, vtype);
+    ir_value *v = new ir_value(name ? std::string(name) : std::string(), storetype, vtype);
     if (!v)
         return nullptr;
     ir_function_collect_value(owner, v);
     return v;
 }
 
-void ir_value_delete(ir_value* self)
-{
-    size_t i;
-    if (self->name)
-        mem_d((void*)self->name);
-    if (self->hasvalue)
-    {
-        if (self->vtype == TYPE_STRING)
-            mem_d((void*)self->constval.vstring);
-    }
-    if (!(self->flags & IR_FLAG_SPLIT_VECTOR)) {
-        for (i = 0; i < 3; ++i) {
-            if (self->members[i])
-                ir_value_delete(self->members[i]);
-        }
-    }
-    vec_free(self->life);
-    mem_d(self);
-}
-
-bool ir_value_set_name(ir_value *self, const char *name)
-{
-    if (self->name)
-        mem_d((void*)self->name);
-    self->name = util_strdup(name);
-    return !!self->name;
-}
-
 bool ir_value_set_float(ir_value *self, float f)
 {
-    if (self->vtype != TYPE_FLOAT)
+    if (self->m_vtype != TYPE_FLOAT)
         return false;
-    self->constval.vfloat = f;
-    self->hasvalue = true;
+    self->m_constval.vfloat = f;
+    self->m_hasvalue = true;
     return true;
 }
 
 bool ir_value_set_func(ir_value *self, int f)
 {
-    if (self->vtype != TYPE_FUNCTION)
+    if (self->m_vtype != TYPE_FUNCTION)
         return false;
-    self->constval.vint = f;
-    self->hasvalue = true;
+    self->m_constval.vint = f;
+    self->m_hasvalue = true;
     return true;
 }
 
 bool ir_value_set_vector(ir_value *self, vec3_t v)
 {
-    if (self->vtype != TYPE_VECTOR)
+    if (self->m_vtype != TYPE_VECTOR)
         return false;
-    self->constval.vvec = v;
-    self->hasvalue = true;
+    self->m_constval.vvec = v;
+    self->m_hasvalue = true;
     return true;
 }
 
 bool ir_value_set_field(ir_value *self, ir_value *fld)
 {
-    if (self->vtype != TYPE_FIELD)
+    if (self->m_vtype != TYPE_FIELD)
         return false;
-    self->constval.vpointer = fld;
-    self->hasvalue = true;
+    self->m_constval.vpointer = fld;
+    self->m_hasvalue = true;
     return true;
 }
 
 bool ir_value_set_string(ir_value *self, const char *str)
 {
-    if (self->vtype != TYPE_STRING)
+    if (self->m_vtype != TYPE_STRING)
         return false;
-    self->constval.vstring = util_strdupe(str);
-    self->hasvalue = true;
+    self->m_constval.vstring = util_strdupe(str);
+    self->m_hasvalue = true;
     return true;
 }
 
 #if 0
 bool ir_value_set_int(ir_value *self, int i)
 {
-    if (self->vtype != TYPE_INTEGER)
+    if (self->m_vtype != TYPE_INTEGER)
         return false;
-    self->constval.vint = i;
-    self->hasvalue = true;
+    self->m_constval.vint = i;
+    self->m_hasvalue = true;
     return true;
 }
 #endif
 
 bool ir_value_lives(ir_value *self, size_t at)
 {
-    size_t i;
-    for (i = 0; i < vec_size(self->life); ++i)
-    {
-        ir_life_entry_t *life = &self->life[i];
-        if (life->start <= at && at <= life->end)
+    for (auto& l : self->m_life) {
+        if (l.start <= at && at <= l.end)
             return true;
-        if (life->start > at) /* since it's ordered */
+        if (l.start > at) /* since it's ordered */
             return false;
     }
     return false;
@@ -1256,54 +1028,50 @@ bool ir_value_lives(ir_value *self, size_t at)
 
 static bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
 {
-    size_t k;
-    vec_push(self->life, e);
-    for (k = vec_size(self->life)-1; k > idx; --k)
-        self->life[k] = self->life[k-1];
-    self->life[idx] = e;
+    self->m_life.insert(self->m_life.begin() + idx, e);
     return true;
 }
 
 static bool ir_value_life_merge(ir_value *self, size_t s)
 {
     size_t i;
-    const size_t vs = vec_size(self->life);
-    ir_life_entry_t *life = nullptr;
+    const size_t vs = self->m_life.size();
+    ir_life_entry_t *life_found = nullptr;
     ir_life_entry_t *before = nullptr;
     ir_life_entry_t new_entry;
 
     /* Find the first range >= s */
     for (i = 0; i < vs; ++i)
     {
-        before = life;
-        life = &self->life[i];
-        if (life->start > s)
+        before = life_found;
+        life_found = &self->m_life[i];
+        if (life_found->start > s)
             break;
     }
     /* nothing found? append */
     if (i == vs) {
         ir_life_entry_t e;
-        if (life && life->end+1 == s)
+        if (life_found && life_found->end+1 == s)
         {
             /* previous life range can be merged in */
-            life->end++;
+            life_found->end++;
             return true;
         }
-        if (life && life->end >= s)
+        if (life_found && life_found->end >= s)
             return false;
         e.start = e.end = s;
-        vec_push(self->life, e);
+        self->m_life.emplace_back(e);
         return true;
     }
     /* found */
     if (before)
     {
         if (before->end + 1 == s &&
-            life->start - 1 == s)
+            life_found->start - 1 == s)
         {
             /* merge */
-            before->end = life->end;
-            vec_remove(self->life, i, 1);
+            before->end = life_found->end;
+            self->m_life.erase(self->m_life.begin()+i);
             return true;
         }
         if (before->end + 1 == s)
@@ -1317,9 +1085,9 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
             return false;
     }
     /* extend */
-    if (life->start - 1 == s)
+    if (life_found->start - 1 == s)
     {
-        life->start--;
+        life_found->start--;
         return true;
     }
     /* insert a new entry */
@@ -1331,65 +1099,63 @@ static bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
 {
     size_t i, myi;
 
-    if (!vec_size(other->life))
+    if (other->m_life.empty())
         return true;
 
-    if (!vec_size(self->life)) {
-        size_t count = vec_size(other->life);
-        ir_life_entry_t *life = vec_add(self->life, count);
-        memcpy(life, other->life, count * sizeof(*life));
+    if (self->m_life.empty()) {
+        self->m_life = other->m_life;
         return true;
     }
 
     myi = 0;
-    for (i = 0; i < vec_size(other->life); ++i)
+    for (i = 0; i < other->m_life.size(); ++i)
     {
-        const ir_life_entry_t *life = &other->life[i];
+        const ir_life_entry_t &otherlife = other->m_life[i];
         while (true)
         {
-            ir_life_entry_t *entry = &self->life[myi];
+            ir_life_entry_t *entry = &self->m_life[myi];
 
-            if (life->end+1 < entry->start)
+            if (otherlife.end+1 < entry->start)
             {
                 /* adding an interval before entry */
-                if (!ir_value_life_insert(self, myi, *life))
+                if (!ir_value_life_insert(self, myi, otherlife))
                     return false;
                 ++myi;
                 break;
             }
 
-            if (life->start <  entry->start &&
-                life->end+1 >= entry->start)
+            if (otherlife.start <  entry->start &&
+                otherlife.end+1 >= entry->start)
             {
                 /* starts earlier and overlaps */
-                entry->start = life->start;
+                entry->start = otherlife.start;
             }
 
-            if (life->end   >  entry->end &&
-                life->start <= entry->end+1)
+            if (otherlife.end   >  entry->end &&
+                otherlife.start <= entry->end+1)
             {
                 /* ends later and overlaps */
-                entry->end = life->end;
+                entry->end = otherlife.end;
             }
 
             /* see if our change combines it with the next ranges */
-            while (myi+1 < vec_size(self->life) &&
-                   entry->end+1 >= self->life[1+myi].start)
+            while (myi+1 < self->m_life.size() &&
+                   entry->end+1 >= self->m_life[1+myi].start)
             {
                 /* overlaps with (myi+1) */
-                if (entry->end < self->life[1+myi].end)
-                    entry->end = self->life[1+myi].end;
-                vec_remove(self->life, myi+1, 1);
-                entry = &self->life[myi];
+                if (entry->end < self->m_life[1+myi].end)
+                    entry->end = self->m_life[1+myi].end;
+                self->m_life.erase(self->m_life.begin() + (myi + 1));
+                entry = &self->m_life[myi];
             }
 
             /* see if we're after the entry */
-            if (life->start > entry->end)
+            if (otherlife.start > entry->end)
             {
                 ++myi;
                 /* append if we're at the end */
-                if (myi >= vec_size(self->life)) {
-                    vec_push(self->life, *life);
+                if (myi >= self->m_life.size()) {
+                    self->m_life.emplace_back(otherlife);
                     break;
                 }
                 /* otherweise check the next range */
@@ -1410,16 +1176,16 @@ static bool ir_values_overlap(const ir_value *a, const ir_value *b)
      * statement above.
      */
 
-    ir_life_entry_t *la, *lb, *enda, *endb;
+    const ir_life_entry_t *la, *lb, *enda, *endb;
 
     /* first of all, if either has no life range, they cannot clash */
-    if (!vec_size(a->life) || !vec_size(b->life))
+    if (a->m_life.empty() || b->m_life.empty())
         return false;
 
-    la = a->life;
-    lb = b->life;
-    enda = la + vec_size(a->life);
-    endb = lb + vec_size(b->life);
+    la = &a->m_life.front();
+    lb = &b->m_life.front();
+    enda = &a->m_life.back() + 1;
+    endb = &b->m_life.back() + 1;
     while (true)
     {
         /* check if the entries overlap, for that,
@@ -1462,9 +1228,9 @@ static bool ir_values_overlap(const ir_value *a, const ir_value *b)
 static bool ir_check_unreachable(ir_block *self)
 {
     /* The IR should never have to deal with unreachable code */
-    if (!self->final/* || OPTS_FLAG(ALLOW_UNREACHABLE_CODE)*/)
+    if (!self->m_final/* || OPTS_FLAG(ALLOW_UNREACHABLE_CODE)*/)
         return true;
-    irerror(self->context, "unreachable statement (%s)", self->label);
+    irerror(self->m_context, "unreachable statement (%s)", self->m_label.c_str());
     return false;
 }
 
@@ -1474,26 +1240,26 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx_t ctx, int op, ir_value *t
     if (!ir_check_unreachable(self))
         return false;
 
-    if (target->store == store_value &&
+    if (target->m_store == store_value &&
         (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC))
     {
-        irerror(self->context, "cannot store to an SSA value");
-        irerror(self->context, "trying to store: %s <- %s", target->name, what->name);
-        irerror(self->context, "instruction: %s", util_instr_str[op]);
+        irerror(self->m_context, "cannot store to an SSA value");
+        irerror(self->m_context, "trying to store: %s <- %s", target->m_name.c_str(), what->m_name.c_str());
+        irerror(self->m_context, "instruction: %s", util_instr_str[op]);
         return false;
     }
 
-    in = ir_instr_new(ctx, self, op);
+    in = new ir_instr(ctx, self, op);
     if (!in)
         return false;
 
     if (!ir_instr_op(in, 0, target, (op < INSTR_STOREP_F || op > INSTR_STOREP_FNC)) ||
         !ir_instr_op(in, 1, what, false))
     {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
-    vec_push(self->instr, in);
+    vec_push(self->m_instr, in);
     return true;
 }
 
@@ -1503,39 +1269,39 @@ bool ir_block_create_state_op(ir_block *self, lex_ctx_t ctx, ir_value *frame, ir
     if (!ir_check_unreachable(self))
         return false;
 
-    in = ir_instr_new(ctx, self, INSTR_STATE);
+    in = new ir_instr(ctx, self, INSTR_STATE);
     if (!in)
         return false;
 
     if (!ir_instr_op(in, 0, frame, false) ||
         !ir_instr_op(in, 1, think, false))
     {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
-    vec_push(self->instr, in);
+    vec_push(self->m_instr, in);
     return true;
 }
 
 static bool ir_block_create_store(ir_block *self, lex_ctx_t ctx, ir_value *target, ir_value *what)
 {
     int op = 0;
-    int vtype;
-    if (target->vtype == TYPE_VARIANT)
-        vtype = what->vtype;
+    qc_type vtype;
+    if (target->m_vtype == TYPE_VARIANT)
+        vtype = what->m_vtype;
     else
-        vtype = target->vtype;
+        vtype = target->m_vtype;
 
 #if 0
-    if      (vtype == TYPE_FLOAT   && what->vtype == TYPE_INTEGER)
+    if      (vtype == TYPE_FLOAT   && what->m_vtype == TYPE_INTEGER)
         op = INSTR_CONV_ITOF;
-    else if (vtype == TYPE_INTEGER && what->vtype == TYPE_FLOAT)
+    else if (vtype == TYPE_INTEGER && what->m_vtype == TYPE_FLOAT)
         op = INSTR_CONV_FTOI;
 #endif
         op = type_store_instr[vtype];
 
     if (OPTS_FLAG(ADJUST_VECTOR_FIELDS)) {
-        if (op == INSTR_STORE_FLD && what->fieldtype == TYPE_VECTOR)
+        if (op == INSTR_STORE_FLD && what->m_fieldtype == TYPE_VECTOR)
             op = INSTR_STORE_V;
     }
 
@@ -1545,19 +1311,19 @@ static bool ir_block_create_store(ir_block *self, lex_ctx_t ctx, ir_value *targe
 bool ir_block_create_storep(ir_block *self, lex_ctx_t ctx, ir_value *target, ir_value *what)
 {
     int op = 0;
-    int vtype;
+    qc_type vtype;
 
-    if (target->vtype != TYPE_POINTER)
+    if (target->m_vtype != TYPE_POINTER)
         return false;
 
     /* storing using pointer - target is a pointer, type must be
      * inferred from source
      */
-    vtype = what->vtype;
+    vtype = what->m_vtype;
 
     op = type_storep_instr[vtype];
     if (OPTS_FLAG(ADJUST_VECTOR_FIELDS)) {
-        if (op == INSTR_STOREP_FLD && what->fieldtype == TYPE_VECTOR)
+        if (op == INSTR_STOREP_FLD && what->m_fieldtype == TYPE_VECTOR)
             op = INSTR_STOREP_V;
     }
 
@@ -1570,19 +1336,19 @@ bool ir_block_create_return(ir_block *self, lex_ctx_t ctx, ir_value *v)
     if (!ir_check_unreachable(self))
         return false;
 
-    self->final = true;
+    self->m_final = true;
 
-    self->is_return = true;
-    in = ir_instr_new(ctx, self, INSTR_RETURN);
+    self->m_is_return = true;
+    in = new ir_instr(ctx, self, INSTR_RETURN);
     if (!in)
         return false;
 
     if (v && !ir_instr_op(in, 0, v, false)) {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
 
-    vec_push(self->instr, in);
+    vec_push(self->m_instr, in);
     return true;
 }
 
@@ -1592,26 +1358,26 @@ bool ir_block_create_if(ir_block *self, lex_ctx_t ctx, ir_value *v,
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return false;
-    self->final = true;
-    /*in = ir_instr_new(ctx, self, (v->vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));*/
-    in = ir_instr_new(ctx, self, VINSTR_COND);
+    self->m_final = true;
+    /*in = new ir_instr(ctx, self, (v->m_vtype == TYPE_STRING ? INSTR_IF_S : INSTR_IF_F));*/
+    in = new ir_instr(ctx, self, VINSTR_COND);
     if (!in)
         return false;
 
     if (!ir_instr_op(in, 0, v, false)) {
-        ir_instr_delete(in);
+        delete in;
         return false;
     }
 
-    in->bops[0] = ontrue;
-    in->bops[1] = onfalse;
+    in->m_bops[0] = ontrue;
+    in->m_bops[1] = onfalse;
 
-    vec_push(self->instr, in);
+    vec_push(self->m_instr, in);
 
-    vec_push(self->exits, ontrue);
-    vec_push(self->exits, onfalse);
-    vec_push(ontrue->entries,  self);
-    vec_push(onfalse->entries, self);
+    vec_push(self->m_exits, ontrue);
+    vec_push(self->m_exits, onfalse);
+    vec_push(ontrue->m_entries,  self);
+    vec_push(onfalse->m_entries, self);
     return true;
 }
 
@@ -1620,69 +1386,67 @@ bool ir_block_create_jump(ir_block *self, lex_ctx_t ctx, ir_block *to)
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return false;
-    self->final = true;
-    in = ir_instr_new(ctx, self, VINSTR_JUMP);
+    self->m_final = true;
+    in = new ir_instr(ctx, self, VINSTR_JUMP);
     if (!in)
         return false;
 
-    in->bops[0] = to;
-    vec_push(self->instr, in);
+    in->m_bops[0] = to;
+    vec_push(self->m_instr, in);
 
-    vec_push(self->exits, to);
-    vec_push(to->entries, self);
+    vec_push(self->m_exits, to);
+    vec_push(to->m_entries, self);
     return true;
 }
 
 bool ir_block_create_goto(ir_block *self, lex_ctx_t ctx, ir_block *to)
 {
-    self->owner->flags |= IR_FLAG_HAS_GOTO;
+    self->m_owner->m_flags |= IR_FLAG_HAS_GOTO;
     return ir_block_create_jump(self, ctx, to);
 }
 
-ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, int ot)
+ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, qc_type ot)
 {
     ir_value *out;
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return nullptr;
-    in = ir_instr_new(ctx, self, VINSTR_PHI);
+    in = new ir_instr(ctx, self, VINSTR_PHI);
     if (!in)
         return nullptr;
-    out = ir_value_out(self->owner, label, store_value, ot);
+    out = ir_value_out(self->m_owner, label, store_value, ot);
     if (!out) {
-        ir_instr_delete(in);
+        delete in;
         return nullptr;
     }
     if (!ir_instr_op(in, 0, out, true)) {
-        ir_instr_delete(in);
-        ir_value_delete(out);
+        delete in;
         return nullptr;
     }
-    vec_push(self->instr, in);
+    vec_push(self->m_instr, in);
     return in;
 }
 
 ir_value* ir_phi_value(ir_instr *self)
 {
-    return self->_ops[0];
+    return self->_m_ops[0];
 }
 
 void ir_phi_add(ir_instr* self, ir_block *b, ir_value *v)
 {
     ir_phi_entry_t pe;
 
-    if (!vec_ir_block_find(self->owner->entries, b, nullptr)) {
-        /* Must not be possible to cause this, otherwise the AST
-         * is doing something wrong.
-         */
-        irerror(self->context, "Invalid entry block for PHI");
+    if (!vec_ir_block_find(self->m_owner->m_entries, b, nullptr)) {
+        // Must not be possible to cause this, otherwise the AST
+        // is doing something wrong.
+        irerror(self->m_context, "Invalid entry block for PHI");
         exit(EXIT_FAILURE);
     }
 
     pe.value = v;
     pe.from = b;
-    v->reads.push_back(self);
-    self->phi.push_back(pe);
+    v->m_reads.push_back(self);
+    self->m_phi.push_back(pe);
 }
 
 /* call related code */
@@ -1692,31 +1456,30 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
     ir_instr *in;
     if (!ir_check_unreachable(self))
         return nullptr;
-    in = ir_instr_new(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
+    in = new ir_instr(ctx, self, (noreturn ? VINSTR_NRCALL : INSTR_CALL0));
     if (!in)
         return nullptr;
     if (noreturn) {
-        self->final = true;
-        self->is_return = true;
+        self->m_final = true;
+        self->m_is_return = true;
     }
-    out = ir_value_out(self->owner, label, (func->outtype == TYPE_VOID) ? store_return : store_value, func->outtype);
+    out = ir_value_out(self->m_owner, label, (func->m_outtype == TYPE_VOID) ? store_return : store_value, func->m_outtype);
     if (!out) {
-        ir_instr_delete(in);
+        delete in;
         return nullptr;
     }
     if (!ir_instr_op(in, 0, out, true) ||
         !ir_instr_op(in, 1, func, false))
     {
-        ir_instr_delete(in);
-        ir_value_delete(out);
+        delete in;
         return nullptr;
     }
-    vec_push(self->instr, in);
+    vec_push(self->m_instr, in);
     /*
     if (noreturn) {
         if (!ir_block_create_return(self, ctx, nullptr)) {
             compile_error(ctx, "internal error: failed to generate dummy-return instruction");
-            ir_instr_delete(in);
+            delete in;
             return nullptr;
         }
     }
@@ -1726,13 +1489,13 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
 
 ir_value* ir_call_value(ir_instr *self)
 {
-    return self->_ops[0];
+    return self->_m_ops[0];
 }
 
 void ir_call_param(ir_instr* self, ir_value *v)
 {
-    self->params.push_back(v);
-    v->reads.push_back(self);
+    self->m_params.push_back(v);
+    v->m_reads.push_back(self);
 }
 
 /* binary op related code */
@@ -1741,7 +1504,7 @@ ir_value* ir_block_create_binop(ir_block *self, lex_ctx_t ctx,
                                 const char *label, int opcode,
                                 ir_value *left, ir_value *right)
 {
-    int ot = TYPE_VOID;
+    qc_type ot = TYPE_VOID;
     switch (opcode) {
         case INSTR_ADD_F:
         case INSTR_SUB_F:
@@ -1860,7 +1623,7 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
                                 const char *label, int opcode,
                                 ir_value *operand)
 {
-    int ot = TYPE_FLOAT;
+    qc_type ot = TYPE_FLOAT;
     switch (opcode) {
         case INSTR_NOT_F:
         case INSTR_NOT_V:
@@ -1881,7 +1644,7 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
             return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, nullptr, operand, TYPE_VECTOR);
 
         default:
-            ot = operand->vtype;
+            ot = operand->m_vtype;
             break;
     };
     if (ot == TYPE_VOID) {
@@ -1894,18 +1657,17 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
 }
 
 static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, const char *label,
-                                        int op, ir_value *a, ir_value *b, int outype)
+                                        int op, ir_value *a, ir_value *b, qc_type outype)
 {
     ir_instr *instr;
     ir_value *out;
 
-    out = ir_value_out(self->owner, label, store_value, outype);
+    out = ir_value_out(self->m_owner, label, store_value, outype);
     if (!out)
         return nullptr;
 
-    instr = ir_instr_new(ctx, self, op);
+    instr = new ir_instr(ctx, self, op);
     if (!instr) {
-        ir_value_delete(out);
         return nullptr;
     }
 
@@ -1916,12 +1678,11 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
         goto on_error;
     }
 
-    vec_push(self->instr, instr);
+    vec_push(self->m_instr, instr);
 
     return out;
 on_error:
-    ir_instr_delete(instr);
-    ir_value_delete(out);
+    delete instr;
     return nullptr;
 }
 
@@ -1930,25 +1691,25 @@ ir_value* ir_block_create_fieldaddress(ir_block *self, lex_ctx_t ctx, const char
     ir_value *v;
 
     /* Support for various pointer types todo if so desired */
-    if (ent->vtype != TYPE_ENTITY)
+    if (ent->m_vtype != TYPE_ENTITY)
         return nullptr;
 
-    if (field->vtype != TYPE_FIELD)
+    if (field->m_vtype != TYPE_FIELD)
         return nullptr;
 
     v = ir_block_create_general_instr(self, ctx, label, INSTR_ADDRESS, ent, field, TYPE_POINTER);
-    v->fieldtype = field->fieldtype;
+    v->m_fieldtype = field->m_fieldtype;
     return v;
 }
 
-ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const char *label, ir_value *ent, ir_value *field, int outype)
+ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const char *label, ir_value *ent, ir_value *field, qc_type outype)
 {
     int op;
-    if (ent->vtype != TYPE_ENTITY)
+    if (ent->m_vtype != TYPE_ENTITY)
         return nullptr;
 
     /* at some point we could redirect for TYPE_POINTER... but that could lead to carelessness */
-    if (field->vtype != TYPE_FIELD)
+    if (field->m_vtype != TYPE_FIELD)
         return nullptr;
 
     switch (outype)
@@ -1964,7 +1725,7 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const cha
         case TYPE_INTEGER: op = INSTR_LOAD_I;   break;
 #endif
         default:
-            irerror(self->context, "invalid type for ir_block_create_load_from_ent: %s", type_name[outype]);
+            irerror(self->m_context, "invalid type for ir_block_create_load_from_ent: %s", type_name[outype]);
             return nullptr;
     }
 
@@ -1978,13 +1739,9 @@ ir_value* ir_block_create_load_from_ent(ir_block *self, lex_ctx_t ctx, const cha
 static bool ir_block_naive_phi(ir_block *self);
 bool ir_function_naive_phi(ir_function *self)
 {
-    size_t i;
-
-    for (i = 0; i < vec_size(self->blocks); ++i)
-    {
-        if (!ir_block_naive_phi(self->blocks[i]))
+    for (auto& b : self->m_blocks)
+        if (!ir_block_naive_phi(b.get()))
             return false;
-    }
     return true;
 }
 
@@ -1995,36 +1752,36 @@ static bool ir_block_naive_phi(ir_block *self)
      * to a list so we don't need to loop through blocks
      * - anyway: "don't optimize YET"
      */
-    for (i = 0; i < vec_size(self->instr); ++i)
+    for (i = 0; i < vec_size(self->m_instr); ++i)
     {
-        ir_instr *instr = self->instr[i];
-        if (instr->opcode != VINSTR_PHI)
+        ir_instr *instr = self->m_instr[i];
+        if (instr->m_opcode != VINSTR_PHI)
             continue;
 
-        vec_remove(self->instr, i, 1);
+        vec_remove(self->m_instr, i, 1);
         --i; /* NOTE: i+1 below */
 
-        for (auto &it : instr->phi) {
+        for (auto &it : instr->m_phi) {
             ir_value *v = it.value;
             ir_block *b = it.from;
-            if (v->store == store_value && v->reads.size() == 1 && v->writes.size() == 1) {
+            if (v->m_store == store_value && v->m_reads.size() == 1 && v->m_writes.size() == 1) {
                 /* replace the value */
-                if (!ir_instr_op(v->writes[0], 0, instr->_ops[0], true))
+                if (!ir_instr_op(v->m_writes[0], 0, instr->_m_ops[0], true))
                     return false;
             } else {
                 /* force a move instruction */
-                ir_instr *prevjump = vec_last(b->instr);
-                vec_pop(b->instr);
-                b->final = false;
-                instr->_ops[0]->store = store_global;
-                if (!ir_block_create_store(b, instr->context, instr->_ops[0], v))
+                ir_instr *prevjump = vec_last(b->m_instr);
+                vec_pop(b->m_instr);
+                b->m_final = false;
+                instr->_m_ops[0]->m_store = store_global;
+                if (!ir_block_create_store(b, instr->m_context, instr->_m_ops[0], v))
                     return false;
-                instr->_ops[0]->store = store_value;
-                vec_push(b->instr, prevjump);
-                b->final = true;
+                instr->_m_ops[0]->m_store = store_value;
+                vec_push(b->m_instr, prevjump);
+                b->m_final = true;
             }
         }
-        ir_instr_delete(instr);
+        delete instr;
     }
     return true;
 }
@@ -2044,9 +1801,9 @@ static void ir_block_enumerate(ir_block *self, size_t *_eid)
 {
     size_t i;
     size_t eid = *_eid;
-    for (i = 0; i < vec_size(self->instr); ++i)
+    for (i = 0; i < vec_size(self->m_instr); ++i)
     {
-        self->instr[i]->eid = eid++;
+        self->m_instr[i]->m_eid = eid++;
     }
     *_eid = eid;
 }
@@ -2058,18 +1815,19 @@ static void ir_block_enumerate(ir_block *self, size_t *_eid)
  */
 void ir_function_enumerate(ir_function *self)
 {
-    size_t i;
     size_t instruction_id = 0;
-    for (i = 0; i < vec_size(self->blocks); ++i)
+    size_t block_eid = 0;
+    for (auto& block : self->m_blocks)
     {
         /* each block now gets an additional "entry" instruction id
          * we can use to avoid point-life issues
          */
-        self->blocks[i]->entry_id = instruction_id;
+        block->m_entry_id = instruction_id;
+        block->m_eid      = block_eid;
         ++instruction_id;
+        ++block_eid;
 
-        self->blocks[i]->eid = i;
-        ir_block_enumerate(self->blocks[i], &instruction_id);
+        ir_block_enumerate(block.get(), &instruction_id);
     }
 }
 
@@ -2090,9 +1848,9 @@ static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
     ir_value *slot;
     size_t vsize = ir_value_sizeof(var);
 
-    var->code.local = vec_size(alloc->locals);
+    var->m_code.local = vec_size(alloc->locals);
 
-    slot = ir_value_var("reg", store_global, var->vtype);
+    slot = new ir_value("reg", store_global, var->m_vtype);
     if (!slot)
         return false;
 
@@ -2101,12 +1859,12 @@ static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
 
     vec_push(alloc->locals, slot);
     vec_push(alloc->sizes, vsize);
-    vec_push(alloc->unique, var->unique_life);
+    vec_push(alloc->unique, var->m_unique_life);
 
     return true;
 
 localerror:
-    ir_value_delete(slot);
+    delete slot;
     return false;
 }
 
@@ -2115,7 +1873,7 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
     size_t a;
     ir_value *slot;
 
-    if (v->unique_life)
+    if (v->m_unique_life)
         return function_allocator_alloc(alloc, v);
 
     for (a = 0; a < vec_size(alloc->locals); ++a)
@@ -2129,7 +1887,7 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
         /* never resize parameters
          * will be required later when overlapping temps + locals
          */
-        if (a < vec_size(self->params) &&
+        if (a < vec_size(self->m_params) &&
             alloc->sizes[a] < ir_value_sizeof(v))
         {
             continue;
@@ -2145,7 +1903,7 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
         if (alloc->sizes[a] < ir_value_sizeof(v))
             alloc->sizes[a] = ir_value_sizeof(v);
 
-        v->code.local = a;
+        v->m_code.local = a;
         return true;
     }
     if (a >= vec_size(alloc->locals)) {
@@ -2157,16 +1915,13 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
 
 bool ir_function_allocate_locals(ir_function *self)
 {
-    size_t i;
     bool   retval = true;
     size_t pos;
     bool   opt_gt = OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS);
 
-    ir_value *v;
-
     function_allocator lockalloc, globalloc;
 
-    if (!vec_size(self->locals) && !vec_size(self->values))
+    if (self->m_locals.empty() && self->m_values.empty())
         return true;
 
     globalloc.locals    = nullptr;
@@ -2178,86 +1933,87 @@ bool ir_function_allocate_locals(ir_function *self)
     lockalloc.positions = nullptr;
     lockalloc.unique    = nullptr;
 
-    for (i = 0; i < vec_size(self->locals); ++i)
+    size_t i;
+    for (i = 0; i < self->m_locals.size(); ++i)
     {
-        v = self->locals[i];
-        if ((self->flags & IR_FLAG_MASK_NO_LOCAL_TEMPS) || !OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
-            v->locked      = true;
-            v->unique_life = true;
+        ir_value *v = self->m_locals[i].get();
+        if ((self->m_flags & IR_FLAG_MASK_NO_LOCAL_TEMPS) || !OPTS_OPTIMIZATION(OPTIM_LOCAL_TEMPS)) {
+            v->m_locked      = true;
+            v->m_unique_life = true;
         }
-        else if (i >= vec_size(self->params))
+        else if (i >= vec_size(self->m_params))
             break;
         else
-            v->locked = true; /* lock parameters locals */
-        if (!function_allocator_alloc((v->locked || !opt_gt ? &lockalloc : &globalloc), v))
+            v->m_locked = true; /* lock parameters locals */
+        if (!function_allocator_alloc((v->m_locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
-    for (; i < vec_size(self->locals); ++i)
+    for (; i < self->m_locals.size(); ++i)
     {
-        v = self->locals[i];
-        if (!vec_size(v->life))
+        ir_value *v = self->m_locals[i].get();
+        if (v->m_life.empty())
             continue;
-        if (!ir_function_allocator_assign(self, (v->locked || !opt_gt ? &lockalloc : &globalloc), v))
+        if (!ir_function_allocator_assign(self, (v->m_locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
 
     /* Allocate a slot for any value that still exists */
-    for (i = 0; i < vec_size(self->values); ++i)
+    for (i = 0; i < self->m_values.size(); ++i)
     {
-        v = self->values[i];
+        ir_value *v = self->m_values[i].get();
 
-        if (!vec_size(v->life))
+        if (v->m_life.empty())
             continue;
 
         /* CALL optimization:
          * If the value is a parameter-temp: 1 write, 1 read from a CALL
          * and it's not "locked", write it to the OFS_PARM directly.
          */
-        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES) && !v->locked && !v->unique_life) {
-            if (v->reads.size() == 1 && v->writes.size() == 1 &&
-                (v->reads[0]->opcode == VINSTR_NRCALL ||
-                 (v->reads[0]->opcode >= INSTR_CALL0 && v->reads[0]->opcode <= INSTR_CALL8)
+        if (OPTS_OPTIMIZATION(OPTIM_CALL_STORES) && !v->m_locked && !v->m_unique_life) {
+            if (v->m_reads.size() == 1 && v->m_writes.size() == 1 &&
+                (v->m_reads[0]->m_opcode == VINSTR_NRCALL ||
+                 (v->m_reads[0]->m_opcode >= INSTR_CALL0 && v->m_reads[0]->m_opcode <= INSTR_CALL8)
                 )
                )
             {
                 size_t param;
-                ir_instr *call = v->reads[0];
-                if (!vec_ir_value_find(call->params, v, &param)) {
-                    irerror(call->context, "internal error: unlocked parameter %s not found", v->name);
+                ir_instr *call = v->m_reads[0];
+                if (!vec_ir_value_find(call->m_params, v, &param)) {
+                    irerror(call->m_context, "internal error: unlocked parameter %s not found", v->m_name.c_str());
                     goto error;
                 }
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
-                v->callparam = true;
+                v->m_callparam = true;
                 if (param < 8)
                     ir_value_code_setaddr(v, OFS_PARM0 + 3*param);
                 else {
-                    size_t nprotos = vec_size(self->owner->extparam_protos);
+                    size_t nprotos = self->m_owner->m_extparam_protos.size();
                     ir_value *ep;
                     param -= 8;
                     if (nprotos > param)
-                        ep = self->owner->extparam_protos[param];
+                        ep = self->m_owner->m_extparam_protos[param].get();
                     else
                     {
-                        ep = ir_gen_extparam_proto(self->owner);
+                        ep = ir_gen_extparam_proto(self->m_owner);
                         while (++nprotos <= param)
-                            ep = ir_gen_extparam_proto(self->owner);
+                            ep = ir_gen_extparam_proto(self->m_owner);
                     }
-                    ir_instr_op(v->writes[0], 0, ep, true);
-                    call->params[param+8] = ep;
+                    ir_instr_op(v->m_writes[0], 0, ep, true);
+                    call->m_params[param+8] = ep;
                 }
                 continue;
             }
-            if (v->writes.size() == 1 && v->writes[0]->opcode == INSTR_CALL0) {
-                v->store = store_return;
-                if (v->members[0]) v->members[0]->store = store_return;
-                if (v->members[1]) v->members[1]->store = store_return;
-                if (v->members[2]) v->members[2]->store = store_return;
+            if (v->m_writes.size() == 1 && v->m_writes[0]->m_opcode == INSTR_CALL0) {
+                v->m_store = store_return;
+                if (v->m_members[0]) v->m_members[0]->m_store = store_return;
+                if (v->m_members[1]) v->m_members[1]->m_store = store_return;
+                if (v->m_members[2]) v->m_members[2]->m_store = store_return;
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
                 continue;
             }
         }
 
-        if (!ir_function_allocator_assign(self, (v->locked || !opt_gt ? &lockalloc : &globalloc), v))
+        if (!ir_function_allocator_assign(self, (v->m_locked || !opt_gt ? &lockalloc : &globalloc), v))
             goto error;
     }
 
@@ -2275,7 +2031,7 @@ bool ir_function_allocate_locals(ir_function *self)
             pos = lockalloc.positions[i-1] + lockalloc.sizes[i-1];
             vec_push(lockalloc.positions, pos);
         }
-        self->allocated_locals = pos + vec_last(lockalloc.sizes);
+        self->m_allocated_locals = pos + vec_last(lockalloc.sizes);
     }
     if (globalloc.sizes) {
         pos = (vec_size(globalloc.sizes) ? globalloc.positions[0] : 0);
@@ -2284,24 +2040,22 @@ bool ir_function_allocate_locals(ir_function *self)
             pos = globalloc.positions[i-1] + globalloc.sizes[i-1];
             vec_push(globalloc.positions, pos);
         }
-        self->globaltemps = pos + vec_last(globalloc.sizes);
+        self->m_globaltemps = pos + vec_last(globalloc.sizes);
     }
 
     /* Locals need to know their new position */
-    for (i = 0; i < vec_size(self->locals); ++i) {
-        v = self->locals[i];
-        if (v->locked || !opt_gt)
-            v->code.local = lockalloc.positions[v->code.local];
+    for (auto& local : self->m_locals) {
+        if (local->m_locked || !opt_gt)
+            local->m_code.local = lockalloc.positions[local->m_code.local];
         else
-            v->code.local = globalloc.positions[v->code.local];
+            local->m_code.local = globalloc.positions[local->m_code.local];
     }
     /* Take over the actual slot positions on values */
-    for (i = 0; i < vec_size(self->values); ++i) {
-        v = self->values[i];
-        if (v->locked || !opt_gt)
-            v->code.local = lockalloc.positions[v->code.local];
+    for (auto& value : self->m_values) {
+        if (value->m_locked || !opt_gt)
+            value->m_code.local = lockalloc.positions[value->m_code.local];
         else
-            v->code.local = globalloc.positions[v->code.local];
+            value->m_code.local = globalloc.positions[value->m_code.local];
     }
 
     goto cleanup;
@@ -2310,9 +2064,9 @@ error:
     retval = false;
 cleanup:
     for (i = 0; i < vec_size(lockalloc.locals); ++i)
-        ir_value_delete(lockalloc.locals[i]);
+        delete lockalloc.locals[i];
     for (i = 0; i < vec_size(globalloc.locals); ++i)
-        ir_value_delete(globalloc.locals[i]);
+        delete globalloc.locals[i];
     vec_free(globalloc.unique);
     vec_free(globalloc.locals);
     vec_free(globalloc.sizes);
@@ -2365,7 +2119,7 @@ static void ir_op_read_write(int op, size_t *read, size_t *write)
 
 static bool ir_block_living_add_instr(ir_block *self, size_t eid) {
     bool changed = false;
-    for (auto &it : self->living)
+    for (auto &it : self->m_living)
         if (ir_value_life_merge(it, eid))
             changed = true;
     return changed;
@@ -2373,10 +2127,10 @@ static bool ir_block_living_add_instr(ir_block *self, size_t eid) {
 
 static bool ir_block_living_lock(ir_block *self) {
     bool changed = false;
-    for (auto &it : self->living) {
-        if (it->locked)
+    for (auto &it : self->m_living) {
+        if (it->m_locked)
             continue;
-        it->locked = true;
+        it->m_locked = true;
         changed = true;
     }
     return changed;
@@ -2387,47 +2141,43 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
     ir_instr *instr;
     ir_value *value;
     size_t i, o, p, mem;
-    /* bitmasks which operands are read from or written to */
+    // bitmasks which operands are read from or written to
     size_t read, write;
-    char dbg_ind[16];
-    dbg_ind[0] = '#';
-    dbg_ind[1] = '0';
-    (void)dbg_ind;
 
-    self->living.clear();
+    self->m_living.clear();
 
-    p = vec_size(self->exits);
+    p = vec_size(self->m_exits);
     for (i = 0; i < p; ++i) {
-        ir_block *prev = self->exits[i];
-        for (auto &it : prev->living)
-            if (!vec_ir_value_find(self->living, it, nullptr))
-                self->living.push_back(it);
+        ir_block *prev = self->m_exits[i];
+        for (auto &it : prev->m_living)
+            if (!vec_ir_value_find(self->m_living, it, nullptr))
+                self->m_living.push_back(it);
     }
 
-    i = vec_size(self->instr);
+    i = vec_size(self->m_instr);
     while (i)
     { --i;
-        instr = self->instr[i];
+        instr = self->m_instr[i];
 
         /* See which operands are read and write operands */
-        ir_op_read_write(instr->opcode, &read, &write);
+        ir_op_read_write(instr->m_opcode, &read, &write);
 
         /* Go through the 3 main operands
          * writes first, then reads
          */
         for (o = 0; o < 3; ++o)
         {
-            if (!instr->_ops[o]) /* no such operand */
+            if (!instr->_m_ops[o]) /* no such operand */
                 continue;
 
-            value = instr->_ops[o];
+            value = instr->_m_ops[o];
 
             /* We only care about locals */
             /* we also calculate parameter liferanges so that locals
              * can take up parameter slots */
-            if (value->store != store_value &&
-                value->store != store_local &&
-                value->store != store_param)
+            if (value->m_store != store_value &&
+                value->m_store != store_local &&
+                value->m_store != store_param)
                 continue;
 
             /* write operands */
@@ -2438,7 +2188,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
             if (write & (1<<o))
             {
                 size_t idx;
-                bool in_living = vec_ir_value_find(self->living, value, &idx);
+                bool in_living = vec_ir_value_find(self->m_living, value, &idx);
                 if (!in_living)
                 {
                     /* If the value isn't alive it hasn't been read before... */
@@ -2448,38 +2198,38 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                      * and make sure it's only printed once
                      * since this function is run multiple times.
                      */
-                    /* con_err( "Value only written %s\n", value->name); */
-                    if (ir_value_life_merge(value, instr->eid))
+                    /* con_err( "Value only written %s\n", value->m_name); */
+                    if (ir_value_life_merge(value, instr->m_eid))
                         *changed = true;
                 } else {
                     /* since 'living' won't contain it
                      * anymore, merge the value, since
                      * (A) doesn't.
                      */
-                    if (ir_value_life_merge(value, instr->eid))
+                    if (ir_value_life_merge(value, instr->m_eid))
                         *changed = true;
                     // Then remove
-                    self->living.erase(self->living.begin() + idx);
+                    self->m_living.erase(self->m_living.begin() + idx);
                 }
                 /* Removing a vector removes all members */
                 for (mem = 0; mem < 3; ++mem) {
-                    if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], &idx)) {
-                        if (ir_value_life_merge(value->members[mem], instr->eid))
+                    if (value->m_members[mem] && vec_ir_value_find(self->m_living, value->m_members[mem], &idx)) {
+                        if (ir_value_life_merge(value->m_members[mem], instr->m_eid))
                             *changed = true;
-                        self->living.erase(self->living.begin() + idx);
+                        self->m_living.erase(self->m_living.begin() + idx);
                     }
                 }
                 /* Removing the last member removes the vector */
-                if (value->memberof) {
-                    value = value->memberof;
+                if (value->m_memberof) {
+                    value = value->m_memberof;
                     for (mem = 0; mem < 3; ++mem) {
-                        if (value->members[mem] && vec_ir_value_find(self->living, value->members[mem], nullptr))
+                        if (value->m_members[mem] && vec_ir_value_find(self->m_living, value->m_members[mem], nullptr))
                             break;
                     }
-                    if (mem == 3 && vec_ir_value_find(self->living, value, &idx)) {
-                        if (ir_value_life_merge(value, instr->eid))
+                    if (mem == 3 && vec_ir_value_find(self->m_living, value, &idx)) {
+                        if (ir_value_life_merge(value, instr->m_eid))
                             *changed = true;
-                        self->living.erase(self->living.begin() + idx);
+                        self->m_living.erase(self->m_living.begin() + idx);
                     }
                 }
             }
@@ -2488,105 +2238,105 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
         /* These operations need a special case as they can break when using
          * same source and destination operand otherwise, as the engine may
          * read the source multiple times. */
-        if (instr->opcode == INSTR_MUL_VF ||
-            instr->opcode == VINSTR_BITAND_VF ||
-            instr->opcode == VINSTR_BITOR_VF ||
-            instr->opcode == VINSTR_BITXOR ||
-            instr->opcode == VINSTR_BITXOR_VF ||
-            instr->opcode == VINSTR_BITXOR_V ||
-            instr->opcode == VINSTR_CROSS)
+        if (instr->m_opcode == INSTR_MUL_VF ||
+            instr->m_opcode == VINSTR_BITAND_VF ||
+            instr->m_opcode == VINSTR_BITOR_VF ||
+            instr->m_opcode == VINSTR_BITXOR ||
+            instr->m_opcode == VINSTR_BITXOR_VF ||
+            instr->m_opcode == VINSTR_BITXOR_V ||
+            instr->m_opcode == VINSTR_CROSS)
         {
-            value = instr->_ops[2];
+            value = instr->_m_ops[2];
             /* the float source will get an additional lifetime */
-            if (ir_value_life_merge(value, instr->eid+1))
+            if (ir_value_life_merge(value, instr->m_eid+1))
                 *changed = true;
-            if (value->memberof && ir_value_life_merge(value->memberof, instr->eid+1))
+            if (value->m_memberof && ir_value_life_merge(value->m_memberof, instr->m_eid+1))
                 *changed = true;
         }
 
-        if (instr->opcode == INSTR_MUL_FV ||
-            instr->opcode == INSTR_LOAD_V ||
-            instr->opcode == VINSTR_BITXOR ||
-            instr->opcode == VINSTR_BITXOR_VF ||
-            instr->opcode == VINSTR_BITXOR_V ||
-            instr->opcode == VINSTR_CROSS)
+        if (instr->m_opcode == INSTR_MUL_FV ||
+            instr->m_opcode == INSTR_LOAD_V ||
+            instr->m_opcode == VINSTR_BITXOR ||
+            instr->m_opcode == VINSTR_BITXOR_VF ||
+            instr->m_opcode == VINSTR_BITXOR_V ||
+            instr->m_opcode == VINSTR_CROSS)
         {
-            value = instr->_ops[1];
+            value = instr->_m_ops[1];
             /* the float source will get an additional lifetime */
-            if (ir_value_life_merge(value, instr->eid+1))
+            if (ir_value_life_merge(value, instr->m_eid+1))
                 *changed = true;
-            if (value->memberof && ir_value_life_merge(value->memberof, instr->eid+1))
+            if (value->m_memberof && ir_value_life_merge(value->m_memberof, instr->m_eid+1))
                 *changed = true;
         }
 
         for (o = 0; o < 3; ++o)
         {
-            if (!instr->_ops[o]) /* no such operand */
+            if (!instr->_m_ops[o]) /* no such operand */
                 continue;
 
-            value = instr->_ops[o];
+            value = instr->_m_ops[o];
 
             /* We only care about locals */
             /* we also calculate parameter liferanges so that locals
              * can take up parameter slots */
-            if (value->store != store_value &&
-                value->store != store_local &&
-                value->store != store_param)
+            if (value->m_store != store_value &&
+                value->m_store != store_local &&
+                value->m_store != store_param)
                 continue;
 
             /* read operands */
             if (read & (1<<o))
             {
-                if (!vec_ir_value_find(self->living, value, nullptr))
-                    self->living.push_back(value);
+                if (!vec_ir_value_find(self->m_living, value, nullptr))
+                    self->m_living.push_back(value);
                 /* reading adds the full vector */
-                if (value->memberof && !vec_ir_value_find(self->living, value->memberof, nullptr))
-                    self->living.push_back(value->memberof);
+                if (value->m_memberof && !vec_ir_value_find(self->m_living, value->m_memberof, nullptr))
+                    self->m_living.push_back(value->m_memberof);
                 for (mem = 0; mem < 3; ++mem) {
-                    if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], nullptr))
-                        self->living.push_back(value->members[mem]);
+                    if (value->m_members[mem] && !vec_ir_value_find(self->m_living, value->m_members[mem], nullptr))
+                        self->m_living.push_back(value->m_members[mem]);
                 }
             }
         }
         /* PHI operands are always read operands */
-        for (auto &it : instr->phi) {
+        for (auto &it : instr->m_phi) {
             value = it.value;
-            if (!vec_ir_value_find(self->living, value, nullptr))
-                self->living.push_back(value);
+            if (!vec_ir_value_find(self->m_living, value, nullptr))
+                self->m_living.push_back(value);
             /* reading adds the full vector */
-            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, nullptr))
-                self->living.push_back(value->memberof);
+            if (value->m_memberof && !vec_ir_value_find(self->m_living, value->m_memberof, nullptr))
+                self->m_living.push_back(value->m_memberof);
             for (mem = 0; mem < 3; ++mem) {
-                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], nullptr))
-                    self->living.push_back(value->members[mem]);
+                if (value->m_members[mem] && !vec_ir_value_find(self->m_living, value->m_members[mem], nullptr))
+                    self->m_living.push_back(value->m_members[mem]);
             }
         }
 
         /* on a call, all these values must be "locked" */
-        if (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8) {
+        if (instr->m_opcode >= INSTR_CALL0 && instr->m_opcode <= INSTR_CALL8) {
             if (ir_block_living_lock(self))
                 *changed = true;
         }
         /* call params are read operands too */
-        for (auto &it : instr->params) {
+        for (auto &it : instr->m_params) {
             value = it;
-            if (!vec_ir_value_find(self->living, value, nullptr))
-                self->living.push_back(value);
+            if (!vec_ir_value_find(self->m_living, value, nullptr))
+                self->m_living.push_back(value);
             /* reading adds the full vector */
-            if (value->memberof && !vec_ir_value_find(self->living, value->memberof, nullptr))
-                self->living.push_back(value->memberof);
+            if (value->m_memberof && !vec_ir_value_find(self->m_living, value->m_memberof, nullptr))
+                self->m_living.push_back(value->m_memberof);
             for (mem = 0; mem < 3; ++mem) {
-                if (value->members[mem] && !vec_ir_value_find(self->living, value->members[mem], nullptr))
-                    self->living.push_back(value->members[mem]);
+                if (value->m_members[mem] && !vec_ir_value_find(self->m_living, value->m_members[mem], nullptr))
+                    self->m_living.push_back(value->m_members[mem]);
             }
         }
 
         /* (A) */
-        if (ir_block_living_add_instr(self, instr->eid))
+        if (ir_block_living_add_instr(self, instr->m_eid))
             *changed = true;
     }
     /* the "entry" instruction ID */
-    if (ir_block_living_add_instr(self, self->entry_id))
+    if (ir_block_living_add_instr(self, self->m_entry_id))
         *changed = true;
 
     return true;
@@ -2594,61 +2344,58 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
 
 bool ir_function_calculate_liferanges(ir_function *self)
 {
-    size_t i, s;
-    bool changed;
-
     /* parameters live at 0 */
-    for (i = 0; i < vec_size(self->params); ++i)
-        if (!ir_value_life_merge(self->locals[i], 0))
-            compile_error(self->context, "internal error: failed value-life merging");
+    for (size_t i = 0; i < vec_size(self->m_params); ++i)
+        if (!ir_value_life_merge(self->m_locals[i].get(), 0))
+            compile_error(self->m_context, "internal error: failed value-life merging");
 
+    bool changed;
     do {
-        self->run_id++;
+        self->m_run_id++;
         changed = false;
-        i = vec_size(self->blocks);
-        while (i--) {
-            ir_block_life_propagate(self->blocks[i], &changed);
-        }
+        for (auto i = self->m_blocks.rbegin(); i != self->m_blocks.rend(); ++i)
+            ir_block_life_propagate(i->get(), &changed);
     } while (changed);
 
-    if (vec_size(self->blocks)) {
-        ir_block *block = self->blocks[0];
-        for (auto &it : block->living) {
+    if (self->m_blocks.size()) {
+        ir_block *block = self->m_blocks[0].get();
+        for (auto &it : block->m_living) {
             ir_value *v = it;
-            if (v->store != store_local)
+            if (v->m_store != store_local)
                 continue;
-            if (v->vtype == TYPE_VECTOR)
+            if (v->m_vtype == TYPE_VECTOR)
                 continue;
-            self->flags |= IR_FLAG_HAS_UNINITIALIZED;
+            self->m_flags |= IR_FLAG_HAS_UNINITIALIZED;
             /* find the instruction reading from it */
-            for (s = 0; s < v->reads.size(); ++s) {
-                if (v->reads[s]->eid == v->life[0].end)
+            size_t s = 0;
+            for (; s < v->m_reads.size(); ++s) {
+                if (v->m_reads[s]->m_eid == v->m_life[0].end)
                     break;
             }
-            if (s < v->reads.size()) {
-                if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+            if (s < v->m_reads.size()) {
+                if (irwarning(v->m_context, WARN_USED_UNINITIALIZED,
                               "variable `%s` may be used uninitialized in this function\n"
                               " -> %s:%i",
-                              v->name,
-                              v->reads[s]->context.file, v->reads[s]->context.line)
+                              v->m_name.c_str(),
+                              v->m_reads[s]->m_context.file, v->m_reads[s]->m_context.line)
                    )
                 {
                     return false;
                 }
                 continue;
             }
-            if (v->memberof) {
-                ir_value *vec = v->memberof;
-                for (s = 0; s < vec->reads.size(); ++s) {
-                    if (vec->reads[s]->eid == v->life[0].end)
+            if (v->m_memberof) {
+                ir_value *vec = v->m_memberof;
+                for (s = 0; s < vec->m_reads.size(); ++s) {
+                    if (vec->m_reads[s]->m_eid == v->m_life[0].end)
                         break;
                 }
-                if (s < vec->reads.size()) {
-                    if (irwarning(v->context, WARN_USED_UNINITIALIZED,
+                if (s < vec->m_reads.size()) {
+                    if (irwarning(v->m_context, WARN_USED_UNINITIALIZED,
                                   "variable `%s` may be used uninitialized in this function\n"
                                   " -> %s:%i",
-                                  v->name,
-                                  vec->reads[s]->context.file, vec->reads[s]->context.line)
+                                  v->m_name.c_str(),
+                                  vec->m_reads[s]->m_context.file, vec->m_reads[s]->m_context.line)
                        )
                     {
                         return false;
@@ -2656,8 +2403,8 @@ bool ir_function_calculate_liferanges(ir_function *self)
                     continue;
                 }
             }
-            if (irwarning(v->context, WARN_USED_UNINITIALIZED,
-                          "variable `%s` may be used uninitialized in this function", v->name))
+            if (irwarning(v->m_context, WARN_USED_UNINITIALIZED,
+                          "variable `%s` may be used uninitialized in this function", v->m_name.c_str()))
             {
                 return false;
             }
@@ -2685,43 +2432,43 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
 
 static bool gen_global_field(code_t *code, ir_value *global)
 {
-    if (global->hasvalue)
+    if (global->m_hasvalue)
     {
-        ir_value *fld = global->constval.vpointer;
+        ir_value *fld = global->m_constval.vpointer;
         if (!fld) {
-            irerror(global->context, "Invalid field constant with no field: %s", global->name);
+            irerror(global->m_context, "Invalid field constant with no field: %s", global->m_name.c_str());
             return false;
         }
 
         /* copy the field's value */
         ir_value_code_setaddr(global, code->globals.size());
-        code->globals.push_back(fld->code.fieldaddr);
-        if (global->fieldtype == TYPE_VECTOR) {
-            code->globals.push_back(fld->code.fieldaddr+1);
-            code->globals.push_back(fld->code.fieldaddr+2);
+        code->globals.push_back(fld->m_code.fieldaddr);
+        if (global->m_fieldtype == TYPE_VECTOR) {
+            code->globals.push_back(fld->m_code.fieldaddr+1);
+            code->globals.push_back(fld->m_code.fieldaddr+2);
         }
     }
     else
     {
         ir_value_code_setaddr(global, code->globals.size());
         code->globals.push_back(0);
-        if (global->fieldtype == TYPE_VECTOR) {
+        if (global->m_fieldtype == TYPE_VECTOR) {
             code->globals.push_back(0);
             code->globals.push_back(0);
         }
     }
-    if (global->code.globaladdr < 0)
+    if (global->m_code.globaladdr < 0)
         return false;
     return true;
 }
 
 static bool gen_global_pointer(code_t *code, ir_value *global)
 {
-    if (global->hasvalue)
+    if (global->m_hasvalue)
     {
-        ir_value *target = global->constval.vpointer;
+        ir_value *target = global->m_constval.vpointer;
         if (!target) {
-            irerror(global->context, "Invalid pointer constant: %s", global->name);
+            irerror(global->m_context, "Invalid pointer constant: %s", global->m_name.c_str());
             /* nullptr pointers are pointing to the nullptr constant, which also
              * sits at address 0, but still has an ir_value for itself.
              */
@@ -2733,23 +2480,23 @@ static bool gen_global_pointer(code_t *code, ir_value *global)
          * void() *fooptr = &foo;
          * void() foo = { code }
          */
-        if (!target->code.globaladdr) {
+        if (!target->m_code.globaladdr) {
             /* FIXME: Check for the constant nullptr ir_value!
              * because then code.globaladdr being 0 is valid.
              */
-            irerror(global->context, "FIXME: Relocation support");
+            irerror(global->m_context, "FIXME: Relocation support");
             return false;
         }
 
         ir_value_code_setaddr(global, code->globals.size());
-        code->globals.push_back(target->code.globaladdr);
+        code->globals.push_back(target->m_code.globaladdr);
     }
     else
     {
         ir_value_code_setaddr(global, code->globals.size());
         code->globals.push_back(0);
     }
-    if (global->code.globaladdr < 0)
+    if (global->m_code.globaladdr < 0)
         return false;
     return true;
 }
@@ -2765,232 +2512,232 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
     size_t    i;
     int       j;
 
-    block->generated = true;
-    block->code_start = code->statements.size();
-    for (i = 0; i < vec_size(block->instr); ++i)
+    block->m_generated = true;
+    block->m_code_start = code->statements.size();
+    for (i = 0; i < vec_size(block->m_instr); ++i)
     {
-        instr = block->instr[i];
+        instr = block->m_instr[i];
 
-        if (instr->opcode == VINSTR_PHI) {
-            irerror(block->context, "cannot generate virtual instruction (phi)");
+        if (instr->m_opcode == VINSTR_PHI) {
+            irerror(block->m_context, "cannot generate virtual instruction (phi)");
             return false;
         }
 
-        if (instr->opcode == VINSTR_JUMP) {
-            target = instr->bops[0];
+        if (instr->m_opcode == VINSTR_JUMP) {
+            target = instr->m_bops[0];
             /* for uncoditional jumps, if the target hasn't been generated
              * yet, we generate them right here.
              */
-            if (!target->generated)
+            if (!target->m_generated)
                 return gen_blocks_recursive(code, func, target);
 
             /* otherwise we generate a jump instruction */
             stmt.opcode = INSTR_GOTO;
-            stmt.o1.s1 = target->code_start - code->statements.size();
+            stmt.o1.s1 = target->m_code_start - code->statements.size();
             stmt.o2.s1 = 0;
             stmt.o3.s1 = 0;
             if (stmt.o1.s1 != 1)
-                code_push_statement(code, &stmt, instr->context);
+                code_push_statement(code, &stmt, instr->m_context);
 
             /* no further instructions can be in this block */
             return true;
         }
 
-        if (instr->opcode == VINSTR_BITXOR) {
+        if (instr->m_opcode == VINSTR_BITXOR) {
             stmt.opcode = INSTR_BITOR;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
             stmt.opcode = INSTR_BITAND;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
+            code_push_statement(code, &stmt, instr->m_context);
             stmt.opcode = INSTR_SUB_F;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_BITAND_V) {
+        if (instr->m_opcode == VINSTR_BITAND_V) {
             stmt.opcode = INSTR_BITAND;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_BITOR_V) {
+        if (instr->m_opcode == VINSTR_BITOR_V) {
             stmt.opcode = INSTR_BITOR;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_BITXOR_V) {
+        if (instr->m_opcode == VINSTR_BITXOR_V) {
             for (j = 0; j < 3; ++j) {
                 stmt.opcode = INSTR_BITOR;
-                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + j;
-                stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]) + j;
-                code_push_statement(code, &stmt, instr->context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
+                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + j;
+                stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]) + j;
+                code_push_statement(code, &stmt, instr->m_context);
                 stmt.opcode = INSTR_BITAND;
-                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + j;
-                stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
-                code_push_statement(code, &stmt, instr->context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
+                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + j;
+                stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]) + j;
+                code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_BITAND_VF) {
+        if (instr->m_opcode == VINSTR_BITAND_VF) {
             stmt.opcode = INSTR_BITAND;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_BITOR_VF) {
+        if (instr->m_opcode == VINSTR_BITOR_VF) {
             stmt.opcode = INSTR_BITOR;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_BITXOR_VF) {
+        if (instr->m_opcode == VINSTR_BITXOR_VF) {
             for (j = 0; j < 3; ++j) {
                 stmt.opcode = INSTR_BITOR;
-                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-                stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]) + j;
-                code_push_statement(code, &stmt, instr->context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
+                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+                stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]) + j;
+                code_push_statement(code, &stmt, instr->m_context);
                 stmt.opcode = INSTR_BITAND;
-                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]);
-                stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
-                code_push_statement(code, &stmt, instr->context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
+                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
+                stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]) + j;
+                code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_CROSS) {
+        if (instr->m_opcode == VINSTR_CROSS) {
             stmt.opcode = INSTR_MUL_F;
             for (j = 0; j < 3; ++j) {
-                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + (j + 1) % 3;
-                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + (j + 2) % 3;
-                stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]) + j;
-                code_push_statement(code, &stmt, instr->context);
-                stmt.o1.s1 = ir_value_code_addr(instr->_ops[1]) + (j + 2) % 3;
-                stmt.o2.s1 = ir_value_code_addr(instr->_ops[2]) + (j + 1) % 3;
-                stmt.o3.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]) + j;
-                code_push_statement(code, &stmt, instr->context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + (j + 1) % 3;
+                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + (j + 2) % 3;
+                stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]) + j;
+                code_push_statement(code, &stmt, instr->m_context);
+                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + (j + 2) % 3;
+                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + (j + 1) % 3;
+                stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]) + j;
+                code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = ir_value_code_addr(instr->_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->owner->vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_ops[0]);
-            code_push_statement(code, &stmt, instr->context);
+            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
+            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
             continue;
         }
 
-        if (instr->opcode == VINSTR_COND) {
-            ontrue  = instr->bops[0];
-            onfalse = instr->bops[1];
+        if (instr->m_opcode == VINSTR_COND) {
+            ontrue  = instr->m_bops[0];
+            onfalse = instr->m_bops[1];
             /* TODO: have the AST signal which block should
              * come first: eg. optimize IFs without ELSE...
              */
 
-            stmt.o1.u1 = ir_value_code_addr(instr->_ops[0]);
+            stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[0]);
             stmt.o2.u1 = 0;
             stmt.o3.s1 = 0;
 
-            if (ontrue->generated) {
+            if (ontrue->m_generated) {
                 stmt.opcode = INSTR_IF;
-                stmt.o2.s1 = ontrue->code_start - code->statements.size();
+                stmt.o2.s1 = ontrue->m_code_start - code->statements.size();
                 if (stmt.o2.s1 != 1)
-                    code_push_statement(code, &stmt, instr->context);
+                    code_push_statement(code, &stmt, instr->m_context);
             }
-            if (onfalse->generated) {
+            if (onfalse->m_generated) {
                 stmt.opcode = INSTR_IFNOT;
-                stmt.o2.s1 = onfalse->code_start - code->statements.size();
+                stmt.o2.s1 = onfalse->m_code_start - code->statements.size();
                 if (stmt.o2.s1 != 1)
-                    code_push_statement(code, &stmt, instr->context);
+                    code_push_statement(code, &stmt, instr->m_context);
             }
-            if (!ontrue->generated) {
-                if (onfalse->generated)
+            if (!ontrue->m_generated) {
+                if (onfalse->m_generated)
                     return gen_blocks_recursive(code, func, ontrue);
             }
-            if (!onfalse->generated) {
-                if (ontrue->generated)
+            if (!onfalse->m_generated) {
+                if (ontrue->m_generated)
                     return gen_blocks_recursive(code, func, onfalse);
             }
             /* neither ontrue nor onfalse exist */
             stmt.opcode = INSTR_IFNOT;
-            if (!instr->likely) {
+            if (!instr->m_likely) {
                 /* Honor the likelyhood hint */
                 ir_block *tmp = onfalse;
                 stmt.opcode = INSTR_IF;
@@ -2998,16 +2745,16 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 ontrue = tmp;
             }
             stidx = code->statements.size();
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
             /* on false we jump, so add ontrue-path */
             if (!gen_blocks_recursive(code, func, ontrue))
                 return false;
             /* fixup the jump address */
             code->statements[stidx].o2.s1 = code->statements.size() - stidx;
             /* generate onfalse path */
-            if (onfalse->generated) {
+            if (onfalse->m_generated) {
                 /* fixup the jump address */
-                code->statements[stidx].o2.s1 = onfalse->code_start - stidx;
+                code->statements[stidx].o2.s1 = onfalse->m_code_start - stidx;
                 if (stidx+2 == code->statements.size() && code->statements[stidx].o2.s1 == 1) {
                     code->statements[stidx] = code->statements[stidx+1];
                     if (code->statements[stidx].o1.s1 < 0)
@@ -3026,11 +2773,11 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 }
                 /* may have been generated in the previous recursive call */
                 stmt.opcode = INSTR_GOTO;
-                stmt.o1.s1 = onfalse->code_start - code->statements.size();
+                stmt.o1.s1 = onfalse->m_code_start - code->statements.size();
                 stmt.o2.s1 = 0;
                 stmt.o3.s1 = 0;
                 if (stmt.o1.s1 != 1)
-                    code_push_statement(code, &stmt, instr->context);
+                    code_push_statement(code, &stmt, instr->m_context);
                 return true;
             }
             else if (stidx+2 == code->statements.size() && code->statements[stidx].o2.s1 == 1) {
@@ -3043,141 +2790,141 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             return gen_blocks_recursive(code, func, onfalse);
         }
 
-        if ( (instr->opcode >= INSTR_CALL0 && instr->opcode <= INSTR_CALL8)
-           || instr->opcode == VINSTR_NRCALL)
+        if ( (instr->m_opcode >= INSTR_CALL0 && instr->m_opcode <= INSTR_CALL8)
+           || instr->m_opcode == VINSTR_NRCALL)
         {
             size_t p, first;
             ir_value *retvalue;
 
-            first = instr->params.size();
+            first = instr->m_params.size();
             if (first > 8)
                 first = 8;
             for (p = 0; p < first; ++p)
             {
-                ir_value *param = instr->params[p];
-                if (param->callparam)
+                ir_value *param = instr->m_params[p];
+                if (param->m_callparam)
                     continue;
 
                 stmt.opcode = INSTR_STORE_F;
                 stmt.o3.u1 = 0;
 
-                if (param->vtype == TYPE_FIELD)
-                    stmt.opcode = field_store_instr[param->fieldtype];
-                else if (param->vtype == TYPE_NIL)
+                if (param->m_vtype == TYPE_FIELD)
+                    stmt.opcode = field_store_instr[param->m_fieldtype];
+                else if (param->m_vtype == TYPE_NIL)
                     stmt.opcode = INSTR_STORE_V;
                 else
-                    stmt.opcode = type_store_instr[param->vtype];
+                    stmt.opcode = type_store_instr[param->m_vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
 
-                if (param->vtype == TYPE_VECTOR && (param->flags & IR_FLAG_SPLIT_VECTOR)) {
+                if (param->m_vtype == TYPE_VECTOR && (param->m_flags & IR_FLAG_SPLIT_VECTOR)) {
                     /* fetch 3 separate floats */
                     stmt.opcode = INSTR_STORE_F;
-                    stmt.o1.u1 = ir_value_code_addr(param->members[0]);
-                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o1.u1 = ir_value_code_addr(param->m_members[0]);
+                    code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->members[1]);
-                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o1.u1 = ir_value_code_addr(param->m_members[1]);
+                    code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->members[2]);
-                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o1.u1 = ir_value_code_addr(param->m_members[2]);
+                    code_push_statement(code, &stmt, instr->m_context);
                 }
                 else
-                    code_push_statement(code, &stmt, instr->context);
+                    code_push_statement(code, &stmt, instr->m_context);
             }
             /* Now handle extparams */
-            first = instr->params.size();
+            first = instr->m_params.size();
             for (; p < first; ++p)
             {
-                ir_builder *ir = func->owner;
-                ir_value *param = instr->params[p];
+                ir_builder *ir = func->m_owner;
+                ir_value *param = instr->m_params[p];
                 ir_value *targetparam;
 
-                if (param->callparam)
+                if (param->m_callparam)
                     continue;
 
-                if (p-8 >= vec_size(ir->extparams))
+                if (p-8 >= ir->m_extparams.size())
                     ir_gen_extparam(ir);
 
-                targetparam = ir->extparams[p-8];
+                targetparam = ir->m_extparams[p-8];
 
                 stmt.opcode = INSTR_STORE_F;
                 stmt.o3.u1 = 0;
 
-                if (param->vtype == TYPE_FIELD)
-                    stmt.opcode = field_store_instr[param->fieldtype];
-                else if (param->vtype == TYPE_NIL)
+                if (param->m_vtype == TYPE_FIELD)
+                    stmt.opcode = field_store_instr[param->m_fieldtype];
+                else if (param->m_vtype == TYPE_NIL)
                     stmt.opcode = INSTR_STORE_V;
                 else
-                    stmt.opcode = type_store_instr[param->vtype];
+                    stmt.opcode = type_store_instr[param->m_vtype];
                 stmt.o1.u1 = ir_value_code_addr(param);
                 stmt.o2.u1 = ir_value_code_addr(targetparam);
-                if (param->vtype == TYPE_VECTOR && (param->flags & IR_FLAG_SPLIT_VECTOR)) {
+                if (param->m_vtype == TYPE_VECTOR && (param->m_flags & IR_FLAG_SPLIT_VECTOR)) {
                     /* fetch 3 separate floats */
                     stmt.opcode = INSTR_STORE_F;
-                    stmt.o1.u1 = ir_value_code_addr(param->members[0]);
-                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o1.u1 = ir_value_code_addr(param->m_members[0]);
+                    code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->members[1]);
-                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o1.u1 = ir_value_code_addr(param->m_members[1]);
+                    code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->members[2]);
-                    code_push_statement(code, &stmt, instr->context);
+                    stmt.o1.u1 = ir_value_code_addr(param->m_members[2]);
+                    code_push_statement(code, &stmt, instr->m_context);
                 }
                 else
-                    code_push_statement(code, &stmt, instr->context);
+                    code_push_statement(code, &stmt, instr->m_context);
             }
 
-            stmt.opcode = INSTR_CALL0 + instr->params.size();
+            stmt.opcode = INSTR_CALL0 + instr->m_params.size();
             if (stmt.opcode > INSTR_CALL8)
                 stmt.opcode = INSTR_CALL8;
-            stmt.o1.u1 = ir_value_code_addr(instr->_ops[1]);
+            stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[1]);
             stmt.o2.u1 = 0;
             stmt.o3.u1 = 0;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
 
-            retvalue = instr->_ops[0];
-            if (retvalue && retvalue->store != store_return &&
-                (retvalue->store == store_global || vec_size(retvalue->life)))
+            retvalue = instr->_m_ops[0];
+            if (retvalue && retvalue->m_store != store_return &&
+                (retvalue->m_store == store_global || retvalue->m_life.size()))
             {
                 /* not to be kept in OFS_RETURN */
-                if (retvalue->vtype == TYPE_FIELD && OPTS_FLAG(ADJUST_VECTOR_FIELDS))
-                    stmt.opcode = field_store_instr[retvalue->fieldtype];
+                if (retvalue->m_vtype == TYPE_FIELD && OPTS_FLAG(ADJUST_VECTOR_FIELDS))
+                    stmt.opcode = field_store_instr[retvalue->m_fieldtype];
                 else
-                    stmt.opcode = type_store_instr[retvalue->vtype];
+                    stmt.opcode = type_store_instr[retvalue->m_vtype];
                 stmt.o1.u1 = OFS_RETURN;
                 stmt.o2.u1 = ir_value_code_addr(retvalue);
                 stmt.o3.u1 = 0;
-                code_push_statement(code, &stmt, instr->context);
+                code_push_statement(code, &stmt, instr->m_context);
             }
             continue;
         }
 
-        if (instr->opcode == INSTR_STATE) {
-            stmt.opcode = instr->opcode;
-            if (instr->_ops[0])
-                stmt.o1.u1 = ir_value_code_addr(instr->_ops[0]);
-            if (instr->_ops[1])
-                stmt.o2.u1 = ir_value_code_addr(instr->_ops[1]);
+        if (instr->m_opcode == INSTR_STATE) {
+            stmt.opcode = instr->m_opcode;
+            if (instr->_m_ops[0])
+                stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[0]);
+            if (instr->_m_ops[1])
+                stmt.o2.u1 = ir_value_code_addr(instr->_m_ops[1]);
             stmt.o3.u1 = 0;
-            code_push_statement(code, &stmt, instr->context);
+            code_push_statement(code, &stmt, instr->m_context);
             continue;
         }
 
-        stmt.opcode = instr->opcode;
+        stmt.opcode = instr->m_opcode;
         stmt.o1.u1 = 0;
         stmt.o2.u1 = 0;
         stmt.o3.u1 = 0;
 
         /* This is the general order of operands */
-        if (instr->_ops[0])
-            stmt.o3.u1 = ir_value_code_addr(instr->_ops[0]);
+        if (instr->_m_ops[0])
+            stmt.o3.u1 = ir_value_code_addr(instr->_m_ops[0]);
 
-        if (instr->_ops[1])
-            stmt.o1.u1 = ir_value_code_addr(instr->_ops[1]);
+        if (instr->_m_ops[1])
+            stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[1]);
 
-        if (instr->_ops[2])
-            stmt.o2.u1 = ir_value_code_addr(instr->_ops[2]);
+        if (instr->_m_ops[2])
+            stmt.o2.u1 = ir_value_code_addr(instr->_m_ops[2]);
 
         if (stmt.opcode == INSTR_RETURN || stmt.opcode == INSTR_DONE)
         {
@@ -3203,7 +2950,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 continue;
             }
         }
-        code_push_statement(code, &stmt, instr->context);
+        code_push_statement(code, &stmt, instr->m_context);
     }
     return true;
 }
@@ -3216,24 +2963,24 @@ static bool gen_function_code(code_t *code, ir_function *self)
     /* Starting from entry point, we generate blocks "as they come"
      * for now. Dead blocks will not be translated obviously.
      */
-    if (!vec_size(self->blocks)) {
-        irerror(self->context, "Function '%s' declared without body.", self->name);
+    if (self->m_blocks.empty()) {
+        irerror(self->m_context, "Function '%s' declared without body.", self->m_name.c_str());
         return false;
     }
 
-    block = self->blocks[0];
-    if (block->generated)
+    block = self->m_blocks[0].get();
+    if (block->m_generated)
         return true;
 
     if (!gen_blocks_recursive(code, self, block)) {
-        irerror(self->context, "failed to generate blocks for '%s'", self->name);
+        irerror(self->m_context, "failed to generate blocks for '%s'", self->m_name.c_str());
         return false;
     }
 
     /* code_write and qcvm -disasm need to know that the function ends here */
     retst = &code->statements.back();
     if (OPTS_OPTIMIZATION(OPTIM_VOID_RETURN) &&
-        self->outtype == TYPE_VOID &&
+        self->m_outtype == TYPE_VOID &&
         retst->opcode == INSTR_RETURN &&
         !retst->o1.u1 && !retst->o2.u1 && !retst->o3.u1)
     {
@@ -3259,17 +3006,16 @@ static qcint_t ir_builder_filestring(ir_builder *ir, const char *filename)
     /* NOTE: filename pointers are copied, we never strdup them,
      * thus we can use pointer-comparison to find the string.
      */
-    size_t i;
     qcint_t  str;
 
-    for (i = 0; i < vec_size(ir->filenames); ++i) {
-        if (ir->filenames[i] == filename)
-            return ir->filestrings[i];
+    for (size_t i = 0; i != ir->m_filenames.size(); ++i) {
+        if (!strcmp(ir->m_filenames[i], filename))
+            return i;
     }
 
-    str = code_genstring(ir->code, filename);
-    vec_push(ir->filenames, filename);
-    vec_push(ir->filestrings, str);
+    str = code_genstring(ir->m_code.get(), filename);
+    ir->m_filenames.push_back(filename);
+    ir->m_filestrings.push_back(str);
     return str;
 }
 
@@ -3280,16 +3026,16 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     size_t i;
 
-    if (!global->hasvalue || (!global->constval.vfunc)) {
-        irerror(global->context, "Invalid state of function-global: not constant: %s", global->name);
+    if (!global->m_hasvalue || (!global->m_constval.vfunc)) {
+        irerror(global->m_context, "Invalid state of function-global: not constant: %s", global->m_name.c_str());
         return false;
     }
 
-    irfun = global->constval.vfunc;
-    fun.name = global->code.name;
-    fun.file = ir_builder_filestring(ir, global->context.file);
+    irfun = global->m_constval.vfunc;
+    fun.name = global->m_code.name;
+    fun.file = ir_builder_filestring(ir, global->m_context.file);
     fun.profile = 0; /* always 0 */
-    fun.nargs = vec_size(irfun->params);
+    fun.nargs = vec_size(irfun->m_params);
     if (fun.nargs > 8)
         fun.nargs = 8;
 
@@ -3297,32 +3043,31 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
         if ((int32_t)i >= fun.nargs)
             fun.argsize[i] = 0;
         else
-            fun.argsize[i] = type_sizeof_[irfun->params[i]];
+            fun.argsize[i] = type_sizeof_[irfun->m_params[i]];
     }
 
     fun.firstlocal = 0;
-    fun.locals = irfun->allocated_locals;
+    fun.locals = irfun->m_allocated_locals;
 
-    if (irfun->builtin)
-        fun.entry = irfun->builtin+1;
+    if (irfun->m_builtin)
+        fun.entry = irfun->m_builtin+1;
     else {
-        irfun->code_function_def = ir->code->functions.size();
-        fun.entry = ir->code->statements.size();
+        irfun->m_code_function_def = ir->m_code->functions.size();
+        fun.entry = ir->m_code->statements.size();
     }
 
-    ir->code->functions.push_back(fun);
+    ir->m_code->functions.push_back(fun);
     return true;
 }
 
 static ir_value* ir_gen_extparam_proto(ir_builder *ir)
 {
-    ir_value *global;
     char      name[128];
 
-    util_snprintf(name, sizeof(name), "EXTPARM#%i", (int)(vec_size(ir->extparam_protos)));
-    global = ir_value_var(name, store_global, TYPE_VECTOR);
+    util_snprintf(name, sizeof(name), "EXTPARM#%i", (int)(ir->m_extparam_protos.size()));
+    ir_value *global = new ir_value(name, store_global, TYPE_VECTOR);
+    ir->m_extparam_protos.emplace_back(global);
 
-    vec_push(ir->extparam_protos, global);
     return global;
 }
 
@@ -3331,56 +3076,53 @@ static void ir_gen_extparam(ir_builder *ir)
     prog_section_def_t def;
     ir_value          *global;
 
-    if (vec_size(ir->extparam_protos) < vec_size(ir->extparams)+1)
+    if (ir->m_extparam_protos.size() < ir->m_extparams.size()+1)
         global = ir_gen_extparam_proto(ir);
     else
-        global = ir->extparam_protos[vec_size(ir->extparams)];
+        global = ir->m_extparam_protos[ir->m_extparams.size()].get();
 
-    def.name = code_genstring(ir->code, global->name);
+    def.name = code_genstring(ir->m_code.get(), global->m_name.c_str());
     def.type = TYPE_VECTOR;
-    def.offset = ir->code->globals.size();
+    def.offset = ir->m_code->globals.size();
 
-    ir->code->defs.push_back(def);
+    ir->m_code->defs.push_back(def);
 
     ir_value_code_setaddr(global, def.offset);
 
-    ir->code->globals.push_back(0);
-    ir->code->globals.push_back(0);
-    ir->code->globals.push_back(0);
+    ir->m_code->globals.push_back(0);
+    ir->m_code->globals.push_back(0);
+    ir->m_code->globals.push_back(0);
 
-    vec_push(ir->extparams, global);
+    ir->m_extparams.emplace_back(global);
 }
 
 static bool gen_function_extparam_copy(code_t *code, ir_function *self)
 {
-    size_t i, ext, numparams;
+    ir_builder *ir = self->m_owner;
 
-    ir_builder *ir = self->owner;
-    ir_value   *ep;
-    prog_section_statement_t stmt;
-
-    numparams = vec_size(self->params);
+    size_t numparams = vec_size(self->m_params);
     if (!numparams)
         return true;
 
+    prog_section_statement_t stmt;
     stmt.opcode = INSTR_STORE_F;
     stmt.o3.s1 = 0;
-    for (i = 8; i < numparams; ++i) {
-        ext = i - 8;
-        if (ext >= vec_size(ir->extparams))
+    for (size_t i = 8; i < numparams; ++i) {
+        size_t ext = i - 8;
+        if (ext >= ir->m_extparams.size())
             ir_gen_extparam(ir);
 
-        ep = ir->extparams[ext];
+        ir_value *ep = ir->m_extparams[ext];
 
-        stmt.opcode = type_store_instr[self->locals[i]->vtype];
-        if (self->locals[i]->vtype == TYPE_FIELD &&
-            self->locals[i]->fieldtype == TYPE_VECTOR)
+        stmt.opcode = type_store_instr[self->m_locals[i]->m_vtype];
+        if (self->m_locals[i]->m_vtype == TYPE_FIELD &&
+            self->m_locals[i]->m_fieldtype == TYPE_VECTOR)
         {
             stmt.opcode = INSTR_STORE_V;
         }
         stmt.o1.u1 = ir_value_code_addr(ep);
-        stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
-        code_push_statement(code, &stmt, self->context);
+        stmt.o2.u1 = ir_value_code_addr(self->m_locals[i].get());
+        code_push_statement(code, &stmt, self->m_context);
     }
 
     return true;
@@ -3390,33 +3132,33 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
 {
     size_t i, ext, numparams, maxparams;
 
-    ir_builder *ir = self->owner;
+    ir_builder *ir = self->m_owner;
     ir_value   *ep;
     prog_section_statement_t stmt;
 
-    numparams = vec_size(self->params);
+    numparams = vec_size(self->m_params);
     if (!numparams)
         return true;
 
     stmt.opcode = INSTR_STORE_V;
     stmt.o3.s1 = 0;
-    maxparams = numparams + self->max_varargs;
+    maxparams = numparams + self->m_max_varargs;
     for (i = numparams; i < maxparams; ++i) {
         if (i < 8) {
             stmt.o1.u1 = OFS_PARM0 + 3*i;
-            stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
-            code_push_statement(code, &stmt, self->context);
+            stmt.o2.u1 = ir_value_code_addr(self->m_locals[i].get());
+            code_push_statement(code, &stmt, self->m_context);
             continue;
         }
         ext = i - 8;
-        while (ext >= vec_size(ir->extparams))
+        while (ext >= ir->m_extparams.size())
             ir_gen_extparam(ir);
 
-        ep = ir->extparams[ext];
+        ep = ir->m_extparams[ext];
 
         stmt.o1.u1 = ir_value_code_addr(ep);
-        stmt.o2.u1 = ir_value_code_addr(self->locals[i]);
-        code_push_statement(code, &stmt, self->context);
+        stmt.o2.u1 = ir_value_code_addr(self->m_locals[i].get());
+        code_push_statement(code, &stmt, self->m_context);
     }
 
     return true;
@@ -3426,47 +3168,46 @@ static bool gen_function_locals(ir_builder *ir, ir_value *global)
 {
     prog_section_function_t *def;
     ir_function             *irfun;
-    size_t                   i;
     uint32_t                 firstlocal, firstglobal;
 
-    irfun = global->constval.vfunc;
-    def   = &ir->code->functions[0] + irfun->code_function_def;
+    irfun = global->m_constval.vfunc;
+    def   = &ir->m_code->functions[0] + irfun->m_code_function_def;
 
     if (OPTS_OPTION_BOOL(OPTION_G) ||
         !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS)        ||
-        (irfun->flags & IR_FLAG_MASK_NO_OVERLAP))
+        (irfun->m_flags & IR_FLAG_MASK_NO_OVERLAP))
     {
-        firstlocal = def->firstlocal = ir->code->globals.size();
+        firstlocal = def->firstlocal = ir->m_code->globals.size();
     } else {
-        firstlocal = def->firstlocal = ir->first_common_local;
+        firstlocal = def->firstlocal = ir->m_first_common_local;
         ++opts_optimizationcount[OPTIM_OVERLAP_LOCALS];
     }
 
-    firstglobal = (OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS) ? ir->first_common_globaltemp : firstlocal);
+    firstglobal = (OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS) ? ir->m_first_common_globaltemp : firstlocal);
 
-    for (i = ir->code->globals.size(); i < firstlocal + irfun->allocated_locals; ++i)
-        ir->code->globals.push_back(0);
-    for (i = 0; i < vec_size(irfun->locals); ++i) {
-        ir_value *v = irfun->locals[i];
-        if (v->locked || !OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS)) {
-            ir_value_code_setaddr(v, firstlocal + v->code.local);
-            if (!ir_builder_gen_global(ir, irfun->locals[i], true)) {
-                irerror(irfun->locals[i]->context, "failed to generate local %s", irfun->locals[i]->name);
+    for (size_t i = ir->m_code->globals.size(); i < firstlocal + irfun->m_allocated_locals; ++i)
+        ir->m_code->globals.push_back(0);
+
+    for (auto& lp : irfun->m_locals) {
+        ir_value *v = lp.get();
+        if (v->m_locked || !OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS)) {
+            ir_value_code_setaddr(v, firstlocal + v->m_code.local);
+            if (!ir_builder_gen_global(ir, v, true)) {
+                irerror(v->m_context, "failed to generate local %s", v->m_name.c_str());
                 return false;
             }
         }
         else
-            ir_value_code_setaddr(v, firstglobal + v->code.local);
+            ir_value_code_setaddr(v, firstglobal + v->m_code.local);
     }
-    for (i = 0; i < vec_size(irfun->values); ++i)
-    {
-        ir_value *v = irfun->values[i];
-        if (v->callparam)
+    for (auto& vp : irfun->m_values) {
+        ir_value *v = vp.get();
+        if (v->m_callparam)
             continue;
-        if (v->locked)
-            ir_value_code_setaddr(v, firstlocal + v->code.local);
+        if (v->m_locked)
+            ir_value_code_setaddr(v, firstlocal + v->m_code.local);
         else
-            ir_value_code_setaddr(v, firstglobal + v->code.local);
+            ir_value_code_setaddr(v, firstglobal + v->m_code.local);
     }
     return true;
 }
@@ -3478,12 +3219,12 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
 
     (void)ir;
 
-    irfun = global->constval.vfunc;
+    irfun = global->m_constval.vfunc;
     if (!irfun) {
-        if (global->cvq == CV_NONE) {
-            if (irwarning(global->context, WARN_IMPLICIT_FUNCTION_POINTER,
+        if (global->m_cvq == CV_NONE) {
+            if (irwarning(global->m_context, WARN_IMPLICIT_FUNCTION_POINTER,
                           "function `%s` has no body and in QC implicitly becomes a function-pointer",
-                          global->name))
+                          global->m_name.c_str()))
             {
                 /* Not bailing out just now. If this happens a lot you don't want to have
                  * to rerun gmqcc for each such function.
@@ -3496,38 +3237,38 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
         return true;
     }
 
-    if (irfun->builtin)
+    if (irfun->m_builtin)
         return true;
 
     /*
      * If there is no definition and the thing is eraseable, we can ignore
      * outputting the function to begin with.
      */
-    if (global->flags & IR_FLAG_ERASABLE && irfun->code_function_def < 0) {
+    if (global->m_flags & IR_FLAG_ERASABLE && irfun->m_code_function_def < 0) {
         return true;
     }
 
-    if (irfun->code_function_def < 0) {
-        irerror(irfun->context, "`%s`: IR global wasn't generated, failed to access function-def", irfun->name);
+    if (irfun->m_code_function_def < 0) {
+        irerror(irfun->m_context, "`%s`: IR global wasn't generated, failed to access function-def", irfun->m_name.c_str());
         return false;
     }
-    fundef = &ir->code->functions[irfun->code_function_def];
+    fundef = &ir->m_code->functions[irfun->m_code_function_def];
 
-    fundef->entry = ir->code->statements.size();
+    fundef->entry = ir->m_code->statements.size();
     if (!gen_function_locals(ir, global)) {
-        irerror(irfun->context, "Failed to generate locals for function %s", irfun->name);
+        irerror(irfun->m_context, "Failed to generate locals for function %s", irfun->m_name.c_str());
         return false;
     }
-    if (!gen_function_extparam_copy(ir->code, irfun)) {
-        irerror(irfun->context, "Failed to generate extparam-copy code for function %s", irfun->name);
+    if (!gen_function_extparam_copy(ir->m_code.get(), irfun)) {
+        irerror(irfun->m_context, "Failed to generate extparam-copy code for function %s", irfun->m_name.c_str());
         return false;
     }
-    if (irfun->max_varargs && !gen_function_varargs_copy(ir->code, irfun)) {
-        irerror(irfun->context, "Failed to generate vararg-copy code for function %s", irfun->name);
+    if (irfun->m_max_varargs && !gen_function_varargs_copy(ir->m_code.get(), irfun)) {
+        irerror(irfun->m_context, "Failed to generate vararg-copy code for function %s", irfun->m_name.c_str());
         return false;
     }
-    if (!gen_function_code(ir->code, irfun)) {
-        irerror(irfun->context, "Failed to generate code for function %s", irfun->name);
+    if (!gen_function_code(ir->m_code.get(), irfun)) {
+        irerror(irfun->m_context, "Failed to generate code for function %s", irfun->m_name.c_str());
         return false;
     }
     return true;
@@ -3601,11 +3342,11 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
     bool               pushdef = opts.optimizeoff;
 
     /* we don't generate split-vectors */
-    if (global->vtype == TYPE_VECTOR && (global->flags & IR_FLAG_SPLIT_VECTOR))
+    if (global->m_vtype == TYPE_VECTOR && (global->m_flags & IR_FLAG_SPLIT_VECTOR))
         return true;
 
-    def.type = global->vtype;
-    def.offset = self->code->globals.size();
+    def.type = global->m_vtype;
+    def.offset = self->m_code->globals.size();
     def.name = 0;
     if (OPTS_OPTION_BOOL(OPTION_G) || !islocal)
     {
@@ -3615,55 +3356,53 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
          * if we're eraseable and the function isn't referenced ignore outputting
          * the function.
          */
-        if (global->flags & IR_FLAG_ERASABLE && global->reads.empty()) {
+        if (global->m_flags & IR_FLAG_ERASABLE && global->m_reads.empty()) {
             return true;
         }
 
         if (OPTS_OPTIMIZATION(OPTIM_STRIP_CONSTANT_NAMES) &&
-            !(global->flags & IR_FLAG_INCLUDE_DEF) &&
-            (global->name[0] == '#' || global->cvq == CV_CONST))
+            !(global->m_flags & IR_FLAG_INCLUDE_DEF) &&
+            (global->m_name[0] == '#' || global->m_cvq == CV_CONST))
         {
             pushdef = false;
         }
 
         if (pushdef) {
-            if (global->name[0] == '#') {
-                if (!self->str_immediate)
-                    self->str_immediate = code_genstring(self->code, "IMMEDIATE");
-                def.name = global->code.name = self->str_immediate;
+            if (global->m_name[0] == '#') {
+                if (!self->m_str_immediate)
+                    self->m_str_immediate = code_genstring(self->m_code.get(), "IMMEDIATE");
+                def.name = global->m_code.name = self->m_str_immediate;
             }
             else
-                def.name = global->code.name = code_genstring(self->code, global->name);
+                def.name = global->m_code.name = code_genstring(self->m_code.get(), global->m_name.c_str());
         }
         else
             def.name   = 0;
         if (islocal) {
             def.offset = ir_value_code_addr(global);
-            self->code->defs.push_back(def);
-            if (global->vtype == TYPE_VECTOR)
-                gen_vector_defs(self->code, def, global->name);
-            else if (global->vtype == TYPE_FIELD && global->fieldtype == TYPE_VECTOR)
-                gen_vector_defs(self->code, def, global->name);
+            self->m_code->defs.push_back(def);
+            if (global->m_vtype == TYPE_VECTOR)
+                gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
+            else if (global->m_vtype == TYPE_FIELD && global->m_fieldtype == TYPE_VECTOR)
+                gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
             return true;
         }
     }
     if (islocal)
         return true;
 
-    switch (global->vtype)
+    switch (global->m_vtype)
     {
     case TYPE_VOID:
-        if (!strcmp(global->name, "end_sys_globals")) {
-            /* TODO: remember this point... all the defs before this one
-             * should be checksummed and added to progdefs.h when we generate it.
-             */
+        if (0 == global->m_name.compare("end_sys_globals")) {
+            // TODO: remember this point... all the defs before this one
+            // should be checksummed and added to progdefs.h when we generate it.
         }
-        else if (!strcmp(global->name, "end_sys_fields")) {
-            /* TODO: same as above but for entity-fields rather than globsl
-             */
+        else if (0 == global->m_name.compare("end_sys_fields")) {
+            // TODO: same as above but for entity-fields rather than globsl
         }
-        else if(irwarning(global->context, WARN_VOID_VARIABLES, "unrecognized variable of type void `%s`",
-                          global->name))
+        else if(irwarning(global->m_context, WARN_VOID_VARIABLES, "unrecognized variable of type void `%s`",
+                          global->m_name.c_str()))
         {
             /* Not bailing out */
             /* return false; */
@@ -3673,115 +3412,115 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
          * Maybe this could be an -foption
          * fteqcc creates data for end_sys_* - of size 1, so let's do the same
          */
-        ir_value_code_setaddr(global, self->code->globals.size());
-        self->code->globals.push_back(0);
+        ir_value_code_setaddr(global, self->m_code->globals.size());
+        self->m_code->globals.push_back(0);
         /* Add the def */
-        if (pushdef) self->code->defs.push_back(def);
+        if (pushdef) self->m_code->defs.push_back(def);
         return true;
     case TYPE_POINTER:
-        if (pushdef) self->code->defs.push_back(def);
-        return gen_global_pointer(self->code, global);
+        if (pushdef) self->m_code->defs.push_back(def);
+        return gen_global_pointer(self->m_code.get(), global);
     case TYPE_FIELD:
         if (pushdef) {
-            self->code->defs.push_back(def);
-            if (global->fieldtype == TYPE_VECTOR)
-                gen_vector_defs(self->code, def, global->name);
+            self->m_code->defs.push_back(def);
+            if (global->m_fieldtype == TYPE_VECTOR)
+                gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
         }
-        return gen_global_field(self->code, global);
+        return gen_global_field(self->m_code.get(), global);
     case TYPE_ENTITY:
         /* fall through */
     case TYPE_FLOAT:
     {
-        ir_value_code_setaddr(global, self->code->globals.size());
-        if (global->hasvalue) {
-            iptr = (int32_t*)&global->constval.ivec[0];
-            self->code->globals.push_back(*iptr);
+        ir_value_code_setaddr(global, self->m_code->globals.size());
+        if (global->m_hasvalue) {
+            iptr = (int32_t*)&global->m_constval.ivec[0];
+            self->m_code->globals.push_back(*iptr);
         } else {
-            self->code->globals.push_back(0);
+            self->m_code->globals.push_back(0);
         }
-        if (!islocal && global->cvq != CV_CONST)
+        if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        if (pushdef) self->code->defs.push_back(def);
+        if (pushdef) self->m_code->defs.push_back(def);
 
-        return global->code.globaladdr >= 0;
+        return global->m_code.globaladdr >= 0;
     }
     case TYPE_STRING:
     {
-        ir_value_code_setaddr(global, self->code->globals.size());
-        if (global->hasvalue) {
-            uint32_t load = code_genstring(self->code, global->constval.vstring);
-            self->code->globals.push_back(load);
+        ir_value_code_setaddr(global, self->m_code->globals.size());
+        if (global->m_hasvalue) {
+            uint32_t load = code_genstring(self->m_code.get(), global->m_constval.vstring);
+            self->m_code->globals.push_back(load);
         } else {
-            self->code->globals.push_back(0);
+            self->m_code->globals.push_back(0);
         }
-        if (!islocal && global->cvq != CV_CONST)
+        if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        if (pushdef) self->code->defs.push_back(def);
-        return global->code.globaladdr >= 0;
+        if (pushdef) self->m_code->defs.push_back(def);
+        return global->m_code.globaladdr >= 0;
     }
     case TYPE_VECTOR:
     {
         size_t d;
-        ir_value_code_setaddr(global, self->code->globals.size());
-        if (global->hasvalue) {
-            iptr = (int32_t*)&global->constval.ivec[0];
-            self->code->globals.push_back(iptr[0]);
-            if (global->code.globaladdr < 0)
+        ir_value_code_setaddr(global, self->m_code->globals.size());
+        if (global->m_hasvalue) {
+            iptr = (int32_t*)&global->m_constval.ivec[0];
+            self->m_code->globals.push_back(iptr[0]);
+            if (global->m_code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof_[global->vtype]; ++d) {
-                self->code->globals.push_back(iptr[d]);
+            for (d = 1; d < type_sizeof_[global->m_vtype]; ++d) {
+                self->m_code->globals.push_back(iptr[d]);
             }
         } else {
-            self->code->globals.push_back(0);
-            if (global->code.globaladdr < 0)
+            self->m_code->globals.push_back(0);
+            if (global->m_code.globaladdr < 0)
                 return false;
-            for (d = 1; d < type_sizeof_[global->vtype]; ++d) {
-                self->code->globals.push_back(0);
+            for (d = 1; d < type_sizeof_[global->m_vtype]; ++d) {
+                self->m_code->globals.push_back(0);
             }
         }
-        if (!islocal && global->cvq != CV_CONST)
+        if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
 
         if (pushdef) {
-            self->code->defs.push_back(def);
+            self->m_code->defs.push_back(def);
             def.type &= ~DEF_SAVEGLOBAL;
-            gen_vector_defs(self->code, def, global->name);
+            gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
         }
-        return global->code.globaladdr >= 0;
+        return global->m_code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
-        ir_value_code_setaddr(global, self->code->globals.size());
-        if (!global->hasvalue) {
-            self->code->globals.push_back(0);
-            if (global->code.globaladdr < 0)
+        ir_value_code_setaddr(global, self->m_code->globals.size());
+        if (!global->m_hasvalue) {
+            self->m_code->globals.push_back(0);
+            if (global->m_code.globaladdr < 0)
                 return false;
         } else {
-            self->code->globals.push_back(self->code->functions.size());
+            self->m_code->globals.push_back(self->m_code->functions.size());
             if (!gen_global_function(self, global))
                 return false;
         }
-        if (!islocal && global->cvq != CV_CONST)
+        if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        if (pushdef) self->code->defs.push_back(def);
+        if (pushdef) self->m_code->defs.push_back(def);
         return true;
     case TYPE_VARIANT:
         /* assume biggest type */
-            ir_value_code_setaddr(global, self->code->globals.size());
-            self->code->globals.push_back(0);
+            ir_value_code_setaddr(global, self->m_code->globals.size());
+            self->m_code->globals.push_back(0);
             for (i = 1; i < type_sizeof_[TYPE_VARIANT]; ++i)
-                self->code->globals.push_back(0);
+                self->m_code->globals.push_back(0);
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
-        irerror(global->context, "Invalid type for global variable `%s`: %s",
-                global->name, type_name[global->vtype]);
+        irerror(global->m_context, "Invalid type for global variable `%s`: %s",
+                global->m_name.c_str(), type_name[global->m_vtype]);
         return false;
     }
 }
 
 static GMQCC_INLINE void ir_builder_prepare_field(code_t *code, ir_value *field)
 {
-    field->code.fieldaddr = code_alloc_field(code, type_sizeof_[field->fieldtype]);
+    field->m_code.fieldaddr = code_alloc_field(code, type_sizeof_[field->m_fieldtype]);
 }
 
 static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
@@ -3791,28 +3530,28 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
     (void)self;
 
-    def.type   = (uint16_t)field->vtype;
-    def.offset = (uint16_t)self->code->globals.size();
+    def.type   = (uint16_t)field->m_vtype;
+    def.offset = (uint16_t)self->m_code->globals.size();
 
     /* create a global named the same as the field */
     if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_GMQCC) {
         /* in our standard, the global gets a dot prefix */
-        size_t len = strlen(field->name);
+        size_t len = field->m_name.length();
         char name[1024];
 
         /* we really don't want to have to allocate this, and 1024
          * bytes is more than enough for a variable/field name
          */
         if (len+2 >= sizeof(name)) {
-            irerror(field->context, "invalid field name size: %u", (unsigned int)len);
+            irerror(field->m_context, "invalid field name size: %u", (unsigned int)len);
             return false;
         }
 
         name[0] = '.';
-        memcpy(name+1, field->name, len); /* no strncpy - we used strlen above */
+        memcpy(name+1, field->m_name.c_str(), len); // no strncpy - we used strlen above
         name[len+1] = 0;
 
-        def.name = code_genstring(self->code, name);
+        def.name = code_genstring(self->m_code.get(), name);
         fld.name = def.name + 1; /* we reuse that string table entry */
     } else {
         /* in plain QC, there cannot be a global with the same name,
@@ -3820,220 +3559,217 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
          * FIXME: fteqcc should create a global as well
          * check if it actually uses the same name. Probably does
          */
-        def.name = code_genstring(self->code, field->name);
+        def.name = code_genstring(self->m_code.get(), field->m_name.c_str());
         fld.name = def.name;
     }
 
-    field->code.name = def.name;
+    field->m_code.name = def.name;
 
-    self->code->defs.push_back(def);
+    self->m_code->defs.push_back(def);
 
-    fld.type = field->fieldtype;
+    fld.type = field->m_fieldtype;
 
     if (fld.type == TYPE_VOID) {
-        irerror(field->context, "field is missing a type: %s - don't know its size", field->name);
+        irerror(field->m_context, "field is missing a type: %s - don't know its size", field->m_name.c_str());
         return false;
     }
 
-    fld.offset = field->code.fieldaddr;
+    fld.offset = field->m_code.fieldaddr;
 
-    self->code->fields.push_back(fld);
+    self->m_code->fields.push_back(fld);
 
-    ir_value_code_setaddr(field, self->code->globals.size());
-    self->code->globals.push_back(fld.offset);
+    ir_value_code_setaddr(field, self->m_code->globals.size());
+    self->m_code->globals.push_back(fld.offset);
     if (fld.type == TYPE_VECTOR) {
-        self->code->globals.push_back(fld.offset+1);
-        self->code->globals.push_back(fld.offset+2);
+        self->m_code->globals.push_back(fld.offset+1);
+        self->m_code->globals.push_back(fld.offset+2);
     }
 
-    if (field->fieldtype == TYPE_VECTOR) {
-        gen_vector_defs  (self->code, def, field->name);
-        gen_vector_fields(self->code, fld, field->name);
+    if (field->m_fieldtype == TYPE_VECTOR) {
+        gen_vector_defs  (self->m_code.get(), def, field->m_name.c_str());
+        gen_vector_fields(self->m_code.get(), fld, field->m_name.c_str());
     }
 
-    return field->code.globaladdr >= 0;
+    return field->m_code.globaladdr >= 0;
 }
 
 static void ir_builder_collect_reusables(ir_builder *builder) {
-    size_t i;
-    ir_value **reusables = nullptr;
-    for (i = 0; i < vec_size(builder->globals); ++i) {
-        ir_value *value = builder->globals[i];
-        if (value->vtype != TYPE_FLOAT || !value->hasvalue)
+    std::vector<ir_value*> reusables;
+
+    for (auto& gp : builder->m_globals) {
+        ir_value *value = gp.get();
+        if (value->m_vtype != TYPE_FLOAT || !value->m_hasvalue)
             continue;
-        if (value->cvq == CV_CONST || (value->name && value->name[0] == '#')) {
-            vec_push(reusables, value);
-        }
+        if (value->m_cvq == CV_CONST || (value->m_name.length() >= 1 && value->m_name[0] == '#'))
+            reusables.emplace_back(value);
     }
-    builder->const_floats = reusables;
+    builder->m_const_floats = move(reusables);
 }
 
 static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
-    size_t i, count;
     ir_value* found[3] = { nullptr, nullptr, nullptr };
 
-    /* must not be written to */
-    if (vec->writes.size())
+    // must not be written to
+    if (vec->m_writes.size())
         return;
-    /* must not be trying to access individual members */
-    if (vec->members[0] || vec->members[1] || vec->members[2])
+    // must not be trying to access individual members
+    if (vec->m_members[0] || vec->m_members[1] || vec->m_members[2])
         return;
-    /* should be actually used otherwise it won't be generated anyway */
-    count = vec->reads.size();
-    if (!count)
+    // should be actually used otherwise it won't be generated anyway
+    if (vec->m_reads.empty())
         return;
+    //size_t count = vec->m_reads.size();
+    //if (!count)
+    //    return;
 
-    /* may only be used directly as function parameters, so if we find some other instruction cancel */
-    for (i = 0; i != count; ++i) {
-        /* we only split vectors if they're used directly as parameter to a call only! */
-        ir_instr *user = vec->reads[i];
-        if ((user->opcode < INSTR_CALL0 || user->opcode > INSTR_CALL8) && user->opcode != VINSTR_NRCALL)
+    // may only be used directly as function parameters, so if we find some other instruction cancel
+    for (ir_instr *user : vec->m_reads) {
+        // we only split vectors if they're used directly as parameter to a call only!
+        if ((user->m_opcode < INSTR_CALL0 || user->m_opcode > INSTR_CALL8) && user->m_opcode != VINSTR_NRCALL)
             return;
     }
 
-    vec->flags |= IR_FLAG_SPLIT_VECTOR;
+    vec->m_flags |= IR_FLAG_SPLIT_VECTOR;
 
-    /* find existing floats making up the split */
-    count = vec_size(self->const_floats);
-    for (i = 0; i != count; ++i) {
-        ir_value *c = self->const_floats[i];
-        if (!found[0] && c->constval.vfloat == vec->constval.vvec.x)
+    // find existing floats making up the split
+    for (ir_value *c : self->m_const_floats) {
+        if (!found[0] && c->m_constval.vfloat == vec->m_constval.vvec.x)
             found[0] = c;
-        if (!found[1] && c->constval.vfloat == vec->constval.vvec.y)
+        if (!found[1] && c->m_constval.vfloat == vec->m_constval.vvec.y)
             found[1] = c;
-        if (!found[2] && c->constval.vfloat == vec->constval.vvec.z)
+        if (!found[2] && c->m_constval.vfloat == vec->m_constval.vvec.z)
             found[2] = c;
         if (found[0] && found[1] && found[2])
             break;
     }
 
-    /* generate floats for not yet found components */
+    // generate floats for not yet found components
     if (!found[0])
-        found[0] = ir_builder_imm_float(self, vec->constval.vvec.x, true);
+        found[0] = ir_builder_imm_float(self, vec->m_constval.vvec.x, true);
     if (!found[1]) {
-        if (vec->constval.vvec.y == vec->constval.vvec.x)
+        if (vec->m_constval.vvec.y == vec->m_constval.vvec.x)
             found[1] = found[0];
         else
-            found[1] = ir_builder_imm_float(self, vec->constval.vvec.y, true);
+            found[1] = ir_builder_imm_float(self, vec->m_constval.vvec.y, true);
     }
     if (!found[2]) {
-        if (vec->constval.vvec.z == vec->constval.vvec.x)
+        if (vec->m_constval.vvec.z == vec->m_constval.vvec.x)
             found[2] = found[0];
-        else if (vec->constval.vvec.z == vec->constval.vvec.y)
+        else if (vec->m_constval.vvec.z == vec->m_constval.vvec.y)
             found[2] = found[1];
         else
-            found[2] = ir_builder_imm_float(self, vec->constval.vvec.z, true);
+            found[2] = ir_builder_imm_float(self, vec->m_constval.vvec.z, true);
     }
 
-    /* the .members array should be safe to use here. */
-    vec->members[0] = found[0];
-    vec->members[1] = found[1];
-    vec->members[2] = found[2];
+    // the .members array should be safe to use here
+    vec->m_members[0] = found[0];
+    vec->m_members[1] = found[1];
+    vec->m_members[2] = found[2];
 
-    /* register the readers for these floats */
-    count = vec->reads.size();
-    for (i = 0; i != count; ++i) {
-        found[0]->reads.push_back(vec->reads[i]);
-        found[1]->reads.push_back(vec->reads[i]);
-        found[2]->reads.push_back(vec->reads[i]);
-    }
+    // register the readers for these floats
+    found[0]->m_reads.insert(found[0]->m_reads.end(), vec->m_reads.begin(), vec->m_reads.end());
+    found[1]->m_reads.insert(found[1]->m_reads.end(), vec->m_reads.begin(), vec->m_reads.end());
+    found[2]->m_reads.insert(found[2]->m_reads.end(), vec->m_reads.begin(), vec->m_reads.end());
 }
 
 static void ir_builder_split_vectors(ir_builder *self) {
-    size_t i, count = vec_size(self->globals);
-    for (i = 0; i != count; ++i) {
-        ir_value *v = self->globals[i];
-        if (v->vtype != TYPE_VECTOR || !v->name || v->name[0] != '#')
+    // member values may be added to self->m_globals during this operation, but
+    // no new vectors will be added, we need to iterate via an index as
+    // c++ iterators would be invalidated
+    const size_t count = self->m_globals.size();
+    for (size_t i = 0; i != count; ++i) {
+        ir_value *v = self->m_globals[i].get();
+        if (v->m_vtype != TYPE_VECTOR || !v->m_name.length() || v->m_name[0] != '#')
             continue;
-        ir_builder_split_vector(self, self->globals[i]);
+        ir_builder_split_vector(self, v);
     }
 }
 
 bool ir_builder_generate(ir_builder *self, const char *filename)
 {
     prog_section_statement_t stmt;
-    size_t i;
     char  *lnofile = nullptr;
 
     if (OPTS_FLAG(SPLIT_VECTOR_PARAMETERS)) {
         ir_builder_collect_reusables(self);
-        if (vec_size(self->const_floats) > 0)
+        if (!self->m_const_floats.empty())
             ir_builder_split_vectors(self);
     }
 
-    for (i = 0; i < vec_size(self->fields); ++i)
-    {
-        ir_builder_prepare_field(self->code, self->fields[i]);
-    }
+    for (auto& fp : self->m_fields)
+        ir_builder_prepare_field(self->m_code.get(), fp.get());
 
-    for (i = 0; i < vec_size(self->globals); ++i)
-    {
-        if (!ir_builder_gen_global(self, self->globals[i], false)) {
+    for (auto& gp : self->m_globals) {
+        ir_value *global = gp.get();
+        if (!ir_builder_gen_global(self, global, false)) {
             return false;
         }
-        if (self->globals[i]->vtype == TYPE_FUNCTION) {
-            ir_function *func = self->globals[i]->constval.vfunc;
-            if (func && self->max_locals < func->allocated_locals &&
-                !(func->flags & IR_FLAG_MASK_NO_OVERLAP))
+        if (global->m_vtype == TYPE_FUNCTION) {
+            ir_function *func = global->m_constval.vfunc;
+            if (func && self->m_max_locals < func->m_allocated_locals &&
+                !(func->m_flags & IR_FLAG_MASK_NO_OVERLAP))
             {
-                self->max_locals = func->allocated_locals;
+                self->m_max_locals = func->m_allocated_locals;
             }
-            if (func && self->max_globaltemps < func->globaltemps)
-                self->max_globaltemps = func->globaltemps;
+            if (func && self->m_max_globaltemps < func->m_globaltemps)
+                self->m_max_globaltemps = func->m_globaltemps;
         }
     }
 
-    for (i = 0; i < vec_size(self->fields); ++i)
-    {
-        if (!ir_builder_gen_field(self, self->fields[i])) {
+    for (auto& fp : self->m_fields) {
+        if (!ir_builder_gen_field(self, fp.get()))
             return false;
-        }
     }
 
-    /* generate nil */
-    ir_value_code_setaddr(self->nil, self->code->globals.size());
-    self->code->globals.push_back(0);
-    self->code->globals.push_back(0);
-    self->code->globals.push_back(0);
+    // generate nil
+    ir_value_code_setaddr(self->m_nil, self->m_code->globals.size());
+    self->m_code->globals.push_back(0);
+    self->m_code->globals.push_back(0);
+    self->m_code->globals.push_back(0);
 
-    /* generate virtual-instruction temps */
-    for (i = 0; i < IR_MAX_VINSTR_TEMPS; ++i) {
-        ir_value_code_setaddr(self->vinstr_temp[i], self->code->globals.size());
-        self->code->globals.push_back(0);
-        self->code->globals.push_back(0);
-        self->code->globals.push_back(0);
+    // generate virtual-instruction temps
+    for (size_t i = 0; i < IR_MAX_VINSTR_TEMPS; ++i) {
+        ir_value_code_setaddr(self->m_vinstr_temp[i], self->m_code->globals.size());
+        self->m_code->globals.push_back(0);
+        self->m_code->globals.push_back(0);
+        self->m_code->globals.push_back(0);
     }
 
-    /* generate global temps */
-    self->first_common_globaltemp = self->code->globals.size();
-    for (i = 0; i < self->max_globaltemps; ++i) {
-        self->code->globals.push_back(0);
-    }
-    /* generate common locals */
-    self->first_common_local = self->code->globals.size();
-    for (i = 0; i < self->max_locals; ++i) {
-        self->code->globals.push_back(0);
-    }
+    // generate global temps
+    self->m_first_common_globaltemp = self->m_code->globals.size();
+    self->m_code->globals.insert(self->m_code->globals.end(), self->m_max_globaltemps, 0);
+    // FIXME:DELME:
+    //for (size_t i = 0; i < self->m_max_globaltemps; ++i) {
+    //    self->m_code->globals.push_back(0);
+    //}
+    // generate common locals
+    self->m_first_common_local = self->m_code->globals.size();
+    self->m_code->globals.insert(self->m_code->globals.end(), self->m_max_locals, 0);
+    // FIXME:DELME:
+    //for (i = 0; i < self->m_max_locals; ++i) {
+    //    self->m_code->globals.push_back(0);
+    //}
 
-    /* generate function code */
-    for (i = 0; i < vec_size(self->globals); ++i)
-    {
-        if (self->globals[i]->vtype == TYPE_FUNCTION) {
-            if (!gen_global_function_code(self, self->globals[i])) {
+    // generate function code
+
+    for (auto& gp : self->m_globals) {
+        ir_value *global = gp.get();
+        if (global->m_vtype == TYPE_FUNCTION) {
+            if (!gen_global_function_code(self, global)) {
                 return false;
             }
         }
     }
 
-    if (self->code->globals.size() >= 65536) {
-        irerror(vec_last(self->globals)->context,
+    if (self->m_code->globals.size() >= 65536) {
+        irerror(self->m_globals.back()->m_context,
             "This progs file would require more globals than the metadata can handle (%zu). Bailing out.",
-            self->code->globals.size());
+            self->m_code->globals.size());
         return false;
     }
 
     /* DP errors if the last instruction is not an INSTR_DONE. */
-    if (self->code->statements.back().opcode != INSTR_DONE)
+    if (self->m_code->statements.back().opcode != INSTR_DONE)
     {
         lex_ctx_t last;
 
@@ -4041,19 +3777,19 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         stmt.o1.u1  = 0;
         stmt.o2.u1  = 0;
         stmt.o3.u1  = 0;
-        last.line   = self->code->linenums.back();
-        last.column = self->code->columnnums.back();
+        last.line   = self->m_code->linenums.back();
+        last.column = self->m_code->columnnums.back();
 
-        code_push_statement(self->code, &stmt, last);
+        code_push_statement(self->m_code.get(), &stmt, last);
     }
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY))
         return true;
 
-    if (self->code->statements.size() != self->code->linenums.size()) {
+    if (self->m_code->statements.size() != self->m_code->linenums.size()) {
         con_err("Linecounter wrong: %lu != %lu\n",
-                self->code->statements.size(),
-                self->code->linenums.size());
+                self->m_code->statements.size(),
+                self->m_code->linenums.size());
     } else if (OPTS_FLAG(LNO)) {
         char  *dot;
         size_t filelen = strlen(filename);
@@ -4068,7 +3804,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (!code_write(self->code, filename, lnofile)) {
+    if (!code_write(self->m_code.get(), filename, lnofile)) {
         vec_free(lnofile);
         return false;
     }
@@ -4114,18 +3850,18 @@ void ir_builder_dump(ir_builder *b, int (*oprintf)(const char*, ...))
     indent[0] = '\t';
     indent[1] = 0;
 
-    oprintf("module %s\n", b->name);
-    for (i = 0; i < vec_size(b->globals); ++i)
+    oprintf("module %s\n", b->m_name.c_str());
+    for (i = 0; i < b->m_globals.size(); ++i)
     {
         oprintf("global ");
-        if (b->globals[i]->hasvalue)
-            oprintf("%s = ", b->globals[i]->name);
-        ir_value_dump(b->globals[i], oprintf);
+        if (b->m_globals[i]->m_hasvalue)
+            oprintf("%s = ", b->m_globals[i]->m_name.c_str());
+        ir_value_dump(b->m_globals[i].get(), oprintf);
         oprintf("\n");
     }
-    for (i = 0; i < vec_size(b->functions); ++i)
-        ir_function_dump(b->functions[i], indent, oprintf);
-    oprintf("endmodule %s\n", b->name);
+    for (i = 0; i < b->m_functions.size(); ++i)
+        ir_function_dump(b->m_functions[i].get(), indent, oprintf);
+    oprintf("endmodule %s\n", b->m_name.c_str());
 }
 
 static const char *storenames[] = {
@@ -4136,122 +3872,122 @@ void ir_function_dump(ir_function *f, char *ind,
                       int (*oprintf)(const char*, ...))
 {
     size_t i;
-    if (f->builtin != 0) {
-        oprintf("%sfunction %s = builtin %i\n", ind, f->name, -f->builtin);
+    if (f->m_builtin != 0) {
+        oprintf("%sfunction %s = builtin %i\n", ind, f->m_name.c_str(), -f->m_builtin);
         return;
     }
-    oprintf("%sfunction %s\n", ind, f->name);
+    oprintf("%sfunction %s\n", ind, f->m_name.c_str());
     util_strncat(ind, "\t", IND_BUFSZ-1);
-    if (vec_size(f->locals))
+    if (f->m_locals.size())
     {
-        oprintf("%s%i locals:\n", ind, (int)vec_size(f->locals));
-        for (i = 0; i < vec_size(f->locals); ++i) {
+        oprintf("%s%i locals:\n", ind, (int)f->m_locals.size());
+        for (i = 0; i < f->m_locals.size(); ++i) {
             oprintf("%s\t", ind);
-            ir_value_dump(f->locals[i], oprintf);
+            ir_value_dump(f->m_locals[i].get(), oprintf);
             oprintf("\n");
         }
     }
     oprintf("%sliferanges:\n", ind);
-    for (i = 0; i < vec_size(f->locals); ++i) {
+    for (i = 0; i < f->m_locals.size(); ++i) {
         const char *attr = "";
         size_t l, m;
-        ir_value *v = f->locals[i];
-        if (v->unique_life && v->locked)
+        ir_value *v = f->m_locals[i].get();
+        if (v->m_unique_life && v->m_locked)
             attr = "unique,locked ";
-        else if (v->unique_life)
+        else if (v->m_unique_life)
             attr = "unique ";
-        else if (v->locked)
+        else if (v->m_locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s %s %s%s@%i ", ind, v->name, type_name[v->vtype],
-                storenames[v->store],
-                attr, (v->callparam ? "callparam " : ""),
-                (int)v->code.local);
-        if (!v->life)
+        oprintf("%s\t%s: %s %s %s%s@%i ", ind, v->m_name.c_str(), type_name[v->m_vtype],
+                storenames[v->m_store],
+                attr, (v->m_callparam ? "callparam " : ""),
+                (int)v->m_code.local);
+        if (v->m_life.empty())
             oprintf("[null]");
-        for (l = 0; l < vec_size(v->life); ++l) {
-            oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
+        for (l = 0; l < v->m_life.size(); ++l) {
+            oprintf("[%i,%i] ", v->m_life[l].start, v->m_life[l].end);
         }
         oprintf("\n");
         for (m = 0; m < 3; ++m) {
-            ir_value *vm = v->members[m];
+            ir_value *vm = v->m_members[m];
             if (!vm)
                 continue;
-            oprintf("%s\t%s: @%i ", ind, vm->name, (int)vm->code.local);
-            for (l = 0; l < vec_size(vm->life); ++l) {
-                oprintf("[%i,%i] ", vm->life[l].start, vm->life[l].end);
+            oprintf("%s\t%s: @%i ", ind, vm->m_name.c_str(), (int)vm->m_code.local);
+            for (l = 0; l < vm->m_life.size(); ++l) {
+                oprintf("[%i,%i] ", vm->m_life[l].start, vm->m_life[l].end);
             }
             oprintf("\n");
         }
     }
-    for (i = 0; i < vec_size(f->values); ++i) {
+    for (i = 0; i < f->m_values.size(); ++i) {
         const char *attr = "";
         size_t l, m;
-        ir_value *v = f->values[i];
-        if (v->unique_life && v->locked)
+        ir_value *v = f->m_values[i].get();
+        if (v->m_unique_life && v->m_locked)
             attr = "unique,locked ";
-        else if (v->unique_life)
+        else if (v->m_unique_life)
             attr = "unique ";
-        else if (v->locked)
+        else if (v->m_locked)
             attr = "locked ";
-        oprintf("%s\t%s: %s %s %s%s@%i ", ind, v->name, type_name[v->vtype],
-                storenames[v->store],
-                attr, (v->callparam ? "callparam " : ""),
-                (int)v->code.local);
-        if (!v->life)
+        oprintf("%s\t%s: %s %s %s%s@%i ", ind, v->m_name.c_str(), type_name[v->m_vtype],
+                storenames[v->m_store],
+                attr, (v->m_callparam ? "callparam " : ""),
+                (int)v->m_code.local);
+        if (v->m_life.empty())
             oprintf("[null]");
-        for (l = 0; l < vec_size(v->life); ++l) {
-            oprintf("[%i,%i] ", v->life[l].start, v->life[l].end);
+        for (l = 0; l < v->m_life.size(); ++l) {
+            oprintf("[%i,%i] ", v->m_life[l].start, v->m_life[l].end);
         }
         oprintf("\n");
         for (m = 0; m < 3; ++m) {
-            ir_value *vm = v->members[m];
+            ir_value *vm = v->m_members[m];
             if (!vm)
                 continue;
-            if (vm->unique_life && vm->locked)
+            if (vm->m_unique_life && vm->m_locked)
                 attr = "unique,locked ";
-            else if (vm->unique_life)
+            else if (vm->m_unique_life)
                 attr = "unique ";
-            else if (vm->locked)
+            else if (vm->m_locked)
                 attr = "locked ";
-            oprintf("%s\t%s: %s@%i ", ind, vm->name, attr, (int)vm->code.local);
-            for (l = 0; l < vec_size(vm->life); ++l) {
-                oprintf("[%i,%i] ", vm->life[l].start, vm->life[l].end);
+            oprintf("%s\t%s: %s@%i ", ind, vm->m_name.c_str(), attr, (int)vm->m_code.local);
+            for (l = 0; l < vm->m_life.size(); ++l) {
+                oprintf("[%i,%i] ", vm->m_life[l].start, vm->m_life[l].end);
             }
             oprintf("\n");
         }
     }
-    if (vec_size(f->blocks))
+    if (f->m_blocks.size())
     {
-        oprintf("%slife passes: %i\n", ind, (int)f->run_id);
-        for (i = 0; i < vec_size(f->blocks); ++i) {
-            ir_block_dump(f->blocks[i], ind, oprintf);
+        oprintf("%slife passes: %i\n", ind, (int)f->m_run_id);
+        for (i = 0; i < f->m_blocks.size(); ++i) {
+            ir_block_dump(f->m_blocks[i].get(), ind, oprintf);
         }
 
     }
     ind[strlen(ind)-1] = 0;
-    oprintf("%sendfunction %s\n", ind, f->name);
+    oprintf("%sendfunction %s\n", ind, f->m_name.c_str());
 }
 
 void ir_block_dump(ir_block* b, char *ind,
                    int (*oprintf)(const char*, ...))
 {
     size_t i;
-    oprintf("%s:%s\n", ind, b->label);
+    oprintf("%s:%s\n", ind, b->m_label.c_str());
     util_strncat(ind, "\t", IND_BUFSZ-1);
 
-    if (b->instr && b->instr[0])
-        oprintf("%s (%i) [entry]\n", ind, (int)(b->instr[0]->eid-1));
-    for (i = 0; i < vec_size(b->instr); ++i)
-        ir_instr_dump(b->instr[i], ind, oprintf);
+    if (b->m_instr && b->m_instr[0])
+        oprintf("%s (%i) [entry]\n", ind, (int)(b->m_instr[0]->m_eid-1));
+    for (i = 0; i < vec_size(b->m_instr); ++i)
+        ir_instr_dump(b->m_instr[i], ind, oprintf);
     ind[strlen(ind)-1] = 0;
 }
 
 static void dump_phi(ir_instr *in, int (*oprintf)(const char*, ...))
 {
-    oprintf("%s <- phi ", in->_ops[0]->name);
-    for (auto &it : in->phi) {
-        oprintf("([%s] : %s) ", it.from->label,
-                                it.value->name);
+    oprintf("%s <- phi ", in->_m_ops[0]->m_name.c_str());
+    for (auto &it : in->m_phi) {
+        oprintf("([%s] : %s) ", it.from->m_label.c_str(),
+                                it.value->m_name.c_str());
     }
     oprintf("\n");
 }
@@ -4262,52 +3998,52 @@ void ir_instr_dump(ir_instr *in, char *ind,
     size_t i;
     const char *comma = nullptr;
 
-    oprintf("%s (%i) ", ind, (int)in->eid);
+    oprintf("%s (%i) ", ind, (int)in->m_eid);
 
-    if (in->opcode == VINSTR_PHI) {
+    if (in->m_opcode == VINSTR_PHI) {
         dump_phi(in, oprintf);
         return;
     }
 
     util_strncat(ind, "\t", IND_BUFSZ-1);
 
-    if (in->_ops[0] && (in->_ops[1] || in->_ops[2])) {
-        ir_value_dump(in->_ops[0], oprintf);
-        if (in->_ops[1] || in->_ops[2])
+    if (in->_m_ops[0] && (in->_m_ops[1] || in->_m_ops[2])) {
+        ir_value_dump(in->_m_ops[0], oprintf);
+        if (in->_m_ops[1] || in->_m_ops[2])
             oprintf(" <- ");
     }
-    if (in->opcode == INSTR_CALL0 || in->opcode == VINSTR_NRCALL) {
-        oprintf("CALL%i\t", in->params.size());
+    if (in->m_opcode == INSTR_CALL0 || in->m_opcode == VINSTR_NRCALL) {
+        oprintf("CALL%i\t", in->m_params.size());
     } else
-        oprintf("%s\t", qc_opname(in->opcode));
+        oprintf("%s\t", qc_opname(in->m_opcode));
 
-    if (in->_ops[0] && !(in->_ops[1] || in->_ops[2])) {
-        ir_value_dump(in->_ops[0], oprintf);
+    if (in->_m_ops[0] && !(in->_m_ops[1] || in->_m_ops[2])) {
+        ir_value_dump(in->_m_ops[0], oprintf);
         comma = ",\t";
     }
     else
     {
         for (i = 1; i != 3; ++i) {
-            if (in->_ops[i]) {
+            if (in->_m_ops[i]) {
                 if (comma)
                     oprintf(comma);
-                ir_value_dump(in->_ops[i], oprintf);
+                ir_value_dump(in->_m_ops[i], oprintf);
                 comma = ",\t";
             }
         }
     }
-    if (in->bops[0]) {
+    if (in->m_bops[0]) {
         if (comma)
             oprintf(comma);
-        oprintf("[%s]", in->bops[0]->label);
+        oprintf("[%s]", in->m_bops[0]->m_label.c_str());
         comma = ",\t";
     }
-    if (in->bops[1])
-        oprintf("%s[%s]", comma, in->bops[1]->label);
-    if (in->params.size()) {
+    if (in->m_bops[1])
+        oprintf("%s[%s]", comma, in->m_bops[1]->m_label.c_str());
+    if (in->m_params.size()) {
         oprintf("\tparams: ");
-        for (auto &it : in->params)
-            oprintf("%s, ", it->name);
+        for (auto &it : in->m_params)
+            oprintf("%s, ", it->m_name.c_str());
     }
     oprintf("\n");
     ind[strlen(ind)-1] = 0;
@@ -4335,51 +4071,50 @@ static void ir_value_dump_string(const char *str, int (*oprintf)(const char*, ..
 
 void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
 {
-    if (v->hasvalue) {
-        switch (v->vtype) {
+    if (v->m_hasvalue) {
+        switch (v->m_vtype) {
             default:
             case TYPE_VOID:
                 oprintf("(void)");
                 break;
             case TYPE_FUNCTION:
-                oprintf("fn:%s", v->name);
+                oprintf("fn:%s", v->m_name.c_str());
                 break;
             case TYPE_FLOAT:
-                oprintf("%g", v->constval.vfloat);
+                oprintf("%g", v->m_constval.vfloat);
                 break;
             case TYPE_VECTOR:
                 oprintf("'%g %g %g'",
-                        v->constval.vvec.x,
-                        v->constval.vvec.y,
-                        v->constval.vvec.z);
+                        v->m_constval.vvec.x,
+                        v->m_constval.vvec.y,
+                        v->m_constval.vvec.z);
                 break;
             case TYPE_ENTITY:
                 oprintf("(entity)");
                 break;
             case TYPE_STRING:
-                ir_value_dump_string(v->constval.vstring, oprintf);
+                ir_value_dump_string(v->m_constval.vstring, oprintf);
                 break;
 #if 0
             case TYPE_INTEGER:
-                oprintf("%i", v->constval.vint);
+                oprintf("%i", v->m_constval.vint);
                 break;
 #endif
             case TYPE_POINTER:
                 oprintf("&%s",
-                    v->constval.vpointer->name);
+                    v->m_constval.vpointer->m_name.c_str());
                 break;
         }
     } else {
-        oprintf("%s", v->name);
+        oprintf("%s", v->m_name.c_str());
     }
 }
 
 void ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...))
 {
-    size_t i;
-    oprintf("Life of %12s:", self->name);
-    for (i = 0; i < vec_size(self->life); ++i)
+    oprintf("Life of %12s:", self->m_name.c_str());
+    for (size_t i = 0; i < self->m_life.size(); ++i)
     {
-        oprintf(" + [%i, %i]\n", self->life[i].start, self->life[i].end);
+        oprintf(" + [%i, %i]\n", self->m_life[i].start, self->m_life[i].end);
     }
 }

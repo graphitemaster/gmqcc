@@ -9,7 +9,7 @@ struct token {
         vec3_t v;
         int i;
         qcfloat_t f;
-        int t; /* type */
+        qc_type t; /* type */
     } constval;
     lex_ctx_t ctx;
 };

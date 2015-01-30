@@ -1,6 +1,10 @@
 #ifndef GMQCC_HDR
 #define GMQCC_HDR
 #include <vector>
+#include <string>
+#include <utility>
+#include <memory>
+using std::move;
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -259,7 +263,7 @@ int util_getline(char  **, size_t *, FILE *);
 /* code.c */
 
 /* Note: if you change the order, fix type_sizeof in ir.c */
-enum {
+enum qc_type {
     TYPE_VOID     ,
     TYPE_STRING   ,
     TYPE_FLOAT    ,
@@ -498,6 +502,10 @@ typedef int32_t qcint_t;
 typedef uint32_t qcuint_t;
 
 struct code_t {
+    void* operator new(std::size_t);
+    void operator delete(void*);
+    code_t();
+    ~code_t();
     std::vector<prog_section_statement_t> statements;
     std::vector<int> linenums;
     std::vector<int> columnnums;
@@ -506,10 +514,10 @@ struct code_t {
     std::vector<prog_section_function_t> functions;
     std::vector<int> globals;
     std::vector<char> chars;
-    uint16_t crc;
-    uint32_t entfields;
+    uint16_t crc = 0;
+    uint32_t entfields = 0;
     ht string_cache;
-    qcint_t string_cached_empty;
+    qcint_t string_cached_empty = 0;
 };
 
 /*
@@ -589,7 +597,7 @@ void            compile_show_werrors(void);
 
 /* ir.c */
 /* TODO: cleanup */
-enum store_types {
+enum store_type {
     store_global,
     store_local,  /* local, assignable for now, should get promoted later */
     store_param,  /* parameters, they are locals with a fixed position */

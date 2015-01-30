@@ -30,7 +30,7 @@ struct intrin {
 
 protected:
     lex_ctx_t ctx() const;
-    ast_function *value(ast_value **out, const char *name, qcint_t vtype);
+    ast_function *value(ast_value **out, const char *name, qc_type vtype);
     void reg(ast_value *const value, ast_function *const func);
 
     ast_expression *nullfunc();
