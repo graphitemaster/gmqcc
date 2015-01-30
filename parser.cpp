@@ -13,7 +13,9 @@
 static void parser_enterblock(parser_t *parser);
 static bool parser_leaveblock(parser_t *parser);
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e);
+static void parser_addlocal(parser_t *parser, const std::string &name, ast_expression *e);
 static void parser_addglobal(parser_t *parser, const char *name, ast_expression *e);
+static void parser_addglobal(parser_t *parser, const std::string &name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring);
 static ast_block* parse_block(parser_t *parser);
@@ -26,7 +28,7 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
 static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *array, const ast_expression *elemtype, const char *funcname);
 static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_value *cached_typedef, bool *is_vararg);
 
-static void parseerror(parser_t *parser, const char *fmt, ...)
+static void parseerror_(parser_t *parser, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -34,8 +36,13 @@ static void parseerror(parser_t *parser, const char *fmt, ...)
     va_end(ap);
 }
 
-/* returns true if it counts as an error */
-static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, ...)
+template<typename... Ts>
+static inline void parseerror(parser_t *parser, const char *fmt, const Ts&... ts) {
+    return parseerror_(parser, fmt, formatNormalize(ts)...);
+}
+
+// returns true if it counts as an error
+static bool GMQCC_WARN parsewarning_(parser_t *parser, int warntype, const char *fmt, ...)
 {
     bool    r;
     va_list ap;
@@ -43,6 +50,11 @@ static bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *
     r = vcompile_warning(parser->lex->tok.ctx, warntype, fmt, ap);
     va_end(ap);
     return r;
+}
+
+template<typename... Ts>
+static inline bool GMQCC_WARN parsewarning(parser_t *parser, int warntype, const char *fmt, const Ts&... ts) {
+    return parsewarning_(parser, warntype, fmt, formatNormalize(ts)...);
 }
 
 /**********************************************************************
@@ -76,17 +88,22 @@ char *parser_strdup(const char *str)
     return util_strdup(str);
 }
 
-static ast_expression* parser_find_field(parser_t *parser, const char *name)
-{
-    return ( ast_expression*)util_htget(parser->htfields, name);
+static ast_expression* parser_find_field(parser_t *parser, const char *name) {
+    return (ast_expression*)util_htget(parser->htfields, name);
+}
+static ast_expression* parser_find_field(parser_t *parser, const std::string &name) {
+    return parser_find_field(parser, name.c_str());
 }
 
 static ast_expression* parser_find_label(parser_t *parser, const char *name)
 {
     for (auto &it : parser->labels)
-        if (!strcmp(it->m_name, name))
-            return (ast_expression*)it;
+        if (it->m_name == name)
+            return it;
     return nullptr;
+}
+static inline ast_expression* parser_find_label(parser_t *parser, const std::string &name) {
+    return parser_find_label(parser, name.c_str());
 }
 
 ast_expression* parser_find_global(parser_t *parser, const char *name)
@@ -97,6 +114,10 @@ ast_expression* parser_find_global(parser_t *parser, const char *name)
     return (ast_expression*)util_htget(parser->htglobals, name);
 }
 
+ast_expression* parser_find_global(parser_t *parser, const std::string &name) {
+    return parser_find_global(parser, name.c_str());
+}
+
 static ast_expression* parser_find_param(parser_t *parser, const char *name)
 {
     ast_value *fun;
@@ -104,8 +125,8 @@ static ast_expression* parser_find_param(parser_t *parser, const char *name)
         return nullptr;
     fun = parser->function->m_function_type;
     for (auto &it : fun->m_type_params) {
-        if (!strcmp(it->m_name, name))
-            return (ast_expression*)it;
+        if (it->m_name == name)
+            return it.get();
     }
     return nullptr;
 }
@@ -127,6 +148,10 @@ static ast_expression* parser_find_local(parser_t *parser, const char *name, siz
     return parser_find_param(parser, name);
 }
 
+static ast_expression* parser_find_local(parser_t *parser, const std::string &name, size_t upto, bool *isparam) {
+    return parser_find_local(parser, name.c_str(), upto, isparam);
+}
+
 static ast_expression* parser_find_var(parser_t *parser, const char *name)
 {
     bool dummy;
@@ -134,6 +159,10 @@ static ast_expression* parser_find_var(parser_t *parser, const char *name)
     v         = parser_find_local(parser, name, 0, &dummy);
     if (!v) v = parser_find_global(parser, name);
     return v;
+}
+
+static inline ast_expression* parser_find_var(parser_t *parser, const std::string &name) {
+    return parser_find_var(parser, name.c_str());
 }
 
 static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t upto)
@@ -148,6 +177,10 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
             return e;
     }
     return nullptr;
+}
+
+static ast_value* parser_find_typedef(parser_t *parser, const std::string &name, size_t upto) {
+    return parser_find_typedef(parser, name.c_str(), upto);
 }
 
 struct sy_elem {
@@ -189,7 +222,7 @@ static sy_elem syblock(lex_ctx_t ctx, ast_block *v) {
     sy_elem e;
     e.etype = 0;
     e.off   = 0;
-    e.out   = (ast_expression*)v;
+    e.out   = v;
     e.block = v;
     e.ctx   = ctx;
     e.isparen = false;
@@ -249,13 +282,13 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
 
     oldindex = index;
 
-    index = ast_array_index_new(ctx, (ast_expression*)field, sub);
-    entfield = ast_entfield_new(ctx, entity, (ast_expression*)index);
-    *out = (ast_expression*)entfield;
+    index = ast_array_index::make(ctx, field, sub);
+    entfield = new ast_entfield(ctx, entity, index);
+    *out = entfield;
 
     oldindex->m_array = nullptr;
     oldindex->m_index = nullptr;
-    ast_delete(oldindex);
+    delete oldindex;
 
     return true;
 }
@@ -360,12 +393,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             if (exprs[0]->m_vtype == TYPE_VECTOR &&
                 exprs[1]->m_vtype == TYPE_NOEXPR)
             {
-                if      (exprs[1] == (ast_expression*)parser->const_vec[0])
-                    out = (ast_expression*)ast_member_new(ctx, exprs[0], 0, nullptr);
-                else if (exprs[1] == (ast_expression*)parser->const_vec[1])
-                    out = (ast_expression*)ast_member_new(ctx, exprs[0], 1, nullptr);
-                else if (exprs[1] == (ast_expression*)parser->const_vec[2])
-                    out = (ast_expression*)ast_member_new(ctx, exprs[0], 2, nullptr);
+                if      (exprs[1] == parser->const_vec[0])
+                    out = ast_member::make(ctx, exprs[0], 0, "");
+                else if (exprs[1] == parser->const_vec[1])
+                    out = ast_member::make(ctx, exprs[0], 1, "");
+                else if (exprs[1] == parser->const_vec[2])
+                    out = ast_member::make(ctx, exprs[0], 2, "");
                 else {
                     compile_error(ctx, "access to invalid vector component");
                     return false;
@@ -376,7 +409,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     compile_error(exprs[1]->m_context, "type error: right hand of member-operand should be an entity-field");
                     return false;
                 }
-                out = (ast_expression*)ast_entfield_new(ctx, exprs[0], exprs[1]);
+                out = new ast_entfield(ctx, exprs[0], exprs[1]);
             }
             else if (exprs[0]->m_vtype == TYPE_VECTOR) {
                 compile_error(exprs[1]->m_context, "vectors cannot be accessed this way");
@@ -402,7 +435,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 compile_error(exprs[1]->m_context, "index must be of type float, not %s", ty1);
                 return false;
             }
-            out = (ast_expression*)ast_array_index_new(ctx, exprs[0], exprs[1]);
+            out = ast_array_index::make(ctx, exprs[0], exprs[1]);
             rotate_entfield_array_index_nodes(&out);
             break;
 
@@ -414,17 +447,17 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return true;
             }
             if (blocks[0]) {
-                if (!ast_block_add_expr(blocks[0], exprs[1]))
+                if (!blocks[0]->addExpr(exprs[1]))
                     return false;
             } else {
-                blocks[0] = ast_block_new(ctx);
-                if (!ast_block_add_expr(blocks[0], exprs[0]) ||
-                    !ast_block_add_expr(blocks[0], exprs[1]))
+                blocks[0] = new ast_block(ctx);
+                if (!blocks[0]->addExpr(exprs[0]) ||
+                    !blocks[0]->addExpr(exprs[1]))
                 {
                     return false;
                 }
             }
-            ast_block_set_type(blocks[0], exprs[1]);
+            blocks[0]->setType(*exprs[1]);
 
             sy->out.push_back(syblock(ctx, blocks[0]));
             return true;
@@ -443,32 +476,32 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             if (exprs[0]->m_vtype == TYPE_FLOAT)
-                out = (ast_expression*)ast_unary_new(ctx, VINSTR_NEG_F, exprs[0]);
+                out = ast_unary::make(ctx, VINSTR_NEG_F, exprs[0]);
             else
-                out = (ast_expression*)ast_unary_new(ctx, VINSTR_NEG_V, exprs[0]);
+                out = ast_unary::make(ctx, VINSTR_NEG_V, exprs[0]);
             break;
 
         case opid2('!','P'):
             if (!(out = parser->m_fold.op(op, exprs))) {
                 switch (exprs[0]->m_vtype) {
                     case TYPE_FLOAT:
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
+                        out = ast_unary::make(ctx, INSTR_NOT_F, exprs[0]);
                         break;
                     case TYPE_VECTOR:
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[0]);
+                        out = ast_unary::make(ctx, INSTR_NOT_V, exprs[0]);
                         break;
                     case TYPE_STRING:
                         if (OPTS_FLAG(TRUE_EMPTY_STRINGS))
-                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, exprs[0]);
+                            out = ast_unary::make(ctx, INSTR_NOT_F, exprs[0]);
                         else
-                            out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[0]);
+                            out = ast_unary::make(ctx, INSTR_NOT_S, exprs[0]);
                         break;
                     /* we don't constant-fold NOT for these types */
                     case TYPE_ENTITY:
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_ENT, exprs[0]);
+                        out = ast_unary::make(ctx, INSTR_NOT_ENT, exprs[0]);
                         break;
                     case TYPE_FUNCTION:
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_FNC, exprs[0]);
+                        out = ast_unary::make(ctx, INSTR_NOT_FNC, exprs[0]);
                         break;
                     default:
                     compile_error(ctx, "invalid types used in expression: cannot logically negate type %s",
@@ -595,11 +628,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 ast_call       *call = nullptr;
                 if (!mod) return false; /* can return null for missing floor */
 
-                call = ast_call_new(parser_ctx(parser), mod);
+                call = ast_call::make(parser_ctx(parser), mod);
                 call->m_params.push_back(exprs[0]);
                 call->m_params.push_back(exprs[1]);
 
-                out = (ast_expression*)call;
+                out = call;
             }
             break;
 
@@ -662,10 +695,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
             if (!(out = parser->m_fold.op(op, exprs))) {
                 ast_expression *shift = parser->m_intrin.func((op->id == opid2('<','<')) ? "__builtin_lshift" : "__builtin_rshift");
-                ast_call *call  = ast_call_new(parser_ctx(parser), shift);
+                ast_call *call  = ast_call::make(parser_ctx(parser), shift);
                 call->m_params.push_back(exprs[0]);
                 call->m_params.push_back(exprs[1]);
-                out = (ast_expression*)call;
+                out = call;
             }
             break;
 
@@ -680,14 +713,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
             if(!(out = parser->m_fold.op(op, exprs))) {
                 ast_expression *shift = parser->m_intrin.func((op->id == opid3('<','<','=')) ? "__builtin_lshift" : "__builtin_rshift");
-                ast_call *call  = ast_call_new(parser_ctx(parser), shift);
+                ast_call *call  = ast_call::make(parser_ctx(parser), shift);
                 call->m_params.push_back(exprs[0]);
                 call->m_params.push_back(exprs[1]);
-                out = (ast_expression*)ast_store_new(
+                out = new ast_store(
                     parser_ctx(parser),
                     INSTR_STORE_F,
                     exprs[0],
-                    (ast_expression*)call
+                    call
                 );
             }
 
@@ -698,7 +731,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid2('&','&'):
             generated_op += INSTR_AND;
             if (!(out = parser->m_fold.op(op, exprs))) {
-                if (OPTS_FLAG(PERL_LOGIC) && !ast_compare_type(exprs[0], exprs[1])) {
+                if (OPTS_FLAG(PERL_LOGIC) && !exprs[0]->compareType(*exprs[1])) {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     compile_error(ctx, "invalid types for logical operation with -fperl-logic: %s and %s", ty1, ty2);
@@ -706,9 +739,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 }
                 for (i = 0; i < 2; ++i) {
                     if (OPTS_FLAG(CORRECT_LOGIC) && exprs[i]->m_vtype == TYPE_VECTOR) {
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_V, exprs[i]);
+                        out = ast_unary::make(ctx, INSTR_NOT_V, exprs[i]);
                         if (!out) break;
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        out = ast_unary::make(ctx, INSTR_NOT_F, out);
                         if (!out) break;
                         exprs[i] = out; out = nullptr;
                         if (OPTS_FLAG(PERL_LOGIC)) {
@@ -717,9 +750,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         }
                     }
                     else if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && exprs[i]->m_vtype == TYPE_STRING) {
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_S, exprs[i]);
+                        out = ast_unary::make(ctx, INSTR_NOT_S, exprs[i]);
                         if (!out) break;
-                        out = (ast_expression*)ast_unary_new(ctx, INSTR_NOT_F, out);
+                        out = ast_unary::make(ctx, INSTR_NOT_F, out);
                         if (!out) break;
                         exprs[i] = out; out = nullptr;
                         if (OPTS_FLAG(PERL_LOGIC)) {
@@ -738,14 +771,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             sy->paren.pop_back();
-            if (!ast_compare_type(exprs[1], exprs[2])) {
+            if (!exprs[1]->compareType(*exprs[2])) {
                 ast_type_to_string(exprs[1], ty1, sizeof(ty1));
                 ast_type_to_string(exprs[2], ty2, sizeof(ty2));
                 compile_error(ctx, "operands of ternary expression must have the same type, got %s and %s", ty1, ty2);
                 return false;
             }
             if (!(out = parser->m_fold.op(op, exprs)))
-                out = (ast_expression*)ast_ternary_new(ctx, exprs[0], exprs[1], exprs[2]);
+                out = new ast_ternary(ctx, exprs[0], exprs[1], exprs[2]);
             break;
 
         case opid2('*', '*'):
@@ -758,10 +791,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
 
             if (!(out = parser->m_fold.op(op, exprs))) {
-                ast_call *gencall = ast_call_new(parser_ctx(parser), parser->m_intrin.func("pow"));
+                ast_call *gencall = ast_call::make(parser_ctx(parser), parser->m_intrin.func("pow"));
                 gencall->m_params.push_back(exprs[0]);
                 gencall->m_params.push_back(exprs[1]);
-                out = (ast_expression*)gencall;
+                out = gencall;
             }
             break;
 
@@ -797,23 +830,23 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
             if (!(out = parser->m_fold.op(op, exprs))) {
                 /* This whole block is NOT fold_binary safe */
-                ast_binary *eq = ast_binary_new(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
+                ast_binary *eq = new ast_binary(ctx, INSTR_EQ_F, exprs[0], exprs[1]);
 
                 eq->m_refs = AST_REF_NONE;
 
                     /* if (lt) { */
-                out = (ast_expression*)ast_ternary_new(ctx,
-                        (ast_expression*)ast_binary_new(ctx, INSTR_LT, exprs[0], exprs[1]),
+                out = new ast_ternary(ctx,
+                        new ast_binary(ctx, INSTR_LT, exprs[0], exprs[1]),
                         /* out = -1 */
-                        (ast_expression*)parser->m_fold.imm_float(2),
+                        parser->m_fold.imm_float(2),
                     /* } else { */
                         /* if (eq) { */
-                        (ast_expression*)ast_ternary_new(ctx, (ast_expression*)eq,
+                        new ast_ternary(ctx, eq,
                             /* out = 0 */
-                            (ast_expression*)parser->m_fold.imm_float(0),
+                            parser->m_fold.imm_float(0),
                         /* } else { */
                             /* out = 1 */
-                            (ast_expression*)parser->m_fold.imm_float(1)
+                            parser->m_fold.imm_float(1)
                         /* } */
                         )
                     /* } */
@@ -871,7 +904,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 }
                 else
                     assignop = type_storep_instr[exprs[0]->m_vtype];
-                if (assignop == VINSTR_END || !ast_compare_type(field->m_next, exprs[1]))
+                if (assignop == VINSTR_END || !field->m_next->compareType(*exprs[1]))
                 {
                     ast_type_to_string(field->m_next, ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -903,7 +936,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
-                else if (!ast_compare_type(exprs[0], exprs[1]))
+                else if (!exprs[0]->compareType(*exprs[1]))
                 {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -922,7 +955,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             /* When we're a vector of part of an entity field we use STOREP */
             if (ast_istype(exprs[0], ast_member) && ast_istype(((ast_member*)exprs[0])->m_owner, ast_entfield))
                 assignop = INSTR_STOREP_F;
-            out = (ast_expression*)ast_store_new(ctx, assignop, exprs[0], exprs[1]);
+            out = new ast_store(ctx, assignop, exprs[0], exprs[1]);
             break;
         case opid3('+','+','P'):
         case opid3('-','-','P'):
@@ -938,13 +971,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 addop = INSTR_SUB_F;
             (void)check_write_to(exprs[0]->m_context, exprs[0]);
             if (ast_istype(exprs[0], ast_entfield)) {
-                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
-                                                        exprs[0],
-                                                        (ast_expression*)parser->m_fold.imm_float(1));
+                out = new ast_binstore(ctx, INSTR_STOREP_F, addop,
+                                       exprs[0],
+                                       parser->m_fold.imm_float(1));
             } else {
-                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STORE_F, addop,
-                                                        exprs[0],
-                                                        (ast_expression*)parser->m_fold.imm_float(1));
+                out = new ast_binstore(ctx, INSTR_STORE_F, addop,
+                                       exprs[0],
+                                       parser->m_fold.imm_float(1));
             }
             break;
         case opid3('S','+','+'):
@@ -964,19 +997,19 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             (void)check_write_to(exprs[0]->m_context, exprs[0]);
             if (ast_istype(exprs[0], ast_entfield)) {
-                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STOREP_F, addop,
-                                                        exprs[0],
-                                                        (ast_expression*)parser->m_fold.imm_float(1));
+                out = new ast_binstore(ctx, INSTR_STOREP_F, addop,
+                                       exprs[0],
+                                       parser->m_fold.imm_float(1));
             } else {
-                out = (ast_expression*)ast_binstore_new(ctx, INSTR_STORE_F, addop,
-                                                        exprs[0],
-                                                        (ast_expression*)parser->m_fold.imm_float(1));
+                out = new ast_binstore(ctx, INSTR_STORE_F, addop,
+                                       exprs[0],
+                                       parser->m_fold.imm_float(1));
             }
             if (!out)
                 return false;
             out = fold::binary(ctx, subop,
                               out,
-                              (ast_expression*)parser->m_fold.imm_float(1));
+                              parser->m_fold.imm_float(1));
 
             break;
         case opid2('+','='):
@@ -997,14 +1030,14 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 assignop = type_store_instr[exprs[0]->m_vtype];
             switch (exprs[0]->m_vtype) {
                 case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binstore_new(ctx, assignop,
-                                                            (op->id == opid2('+','=') ? INSTR_ADD_F : INSTR_SUB_F),
-                                                            exprs[0], exprs[1]);
+                    out = new ast_binstore(ctx, assignop,
+                                           (op->id == opid2('+','=') ? INSTR_ADD_F : INSTR_SUB_F),
+                                           exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
-                    out = (ast_expression*)ast_binstore_new(ctx, assignop,
-                                                            (op->id == opid2('+','=') ? INSTR_ADD_V : INSTR_SUB_V),
-                                                            exprs[0], exprs[1]);
+                    out = new ast_binstore(ctx, assignop,
+                                           (op->id == opid2('+','=') ? INSTR_ADD_V : INSTR_SUB_V),
+                                           exprs[0], exprs[1]);
                     break;
                 default:
                     compile_error(ctx, "invalid types used in expression: cannot add or subtract type %s and %s",
@@ -1032,24 +1065,24 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 assignop = type_store_instr[exprs[0]->m_vtype];
             switch (exprs[0]->m_vtype) {
                 case TYPE_FLOAT:
-                    out = (ast_expression*)ast_binstore_new(ctx, assignop,
-                                                            (op->id == opid2('*','=') ? INSTR_MUL_F : INSTR_DIV_F),
-                                                            exprs[0], exprs[1]);
+                    out = new ast_binstore(ctx, assignop,
+                                           (op->id == opid2('*','=') ? INSTR_MUL_F : INSTR_DIV_F),
+                                           exprs[0], exprs[1]);
                     break;
                 case TYPE_VECTOR:
                     if (op->id == opid2('*','=')) {
-                        out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_MUL_VF,
-                                                                exprs[0], exprs[1]);
+                        out = new ast_binstore(ctx, assignop, INSTR_MUL_VF,
+                                               exprs[0], exprs[1]);
                     } else {
                         out = fold::binary(ctx, INSTR_DIV_F,
-                                         (ast_expression*)parser->m_fold.imm_float(1),
+                                         parser->m_fold.imm_float(1),
                                          exprs[1]);
                         if (!out) {
                             compile_error(ctx, "internal error: failed to generate division");
                             return false;
                         }
-                        out = (ast_expression*)ast_binstore_new(ctx, assignop, INSTR_MUL_VF,
-                                                                exprs[0], out);
+                        out = new ast_binstore(ctx, assignop, INSTR_MUL_VF,
+                                               exprs[0], out);
                     }
                     break;
                 default:
@@ -1075,13 +1108,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             else
                 assignop = type_store_instr[exprs[0]->m_vtype];
             if (exprs[0]->m_vtype == TYPE_FLOAT)
-                out = (ast_expression*)ast_binstore_new(ctx, assignop,
-                                                        (op->id == opid2('^','=') ? VINSTR_BITXOR : op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
-                                                        exprs[0], exprs[1]);
+                out = new ast_binstore(ctx, assignop,
+                                       (op->id == opid2('^','=') ? VINSTR_BITXOR : op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
+                                       exprs[0], exprs[1]);
             else
-                out = (ast_expression*)ast_binstore_new(ctx, assignop,
-                                                        (op->id == opid2('^','=') ? VINSTR_BITXOR_V : op->id == opid2('&','=') ? VINSTR_BITAND_V : VINSTR_BITOR_V),
-                                                        exprs[0], exprs[1]);
+                out = new ast_binstore(ctx, assignop,
+                                       (op->id == opid2('^','=') ? VINSTR_BITXOR_V : op->id == opid2('&','=') ? VINSTR_BITAND_V : VINSTR_BITOR_V),
+                                       exprs[0], exprs[1]);
             break;
         case opid3('&','~','='):
             /* This is like: a &= ~(b);
@@ -1107,11 +1140,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             (void)check_write_to(ctx, exprs[0]);
             if (exprs[0]->m_vtype == TYPE_FLOAT)
-                asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_F, exprs[0], out);
+                asbinstore = new ast_binstore(ctx, assignop, INSTR_SUB_F, exprs[0], out);
             else
-                asbinstore = ast_binstore_new(ctx, assignop, INSTR_SUB_V, exprs[0], out);
+                asbinstore = new ast_binstore(ctx, assignop, INSTR_SUB_V, exprs[0], out);
             asbinstore->m_keep_dest = true;
-            out = (ast_expression*)asbinstore;
+            out = asbinstore;
             break;
 
         case opid3('l', 'e', 'n'):
@@ -1138,9 +1171,9 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             if (!(out = parser->m_fold.op(op, exprs))) {
                 if (exprs[0]->m_vtype == TYPE_FLOAT) {
-                    out = fold::binary(ctx, INSTR_SUB_F, (ast_expression*)parser->m_fold.imm_float(2), exprs[0]);
+                    out = fold::binary(ctx, INSTR_SUB_F, parser->m_fold.imm_float(2), exprs[0]);
                 } else {
-                    out = fold::binary(ctx, INSTR_SUB_V, (ast_expression*)parser->m_fold.imm_vector(1), exprs[0]);
+                    out = fold::binary(ctx, INSTR_SUB_V, parser->m_fold.imm_vector(1), exprs[0]);
                 }
             }
             break;
@@ -1201,7 +1234,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         ast_type_to_string(sy->out.back().out, ty, sizeof(ty));
         ast_unref(sy->out.back().out);
         sy->out[fid] = syexp(sy->out.back().out->m_context,
-                             (ast_expression*)parser->m_fold.constgen_string(ty, false));
+                             parser->m_fold.constgen_string(ty, false));
         sy->out.pop_back();
         return true;
     }
@@ -1212,8 +1245,8 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
      * and than fruitfully fold them.
      */
 #define fold_can_1(X)  \
-    (ast_istype(((ast_expression*)(X)), ast_value) && (X)->m_hasvalue && ((X)->m_cvq == CV_CONST) && \
-                ((ast_expression*)(X))->m_vtype != TYPE_FUNCTION)
+    (ast_istype(((X)), ast_value) && (X)->m_hasvalue && ((X)->m_cvq == CV_CONST) && \
+                ((X))->m_vtype != TYPE_FUNCTION)
 
     if (fid + 1 < sy->out.size())
         ++paramcount;
@@ -1253,7 +1286,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     }
 
     fold_leave:
-    call = ast_call_new(sy->ops[sy->ops.size()].ctx, fun);
+    call = ast_call::make(sy->ops[sy->ops.size()].ctx, fun);
 
     if (!call)
         return false;
@@ -1269,7 +1302,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     for (i = 0; i < paramcount; ++i)
         call->m_params.push_back(sy->out[fid+1 + i].out);
     sy->out.erase(sy->out.end() - paramcount, sy->out.end());
-    (void)!ast_call_check_types(call, parser->function->m_function_type->m_varparam);
+    (void)!call->checkTypes(parser->function->m_function_type->m_varparam);
     if (parser->max_param_count < paramcount)
         parser->max_param_count = paramcount;
 
@@ -1278,12 +1311,12 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
         if ((fun->m_flags & AST_FLAG_VARIADIC) &&
             !(/*funval->m_cvq == CV_CONST && */ funval->m_hasvalue && funval->m_constval.vfunc->m_builtin))
         {
-            call->m_va_count = (ast_expression*)parser->m_fold.constgen_float((qcfloat_t)paramcount, false);
+            call->m_va_count = parser->m_fold.constgen_float((qcfloat_t)paramcount, false);
         }
     }
 
     /* overwrite fid, the function, with a call */
-    sy->out[fid] = syexp(call->m_context, (ast_expression*)call);
+    sy->out[fid] = syexp(call->m_context, call);
 
     if (fun->m_vtype != TYPE_FUNCTION) {
         parseerror(parser, "not a function (%s)", type_name[fun->m_vtype]);
@@ -1303,7 +1336,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
                         "-> it has been declared here: %s:%i",
                         fun->m_context.file, fun->m_context.line);
             }
-            if (!fval->m_desc) {
+            if (!fval->m_desc.length()) {
                 return !parsewarning(parser, WARN_DEPRECATED,
                         "call to `%s` (which is marked deprecated)\n"
                         "-> `%s` declared here: %s:%i",
@@ -1432,8 +1465,8 @@ static ast_expression* parse_vararg_do(parser_t *parser)
             parseerror(parser, "expected comma after parameter index");
             return nullptr;
         }
-        /* vararg piping: ...(start) */
-        out = (ast_expression*)ast_argpipe_new(ctx, idx);
+        // vararg piping: ...(start)
+        out = new ast_argpipe(ctx, idx);
         return out;
     }
 
@@ -1451,26 +1484,26 @@ static ast_expression* parse_vararg_do(parser_t *parser)
 
     if (parser->tok != ')') {
         ast_unref(idx);
-        ast_delete(typevar);
+        delete typevar;
         parseerror(parser, "expected closing paren");
         return nullptr;
     }
 
     if (funtype->m_varparam &&
-        !ast_compare_type((ast_expression*)typevar, (ast_expression*)funtype->m_varparam))
+        !typevar->compareType(*funtype->m_varparam))
     {
         char ty1[1024];
         char ty2[1024];
-        ast_type_to_string((ast_expression*)typevar, ty1, sizeof(ty1));
-        ast_type_to_string((ast_expression*)funtype->m_varparam, ty2, sizeof(ty2));
+        ast_type_to_string(typevar, ty1, sizeof(ty1));
+        ast_type_to_string(funtype->m_varparam, ty2, sizeof(ty2));
         compile_error(typevar->m_context,
                       "function was declared to take varargs of type `%s`, requested type is: %s",
                       ty2, ty1);
     }
 
-    out = (ast_expression*)ast_array_index_new(ctx, (ast_expression*)(parser->function->m_varargs), idx);
-    ast_type_adopt(out, typevar);
-    ast_delete(typevar);
+    out = ast_array_index::make(ctx, parser->function->m_varargs.get(), idx);
+    out->adoptType(*typevar);
+    delete typevar;
     return out;
 }
 
@@ -1511,7 +1544,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         val = (ast_value*)parser->m_fold.constgen_string(parser_tokval(parser), true);
         if (!val)
             return false;
-        sy->out.push_back(syexp(parser_ctx(parser), (ast_expression*)val));
+        sy->out.push_back(syexp(parser_ctx(parser), val));
 
         if (!parser_next(parser) || parser->tok != ')') {
             parseerror(parser, "expected closing paren after translatable string");
@@ -1575,22 +1608,22 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         }
         if (prev && prev->m_vtype == TYPE_VECTOR && ctoken[0] >= 'x' && ctoken[0] <= 'z' && !ctoken[1])
         {
-            var = (ast_expression*)parser->const_vec[ctoken[0]-'x'];
+            var = parser->const_vec[ctoken[0]-'x'];
         } else {
             var = parser_find_var(parser, parser_tokval(parser));
             if (!var)
                 var = parser_find_field(parser, parser_tokval(parser));
         }
         if (!var && with_labels) {
-            var = (ast_expression*)parser_find_label(parser, parser_tokval(parser));
+            var = parser_find_label(parser, parser_tokval(parser));
             if (!with_labels) {
-                ast_label *lbl = ast_label_new(parser_ctx(parser), parser_tokval(parser), true);
-                var = (ast_expression*)lbl;
+                ast_label *lbl = new ast_label(parser_ctx(parser), parser_tokval(parser), true);
+                var = lbl;
                 parser->labels.push_back(lbl);
             }
         }
         if (!var && !strcmp(parser_tokval(parser), "__FUNC__"))
-            var = (ast_expression*)parser->m_fold.constgen_string(parser->function->m_name, false);
+            var = parser->m_fold.constgen_string(parser->function->m_name, false);
         if (!var) {
             /*
              * now we try for the real intrinsic hashtable. If the string
@@ -1894,7 +1927,7 @@ static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma
                     {
                         char *newstr = nullptr;
                         util_asprintf(&newstr, "%s%s", last->m_constval.vstring, parser_tokval(parser));
-                        sy.out.back().out = (ast_expression*)parser->m_fold.constgen_string(newstr, false);
+                        sy.out.back().out = parser->m_fold.constgen_string(newstr, false);
                         mem_d(newstr);
                         concatenated = true;
                     }
@@ -1999,7 +2032,7 @@ static bool parser_leaveblock(parser_t *parser)
 
     typedefs = vec_last(parser->_blocktypedefs);
     while (vec_size(parser->_typedefs) != typedefs) {
-        ast_delete(vec_last(parser->_typedefs));
+        delete vec_last(parser->_typedefs);
         vec_pop(parser->_typedefs);
     }
     util_htdel(vec_last(parser->typedefs));
@@ -2015,11 +2048,17 @@ static void parser_addlocal(parser_t *parser, const char *name, ast_expression *
     vec_push(parser->_locals, e);
     util_htset(vec_last(parser->variables), name, (void*)e);
 }
+static void parser_addlocal(parser_t *parser, const std::string &name, ast_expression *e) {
+    return parser_addlocal(parser, name.c_str(), e);
+}
 
 static void parser_addglobal(parser_t *parser, const char *name, ast_expression *e)
 {
     parser->globals.push_back(e);
     util_htset(parser->htglobals, name, e);
+}
+static void parser_addglobal(parser_t *parser, const std::string &name, ast_expression *e) {
+    return parser_addglobal(parser, name.c_str(), e);
 }
 
 static ast_expression* process_condition(parser_t *parser, ast_expression *cond, bool *_ifnot)
@@ -2037,7 +2076,7 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     if (OPTS_FLAG(FALSE_EMPTY_STRINGS) && cond->m_vtype == TYPE_STRING)
     {
         prev = cond;
-        cond = (ast_expression*)ast_unary_new(cond->m_context, INSTR_NOT_S, cond);
+        cond = ast_unary::make(cond->m_context, INSTR_NOT_S, cond);
         if (!cond) {
             ast_unref(prev);
             parseerror(parser, "internal error: failed to process condition");
@@ -2053,7 +2092,7 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
         {
             /* in perl-logic, AND and OR take care of the -fcorrect-logic */
             prev = cond;
-            cond = (ast_expression*)ast_unary_new(cond->m_context, INSTR_NOT_V, cond);
+            cond = ast_unary::make(cond->m_context, INSTR_NOT_V, cond);
             if (!cond) {
                 ast_unref(prev);
                 parseerror(parser, "internal error: failed to process condition");
@@ -2069,7 +2108,7 @@ static ast_expression* process_condition(parser_t *parser, ast_expression *cond,
     {
         cond = unary->m_operand;
         unary->m_operand = nullptr;
-        ast_delete(unary);
+        delete unary;
         ifnot = !ifnot;
         unary = (ast_unary*)cond;
     }
@@ -2133,18 +2172,18 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         return false;
     }
     if (!ontrue)
-        ontrue = (ast_expression*)ast_block_new(parser_ctx(parser));
+        ontrue = new ast_block(parser_ctx(parser));
     /* check for an else */
     if (!strcmp(parser_tokval(parser), "else")) {
         /* parse into the 'else' branch */
         if (!parser_next(parser)) {
             parseerror(parser, "expected on-false branch after 'else'");
-            ast_delete(ontrue);
+            delete ontrue;
             ast_unref(cond);
             return false;
         }
         if (!parse_statement_or_block(parser, &onfalse)) {
-            ast_delete(ontrue);
+            delete ontrue;
             ast_unref(cond);
             return false;
         }
@@ -2152,16 +2191,16 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
 
     cond = process_condition(parser, cond, &ifnot);
     if (!cond) {
-        if (ontrue)  ast_delete(ontrue);
-        if (onfalse) ast_delete(onfalse);
+        if (ontrue)  delete ontrue;
+        if (onfalse) delete onfalse;
         return false;
     }
 
     if (ifnot)
-        ifthen = ast_ifthen_new(ctx, cond, onfalse, ontrue);
+        ifthen = new ast_ifthen(ctx, cond, onfalse, ontrue);
     else
-        ifthen = ast_ifthen_new(ctx, cond, ontrue, onfalse);
-    *out = (ast_expression*)ifthen;
+        ifthen = new ast_ifthen(ctx, cond, ontrue, onfalse);
+    *out = ifthen;
     return true;
 }
 
@@ -2209,7 +2248,7 @@ static bool parse_while(parser_t *parser, ast_block *block, ast_expression **out
     if (parser->breaks.back() != label || parser->continues.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
-        ast_delete(*out);
+        delete *out;
         *out = nullptr;
     }
     else {
@@ -2261,8 +2300,8 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
         ast_unref(ontrue);
         return false;
     }
-    aloop = ast_loop_new(ctx, nullptr, cond, ifnot, nullptr, false, nullptr, ontrue);
-    *out = (ast_expression*)aloop;
+    aloop = new ast_loop(ctx, nullptr, cond, ifnot, nullptr, false, nullptr, ontrue);
+    *out = aloop;
     return true;
 }
 
@@ -2305,12 +2344,7 @@ static bool parse_dowhile(parser_t *parser, ast_block *block, ast_expression **o
     if (parser->breaks.back() != label || parser->continues.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
-        /*
-         * Test for nullptr otherwise ast_delete dereferences null pointer
-         * and boom.
-         */
-        if (*out)
-            ast_delete(*out);
+        delete *out;
         *out = nullptr;
     }
     else {
@@ -2339,20 +2373,20 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
         strcmp(parser_tokval(parser), "while"))
     {
         parseerror(parser, "expected 'while' and condition");
-        ast_delete(ontrue);
+        delete ontrue;
         return false;
     }
 
     /* skip the 'while' and check for opening paren */
     if (!parser_next(parser) || parser->tok != '(') {
         parseerror(parser, "expected 'while' condition in parenthesis");
-        ast_delete(ontrue);
+        delete ontrue;
         return false;
     }
     /* parse into the expression */
     if (!parser_next(parser)) {
         parseerror(parser, "expected 'while' condition after opening paren");
-        ast_delete(ontrue);
+        delete ontrue;
         return false;
     }
     /* parse the condition */
@@ -2362,32 +2396,32 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
     /* closing paren */
     if (parser->tok != ')') {
         parseerror(parser, "expected closing paren after 'while' condition");
-        ast_delete(ontrue);
+        delete ontrue;
         ast_unref(cond);
         return false;
     }
     /* parse on */
     if (!parser_next(parser) || parser->tok != ';') {
         parseerror(parser, "expected semicolon after condition");
-        ast_delete(ontrue);
+        delete ontrue;
         ast_unref(cond);
         return false;
     }
 
     if (!parser_next(parser)) {
         parseerror(parser, "parse error");
-        ast_delete(ontrue);
+        delete ontrue;
         ast_unref(cond);
         return false;
     }
 
     cond = process_condition(parser, cond, &ifnot);
     if (!cond) {
-        ast_delete(ontrue);
+        delete ontrue;
         return false;
     }
-    aloop = ast_loop_new(ctx, nullptr, nullptr, false, cond, ifnot, nullptr, ontrue);
-    *out = (ast_expression*)aloop;
+    aloop = new ast_loop(ctx, nullptr, nullptr, false, cond, ifnot, nullptr, ontrue);
+    *out = aloop;
     return true;
 }
 
@@ -2435,7 +2469,7 @@ static bool parse_for(parser_t *parser, ast_block *block, ast_expression **out)
     if (parser->breaks.back() != label || parser->continues.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
-        ast_delete(*out);
+        delete *out;
         *out = nullptr;
     }
     else {
@@ -2542,11 +2576,11 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         if (!cond)
             goto onerr;
     }
-    aloop = ast_loop_new(ctx, initexpr, cond, ifnot, nullptr, false, increment, ontrue);
-    *out = (ast_expression*)aloop;
+    aloop = new ast_loop(ctx, initexpr, cond, ifnot, nullptr, false, increment, ontrue);
+    *out = aloop;
 
     if (!parser_leaveblock(parser)) {
-        ast_delete(aloop);
+        delete aloop;
         return false;
     }
     return true;
@@ -2599,12 +2633,12 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
 
         /* prepare the return value */
         if (!retval) {
-            retval = ast_value_new(ctx, "#LOCAL_RETURN", TYPE_VOID);
-            ast_type_adopt(retval, expected->m_next);
+            retval = new ast_value(ctx, "#LOCAL_RETURN", TYPE_VOID);
+            retval->adoptType(*expected->m_next);
             parser->function->m_return_value = retval;
         }
 
-        if (!ast_compare_type(exp, (ast_expression*)retval)) {
+        if (!exp->compareType(*retval)) {
             char ty1[1024], ty2[1024];
             ast_type_to_string(exp, ty1, sizeof(ty1));
             ast_type_to_string(retval, ty2, sizeof(ty2));
@@ -2612,10 +2646,10 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
         }
 
         /* store to 'return' local variable */
-        var = (ast_expression*)ast_store_new(
+        var = new ast_store(
             ctx,
             type_store_instr[expected->m_next->m_vtype],
-            (ast_expression*)retval, exp);
+            retval, exp);
 
         if (!var) {
             ast_unref(exp);
@@ -2637,12 +2671,12 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
             return false;
 
         if (exp->m_vtype != TYPE_NIL &&
-            exp->m_vtype != ((ast_expression*)expected)->m_next->m_vtype)
+            exp->m_vtype != (expected)->m_next->m_vtype)
         {
             parseerror(parser, "return with invalid expression");
         }
 
-        ret = ast_return_new(ctx, exp);
+        ret = new ast_return(ctx, exp);
         if (!ret) {
             ast_unref(exp);
             return false;
@@ -2655,9 +2689,9 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
         {
             (void)!parsewarning(parser, WARN_MISSING_RETURN_VALUES, "return without value");
         }
-        ret = ast_return_new(ctx, (ast_expression*)retval);
+        ret = new ast_return(ctx, retval);
     }
-    *out = (ast_expression*)ret;
+    *out = ret;
     return true;
 }
 
@@ -2710,7 +2744,7 @@ static bool parse_break_continue(parser_t *parser, ast_block *block, ast_express
     if (!parser_next(parser))
         parseerror(parser, "parse error");
 
-    *out = (ast_expression*)ast_breakcont_new(ctx, is_continue, levels);
+    *out = new ast_breakcont(ctx, is_continue, levels);
     return true;
 }
 
@@ -2991,7 +3025,7 @@ static bool parse_switch(parser_t *parser, ast_block *block, ast_expression **ou
     if (parser->breaks.back() != label) {
         parseerror(parser, "internal error: label stack corrupted");
         rv = false;
-        ast_delete(*out);
+        delete *out;
         *out = nullptr;
     }
     else {
@@ -3027,24 +3061,24 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
     if (!operand)
         return false;
 
-    switchnode = ast_switch_new(ctx, operand);
+    switchnode = new ast_switch(ctx, operand);
 
     /* closing paren */
     if (parser->tok != ')') {
-        ast_delete(switchnode);
+        delete switchnode;
         parseerror(parser, "expected closing paren after 'switch' operand");
         return false;
     }
 
     /* parse over the opening paren */
     if (!parser_next(parser) || parser->tok != '{') {
-        ast_delete(switchnode);
+        delete switchnode;
         parseerror(parser, "expected list of cases");
         return false;
     }
 
     if (!parser_next(parser)) {
-        ast_delete(switchnode);
+        delete switchnode;
         parseerror(parser, "expected 'case' or 'default'");
         return false;
     }
@@ -3057,7 +3091,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
             typevar = parser_find_typedef(parser, parser_tokval(parser), 0);
         if (typevar || parser->tok == TOKEN_TYPENAME) {
             if (!parse_variable(parser, block, true, CV_NONE, typevar, false, false, 0, nullptr)) {
-                ast_delete(switchnode);
+                delete switchnode;
                 return false;
             }
             continue;
@@ -3065,11 +3099,11 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         if (parse_qualifiers(parser, true, &cvq, &noref, &is_static, &qflags, nullptr))
         {
             if (cvq == CV_WRONG) {
-                ast_delete(switchnode);
+                delete switchnode;
                 return false;
             }
             if (!parse_variable(parser, block, true, cvq, nullptr, noref, is_static, qflags, nullptr)) {
-                ast_delete(switchnode);
+                delete switchnode;
                 return false;
             }
             continue;
@@ -3083,13 +3117,13 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
 
         if (!strcmp(parser_tokval(parser), "case")) {
             if (!parser_next(parser)) {
-                ast_delete(switchnode);
+                delete switchnode;
                 parseerror(parser, "expected expression for case");
                 return false;
             }
             swcase.m_value = parse_expression_leave(parser, false, false, false);
             if (!swcase.m_value) {
-                ast_delete(switchnode);
+                delete switchnode;
                 parseerror(parser, "expected expression for case");
                 return false;
             }
@@ -3104,13 +3138,13 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         else if (!strcmp(parser_tokval(parser), "default")) {
             swcase.m_value = nullptr;
             if (!parser_next(parser)) {
-                ast_delete(switchnode);
+                delete switchnode;
                 parseerror(parser, "expected colon");
                 return false;
             }
         }
         else {
-            ast_delete(switchnode);
+            delete switchnode;
             parseerror(parser, "expected 'case' or 'default'");
             return false;
         }
@@ -3118,24 +3152,24 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
         /* Now the colon and body */
         if (parser->tok != ':') {
             if (swcase.m_value) ast_unref(swcase.m_value);
-            ast_delete(switchnode);
+            delete switchnode;
             parseerror(parser, "expected colon");
             return false;
         }
 
         if (!parser_next(parser)) {
             if (swcase.m_value) ast_unref(swcase.m_value);
-            ast_delete(switchnode);
+            delete switchnode;
             parseerror(parser, "expected statements or case");
             return false;
         }
-        caseblock = ast_block_new(parser_ctx(parser));
+        caseblock = new ast_block(parser_ctx(parser));
         if (!caseblock) {
             if (swcase.m_value) ast_unref(swcase.m_value);
-            ast_delete(switchnode);
+            delete switchnode;
             return false;
         }
-        swcase.m_code = (ast_expression*)caseblock;
+        swcase.m_code = caseblock;
         switchnode->m_cases.push_back(swcase);
         while (true) {
             ast_expression *expr;
@@ -3149,13 +3183,13 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
                 }
             }
             if (!parse_statement(parser, caseblock, &expr, true)) {
-                ast_delete(switchnode);
+                delete switchnode;
                 return false;
             }
             if (!expr)
                 continue;
-            if (!ast_block_add_expr(caseblock, expr)) {
-                ast_delete(switchnode);
+            if (!caseblock->addExpr(expr)) {
+                delete switchnode;
                 return false;
             }
         }
@@ -3165,16 +3199,16 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
 
     /* closing paren */
     if (parser->tok != '}') {
-        ast_delete(switchnode);
+        delete switchnode;
         parseerror(parser, "expected closing paren of case list");
         return false;
     }
     if (!parser_next(parser)) {
-        ast_delete(switchnode);
+        delete switchnode;
         parseerror(parser, "parse error after switch");
         return false;
     }
-    *out = (ast_expression*)switchnode;
+    *out = switchnode;
     return true;
 }
 
@@ -3201,14 +3235,14 @@ static ast_expression *parse_goto_computed(parser_t *parser, ast_expression **si
 
         cond = tern->m_cond;
         tern->m_cond = nullptr;
-        ast_delete(tern);
+        delete tern;
         *side = nullptr;
-        return (ast_expression*)ast_ifthen_new(parser_ctx(parser), cond, on_true, on_false);
+        return new ast_ifthen(parser_ctx(parser), cond, on_true, on_false);
     } else if (ast_istype(*side, ast_label)) {
-        ast_goto *gt = ast_goto_new(parser_ctx(parser), ((ast_label*)*side)->m_name);
-        ast_goto_set_label(gt, ((ast_label*)*side));
+        ast_goto *gt = new ast_goto(parser_ctx(parser), ((ast_label*)*side)->m_name);
+        gt->setLabel(reinterpret_cast<ast_label*>(*side));
         *side = nullptr;
-        return (ast_expression*)gt;
+        return gt;
     }
     return nullptr;
 }
@@ -3243,15 +3277,15 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
     }
 
     /* not computed goto */
-    gt = ast_goto_new(parser_ctx(parser), parser_tokval(parser));
+    gt = new ast_goto(parser_ctx(parser), parser_tokval(parser));
     lbl = parser_find_label(parser, gt->m_name);
     if (lbl) {
         if (!ast_istype(lbl, ast_label)) {
             parseerror(parser, "internal error: label is not an ast_label");
-            ast_delete(gt);
+            delete gt;
             return false;
         }
-        ast_goto_set_label(gt, (ast_label*)lbl);
+        gt->setLabel(reinterpret_cast<ast_label*>(lbl));
     }
     else
         parser->gotos.push_back(gt);
@@ -3265,7 +3299,7 @@ static bool parse_goto(parser_t *parser, ast_expression **out)
         return false;
     }
 
-    *out = (ast_expression*)gt;
+    *out = gt;
     return true;
 }
 
@@ -3392,8 +3426,8 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
 
             if (parser->tok == TOKEN_IDENT && (tdef = parser_find_typedef(parser, parser_tokval(parser), 0)))
             {
-                ast_type_to_string((ast_expression*)tdef, ty, sizeof(ty));
-                con_out("__builtin_debug_printtype: `%s`=`%s`\n", tdef->m_name, ty);
+                ast_type_to_string(tdef, ty, sizeof(ty));
+                con_out("__builtin_debug_printtype: `%s`=`%s`\n", tdef->m_name.c_str(), ty);
                 if (!parser_next(parser)) {
                     parseerror(parser, "parse error after __builtin_debug_printtype typename argument");
                     return false;
@@ -3479,7 +3513,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
         inner = parse_block(parser);
         if (!inner)
             return false;
-        *out = (ast_expression*)inner;
+        *out = inner;
         return true;
     }
     else if (parser->tok == ':')
@@ -3503,17 +3537,17 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
             label->m_undefined = false;
         }
         else {
-            label = ast_label_new(parser_ctx(parser), parser_tokval(parser), false);
+            label = new ast_label(parser_ctx(parser), parser_tokval(parser), false);
             parser->labels.push_back(label);
         }
-        *out = (ast_expression*)label;
+        *out = label;
         if (!parser_next(parser)) {
             parseerror(parser, "parse error after label");
             return false;
         }
         for (i = 0; i < parser->gotos.size(); ++i) {
-            if (!strcmp(parser->gotos[i]->m_name, label->m_name)) {
-                ast_goto_set_label(parser->gotos[i], label);
+            if (parser->gotos[i]->m_name == label->m_name) {
+                parser->gotos[i]->setLabel(label);
                 parser->gotos.erase(parser->gotos.begin() + i);
                 --i;
             }
@@ -3604,14 +3638,14 @@ static bool parse_enum(parser_t *parser)
             goto onerror;
         }
 
-        var = ast_value_new(parser_ctx(parser), parser_tokval(parser), TYPE_FLOAT);
+        var = new ast_value(parser_ctx(parser), parser_tokval(parser), TYPE_FLOAT);
         vec_push(values, var);
         var->m_cvq             = CV_CONST;
         var->m_hasvalue        = true;
 
         /* for flagged enumerations increment in POTs of TWO */
         var->m_constval.vfloat = (flag) ? (num *= 2) : (num ++);
-        parser_addglobal(parser, var->m_name, (ast_expression*)var);
+        parser_addglobal(parser, var->m_name, var);
 
         if (!parser_next(parser)) {
             parseerror(parser, "expected `=`, `}` or comma after identifier");
@@ -3703,8 +3737,8 @@ static bool parse_block_into(parser_t *parser, ast_block *block)
         }
         if (!expr)
             continue;
-        if (!ast_block_add_expr(block, expr)) {
-            ast_delete(block);
+        if (!block->addExpr(expr)) {
+            delete block;
             block = nullptr;
             goto cleanup;
         }
@@ -3725,11 +3759,11 @@ cleanup:
 static ast_block* parse_block(parser_t *parser)
 {
     ast_block *block;
-    block = ast_block_new(parser_ctx(parser));
+    block = new ast_block(parser_ctx(parser));
     if (!block)
         return nullptr;
     if (!parse_block_into(parser, block)) {
-        ast_block_delete(block);
+        delete block;
         return nullptr;
     }
     return block;
@@ -3738,7 +3772,7 @@ static ast_block* parse_block(parser_t *parser)
 static bool parse_statement_or_block(parser_t *parser, ast_expression **out)
 {
     if (parser->tok == '{') {
-        *out = (ast_expression*)parse_block(parser);
+        *out = parse_block(parser);
         return !!*out;
     }
     return parse_statement(parser, nullptr, out, false);
@@ -3747,15 +3781,15 @@ static bool parse_statement_or_block(parser_t *parser, ast_expression **out)
 static bool create_vector_members(ast_value *var, ast_member **me)
 {
     size_t i;
-    size_t len = strlen(var->m_name);
+    size_t len = var->m_name.length();
 
     for (i = 0; i < 3; ++i) {
         char *name = (char*)mem_a(len+3);
-        memcpy(name, var->m_name, len);
+        memcpy(name, var->m_name.c_str(), len);
         name[len+0] = '_';
         name[len+1] = 'x'+i;
         name[len+2] = 0;
-        me[i] = ast_member_new(var->m_context, (ast_expression*)var, i, name);
+        me[i] = ast_member::make(var->m_context, var, i, name);
         mem_d(name);
         if (!me[i])
             break;
@@ -3764,7 +3798,7 @@ static bool create_vector_members(ast_value *var, ast_member **me)
         return true;
 
     /* unroll */
-    do { ast_member_delete(me[--i]); } while(i);
+    do { delete me[--i]; } while(i);
     return false;
 }
 
@@ -3862,23 +3896,23 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             ast_value      *thinkfunc;
             ast_expression *functype = fld_think->m_next;
 
-            thinkfunc = ast_value_new(parser_ctx(parser), parser_tokval(parser), functype->m_vtype);
-            if (!thinkfunc) { /* || !ast_type_adopt(thinkfunc, functype)*/
+            thinkfunc = new ast_value(parser_ctx(parser), parser_tokval(parser), functype->m_vtype);
+            if (!thinkfunc) { /* || !thinkfunc->adoptType(*functype)*/
                 ast_unref(framenum);
                 parseerror(parser, "failed to create implicit prototype for `%s`", parser_tokval(parser));
                 return false;
             }
-            ast_type_adopt(thinkfunc, functype);
+            thinkfunc->adoptType(*functype);
 
             if (!parser_next(parser)) {
                 ast_unref(framenum);
-                ast_delete(thinkfunc);
+                delete thinkfunc;
                 return false;
             }
 
-            parser_addglobal(parser, thinkfunc->m_name, (ast_expression*)thinkfunc);
+            parser_addglobal(parser, thinkfunc->m_name, thinkfunc);
 
-            nextthink = (ast_expression*)thinkfunc;
+            nextthink = thinkfunc;
 
         } else {
             nextthink = parse_expression_leave(parser, true, false, false);
@@ -3917,7 +3951,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
         has_frame_think = true;
     }
 
-    block = ast_block_new(parser_ctx(parser));
+    block = new ast_block(parser_ctx(parser));
     if (!block) {
         parseerror(parser, "failed to allocate block");
         if (has_frame_think) {
@@ -3929,12 +3963,12 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
     if (has_frame_think) {
         if (!OPTS_FLAG(EMULATE_STATE)) {
-            ast_state *state_op = ast_state_new(parser_ctx(parser), framenum, nextthink);
-            if (!ast_block_add_expr(block, (ast_expression*)state_op)) {
+            ast_state *state_op = new ast_state(parser_ctx(parser), framenum, nextthink);
+            if (!block->addExpr(state_op)) {
                 parseerror(parser, "failed to generate state op for [frame,think]");
                 ast_unref(nextthink);
                 ast_unref(framenum);
-                ast_delete(block);
+                delete block;
                 return false;
             }
         } else {
@@ -3951,48 +3985,48 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             float frame_delta = 1.0f / (float)OPTS_OPTION_U32(OPTION_STATE_FPS);
 
             ctx = parser_ctx(parser);
-            self_frame     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_frame);
-            self_nextthink = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_nextthink);
-            self_think     = (ast_expression*)ast_entfield_new(ctx, gbl_self, fld_think);
+            self_frame     = new ast_entfield(ctx, gbl_self, fld_frame);
+            self_nextthink = new ast_entfield(ctx, gbl_self, fld_nextthink);
+            self_think     = new ast_entfield(ctx, gbl_self, fld_think);
 
-            time_plus_1    = (ast_expression*)ast_binary_new(ctx, INSTR_ADD_F,
-                             gbl_time, (ast_expression*)parser->m_fold.constgen_float(frame_delta, false));
+            time_plus_1    = new ast_binary(ctx, INSTR_ADD_F,
+                             gbl_time, parser->m_fold.constgen_float(frame_delta, false));
 
             if (!self_frame || !self_nextthink || !self_think || !time_plus_1) {
-                if (self_frame)     ast_delete(self_frame);
-                if (self_nextthink) ast_delete(self_nextthink);
-                if (self_think)     ast_delete(self_think);
-                if (time_plus_1)    ast_delete(time_plus_1);
+                if (self_frame)     delete self_frame;
+                if (self_nextthink) delete self_nextthink;
+                if (self_think)     delete self_think;
+                if (time_plus_1)    delete time_plus_1;
                 retval = false;
             }
 
             if (retval)
             {
-                store_frame     = ast_store_new(ctx, INSTR_STOREP_F,   self_frame,     framenum);
-                store_nextthink = ast_store_new(ctx, INSTR_STOREP_F,   self_nextthink, time_plus_1);
-                store_think     = ast_store_new(ctx, INSTR_STOREP_FNC, self_think,     nextthink);
+                store_frame     = new ast_store(ctx, INSTR_STOREP_F,   self_frame,     framenum);
+                store_nextthink = new ast_store(ctx, INSTR_STOREP_F,   self_nextthink, time_plus_1);
+                store_think     = new ast_store(ctx, INSTR_STOREP_FNC, self_think,     nextthink);
 
                 if (!store_frame) {
-                    ast_delete(self_frame);
+                    delete self_frame;
                     retval = false;
                 }
                 if (!store_nextthink) {
-                    ast_delete(self_nextthink);
+                    delete self_nextthink;
                     retval = false;
                 }
                 if (!store_think) {
-                    ast_delete(self_think);
+                    delete self_think;
                     retval = false;
                 }
                 if (!retval) {
-                    if (store_frame)     ast_delete(store_frame);
-                    if (store_nextthink) ast_delete(store_nextthink);
-                    if (store_think)     ast_delete(store_think);
+                    if (store_frame)     delete store_frame;
+                    if (store_nextthink) delete store_nextthink;
+                    if (store_think)     delete store_think;
                     retval = false;
                 }
-                if (!ast_block_add_expr(block, (ast_expression*)store_frame) ||
-                    !ast_block_add_expr(block, (ast_expression*)store_nextthink) ||
-                    !ast_block_add_expr(block, (ast_expression*)store_think))
+                if (!block->addExpr(store_frame) ||
+                    !block->addExpr(store_nextthink) ||
+                    !block->addExpr(store_think))
                 {
                     retval = false;
                 }
@@ -4002,7 +4036,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
                 parseerror(parser, "failed to generate code for [frame,think]");
                 ast_unref(nextthink);
                 ast_unref(framenum);
-                ast_delete(block);
+                delete block;
                 return false;
             }
         }
@@ -4011,22 +4045,22 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     if (var->m_hasvalue) {
         if (!(var->m_flags & AST_FLAG_ACCUMULATE)) {
             parseerror(parser, "function `%s` declared with multiple bodies", var->m_name);
-            ast_block_delete(block);
+            delete block;
             goto enderr;
         }
         func = var->m_constval.vfunc;
 
         if (!func) {
             parseerror(parser, "internal error: nullptr function: `%s`", var->m_name);
-            ast_block_delete(block);
+            delete block;
             goto enderr;
         }
     } else {
-        func = ast_function_new(var->m_context, var->m_name, var);
+        func = ast_function::make(var->m_context, var->m_name, var);
 
         if (!func) {
             parseerror(parser, "failed to allocate function for `%s`", var->m_name);
-            ast_block_delete(block);
+            delete block;
             goto enderr;
         }
         parser->functions.push_back(func);
@@ -4045,48 +4079,48 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
             continue;
         }
 
-        if (!create_vector_members(it, me)) {
-            ast_block_delete(block);
+        if (!create_vector_members(it.get(), me)) {
+            delete block;
             goto enderrfn;
         }
 
         for (e = 0; e < 3; ++e) {
-            parser_addlocal(parser, me[e]->m_name, (ast_expression*)me[e]);
-            ast_block_collect(block, (ast_expression*)me[e]);
+            parser_addlocal(parser, me[e]->m_name, me[e]);
+            block->collect(me[e]);
         }
     }
 
     if (var->m_argcounter && !func->m_argc) {
-        ast_value *argc = ast_value_new(var->m_context, var->m_argcounter, TYPE_FLOAT);
-        parser_addlocal(parser, argc->m_name, (ast_expression*)argc);
-        func->m_argc = argc;
+        ast_value *argc = new ast_value(var->m_context, var->m_argcounter, TYPE_FLOAT);
+        parser_addlocal(parser, argc->m_name, argc);
+        func->m_argc.reset(argc);
     }
 
     if (OPTS_FLAG(VARIADIC_ARGS) && var->m_flags & AST_FLAG_VARIADIC && !func->m_varargs) {
         char name[1024];
-        ast_value *varargs = ast_value_new(var->m_context, "reserved:va_args", TYPE_ARRAY);
+        ast_value *varargs = new ast_value(var->m_context, "reserved:va_args", TYPE_ARRAY);
         varargs->m_flags |= AST_FLAG_IS_VARARG;
-        varargs->m_next = (ast_expression*)ast_value_new(var->m_context, nullptr, TYPE_VECTOR);
+        varargs->m_next = new ast_value(var->m_context, "", TYPE_VECTOR);
         varargs->m_count = 0;
-        util_snprintf(name, sizeof(name), "%s##va##SET", var->m_name);
+        util_snprintf(name, sizeof(name), "%s##va##SET", var->m_name.c_str());
         if (!parser_create_array_setter_proto(parser, varargs, name)) {
-            ast_delete(varargs);
-            ast_block_delete(block);
+            delete varargs;
+            delete block;
             goto enderrfn;
         }
-        util_snprintf(name, sizeof(name), "%s##va##GET", var->m_name);
+        util_snprintf(name, sizeof(name), "%s##va##GET", var->m_name.c_str());
         if (!parser_create_array_getter_proto(parser, varargs, varargs->m_next, name)) {
-            ast_delete(varargs);
-            ast_block_delete(block);
+            delete varargs;
+            delete block;
             goto enderrfn;
         }
-        func->m_varargs     = varargs;
+        func->m_varargs.reset(varargs);
         func->m_fixedparams = (ast_value*)parser->m_fold.constgen_float(var->m_type_params.size(), false);
     }
 
     parser->function = func;
     if (!parse_block_into(parser, block)) {
-        ast_block_delete(block);
+        delete block;
         goto enderrfn;
     }
 
@@ -4109,7 +4143,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 enderrfn:
     (void)!parser_leaveblock(parser);
     parser->functions.pop_back();
-    ast_function_delete(func);
+    delete func;
     var->m_constval.vfunc = nullptr;
 
 enderr:
@@ -4132,29 +4166,29 @@ static ast_expression *array_accessor_split(
     lex_ctx_t ctx = array->m_context;
 
     if (!left || !right) {
-        if (left)  ast_delete(left);
-        if (right) ast_delete(right);
+        if (left)  delete left;
+        if (right) delete right;
         return nullptr;
     }
 
-    cmp = ast_binary_new(ctx, INSTR_LT,
-                         (ast_expression*)index,
-                         (ast_expression*)parser->m_fold.constgen_float(middle, false));
+    cmp = new ast_binary(ctx, INSTR_LT,
+                         index,
+                         parser->m_fold.constgen_float(middle, false));
     if (!cmp) {
-        ast_delete(left);
-        ast_delete(right);
+        delete left;
+        delete right;
         parseerror(parser, "internal error: failed to create comparison for array setter");
         return nullptr;
     }
 
-    ifthen = ast_ifthen_new(ctx, (ast_expression*)cmp, left, right);
+    ifthen = new ast_ifthen(ctx, cmp, left, right);
     if (!ifthen) {
-        ast_delete(cmp); /* will delete left and right */
+        delete cmp; /* will delete left and right */
         parseerror(parser, "internal error: failed to create conditional jump for array setter");
         return nullptr;
     }
 
-    return (ast_expression*)ifthen;
+    return ifthen;
 }
 
 static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast_value *index, ast_value *value, size_t from, size_t afterend)
@@ -4172,39 +4206,39 @@ static ast_expression *array_setter_node(parser_t *parser, ast_value *array, ast
         if (value->m_vtype == TYPE_FIELD && value->m_next->m_vtype == TYPE_VECTOR)
             assignop = INSTR_STORE_V;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser->m_fold.constgen_float(from, false));
+        subscript = ast_array_index::make(ctx, array, parser->m_fold.constgen_float(from, false));
         if (!subscript)
             return nullptr;
 
-        st = ast_store_new(ctx, assignop, (ast_expression*)subscript, (ast_expression*)value);
+        st = new ast_store(ctx, assignop, subscript, value);
         if (!st) {
-            ast_delete(subscript);
+            delete subscript;
             return nullptr;
         }
 
-        block = ast_block_new(ctx);
+        block = new ast_block(ctx);
         if (!block) {
-            ast_delete(st);
+            delete st;
             return nullptr;
         }
 
-        if (!ast_block_add_expr(block, (ast_expression*)st)) {
-            ast_delete(block);
+        if (!block->addExpr(st)) {
+            delete block;
             return nullptr;
         }
 
-        ret = ast_return_new(ctx, nullptr);
+        ret = new ast_return(ctx, nullptr);
         if (!ret) {
-            ast_delete(block);
+            delete block;
             return nullptr;
         }
 
-        if (!ast_block_add_expr(block, (ast_expression*)ret)) {
-            ast_delete(block);
+        if (!block->addExpr(ret)) {
+            delete block;
             return nullptr;
         }
 
-        return (ast_expression*)block;
+        return block;
     } else {
         ast_expression *left, *right;
         size_t diff = afterend - from;
@@ -4238,51 +4272,48 @@ static ast_expression *array_field_setter_node(
         if (value->m_vtype == TYPE_FIELD && value->m_next->m_vtype == TYPE_VECTOR)
             assignop = INSTR_STOREP_V;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser->m_fold.constgen_float(from, false));
+        subscript = ast_array_index::make(ctx, array, parser->m_fold.constgen_float(from, false));
         if (!subscript)
             return nullptr;
 
-        subscript->m_next = ast_type_copy(subscript->m_context, (ast_expression*)subscript);
+        subscript->m_next = new ast_expression(ast_copy_type, subscript->m_context, *subscript);
         subscript->m_vtype = TYPE_FIELD;
 
-        entfield = ast_entfield_new_force(ctx,
-                                          (ast_expression*)entity,
-                                          (ast_expression*)subscript,
-                                          (ast_expression*)subscript);
+        entfield = new ast_entfield(ctx, entity, subscript, subscript);
         if (!entfield) {
-            ast_delete(subscript);
+            delete subscript;
             return nullptr;
         }
 
-        st = ast_store_new(ctx, assignop, (ast_expression*)entfield, (ast_expression*)value);
+        st = new ast_store(ctx, assignop, entfield, value);
         if (!st) {
-            ast_delete(entfield);
+            delete entfield;
             return nullptr;
         }
 
-        block = ast_block_new(ctx);
+        block = new ast_block(ctx);
         if (!block) {
-            ast_delete(st);
+            delete st;
             return nullptr;
         }
 
-        if (!ast_block_add_expr(block, (ast_expression*)st)) {
-            ast_delete(block);
+        if (!block->addExpr(st)) {
+            delete block;
             return nullptr;
         }
 
-        ret = ast_return_new(ctx, nullptr);
+        ret = new ast_return(ctx, nullptr);
         if (!ret) {
-            ast_delete(block);
+            delete block;
             return nullptr;
         }
 
-        if (!ast_block_add_expr(block, (ast_expression*)ret)) {
-            ast_delete(block);
+        if (!block->addExpr(ret)) {
+            delete block;
             return nullptr;
         }
 
-        return (ast_expression*)block;
+        return block;
     } else {
         ast_expression *left, *right;
         size_t diff = afterend - from;
@@ -4301,17 +4332,17 @@ static ast_expression *array_getter_node(parser_t *parser, ast_value *array, ast
         ast_return      *ret;
         ast_array_index *subscript;
 
-        subscript = ast_array_index_new(ctx, (ast_expression*)array, (ast_expression*)parser->m_fold.constgen_float(from, false));
+        subscript = ast_array_index::make(ctx, array, parser->m_fold.constgen_float(from, false));
         if (!subscript)
             return nullptr;
 
-        ret = ast_return_new(ctx, (ast_expression*)subscript);
+        ret = new ast_return(ctx, subscript);
         if (!ret) {
-            ast_delete(subscript);
+            delete subscript;
             return nullptr;
         }
 
-        return (ast_expression*)ret;
+        return ret;
     } else {
         ast_expression *left, *right;
         size_t diff = afterend - from;
@@ -4328,25 +4359,25 @@ static bool parser_create_array_accessor(parser_t *parser, ast_value *array, con
     ast_value      *fval = nullptr;
     ast_block      *body = nullptr;
 
-    fval = ast_value_new(array->m_context, funcname, TYPE_FUNCTION);
+    fval = new ast_value(array->m_context, funcname, TYPE_FUNCTION);
     if (!fval) {
         parseerror(parser, "failed to create accessor function value");
         return false;
     }
     fval->m_flags &= ~(AST_FLAG_COVERAGE_MASK);
 
-    func = ast_function_new(array->m_context, funcname, fval);
+    func = ast_function::make(array->m_context, funcname, fval);
     if (!func) {
-        ast_delete(fval);
+        delete fval;
         parseerror(parser, "failed to create accessor function node");
         return false;
     }
 
-    body = ast_block_new(array->m_context);
+    body = new ast_block(array->m_context);
     if (!body) {
         parseerror(parser, "failed to create block for array accessor");
-        ast_delete(fval);
-        ast_delete(func);
+        delete fval;
+        delete func;
         return false;
     }
 
@@ -4373,26 +4404,26 @@ static ast_value* parser_create_array_setter_proto(parser_t *parser, ast_value *
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
         return nullptr;
     func = fval->m_constval.vfunc;
-    fval->m_next = (ast_expression*)ast_value_new(array->m_context, "<void>", TYPE_VOID);
+    fval->m_next = new ast_value(array->m_context, "<void>", TYPE_VOID);
 
-    index = ast_value_new(array->m_context, "index", TYPE_FLOAT);
-    value = ast_value_from_type((ast_value*)array->m_next);
+    index = new ast_value(array->m_context, "index", TYPE_FLOAT);
+    value = new ast_value(ast_copy_type, *(ast_value*)array->m_next);
 
     if (!index || !value) {
         parseerror(parser, "failed to create locals for array accessor");
         goto cleanup;
     }
-    (void)!ast_value_set_name(value, "value"); /* not important */
-    fval->m_type_params.push_back(index);
-    fval->m_type_params.push_back(value);
+    value->m_name = "value"; // not important
+    fval->m_type_params.emplace_back(index);
+    fval->m_type_params.emplace_back(value);
 
     array->m_setter = fval;
     return fval;
 cleanup:
-    if (index) ast_delete(index);
-    if (value) ast_delete(value);
-    ast_delete(func);
-    ast_delete(fval);
+    if (index) delete index;
+    if (value) delete value;
+    delete func;
+    delete fval;
     return nullptr;
 }
 
@@ -4400,15 +4431,15 @@ static bool parser_create_array_setter_impl(parser_t *parser, ast_value *array)
 {
     ast_expression *root = nullptr;
     root = array_setter_node(parser, array,
-                             array->m_setter->m_type_params[0],
-                             array->m_setter->m_type_params[1],
+                             array->m_setter->m_type_params[0].get(),
+                             array->m_setter->m_type_params[1].get(),
                              0, array->m_count);
     if (!root) {
         parseerror(parser, "failed to build accessor search tree");
         return false;
     }
-    if (!ast_block_add_expr(array->m_setter->m_constval.vfunc->m_blocks[0].get(), root)) {
-        ast_delete(root);
+    if (!array->m_setter->m_constval.vfunc->m_blocks[0].get()->addExpr(root)) {
+        delete root;
         return false;
     }
     return true;
@@ -4438,19 +4469,19 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
         return false;
     func = fval->m_constval.vfunc;
-    fval->m_next = (ast_expression*)ast_value_new(array->m_context, "<void>", TYPE_VOID);
+    fval->m_next = new ast_value(array->m_context, "<void>", TYPE_VOID);
 
-    entity = ast_value_new(array->m_context, "entity", TYPE_ENTITY);
-    index  = ast_value_new(array->m_context, "index",  TYPE_FLOAT);
-    value  = ast_value_from_type((ast_value*)array->m_next);
+    entity = new ast_value(array->m_context, "entity", TYPE_ENTITY);
+    index  = new ast_value(array->m_context, "index",  TYPE_FLOAT);
+    value  = new ast_value(ast_copy_type, *(ast_value*)array->m_next);
     if (!entity || !index || !value) {
         parseerror(parser, "failed to create locals for array accessor");
         goto cleanup;
     }
-    (void)!ast_value_set_name(value, "value"); /* not important */
-    fval->m_type_params.push_back(entity);
-    fval->m_type_params.push_back(index);
-    fval->m_type_params.push_back(value);
+    value->m_name = "value"; // not important
+    fval->m_type_params.emplace_back(entity);
+    fval->m_type_params.emplace_back(index);
+    fval->m_type_params.emplace_back(value);
 
     root = array_field_setter_node(parser, array, entity, index, value, 0, array->m_count);
     if (!root) {
@@ -4459,14 +4490,14 @@ static bool parser_create_array_field_setter(parser_t *parser, ast_value *array,
     }
 
     array->m_setter = fval;
-    return ast_block_add_expr(func->m_blocks[0].get(), root);
+    return func->m_blocks[0].get()->addExpr(root);
 cleanup:
-    if (entity) ast_delete(entity);
-    if (index)  ast_delete(index);
-    if (value)  ast_delete(value);
-    if (root)   ast_delete(root);
-    ast_delete(func);
-    ast_delete(fval);
+    if (entity) delete entity;
+    if (index)  delete index;
+    if (value)  delete value;
+    if (root)   delete root;
+    delete func;
+    delete fval;
     return false;
 }
 
@@ -4487,22 +4518,22 @@ static ast_value* parser_create_array_getter_proto(parser_t *parser, ast_value *
     if (!parser_create_array_accessor(parser, array, funcname, &fval))
         return nullptr;
     func = fval->m_constval.vfunc;
-    fval->m_next = ast_type_copy(array->m_context, elemtype);
+    fval->m_next = new ast_expression(ast_copy_type, array->m_context, *elemtype);
 
-    index = ast_value_new(array->m_context, "index", TYPE_FLOAT);
+    index = new ast_value(array->m_context, "index", TYPE_FLOAT);
 
     if (!index) {
         parseerror(parser, "failed to create locals for array accessor");
         goto cleanup;
     }
-    fval->m_type_params.push_back(index);
+    fval->m_type_params.emplace_back(index);
 
     array->m_getter = fval;
     return fval;
 cleanup:
-    if (index) ast_delete(index);
-    ast_delete(func);
-    ast_delete(fval);
+    if (index) delete index;
+    delete func;
+    delete fval;
     return nullptr;
 }
 
@@ -4510,13 +4541,13 @@ static bool parser_create_array_getter_impl(parser_t *parser, ast_value *array)
 {
     ast_expression *root = nullptr;
 
-    root = array_getter_node(parser, array, array->m_getter->m_type_params[0], 0, array->m_count);
+    root = array_getter_node(parser, array, array->m_getter->m_type_params[0].get(), 0, array->m_count);
     if (!root) {
         parseerror(parser, "failed to build accessor search tree");
         return false;
     }
-    if (!ast_block_add_expr(array->m_getter->m_constval.vfunc->m_blocks[0].get(), root)) {
-        ast_delete(root);
+    if (!array->m_getter->m_constval.vfunc->m_blocks[0].get()->addExpr(root)) {
+        delete root;
         return false;
     }
     return true;
@@ -4532,7 +4563,7 @@ static bool parser_create_array_getter(parser_t *parser, ast_value *array, const
 static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 {
     lex_ctx_t ctx = parser_ctx(parser);
-    std::vector<ast_value *> params;
+    std::vector<std::unique_ptr<ast_value>> params;
     ast_value *fval;
     bool first = true;
     bool variadic = false;
@@ -4541,7 +4572,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
 
     /* for the sake of less code we parse-in in this function */
     if (!parser_next(parser)) {
-        ast_delete(var);
+        delete var;
         parseerror(parser, "expected parameter list");
         return nullptr;
     }
@@ -4581,17 +4612,17 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 }
             }
         } else {
-            params.push_back(param);
+            params.emplace_back(param);
             if (param->m_vtype >= TYPE_VARIANT) {
                 char tname[1024]; /* typename is reserved in C++ */
-                ast_type_to_string((ast_expression*)param, tname, sizeof(tname));
+                ast_type_to_string(param, tname, sizeof(tname));
                 parseerror(parser, "type not supported as part of a parameter list: %s", tname);
                 goto on_error;
             }
             /* type-restricted varargs */
             if (parser->tok == TOKEN_DOTS) {
                 variadic = true;
-                varparam = params.back();
+                varparam = params.back().release();
                 params.pop_back();
                 if (!parser_next(parser) || (parser->tok != ')' && parser->tok != TOKEN_IDENT)) {
                     parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
@@ -4599,7 +4630,7 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
                 }
                 if (parser->tok == TOKEN_IDENT) {
                     argcounter = util_strdup(parser_tokval(parser));
-                    ast_value_set_name(param, argcounter);
+                    param->m_name = argcounter;
                     if (!parser_next(parser) || parser->tok != ')') {
                         parseerror(parser, "`...` must be the last parameter of a variadic function declaration");
                         goto on_error;
@@ -4627,14 +4658,14 @@ static ast_value *parse_parameter_list(parser_t *parser, ast_value *var)
     }
 
     /* now turn 'var' into a function type */
-    fval = ast_value_new(ctx, "<type()>", TYPE_FUNCTION);
-    fval->m_next = (ast_expression*)var;
+    fval = new ast_value(ctx, "<type()>", TYPE_FUNCTION);
+    fval->m_next = var;
     if (variadic)
         fval->m_flags |= AST_FLAG_VARIADIC;
     var = fval;
 
     var->m_type_params = move(params);
-    var->m_varparam = (ast_expression*)varparam;
+    var->m_varparam = varparam;
     var->m_argcounter = argcounter;
 
     return var;
@@ -4643,10 +4674,8 @@ on_error:
     if (argcounter)
         mem_d(argcounter);
     if (varparam)
-        ast_delete(varparam);
-    ast_delete(var);
-    for (auto &it : params)
-        ast_delete(it);
+        delete varparam;
+    delete var;
     return nullptr;
 }
 
@@ -4659,7 +4688,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
     ctx = parser_ctx(parser);
 
     if (!parser_next(parser)) {
-        ast_delete(var);
+        delete var;
         parseerror(parser, "expected array-size");
         return nullptr;
     }
@@ -4670,7 +4699,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
         if (!cexp || !ast_istype(cexp, ast_value)) {
             if (cexp)
                 ast_unref(cexp);
-            ast_delete(var);
+            delete var;
             parseerror(parser, "expected array-size as constant positive integer");
             return nullptr;
         }
@@ -4681,8 +4710,8 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
         cval = nullptr;
     }
 
-    tmp = ast_value_new(ctx, "<type[]>", TYPE_ARRAY);
-    tmp->m_next = (ast_expression*)var;
+    tmp = new ast_value(ctx, "<type[]>", TYPE_ARRAY);
+    tmp->m_next = var;
     var = tmp;
 
     if (cval) {
@@ -4692,7 +4721,7 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
             tmp->m_count = cval->m_constval.vfloat;
         else {
             ast_unref(cexp);
-            ast_delete(var);
+            delete var;
             parseerror(parser, "array-size must be a positive integer constant");
             return nullptr;
         }
@@ -4704,12 +4733,12 @@ static ast_value *parse_arraysize(parser_t *parser, ast_value *var)
     }
 
     if (parser->tok != ']') {
-        ast_delete(var);
+        delete var;
         parseerror(parser, "expected ']' after array-size");
         return nullptr;
     }
     if (!parser_next(parser)) {
-        ast_delete(var);
+        delete var;
         parseerror(parser, "error after parsing array size");
         return nullptr;
     }
@@ -4790,14 +4819,14 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
     /* generate the basic type value */
     if (cached_typedef) {
-        var = ast_value_from_type(cached_typedef);
-        ast_value_set_name(var, "<type(from_def)>");
+        var = new ast_value(ast_copy_type, *cached_typedef);
+        var->m_name = "<type(from_def)>";
     } else
-        var = ast_value_new(ctx, "<type>", parser_token(parser)->constval.t);
+        var = new ast_value(ctx, "<type>", parser_token(parser)->constval.t);
 
     for (; morefields; --morefields) {
-        tmp = ast_value_new(ctx, "<.type>", TYPE_FIELD);
-        tmp->m_next = (ast_expression*)var;
+        tmp = new ast_value(ctx, "<.type>", TYPE_FIELD);
+        tmp->m_next = var;
         var = tmp;
     }
 
@@ -4808,7 +4837,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
     /* parse on */
     if (!parser_next(parser)) {
-        ast_delete(var);
+        delete var;
         parseerror(parser, "parse error after typename");
         return nullptr;
     }
@@ -4826,10 +4855,10 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
     /* store the base if requested */
     if (storebase) {
-        *storebase = ast_value_from_type(var);
+        *storebase = new ast_value(ast_copy_type, *var);
         if (isfield) {
-            tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
-            tmp->m_next = (ast_expression*)*storebase;
+            tmp = new ast_value(ctx, "<type:f>", TYPE_FIELD);
+            tmp->m_next = *storebase;
             *storebase = tmp;
         }
     }
@@ -4845,7 +4874,7 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
         /* parse on */
         if (!parser_next(parser)) {
-            ast_delete(var);
+            delete var;
             mem_d(name);
             parseerror(parser, "error after variable or field declaration");
             return nullptr;
@@ -4866,8 +4895,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
     /* This is the point where we can turn it into a field */
     if (isfield) {
         /* turn it into a field if desired */
-        tmp = ast_value_new(ctx, "<type:f>", TYPE_FIELD);
-        tmp->m_next = (ast_expression*)var;
+        tmp = new ast_value(ctx, "<type:f>", TYPE_FIELD);
+        tmp->m_next = var;
         var = tmp;
     }
 
@@ -4886,13 +4915,8 @@ static ast_value *parse_typename(parser_t *parser, ast_value **storebase, ast_va
 
     /* finally name it */
     if (name) {
-        if (!ast_value_set_name(var, name)) {
-            ast_delete(var);
-            mem_d(name);
-            parseerror(parser, "internal error: failed to set name");
-            return nullptr;
-        }
-        /* free the name, ast_value_set_name duplicates */
+        var->m_name = name;
+        // free the name, ast_value_set_name duplicates
         mem_d(name);
     }
 
@@ -4909,10 +4933,10 @@ static bool parse_typedef(parser_t *parser)
     if (!typevar)
         return false;
 
-    /* while parsing types, the ast_value's get named '<something>' */
-    if (!typevar->m_name || typevar->m_name[0] == '<') {
+    // while parsing types, the ast_value's get named '<something>'
+    if (!typevar->m_name.length() || typevar->m_name[0] == '<') {
         parseerror(parser, "missing name in typedef");
-        ast_delete(typevar);
+        delete typevar;
         return false;
     }
 
@@ -4920,19 +4944,19 @@ static bool parse_typedef(parser_t *parser)
         parseerror(parser, "cannot define a type with the same name as a variable: %s\n"
                    " -> `%s` has been declared here: %s:%i",
                    typevar->m_name, old->m_context.file, old->m_context.line);
-        ast_delete(typevar);
+        delete typevar;
         return false;
     }
 
     if ( (oldtype = parser_find_typedef(parser, typevar->m_name, vec_last(parser->_blocktypedefs))) ) {
         parseerror(parser, "type `%s` has already been declared here: %s:%i",
                    typevar->m_name, oldtype->m_context.file, oldtype->m_context.line);
-        ast_delete(typevar);
+        delete typevar;
         return false;
     }
 
     vec_push(parser->_typedefs, typevar);
-    util_htset(vec_last(parser->typedefs), typevar->m_name, typevar);
+    util_htset(vec_last(parser->typedefs), typevar->m_name.c_str(), typevar);
 
     if (parser->tok != ';') {
         parseerror(parser, "expected semicolon after typedef");
@@ -4987,10 +5011,10 @@ static bool parser_check_qualifiers(parser_t *parser, const ast_value *var, cons
 static bool create_array_accessors(parser_t *parser, ast_value *var)
 {
     char name[1024];
-    util_snprintf(name, sizeof(name), "%s##SET", var->m_name);
+    util_snprintf(name, sizeof(name), "%s##SET", var->m_name.c_str());
     if (!parser_create_array_setter(parser, var, name))
         return false;
-    util_snprintf(name, sizeof(name), "%s##GET", var->m_name);
+    util_snprintf(name, sizeof(name), "%s##GET", var->m_name.c_str());
     if (!parser_create_array_getter(parser, var, var->m_next, name))
         return false;
     return true;
@@ -5078,15 +5102,15 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
     var = parse_typename(parser, &basetype, cached_typedef, nullptr);
     if (!var) {
         if (basetype)
-            ast_delete(basetype);
+            delete basetype;
         return false;
     }
 
     /* while parsing types, the ast_value's get named '<something>' */
-    if (!var->m_name || var->m_name[0] == '<') {
+    if (!var->m_name.length() || var->m_name[0] == '<') {
         parseerror(parser, "declaration does not declare anything");
         if (basetype)
-            ast_delete(basetype);
+            delete basetype;
         return false;
     }
 
@@ -5153,7 +5177,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
          * Also: if there was a prototype, `var` will be deleted and set to `proto` which
          * is then filled with the previous definition and the parameter-names replaced.
          */
-        if (!strcmp(var->m_name, "nil")) {
+        if (var->m_name == "nil") {
             if (OPTS_FLAG(UNTYPED_NIL)) {
                 if (!localblock || !OPTS_FLAG(PERMISSIVE))
                     parseerror(parser, "name `nil` not allowed (try -fpermissive)");
@@ -5163,12 +5187,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         if (!localblock) {
             /* Deal with end_sys_ vars */
             was_end = false;
-            if (!strcmp(var->m_name, "end_sys_globals")) {
+            if (var->m_name == "end_sys_globals") {
                 var->m_uses++;
                 parser->crc_globals = parser->globals.size();
                 was_end = true;
             }
-            else if (!strcmp(var->m_name, "end_sys_fields")) {
+            else if (var->m_name == "end_sys_fields") {
                 var->m_uses++;
                 parser->crc_fields = parser->fields.size();
                 was_end = true;
@@ -5194,7 +5218,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         retval = false;
                         goto cleanup;
                     }
-                    ast_delete(var);
+                    delete var;
                     var = nullptr;
                     goto skipvar;
                     /*
@@ -5228,7 +5252,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     }
                     proto = (ast_value*)old;
                     proto->m_desc = var->m_desc;
-                    if (!ast_compare_type((ast_expression*)proto, (ast_expression*)var)) {
+                    if (!proto->compareType(*var)) {
                         parseerror(parser, "conflicting types for `%s`, previous declaration was here: %s:%i",
                                    proto->m_name,
                                    proto->m_context.file, proto->m_context.line);
@@ -5237,16 +5261,14 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     }
                     /* we need the new parameter-names */
                     for (i = 0; i < proto->m_type_params.size(); ++i)
-                        ast_value_set_name(proto->m_type_params[i], var->m_type_params[i]->m_name);
+                        proto->m_type_params[i]->m_name = var->m_type_params[i]->m_name;
                     if (!parser_check_qualifiers(parser, var, proto)) {
                         retval = false;
-                        if (proto->m_desc)
-                            mem_d(proto->m_desc);
                         proto = nullptr;
                         goto cleanup;
                     }
                     proto->m_flags |= var->m_flags;
-                    ast_delete(var);
+                    delete var;
                     var = proto;
                 }
                 else
@@ -5284,7 +5306,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                          */
                         if (proto->m_flags & AST_FLAG_FINAL_DECL)
                             old->m_context = var->m_context;
-                        ast_delete(var);
+                        delete var;
                         var = proto;
                     }
                     if (OPTS_OPTION_U32(OPTION_STANDARD) == COMPILER_QCC &&
@@ -5320,7 +5342,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     goto cleanup;
                 }
                 if (OPTS_OPTION_U32(OPTION_STANDARD) != COMPILER_GMQCC) {
-                    ast_delete(var);
+                    delete var;
                     if (ast_istype(old, ast_value))
                         var = proto = (ast_value*)old;
                     else {
@@ -5356,21 +5378,21 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 /* deal with global variables, fields, functions */
                 if (!nofields && var->m_vtype == TYPE_FIELD && parser->tok != '=') {
                     var->m_isfield = true;
-                    parser->fields.push_back((ast_expression*)var);
-                    util_htset(parser->htfields, var->m_name, var);
+                    parser->fields.push_back(var);
+                    util_htset(parser->htfields, var->m_name.c_str(), var);
                     if (isvector) {
                         for (i = 0; i < 3; ++i) {
-                            parser->fields.push_back((ast_expression*)me[i]);
-                            util_htset(parser->htfields, me[i]->m_name, me[i]);
+                            parser->fields.push_back(me[i]);
+                            util_htset(parser->htfields, me[i]->m_name.c_str(), me[i]);
                         }
                     }
                 }
                 else {
                     if (!(var->m_flags & AST_FLAG_ALIAS)) {
-                        parser_addglobal(parser, var->m_name, (ast_expression*)var);
+                        parser_addglobal(parser, var->m_name, var);
                         if (isvector) {
                             for (i = 0; i < 3; ++i) {
-                                parser_addglobal(parser, me[i]->m_name, (ast_expression*)me[i]);
+                                parser_addglobal(parser, me[i]->m_name.c_str(), me[i]);
                             }
                         }
                     } else {
@@ -5381,12 +5403,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        if (!ast_compare_type((ast_expression*)var, find)) {
+                        if (!var->compareType(*find)) {
                             char ty1[1024];
                             char ty2[1024];
 
-                            ast_type_to_string(find,                  ty1, sizeof(ty1));
-                            ast_type_to_string((ast_expression*)var,  ty2, sizeof(ty2));
+                            ast_type_to_string(find, ty1, sizeof(ty1));
+                            ast_type_to_string(var,  ty2, sizeof(ty2));
 
                             compile_error(parser_ctx(parser), "incompatible types `%s` and `%s` for alias `%s`",
                                 ty1, ty2, var->m_name
@@ -5394,19 +5416,19 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                             return false;
                         }
 
-                        util_htset(parser->aliases, var->m_name, find);
+                        util_htset(parser->aliases, var->m_name.c_str(), find);
 
                         /* generate aliases for vector components */
                         if (isvector) {
                             char *buffer[3];
 
-                            util_asprintf(&buffer[0], "%s_x", var->m_desc);
-                            util_asprintf(&buffer[1], "%s_y", var->m_desc);
-                            util_asprintf(&buffer[2], "%s_z", var->m_desc);
+                            util_asprintf(&buffer[0], "%s_x", var->m_desc.c_str());
+                            util_asprintf(&buffer[1], "%s_y", var->m_desc.c_str());
+                            util_asprintf(&buffer[2], "%s_z", var->m_desc.c_str());
 
-                            util_htset(parser->aliases, me[0]->m_name, parser_find_global(parser, buffer[0]));
-                            util_htset(parser->aliases, me[1]->m_name, parser_find_global(parser, buffer[1]));
-                            util_htset(parser->aliases, me[2]->m_name, parser_find_global(parser, buffer[2]));
+                            util_htset(parser->aliases, me[0]->m_name.c_str(), parser_find_global(parser, buffer[0]));
+                            util_htset(parser->aliases, me[1]->m_name.c_str(), parser_find_global(parser, buffer[1]));
+                            util_htset(parser->aliases, me[2]->m_name.c_str(), parser_find_global(parser, buffer[2]));
 
                             mem_d(buffer[0]);
                             mem_d(buffer[1]);
@@ -5416,70 +5438,61 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 }
             } else {
                 if (is_static) {
-                    /* a static adds itself to be generated like any other global
-                     * but is added to the local namespace instead
-                     */
-                    char   *defname = nullptr;
-                    size_t  prefix_len, ln;
+                    // a static adds itself to be generated like any other global
+                    // but is added to the local namespace instead
+                    std::string defname;
+                    size_t  prefix_len;
                     size_t  sn, sn_size;
 
-                    ln = strlen(parser->function->m_name);
-                    vec_append(defname, ln, parser->function->m_name);
+                    defname = parser->function->m_name;
+                    defname.append(2, ':');
 
-                    vec_append(defname, 2, "::");
-                    /* remember the length up to here */
-                    prefix_len = vec_size(defname);
+                    // remember the length up to here
+                    prefix_len = defname.length();
 
-                    /* Add it to the local scope */
-                    util_htset(vec_last(parser->variables), var->m_name, (void*)var);
+                    // Add it to the local scope
+                    util_htset(vec_last(parser->variables), var->m_name.c_str(), (void*)var);
 
-                    /* now rename the global */
-                    ln = strlen(var->m_name);
-                    vec_append(defname, ln, var->m_name);
-                    /* if a variable of that name already existed, add the
-                     * counter value.
-                     * The counter is incremented either way.
-                     */
+                    // now rename the global
+                    defname.append(var->m_name);
+                    // if a variable of that name already existed, add the
+                    // counter value.
+                    // The counter is incremented either way.
                     sn_size = parser->function->m_static_names.size();
                     for (sn = 0; sn != sn_size; ++sn) {
-                        if (strcmp(parser->function->m_static_names[sn], var->m_name) == 0)
+                        if (parser->function->m_static_names[sn] == var->m_name.c_str())
                             break;
                     }
                     if (sn != sn_size) {
                         char *num = nullptr;
                         int   len = util_asprintf(&num, "#%u", parser->function->m_static_count);
-                        vec_append(defname, len, num);
+                        defname.append(num, 0, len);
                         mem_d(num);
                     }
                     else
-                        parser->function->m_static_names.push_back(util_strdup(var->m_name));
+                        parser->function->m_static_names.emplace_back(var->m_name);
                     parser->function->m_static_count++;
-                    ast_value_set_name(var, defname);
+                    var->m_name = defname;
 
-                    /* push it to the to-be-generated globals */
-                    parser->globals.push_back((ast_expression*)var);
+                    // push it to the to-be-generated globals
+                    parser->globals.push_back(var);
 
-                    /* same game for the vector members */
+                    // same game for the vector members
                     if (isvector) {
+                        defname.erase(prefix_len);
                         for (i = 0; i < 3; ++i) {
-                            util_htset(vec_last(parser->variables), me[i]->m_name, (void*)(me[i]));
-
-                            vec_shrinkto(defname, prefix_len);
-                            ln = strlen(me[i]->m_name);
-                            vec_append(defname, ln, me[i]->m_name);
-                            ast_member_set_name(me[i], defname);
-
-                            parser->globals.push_back((ast_expression*)me[i]);
+                            util_htset(vec_last(parser->variables), me[i]->m_name.c_str(), (void*)(me[i]));
+                            me[i]->m_name = move(defname + me[i]->m_name);
+                            parser->globals.push_back(me[i]);
                         }
                     }
-                    vec_free(defname);
                 } else {
                     localblock->m_locals.push_back(var);
-                    parser_addlocal(parser, var->m_name, (ast_expression*)var);
+                    parser_addlocal(parser, var->m_name, var);
                     if (isvector) {
                         for (i = 0; i < 3; ++i) {
-                            parser_addlocal(parser, me[i]->m_name, (ast_expression*)me[i]);
-                            ast_block_collect(localblock, (ast_expression*)me[i]);
+                            parser_addlocal(parser, me[i]->m_name, me[i]);
+                            localblock->collect(me[i]);
                         }
                     }
                 }
@@ -5511,24 +5524,24 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                 goto cleanup;
             }
 
-            util_snprintf(name, sizeof(name), "%s##SETF", var->m_name);
+            util_snprintf(name, sizeof(name), "%s##SETF", var->m_name.c_str());
             if (!parser_create_array_field_setter(parser, array, name))
                 goto cleanup;
 
-            telem = ast_type_copy(var->m_context, array->m_next);
-            tfield = ast_value_new(var->m_context, "<.type>", TYPE_FIELD);
+            telem = new ast_expression(ast_copy_type, var->m_context, *array->m_next);
+            tfield = new ast_value(var->m_context, "<.type>", TYPE_FIELD);
             tfield->m_next = telem;
-            util_snprintf(name, sizeof(name), "%s##GETFP", var->m_name);
-            if (!parser_create_array_getter(parser, array, (ast_expression*)tfield, name)) {
-                ast_delete(tfield);
+            util_snprintf(name, sizeof(name), "%s##GETFP", var->m_name.c_str());
+            if (!parser_create_array_getter(parser, array, tfield, name)) {
+                delete tfield;
                 goto cleanup;
             }
-            ast_delete(tfield);
+            delete tfield;
         }
 
 skipvar:
         if (parser->tok == ';') {
-            ast_delete(basetype);
+            delete basetype;
             if (!parser_next(parser)) {
                 parseerror(parser, "error after variable declaration");
                 return false;
@@ -5637,7 +5650,7 @@ skipvar:
             }
             else
             {
-                func = ast_function_new(var->m_context, var->m_name, var);
+                func = ast_function::make(var->m_context, var->m_name, var);
                 if (!func) {
                     parseerror(parser, "failed to allocate function for `%s`", var->m_name);
                     break;
@@ -5652,8 +5665,7 @@ skipvar:
                     : (!parser_next(parser)))
             {
                 parseerror(parser, "expected comma or semicolon");
-                if (func)
-                    ast_function_delete(func);
+                delete func;
                 var->m_constval.vfunc = nullptr;
                 break;
             }
@@ -5684,7 +5696,7 @@ skipvar:
 
             if (!parse_function_body(parser, var))
                 break;
-            ast_delete(basetype);
+            delete basetype;
             for (auto &it : parser->gotos)
                 parseerror(parser, "undefined label: `%s`", it->m_name);
             parser->gotos.clear();
@@ -5712,7 +5724,7 @@ skipvar:
                     }
                 }
                 /* do sanity checking, this function really needs refactoring */
-                if (vec_last(parser->_locals) != (ast_expression*)var)
+                if (vec_last(parser->_locals) != var)
                     parseerror(parser, "internal error: unexpected change in local variable handling");
                 else
                     vec_pop(parser->_locals);
@@ -5721,10 +5733,10 @@ skipvar:
                 else
                     localblock->m_locals.pop_back();
                 /* push it to the to-be-generated globals */
-                parser->globals.push_back((ast_expression*)var);
+                parser->globals.push_back(var);
                 if (isvector)
                     for (i = 0; i < 3; ++i)
-                        parser->globals.push_back((ast_expression*)last_me[i]);
+                        parser->globals.push_back(last_me[i]);
                 folded_const = true;
             }
 
@@ -5762,15 +5774,15 @@ skipvar:
                 shunt sy;
                 cvq = var->m_cvq;
                 var->m_cvq = CV_NONE;
-                sy.out.push_back(syexp(var->m_context, (ast_expression*)var));
-                sy.out.push_back(syexp(cexp->m_context, (ast_expression*)cexp));
+                sy.out.push_back(syexp(var->m_context, var));
+                sy.out.push_back(syexp(cexp->m_context, cexp));
                 sy.ops.push_back(syop(var->m_context, parser->assign_op));
                 if (!parser_sy_apply_operator(parser, &sy))
                     ast_unref(cexp);
                 else {
                     if (sy.out.size() != 1 && sy.ops.size() != 0)
                         parseerror(parser, "internal error: leaked operands");
-                    if (!ast_block_add_expr(localblock, (ast_expression*)sy.out[0].out))
+                    if (!localblock->addExpr(sy.out[0].out))
                         break;
                 }
                 var->m_cvq = cvq;
@@ -5795,9 +5807,9 @@ another:
                 parseerror(parser, "expected another variable");
                 break;
             }
-            var = ast_value_from_type(basetype);
+            var = new ast_value(ast_copy_type, *basetype);
             cleanvar = true;
-            ast_value_set_name(var, parser_tokval(parser));
+            var->m_name = parser_tokval(parser);
             if (!parser_next(parser)) {
                 parseerror(parser, "error parsing variable declaration");
                 break;
@@ -5815,22 +5827,22 @@ another:
             break;
         }
 
-        ast_delete(basetype);
+        delete basetype;
         return true;
     }
 
     if (cleanvar && var)
-        ast_delete(var);
-    ast_delete(basetype);
+        delete var;
+    delete basetype;
     return false;
 
 cleanup:
-    ast_delete(basetype);
+    delete basetype;
     if (cleanvar && var)
-        ast_delete(var);
-    if (me[0]) ast_member_delete(me[0]);
-    if (me[1]) ast_member_delete(me[1]);
-    if (me[2]) ast_member_delete(me[2]);
+        delete var;
+    delete me[0];
+    delete me[1];
+    delete me[2];
     return retval;
 }
 
@@ -5942,7 +5954,7 @@ static void generate_checksum(parser_t *parser, ir_builder *ir)
                 crc = progdefs_crc_both(crc, "\tint\t");
                 break;
         }
-        crc = progdefs_crc_both(crc, value->m_name);
+        crc = progdefs_crc_both(crc, value->m_name.c_str());
         crc = progdefs_crc_both(crc, ";\n");
     }
     crc = progdefs_crc_both(crc, "} globalvars_t;\n\ntypedef struct\n{\n");
@@ -5959,7 +5971,7 @@ static void generate_checksum(parser_t *parser, ir_builder *ir)
                 crc = progdefs_crc_both(crc, "\tint\t");
                 break;
         }
-        crc = progdefs_crc_both(crc, value->m_name);
+        crc = progdefs_crc_both(crc, value->m_name.c_str());
         crc = progdefs_crc_both(crc, ";\n");
     }
     crc = progdefs_crc_both(crc, "} entvars_t;\n\n");
@@ -6003,19 +6015,19 @@ parser_t *parser_create()
     empty_ctx.file   = "<internal>";
     empty_ctx.line   = 0;
     empty_ctx.column = 0;
-    parser->nil = ast_value_new(empty_ctx, "nil", TYPE_NIL);
+    parser->nil = new ast_value(empty_ctx, "nil", TYPE_NIL);
     parser->nil->m_cvq = CV_CONST;
     if (OPTS_FLAG(UNTYPED_NIL))
         util_htset(parser->htglobals, "nil", (void*)parser->nil);
 
     parser->max_param_count = 1;
 
-    parser->const_vec[0] = ast_value_new(empty_ctx, "<vector.x>", TYPE_NOEXPR);
-    parser->const_vec[1] = ast_value_new(empty_ctx, "<vector.y>", TYPE_NOEXPR);
-    parser->const_vec[2] = ast_value_new(empty_ctx, "<vector.z>", TYPE_NOEXPR);
+    parser->const_vec[0] = new ast_value(empty_ctx, "<vector.x>", TYPE_NOEXPR);
+    parser->const_vec[1] = new ast_value(empty_ctx, "<vector.y>", TYPE_NOEXPR);
+    parser->const_vec[2] = new ast_value(empty_ctx, "<vector.z>", TYPE_NOEXPR);
 
     if (OPTS_OPTION_BOOL(OPTION_ADD_INFO)) {
-        parser->reserved_version = ast_value_new(empty_ctx, "reserved:version", TYPE_STRING);
+        parser->reserved_version = new ast_value(empty_ctx, "reserved:version", TYPE_STRING);
         parser->reserved_version->m_cvq = CV_CONST;
         parser->reserved_version->m_hasvalue = true;
         parser->reserved_version->m_flags |= AST_FLAG_INCLUDE_DEF;
@@ -6088,13 +6100,13 @@ static void parser_remove_ast(parser_t *parser)
         return;
     parser->ast_cleaned = true;
     for (auto &it : parser->accessors) {
-        ast_delete(it->m_constval.vfunc);
+        delete it->m_constval.vfunc;
         it->m_constval.vfunc = nullptr;
-        ast_delete(it);
+        delete it;
     }
-    for (auto &it : parser->functions) ast_delete(it);
-    for (auto &it : parser->globals) ast_delete(it);
-    for (auto &it : parser->fields) ast_delete(it);
+    for (auto &it : parser->functions) delete it;
+    for (auto &it : parser->globals) delete it;
+    for (auto &it : parser->fields) delete it;
 
     for (i = 0; i < vec_size(parser->variables); ++i)
         util_htdel(parser->variables[i]);
@@ -6103,7 +6115,7 @@ static void parser_remove_ast(parser_t *parser)
     vec_free(parser->_locals);
 
     for (i = 0; i < vec_size(parser->_typedefs); ++i)
-        ast_delete(parser->_typedefs[i]);
+        delete parser->_typedefs[i];
     vec_free(parser->_typedefs);
     for (i = 0; i < vec_size(parser->typedefs); ++i)
         util_htdel(parser->typedefs[i]);
@@ -6112,14 +6124,14 @@ static void parser_remove_ast(parser_t *parser)
 
     vec_free(parser->_block_ctx);
 
-    ast_value_delete(parser->nil);
+    delete parser->nil;
 
-    ast_value_delete(parser->const_vec[0]);
-    ast_value_delete(parser->const_vec[1]);
-    ast_value_delete(parser->const_vec[2]);
+    delete parser->const_vec[0];
+    delete parser->const_vec[1];
+    delete parser->const_vec[2];
 
     if (parser->reserved_version)
-        ast_value_delete(parser->reserved_version);
+        delete parser->reserved_version;
 
     util_htdel(parser->aliases);
 }
@@ -6141,7 +6153,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
 
     func = nullptr;
     for (auto &it : parser->functions) {
-        if (!strcmp(it->m_name, "coverage")) {
+        if (it->m_name == "coverage") {
             func = it;
             break;
         }
@@ -6156,7 +6168,7 @@ static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
     }
 
     cov  = func->m_function_type;
-    expr = (ast_expression*)cov;
+    expr = cov;
 
     if (expr->m_vtype != TYPE_FUNCTION || expr->m_type_params.size()) {
         char ty[1024];
@@ -6193,8 +6205,8 @@ bool parser_finish(parser_t *parser, const char *output)
         ast_value *field = (ast_value*)it;
         hasvalue = field->m_hasvalue;
         field->m_hasvalue = false;
-        if (!ast_global_codegen((ast_value*)field, ir, true)) {
-            con_out("failed to generate field %s\n", field->m_name);
+        if (!reinterpret_cast<ast_value*>(field)->generateGlobal(ir, true)) {
+            con_out("failed to generate field %s\n", field->m_name.c_str());
             delete ir;
             return false;
         }
@@ -6220,8 +6232,8 @@ bool parser_finish(parser_t *parser, const char *output)
             retval = retval && !compile_warning(asvalue->m_context, WARN_UNUSED_VARIABLE,
                                                 "unused global: `%s`", asvalue->m_name);
         }
-        if (!ast_global_codegen(asvalue, ir, false)) {
-            con_out("failed to generate global %s\n", asvalue->m_name);
+        if (!asvalue->generateGlobal(ir, false)) {
+            con_out("failed to generate global %s\n", asvalue->m_name.c_str());
             delete ir;
             return false;
         }
@@ -6233,18 +6245,17 @@ bool parser_finish(parser_t *parser, const char *output)
         if (f->m_varargs) {
             if (parser->max_param_count > f->m_function_type->m_type_params.size()) {
                 f->m_varargs->m_count = parser->max_param_count - f->m_function_type->m_type_params.size();
-                if (!parser_create_array_setter_impl(parser, f->m_varargs)) {
-                    con_out("failed to generate vararg setter for %s\n", f->m_name);
+                if (!parser_create_array_setter_impl(parser, f->m_varargs.get())) {
+                    con_out("failed to generate vararg setter for %s\n", f->m_name.c_str());
                     delete ir;
                     return false;
                 }
-                if (!parser_create_array_getter_impl(parser, f->m_varargs)) {
-                    con_out("failed to generate vararg getter for %s\n", f->m_name);
+                if (!parser_create_array_getter_impl(parser, f->m_varargs.get())) {
+                    con_out("failed to generate vararg getter for %s\n", f->m_name.c_str());
                     delete ir;
                     return false;
                 }
             } else {
-                ast_delete(f->m_varargs);
                 f->m_varargs = nullptr;
             }
         }
@@ -6271,32 +6282,32 @@ bool parser_finish(parser_t *parser, const char *output)
                                        "uninitialized global: `%s`",
                                        asvalue->m_name);
         }
-        if (!ast_generate_accessors(asvalue, ir)) {
+        if (!asvalue->generateAccessors(ir)) {
             delete ir;
             return false;
         }
     }
     for (auto &it : parser->fields) {
         ast_value *asvalue = (ast_value*)it->m_next;
-        if (!ast_istype((ast_expression*)asvalue, ast_value))
+        if (!ast_istype(asvalue, ast_value))
             continue;
         if (asvalue->m_vtype != TYPE_ARRAY)
             continue;
-        if (!ast_generate_accessors(asvalue, ir)) {
+        if (!asvalue->generateAccessors(ir)) {
             delete ir;
             return false;
         }
     }
     if (parser->reserved_version &&
-        !ast_global_codegen(parser->reserved_version, ir, false))
+        !parser->reserved_version->generateGlobal(ir, false))
     {
         con_out("failed to generate reserved::version");
         delete ir;
         return false;
     }
     for (auto &f : parser->functions) {
-        if (!ast_function_codegen(f, ir)) {
-            con_out("failed to generate function %s\n", f->m_name);
+        if (!f->generateFunction(ir)) {
+            con_out("failed to generate function %s\n", f->m_name.c_str());
             delete ir;
             return false;
         }
@@ -6308,7 +6319,7 @@ bool parser_finish(parser_t *parser, const char *output)
         ir_builder_dump(ir, con_out);
     for (auto &it : parser->functions) {
         if (!ir_function_finalize(it->m_ir_func)) {
-            con_out("failed to finalize function %s\n", it->m_name);
+            con_out("failed to finalize function %s\n", it->m_name.c_str());
             delete ir;
             return false;
         }

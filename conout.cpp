@@ -176,7 +176,7 @@ void vcompile_error(lex_ctx_t ctx, const char *msg, va_list ap)
     con_cvprintmsg(ctx, LVL_ERROR, "error", msg, ap);
 }
 
-void compile_error(lex_ctx_t ctx, const char *msg, ...)
+void compile_error_(lex_ctx_t ctx, const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
@@ -215,7 +215,7 @@ bool GMQCC_WARN vcompile_warning(lex_ctx_t ctx, int warntype, const char *fmt, v
     return OPTS_WERROR(warntype) && OPTS_FLAG(BAIL_ON_WERROR);
 }
 
-bool GMQCC_WARN compile_warning(lex_ctx_t ctx, int warntype, const char *fmt, ...)
+bool GMQCC_WARN compile_warning_(lex_ctx_t ctx, int warntype, const char *fmt, ...)
 {
     bool r;
     va_list ap;

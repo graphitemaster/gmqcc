@@ -95,10 +95,6 @@ enum {
 
 #define ast_istype(x, t) ( (x)->m_node_type == (TYPE_##t) )
 
-/* Node interface with common components
- */
-typedef void ast_node_delete(ast_node*);
-
 struct ast_node
 {
     ast_node() = delete;
@@ -114,7 +110,7 @@ struct ast_node
     bool             m_keep_node;
     bool             m_side_effects;
 
-    void propagate_side_effects(ast_node *other) const;
+    void propagateSideEffects(ast_node *other) const;
 };
 
 #define ast_unref(x) do        \
@@ -127,15 +123,6 @@ struct ast_node
 enum class ast_copy_type_t { value };
 static const ast_copy_type_t ast_copy_type = ast_copy_type_t::value;
 
-/* Expression interface
- *
- * Any expression or block returns an ir_value, and needs
- * to know the current function.
- */
-typedef bool ast_expression_codegen(ast_expression*,
-                                    ast_function*,
-                                    bool lvalue,
-                                    ir_value**);
 /* TODO: the codegen function should take an output-type parameter
  * indicating whether a variable, type, label etc. is expected, and
  * an environment!
@@ -151,13 +138,16 @@ struct ast_expression : ast_node {
     ast_expression(lex_ctx_t ctx, int nodetype, qc_type vtype);
     ast_expression(lex_ctx_t ctx, int nodetype);
     ~ast_expression();
-    ast_expression(ast_copy_type_t, int nodetype, const ast_expression&);
+
     ast_expression(ast_copy_type_t, const ast_expression&);
+    ast_expression(ast_copy_type_t, lex_ctx_t ctx, const ast_expression&);
+    ast_expression(ast_copy_type_t, int nodetype, const ast_expression&);
+    ast_expression(ast_copy_type_t, int nodetype, lex_ctx_t ctx, const ast_expression&);
 
-    static ast_expression *shallow_type(lex_ctx_t ctx, qc_type vtype);
+    static ast_expression *shallowType(lex_ctx_t ctx, qc_type vtype);
 
-    bool compare_type(const ast_expression &other) const;
-    void adopt_type(const ast_expression &other);
+    bool compareType(const ast_expression &other) const;
+    void adoptType(const ast_expression &other);
 
     qc_type                 m_vtype = TYPE_VOID;
     ast_expression         *m_next = nullptr;
@@ -177,6 +167,8 @@ struct ast_expression : ast_node {
      */
     ir_value               *m_outl = nullptr;
     ir_value               *m_outr = nullptr;
+
+    virtual bool codegen(ast_function *current, bool lvalue, ir_value **out);
 };
 
 /* Value
@@ -206,7 +198,13 @@ struct ast_value : ast_expression
     ast_value(ast_copy_type_t, const ast_value&);
     ast_value(ast_copy_type_t, const ast_value&, const std::string&);
 
-    void add_param(ast_value*);
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
+    void addParam(ast_value*);
+
+    bool generateGlobal(ir_builder*, bool isfield);
+    bool generateLocal(ir_function*, bool param);
+    bool generateAccessors(ir_builder*);
 
     std::string m_name;
     std::string m_desc;
@@ -229,18 +227,22 @@ struct ast_value : ast_expression
     size_t m_uses = 0;
 
     ir_value *m_ir_v = nullptr;
-    ir_value **m_ir_values = nullptr;
+    std::vector<ir_value*> m_ir_values;
     size_t m_ir_value_count = 0;
 
     /* ONLY for arrays in progs version up to 6 */
     ast_value *m_setter = nullptr;
     ast_value *m_getter = nullptr;
 
-
     bool m_intrinsic = false; /* true if associated with intrinsic */
-};
 
-bool ast_global_codegen(ast_value *self, ir_builder *ir, bool isfield);
+private:
+    bool generateGlobalFunction(ir_builder*);
+    bool generateGlobalField(ir_builder*);
+    ir_value *prepareGlobalArray(ir_builder*);
+    bool setGlobalArray();
+    bool checkArray(const ast_value &array) const;
+};
 
 void ast_type_to_string(const ast_expression *e, char *buf, size_t bufsize);
 
@@ -262,6 +264,8 @@ struct ast_binary : ast_expression
     ast_binary(lex_ctx_t ctx, int op, ast_expression *l, ast_expression *r);
     ~ast_binary();
 
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     int m_op;
     ast_expression *m_left;
     ast_expression *m_right;
@@ -280,6 +284,8 @@ struct ast_binstore : ast_expression
     ast_binstore(lex_ctx_t ctx, int storeop, int mathop, ast_expression *l, ast_expression *r);
     ~ast_binstore();
 
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     int m_opstore;
     int m_opbin;
     ast_expression *m_dest;
@@ -287,11 +293,6 @@ struct ast_binstore : ast_expression
     /* for &~= which uses the destination in a binary in source we can use this */
     bool m_keep_dest;
 };
-ast_binstore* ast_binstore_new(lex_ctx_t    ctx,
-                               int        storeop,
-                               int        op,
-                               ast_expression *left,
-                               ast_expression *right);
 
 /* Unary
  *
@@ -301,9 +302,14 @@ struct ast_unary : ast_expression
 {
     ast_unary() = delete;
     ~ast_unary();
+
+    static ast_unary* make(lex_ctx_t ctx, int op, ast_expression *expr);
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     int m_op;
     ast_expression *m_operand;
-    static ast_unary* make(lex_ctx_t ctx, int op, ast_expression *expr);
+
 private:
     ast_unary(lex_ctx_t ctx, int op, ast_expression *expr);
 };
@@ -319,6 +325,9 @@ struct ast_return : ast_expression
     ast_return() = delete;
     ast_return(lex_ctx_t ctx, ast_expression *expr);
     ~ast_return();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_operand;
 };
 
@@ -341,6 +350,9 @@ struct ast_entfield : ast_expression
     ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field);
     ast_entfield(lex_ctx_t ctx, ast_expression *entity, ast_expression *field, const ast_expression *outtype);
     ~ast_entfield();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     // The entity can come from an expression of course.
     ast_expression *m_entity;
     // As can the field, it just must result in a value of TYPE_FIELD
@@ -356,6 +368,8 @@ struct ast_member : ast_expression
 {
     static ast_member *make(lex_ctx_t ctx, ast_expression *owner, unsigned int field, const std::string &name);
     ~ast_member();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
 
     ast_expression *m_owner;
     unsigned int m_field;
@@ -381,6 +395,9 @@ struct ast_array_index : ast_expression
 {
     static ast_array_index* make(lex_ctx_t ctx, ast_expression *array, ast_expression *index);
     ~ast_array_index();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_array;
     ast_expression *m_index;
 private:
@@ -396,6 +413,9 @@ struct ast_argpipe : ast_expression
 {
     ast_argpipe() = delete;
     ast_argpipe(lex_ctx_t ctx, ast_expression *index);
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ~ast_argpipe();
     ast_expression *m_index;
 };
@@ -410,6 +430,9 @@ struct ast_store : ast_expression
     ast_store() = delete;
     ast_store(lex_ctx_t ctx, int op, ast_expression *d, ast_expression *s);
     ~ast_store();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     int m_op;
     ast_expression *m_dest;
     ast_expression *m_source;
@@ -431,6 +454,9 @@ struct ast_ifthen : ast_expression
     ast_ifthen() = delete;
     ast_ifthen(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
     ~ast_ifthen();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *m_on_true;
@@ -455,6 +481,9 @@ struct ast_ternary : ast_expression
     ast_ternary() = delete;
     ast_ternary(lex_ctx_t ctx, ast_expression *cond, ast_expression *ontrue, ast_expression *onfalse);
     ~ast_ternary();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_cond;
     /* It's all just 'expressions', since an ast_block is one too. */
     ast_expression *m_on_true;
@@ -494,6 +523,9 @@ struct ast_loop : ast_expression
              ast_expression *increment,
              ast_expression *body);
     ~ast_loop();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_initexpr;
     ast_expression *m_precond;
     ast_expression *m_postcond;
@@ -513,10 +545,16 @@ struct ast_loop : ast_expression
  */
 struct ast_breakcont : ast_expression
 {
+    ast_breakcont() = delete;
+    ast_breakcont(lex_ctx_t ctx, bool iscont, unsigned int levels);
+    ~ast_breakcont();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
+
     bool         m_is_continue;
     unsigned int m_levels;
 };
-ast_breakcont* ast_breakcont_new(lex_ctx_t ctx, bool iscont, unsigned int levels);
 
 /* Switch Statements
  *
@@ -535,11 +573,16 @@ struct ast_switch_case {
 
 struct ast_switch : ast_expression
 {
+    ast_switch() = delete;
+    ast_switch(lex_ctx_t ctx, ast_expression *op);
+    ~ast_switch();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_operand;
     std::vector<ast_switch_case> m_cases;
 };
 
-ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op);
 
 /* Label nodes
  *
@@ -547,15 +590,23 @@ ast_switch* ast_switch_new(lex_ctx_t ctx, ast_expression *op);
  */
 struct ast_label : ast_expression
 {
-    const char *m_name;
+    ast_label() = delete;
+    ast_label(lex_ctx_t ctx, const std::string &name, bool undefined);
+    ~ast_label();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
+    std::string m_name;
     ir_block *m_irblock;
     std::vector<ast_goto*> m_gotos;
 
     /* means it has not yet been defined */
     bool m_undefined;
-};
 
-ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined);
+private:
+    void registerGoto(ast_goto*);
+    friend struct ast_goto;
+};
 
 /* GOTO nodes
  *
@@ -563,13 +614,18 @@ ast_label* ast_label_new(lex_ctx_t ctx, const char *name, bool undefined);
  */
 struct ast_goto : ast_expression
 {
-    const char *m_name;
+    ast_goto() = delete;
+    ast_goto(lex_ctx_t ctx, const std::string &name);
+    ~ast_goto();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
+    void setLabel(ast_label*);
+
+    std::string m_name;
     ast_label *m_target;
     ir_block *m_irblock_from;
 };
-
-ast_goto* ast_goto_new(lex_ctx_t ctx, const char *name);
-void ast_goto_set_label(ast_goto*, ast_label*);
 
 /* STATE node
  *
@@ -577,11 +633,15 @@ void ast_goto_set_label(ast_goto*, ast_label*);
  */
 struct ast_state : ast_expression
 {
+    ast_state() = delete;
+    ast_state(lex_ctx_t ctx, ast_expression *frame, ast_expression *think);
+    ~ast_state();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     ast_expression *m_framenum;
     ast_expression *m_nextthink;
 };
-ast_state* ast_state_new(lex_ctx_t ctx, ast_expression *frame, ast_expression *think);
-void ast_state_delete(ast_state*);
 
 /* CALL node
  *
@@ -595,29 +655,42 @@ void ast_state_delete(ast_state*);
  */
 struct ast_call : ast_expression
 {
+    ast_call() = delete;
+    static ast_call *make(lex_ctx_t, ast_expression*);
+    ~ast_call();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
+    bool checkTypes(ast_expression *this_func_va_type) const;
+
     ast_expression *m_func;
     std::vector<ast_expression *> m_params;
     ast_expression *m_va_count;
+
+private:
+    ast_call(lex_ctx_t ctx, ast_expression *funcexpr);
+    bool checkVararg(ast_expression *va_type, ast_expression *exp_type) const;
 };
-ast_call* ast_call_new(lex_ctx_t ctx,
-                       ast_expression *funcexpr);
-bool ast_call_check_types(ast_call*, ast_expression *this_func_va_type);
 
 /* Blocks
  *
  */
 struct ast_block : ast_expression
 {
+    ast_block() = delete;
+    ast_block(lex_ctx_t ctx);
+    ~ast_block();
+
+    bool codegen(ast_function *current, bool lvalue, ir_value **out) override;
+
     std::vector<ast_value*>      m_locals;
     std::vector<ast_expression*> m_exprs;
     std::vector<ast_expression*> m_collect;
-};
-ast_block* ast_block_new(lex_ctx_t ctx);
-void ast_block_delete(ast_block*);
-void ast_block_set_type(ast_block*, ast_expression *from);
-void ast_block_collect(ast_block*, ast_expression*);
 
-bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
+    void setType(const ast_expression &from);
+    bool GMQCC_WARN addExpr(ast_expression*);
+    void collect(ast_expression*);
+};
 
 /* Function
  *
@@ -628,49 +701,53 @@ bool GMQCC_WARN ast_block_add_expr(ast_block*, ast_expression*);
  * neither functions inside functions, nor lambdas, and function
  * pointers could just work with a name. However, this way could be
  * more flexible, and adds no real complexity.
+ *
+ * The destructor will NOT delete the underlying ast_value
+ *
  */
 struct ast_function : ast_node
 {
-    ast_value  *m_function_type;
-    const char *m_name;
+    ast_function() = delete;
+    static ast_function *make(lex_ctx_t ctx, const std::string &name, ast_value *vtype);
+    ~ast_function();
 
-    int m_builtin;
+    const char* makeLabel(const char *prefix);
+    virtual bool generateFunction(ir_builder*);
+
+    ast_value  *m_function_type = nullptr;
+    std::string m_name;
+
+    int m_builtin = 0;
 
     /* list of used-up names for statics without the count suffix */
-    std::vector<char*> m_static_names;
+    std::vector<std::string> m_static_names;
     /* number of static variables, by convention this includes the
      * ones without the count-suffix - remember this when dealing
      * with savegames. uint instead of size_t as %zu in printf is
      * C99, so no windows support. */
-    unsigned int m_static_count;
+    unsigned int m_static_count = 0;
 
-    ir_function *m_ir_func;
-    ir_block *m_curblock;
+    ir_function *m_ir_func = nullptr;
+    ir_block *m_curblock = nullptr;
     std::vector<ir_block*> m_breakblocks;
     std::vector<ir_block*> m_continueblocks;
 
-    size_t m_labelcount;
+    size_t m_labelcount = 0;
     /* in order for thread safety - for the optional
      * channel abesed multithreading... keeping a buffer
      * here to use in ast_function_label.
      */
-    char m_labelbuf[64];
     std::vector<std::unique_ptr<ast_block>> m_blocks;
-    ast_value *m_varargs;
-    ast_value *m_argc;
-    ast_value *m_fixedparams;
-    ast_value *m_return_value;
-};
-ast_function* ast_function_new(lex_ctx_t ctx, const char *name, ast_value *vtype);
-/* This will NOT delete the underlying ast_value */
-void ast_function_delete(ast_function*);
-/* For "optimized" builds this can just keep returning "foo"...
- * or whatever...
- */
-const char* ast_function_label(ast_function*, const char *prefix);
+    std::unique_ptr<ast_value> m_varargs;
+    std::unique_ptr<ast_value> m_argc;
+    ast_value *m_fixedparams = nullptr; // these use unref()
+    ast_value *m_return_value = nullptr;
 
-bool ast_function_codegen(ast_function *self, ir_builder *builder);
-bool ast_generate_accessors(ast_value *asvalue, ir_builder *ir);
+private:
+    ast_function(lex_ctx_t ctx, const std::string &name, ast_value *vtype);
+
+    char m_labelbuf[64];
+};
 
 /*
  * If the condition creates a situation where this becomes -1 size it means there are

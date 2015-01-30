@@ -32,6 +32,7 @@ struct fold {
     ast_expression *constgen_float(qcfloat_t value, bool inexact);
     ast_expression *constgen_vector(vec3_t value);
     ast_expression *constgen_string(const char *str, bool translate);
+    ast_expression *constgen_string(const std::string &str, bool translate);
 
     ast_value *imm_float(size_t index) const { return m_imm_float[index]; }
     ast_value *imm_vector(size_t index) const { return m_imm_vector[index]; }

@@ -931,14 +931,14 @@ bool fold::generate(ir_builder *ir) {
     // generate globals for immediate folded values
     ast_value *cur;
     for (auto &it : m_imm_float)
-        if (!ast_global_codegen((cur = it), ir, false)) goto err;
+        if (!(cur = it)->generateGlobal(ir, false)) goto err;
     for (auto &it : m_imm_vector)
-        if (!ast_global_codegen((cur = it), ir, false)) goto err;
+        if (!(cur = it)->generateGlobal(ir, false)) goto err;
     for (auto &it : m_imm_string)
-        if (!ast_global_codegen((cur = it), ir, false)) goto err;
+        if (!(cur = it)->generateGlobal(ir, false)) goto err;
     return true;
 err:
-    con_out("failed to generate global %s\n", cur->m_name);
+    con_out("failed to generate global %s\n", cur->m_name.c_str());
     delete ir;
     return false;
 }
@@ -960,7 +960,7 @@ ast_expression *fold::constgen_float(qcfloat_t value, bool inexact) {
         if (!memcmp(&it->m_constval.vfloat, &value, sizeof(qcfloat_t)))
             return (ast_expression*)it;
 
-    ast_value *out  = ast_value_new(ctx(), "#IMMEDIATE", TYPE_FLOAT);
+    ast_value *out  = new ast_value(ctx(), "#IMMEDIATE", TYPE_FLOAT);
     out->m_cvq = CV_CONST;
     out->m_hasvalue = true;
     out->m_inexact = inexact;
@@ -976,7 +976,7 @@ ast_expression *fold::constgen_vector(vec3_t value) {
         if (vec3_cmp(it->m_constval.vvec, value))
             return (ast_expression*)it;
 
-    ast_value *out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_VECTOR);
+    ast_value *out = new ast_value(ctx(), "#IMMEDIATE", TYPE_VECTOR);
     out->m_cvq = CV_CONST;
     out->m_hasvalue = true;
     out->m_constval.vvec = value;
@@ -997,10 +997,10 @@ ast_expression *fold::constgen_string(const char *str, bool translate) {
     if (translate) {
         char name[32];
         util_snprintf(name, sizeof(name), "dotranslate_%zu", m_parser->translated++);
-        out = ast_value_new(ctx(), name, TYPE_STRING);
+        out = new ast_value(ctx(), name, TYPE_STRING);
         out->m_flags |= AST_FLAG_INCLUDE_DEF; /* def needs to be included for translatables */
     } else {
-        out = ast_value_new(ctx(), "#IMMEDIATE", TYPE_STRING);
+        out = new ast_value(ctx(), "#IMMEDIATE", TYPE_STRING);
     }
 
     out->m_cvq = CV_CONST;
@@ -1012,6 +1012,10 @@ ast_expression *fold::constgen_string(const char *str, bool translate) {
     util_htseth(table, str, hash, out);
 
     return (ast_expression*)out;
+}
+
+ast_expression *fold::constgen_string(const std::string &str, bool translate) {
+  return constgen_string(str.c_str(), translate);
 }
 
 typedef union {
@@ -1069,11 +1073,11 @@ ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
     if (!y && !z) {
         ast_expression *out;
         ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
-        out = (ast_expression*)ast_member_new(ctx(), (ast_expression*)sel, set[0]-'x', nullptr);
+        out = ast_member::make(ctx(), (ast_expression*)sel, set[0]-'x', nullptr);
         out->m_keep_node = false;
         ((ast_member*)out)->m_rvalue = true;
         if (x != -1.0f)
-            return (ast_expression*)ast_binary_new(ctx(), INSTR_MUL_F, constgen_float(x, false), out);
+            return new ast_binary(ctx(), INSTR_MUL_F, constgen_float(x, false), out);
     }
     return nullptr;
 }
@@ -1181,7 +1185,7 @@ ast_expression *fold::op_div(ast_value *a, ast_value *b) {
             bool inexact = check_except_float(&sfloat_div, a, b);
             return constgen_float(immvalue_float(a) / immvalue_float(b), inexact);
         } else if (fold_can_1(b)) {
-            return (ast_expression*)ast_binary_new(
+            return new ast_binary(
                 ctx(),
                 INSTR_MUL_F,
                 (ast_expression*)a,
@@ -1192,17 +1196,16 @@ ast_expression *fold::op_div(ast_value *a, ast_value *b) {
         if (fold_can_2(a, b)) {
             return constgen_vector(vec3_mulvf(ctx(), immvalue_vector(a), 1.0f / immvalue_float(b)));
         } else {
-            return (ast_expression*)ast_binary_new(
+            return new ast_binary(
                 ctx(),
                 INSTR_MUL_VF,
                 (ast_expression*)a,
                 (fold_can_1(b))
                     ? (ast_expression*)constgen_float(1.0f / immvalue_float(b), false)
-                    : (ast_expression*)ast_binary_new(
-                                            ctx(),
-                                            INSTR_DIV_F,
-                                            (ast_expression*)m_imm_float[1],
-                                            (ast_expression*)b
+                    : new ast_binary(ctx(),
+                                     INSTR_DIV_F,
+                                     (ast_expression*)m_imm_float[1],
+                                     (ast_expression*)b
                     )
             );
         }
@@ -1600,12 +1603,11 @@ ast_expression *fold::binary(lex_ctx_t ctx, int op, ast_expression *left, ast_ex
     ast_expression *ret = superfluous(left, right, op);
     if (ret)
         return ret;
-    return (ast_expression*)ast_binary_new(ctx, op, left, right);
+    return new ast_binary(ctx, op, left, right);
 }
 
 int fold::cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
     if (isfloat(condval) && fold_can_1(condval) && OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
-        ast_expression_codegen *cgen;
         ir_block               *elide;
         ir_value               *dummy;
         bool                    istrue  = (immvalue_float(condval) != 0.0f && branch->m_on_true);
@@ -1621,9 +1623,9 @@ int fold::cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
             return true;
         }
 
-        if (!(elide = ir_function_create_block(branch->m_context, func->m_ir_func, ast_function_label(func, ((istrue) ? "ontrue" : "onfalse")))))
+        if (!(elide = ir_function_create_block(branch->m_context, func->m_ir_func, func->makeLabel((istrue) ? "ontrue" : "onfalse"))))
             return false;
-        if (!(*(cgen = path->m_codegen))((ast_expression*)path, func, false, &dummy))
+        if (!path->codegen(func, false, &dummy))
             return false;
         if (!ir_block_create_jump(func->m_curblock, branch->m_context, elide))
             return false;

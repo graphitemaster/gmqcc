@@ -589,11 +589,27 @@ extern size_t compile_errors;
 extern size_t compile_Werrors;
 extern size_t compile_warnings;
 
-void /********/ compile_error   (lex_ctx_t ctx, /*LVL_ERROR*/ const char *msg, ...);
+void /********/ compile_error_  (lex_ctx_t ctx, /*LVL_ERROR*/ const char *msg, ...);
 void /********/ vcompile_error  (lex_ctx_t ctx, /*LVL_ERROR*/ const char *msg, va_list ap);
-bool GMQCC_WARN compile_warning (lex_ctx_t ctx, int warntype, const char *fmt, ...);
+bool GMQCC_WARN compile_warning_(lex_ctx_t ctx, int warntype, const char *fmt, ...);
 bool GMQCC_WARN vcompile_warning(lex_ctx_t ctx, int warntype, const char *fmt, va_list ap);
 void            compile_show_werrors(void);
+
+template <typename T>
+inline constexpr const T formatNormalize(const T argument) { return argument; }
+
+inline const char *formatNormalize(const std::string &argument) {
+    return argument.c_str();
+}
+
+template<typename... Ts>
+inline bool GMQCC_WARN compile_warning(lex_ctx_t ctx, int warntype, const char *fmt, const Ts&... ts) {
+    return compile_warning_(ctx, warntype, fmt, formatNormalize(ts)...);
+}
+template<typename... Ts>
+inline void /********/ compile_error   (lex_ctx_t ctx, /*LVL_ERROR*/ const char *msg, const Ts&... ts) {
+    return compile_error_(ctx, msg, formatNormalize(ts)...);
+}
 
 /* ir.c */
 /* TODO: cleanup */
