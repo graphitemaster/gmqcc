@@ -792,6 +792,9 @@ static void ir_instr_delete_quick(ir_instr *self)
 {
     self->m_phi.clear();
     self->m_params.clear();
+    self->_m_ops[0] = nullptr;
+    self->_m_ops[1] = nullptr;
+    self->_m_ops[2] = nullptr;
     delete self;
 }
 
