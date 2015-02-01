@@ -365,16 +365,20 @@ ast_binstore::~ast_binstore()
 
 ast_unary* ast_unary::make(lex_ctx_t ctx, int op, ast_expression *expr)
 {
-    if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
-        ast_unary *prev = (ast_unary*)((ast_unary*)expr)->m_operand;
-
-        /* Handle for double negation */
-        if (((ast_unary*)expr)->m_op == op)
-            prev = (ast_unary*)((ast_unary*)expr)->m_operand;
-
-        if (ast_istype(prev, ast_unary)) {
-            ++opts_optimizationcount[OPTIM_PEEPHOLE];
-            return prev;
+    // handle double negation, double bitwise or logical not
+    if (op == opid2('!','P') ||
+        op == opid2('~','P') ||
+        op == opid2('-','P'))
+    {
+        if (ast_istype(expr, ast_unary) && OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
+            ast_unary *unary = reinterpret_cast<ast_unary*>(expr);
+            if (unary->m_op == op) {
+                auto out = reinterpret_cast<ast_unary*>(unary->m_operand);
+                unary->m_operand = nullptr;
+                delete unary;
+                ++opts_optimizationcount[OPTIM_PEEPHOLE];
+                return out;
+            }
         }
     }
 
