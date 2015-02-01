@@ -24,9 +24,10 @@ ast_node::~ast_node()
 }
 
 /* weight and side effects */
-void ast_node::propagateSideEffects(ast_node *other) const
+void ast_node::propagateSideEffects(const ast_node *other)
 {
-    other->m_side_effects = m_side_effects;
+    if (other->m_side_effects)
+        m_side_effects = true;
 }
 
 /* General expression initialization */

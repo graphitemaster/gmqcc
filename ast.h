@@ -110,7 +110,7 @@ struct ast_node
     bool             m_keep_node;
     bool             m_side_effects;
 
-    void propagateSideEffects(ast_node *other) const;
+    void propagateSideEffects(const ast_node *other);
 };
 
 #define ast_unref(x) do        \
