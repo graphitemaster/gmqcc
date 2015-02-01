@@ -1073,7 +1073,7 @@ ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
     if (!y && !z) {
         ast_expression *out;
         ++opts_optimizationcount[OPTIM_VECTOR_COMPONENTS];
-        out = ast_member::make(ctx(), (ast_expression*)sel, set[0]-'x', nullptr);
+        out = ast_member::make(ctx(), (ast_expression*)sel, set[0]-'x', "");
         out->m_keep_node = false;
         ((ast_member*)out)->m_rvalue = true;
         if (x != -1.0f)
