@@ -946,6 +946,10 @@ ast_function::~ast_function()
         ast_unref(m_fixedparams);
     if (m_return_value)
         ast_unref(m_return_value);
+
+    // force this to be cleared before m_varargs/m_argc as blocks might
+    // try to access them via ast_unref()
+    m_blocks.clear();
 }
 
 const char* ast_function::makeLabel(const char *prefix)
