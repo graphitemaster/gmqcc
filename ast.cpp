@@ -1041,15 +1041,15 @@ bool ast_value::setGlobalArray()
     for (i = 0; i != count; ++i) {
         switch (m_next->m_vtype) {
             case TYPE_FLOAT:
-                if (!ir_value_set_float(m_ir_values[i], m_initlist[i].vfloat))
+                if (!m_ir_values[i]->setFloat(m_initlist[i].vfloat))
                     return false;
                 break;
             case TYPE_VECTOR:
-                if (!ir_value_set_vector(m_ir_values[i], m_initlist[i].vvec))
+                if (!m_ir_values[i]->setVector(m_initlist[i].vvec))
                     return false;
                 break;
             case TYPE_STRING:
-                if (!ir_value_set_string(m_ir_values[i], m_initlist[i].vstring))
+                if (!m_ir_values[i]->setString(m_initlist[i].vstring))
                     return false;
                 break;
             case TYPE_ARRAY:
@@ -1069,7 +1069,7 @@ bool ast_value::setGlobalArray()
                     compile_error(m_context, "field constant generated before its field");
                     return false;
                 }
-                if (!ir_value_set_field(m_ir_values[i], m_initlist[i].vfield->m_ir_v))
+                if (!m_ir_values[i]->setField(m_initlist[i].vfield->m_ir_v))
                     return false;
                 break;
             default:
@@ -1115,9 +1115,9 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
     } else {
         // Arrays don't do this since there's no "array" value which spans across the
         // whole thing.
-        v = ir_builder_create_global(ir, m_name, m_vtype);
+        v = ir->createGlobal(m_name, m_vtype);
         if (!v) {
-            compile_error(m_context, "ir_builder_create_global failed on `%s`", m_name);
+            compile_error(m_context, "ir_builder::createGlobal failed on `%s`", m_name);
             return false;
         }
         codegen_output_type(this, v);
@@ -1138,15 +1138,15 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
         switch (m_vtype)
         {
             case TYPE_FLOAT:
-                if (!ir_value_set_float(v, m_constval.vfloat))
+                if (!v->setFloat(m_constval.vfloat))
                     return false;
                 break;
             case TYPE_VECTOR:
-                if (!ir_value_set_vector(v, m_constval.vvec))
+                if (!v->setVector(m_constval.vvec))
                     return false;
                 break;
             case TYPE_STRING:
-                if (!ir_value_set_string(v, m_constval.vstring))
+                if (!v->setString(m_constval.vstring))
                     return false;
                 break;
             case TYPE_ARRAY:
@@ -1168,7 +1168,7 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
                     compile_error(m_context, "field constant generated before its field");
                     return false;
                 }
-                if (!ir_value_set_field(v, m_constval.vfield->m_ir_v))
+                if (!v->setField(m_constval.vfield->m_ir_v))
                     return false;
                 break;
             default:
@@ -1182,7 +1182,7 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
 
 bool ast_value::generateGlobalFunction(ir_builder *ir)
 {
-    ir_function *func = ir_builder_create_function(ir, m_name, m_next->m_vtype);
+    ir_function *func = ir->createFunction(m_name, m_next->m_vtype);
     if (!func)
         return false;
     func->m_context = m_context;
@@ -1222,9 +1222,9 @@ bool ast_value::generateGlobalField(ir_builder *ir)
         ast_expression *elemtype = array->m_next;
         qc_type vtype = elemtype->m_vtype;
 
-        ir_value *v = ir_builder_create_field(ir, m_name, vtype);
+        ir_value *v = ir->createField(m_name, vtype);
         if (!v) {
-            compile_error(m_context, "ir_builder_create_global failed on `%s`", m_name);
+            compile_error(m_context, "ir_builder::createGlobal failed on `%s`", m_name);
             return false;
         }
         v->m_context = m_context;
@@ -1245,9 +1245,9 @@ bool ast_value::generateGlobalField(ir_builder *ir)
         array->m_ir_values[0] = v;
         for (size_t ai = 1; ai < array->m_count; ++ai) {
             util_snprintf(name.get() + namelen, 16, "[%u]", (unsigned int)ai);
-            array->m_ir_values[ai] = ir_builder_create_field(ir, name.get(), vtype);
+            array->m_ir_values[ai] = ir->createField(name.get(), vtype);
             if (!array->m_ir_values[ai]) {
-                compile_error(m_context, "ir_builder_create_global failed on `%s`", name.get());
+                compile_error(m_context, "ir_builder::createGlobal failed on `%s`", name.get());
                 return false;
             }
             array->m_ir_values[ai]->m_context = m_context;
@@ -1259,7 +1259,7 @@ bool ast_value::generateGlobalField(ir_builder *ir)
     }
     else
     {
-        ir_value *v = ir_builder_create_field(ir, m_name, m_next->m_vtype);
+        ir_value *v = ir->createField(m_name, m_next->m_vtype);
         if (!v)
             return false;
         v->m_context = m_context;
@@ -1287,9 +1287,9 @@ ir_value *ast_value::prepareGlobalArray(ir_builder *ir)
     if (!checkArray(*this))
         return nullptr;
 
-    ir_value *v = ir_builder_create_global(ir, m_name, vtype);
+    ir_value *v = ir->createGlobal(m_name, vtype);
     if (!v) {
-        compile_error(m_context, "ir_builder_create_global failed `%s`", m_name);
+        compile_error(m_context, "ir_builder::createGlobal failed `%s`", m_name);
         return nullptr;
     }
     v->m_context = m_context;
@@ -1309,9 +1309,9 @@ ir_value *ast_value::prepareGlobalArray(ir_builder *ir)
     m_ir_values[0] = v;
     for (size_t ai = 1; ai < m_count; ++ai) {
         util_snprintf(name.get() + namelen, 16, "[%u]", (unsigned int)ai);
-        m_ir_values[ai] = ir_builder_create_global(ir, name.get(), vtype);
+        m_ir_values[ai] = ir->createGlobal(name.get(), vtype);
         if (!m_ir_values[ai]) {
-            compile_error(m_context, "ir_builder_create_global failed `%s`", name.get());
+            compile_error(m_context, "ir_builder::createGlobal failed `%s`", name.get());
             return nullptr;
         }
         m_ir_values[ai]->m_context = m_context;
@@ -1374,7 +1374,7 @@ bool ast_value::generateLocal(ir_function *func, bool param)
             util_snprintf(name.get() + namelen, 16, "[%u]", (unsigned int)ai);
             m_ir_values[ai] = ir_function_create_local(func, name.get(), vtype, param);
             if (!m_ir_values[ai]) {
-                compile_error(m_context, "internal_error: ir_builder_create_global failed on `%s`", name.get());
+                compile_error(m_context, "internal_error: ir_builder::createGlobal failed on `%s`", name.get());
                 return false;
             }
             m_ir_values[ai]->m_context = m_context;
@@ -1397,15 +1397,15 @@ bool ast_value::generateLocal(ir_function *func, bool param)
         switch (m_vtype)
         {
             case TYPE_FLOAT:
-                if (!ir_value_set_float(v, m_constval.vfloat))
+                if (!v->setFloat(m_constval.vfloat))
                     goto error;
                 break;
             case TYPE_VECTOR:
-                if (!ir_value_set_vector(v, m_constval.vvec))
+                if (!v->setVector(m_constval.vvec))
                     goto error;
                 break;
             case TYPE_STRING:
-                if (!ir_value_set_string(v, m_constval.vstring))
+                if (!v->setString(m_constval.vstring))
                     goto error;
                 break;
             default:
@@ -1539,7 +1539,7 @@ bool ast_function::generateFunction(ir_builder *ir)
             return false;
         sub = ir_block_create_binop(m_curblock, m_context,
                                     makeLabel("va_count"), INSTR_SUB_F,
-                                    ir_builder_get_va_count(ir), fixed);
+                                    ir->get_va_count(), fixed);
         if (!sub)
             return false;
         if (!ir_block_create_store_op(m_curblock, m_context, INSTR_STORE_F,
@@ -2112,7 +2112,7 @@ bool ast_member::codegen(ast_function *func, bool lvalue, ir_value **out)
         return false;
     }
 
-    *out = ir_value_vector_member(vec, m_field);
+    *out = vec->vectorMember(m_field);
     m_outl = *out;
 
     return (*out != nullptr);
@@ -3027,7 +3027,7 @@ bool ast_call::codegen(ast_function *func, bool lvalue, ir_value **out)
         if (!m_va_count->codegen(func, false, &va_count))
             return false;
         if (!ir_block_create_store_op(func->m_curblock, m_context, INSTR_STORE_F,
-                                      ir_builder_get_va_count(builder), va_count))
+                                      builder->get_va_count(), va_count))
         {
             return false;
         }

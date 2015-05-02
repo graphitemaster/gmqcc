@@ -190,11 +190,6 @@ const uint16_t type_not_instr[TYPE_COUNT] = {
 };
 
 /* protos */
-static void            ir_value_dump(ir_value*, int (*oprintf)(const char*,...));
-
-static ir_value*       ir_gen_extparam_proto(ir_builder *ir);
-static void            ir_gen_extparam      (ir_builder *ir);
-
 static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));
 
 static ir_value*       ir_block_create_general_instr(ir_block *self, lex_ctx_t, const char *label,
@@ -313,24 +308,18 @@ ir_builder::~ir_builder()
     m_extparam_protos.clear();
 }
 
-static ir_function* ir_builder_get_function(ir_builder *self, const char *name)
+ir_function* ir_builder::createFunction(const std::string& name, qc_type outtype)
 {
-    return (ir_function*)util_htget(self->m_htfunctions, name);
-}
-
-ir_function* ir_builder_create_function(ir_builder *self, const std::string& name, qc_type outtype)
-{
-    ir_function *fn = ir_builder_get_function(self, name.c_str());
-    if (fn) {
+    ir_function *fn = (ir_function*)util_htget(m_htfunctions, name.c_str());
+    if (fn)
         return nullptr;
-    }
 
-    fn = new ir_function(self, outtype);
+    fn = new ir_function(this, outtype);
     fn->m_name = name;
-    self->m_functions.emplace_back(fn);
-    util_htset(self->m_htfunctions, name.c_str(), fn);
+    m_functions.emplace_back(fn);
+    util_htset(m_htfunctions, name.c_str(), fn);
 
-    fn->m_value = ir_builder_create_global(self, fn->m_name, TYPE_FUNCTION);
+    fn->m_value = createGlobal(fn->m_name, TYPE_FUNCTION);
     if (!fn->m_value) {
         delete fn;
         return nullptr;
@@ -344,53 +333,42 @@ ir_function* ir_builder_create_function(ir_builder *self, const std::string& nam
     return fn;
 }
 
-static ir_value* ir_builder_get_global(ir_builder *self, const char *name)
-{
-    return (ir_value*)util_htget(self->m_htglobals, name);
-}
-
-ir_value* ir_builder_create_global(ir_builder *self, const std::string& name, qc_type vtype)
+ir_value* ir_builder::createGlobal(const std::string& name, qc_type vtype)
 {
     ir_value *ve;
 
     if (name[0] != '#')
     {
-        ve = ir_builder_get_global(self, name.c_str());
+        ve = (ir_value*)util_htget(m_htglobals, name.c_str());
         if (ve) {
             return nullptr;
         }
     }
 
     ve = new ir_value(std::string(name), store_global, vtype);
-    self->m_globals.emplace_back(ve);
-    util_htset(self->m_htglobals, name.c_str(), ve);
+    m_globals.emplace_back(ve);
+    util_htset(m_htglobals, name.c_str(), ve);
     return ve;
 }
 
-ir_value* ir_builder_get_va_count(ir_builder *self)
+ir_value* ir_builder::get_va_count()
 {
-    if (self->m_reserved_va_count)
-        return self->m_reserved_va_count;
-    return (self->m_reserved_va_count = ir_builder_create_global(self, "reserved:va_count", TYPE_FLOAT));
+    if (m_reserved_va_count)
+        return m_reserved_va_count;
+    return (m_reserved_va_count = createGlobal("reserved:va_count", TYPE_FLOAT));
 }
 
-static ir_value* ir_builder_get_field(ir_builder *self, const char *name)
+ir_value* ir_builder::createField(const std::string& name, qc_type vtype)
 {
-    return (ir_value*)util_htget(self->m_htfields, name);
-}
-
-
-ir_value* ir_builder_create_field(ir_builder *self, const std::string& name, qc_type vtype)
-{
-    ir_value *ve = ir_builder_get_field(self, name.c_str());
+    ir_value *ve = (ir_value*)util_htget(m_htfields, name.c_str());
     if (ve) {
         return nullptr;
     }
 
     ve = new ir_value(std::string(name), store_global, TYPE_FIELD);
     ve->m_fieldtype = vtype;
-    self->m_fields.emplace_back(ve);
-    util_htset(self->m_htfields, name.c_str(), ve);
+    m_fields.emplace_back(ve);
+    util_htset(m_htfields, name.c_str(), ve);
     return ve;
 }
 
@@ -677,9 +655,9 @@ bool ir_function_finalize(ir_function *self)
         if (v->m_vtype == TYPE_VECTOR ||
             (v->m_vtype == TYPE_FIELD && v->m_outtype == TYPE_VECTOR))
         {
-            ir_value_vector_member(v, 0);
-            ir_value_vector_member(v, 1);
-            ir_value_vector_member(v, 2);
+            v->vectorMember(0);
+            v->vectorMember(1);
+            v->vectorMember(2);
         }
     }
     for (auto& vp : self->m_values) {
@@ -687,9 +665,9 @@ bool ir_function_finalize(ir_function *self)
         if (v->m_vtype == TYPE_VECTOR ||
             (v->m_vtype == TYPE_FIELD && v->m_outtype == TYPE_VECTOR))
         {
-            ir_value_vector_member(v, 0);
-            ir_value_vector_member(v, 1);
-            ir_value_vector_member(v, 2);
+            v->vectorMember(0);
+            v->vectorMember(1);
+            v->vectorMember(2);
         }
     }
 
@@ -826,25 +804,25 @@ static bool ir_instr_op(ir_instr *self, int op, ir_value *v, bool writing)
  *IR Value
  */
 
-static void ir_value_code_setaddr(ir_value *self, int32_t gaddr)
+void ir_value::setCodeAddress(int32_t gaddr)
 {
-    self->m_code.globaladdr = gaddr;
-    if (self->m_members[0]) self->m_members[0]->m_code.globaladdr = gaddr;
-    if (self->m_members[1]) self->m_members[1]->m_code.globaladdr = gaddr;
-    if (self->m_members[2]) self->m_members[2]->m_code.globaladdr = gaddr;
+    m_code.globaladdr = gaddr;
+    if (m_members[0]) m_members[0]->m_code.globaladdr = gaddr;
+    if (m_members[1]) m_members[1]->m_code.globaladdr = gaddr;
+    if (m_members[2]) m_members[2]->m_code.globaladdr = gaddr;
 }
 
-static int32_t ir_value_code_addr(const ir_value *self)
+int32_t ir_value::codeAddress() const
 {
-    if (self->m_store == store_return)
-        return OFS_RETURN + self->m_code.addroffset;
-    return self->m_code.globaladdr + self->m_code.addroffset;
+    if (m_store == store_return)
+        return OFS_RETURN + m_code.addroffset;
+    return m_code.globaladdr + m_code.addroffset;
 }
 
 ir_value::ir_value(std::string&& name_, store_type store_, qc_type vtype_)
-: m_name(move(name_)),
-  m_vtype(vtype_),
-  m_store(store_)
+    : m_name(move(name_))
+    , m_vtype(vtype_)
+    , m_store(store_)
 {
     m_fieldtype = TYPE_VOID;
     m_outtype = TYPE_VOID;
@@ -868,6 +846,12 @@ ir_value::ir_value(std::string&& name_, store_type store_, qc_type vtype_)
     m_callparam  = false;
 }
 
+ir_value::ir_value(ir_function *owner, std::string&& name, store_type storetype, qc_type vtype)
+    : ir_value(move(name), storetype, vtype)
+{
+    ir_function_collect_value(owner, this);
+}
+
 ir_value::~ir_value()
 {
     size_t i;
@@ -885,142 +869,132 @@ ir_value::~ir_value()
 
 
 /*  helper function */
-static ir_value* ir_builder_imm_float(ir_builder *self, float value, bool add_to_list) {
+ir_value* ir_builder::literalFloat(float value, bool add_to_list) {
     ir_value *v = new ir_value("#IMMEDIATE", store_global, TYPE_FLOAT);
     v->m_flags |= IR_FLAG_ERASABLE;
     v->m_hasvalue = true;
     v->m_cvq = CV_CONST;
     v->m_constval.vfloat = value;
 
-    self->m_globals.emplace_back(v);
+    m_globals.emplace_back(v);
     if (add_to_list)
-        self->m_const_floats.emplace_back(v);
+        m_const_floats.emplace_back(v);
     return v;
 }
 
-ir_value* ir_value_vector_member(ir_value *self, unsigned int member)
+ir_value* ir_value::vectorMember(unsigned int member)
 {
     std::string name;
     ir_value *m;
     if (member >= 3)
         return nullptr;
 
-    if (self->m_members[member])
-        return self->m_members[member];
+    if (m_members[member])
+        return m_members[member];
 
-    if (!self->m_name.empty()) {
+    if (!m_name.empty()) {
         char member_name[3] = { '_', char('x' + member), 0 };
-        name = self->m_name + member_name;
+        name = m_name + member_name;
     }
 
-    if (self->m_vtype == TYPE_VECTOR)
+    if (m_vtype == TYPE_VECTOR)
     {
-        m = new ir_value(move(name), self->m_store, TYPE_FLOAT);
+        m = new ir_value(move(name), m_store, TYPE_FLOAT);
         if (!m)
             return nullptr;
-        m->m_context = self->m_context;
+        m->m_context = m_context;
 
-        self->m_members[member] = m;
+        m_members[member] = m;
         m->m_code.addroffset = member;
     }
-    else if (self->m_vtype == TYPE_FIELD)
+    else if (m_vtype == TYPE_FIELD)
     {
-        if (self->m_fieldtype != TYPE_VECTOR)
+        if (m_fieldtype != TYPE_VECTOR)
             return nullptr;
-        m = new ir_value(move(name), self->m_store, TYPE_FIELD);
+        m = new ir_value(move(name), m_store, TYPE_FIELD);
         if (!m)
             return nullptr;
         m->m_fieldtype = TYPE_FLOAT;
-        m->m_context = self->m_context;
+        m->m_context = m_context;
 
-        self->m_members[member] = m;
+        m_members[member] = m;
         m->m_code.addroffset = member;
     }
     else
     {
-        irerror(self->m_context, "invalid member access on %s", self->m_name.c_str());
+        irerror(m_context, "invalid member access on %s", m_name.c_str());
         return nullptr;
     }
 
-    m->m_memberof = self;
+    m->m_memberof = this;
     return m;
 }
 
-static GMQCC_INLINE size_t ir_value_sizeof(const ir_value *self)
-{
-    if (self->m_vtype == TYPE_FIELD && self->m_fieldtype == TYPE_VECTOR)
+size_t ir_value::size() const {
+    if (m_vtype == TYPE_FIELD && m_fieldtype == TYPE_VECTOR)
         return type_sizeof_[TYPE_VECTOR];
-    return type_sizeof_[self->m_vtype];
+    return type_sizeof_[m_vtype];
 }
 
-static ir_value* ir_value_out(ir_function *owner, const char *name, store_type storetype, qc_type vtype)
+bool ir_value::setFloat(float f)
 {
-    ir_value *v = new ir_value(name ? std::string(name) : std::string(), storetype, vtype);
-    if (!v)
-        return nullptr;
-    ir_function_collect_value(owner, v);
-    return v;
-}
-
-bool ir_value_set_float(ir_value *self, float f)
-{
-    if (self->m_vtype != TYPE_FLOAT)
+    if (m_vtype != TYPE_FLOAT)
         return false;
-    self->m_constval.vfloat = f;
-    self->m_hasvalue = true;
+    m_constval.vfloat = f;
+    m_hasvalue = true;
     return true;
 }
 
-bool ir_value_set_func(ir_value *self, int f)
+bool ir_value::setFunc(int f)
 {
-    if (self->m_vtype != TYPE_FUNCTION)
+    if (m_vtype != TYPE_FUNCTION)
         return false;
-    self->m_constval.vint = f;
-    self->m_hasvalue = true;
+    m_constval.vint = f;
+    m_hasvalue = true;
     return true;
 }
 
-bool ir_value_set_vector(ir_value *self, vec3_t v)
+bool ir_value::setVector(vec3_t v)
 {
-    if (self->m_vtype != TYPE_VECTOR)
+    if (m_vtype != TYPE_VECTOR)
         return false;
-    self->m_constval.vvec = v;
-    self->m_hasvalue = true;
+    m_constval.vvec = v;
+    m_hasvalue = true;
     return true;
 }
 
-bool ir_value_set_field(ir_value *self, ir_value *fld)
+bool ir_value::setField(ir_value *fld)
 {
-    if (self->m_vtype != TYPE_FIELD)
+    if (m_vtype != TYPE_FIELD)
         return false;
-    self->m_constval.vpointer = fld;
-    self->m_hasvalue = true;
+    m_constval.vpointer = fld;
+    m_hasvalue = true;
     return true;
 }
 
-bool ir_value_set_string(ir_value *self, const char *str)
+bool ir_value::setString(const char *str)
 {
-    if (self->m_vtype != TYPE_STRING)
+    if (m_vtype != TYPE_STRING)
         return false;
-    self->m_constval.vstring = util_strdupe(str);
-    self->m_hasvalue = true;
+    m_constval.vstring = util_strdupe(str);
+    m_hasvalue = true;
     return true;
 }
 
 #if 0
-bool ir_value_set_int(ir_value *self, int i)
+bool ir_value::setInt(int i)
 {
-    if (self->m_vtype != TYPE_INTEGER)
+    if (m_vtype != TYPE_INTEGER)
         return false;
-    self->m_constval.vint = i;
-    self->m_hasvalue = true;
+    m_constval.vint = i;
+    m_hasvalue = true;
     return true;
 }
 #endif
 
-bool ir_value_lives(ir_value *self, size_t at)
+bool ir_value::lives(size_t at)
 {
-    for (auto& l : self->m_life) {
+    for (auto& l : m_life) {
         if (l.start <= at && at <= l.end)
             return true;
         if (l.start > at) /* since it's ordered */
@@ -1029,16 +1003,16 @@ bool ir_value_lives(ir_value *self, size_t at)
     return false;
 }
 
-static bool ir_value_life_insert(ir_value *self, size_t idx, ir_life_entry_t e)
+bool ir_value::insertLife(size_t idx, ir_life_entry_t e)
 {
-    self->m_life.insert(self->m_life.begin() + idx, e);
+    m_life.insert(m_life.begin() + idx, e);
     return true;
 }
 
-static bool ir_value_life_merge(ir_value *self, size_t s)
+bool ir_value::setAlive(size_t s)
 {
     size_t i;
-    const size_t vs = self->m_life.size();
+    const size_t vs = m_life.size();
     ir_life_entry_t *life_found = nullptr;
     ir_life_entry_t *before = nullptr;
     ir_life_entry_t new_entry;
@@ -1047,7 +1021,7 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
     for (i = 0; i < vs; ++i)
     {
         before = life_found;
-        life_found = &self->m_life[i];
+        life_found = &m_life[i];
         if (life_found->start > s)
             break;
     }
@@ -1063,7 +1037,7 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
         if (life_found && life_found->end >= s)
             return false;
         e.start = e.end = s;
-        self->m_life.emplace_back(e);
+        m_life.emplace_back(e);
         return true;
     }
     /* found */
@@ -1074,7 +1048,7 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
         {
             /* merge */
             before->end = life_found->end;
-            self->m_life.erase(self->m_life.begin()+i);
+            m_life.erase(m_life.begin()+i);
             return true;
         }
         if (before->end + 1 == s)
@@ -1095,18 +1069,18 @@ static bool ir_value_life_merge(ir_value *self, size_t s)
     }
     /* insert a new entry */
     new_entry.start = new_entry.end = s;
-    return ir_value_life_insert(self, i, new_entry);
+    return insertLife(i, new_entry);
 }
 
-static bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
+bool ir_value::mergeLife(const ir_value *other)
 {
     size_t i, myi;
 
     if (other->m_life.empty())
         return true;
 
-    if (self->m_life.empty()) {
-        self->m_life = other->m_life;
+    if (m_life.empty()) {
+        m_life = other->m_life;
         return true;
     }
 
@@ -1116,12 +1090,12 @@ static bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
         const ir_life_entry_t &otherlife = other->m_life[i];
         while (true)
         {
-            ir_life_entry_t *entry = &self->m_life[myi];
+            ir_life_entry_t *entry = &m_life[myi];
 
             if (otherlife.end+1 < entry->start)
             {
                 /* adding an interval before entry */
-                if (!ir_value_life_insert(self, myi, otherlife))
+                if (!insertLife(myi, otherlife))
                     return false;
                 ++myi;
                 break;
@@ -1142,14 +1116,14 @@ static bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
             }
 
             /* see if our change combines it with the next ranges */
-            while (myi+1 < self->m_life.size() &&
-                   entry->end+1 >= self->m_life[1+myi].start)
+            while (myi+1 < m_life.size() &&
+                   entry->end+1 >= m_life[1+myi].start)
             {
                 /* overlaps with (myi+1) */
-                if (entry->end < self->m_life[1+myi].end)
-                    entry->end = self->m_life[1+myi].end;
-                self->m_life.erase(self->m_life.begin() + (myi + 1));
-                entry = &self->m_life[myi];
+                if (entry->end < m_life[1+myi].end)
+                    entry->end = m_life[1+myi].end;
+                m_life.erase(m_life.begin() + (myi + 1));
+                entry = &m_life[myi];
             }
 
             /* see if we're after the entry */
@@ -1157,8 +1131,8 @@ static bool ir_value_life_merge_into(ir_value *self, const ir_value *other)
             {
                 ++myi;
                 /* append if we're at the end */
-                if (myi >= self->m_life.size()) {
-                    self->m_life.emplace_back(otherlife);
+                if (myi >= m_life.size()) {
+                    m_life.emplace_back(otherlife);
                     break;
                 }
                 /* otherweise check the next range */
@@ -1417,7 +1391,7 @@ ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, 
     in = new ir_instr(ctx, self, VINSTR_PHI);
     if (!in)
         return nullptr;
-    out = ir_value_out(self->m_owner, label, store_value, ot);
+    out = new ir_value(self->m_owner, label ? label : "", store_value, ot);
     if (!out) {
         delete in;
         return nullptr;
@@ -1466,7 +1440,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
         self->m_final = true;
         self->m_is_return = true;
     }
-    out = ir_value_out(self->m_owner, label, (func->m_outtype == TYPE_VOID) ? store_return : store_value, func->m_outtype);
+    out = new ir_value(self->m_owner, label ? label : "", (func->m_outtype == TYPE_VOID) ? store_return : store_value, func->m_outtype);
     if (!out) {
         delete in;
         return nullptr;
@@ -1665,7 +1639,7 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
     ir_instr *instr;
     ir_value *out;
 
-    out = ir_value_out(self->m_owner, label, store_value, outype);
+    out = new ir_value(self->m_owner, label ? label : "", store_value, outype);
     if (!out)
         return nullptr;
 
@@ -1849,7 +1823,7 @@ struct function_allocator {
 static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
 {
     ir_value *slot;
-    size_t vsize = ir_value_sizeof(var);
+    size_t vsize = var->size();
 
     var->m_code.local = vec_size(alloc->locals);
 
@@ -1857,7 +1831,7 @@ static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
     if (!slot)
         return false;
 
-    if (!ir_value_life_merge_into(slot, var))
+    if (!slot->mergeLife(var))
         goto localerror;
 
     vec_push(alloc->locals, slot);
@@ -1891,7 +1865,7 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
          * will be required later when overlapping temps + locals
          */
         if (a < vec_size(self->m_params) &&
-            alloc->sizes[a] < ir_value_sizeof(v))
+            alloc->sizes[a] < v->size())
         {
             continue;
         }
@@ -1899,12 +1873,12 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
         if (ir_values_overlap(v, slot))
             continue;
 
-        if (!ir_value_life_merge_into(slot, v))
+        if (!slot->mergeLife(v))
             return false;
 
         /* adjust size for this slot */
-        if (alloc->sizes[a] < ir_value_sizeof(v))
-            alloc->sizes[a] = ir_value_sizeof(v);
+        if (alloc->sizes[a] < v->size())
+            alloc->sizes[a] = v->size();
 
         v->m_code.local = a;
         return true;
@@ -1988,7 +1962,7 @@ bool ir_function_allocate_locals(ir_function *self)
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
                 v->m_callparam = true;
                 if (param < 8)
-                    ir_value_code_setaddr(v, OFS_PARM0 + 3*param);
+                    v->setCodeAddress(OFS_PARM0 + 3*param);
                 else {
                     size_t nprotos = self->m_owner->m_extparam_protos.size();
                     ir_value *ep;
@@ -1997,9 +1971,9 @@ bool ir_function_allocate_locals(ir_function *self)
                         ep = self->m_owner->m_extparam_protos[param].get();
                     else
                     {
-                        ep = ir_gen_extparam_proto(self->m_owner);
+                        ep = self->m_owner->generateExtparamProto();
                         while (++nprotos <= param)
-                            ep = ir_gen_extparam_proto(self->m_owner);
+                            ep = self->m_owner->generateExtparamProto();
                     }
                     ir_instr_op(v->m_writes[0], 0, ep, true);
                     call->m_params[param+8] = ep;
@@ -2123,7 +2097,7 @@ static void ir_op_read_write(int op, size_t *read, size_t *write)
 static bool ir_block_living_add_instr(ir_block *self, size_t eid) {
     bool changed = false;
     for (auto &it : self->m_living)
-        if (ir_value_life_merge(it, eid))
+        if (it->setAlive(eid))
             changed = true;
     return changed;
 }
@@ -2202,14 +2176,14 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                      * since this function is run multiple times.
                      */
                     /* con_err( "Value only written %s\n", value->m_name); */
-                    if (ir_value_life_merge(value, instr->m_eid))
+                    if (value->setAlive(instr->m_eid))
                         *changed = true;
                 } else {
                     /* since 'living' won't contain it
                      * anymore, merge the value, since
                      * (A) doesn't.
                      */
-                    if (ir_value_life_merge(value, instr->m_eid))
+                    if (value->setAlive(instr->m_eid))
                         *changed = true;
                     // Then remove
                     self->m_living.erase(self->m_living.begin() + idx);
@@ -2217,7 +2191,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                 /* Removing a vector removes all members */
                 for (mem = 0; mem < 3; ++mem) {
                     if (value->m_members[mem] && vec_ir_value_find(self->m_living, value->m_members[mem], &idx)) {
-                        if (ir_value_life_merge(value->m_members[mem], instr->m_eid))
+                        if (value->m_members[mem]->setAlive(instr->m_eid))
                             *changed = true;
                         self->m_living.erase(self->m_living.begin() + idx);
                     }
@@ -2230,7 +2204,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                             break;
                     }
                     if (mem == 3 && vec_ir_value_find(self->m_living, value, &idx)) {
-                        if (ir_value_life_merge(value, instr->m_eid))
+                        if (value->setAlive(instr->m_eid))
                             *changed = true;
                         self->m_living.erase(self->m_living.begin() + idx);
                     }
@@ -2251,9 +2225,9 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
         {
             value = instr->_m_ops[2];
             /* the float source will get an additional lifetime */
-            if (ir_value_life_merge(value, instr->m_eid+1))
+            if (value->setAlive(instr->m_eid+1))
                 *changed = true;
-            if (value->m_memberof && ir_value_life_merge(value->m_memberof, instr->m_eid+1))
+            if (value->m_memberof && value->m_memberof->setAlive(instr->m_eid+1))
                 *changed = true;
         }
 
@@ -2266,9 +2240,9 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
         {
             value = instr->_m_ops[1];
             /* the float source will get an additional lifetime */
-            if (ir_value_life_merge(value, instr->m_eid+1))
+            if (value->setAlive(instr->m_eid+1))
                 *changed = true;
-            if (value->m_memberof && ir_value_life_merge(value->m_memberof, instr->m_eid+1))
+            if (value->m_memberof && value->m_memberof->setAlive(instr->m_eid+1))
                 *changed = true;
         }
 
@@ -2349,7 +2323,7 @@ bool ir_function_calculate_liferanges(ir_function *self)
 {
     /* parameters live at 0 */
     for (size_t i = 0; i < vec_size(self->m_params); ++i)
-        if (!ir_value_life_merge(self->m_locals[i].get(), 0))
+        if (!self->m_locals[i].get()->setAlive(0))
             compile_error(self->m_context, "internal error: failed value-life merging");
 
     bool changed;
@@ -2431,8 +2405,6 @@ bool ir_function_calculate_liferanges(ir_function *self)
  *
  * Breaking conventions is annoying...
  */
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal);
-
 static bool gen_global_field(code_t *code, ir_value *global)
 {
     if (global->m_hasvalue)
@@ -2444,7 +2416,7 @@ static bool gen_global_field(code_t *code, ir_value *global)
         }
 
         /* copy the field's value */
-        ir_value_code_setaddr(global, code->globals.size());
+        global->setCodeAddress(code->globals.size());
         code->globals.push_back(fld->m_code.fieldaddr);
         if (global->m_fieldtype == TYPE_VECTOR) {
             code->globals.push_back(fld->m_code.fieldaddr+1);
@@ -2453,7 +2425,7 @@ static bool gen_global_field(code_t *code, ir_value *global)
     }
     else
     {
-        ir_value_code_setaddr(global, code->globals.size());
+        global->setCodeAddress(code->globals.size());
         code->globals.push_back(0);
         if (global->m_fieldtype == TYPE_VECTOR) {
             code->globals.push_back(0);
@@ -2491,12 +2463,12 @@ static bool gen_global_pointer(code_t *code, ir_value *global)
             return false;
         }
 
-        ir_value_code_setaddr(global, code->globals.size());
+        global->setCodeAddress(code->globals.size());
         code->globals.push_back(target->m_code.globaladdr);
     }
     else
     {
-        ir_value_code_setaddr(global, code->globals.size());
+        global->setCodeAddress(code->globals.size());
         code->globals.push_back(0);
     }
     if (global->m_code.globaladdr < 0)
@@ -2548,19 +2520,19 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         if (instr->m_opcode == VINSTR_BITXOR) {
             stmt.opcode = INSTR_BITOR;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
+            stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             stmt.opcode = INSTR_BITAND;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
+            stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
+            stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+            stmt.o3.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             stmt.opcode = INSTR_SUB_F;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
@@ -2569,9 +2541,9 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         if (instr->m_opcode == VINSTR_BITAND_V) {
             stmt.opcode = INSTR_BITAND;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
+            stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
@@ -2588,9 +2560,9 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         if (instr->m_opcode == VINSTR_BITOR_V) {
             stmt.opcode = INSTR_BITOR;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
+            stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o2.s1;
@@ -2608,20 +2580,20 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
         if (instr->m_opcode == VINSTR_BITXOR_V) {
             for (j = 0; j < 3; ++j) {
                 stmt.opcode = INSTR_BITOR;
-                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + j;
-                stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]) + j;
+                stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
+                stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + j;
+                stmt.o3.s1 = instr->_m_ops[0]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
                 stmt.opcode = INSTR_BITAND;
-                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + j;
-                stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]) + j;
+                stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
+                stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + j;
+                stmt.o3.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
@@ -2630,9 +2602,9 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         if (instr->m_opcode == VINSTR_BITAND_VF) {
             stmt.opcode = INSTR_BITAND;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
+            stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
@@ -2647,9 +2619,9 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         if (instr->m_opcode == VINSTR_BITOR_VF) {
             stmt.opcode = INSTR_BITOR;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]);
-            stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
+            stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             ++stmt.o1.s1;
             ++stmt.o3.s1;
@@ -2665,20 +2637,20 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
         if (instr->m_opcode == VINSTR_BITXOR_VF) {
             for (j = 0; j < 3; ++j) {
                 stmt.opcode = INSTR_BITOR;
-                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-                stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]) + j;
+                stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
+                stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+                stmt.o3.s1 = instr->_m_ops[0]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
                 stmt.opcode = INSTR_BITAND;
-                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + j;
-                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]);
-                stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]) + j;
+                stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
+                stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
+                stmt.o3.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
@@ -2688,19 +2660,19 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
         if (instr->m_opcode == VINSTR_CROSS) {
             stmt.opcode = INSTR_MUL_F;
             for (j = 0; j < 3; ++j) {
-                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + (j + 1) % 3;
-                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + (j + 2) % 3;
-                stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]) + j;
+                stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + (j + 1) % 3;
+                stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + (j + 2) % 3;
+                stmt.o3.s1 = instr->_m_ops[0]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
-                stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[1]) + (j + 2) % 3;
-                stmt.o2.s1 = ir_value_code_addr(instr->_m_ops[2]) + (j + 1) % 3;
-                stmt.o3.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]) + j;
+                stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + (j + 2) % 3;
+                stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + (j + 1) % 3;
+                stmt.o3.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = ir_value_code_addr(instr->_m_ops[0]);
-            stmt.o2.s1 = ir_value_code_addr(func->m_owner->m_vinstr_temp[0]);
-            stmt.o3.s1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
+            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
 
             /* instruction generated */
@@ -2714,7 +2686,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
              * come first: eg. optimize IFs without ELSE...
              */
 
-            stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o1.u1 = instr->_m_ops[0]->codeAddress();
             stmt.o2.u1 = 0;
             stmt.o3.s1 = 0;
 
@@ -2817,19 +2789,19 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     stmt.opcode = INSTR_STORE_V;
                 else
                     stmt.opcode = type_store_instr[param->m_vtype];
-                stmt.o1.u1 = ir_value_code_addr(param);
+                stmt.o1.u1 = param->codeAddress();
                 stmt.o2.u1 = OFS_PARM0 + 3 * p;
 
                 if (param->m_vtype == TYPE_VECTOR && (param->m_flags & IR_FLAG_SPLIT_VECTOR)) {
                     /* fetch 3 separate floats */
                     stmt.opcode = INSTR_STORE_F;
-                    stmt.o1.u1 = ir_value_code_addr(param->m_members[0]);
+                    stmt.o1.u1 = param->m_members[0]->codeAddress();
                     code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->m_members[1]);
+                    stmt.o1.u1 = param->m_members[1]->codeAddress();
                     code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->m_members[2]);
+                    stmt.o1.u1 = param->m_members[2]->codeAddress();
                     code_push_statement(code, &stmt, instr->m_context);
                 }
                 else
@@ -2847,7 +2819,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     continue;
 
                 if (p-8 >= ir->m_extparams.size())
-                    ir_gen_extparam(ir);
+                    ir->generateExtparam();
 
                 targetparam = ir->m_extparams[p-8];
 
@@ -2860,18 +2832,18 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                     stmt.opcode = INSTR_STORE_V;
                 else
                     stmt.opcode = type_store_instr[param->m_vtype];
-                stmt.o1.u1 = ir_value_code_addr(param);
-                stmt.o2.u1 = ir_value_code_addr(targetparam);
+                stmt.o1.u1 = param->codeAddress();
+                stmt.o2.u1 = targetparam->codeAddress();
                 if (param->m_vtype == TYPE_VECTOR && (param->m_flags & IR_FLAG_SPLIT_VECTOR)) {
                     /* fetch 3 separate floats */
                     stmt.opcode = INSTR_STORE_F;
-                    stmt.o1.u1 = ir_value_code_addr(param->m_members[0]);
+                    stmt.o1.u1 = param->m_members[0]->codeAddress();
                     code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->m_members[1]);
+                    stmt.o1.u1 = param->m_members[1]->codeAddress();
                     code_push_statement(code, &stmt, instr->m_context);
                     stmt.o2.u1++;
-                    stmt.o1.u1 = ir_value_code_addr(param->m_members[2]);
+                    stmt.o1.u1 = param->m_members[2]->codeAddress();
                     code_push_statement(code, &stmt, instr->m_context);
                 }
                 else
@@ -2881,7 +2853,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.opcode = INSTR_CALL0 + instr->m_params.size();
             if (stmt.opcode > INSTR_CALL8)
                 stmt.opcode = INSTR_CALL8;
-            stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o1.u1 = instr->_m_ops[1]->codeAddress();
             stmt.o2.u1 = 0;
             stmt.o3.u1 = 0;
             code_push_statement(code, &stmt, instr->m_context);
@@ -2896,7 +2868,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 else
                     stmt.opcode = type_store_instr[retvalue->m_vtype];
                 stmt.o1.u1 = OFS_RETURN;
-                stmt.o2.u1 = ir_value_code_addr(retvalue);
+                stmt.o2.u1 = retvalue->codeAddress();
                 stmt.o3.u1 = 0;
                 code_push_statement(code, &stmt, instr->m_context);
             }
@@ -2906,9 +2878,9 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
         if (instr->m_opcode == INSTR_STATE) {
             stmt.opcode = instr->m_opcode;
             if (instr->_m_ops[0])
-                stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[0]);
+                stmt.o1.u1 = instr->_m_ops[0]->codeAddress();
             if (instr->_m_ops[1])
-                stmt.o2.u1 = ir_value_code_addr(instr->_m_ops[1]);
+                stmt.o2.u1 = instr->_m_ops[1]->codeAddress();
             stmt.o3.u1 = 0;
             code_push_statement(code, &stmt, instr->m_context);
             continue;
@@ -2921,13 +2893,13 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
         /* This is the general order of operands */
         if (instr->_m_ops[0])
-            stmt.o3.u1 = ir_value_code_addr(instr->_m_ops[0]);
+            stmt.o3.u1 = instr->_m_ops[0]->codeAddress();
 
         if (instr->_m_ops[1])
-            stmt.o1.u1 = ir_value_code_addr(instr->_m_ops[1]);
+            stmt.o1.u1 = instr->_m_ops[1]->codeAddress();
 
         if (instr->_m_ops[2])
-            stmt.o2.u1 = ir_value_code_addr(instr->_m_ops[2]);
+            stmt.o2.u1 = instr->_m_ops[2]->codeAddress();
 
         if (stmt.opcode == INSTR_RETURN || stmt.opcode == INSTR_DONE)
         {
@@ -3004,25 +2976,25 @@ static bool gen_function_code(code_t *code, ir_function *self)
     return true;
 }
 
-static qcint_t ir_builder_filestring(ir_builder *ir, const char *filename)
+qcint_t ir_builder::filestring(const char *filename)
 {
     /* NOTE: filename pointers are copied, we never strdup them,
      * thus we can use pointer-comparison to find the string.
      */
     qcint_t  str;
 
-    for (size_t i = 0; i != ir->m_filenames.size(); ++i) {
-        if (!strcmp(ir->m_filenames[i], filename))
+    for (size_t i = 0; i != m_filenames.size(); ++i) {
+        if (!strcmp(m_filenames[i], filename))
             return i;
     }
 
-    str = code_genstring(ir->m_code.get(), filename);
-    ir->m_filenames.push_back(filename);
-    ir->m_filestrings.push_back(str);
+    str = code_genstring(m_code.get(), filename);
+    m_filenames.push_back(filename);
+    m_filestrings.push_back(str);
     return str;
 }
 
-static bool gen_global_function(ir_builder *ir, ir_value *global)
+bool ir_builder::generateGlobalFunction(ir_value *global)
 {
     prog_section_function_t fun;
     ir_function            *irfun;
@@ -3036,7 +3008,7 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
 
     irfun = global->m_constval.vfunc;
     fun.name = global->m_code.name;
-    fun.file = ir_builder_filestring(ir, global->m_context.file);
+    fun.file = filestring(global->m_context.file);
     fun.profile = 0; /* always 0 */
     fun.nargs = vec_size(irfun->m_params);
     if (fun.nargs > 8)
@@ -3055,48 +3027,48 @@ static bool gen_global_function(ir_builder *ir, ir_value *global)
     if (irfun->m_builtin)
         fun.entry = irfun->m_builtin+1;
     else {
-        irfun->m_code_function_def = ir->m_code->functions.size();
-        fun.entry = ir->m_code->statements.size();
+        irfun->m_code_function_def = m_code->functions.size();
+        fun.entry = m_code->statements.size();
     }
 
-    ir->m_code->functions.push_back(fun);
+    m_code->functions.push_back(fun);
     return true;
 }
 
-static ir_value* ir_gen_extparam_proto(ir_builder *ir)
+ir_value* ir_builder::generateExtparamProto()
 {
     char      name[128];
 
-    util_snprintf(name, sizeof(name), "EXTPARM#%i", (int)(ir->m_extparam_protos.size()));
+    util_snprintf(name, sizeof(name), "EXTPARM#%i", (int)(m_extparam_protos.size()));
     ir_value *global = new ir_value(name, store_global, TYPE_VECTOR);
-    ir->m_extparam_protos.emplace_back(global);
+    m_extparam_protos.emplace_back(global);
 
     return global;
 }
 
-static void ir_gen_extparam(ir_builder *ir)
+void ir_builder::generateExtparam()
 {
     prog_section_def_t def;
     ir_value          *global;
 
-    if (ir->m_extparam_protos.size() < ir->m_extparams.size()+1)
-        global = ir_gen_extparam_proto(ir);
+    if (m_extparam_protos.size() < m_extparams.size()+1)
+        global = generateExtparamProto();
     else
-        global = ir->m_extparam_protos[ir->m_extparams.size()].get();
+        global = m_extparam_protos[m_extparams.size()].get();
 
-    def.name = code_genstring(ir->m_code.get(), global->m_name.c_str());
+    def.name = code_genstring(m_code.get(), global->m_name.c_str());
     def.type = TYPE_VECTOR;
-    def.offset = ir->m_code->globals.size();
+    def.offset = m_code->globals.size();
 
-    ir->m_code->defs.push_back(def);
+    m_code->defs.push_back(def);
 
-    ir_value_code_setaddr(global, def.offset);
+    global->setCodeAddress(def.offset);
 
-    ir->m_code->globals.push_back(0);
-    ir->m_code->globals.push_back(0);
-    ir->m_code->globals.push_back(0);
+    m_code->globals.push_back(0);
+    m_code->globals.push_back(0);
+    m_code->globals.push_back(0);
 
-    ir->m_extparams.emplace_back(global);
+    m_extparams.emplace_back(global);
 }
 
 static bool gen_function_extparam_copy(code_t *code, ir_function *self)
@@ -3113,7 +3085,7 @@ static bool gen_function_extparam_copy(code_t *code, ir_function *self)
     for (size_t i = 8; i < numparams; ++i) {
         size_t ext = i - 8;
         if (ext >= ir->m_extparams.size())
-            ir_gen_extparam(ir);
+            ir->generateExtparam();
 
         ir_value *ep = ir->m_extparams[ext];
 
@@ -3123,8 +3095,8 @@ static bool gen_function_extparam_copy(code_t *code, ir_function *self)
         {
             stmt.opcode = INSTR_STORE_V;
         }
-        stmt.o1.u1 = ir_value_code_addr(ep);
-        stmt.o2.u1 = ir_value_code_addr(self->m_locals[i].get());
+        stmt.o1.u1 = ep->codeAddress();
+        stmt.o2.u1 = self->m_locals[i].get()->codeAddress();
         code_push_statement(code, &stmt, self->m_context);
     }
 
@@ -3149,78 +3121,76 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
     for (i = numparams; i < maxparams; ++i) {
         if (i < 8) {
             stmt.o1.u1 = OFS_PARM0 + 3*i;
-            stmt.o2.u1 = ir_value_code_addr(self->m_locals[i].get());
+            stmt.o2.u1 = self->m_locals[i].get()->codeAddress();
             code_push_statement(code, &stmt, self->m_context);
             continue;
         }
         ext = i - 8;
         while (ext >= ir->m_extparams.size())
-            ir_gen_extparam(ir);
+            ir->generateExtparam();
 
         ep = ir->m_extparams[ext];
 
-        stmt.o1.u1 = ir_value_code_addr(ep);
-        stmt.o2.u1 = ir_value_code_addr(self->m_locals[i].get());
+        stmt.o1.u1 = ep->codeAddress();
+        stmt.o2.u1 = self->m_locals[i].get()->codeAddress();
         code_push_statement(code, &stmt, self->m_context);
     }
 
     return true;
 }
 
-static bool gen_function_locals(ir_builder *ir, ir_value *global)
+bool ir_builder::generateFunctionLocals(ir_value *global)
 {
     prog_section_function_t *def;
     ir_function             *irfun;
     uint32_t                 firstlocal, firstglobal;
 
     irfun = global->m_constval.vfunc;
-    def   = &ir->m_code->functions[0] + irfun->m_code_function_def;
+    def   = &m_code->functions[0] + irfun->m_code_function_def;
 
     if (OPTS_OPTION_BOOL(OPTION_G) ||
         !OPTS_OPTIMIZATION(OPTIM_OVERLAP_LOCALS)        ||
         (irfun->m_flags & IR_FLAG_MASK_NO_OVERLAP))
     {
-        firstlocal = def->firstlocal = ir->m_code->globals.size();
+        firstlocal = def->firstlocal = m_code->globals.size();
     } else {
-        firstlocal = def->firstlocal = ir->m_first_common_local;
+        firstlocal = def->firstlocal = m_first_common_local;
         ++opts_optimizationcount[OPTIM_OVERLAP_LOCALS];
     }
 
-    firstglobal = (OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS) ? ir->m_first_common_globaltemp : firstlocal);
+    firstglobal = (OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS) ? m_first_common_globaltemp : firstlocal);
 
-    for (size_t i = ir->m_code->globals.size(); i < firstlocal + irfun->m_allocated_locals; ++i)
-        ir->m_code->globals.push_back(0);
+    for (size_t i = m_code->globals.size(); i < firstlocal + irfun->m_allocated_locals; ++i)
+        m_code->globals.push_back(0);
 
     for (auto& lp : irfun->m_locals) {
         ir_value *v = lp.get();
         if (v->m_locked || !OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS)) {
-            ir_value_code_setaddr(v, firstlocal + v->m_code.local);
-            if (!ir_builder_gen_global(ir, v, true)) {
+            v->setCodeAddress(firstlocal + v->m_code.local);
+            if (!generateGlobal(v, true)) {
                 irerror(v->m_context, "failed to generate local %s", v->m_name.c_str());
                 return false;
             }
         }
         else
-            ir_value_code_setaddr(v, firstglobal + v->m_code.local);
+            v->setCodeAddress(firstglobal + v->m_code.local);
     }
     for (auto& vp : irfun->m_values) {
         ir_value *v = vp.get();
         if (v->m_callparam)
             continue;
         if (v->m_locked)
-            ir_value_code_setaddr(v, firstlocal + v->m_code.local);
+            v->setCodeAddress(firstlocal + v->m_code.local);
         else
-            ir_value_code_setaddr(v, firstglobal + v->m_code.local);
+            v->setCodeAddress(firstglobal + v->m_code.local);
     }
     return true;
 }
 
-static bool gen_global_function_code(ir_builder *ir, ir_value *global)
+bool ir_builder::generateGlobalFunctionCode(ir_value *global)
 {
     prog_section_function_t *fundef;
     ir_function             *irfun;
-
-    (void)ir;
 
     irfun = global->m_constval.vfunc;
     if (!irfun) {
@@ -3255,22 +3225,22 @@ static bool gen_global_function_code(ir_builder *ir, ir_value *global)
         irerror(irfun->m_context, "`%s`: IR global wasn't generated, failed to access function-def", irfun->m_name.c_str());
         return false;
     }
-    fundef = &ir->m_code->functions[irfun->m_code_function_def];
+    fundef = &m_code->functions[irfun->m_code_function_def];
 
-    fundef->entry = ir->m_code->statements.size();
-    if (!gen_function_locals(ir, global)) {
+    fundef->entry = m_code->statements.size();
+    if (!generateFunctionLocals(global)) {
         irerror(irfun->m_context, "Failed to generate locals for function %s", irfun->m_name.c_str());
         return false;
     }
-    if (!gen_function_extparam_copy(ir->m_code.get(), irfun)) {
+    if (!gen_function_extparam_copy(m_code.get(), irfun)) {
         irerror(irfun->m_context, "Failed to generate extparam-copy code for function %s", irfun->m_name.c_str());
         return false;
     }
-    if (irfun->m_max_varargs && !gen_function_varargs_copy(ir->m_code.get(), irfun)) {
+    if (irfun->m_max_varargs && !gen_function_varargs_copy(m_code.get(), irfun)) {
         irerror(irfun->m_context, "Failed to generate vararg-copy code for function %s", irfun->m_name.c_str());
         return false;
     }
-    if (!gen_function_code(ir->m_code.get(), irfun)) {
+    if (!gen_function_code(m_code.get(), irfun)) {
         irerror(irfun->m_context, "Failed to generate code for function %s", irfun->m_name.c_str());
         return false;
     }
@@ -3337,7 +3307,7 @@ static void gen_vector_fields(code_t *code, prog_section_field_t fld, const char
     mem_d(component);
 }
 
-static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool islocal)
+bool ir_builder::generateGlobal(ir_value *global, bool islocal)
 {
     size_t             i;
     int32_t           *iptr;
@@ -3349,7 +3319,7 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
         return true;
 
     def.type = global->m_vtype;
-    def.offset = self->m_code->globals.size();
+    def.offset = m_code->globals.size();
     def.name = 0;
     if (OPTS_OPTION_BOOL(OPTION_G) || !islocal)
     {
@@ -3372,22 +3342,22 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
 
         if (pushdef) {
             if (global->m_name[0] == '#') {
-                if (!self->m_str_immediate)
-                    self->m_str_immediate = code_genstring(self->m_code.get(), "IMMEDIATE");
-                def.name = global->m_code.name = self->m_str_immediate;
+                if (!m_str_immediate)
+                    m_str_immediate = code_genstring(m_code.get(), "IMMEDIATE");
+                def.name = global->m_code.name = m_str_immediate;
             }
             else
-                def.name = global->m_code.name = code_genstring(self->m_code.get(), global->m_name.c_str());
+                def.name = global->m_code.name = code_genstring(m_code.get(), global->m_name.c_str());
         }
         else
             def.name   = 0;
         if (islocal) {
-            def.offset = ir_value_code_addr(global);
-            self->m_code->defs.push_back(def);
+            def.offset = global->codeAddress();
+            m_code->defs.push_back(def);
             if (global->m_vtype == TYPE_VECTOR)
-                gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
+                gen_vector_defs(m_code.get(), def, global->m_name.c_str());
             else if (global->m_vtype == TYPE_FIELD && global->m_fieldtype == TYPE_VECTOR)
-                gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
+                gen_vector_defs(m_code.get(), def, global->m_name.c_str());
             return true;
         }
     }
@@ -3415,107 +3385,112 @@ static bool ir_builder_gen_global(ir_builder *self, ir_value *global, bool isloc
          * Maybe this could be an -foption
          * fteqcc creates data for end_sys_* - of size 1, so let's do the same
          */
-        ir_value_code_setaddr(global, self->m_code->globals.size());
-        self->m_code->globals.push_back(0);
+        global->setCodeAddress(m_code->globals.size());
+        m_code->globals.push_back(0);
         /* Add the def */
-        if (pushdef) self->m_code->defs.push_back(def);
+        if (pushdef)
+            m_code->defs.push_back(def);
         return true;
     case TYPE_POINTER:
-        if (pushdef) self->m_code->defs.push_back(def);
-        return gen_global_pointer(self->m_code.get(), global);
+        if (pushdef)
+            m_code->defs.push_back(def);
+        return gen_global_pointer(m_code.get(), global);
     case TYPE_FIELD:
         if (pushdef) {
-            self->m_code->defs.push_back(def);
+            m_code->defs.push_back(def);
             if (global->m_fieldtype == TYPE_VECTOR)
-                gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
+                gen_vector_defs(m_code.get(), def, global->m_name.c_str());
         }
-        return gen_global_field(self->m_code.get(), global);
+        return gen_global_field(m_code.get(), global);
     case TYPE_ENTITY:
         /* fall through */
     case TYPE_FLOAT:
     {
-        ir_value_code_setaddr(global, self->m_code->globals.size());
+        global->setCodeAddress(m_code->globals.size());
         if (global->m_hasvalue) {
             if (global->m_cvq == CV_CONST && global->m_reads.empty())
                 return true;
             iptr = (int32_t*)&global->m_constval.ivec[0];
-            self->m_code->globals.push_back(*iptr);
+            m_code->globals.push_back(*iptr);
         } else {
-            self->m_code->globals.push_back(0);
+            m_code->globals.push_back(0);
         }
         if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        if (pushdef) self->m_code->defs.push_back(def);
+        if (pushdef)
+            m_code->defs.push_back(def);
 
         return global->m_code.globaladdr >= 0;
     }
     case TYPE_STRING:
     {
-        ir_value_code_setaddr(global, self->m_code->globals.size());
+        global->setCodeAddress(m_code->globals.size());
         if (global->m_hasvalue) {
             if (global->m_cvq == CV_CONST && global->m_reads.empty())
                 return true;
-            uint32_t load = code_genstring(self->m_code.get(), global->m_constval.vstring);
-            self->m_code->globals.push_back(load);
+            uint32_t load = code_genstring(m_code.get(), global->m_constval.vstring);
+            m_code->globals.push_back(load);
         } else {
-            self->m_code->globals.push_back(0);
+            m_code->globals.push_back(0);
         }
         if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        if (pushdef) self->m_code->defs.push_back(def);
+        if (pushdef)
+            m_code->defs.push_back(def);
         return global->m_code.globaladdr >= 0;
     }
     case TYPE_VECTOR:
     {
         size_t d;
-        ir_value_code_setaddr(global, self->m_code->globals.size());
+        global->setCodeAddress(m_code->globals.size());
         if (global->m_hasvalue) {
             iptr = (int32_t*)&global->m_constval.ivec[0];
-            self->m_code->globals.push_back(iptr[0]);
+            m_code->globals.push_back(iptr[0]);
             if (global->m_code.globaladdr < 0)
                 return false;
             for (d = 1; d < type_sizeof_[global->m_vtype]; ++d) {
-                self->m_code->globals.push_back(iptr[d]);
+                m_code->globals.push_back(iptr[d]);
             }
         } else {
-            self->m_code->globals.push_back(0);
+            m_code->globals.push_back(0);
             if (global->m_code.globaladdr < 0)
                 return false;
             for (d = 1; d < type_sizeof_[global->m_vtype]; ++d) {
-                self->m_code->globals.push_back(0);
+                m_code->globals.push_back(0);
             }
         }
         if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
 
         if (pushdef) {
-            self->m_code->defs.push_back(def);
+            m_code->defs.push_back(def);
             def.type &= ~DEF_SAVEGLOBAL;
-            gen_vector_defs(self->m_code.get(), def, global->m_name.c_str());
+            gen_vector_defs(m_code.get(), def, global->m_name.c_str());
         }
         return global->m_code.globaladdr >= 0;
     }
     case TYPE_FUNCTION:
-        ir_value_code_setaddr(global, self->m_code->globals.size());
+        global->setCodeAddress(m_code->globals.size());
         if (!global->m_hasvalue) {
-            self->m_code->globals.push_back(0);
+            m_code->globals.push_back(0);
             if (global->m_code.globaladdr < 0)
                 return false;
         } else {
-            self->m_code->globals.push_back(self->m_code->functions.size());
-            if (!gen_global_function(self, global))
+            m_code->globals.push_back(m_code->functions.size());
+            if (!generateGlobalFunction(global))
                 return false;
         }
         if (!islocal && global->m_cvq != CV_CONST)
             def.type |= DEF_SAVEGLOBAL;
-        if (pushdef) self->m_code->defs.push_back(def);
+        if (pushdef)
+            m_code->defs.push_back(def);
         return true;
     case TYPE_VARIANT:
         /* assume biggest type */
-            ir_value_code_setaddr(global, self->m_code->globals.size());
-            self->m_code->globals.push_back(0);
+            global->setCodeAddress(m_code->globals.size());
+            m_code->globals.push_back(0);
             for (i = 1; i < type_sizeof_[TYPE_VARIANT]; ++i)
-                self->m_code->globals.push_back(0);
+                m_code->globals.push_back(0);
             return true;
     default:
         /* refuse to create 'void' type or any other fancy business. */
@@ -3585,7 +3560,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
 
     self->m_code->fields.push_back(fld);
 
-    ir_value_code_setaddr(field, self->m_code->globals.size());
+    field->setCodeAddress(self->m_code->globals.size());
     self->m_code->globals.push_back(fld.offset);
     if (fld.type == TYPE_VECTOR) {
         self->m_code->globals.push_back(fld.offset+1);
@@ -3652,12 +3627,12 @@ static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
 
     // generate floats for not yet found components
     if (!found[0])
-        found[0] = ir_builder_imm_float(self, vec->m_constval.vvec.x, true);
+        found[0] = self->literalFloat(vec->m_constval.vvec.x, true);
     if (!found[1]) {
         if (vec->m_constval.vvec.y == vec->m_constval.vvec.x)
             found[1] = found[0];
         else
-            found[1] = ir_builder_imm_float(self, vec->m_constval.vvec.y, true);
+            found[1] = self->literalFloat(vec->m_constval.vvec.y, true);
     }
     if (!found[2]) {
         if (vec->m_constval.vvec.z == vec->m_constval.vvec.x)
@@ -3665,7 +3640,7 @@ static void ir_builder_split_vector(ir_builder *self, ir_value *vec) {
         else if (vec->m_constval.vvec.z == vec->m_constval.vvec.y)
             found[2] = found[1];
         else
-            found[2] = ir_builder_imm_float(self, vec->m_constval.vvec.z, true);
+            found[2] = self->literalFloat(vec->m_constval.vvec.z, true);
     }
 
     // the .members array should be safe to use here
@@ -3692,91 +3667,90 @@ static void ir_builder_split_vectors(ir_builder *self) {
     }
 }
 
-bool ir_builder_generate(ir_builder *self, const char *filename)
+bool ir_builder::generate(const char *filename)
 {
     prog_section_statement_t stmt;
     char  *lnofile = nullptr;
 
     if (OPTS_FLAG(SPLIT_VECTOR_PARAMETERS)) {
-        ir_builder_collect_reusables(self);
-        if (!self->m_const_floats.empty())
-            ir_builder_split_vectors(self);
+        ir_builder_collect_reusables(this);
+        if (!m_const_floats.empty())
+            ir_builder_split_vectors(this);
     }
 
-    for (auto& fp : self->m_fields)
-        ir_builder_prepare_field(self->m_code.get(), fp.get());
+    for (auto& fp : m_fields)
+        ir_builder_prepare_field(m_code.get(), fp.get());
 
-    for (auto& gp : self->m_globals) {
+    for (auto& gp : m_globals) {
         ir_value *global = gp.get();
-        if (!ir_builder_gen_global(self, global, false)) {
+        if (!generateGlobal(global, false)) {
             return false;
         }
         if (global->m_vtype == TYPE_FUNCTION) {
             ir_function *func = global->m_constval.vfunc;
-            if (func && self->m_max_locals < func->m_allocated_locals &&
+            if (func && m_max_locals < func->m_allocated_locals &&
                 !(func->m_flags & IR_FLAG_MASK_NO_OVERLAP))
             {
-                self->m_max_locals = func->m_allocated_locals;
+                m_max_locals = func->m_allocated_locals;
             }
-            if (func && self->m_max_globaltemps < func->m_globaltemps)
-                self->m_max_globaltemps = func->m_globaltemps;
+            if (func && m_max_globaltemps < func->m_globaltemps)
+                m_max_globaltemps = func->m_globaltemps;
         }
     }
 
-    for (auto& fp : self->m_fields) {
-        if (!ir_builder_gen_field(self, fp.get()))
+    for (auto& fp : m_fields) {
+        if (!ir_builder_gen_field(this, fp.get()))
             return false;
     }
 
     // generate nil
-    ir_value_code_setaddr(self->m_nil, self->m_code->globals.size());
-    self->m_code->globals.push_back(0);
-    self->m_code->globals.push_back(0);
-    self->m_code->globals.push_back(0);
+    m_nil->setCodeAddress(m_code->globals.size());
+    m_code->globals.push_back(0);
+    m_code->globals.push_back(0);
+    m_code->globals.push_back(0);
 
     // generate virtual-instruction temps
     for (size_t i = 0; i < IR_MAX_VINSTR_TEMPS; ++i) {
-        ir_value_code_setaddr(self->m_vinstr_temp[i], self->m_code->globals.size());
-        self->m_code->globals.push_back(0);
-        self->m_code->globals.push_back(0);
-        self->m_code->globals.push_back(0);
+        m_vinstr_temp[i]->setCodeAddress(m_code->globals.size());
+        m_code->globals.push_back(0);
+        m_code->globals.push_back(0);
+        m_code->globals.push_back(0);
     }
 
     // generate global temps
-    self->m_first_common_globaltemp = self->m_code->globals.size();
-    self->m_code->globals.insert(self->m_code->globals.end(), self->m_max_globaltemps, 0);
+    m_first_common_globaltemp = m_code->globals.size();
+    m_code->globals.insert(m_code->globals.end(), m_max_globaltemps, 0);
     // FIXME:DELME:
-    //for (size_t i = 0; i < self->m_max_globaltemps; ++i) {
-    //    self->m_code->globals.push_back(0);
+    //for (size_t i = 0; i < m_max_globaltemps; ++i) {
+    //    m_code->globals.push_back(0);
     //}
     // generate common locals
-    self->m_first_common_local = self->m_code->globals.size();
-    self->m_code->globals.insert(self->m_code->globals.end(), self->m_max_locals, 0);
+    m_first_common_local = m_code->globals.size();
+    m_code->globals.insert(m_code->globals.end(), m_max_locals, 0);
     // FIXME:DELME:
-    //for (i = 0; i < self->m_max_locals; ++i) {
-    //    self->m_code->globals.push_back(0);
+    //for (i = 0; i < m_max_locals; ++i) {
+    //    m_code->globals.push_back(0);
     //}
 
     // generate function code
 
-    for (auto& gp : self->m_globals) {
+    for (auto& gp : m_globals) {
         ir_value *global = gp.get();
         if (global->m_vtype == TYPE_FUNCTION) {
-            if (!gen_global_function_code(self, global)) {
+            if (!this->generateGlobalFunctionCode(global))
                 return false;
-            }
         }
     }
 
-    if (self->m_code->globals.size() >= 65536) {
-        irerror(self->m_globals.back()->m_context,
+    if (m_code->globals.size() >= 65536) {
+        irerror(m_globals.back()->m_context,
             "This progs file would require more globals than the metadata can handle (%zu). Bailing out.",
-            self->m_code->globals.size());
+            m_code->globals.size());
         return false;
     }
 
     /* DP errors if the last instruction is not an INSTR_DONE. */
-    if (self->m_code->statements.back().opcode != INSTR_DONE)
+    if (m_code->statements.back().opcode != INSTR_DONE)
     {
         lex_ctx_t last;
 
@@ -3784,19 +3758,19 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         stmt.o1.u1  = 0;
         stmt.o2.u1  = 0;
         stmt.o3.u1  = 0;
-        last.line   = self->m_code->linenums.back();
-        last.column = self->m_code->columnnums.back();
+        last.line   = m_code->linenums.back();
+        last.column = m_code->columnnums.back();
 
-        code_push_statement(self->m_code.get(), &stmt, last);
+        code_push_statement(m_code.get(), &stmt, last);
     }
 
     if (OPTS_OPTION_BOOL(OPTION_PP_ONLY))
         return true;
 
-    if (self->m_code->statements.size() != self->m_code->linenums.size()) {
+    if (m_code->statements.size() != m_code->linenums.size()) {
         con_err("Linecounter wrong: %lu != %lu\n",
-                self->m_code->statements.size(),
-                self->m_code->linenums.size());
+                m_code->statements.size(),
+                m_code->linenums.size());
     } else if (OPTS_FLAG(LNO)) {
         char  *dot;
         size_t filelen = strlen(filename);
@@ -3811,7 +3785,7 @@ bool ir_builder_generate(ir_builder *self, const char *filename)
         memcpy(vec_add(lnofile, 5), ".lno", 5);
     }
 
-    if (!code_write(self->m_code.get(), filename, lnofile)) {
+    if (!code_write(m_code.get(), filename, lnofile)) {
         vec_free(lnofile);
         return false;
     }
@@ -3850,25 +3824,25 @@ static const char *qc_opname(int op)
     }
 }
 
-void ir_builder_dump(ir_builder *b, int (*oprintf)(const char*, ...))
+void ir_builder::dump(int (*oprintf)(const char*, ...)) const
 {
     size_t i;
     char indent[IND_BUFSZ];
     indent[0] = '\t';
     indent[1] = 0;
 
-    oprintf("module %s\n", b->m_name.c_str());
-    for (i = 0; i < b->m_globals.size(); ++i)
+    oprintf("module %s\n", m_name.c_str());
+    for (i = 0; i < m_globals.size(); ++i)
     {
         oprintf("global ");
-        if (b->m_globals[i]->m_hasvalue)
-            oprintf("%s = ", b->m_globals[i]->m_name.c_str());
-        ir_value_dump(b->m_globals[i].get(), oprintf);
+        if (m_globals[i]->m_hasvalue)
+            oprintf("%s = ", m_globals[i]->m_name.c_str());
+        m_globals[i].get()->dump(oprintf);
         oprintf("\n");
     }
-    for (i = 0; i < b->m_functions.size(); ++i)
-        ir_function_dump(b->m_functions[i].get(), indent, oprintf);
-    oprintf("endmodule %s\n", b->m_name.c_str());
+    for (i = 0; i < m_functions.size(); ++i)
+        ir_function_dump(m_functions[i].get(), indent, oprintf);
+    oprintf("endmodule %s\n", m_name.c_str());
 }
 
 static const char *storenames[] = {
@@ -3890,7 +3864,7 @@ void ir_function_dump(ir_function *f, char *ind,
         oprintf("%s%i locals:\n", ind, (int)f->m_locals.size());
         for (i = 0; i < f->m_locals.size(); ++i) {
             oprintf("%s\t", ind);
-            ir_value_dump(f->m_locals[i].get(), oprintf);
+            f->m_locals[i].get()->dump(oprintf);
             oprintf("\n");
         }
     }
@@ -4015,7 +3989,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
     util_strncat(ind, "\t", IND_BUFSZ-1);
 
     if (in->_m_ops[0] && (in->_m_ops[1] || in->_m_ops[2])) {
-        ir_value_dump(in->_m_ops[0], oprintf);
+        in->_m_ops[0]->dump(oprintf);
         if (in->_m_ops[1] || in->_m_ops[2])
             oprintf(" <- ");
     }
@@ -4025,7 +3999,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
         oprintf("%s\t", qc_opname(in->m_opcode));
 
     if (in->_m_ops[0] && !(in->_m_ops[1] || in->_m_ops[2])) {
-        ir_value_dump(in->_m_ops[0], oprintf);
+        in->_m_ops[0]->dump(oprintf);
         comma = ",\t";
     }
     else
@@ -4034,7 +4008,7 @@ void ir_instr_dump(ir_instr *in, char *ind,
             if (in->_m_ops[i]) {
                 if (comma)
                     oprintf(comma);
-                ir_value_dump(in->_m_ops[i], oprintf);
+                in->_m_ops[i]->dump(oprintf);
                 comma = ",\t";
             }
         }
@@ -4076,52 +4050,52 @@ static void ir_value_dump_string(const char *str, int (*oprintf)(const char*, ..
     oprintf("\"");
 }
 
-void ir_value_dump(ir_value* v, int (*oprintf)(const char*, ...))
+void ir_value::dump(int (*oprintf)(const char*, ...)) const
 {
-    if (v->m_hasvalue) {
-        switch (v->m_vtype) {
+    if (m_hasvalue) {
+        switch (m_vtype) {
             default:
             case TYPE_VOID:
                 oprintf("(void)");
                 break;
             case TYPE_FUNCTION:
-                oprintf("fn:%s", v->m_name.c_str());
+                oprintf("fn:%s", m_name.c_str());
                 break;
             case TYPE_FLOAT:
-                oprintf("%g", v->m_constval.vfloat);
+                oprintf("%g", m_constval.vfloat);
                 break;
             case TYPE_VECTOR:
                 oprintf("'%g %g %g'",
-                        v->m_constval.vvec.x,
-                        v->m_constval.vvec.y,
-                        v->m_constval.vvec.z);
+                        m_constval.vvec.x,
+                        m_constval.vvec.y,
+                        m_constval.vvec.z);
                 break;
             case TYPE_ENTITY:
                 oprintf("(entity)");
                 break;
             case TYPE_STRING:
-                ir_value_dump_string(v->m_constval.vstring, oprintf);
+                ir_value_dump_string(m_constval.vstring, oprintf);
                 break;
 #if 0
             case TYPE_INTEGER:
-                oprintf("%i", v->m_constval.vint);
+                oprintf("%i", m_constval.vint);
                 break;
 #endif
             case TYPE_POINTER:
                 oprintf("&%s",
-                    v->m_constval.vpointer->m_name.c_str());
+                    m_constval.vpointer->m_name.c_str());
                 break;
         }
     } else {
-        oprintf("%s", v->m_name.c_str());
+        oprintf("%s", m_name.c_str());
     }
 }
 
-void ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...))
+void ir_value::dumpLife(int (*oprintf)(const char*,...)) const
 {
-    oprintf("Life of %12s:", self->m_name.c_str());
-    for (size_t i = 0; i < self->m_life.size(); ++i)
+    oprintf("Life of %12s:", m_name.c_str());
+    for (size_t i = 0; i < m_life.size(); ++i)
     {
-        oprintf(" + [%i, %i]\n", self->m_life[i].start, self->m_life[i].end);
+        oprintf(" + [%i, %i]\n", m_life[i].start, m_life[i].end);
     }
 }

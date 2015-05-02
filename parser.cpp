@@ -6215,12 +6215,12 @@ bool parser_finish(parser_t *parser, const char *output)
             ast_expression *subtype;
             field->m_hasvalue = true;
             subtype = field->m_next;
-            ifld = ir_builder_create_field(ir, field->m_name, subtype->m_vtype);
+            ifld = ir->createField(field->m_name, subtype->m_vtype);
             if (subtype->m_vtype == TYPE_FIELD)
                 ifld->m_fieldtype = subtype->m_next->m_vtype;
             else if (subtype->m_vtype == TYPE_FUNCTION)
                 ifld->m_outtype = subtype->m_next->m_vtype;
-            (void)!ir_value_set_field(field->m_ir_v, ifld);
+            (void)!field->m_ir_v->setField(ifld);
         }
     }
     for (auto &it : parser->globals) {
@@ -6316,7 +6316,7 @@ bool parser_finish(parser_t *parser, const char *output)
     generate_checksum(parser, ir);
 
     if (OPTS_OPTION_BOOL(OPTION_DUMP))
-        ir_builder_dump(ir, con_out);
+        ir->dump(con_out);
     for (auto &it : parser->functions) {
         if (!ir_function_finalize(it->m_ir_func)) {
             con_out("failed to finalize function %s\n", it->m_name.c_str());
@@ -6334,9 +6334,9 @@ bool parser_finish(parser_t *parser, const char *output)
 
     if (retval) {
         if (OPTS_OPTION_BOOL(OPTION_DUMPFIN))
-            ir_builder_dump(ir, con_out);
+            ir->dump(con_out);
 
-        if (!ir_builder_generate(ir, output)) {
+        if (!ir->generate(output)) {
             con_out("*** failed to generate output file\n");
             delete ir;
             return false;

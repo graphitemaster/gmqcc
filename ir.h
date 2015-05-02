@@ -37,7 +37,29 @@ enum {
 
 struct ir_value {
     ir_value(std::string&& name, store_type storetype, qc_type vtype);
+    ir_value(ir_function *owner, std::string&& name, store_type storetype, qc_type vtype);
     ~ir_value();
+
+    ir_value *vectorMember(unsigned int member);
+
+    bool GMQCC_WARN setFloat(float);
+    bool GMQCC_WARN setFunc(int);
+    bool GMQCC_WARN setString(const char*);
+    bool GMQCC_WARN setVector(vec3_t);
+    bool GMQCC_WARN setField(ir_value*);
+#if 0
+    bool GMQCC_WARN setInt(int);
+#endif
+
+    bool lives(size_t at);
+    void dumpLife(int (*oprintf)(const char*, ...)) const;
+
+    void setCodeAddress(int32_t gaddr);
+    int32_t codeAddress() const;
+
+    bool insertLife(size_t idx, ir_life_entry_t);
+    bool setAlive(size_t position);
+    bool mergeLife(const ir_value *other);
 
     std::string m_name;
 
@@ -81,21 +103,11 @@ struct ir_value {
     bool m_callparam;
 
     std::vector<ir_life_entry_t> m_life; // For the temp allocator
-};
 
-/*
- * ir_value can be a variable, or created by an operation
- * if a result of an operation: the function should store
- * it to remember to delete it / garbage collect it
- */
-ir_value*       ir_value_vector_member(ir_value*, unsigned int member);
-bool GMQCC_WARN ir_value_set_float(ir_value*, float f);
-bool GMQCC_WARN ir_value_set_func(ir_value*, int f);
-bool GMQCC_WARN ir_value_set_string(ir_value*, const char *s);
-bool GMQCC_WARN ir_value_set_vector(ir_value*, vec3_t v);
-bool GMQCC_WARN ir_value_set_field(ir_value*, ir_value *fld);
-bool            ir_value_lives(ir_value*, size_t);
-void            ir_value_dump_life(const ir_value *self, int (*oprintf)(const char*,...));
+    size_t size() const;
+
+    void dump(int (*oprintf)(const char*, ...)) const;
+};
 
 /* PHI data */
 struct ir_phi_entry_t {
@@ -243,6 +255,18 @@ struct ir_builder {
     ir_builder(const std::string& modulename);
     ~ir_builder();
 
+    ir_function *createFunction(const std::string &name, qc_type outtype);
+    ir_value *createGlobal(const std::string &name, qc_type vtype);
+    ir_value *createField(const std::string &name, qc_type vtype);
+    ir_value *get_va_count();
+    bool generate(const char *filename);
+    void dump(int (*oprintf)(const char*, ...)) const;
+
+    ir_value *generateExtparamProto();
+    void generateExtparam();
+
+    ir_value *literalFloat(float value, bool add_to_list);
+
     std::string m_name;
     std::vector<std::unique_ptr<ir_function>> m_functions;
     std::vector<std::unique_ptr<ir_value>>    m_globals;
@@ -282,14 +306,14 @@ struct ir_builder {
 
     /* code generator */
     std::unique_ptr<code_t> m_code;
-};
 
-ir_function* ir_builder_create_function(ir_builder*, const std::string& name, qc_type outtype);
-ir_value*    ir_builder_create_global(ir_builder*, const std::string& name, qc_type vtype);
-ir_value*    ir_builder_create_field(ir_builder*, const std::string& name, qc_type vtype);
-ir_value*    ir_builder_get_va_count(ir_builder*);
-bool         ir_builder_generate(ir_builder *self, const char *filename);
-void         ir_builder_dump(ir_builder*, int (*oprintf)(const char*, ...));
+private:
+    qcint_t filestring(const char *filename);
+    bool generateGlobal(ir_value*, bool is_local);
+    bool generateGlobalFunction(ir_value*);
+    bool generateGlobalFunctionCode(ir_value*);
+    bool generateFunctionLocals(ir_value*);
+};
 
 /*
  * This code assumes 32 bit floats while generating binary
