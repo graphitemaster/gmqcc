@@ -667,7 +667,7 @@ static qcvm_parameter *main_params = NULL;
     if (prog->argc != (num)) {                                                 \
         prog->vmerror++;                                                       \
         fprintf(stderr, "ERROR: invalid number of arguments for %s: %i, expected %i\n", \
-        __FUNCTION__, prog->argc, (num));                                      \
+        __extension__ __FUNCTION__, prog->argc, (num));                                      \
         return -1;                                                             \
     }                                                                          \
 } while (0)
