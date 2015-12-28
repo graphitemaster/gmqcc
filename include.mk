@@ -6,7 +6,7 @@ DATADIR := $(PREFIX)/share
 MANDIR  := $(DATADIR)/man
 
 # default flags
-CFLAGS  += -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -g3
+CFLAGS  += -Wall -Wextra -Werror -Wstrict-aliasing -Wno-attributes -O2
 
 # compiler
 CC      ?= clang
