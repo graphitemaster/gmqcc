@@ -1917,6 +1917,9 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
                                 ir_value *operand)
 {
     int ot = TYPE_FLOAT;
+    ir_value *minus_1 = NULL;
+    if (opcode == VINSTR_NEG_F || opcode == VINSTR_NEG_V)
+        minus_1 = ir_builder_imm_float(self->owner->owner, -1.0f, false);
     switch (opcode) {
         case INSTR_NOT_F:
         case INSTR_NOT_V:
@@ -1926,15 +1929,11 @@ ir_value* ir_block_create_unary(ir_block *self, lex_ctx_t ctx,
         case INSTR_NOT_I:   */
             ot = TYPE_FLOAT;
             break;
-
-        /*
-         * Negation for virtual instructions is emulated with 0-value. Thankfully
-         * the operand for 0 already exists so we just source it from here.
-         */
+        /* Negation is implemented as -1 * <operand> */
         case VINSTR_NEG_F:
-            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_F, NULL, operand, ot);
+            return ir_block_create_general_instr(self, ctx, label, INSTR_MUL_F, minus_1, operand, TYPE_FLOAT);
         case VINSTR_NEG_V:
-            return ir_block_create_general_instr(self, ctx, label, INSTR_SUB_V, NULL, operand, TYPE_VECTOR);
+            return ir_block_create_general_instr(self, ctx, label, INSTR_MUL_FV, minus_1, operand, TYPE_VECTOR);
 
         default:
             ot = operand->vtype;
