@@ -1,6 +1,6 @@
 UNAME ?= $(shell uname)
 CYGWIN = $(findstring CYGWIN, $(UNAME))
-MINGW = $(findstring MINGW,  $(UNAME))
+MINGW = $(findstring MINGW, $(UNAME))
 
 ifneq ("$(CYGWIN)", "")
 WINDOWS=1
