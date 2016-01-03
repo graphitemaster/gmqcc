@@ -1,3 +1,14 @@
+UNAME ?= $(shell uname)
+CYGWIN = $(findstring CYGWIN, $(UNAME))
+MINGW = $(findstring MINGW,  $(UNAME))
+
+ifneq ("$(CYGWIN)", "")
+WINDOWS=1
+endif
+ifneq ("$(MINGW)", "")
+WINDOWS=1
+endif
+
 CXX ?= clang++
 CXXFLAGS = \
 	-std=c++11 \
@@ -44,31 +55,44 @@ CDEPS = $(CSRCS:.cpp=.d)
 TDEPS = $(TSRCS:.cpp=.d)
 VDEPS = $(VSRCS:.cpp=.d)
 
+ifndef WINDOWS
 CBIN = gmqcc
-TBIN = testsuite
 VBIN = qcvm
+TBIN = testsuite
+else
+CBIN = gmqcc.exe
+CVIN = qcvm.exe
+endif
 
-all: $(CBIN) $(TBIN) $(VBIN)
+ifndef WINDOWS
+all: $(CBIN) $(QCVM) $(TBIN)
+else
+all: $(CBIN) $(QCVM)
+endif
 
 $(CBIN): $(COBJS)
 	$(CXX) $(COBJS) -o $@
 
+$(VBIN): $(VOBJS)
+	$(CXX) $(VOBJS) -o $@
+
+ifndef WINDOWS
 $(TBIN): $(TOBJS)
 	$(CXX) $(TOBJS) -o $@
 
-$(VBIN): $(VOBJS)
-	$(CXX) $(VOBJS) -o $@
+test: $(TBIN)
+	@./$(TBIN)
+endif
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-test: $(CBIN) $(TBIN) $(VBIN)
-	@./$(TBIN)
-
 clean:
 	rm -f *.d
 	rm -f $(COBJS) $(CDEPS) $(CBIN)
-	rm -f $(TOBJS) $(TDEPS) $(TBIN)
 	rm -f $(VOBJS) $(VDEPS) $(VBIN)
+ifndef WINDOWS
+	rm -f $(TOBJS) $(TDEPS) $(TOBJS)
+endif
 
 -include *.d
