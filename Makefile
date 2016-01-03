@@ -61,7 +61,7 @@ VBIN = qcvm
 TBIN = testsuite
 else
 CBIN = gmqcc.exe
-CVIN = qcvm.exe
+VBIN = qcvm.exe
 endif
 
 ifndef WINDOWS
@@ -80,7 +80,7 @@ ifndef WINDOWS
 $(TBIN): $(TOBJS)
 	$(CXX) $(TOBJS) -o $@
 
-test: $(TBIN)
+test: $(CBIN) $(VBIN) $(TBIN)
 	@./$(TBIN)
 endif
 
