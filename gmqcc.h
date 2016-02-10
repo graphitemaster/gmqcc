@@ -262,7 +262,22 @@ int util_getline(char  **, size_t *, FILE *);
 
 /* code.c */
 
-/* Note: if you change the order, fix type_sizeof in ir.c */
+struct qc_type_s {
+    const char *m_name;
+    size_t m_size;
+    uint16_t m_store_instr;
+    uint16_t m_field_store_instr;
+    uint16_t m_type_storep_instr;
+    uint16_t m_type_eq_instr;
+    uint16_t m_type_ne_instr;
+    uint16_t m_type_not_instr;
+};
+#define QC_TYPE_FLD(arr, fld) \
+const struct { \
+    auto operator[](int i) const -> decltype(qc_types[i].fld) { return qc_types[i].fld; } \
+} arr
+extern const qc_type_s qc_types[];
+
 enum qc_type {
     TYPE_VOID     ,
     TYPE_STRING   ,
@@ -277,11 +292,8 @@ enum qc_type {
     TYPE_STRUCT   ,
     TYPE_UNION    ,
     TYPE_ARRAY    ,
-
-    TYPE_NIL      , /* it's its own type / untyped */
-    TYPE_NOEXPR   , /* simply invalid in expressions */
-
-    TYPE_COUNT
+    TYPE_NIL      ,
+    TYPE_NOEXPR   ,
 };
 
 /* const/var qualifiers */
@@ -290,9 +302,9 @@ enum qc_type {
 #define CV_VAR   -1
 #define CV_WRONG  0x8000 /* magic number to help parsing */
 
-extern const char    *type_name        [TYPE_COUNT];
-extern const uint16_t type_store_instr [TYPE_COUNT];
-extern const uint16_t field_store_instr[TYPE_COUNT];
+QC_TYPE_FLD(type_name, m_name);
+QC_TYPE_FLD(type_store_instr, m_store_instr);
+QC_TYPE_FLD(field_store_instr, m_field_store_instr);
 
 /*
  * could use type_store_instr + INSTR_STOREP_F - INSTR_STORE_F
@@ -300,10 +312,10 @@ extern const uint16_t field_store_instr[TYPE_COUNT];
  * instruction set, the old ones are left untouched, thus the _I instructions
  * are at a seperate place.
  */
-extern const uint16_t type_storep_instr[TYPE_COUNT];
-extern const uint16_t type_eq_instr    [TYPE_COUNT];
-extern const uint16_t type_ne_instr    [TYPE_COUNT];
-extern const uint16_t type_not_instr   [TYPE_COUNT];
+QC_TYPE_FLD(type_storep_instr, m_type_storep_instr);
+QC_TYPE_FLD(type_eq_instr, m_type_eq_instr);
+QC_TYPE_FLD(type_ne_instr, m_type_ne_instr);
+QC_TYPE_FLD(type_not_instr, m_type_not_instr);
 
 struct prog_section_t {
     uint32_t offset;      /* Offset in file of where data begins  */

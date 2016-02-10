@@ -4,190 +4,33 @@
 #include "gmqcc.h"
 #include "ir.h"
 
+const qc_type_s qc_types[] = {
+    {"void",            1, INSTR_STORE_F,   INSTR_STORE_FLD,    INSTR_STOREP_F,     INSTR_EQ_F,     INSTR_NE_F,     INSTR_NOT_F,    },
+    /* `not` not to be used, depends on string related -f flags */
+    {"string",          1, INSTR_STORE_S,   INSTR_STORE_FLD,    INSTR_STOREP_S,     INSTR_EQ_S,     INSTR_NE_S,     VINSTR_END,     },
+    {"float",           1, INSTR_STORE_F,   INSTR_STORE_FLD,    INSTR_STOREP_F,     INSTR_EQ_F,     INSTR_NE_F,     INSTR_NOT_F,    },
+    {"vector",          3, INSTR_STORE_V,   INSTR_STORE_V,      INSTR_STOREP_V,     INSTR_EQ_V,     INSTR_NE_V,     INSTR_NOT_V,    },
+    {"entity",          1, INSTR_STORE_ENT, INSTR_STORE_FLD,    INSTR_STOREP_ENT,   INSTR_EQ_E,     INSTR_NE_E,     INSTR_NOT_ENT,  },
+    {"field",           1, INSTR_STORE_FLD, INSTR_STORE_FLD,    INSTR_STOREP_FLD,   INSTR_EQ_E,     INSTR_NE_E,     INSTR_NOT_ENT,  },
+    {"function",        1, INSTR_STORE_FNC, INSTR_STORE_FLD,    INSTR_STOREP_FNC,   INSTR_EQ_FNC,   INSTR_NE_FNC,   INSTR_NOT_FNC,  },
+    {"pointer",         1, INSTR_STORE_ENT, INSTR_STORE_FLD,    INSTR_STOREP_ENT,   INSTR_EQ_E,     INSTR_NE_E,     INSTR_NOT_ENT,  },
+    {"integer",         1, INSTR_STORE_F,   INSTR_STORE_FLD,    INSTR_STOREP_F,     INSTR_EQ_F,     INSTR_NE_F,     INSTR_NOT_F,    },
+    /* should never be accessed */
+    {"variant",         3, INSTR_STORE_V,   INSTR_STORE_V,      INSTR_STOREP_V,     INSTR_EQ_V,     INSTR_NE_V,     INSTR_NOT_V,    },
+    {"struct",          0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
+    {"union",           0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
+    {"array",           0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
+    /* it's its own type / untyped */
+    {"nil",             0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
+    /* simply invalid in expressions */
+    {"<no-expression>", 0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
+};
+
 /***********************************************************************
  * Type sizes used at multiple points in the IR codegen
  */
 
-const char *type_name[TYPE_COUNT] = {
-    "void",
-    "string",
-    "float",
-    "vector",
-    "entity",
-    "field",
-    "function",
-    "pointer",
-    "integer",
-    "variant",
-    "struct",
-    "union",
-    "array",
-
-    "nil",
-    "<no-expression>"
-};
-
-static size_t type_sizeof_[TYPE_COUNT] = {
-    1, /* TYPE_VOID     */
-    1, /* TYPE_STRING   */
-    1, /* TYPE_FLOAT    */
-    3, /* TYPE_VECTOR   */
-    1, /* TYPE_ENTITY   */
-    1, /* TYPE_FIELD    */
-    1, /* TYPE_FUNCTION */
-    1, /* TYPE_POINTER  */
-    1, /* TYPE_INTEGER  */
-    3, /* TYPE_VARIANT  */
-    0, /* TYPE_STRUCT   */
-    0, /* TYPE_UNION    */
-    0, /* TYPE_ARRAY    */
-    0, /* TYPE_NIL      */
-    0, /* TYPE_NOESPR   */
-};
-
-const uint16_t type_store_instr[TYPE_COUNT] = {
-    INSTR_STORE_F, /* should use I when having integer support */
-    INSTR_STORE_S,
-    INSTR_STORE_F,
-    INSTR_STORE_V,
-    INSTR_STORE_ENT,
-    INSTR_STORE_FLD,
-    INSTR_STORE_FNC,
-    INSTR_STORE_ENT, /* should use I */
-#if 0
-    INSTR_STORE_I, /* integer type */
-#else
-    INSTR_STORE_F,
-#endif
-
-    INSTR_STORE_V, /* variant, should never be accessed */
-
-    VINSTR_END, /* struct */
-    VINSTR_END, /* union  */
-    VINSTR_END, /* array  */
-    VINSTR_END, /* nil    */
-    VINSTR_END, /* noexpr */
-};
-
-const uint16_t field_store_instr[TYPE_COUNT] = {
-    INSTR_STORE_FLD,
-    INSTR_STORE_FLD,
-    INSTR_STORE_FLD,
-    INSTR_STORE_V,
-    INSTR_STORE_FLD,
-    INSTR_STORE_FLD,
-    INSTR_STORE_FLD,
-    INSTR_STORE_FLD,
-#if 0
-    INSTR_STORE_FLD, /* integer type */
-#else
-    INSTR_STORE_FLD,
-#endif
-
-    INSTR_STORE_V, /* variant, should never be accessed */
-
-    VINSTR_END, /* struct */
-    VINSTR_END, /* union  */
-    VINSTR_END, /* array  */
-    VINSTR_END, /* nil    */
-    VINSTR_END, /* noexpr */
-};
-
-const uint16_t type_storep_instr[TYPE_COUNT] = {
-    INSTR_STOREP_F, /* should use I when having integer support */
-    INSTR_STOREP_S,
-    INSTR_STOREP_F,
-    INSTR_STOREP_V,
-    INSTR_STOREP_ENT,
-    INSTR_STOREP_FLD,
-    INSTR_STOREP_FNC,
-    INSTR_STOREP_ENT, /* should use I */
-#if 0
-    INSTR_STOREP_ENT, /* integer type */
-#else
-    INSTR_STOREP_F,
-#endif
-
-    INSTR_STOREP_V, /* variant, should never be accessed */
-
-    VINSTR_END, /* struct */
-    VINSTR_END, /* union  */
-    VINSTR_END, /* array  */
-    VINSTR_END, /* nil    */
-    VINSTR_END, /* noexpr */
-};
-
-const uint16_t type_eq_instr[TYPE_COUNT] = {
-    INSTR_EQ_F, /* should use I when having integer support */
-    INSTR_EQ_S,
-    INSTR_EQ_F,
-    INSTR_EQ_V,
-    INSTR_EQ_E,
-    INSTR_EQ_E, /* FLD has no comparison */
-    INSTR_EQ_FNC,
-    INSTR_EQ_E, /* should use I */
-#if 0
-    INSTR_EQ_I,
-#else
-    INSTR_EQ_F,
-#endif
-
-    INSTR_EQ_V, /* variant, should never be accessed */
-
-    VINSTR_END, /* struct */
-    VINSTR_END, /* union  */
-    VINSTR_END, /* array  */
-    VINSTR_END, /* nil    */
-    VINSTR_END, /* noexpr */
-};
-
-const uint16_t type_ne_instr[TYPE_COUNT] = {
-    INSTR_NE_F, /* should use I when having integer support */
-    INSTR_NE_S,
-    INSTR_NE_F,
-    INSTR_NE_V,
-    INSTR_NE_E,
-    INSTR_NE_E, /* FLD has no comparison */
-    INSTR_NE_FNC,
-    INSTR_NE_E, /* should use I */
-#if 0
-    INSTR_NE_I,
-#else
-    INSTR_NE_F,
-#endif
-
-    INSTR_NE_V, /* variant, should never be accessed */
-
-    VINSTR_END, /* struct */
-    VINSTR_END, /* union  */
-    VINSTR_END, /* array  */
-    VINSTR_END, /* nil    */
-    VINSTR_END, /* noexpr */
-};
-
-const uint16_t type_not_instr[TYPE_COUNT] = {
-    INSTR_NOT_F, /* should use I when having integer support */
-    VINSTR_END,  /* not to be used, depends on string related -f flags */
-    INSTR_NOT_F,
-    INSTR_NOT_V,
-    INSTR_NOT_ENT,
-    INSTR_NOT_ENT,
-    INSTR_NOT_FNC,
-    INSTR_NOT_ENT, /* should use I */
-#if 0
-    INSTR_NOT_I, /* integer type */
-#else
-    INSTR_NOT_F,
-#endif
-
-    INSTR_NOT_V, /* variant, should never be accessed */
-
-    VINSTR_END, /* struct */
-    VINSTR_END, /* union  */
-    VINSTR_END, /* array  */
-    VINSTR_END, /* nil    */
-    VINSTR_END, /* noexpr */
-};
+QC_TYPE_FLD(type_sizeof_, m_size);
 
 /* protos */
 static void            ir_function_dump(ir_function*, char *ind, int (*oprintf)(const char*,...));

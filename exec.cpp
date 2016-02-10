@@ -597,27 +597,6 @@ cleanup:
 
 #include <math.h>
 
-const char *type_name[TYPE_COUNT] = {
-    "void",
-    "string",
-    "float",
-    "vector",
-    "entity",
-    "field",
-    "function",
-    "pointer",
-    "integer",
-
-    "variant",
-
-    "struct",
-    "union",
-    "array",
-
-    "nil",
-    "noexpr"
-};
-
 struct qcvm_parameter {
     int         vtype;
     const char *value;
