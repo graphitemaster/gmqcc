@@ -30,6 +30,7 @@ struct fold {
     static ast_expression *binary(lex_ctx_t ctx, int op, ast_expression *left, ast_expression *right);
 
     ast_expression *constgen_float(qcfloat_t value, bool inexact);
+    ast_expression *constgen_int(qcint_t value);
     ast_expression *constgen_vector(vec3_t value);
     ast_expression *constgen_string(const char *str, bool translate);
     ast_expression *constgen_string(const std::string &str, bool translate);
@@ -96,6 +97,7 @@ private:
     friend struct intrin;
 
     std::vector<ast_value*> m_imm_float;
+    std::vector<ast_value*> m_imm_int;
     std::vector<ast_value*> m_imm_vector;
     std::vector<ast_value*> m_imm_string;
     hash_table_t *m_imm_string_untranslate; /* map<string, ast_value*> */

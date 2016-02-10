@@ -100,6 +100,8 @@ bool ast_expression::compareType(const ast_expression &other) const
     if (m_vtype == TYPE_NIL ||
         other.m_vtype == TYPE_NIL)
         return true;
+    if (m_vtype == TYPE_BOOL && (other.m_vtype == TYPE_INTEGER || other.m_vtype == TYPE_FLOAT)) return true;
+    if (m_vtype == TYPE_INTEGER && other.m_vtype == TYPE_FLOAT) return true;
     if (m_vtype != other.m_vtype)
         return false;
     if (!m_next != !other.m_next)
@@ -317,15 +319,15 @@ ast_binary::ast_binary(lex_ctx_t ctx, int op,
     propagateSideEffects(right);
 
     if (op >= INSTR_EQ_F && op <= INSTR_GT)
-        m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_BOOL;
     else if (op == INSTR_AND || op == INSTR_OR) {
         if (OPTS_FLAG(PERL_LOGIC))
             adoptType(*right);
         else
-            m_vtype = TYPE_FLOAT;
+            m_vtype = TYPE_BOOL;
     }
     else if (op == INSTR_BITAND || op == INSTR_BITOR)
-        m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_INTEGER;
     else if (op == INSTR_MUL_VF || op == INSTR_MUL_FV)
         m_vtype = TYPE_VECTOR;
     else if (op == INSTR_MUL_V)
@@ -392,7 +394,7 @@ ast_unary::ast_unary(lex_ctx_t ctx, int op, ast_expression *expr)
 {
     propagateSideEffects(expr);
     if ((op >= INSTR_NOT_F && op <= INSTR_NOT_FNC) || op == VINSTR_NEG_F) {
-        m_vtype = TYPE_FLOAT;
+        m_vtype = TYPE_BOOL;
     } else if (op == VINSTR_NEG_V) {
         m_vtype = TYPE_VECTOR;
     } else {
@@ -1041,6 +1043,8 @@ bool ast_value::setGlobalArray()
     for (i = 0; i != count; ++i) {
         switch (m_next->m_vtype) {
             case TYPE_FLOAT:
+            case TYPE_INTEGER:
+            case TYPE_BOOL:
                 if (!m_ir_values[i]->setFloat(m_initlist[i].vfloat))
                     return false;
                 break;
@@ -1138,6 +1142,8 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
         switch (m_vtype)
         {
             case TYPE_FLOAT:
+            case TYPE_INTEGER:
+            case TYPE_BOOL:
                 if (!v->setFloat(m_constval.vfloat))
                     return false;
                 break;
@@ -1397,6 +1403,8 @@ bool ast_value::generateLocal(ir_function *func, bool param)
         switch (m_vtype)
         {
             case TYPE_FLOAT:
+            case TYPE_INTEGER:
+            case TYPE_BOOL:
                 if (!v->setFloat(m_constval.vfloat))
                     goto error;
                 break;
@@ -2187,15 +2195,15 @@ bool ast_array_index::codegen(ast_function *func, bool lvalue, ir_value **out)
         }
         *out = arr->m_ir_values[arridx];
     }
-    else if (idx->m_vtype == TYPE_INTEGER) {
-        unsigned int arridx = idx->m_constval.vint;
-        if (arridx >= m_array->m_count)
-        {
-            compile_error(m_context, "array index out of bounds: %i", arridx);
-            return false;
-        }
-        *out = arr->m_ir_values[arridx];
-    }
+//    else if (idx->m_vtype == TYPE_INTEGER) {
+//        unsigned int arridx = idx->m_constval.vint;
+//        if (arridx >= m_array->m_count)
+//        {
+//            compile_error(m_context, "array index out of bounds: %i", arridx);
+//            return false;
+//        }
+//        *out = arr->m_ir_values[arridx];
+//    }
     else {
         compile_error(m_context, "array indexing here needs an integer constant");
         return false;

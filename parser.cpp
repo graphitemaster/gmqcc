@@ -936,7 +936,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
                     compile_error(ctx, "invalid types in assignment: cannot assign %s to %s", ty2, ty1);
                 }
-                else if (!exprs[0]->compareType(*exprs[1]))
+                else if (!exprs[1]->compareType(*exprs[0]))
                 {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
                     ast_type_to_string(exprs[1], ty2, sizeof(ty2));
@@ -1573,7 +1573,7 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         return true;
     }
     else if (parser->tok == TOKEN_INTCONST || parser->tok == TOKEN_CHARCONST) {
-        ast_expression *val = parser->m_fold.constgen_float((qcfloat_t)(parser_token(parser)->constval.i), false);
+        ast_expression *val = parser->m_fold.constgen_int(parser_token(parser)->constval.i);
         if (!val)
             return false;
         sy->out.push_back(syexp(parser_ctx(parser), val));
@@ -6018,6 +6018,18 @@ parser_t *parser_create()
     if (OPTS_FLAG(UNTYPED_NIL))
         util_htset(parser->htglobals, "nil", (void*)parser->nil);
 
+    parser->const_true = new ast_value(empty_ctx, "true", TYPE_BOOL);
+    parser->const_true->m_cvq = CV_CONST;
+    parser->const_true->m_hasvalue = true;
+    parser->const_true->m_constval.vfloat = 1;
+    util_htset(parser->htglobals, "true", (void *) parser->const_true);
+
+    parser->const_false = new ast_value(empty_ctx, "false", TYPE_BOOL);
+    parser->const_false->m_cvq = CV_CONST;
+    parser->const_false->m_hasvalue = true;
+    parser->const_false->m_constval.vfloat = 0;
+    util_htset(parser->htglobals, "false", (void *) parser->const_false);
+
     parser->max_param_count = 1;
 
     parser->const_vec[0] = new ast_value(empty_ctx, "<vector.x>", TYPE_NOEXPR);
@@ -6123,6 +6135,9 @@ static void parser_remove_ast(parser_t *parser)
     vec_free(parser->_block_ctx);
 
     delete parser->nil;
+
+    delete parser->const_true;
+    delete parser->const_false;
 
     delete parser->const_vec[0];
     delete parser->const_vec[1];
@@ -6303,6 +6318,8 @@ bool parser_finish(parser_t *parser, const char *output)
         delete ir;
         return false;
     }
+    parser->const_true->generateGlobal(ir, false);
+    parser->const_false->generateGlobal(ir, false);
     for (auto &f : parser->functions) {
         if (!f->generateFunction(ir)) {
             con_out("failed to generate function %s\n", f->m_name.c_str());

@@ -932,6 +932,8 @@ bool fold::generate(ir_builder *ir) {
     ast_value *cur;
     for (auto &it : m_imm_float)
         if (!(cur = it)->generateGlobal(ir, false)) goto err;
+    for (auto &it : m_imm_int)
+        if (!(cur = it)->generateGlobal(ir, false)) goto err;
     for (auto &it : m_imm_vector)
         if (!(cur = it)->generateGlobal(ir, false)) goto err;
     for (auto &it : m_imm_string)
@@ -947,6 +949,7 @@ fold::~fold() {
 // TODO: parser lifetime so this is called when it should be
 #if 0
     for (auto &it : m_imm_float) ast_delete(it);
+    for (auto &it : m_imm_int) ast_delete(it);
     for (auto &it : m_imm_vector) ast_delete(it);
     for (auto &it : m_imm_string) ast_delete(it);
 
@@ -967,6 +970,22 @@ ast_expression *fold::constgen_float(qcfloat_t value, bool inexact) {
     out->m_constval.vfloat = value;
 
     m_imm_float.push_back(out);
+
+    return out;
+}
+
+ast_expression *fold::constgen_int(qcint_t value_) {
+    qcfloat_t value = (qcfloat_t) value_;
+    for (auto &it : m_imm_int)
+        if (!memcmp(&it->m_constval.vfloat, &value, sizeof(qcfloat_t)))
+            return it;
+
+    ast_value *out  = new ast_value(ctx(), "#IMMEDIATE", TYPE_INTEGER);
+    out->m_cvq = CV_CONST;
+    out->m_hasvalue = true;
+    out->m_constval.vfloat = value;
+
+    m_imm_int.push_back(out);
 
     return out;
 }

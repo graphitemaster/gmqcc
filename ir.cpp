@@ -24,6 +24,7 @@ const qc_type_s qc_types[] = {
     {"nil",             0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
     /* simply invalid in expressions */
     {"<no-expression>", 0, VINSTR_END,      VINSTR_END,         VINSTR_END,         VINSTR_END,     VINSTR_END,     VINSTR_END,     },
+    {"bool",            1, INSTR_STORE_F,   INSTR_STORE_FLD,    INSTR_STOREP_F,     INSTR_EQ_F,     INSTR_NE_F,     INSTR_NOT_F,    },
 };
 
 /***********************************************************************
@@ -781,7 +782,7 @@ size_t ir_value::size() const {
 
 bool ir_value::setFloat(float f)
 {
-    if (m_vtype != TYPE_FLOAT)
+    if (m_vtype != TYPE_FLOAT && m_vtype != TYPE_INTEGER && m_vtype != TYPE_BOOL)
         return false;
     m_constval.vfloat = f;
     m_hasvalue = true;
@@ -3248,6 +3249,8 @@ bool ir_builder::generateGlobal(ir_value *global, bool islocal)
     case TYPE_ENTITY:
         /* fall through */
     case TYPE_FLOAT:
+    case TYPE_INTEGER:
+    case TYPE_BOOL:
     {
         global->setCodeAddress(m_code->globals.size());
         if (global->m_hasvalue) {

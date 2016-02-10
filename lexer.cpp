@@ -1308,6 +1308,9 @@ int lex_do(lex_file *lex)
         } else if (!strcmp(v, "float")) {
             lex->tok.ttype = TOKEN_TYPENAME;
             lex->tok.constval.t = TYPE_FLOAT;
+        } else if (!strcmp(v, "bool")) {
+            lex->tok.ttype = TOKEN_TYPENAME;
+            lex->tok.constval.t = TYPE_BOOL;
         } else if (!strcmp(v, "string")) {
             lex->tok.ttype = TOKEN_TYPENAME;
             lex->tok.constval.t = TYPE_STRING;

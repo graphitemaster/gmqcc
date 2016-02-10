@@ -294,6 +294,7 @@ enum qc_type {
     TYPE_ARRAY    ,
     TYPE_NIL      ,
     TYPE_NOEXPR   ,
+    TYPE_BOOL     ,
 };
 
 /* const/var qualifiers */

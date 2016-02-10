@@ -29,6 +29,8 @@ struct parser_t {
 
     ast_value *nil;
     ast_value *reserved_version;
+    ast_value *const_true;
+    ast_value *const_false;
 
     size_t crc_globals;
     size_t crc_fields;
