@@ -1,17 +1,10 @@
 *.o
+*.d
 *.orig
 *.rej
 *.patch
 *.diff
 *.exe
-
-distro/archlinux/*
-distro/archbsd/*
-!distro/archlinux/git/PKGBUILD
-!distro/archlinux/release/PKGBUILD
-!distro/archbsd/release/PKGBUILD
-!distro/archbsd/git/PKGBUILD
-!distro/archlinux/this/Makefile
 
 gmqcc
 gmqpak
