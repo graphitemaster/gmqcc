@@ -508,7 +508,7 @@ static GMQCC_INLINE void sfloat_check(lex_ctx_t ctx, sfloat_state_t *state, cons
             compile_error(ctx, "arithmetic overflow in `%s' component", vec);
         if (state->exceptionflags & SFLOAT_UNDERFLOW)
             compile_error(ctx, "arithmetic underflow in `%s' component", vec);
-            return;
+        return;
     }
     if (state->exceptionflags & SFLOAT_DIVBYZERO)
         compile_error(ctx, "division by zero");
