@@ -631,6 +631,13 @@ bool ir_function_finalize(ir_function *self)
     if (self->m_builtin)
         return true;
 
+    for (auto& lp : self->m_locals) {
+        ir_value *v = lp.get();
+        if (v->m_reads.empty() && v->m_writes.size()
+            && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
+                        "unused variable: `%s`", v->m_name.c_str())) return false;
+    }
+
     if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
         if (!ir_function_pass_peephole(self)) {
             irerror(self->m_context, "generic optimization pass broke something in `%s`", self->m_name.c_str());
