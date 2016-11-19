@@ -6226,7 +6226,7 @@ bool parser_finish(parser_t *parser, const char *output)
         if (!ast_istype(it, ast_value))
             continue;
         asvalue = (ast_value*)it;
-        if (!asvalue->m_uses && asvalue->m_vtype != TYPE_FUNCTION) {
+        if (!asvalue->m_uses && asvalue->m_cvq != CV_CONST && asvalue->m_vtype != TYPE_FUNCTION) {
             retval = retval && !compile_warning(asvalue->m_context, WARN_UNUSED_VARIABLE,
                                                 "unused global: `%s`", asvalue->m_name);
         }
