@@ -914,7 +914,7 @@ ir_value* ir_value::vectorMember(unsigned int member)
         m = new ir_value(move(name), m_store, TYPE_FIELD);
         if (!m)
             return nullptr;
-        m->m_fieldtype = TYPE_FLOAT;
+        m->m_fieldtype = TYPE_VECTOR;
         m->m_context = m_context;
 
         m_members[member] = m;
