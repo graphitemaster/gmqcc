@@ -2098,13 +2098,45 @@ bool ast_member::codegen(ast_function *func, bool lvalue, ir_value **out)
         compile_error(m_context, "not an l-value (member access)");
         return false;
     }
-    if (m_outl) {
+    if (lvalue && m_outl) {
         *out = m_outl;
         return true;
     }
+    if (!lvalue && m_outr) {
+        *out = m_outr;
+        return true;
+    }
 
-    if (!m_owner->codegen(func, false, &vec))
-        return false;
+    if (ast_istype(m_owner, ast_entfield)) {
+        ir_value *ent, *field;
+        auto entfield = reinterpret_cast<ast_entfield*>(m_owner);
+        if (!entfield->m_entity->codegen(func, false, &ent))
+            return false;
+        if (!entfield->m_field->codegen(func, false, &vec))
+            return false;
+        field = vec->vectorMember(m_field);
+        if (lvalue) {
+            *out = ir_block_create_fieldaddress(func->m_curblock, m_context, func->makeLabel("mefa"),
+                                                ent, field);
+        } else {
+            *out = ir_block_create_load_from_ent(func->m_curblock, m_context, func->makeLabel("mefv"),
+                                                 ent, field, m_vtype);
+        }
+        if (!*out) {
+            compile_error(m_context, "failed to create %s instruction (output type %s)",
+                     (lvalue ? "ADDRESS" : "FIELD"),
+                     type_name[m_vtype]);
+            return false;
+        }
+        if (lvalue)
+            m_outl = *out;
+        else
+            m_outr = *out;
+        return (*out != nullptr);
+    } else {
+        if (!m_owner->codegen(func, false, &vec))
+            return false;
+    }
 
     if (vec->m_vtype != TYPE_VECTOR &&
         !(vec->m_vtype == TYPE_FIELD && m_owner->m_next->m_vtype == TYPE_VECTOR))
