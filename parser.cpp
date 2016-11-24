@@ -3120,6 +3120,52 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
                 return false;
             }
             swcase.m_value = parse_expression_leave(parser, false, false, false);
+
+            if (!operand->compareType(*swcase.m_value)) {
+                char ty1[1024];
+                char ty2[1024];
+
+                ast_type_to_string(swcase.m_value, ty1, sizeof ty1);
+                ast_type_to_string(operand, ty2, sizeof ty2);
+
+                auto fnLiteral = [](ast_expression *expression) -> char* {
+                    if (!ast_istype(expression, ast_value))
+                        return nullptr;
+                    ast_value *value = (ast_value *)expression;
+                    if (!value->m_hasvalue)
+                        return nullptr;
+                    char *string = nullptr;
+                    basic_value_t *constval = &value->m_constval;
+                    switch (value->m_vtype)
+                    {
+                    case TYPE_FLOAT:
+                        util_asprintf(&string, "%.2f", constval->vfloat);
+                        return string;
+                    case TYPE_VECTOR:
+                        util_asprintf(&string, "'%.2f %.2f %.2f'",
+                            constval->vvec.x,
+                            constval->vvec.y,
+                            constval->vvec.z);
+                        return string;
+                    case TYPE_STRING:
+                        util_asprintf(&string, "\"%s\"", constval->vstring);
+                        return string;
+                    default:
+                        break;
+                    }
+                    return nullptr;
+                };
+
+                char *literal = fnLiteral(swcase.m_value);
+                if (literal)
+                    compile_error(parser_ctx(parser), "incompatible type `%s` for switch case `%s` expected `%s`", ty1, literal, ty2);
+                else
+                    compile_error(parser_ctx(parser), "incompatible type `%s` for switch case expected `%s`", ty1, ty2);
+                mem_d(literal);
+                delete switchnode;
+                return false;
+            }
+
             if (!swcase.m_value) {
                 delete switchnode;
                 parseerror(parser, "expected expression for case");
