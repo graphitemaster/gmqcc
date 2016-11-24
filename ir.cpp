@@ -656,8 +656,7 @@ bool ir_function_finalize(ir_function *self)
                             return false;
             }
             // just a standard variable
-            else if (v->m_name[0] != '#'
-                && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
+            else if (irwarning(v->m_context, WARN_UNUSED_VARIABLE,
                     "unused variable: `%s`", v->m_name.c_str())) return false;
         }
     }

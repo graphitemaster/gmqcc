@@ -2630,6 +2630,7 @@ static bool parse_return(parser_t *parser, ast_block *block, ast_expression **ou
             retval = new ast_value(ctx, "#LOCAL_RETURN", TYPE_VOID);
             retval->adoptType(*expected->m_next);
             parser->function->m_return_value = retval;
+            parser->function->m_return_value->m_flags |= AST_FLAG_NOREF;
         }
 
         if (!exp->compareType(*retval)) {
