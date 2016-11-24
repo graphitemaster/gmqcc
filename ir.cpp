@@ -633,9 +633,32 @@ bool ir_function_finalize(ir_function *self)
 
     for (auto& lp : self->m_locals) {
         ir_value *v = lp.get();
-        if (v->m_reads.empty() && v->m_writes.size()
-            && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
-                        "unused variable: `%s`", v->m_name.c_str())) return false;
+        if (v->m_reads.empty() && v->m_writes.size()) {
+            // if it's a vector check to ensure all it's members are unused before
+            // claiming it's unused, otherwise skip the vector entierly
+            if (v->m_vtype == TYPE_VECTOR)
+            {
+                size_t mask = (1 << 0) | (1 << 1) | (1 << 2), bits = 0;
+                for (size_t i = 0; i < 3; i++)
+                    if (!v->m_members[i] || (v->m_members[i]->m_reads.empty()
+                        && v->m_members[i]->m_writes.size()))
+                        bits |= (1 << i);
+                // all components are unused so just report the vector
+                if (bits == mask && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
+                    "unused variable: `%s`", v->m_name.c_str()))
+                    return false;
+                else if (bits != mask)
+                    // individual components are unused so mention them
+                    for (size_t i = 0; i < 3; i++)
+                        if ((bits & (1 << i))
+                            && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
+                                "unused variable: `%s.%c`", v->m_name.c_str(), "xyz"[i]))
+                            return false;
+            }
+            // just a standard variable
+            else if (irwarning(v->m_context, WARN_UNUSED_VARIABLE,
+                "unused variable: `%s`", v->m_name.c_str())) return false;
+        }
     }
 
     if (OPTS_OPTIMIZATION(OPTIM_PEEPHOLE)) {
