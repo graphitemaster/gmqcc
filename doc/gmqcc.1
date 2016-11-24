@@ -186,6 +186,9 @@ variables can be opened using
 .Ql #pragma noref 1
 and closed via
 .Ql #pragma noref 0 Ns .
+.It Fl W Ns Cm unused-component
+Generate a warning about vector variables which are declared but not all their
+components are used.
 .It Fl W Ns Cm used-uninitialized
 Generate a warning if it is possible that a variable can be used
 without prior initialization. Note that this warning is not

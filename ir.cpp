@@ -651,13 +651,14 @@ bool ir_function_finalize(ir_function *self)
                     // individual components are unused so mention them
                     for (size_t i = 0; i < 3; i++)
                         if ((bits & (1 << i))
-                            && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
-                                "unused variable: `%s.%c`", v->m_name.c_str(), "xyz"[i]))
+                            && irwarning(v->m_context, WARN_UNUSED_COMPONENT,
+                                "unused vector component: `%s.%c`", v->m_name.c_str(), "xyz"[i]))
                             return false;
             }
             // just a standard variable
-            else if (irwarning(v->m_context, WARN_UNUSED_VARIABLE,
-                "unused variable: `%s`", v->m_name.c_str())) return false;
+            else if (v->m_name[0] != '#'
+                && irwarning(v->m_context, WARN_UNUSED_VARIABLE,
+                    "unused variable: `%s`", v->m_name.c_str())) return false;
         }
     }
 

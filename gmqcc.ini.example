@@ -348,13 +348,18 @@
 
 [warnings]
     #Generate a warning about variables which are declared but never
-    #used.  This can be avoided by adding the ‘noref’ keyword in front
+    #used. This can be avoided by adding the ‘noref’ keyword in front
     #of the variable declaration. Additionally a complete section of
     #unreferenced variables can be opened using ‘#pragma noref 1’ and
     #closed via ‘#pragma noref 0’.
 
     UNUSED_VARIABLE = false
 
+
+    #Generate a warning about vector variables which are declared but
+    #components of it are never used.
+
+    UNUSED_COMPONENT = false
 
     #Generate a warning if it is possible that a variable can be used
     #without prior initialization. Note that this warning is not nec‐
