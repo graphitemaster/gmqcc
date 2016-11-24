@@ -6324,11 +6324,15 @@ bool parser_finish(parser_t *parser, const char *output)
     }
     parser_remove_ast(parser);
 
-    if (compile_Werrors) {
-        con_out("*** there were warnings treated as errors\n");
-        compile_show_werrors();
-        retval = false;
-    }
+    auto fnCheckWErrors = [&retval]() {
+        if (compile_Werrors) {
+            con_out("*** there were warnings treated as errors\n");
+            compile_show_werrors();
+            retval = false;
+        }
+    };
+
+    fnCheckWErrors();
 
     if (retval) {
         if (OPTS_OPTION_BOOL(OPTION_DUMPFIN))
@@ -6339,6 +6343,9 @@ bool parser_finish(parser_t *parser, const char *output)
             delete ir;
             return false;
         }
+
+        // ir->generate can generate compiler warnings
+        fnCheckWErrors();
     }
     delete ir;
     return retval;
