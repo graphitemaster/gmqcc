@@ -638,7 +638,7 @@ bool ir_function_finalize(ir_function *self)
             // claiming it's unused, otherwise skip the vector entierly
             if (v->m_vtype == TYPE_VECTOR)
             {
-                size_t mask = (1 << 0) | (1 << 1) | (1 << 2), bits = 0;
+                size_t mask = (1 << 3) - 1, bits = 0;
                 for (size_t i = 0; i < 3; i++)
                     if (!v->m_members[i] || (v->m_members[i]->m_reads.empty()
                         && v->m_members[i]->m_writes.size()))
