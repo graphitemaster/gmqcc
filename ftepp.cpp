@@ -920,7 +920,7 @@ static bool ftepp_macro_call(ftepp_t *ftepp, ppmacro *macro)
     if ( vec_size(params) < vec_size(macro->params) ||
         (vec_size(params) > vec_size(macro->params) && !macro->variadic) )
     {
-        ftepp_error(ftepp, "macro %s expects%s %u paramteters, %u provided", macro->name,
+        ftepp_error(ftepp, "macro %s expects%s %u parameters, %u provided", macro->name,
                     (macro->variadic ? " at least" : ""),
                     (unsigned int)vec_size(macro->params),
                     (unsigned int)vec_size(params));
