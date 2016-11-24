@@ -62,6 +62,12 @@ enum {
     AST_FLAG_COVERAGE       = 1 << 12,
     AST_FLAG_BLOCK_COVERAGE = 1 << 13,
 
+    /*
+     * Propagates norefness to the IR so the unused (read/write) check can be
+     * more intelligently done.
+     */
+    AST_FLAG_NOREF          = 1 << 14,
+
     AST_FLAG_LAST,
     AST_FLAG_TYPE_MASK      = (AST_FLAG_VARIADIC | AST_FLAG_NORETURN),
     AST_FLAG_COVERAGE_MASK  = (AST_FLAG_BLOCK_COVERAGE)
@@ -222,9 +228,6 @@ struct ast_value : ast_expression
      * was provided.
      */
     std::vector<basic_value_t> m_initlist;
-
-    /* usecount for the parser */
-    size_t m_uses = 0;
 
     ir_value *m_ir_v = nullptr;
     std::vector<ir_value*> m_ir_values;

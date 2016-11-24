@@ -633,7 +633,7 @@ bool ir_function_finalize(ir_function *self)
 
     for (auto& lp : self->m_locals) {
         ir_value *v = lp.get();
-        if (v->m_reads.empty() && v->m_writes.size()) {
+        if (v->m_reads.empty() && v->m_writes.size() && !(v->m_flags & IR_FLAG_NOREF)) {
             // if it's a vector check to ensure all it's members are unused before
             // claiming it's unused, otherwise skip the vector entierly
             if (v->m_vtype == TYPE_VECTOR)

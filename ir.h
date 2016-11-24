@@ -27,8 +27,8 @@ enum {
     IR_FLAG_INCLUDE_DEF             = 1 << 3,
     IR_FLAG_ERASABLE                = 1 << 4,
     IR_FLAG_BLOCK_COVERAGE          = 1 << 5,
-
-    IR_FLAG_SPLIT_VECTOR            = 1 << 6,
+    IR_FLAG_NOREF                   = 1 << 6,
+    IR_FLAG_SPLIT_VECTOR            = 1 << 7,
 
     IR_FLAG_LAST,
     IR_FLAG_MASK_NO_OVERLAP      = (IR_FLAG_HAS_ARRAYS | IR_FLAG_HAS_UNINITIALIZED),

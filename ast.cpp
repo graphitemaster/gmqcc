@@ -1132,6 +1132,8 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
         m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
     if (m_flags & AST_FLAG_ERASEABLE)
         m_ir_v->m_flags |= IR_FLAG_ERASABLE;
+    if (m_flags & AST_FLAG_NOREF)
+        m_ir_v->m_flags |= IR_FLAG_NOREF;
 
     /* initialize */
     if (m_hasvalue) {
@@ -1236,6 +1238,8 @@ bool ast_value::generateGlobalField(ir_builder *ir)
             m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
         if (m_flags & AST_FLAG_ERASEABLE)
             m_ir_v->m_flags |= IR_FLAG_ERASABLE;
+        if (m_flags & AST_FLAG_NOREF)
+            m_ir_v->m_flags |= IR_FLAG_NOREF;
 
         const size_t namelen = m_name.length();
         std::unique_ptr<char[]> name(new char[namelen+16]);
@@ -1254,7 +1258,9 @@ bool ast_value::generateGlobalField(ir_builder *ir)
             array->m_ir_values[ai]->m_unique_life = true;
             array->m_ir_values[ai]->m_locked      = true;
             if (m_flags & AST_FLAG_INCLUDE_DEF)
-                m_ir_values[ai]->m_flags |= IR_FLAG_INCLUDE_DEF;
+                array->m_ir_values[ai]->m_flags |= IR_FLAG_INCLUDE_DEF;
+            if (m_flags & AST_FLAG_NOREF)
+                array->m_ir_values[ai]->m_flags |= IR_FLAG_NOREF;
         }
     }
     else
@@ -1266,9 +1272,10 @@ bool ast_value::generateGlobalField(ir_builder *ir)
         m_ir_v = v;
         if (m_flags & AST_FLAG_INCLUDE_DEF)
             m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
-
         if (m_flags & AST_FLAG_ERASEABLE)
             m_ir_v->m_flags |= IR_FLAG_ERASABLE;
+        if (m_flags & AST_FLAG_NOREF)
+            m_ir_v->m_flags |= IR_FLAG_NOREF;
     }
     return true;
 }
@@ -1299,7 +1306,9 @@ ir_value *ast_value::prepareGlobalArray(ir_builder *ir)
     if (m_flags & AST_FLAG_INCLUDE_DEF)
         v->m_flags |= IR_FLAG_INCLUDE_DEF;
     if (m_flags & AST_FLAG_ERASEABLE)
-        m_ir_v->m_flags |= IR_FLAG_ERASABLE;
+        v->m_flags |= IR_FLAG_ERASABLE;
+    if (m_flags & AST_FLAG_NOREF)
+        v->m_flags |= IR_FLAG_NOREF;
 
     const size_t namelen = m_name.length();
     std::unique_ptr<char[]> name(new char[namelen+16]);
@@ -1319,6 +1328,8 @@ ir_value *ast_value::prepareGlobalArray(ir_builder *ir)
         m_ir_values[ai]->m_locked      = true;
         if (m_flags & AST_FLAG_INCLUDE_DEF)
             m_ir_values[ai]->m_flags |= IR_FLAG_INCLUDE_DEF;
+        if (m_flags & AST_FLAG_NOREF)
+            m_ir_values[ai]->m_flags |= IR_FLAG_NOREF;
     }
 
     return v;
@@ -1365,6 +1376,9 @@ bool ast_value::generateLocal(ir_function *func, bool param)
         v->m_unique_life = true;
         v->m_locked      = true;
 
+        if (m_flags & AST_FLAG_NOREF)
+            v->m_flags |= IR_FLAG_NOREF;
+
         const size_t namelen = m_name.length();
         std::unique_ptr<char[]> name(new char[namelen+16]);
         util_strncpy(name.get(), m_name.c_str(), namelen);
@@ -1379,7 +1393,10 @@ bool ast_value::generateLocal(ir_function *func, bool param)
             }
             m_ir_values[ai]->m_context = m_context;
             m_ir_values[ai]->m_unique_life = true;
-            m_ir_values[ai]->m_locked      = true;
+            m_ir_values[ai]->m_locked = true;
+
+            if (m_flags & AST_FLAG_NOREF)
+                m_ir_values[ai]->m_flags |= IR_FLAG_NOREF;
         }
     }
     else
@@ -1417,6 +1434,9 @@ bool ast_value::generateLocal(ir_function *func, bool param)
     // link us to the ir_value
     v->m_cvq = m_cvq;
     m_ir_v = v;
+
+    if (m_flags & AST_FLAG_NOREF)
+        m_ir_v->m_flags |= IR_FLAG_NOREF;
 
     if (!generateAccessors(func->m_owner))
         return false;

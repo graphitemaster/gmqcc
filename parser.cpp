@@ -1668,13 +1668,16 @@ static bool parse_sya_operand(parser_t *parser, shunt *sy, bool with_labels)
         }
         else
         {
-            if (ast_istype(var, ast_value)) {
-                ((ast_value*)var)->m_uses++;
+            // promote these to norefs
+            if (ast_istype(var, ast_value))
+            {
+                ((ast_value *)var)->m_flags |= AST_FLAG_NOREF;
             }
-            else if (ast_istype(var, ast_member)) {
-                ast_member *mem = (ast_member*)var;
+            else if (ast_istype(var, ast_member))
+            {
+                ast_member *mem = (ast_member *)var;
                 if (ast_istype(mem->m_owner, ast_value))
-                    ((ast_value*)(mem->m_owner))->m_uses++;
+                    ((ast_value *)mem->m_owner)->m_flags |= AST_FLAG_NOREF;
             }
         }
         sy->out.push_back(syexp(parser_ctx(parser), var));
@@ -2020,15 +2023,8 @@ static bool parser_leaveblock(parser_t *parser)
 
     locals = vec_last(parser->_blocklocals);
     vec_pop(parser->_blocklocals);
-    while (vec_size(parser->_locals) != locals) {
-        ast_expression *e = vec_last(parser->_locals);
-        ast_value      *v = (ast_value*)e;
+    while (vec_size(parser->_locals) != locals)
         vec_pop(parser->_locals);
-        if (ast_istype(e, ast_value) && !v->m_uses) {
-            if (compile_warning(v->m_context, WARN_UNUSED_VARIABLE, "unused variable: `%s`", v->m_name))
-                rv = false;
-        }
-    }
 
     typedefs = vec_last(parser->_blocktypedefs);
     while (vec_size(parser->_typedefs) != typedefs) {
@@ -5232,12 +5228,12 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             /* Deal with end_sys_ vars */
             was_end = false;
             if (var->m_name == "end_sys_globals") {
-                var->m_uses++;
+                var->m_flags |= AST_FLAG_NOREF;
                 parser->crc_globals = parser->globals.size();
                 was_end = true;
             }
             else if (var->m_name == "end_sys_fields") {
-                var->m_uses++;
+                var->m_flags |= AST_FLAG_NOREF;
                 parser->crc_fields = parser->fields.size();
                 was_end = true;
             }
@@ -5397,9 +5393,8 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
 
-        /* in a noref section we simply bump the usecount */
         if (noref || parser->noref)
-            var->m_uses++;
+            var->m_flags |= AST_FLAG_NOREF;
 
         /* Part 2:
          * Create the global/local, and deal with vector types.
@@ -5800,7 +5795,10 @@ skipvar:
                         var->m_cvq = CV_CONST;
                     }
                     if (cval == parser->nil)
+                    {
                         var->m_flags |= AST_FLAG_INITIALIZED;
+                        var->m_flags |= AST_FLAG_NOREF;
+                    }
                     else
                     {
                         var->m_hasvalue = true;
@@ -6075,6 +6073,7 @@ parser_t *parser_create()
         parser->reserved_version->m_cvq = CV_CONST;
         parser->reserved_version->m_hasvalue = true;
         parser->reserved_version->m_flags |= AST_FLAG_INCLUDE_DEF;
+        parser->reserved_version->m_flags |= AST_FLAG_NOREF;
         parser->reserved_version->m_constval.vstring = util_strdup(GMQCC_FULL_VERSION_STRING);
     } else {
         parser->reserved_version = nullptr;
@@ -6272,7 +6271,7 @@ bool parser_finish(parser_t *parser, const char *output)
         if (!ast_istype(it, ast_value))
             continue;
         asvalue = (ast_value*)it;
-        if (!asvalue->m_uses && asvalue->m_cvq != CV_CONST && asvalue->m_vtype != TYPE_FUNCTION) {
+        if (!(asvalue->m_flags & AST_FLAG_NOREF) && asvalue->m_cvq != CV_CONST && asvalue->m_vtype != TYPE_FUNCTION) {
             retval = retval && !compile_warning(asvalue->m_context, WARN_UNUSED_VARIABLE,
                                                 "unused global: `%s`", asvalue->m_name);
         }
