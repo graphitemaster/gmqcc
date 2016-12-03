@@ -235,15 +235,14 @@ static bool GMQCC_WARN vec_ir_value_find(std::vector<ir_value *> &vec, const ir_
     return false;
 }
 
-static bool GMQCC_WARN vec_ir_block_find(ir_block **vec, ir_block *what, size_t *idx)
+static bool GMQCC_WARN vec_ir_block_find(std::vector<ir_block *> &vec, ir_block *what, size_t *idx)
 {
-    size_t i;
-    size_t len = vec_size(vec);
-    for (i = 0; i < len; ++i) {
-        if (vec[i] == what) {
-            if (idx) *idx = i;
-            return true;
-        }
+    for (auto &it : vec) {
+        if (it != what)
+            continue;
+        if (idx)
+            *idx = &it - &vec[0];
+        return true;
     }
     return false;
 }
@@ -746,7 +745,6 @@ ir_block::~ir_block()
     for (size_t i = 0; i != vec_size(m_instr); ++i)
         delete m_instr[i];
     vec_free(m_instr);
-    vec_free(m_entries);
     vec_free(m_exits);
 }
 
@@ -1383,8 +1381,8 @@ bool ir_block_create_if(ir_block *self, lex_ctx_t ctx, ir_value *v,
 
     vec_push(self->m_exits, ontrue);
     vec_push(self->m_exits, onfalse);
-    vec_push(ontrue->m_entries,  self);
-    vec_push(onfalse->m_entries, self);
+    ontrue->m_entries.push_back(self);
+    onfalse->m_entries.push_back(self);
     return true;
 }
 
@@ -1402,7 +1400,7 @@ bool ir_block_create_jump(ir_block *self, lex_ctx_t ctx, ir_block *to)
     vec_push(self->m_instr, in);
 
     vec_push(self->m_exits, to);
-    vec_push(to->m_entries, self);
+    to->m_entries.push_back(self);
     return true;
 }
 

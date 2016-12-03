@@ -1582,7 +1582,7 @@ bool ast_function::generateFunction(ir_builder *ir)
         {
             return ir_block_create_return(m_curblock, m_context, nullptr);
         }
-        else if (vec_size(m_curblock->m_entries) || m_curblock == irf->m_first)
+        else if (m_curblock->m_entries.size() || m_curblock == irf->m_first)
         {
             if (m_return_value) {
                 if (!m_return_value->codegen(this, false, &dummy))

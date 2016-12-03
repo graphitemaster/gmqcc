@@ -149,7 +149,7 @@ struct ir_block {
     bool m_final = false; /* once a jump is added we're done */
 
     ir_instr **m_instr = nullptr;
-    ir_block **m_entries = nullptr;
+    std::vector<ir_block *> m_entries;
     ir_block **m_exits = nullptr;
     std::vector<ir_value *> m_living;
 
