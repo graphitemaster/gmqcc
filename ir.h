@@ -148,7 +148,7 @@ struct ir_block {
     lex_ctx_t m_context;
     bool m_final = false; /* once a jump is added we're done */
 
-    ir_instr **m_instr = nullptr;
+    std::vector<ir_instr *> m_instr;
     std::vector<ir_block *> m_entries;
     std::vector<ir_block *> m_exits;
     std::vector<ir_value *> m_living;

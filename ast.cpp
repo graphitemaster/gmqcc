@@ -1804,7 +1804,7 @@ bool ast_binary::codegen(ast_function *func, bool lvalue, ir_value **out)
                 return false;
         }
         /* use the likely flag */
-        vec_last(func->m_curblock->m_instr)->m_likely = true;
+        func->m_curblock->m_instr.back()->m_likely = true;
 
         /* enter the right-expression's block */
         func->m_curblock = other;

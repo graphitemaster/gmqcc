@@ -432,7 +432,7 @@ static bool ir_function_pass_peephole(ir_function *self)
 {
     for (auto& bp : self->m_blocks) {
         ir_block *block = bp.get();
-        for (size_t i = 0; i < vec_size(block->m_instr); ++i) {
+        for (size_t i = 0; i < block->m_instr.size(); ++i) {
             ir_instr *inst;
             inst = block->m_instr[i];
 
@@ -480,7 +480,7 @@ static bool ir_function_pass_peephole(ir_function *self)
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 (void)!ir_instr_op(oper, 0, store->_m_ops[0], true);
 
-                vec_remove(block->m_instr, i, 1);
+                block->m_instr.erase(block->m_instr.begin() + i);
                 delete store;
             }
             else if (inst->m_opcode == VINSTR_COND)
@@ -514,15 +514,15 @@ static bool ir_function_pass_peephole(ir_function *self)
                     (void)!ir_instr_op(inst, 0, inot->_m_ops[1], false);
                     /* remove NOT */
                     tmp = inot->m_owner;
-                    for (inotid = 0; inotid < vec_size(tmp->m_instr); ++inotid) {
+                    for (inotid = 0; inotid < tmp->m_instr.size(); ++inotid) {
                         if (tmp->m_instr[inotid] == inot)
                             break;
                     }
-                    if (inotid >= vec_size(tmp->m_instr)) {
+                    if (inotid >= tmp->m_instr.size()) {
                         compile_error(inst->m_context, "sanity-check failed: failed to find instruction to optimize out");
                         return false;
                     }
-                    vec_remove(tmp->m_instr, inotid, 1);
+                    tmp->m_instr.erase(tmp->m_instr.begin() + inotid);
                     delete inot;
                     /* swap ontrue/onfalse */
                     tmp = inst->m_bops[0];
@@ -547,14 +547,14 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
         ir_value *funcval;
         ir_instr *ret, *call, *store = nullptr;
 
-        if (!block->m_final || vec_size(block->m_instr) < 2)
+        if (!block->m_final || block->m_instr.size() < 2)
             continue;
 
-        ret = block->m_instr[vec_size(block->m_instr)-1];
+        ret = block->m_instr.back();
         if (ret->m_opcode != INSTR_DONE && ret->m_opcode != INSTR_RETURN)
             continue;
 
-        call = block->m_instr[vec_size(block->m_instr)-2];
+        call = block->m_instr[block->m_instr.size()-2];
         if (call->m_opcode >= INSTR_STORE_F && call->m_opcode <= INSTR_STORE_FNC) {
             /* account for the unoptimized
              * CALL
@@ -562,11 +562,11 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
              * RETURN %tmp
              * version
              */
-            if (vec_size(block->m_instr) < 3)
+            if (block->m_instr.size() < 3)
                 continue;
 
             store = call;
-            call = block->m_instr[vec_size(block->m_instr)-3];
+            call = block->m_instr[block->m_instr.size()-3];
         }
 
         if (call->m_opcode < INSTR_CALL0 || call->m_opcode > INSTR_CALL8)
@@ -580,7 +580,7 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
             {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
                 call->_m_ops[0] = store->_m_ops[0];
-                vec_remove(block->m_instr, vec_size(block->m_instr) - 2, 1);
+                block->m_instr.erase(block->m_instr.end()-2);
                 delete store;
             }
             else
@@ -601,7 +601,7 @@ static bool ir_function_pass_tailrecursion(ir_function *self)
             continue;
 
         ++opts_optimizationcount[OPTIM_TAIL_RECURSION];
-        vec_shrinkby(block->m_instr, 2);
+        block->m_instr.erase(block->m_instr.end()-2, block->m_instr.end());
 
         block->m_final = false; /* open it back up */
 
@@ -742,17 +742,15 @@ ir_block::ir_block(ir_function* owner, const std::string& name)
 
 ir_block::~ir_block()
 {
-    for (size_t i = 0; i != vec_size(m_instr); ++i)
-        delete m_instr[i];
-    vec_free(m_instr);
+    for (auto &i : m_instr)
+        delete i;
 }
 
 static void ir_block_delete_quick(ir_block* self)
 {
-    size_t i;
-    for (i = 0; i != vec_size(self->m_instr); ++i)
-        ir_instr_delete_quick(self->m_instr[i]);
-    vec_free(self->m_instr);
+    for (auto &i : self->m_instr)
+        ir_instr_delete_quick(i);
+    self->m_instr.clear();
     delete self;
 }
 
@@ -1263,7 +1261,7 @@ bool ir_block_create_store_op(ir_block *self, lex_ctx_t ctx, int op, ir_value *t
         delete in;
         return false;
     }
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
     return true;
 }
 
@@ -1283,7 +1281,7 @@ bool ir_block_create_state_op(ir_block *self, lex_ctx_t ctx, ir_value *frame, ir
         delete in;
         return false;
     }
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
     return true;
 }
 
@@ -1352,7 +1350,7 @@ bool ir_block_create_return(ir_block *self, lex_ctx_t ctx, ir_value *v)
         return false;
     }
 
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
     return true;
 }
 
@@ -1376,7 +1374,7 @@ bool ir_block_create_if(ir_block *self, lex_ctx_t ctx, ir_value *v,
     in->m_bops[0] = ontrue;
     in->m_bops[1] = onfalse;
 
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
 
     self->m_exits.push_back(ontrue);
     self->m_exits.push_back(onfalse);
@@ -1396,7 +1394,7 @@ bool ir_block_create_jump(ir_block *self, lex_ctx_t ctx, ir_block *to)
         return false;
 
     in->m_bops[0] = to;
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
 
     self->m_exits.push_back(to);
     to->m_entries.push_back(self);
@@ -1427,7 +1425,7 @@ ir_instr* ir_block_create_phi(ir_block *self, lex_ctx_t ctx, const char *label, 
         delete in;
         return nullptr;
     }
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
     return in;
 }
 
@@ -1478,7 +1476,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
         delete in;
         return nullptr;
     }
-    vec_push(self->m_instr, in);
+    self->m_instr.push_back(in);
     /*
     if (noreturn) {
         if (!ir_block_create_return(self, ctx, nullptr)) {
@@ -1682,7 +1680,7 @@ static ir_value* ir_block_create_general_instr(ir_block *self, lex_ctx_t ctx, co
         goto on_error;
     }
 
-    vec_push(self->m_instr, instr);
+    self->m_instr.push_back(instr);
 
     return out;
 on_error:
@@ -1756,13 +1754,13 @@ static bool ir_block_naive_phi(ir_block *self)
      * to a list so we don't need to loop through blocks
      * - anyway: "don't optimize YET"
      */
-    for (i = 0; i < vec_size(self->m_instr); ++i)
+    for (i = 0; i < self->m_instr.size(); ++i)
     {
         ir_instr *instr = self->m_instr[i];
         if (instr->m_opcode != VINSTR_PHI)
             continue;
 
-        vec_remove(self->m_instr, i, 1);
+        self->m_instr.erase(self->m_instr.begin()+i);
         --i; /* NOTE: i+1 below */
 
         for (auto &it : instr->m_phi) {
@@ -1774,14 +1772,14 @@ static bool ir_block_naive_phi(ir_block *self)
                     return false;
             } else {
                 /* force a move instruction */
-                ir_instr *prevjump = vec_last(b->m_instr);
-                vec_pop(b->m_instr);
+                ir_instr *prevjump = b->m_instr.back();
+                b->m_instr.pop_back();
                 b->m_final = false;
                 instr->_m_ops[0]->m_store = store_global;
                 if (!ir_block_create_store(b, instr->m_context, instr->_m_ops[0], v))
                     return false;
                 instr->_m_ops[0]->m_store = store_value;
-                vec_push(b->m_instr, prevjump);
+                b->m_instr.push_back(prevjump);
                 b->m_final = true;
             }
         }
@@ -1803,12 +1801,9 @@ static bool ir_block_naive_phi(ir_block *self)
  */
 static void ir_block_enumerate(ir_block *self, size_t *_eid)
 {
-    size_t i;
     size_t eid = *_eid;
-    for (i = 0; i < vec_size(self->m_instr); ++i)
-    {
-        self->m_instr[i]->m_eid = eid++;
-    }
+    for (auto &i : self->m_instr)
+        i->m_eid = eid++;
     *_eid = eid;
 }
 
@@ -2156,7 +2151,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
                 self->m_living.push_back(it);
     }
 
-    i = vec_size(self->m_instr);
+    i = self->m_instr.size();
     while (i)
     { --i;
         instr = self->m_instr[i];
@@ -2514,7 +2509,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
 
     block->m_generated = true;
     block->m_code_start = code->statements.size();
-    for (i = 0; i < vec_size(block->m_instr); ++i)
+    for (i = 0; i < block->m_instr.size(); ++i)
     {
         instr = block->m_instr[i];
 
@@ -3977,14 +3972,13 @@ void ir_function_dump(ir_function *f, char *ind,
 void ir_block_dump(ir_block* b, char *ind,
                    int (*oprintf)(const char*, ...))
 {
-    size_t i;
     oprintf("%s:%s\n", ind, b->m_label.c_str());
     util_strncat(ind, "\t", IND_BUFSZ-1);
 
-    if (b->m_instr && b->m_instr[0])
+    if (!b->m_instr.empty() && b->m_instr[0])
         oprintf("%s (%i) [entry]\n", ind, (int)(b->m_instr[0]->m_eid-1));
-    for (i = 0; i < vec_size(b->m_instr); ++i)
-        ir_instr_dump(b->m_instr[i], ind, oprintf);
+    for (auto &i : b->m_instr)
+        ir_instr_dump(i, ind, oprintf);
     ind[strlen(ind)-1] = 0;
 }
 
