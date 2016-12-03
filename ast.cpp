@@ -1510,9 +1510,9 @@ bool ast_function::generateFunction(ir_builder *ir)
     /* fill the parameter list */
     for (auto &it : m_function_type->m_type_params) {
         if (it->m_vtype == TYPE_FIELD)
-            vec_push(irf->m_params, it->m_next->m_vtype);
+            irf->m_params.push_back(it->m_next->m_vtype);
         else
-            vec_push(irf->m_params, it->m_vtype);
+            irf->m_params.push_back(it->m_vtype);
         if (!m_builtin) {
             if (!it->generateLocal(m_ir_func, true))
                 return false;

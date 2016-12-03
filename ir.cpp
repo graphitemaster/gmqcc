@@ -1885,7 +1885,7 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
         /* never resize parameters
          * will be required later when overlapping temps + locals
          */
-        if (a < vec_size(self->m_params) &&
+        if (a < self->m_params.size() &&
             alloc->sizes[a] < v->size())
         {
             continue;
@@ -1929,7 +1929,7 @@ bool ir_function_allocate_locals(ir_function *self)
             v->m_locked      = true;
             v->m_unique_life = true;
         }
-        else if (i >= vec_size(self->m_params))
+        else if (i >= self->m_params.size())
             break;
         else
             v->m_locked = true; /* lock parameters locals */
@@ -2314,7 +2314,7 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
 bool ir_function_calculate_liferanges(ir_function *self)
 {
     /* parameters live at 0 */
-    for (size_t i = 0; i < vec_size(self->m_params); ++i)
+    for (size_t i = 0; i < self->m_params.size(); ++i)
         if (!self->m_locals[i].get()->setAlive(0))
             compile_error(self->m_context, "internal error: failed value-life merging");
 
@@ -3002,7 +3002,7 @@ bool ir_builder::generateGlobalFunction(ir_value *global)
     fun.name = global->m_code.name;
     fun.file = filestring(global->m_context.file);
     fun.profile = 0; /* always 0 */
-    fun.nargs = vec_size(irfun->m_params);
+    fun.nargs = irfun->m_params.size();
     if (fun.nargs > 8)
         fun.nargs = 8;
 
@@ -3067,7 +3067,7 @@ static bool gen_function_extparam_copy(code_t *code, ir_function *self)
 {
     ir_builder *ir = self->m_owner;
 
-    size_t numparams = vec_size(self->m_params);
+    size_t numparams = self->m_params.size();
     if (!numparams)
         return true;
 
@@ -3103,7 +3103,7 @@ static bool gen_function_varargs_copy(code_t *code, ir_function *self)
     ir_value   *ep;
     prog_section_statement_t stmt;
 
-    numparams = vec_size(self->m_params);
+    numparams = self->m_params.size();
     if (!numparams)
         return true;
 

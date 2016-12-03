@@ -201,11 +201,11 @@ struct ir_function {
 
     ir_builder *m_owner;
 
-    std::string m_name;
-    qc_type     m_outtype;
-    int        *m_params  = nullptr;
-    ir_flag_t   m_flags   = 0;
-    int         m_builtin = 0;
+    std::string      m_name;
+    qc_type          m_outtype;
+    std::vector<int> m_params;
+    ir_flag_t        m_flags   = 0;
+    int              m_builtin = 0;
 
     std::vector<std::unique_ptr<ir_block>> m_blocks;
 
