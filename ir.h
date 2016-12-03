@@ -150,7 +150,7 @@ struct ir_block {
 
     ir_instr **m_instr = nullptr;
     std::vector<ir_block *> m_entries;
-    ir_block **m_exits = nullptr;
+    std::vector<ir_block *> m_exits;
     std::vector<ir_value *> m_living;
 
     /* For the temp-allocation */

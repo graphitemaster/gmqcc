@@ -745,7 +745,6 @@ ir_block::~ir_block()
     for (size_t i = 0; i != vec_size(m_instr); ++i)
         delete m_instr[i];
     vec_free(m_instr);
-    vec_free(m_exits);
 }
 
 static void ir_block_delete_quick(ir_block* self)
@@ -1379,8 +1378,8 @@ bool ir_block_create_if(ir_block *self, lex_ctx_t ctx, ir_value *v,
 
     vec_push(self->m_instr, in);
 
-    vec_push(self->m_exits, ontrue);
-    vec_push(self->m_exits, onfalse);
+    self->m_exits.push_back(ontrue);
+    self->m_exits.push_back(onfalse);
     ontrue->m_entries.push_back(self);
     onfalse->m_entries.push_back(self);
     return true;
@@ -1399,7 +1398,7 @@ bool ir_block_create_jump(ir_block *self, lex_ctx_t ctx, ir_block *to)
     in->m_bops[0] = to;
     vec_push(self->m_instr, in);
 
-    vec_push(self->m_exits, to);
+    self->m_exits.push_back(to);
     to->m_entries.push_back(self);
     return true;
 }
@@ -2145,15 +2144,13 @@ static bool ir_block_life_propagate(ir_block *self, bool *changed)
 {
     ir_instr *instr;
     ir_value *value;
-    size_t i, o, p, mem;
+    size_t i, o, mem;
     // bitmasks which operands are read from or written to
     size_t read, write;
 
     self->m_living.clear();
 
-    p = vec_size(self->m_exits);
-    for (i = 0; i < p; ++i) {
-        ir_block *prev = self->m_exits[i];
+    for (auto &prev : self->m_exits) {
         for (auto &it : prev->m_living)
             if (!vec_ir_value_find(self->m_living, it, nullptr))
                 self->m_living.push_back(it);
