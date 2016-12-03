@@ -1836,10 +1836,10 @@ void ir_function_enumerate(ir_function *self)
  * This is the counterpart to register-allocation in register machines.
  */
 struct function_allocator {
-    ir_value **locals;
-    size_t *sizes;
-    size_t *positions;
-    bool *unique;
+    std::vector<std::unique_ptr<ir_value>> locals;
+    std::vector<size_t> sizes;
+    std::vector<size_t> positions;
+    std::vector<bool> unique;
 };
 
 static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
@@ -1847,7 +1847,7 @@ static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
     ir_value *slot;
     size_t vsize = var->size();
 
-    var->m_code.local = vec_size(alloc->locals);
+    var->m_code.local = alloc->locals.size();
 
     slot = new ir_value("reg", store_global, var->m_vtype);
     if (!slot)
@@ -1856,9 +1856,9 @@ static bool function_allocator_alloc(function_allocator *alloc, ir_value *var)
     if (!slot->mergeLife(var))
         goto localerror;
 
-    vec_push(alloc->locals, slot);
-    vec_push(alloc->sizes, vsize);
-    vec_push(alloc->unique, var->m_unique_life);
+    alloc->locals.emplace_back(slot);
+    alloc->sizes.push_back(vsize);
+    alloc->unique.push_back(var->m_unique_life);
 
     return true;
 
@@ -1870,18 +1870,17 @@ localerror:
 static bool ir_function_allocator_assign(ir_function *self, function_allocator *alloc, ir_value *v)
 {
     size_t a;
-    ir_value *slot;
 
     if (v->m_unique_life)
         return function_allocator_alloc(alloc, v);
 
-    for (a = 0; a < vec_size(alloc->locals); ++a)
+    for (a = 0; a < alloc->locals.size(); ++a)
     {
         /* if it's reserved for a unique liferange: skip */
         if (alloc->unique[a])
             continue;
 
-        slot = alloc->locals[a];
+        ir_value *slot = alloc->locals[a].get();
 
         /* never resize parameters
          * will be required later when overlapping temps + locals
@@ -1905,7 +1904,7 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
         v->m_code.local = a;
         return true;
     }
-    if (a >= vec_size(alloc->locals)) {
+    if (a >= alloc->locals.size()) {
         if (!function_allocator_alloc(alloc, v))
             return false;
     }
@@ -1914,7 +1913,6 @@ static bool ir_function_allocator_assign(ir_function *self, function_allocator *
 
 bool ir_function_allocate_locals(ir_function *self)
 {
-    bool   retval = true;
     size_t pos;
     bool   opt_gt = OPTS_OPTIMIZATION(OPTIM_GLOBAL_TEMPS);
 
@@ -1922,15 +1920,6 @@ bool ir_function_allocate_locals(ir_function *self)
 
     if (self->m_locals.empty() && self->m_values.empty())
         return true;
-
-    globalloc.locals    = nullptr;
-    globalloc.sizes     = nullptr;
-    globalloc.positions = nullptr;
-    globalloc.unique    = nullptr;
-    lockalloc.locals    = nullptr;
-    lockalloc.sizes     = nullptr;
-    lockalloc.positions = nullptr;
-    lockalloc.unique    = nullptr;
 
     size_t i;
     for (i = 0; i < self->m_locals.size(); ++i)
@@ -1945,7 +1934,7 @@ bool ir_function_allocate_locals(ir_function *self)
         else
             v->m_locked = true; /* lock parameters locals */
         if (!function_allocator_alloc((v->m_locked || !opt_gt ? &lockalloc : &globalloc), v))
-            goto error;
+            return false;
     }
     for (; i < self->m_locals.size(); ++i)
     {
@@ -1953,7 +1942,7 @@ bool ir_function_allocate_locals(ir_function *self)
         if (v->m_life.empty())
             continue;
         if (!ir_function_allocator_assign(self, (v->m_locked || !opt_gt ? &lockalloc : &globalloc), v))
-            goto error;
+            return false;
     }
 
     /* Allocate a slot for any value that still exists */
@@ -1979,7 +1968,7 @@ bool ir_function_allocate_locals(ir_function *self)
                 ir_instr *call = v->m_reads[0];
                 if (!vec_ir_value_find(call->m_params, v, &param)) {
                     irerror(call->m_context, "internal error: unlocked parameter %s not found", v->m_name.c_str());
-                    goto error;
+                    return false;
                 }
                 ++opts_optimizationcount[OPTIM_CALL_STORES];
                 v->m_callparam = true;
@@ -2013,33 +2002,33 @@ bool ir_function_allocate_locals(ir_function *self)
         }
 
         if (!ir_function_allocator_assign(self, (v->m_locked || !opt_gt ? &lockalloc : &globalloc), v))
-            goto error;
+            return false;
     }
 
-    if (!lockalloc.sizes && !globalloc.sizes) {
-        goto cleanup;
-    }
-    vec_push(lockalloc.positions, 0);
-    vec_push(globalloc.positions, 0);
+    if (lockalloc.sizes.empty() && globalloc.sizes.empty())
+        return true;
+
+    lockalloc.positions.push_back(0);
+    globalloc.positions.push_back(0);
 
     /* Adjust slot positions based on sizes */
-    if (lockalloc.sizes) {
-        pos = (vec_size(lockalloc.sizes) ? lockalloc.positions[0] : 0);
-        for (i = 1; i < vec_size(lockalloc.sizes); ++i)
+    if (!lockalloc.sizes.empty()) {
+        pos = (lockalloc.sizes.size() ? lockalloc.positions[0] : 0);
+        for (i = 1; i < lockalloc.sizes.size(); ++i)
         {
             pos = lockalloc.positions[i-1] + lockalloc.sizes[i-1];
-            vec_push(lockalloc.positions, pos);
+            lockalloc.positions.push_back(pos);
         }
-        self->m_allocated_locals = pos + vec_last(lockalloc.sizes);
+        self->m_allocated_locals = pos + lockalloc.sizes.back();
     }
-    if (globalloc.sizes) {
-        pos = (vec_size(globalloc.sizes) ? globalloc.positions[0] : 0);
-        for (i = 1; i < vec_size(globalloc.sizes); ++i)
+    if (!globalloc.sizes.empty()) {
+        pos = (globalloc.sizes.size() ? globalloc.positions[0] : 0);
+        for (i = 1; i < globalloc.sizes.size(); ++i)
         {
             pos = globalloc.positions[i-1] + globalloc.sizes[i-1];
-            vec_push(globalloc.positions, pos);
+            globalloc.positions.push_back(pos);
         }
-        self->m_globaltemps = pos + vec_last(globalloc.sizes);
+        self->m_globaltemps = pos + globalloc.sizes.back();
     }
 
     /* Locals need to know their new position */
@@ -2057,24 +2046,7 @@ bool ir_function_allocate_locals(ir_function *self)
             value->m_code.local = globalloc.positions[value->m_code.local];
     }
 
-    goto cleanup;
-
-error:
-    retval = false;
-cleanup:
-    for (i = 0; i < vec_size(lockalloc.locals); ++i)
-        delete lockalloc.locals[i];
-    for (i = 0; i < vec_size(globalloc.locals); ++i)
-        delete globalloc.locals[i];
-    vec_free(globalloc.unique);
-    vec_free(globalloc.locals);
-    vec_free(globalloc.sizes);
-    vec_free(globalloc.positions);
-    vec_free(lockalloc.unique);
-    vec_free(lockalloc.locals);
-    vec_free(lockalloc.sizes);
-    vec_free(lockalloc.positions);
-    return retval;
+    return true;
 }
 
 /* Get information about which operand
