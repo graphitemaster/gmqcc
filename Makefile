@@ -110,7 +110,7 @@ strip: $(GMQCC) $(QCVM) $(TESTSUITE)
 	strip $(TESTSUITE)
 
 clean:
-	rm -rf *.o $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
+	rm -rf *.o *.d $(GMQCC) $(QCVM) $(TESTSUITE) $(PAK) *.dat gource.mp4 *.exe gm-qcc.tgz ./cov-int
 
 depend:
 	@ makedepend -Y -w 65536 2> /dev/null $(subst .o,.c,$(DEPS))
