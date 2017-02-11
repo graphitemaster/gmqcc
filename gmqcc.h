@@ -103,6 +103,7 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #if defined(__GNUC__) || defined(__CLANG__)
 #   define GMQCC_WARN __attribute__((warn_unused_result))
 #   define GMQCC_USED __attribute__((used))
+#   define GMQCC_FUNCTION __func__
 #else
 #   define GMQCC_WARN
 #   define GMQCC_USED
@@ -134,9 +135,14 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
  */
 #elif defined(_MSC_VER)
 #    define GMQCC_INLINE __forceinline
+#    define GMQCC_FUNCTION __FUNCTION__
 #else
 #    define GMQCC_INLINE
 #endif /*! __STDC_VERSION__ */
+
+#ifndef GMQCC_FUNCTION
+#    define GMQCC_FUNCTION "<unknown-function>"
+#endif
 
 /*
  * noreturn is present in GCC and clang
