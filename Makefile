@@ -4,7 +4,7 @@ UNAME  ?= $(shell uname)
 CYGWIN  = $(findstring CYGWIN,  $(UNAME))
 MINGW   = $(findstring MINGW32, $(UNAME))
 
-CFLAGS += -Wall -Wextra -Werror -Wstrict-aliasing
+CFLAGS += -Wall -Wextra -Wstrict-aliasing
 #turn on tons of warnings if clang is present
 # but also turn off the STUPID ONES
 ifeq ($(CC), clang)
