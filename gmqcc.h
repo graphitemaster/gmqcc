@@ -660,7 +660,7 @@ enum {
 #define VMXF_TRACE   0x0001     /* trace: print statements before executing */
 #define VMXF_PROFILE 0x0002     /* profile: increment the profile counters */
 
-struct qc_program_t;
+typedef struct qc_program qc_program_t;
 typedef int (*prog_builtin_t)(qc_program_t *prog);
 
 struct qc_exec_stack_t {
@@ -669,18 +669,21 @@ struct qc_exec_stack_t {
     prog_section_function_t *function;
 };
 
-struct qc_program_t {
-    char *filename;
+struct qc_program {
+    qc_program() = delete;
+    qc_program(const char *name, uint16_t crc, size_t entfields);
+
+    std::string filename;
     std::vector<prog_section_statement_t> code;
     std::vector<prog_section_def_t> defs;
     std::vector<prog_section_def_t> fields;
     std::vector<prog_section_function_t> functions;
     std::vector<char> strings;
     std::vector<qcint_t> globals;
-    qcint_t *entitydata;
-    bool *entitypool;
+    std::vector<qcint_t> entitydata;
+    std::vector<bool> entitypool;
 
-    const char* *function_stack;
+    std::vector<const char*> function_stack;
 
     uint16_t crc16;
 
@@ -689,7 +692,7 @@ struct qc_program_t {
 
     qcint_t  vmerror;
 
-    size_t *profile;
+    std::vector<size_t> profile;
 
     prog_builtin_t *builtins;
     size_t          builtins_count;
@@ -699,8 +702,8 @@ struct qc_program_t {
     size_t entityfields;
     bool   allowworldwrites;
 
-    qcint_t         *localstack;
-    qc_exec_stack_t *stack;
+    std::vector<qcint_t> localstack;
+    std::vector<qc_exec_stack_t> stack;
     size_t statement;
 
     size_t xflags;

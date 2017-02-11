@@ -28,6 +28,12 @@ static void qcvmerror(qc_program_t *prog, const char *fmt, ...)
     putchar('\n');
 }
 
+qc_program::qc_program(const char *name, uint16_t crc, size_t entfields)
+    : filename(name)
+    , crc16(crc)
+    , entityfields(entfields)
+{}
+
 qc_program_t* prog_load(const char *filename, bool skipversion)
 {
     prog_header_t header;
@@ -58,22 +64,7 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
         return nullptr;
     }
 
-    prog = (qc_program_t*)mem_a(sizeof(qc_program_t));
-    if (!prog) {
-        fclose(file);
-        fprintf(stderr, "failed to allocate program data\n");
-        return nullptr;
-    }
-    memset(prog, 0, sizeof(*prog));
-
-    prog->entityfields = header.entfield;
-    prog->crc16 = header.crc16;
-
-    prog->filename = util_strdup(filename);
-    if (!prog->filename) {
-        loaderror("failed to store program name");
-        goto error;
-    }
+    prog = new qc_program(filename, header.crc16, header.entfield);
 
 #define read_data(hdrvar, progvar, reserved)                           \
     if (fseek(file, header.hdrvar.offset, SEEK_SET) != 0) {            \
@@ -110,7 +101,8 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     fclose(file);
 
     /* profile counters */
-    memset(vec_add(prog->profile, prog->code.size()), 0, sizeof(prog->profile[0]) * prog->code.size());
+    prog->profile.resize(prog->code.size());
+    memset(&prog->profile[0], 0, sizeof(prog->profile[0]) * prog->profile.size());
 
     /* Add tempstring area */
     prog->tempstring_start = prog->strings.size();
@@ -119,8 +111,9 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     prog->strings.resize(prog->strings.size() + 16*1024, '\0');
 
     /* spawn the world entity */
-    vec_push(prog->entitypool, true);
-    memset(vec_add(prog->entitydata, prog->entityfields), 0, prog->entityfields * sizeof(prog->entitydata[0]));
+    prog->entitypool.emplace_back(true);
+    prog->entitydata.resize(prog->entityfields);
+    memset(prog->entitydata.data(), 0, sizeof(prog->entitydata[0]) * prog->entityfields);
     prog->entities = 1;
 
     /* cache some globals and fields from names */
@@ -156,11 +149,7 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     return prog;
 
 error:
-    if (prog->filename)
-        mem_d(prog->filename);
-    vec_free(prog->entitydata);
-    vec_free(prog->entitypool);
-    mem_d(prog);
+    delete prog;
 
     fclose(file);
     return nullptr;
@@ -168,13 +157,7 @@ error:
 
 void prog_delete(qc_program_t *prog)
 {
-    if (prog->filename) mem_d(prog->filename);
-    vec_free(prog->entitydata);
-    vec_free(prog->entitypool);
-    vec_free(prog->localstack);
-    vec_free(prog->stack);
-    vec_free(prog->profile);
-    mem_d(prog);
+    delete prog;
 }
 
 /***********************************************************************
@@ -205,28 +188,31 @@ prog_section_def_t* prog_getdef(qc_program_t *prog, qcint_t off)
 }
 
 qcany_t* prog_getedict(qc_program_t *prog, qcint_t e) {
-    if (e >= (qcint_t)vec_size(prog->entitypool)) {
+    if (e >= (qcint_t)prog->entitypool.size()) {
         prog->vmerror++;
         fprintf(stderr, "Accessing out of bounds edict %i\n", (int)e);
         e = 0;
     }
-    return (qcany_t*)(prog->entitydata + (prog->entityfields * e));
+    return (qcany_t*)&prog->entitydata[prog->entityfields * e];
 }
 
 static qcint_t prog_spawn_entity(qc_program_t *prog) {
     char  *data;
     qcint_t  e;
-    for (e = 0; e < (qcint_t)vec_size(prog->entitypool); ++e) {
+    for (e = 0; e < (qcint_t)prog->entitypool.size(); ++e) {
         if (!prog->entitypool[e]) {
-            data = (char*)(prog->entitydata + (prog->entityfields * e));
+            data = (char*)&prog->entitydata[prog->entityfields * e];
             memset(data, 0, prog->entityfields * sizeof(qcint_t));
             return e;
         }
     }
-    vec_push(prog->entitypool, true);
+    prog->entitypool.emplace_back(true);
     prog->entities++;
-    data = (char*)vec_add(prog->entitydata, prog->entityfields);
-    memset(data, 0, prog->entityfields * sizeof(qcint_t));
+    size_t sz = prog->entitydata.size();
+    prog->entitydata.resize(sz + prog->entityfields);
+    data = (char*)&prog->entitydata[sz];
+    memset(data, 0, sz * sizeof(qcint_t));
+
     return e;
 }
 
@@ -236,7 +222,7 @@ static void prog_free_entity(qc_program_t *prog, qcint_t e) {
         fprintf(stderr, "Trying to free world entity\n");
         return;
     }
-    if (e >= (qcint_t)vec_size(prog->entitypool)) {
+    if (e >= (qcint_t)prog->entitypool.size()) {
         prog->vmerror++;
         fprintf(stderr, "Trying to free out of bounds entity\n");
         return;
@@ -369,11 +355,11 @@ static void prog_print_statement(qc_program_t *prog, prog_section_statement_t *s
         printf("<illegal instruction %d>\n", st->opcode);
         return;
     }
-    if ((prog->xflags & VMXF_TRACE) && vec_size(prog->function_stack)) {
+    if ((prog->xflags & VMXF_TRACE) && !prog->function_stack.empty()) {
         size_t i;
-        for (i = 0; i < vec_size(prog->function_stack); ++i)
+        for (i = 0; i < prog->function_stack.size(); ++i)
             printf("->");
-        printf("%s:", vec_last(prog->function_stack));
+        printf("%s:", prog->function_stack.back());
     }
     printf(" <> %-12s", util_instr_str[st->opcode]);
     if (st->opcode >= INSTR_IF &&
@@ -467,30 +453,30 @@ static qcint_t prog_enterfunction(qc_program_t *prog, prog_section_function_t *f
     int32_t p;
 
     /* back up locals */
-    st.localsp  = vec_size(prog->localstack);
+    st.localsp  = prog->localstack.size();
     st.stmt     = prog->statement;
     st.function = func;
 
     if (prog->xflags & VMXF_TRACE) {
         const char *str = prog_getstring(prog, func->name);
-        vec_push(prog->function_stack, str);
+        prog->function_stack.emplace_back(str);
     }
 
 #ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS
-    if (vec_size(prog->stack))
+    if (prog->stack.size())
     {
         prog_section_function_t *cur;
-        cur = prog->stack[vec_size(prog->stack)-1].function;
+        cur = prog->stack.back().function;
         if (cur)
         {
             qcint_t *globals = &prog->globals[0] + cur->firstlocal;
-            vec_append(prog->localstack, cur->locals, globals);
+            prog->localstack.insert(prog->localstack.end(), globals, globals + cur->locals);
         }
     }
 #else
     {
         qcint_t *globals = &prog->globals[0] + func->firstlocal;
-        vec_append(prog->localstack, func->locals, globals);
+        prog->localstack.insert(prog->localstack.end(), globals, globals + func->locals);
     }
 #endif
 
@@ -505,7 +491,7 @@ static qcint_t prog_enterfunction(qc_program_t *prog, prog_section_function_t *f
         }
     }
 
-    vec_push(prog->stack, st);
+    prog->stack.emplace_back(st);
 
     return func->entry;
 }
@@ -514,30 +500,29 @@ static qcint_t prog_leavefunction(qc_program_t *prog) {
     prog_section_function_t *prev = nullptr;
     size_t oldsp;
 
-    qc_exec_stack_t st = vec_last(prog->stack);
+    qc_exec_stack_t st = prog->stack.back();
 
     if (prog->xflags & VMXF_TRACE) {
-        if (vec_size(prog->function_stack))
-            vec_pop(prog->function_stack);
+        if (!prog->function_stack.empty())
+            prog->function_stack.pop_back();
     }
 
 #ifdef QCVM_BACKUP_STRATEGY_CALLER_VARS
-    if (vec_size(prog->stack) > 1) {
-        prev  = prog->stack[vec_size(prog->stack)-2].function;
-        oldsp = prog->stack[vec_size(prog->stack)-2].localsp;
+    if (prog->stack.size() > 1) {
+        prev  = prog->stack[prog->stack.size()-2].function;
+        oldsp = prog->stack[prog->stack.size()-2].localsp;
     }
 #else
-    prev  = prog->stack[vec_size(prog->stack)-1].function;
-    oldsp = prog->stack[vec_size(prog->stack)-1].localsp;
+    prev  = prog->stack[prog->stack.size()-1].function;
+    oldsp = prog->stack[prog->stack.size()-1].localsp;
 #endif
     if (prev) {
         qcint_t *globals = &prog->globals[0] + prev->firstlocal;
-        memcpy(globals, prog->localstack + oldsp, prev->locals * sizeof(prog->localstack[0]));
-        /* vec_remove(prog->localstack, oldsp, vec_size(prog->localstack)-oldsp); */
-        vec_shrinkto(prog->localstack, oldsp);
+        memcpy(globals, &prog->localstack[oldsp], prev->locals * sizeof(prog->localstack[0]));
+        prog->localstack.resize(oldsp);
     }
 
-    vec_pop(prog->stack);
+    prog->stack.pop_back();
 
     return st.stmt - 1; /* offset the ++st */
 }
@@ -584,8 +569,8 @@ bool prog_exec(qc_program_t *prog, prog_section_function_t *func, size_t flags, 
 
 cleanup:
     prog->xflags = oldxflags;
-    vec_free(prog->localstack);
-    vec_free(prog->stack);
+    prog->localstack.clear();
+    prog->stack.clear();
     if (prog->vmerror)
         return false;
     return true;
@@ -623,7 +608,7 @@ struct qcvm_parameter {
     const char *value;
 };
 
-static qcvm_parameter *main_params = nullptr;
+static std::vector<qcvm_parameter> main_params;
 
 #define CheckArgs(num) do {                                                    \
     if (prog->argc != (num)) {                                                 \
@@ -887,7 +872,7 @@ static void prog_main_setparams(qc_program_t *prog) {
     size_t i;
     qcany_t *arg;
 
-    for (i = 0; i < vec_size(main_params); ++i) {
+    for (i = 0; i < main_params.size(); ++i) {
         arg = GetGlobal(OFS_PARM0 + 3*i);
         arg->vector[0] = 0;
         arg->vector[1] = 0;
@@ -926,8 +911,8 @@ int main(int argc, char **argv) {
     bool        opts_info        = false;
     bool        noexec           = false;
     const char *progsfile        = nullptr;
-    const char **dis_list        = nullptr;
     int         opts_v           = 0;
+    std::vector<const char*> dis_list;
 
     arg0 = argv[0];
 
@@ -997,7 +982,7 @@ int main(int argc, char **argv) {
                 usage();
                 exit(EXIT_FAILURE);
             }
-            vec_push(dis_list, argv[1]);
+            dis_list.emplace_back(argv[1]);
             --argc;
             ++argv;
             noexec = true;
@@ -1042,7 +1027,7 @@ int main(int argc, char **argv) {
             }
             p.value = argv[1];
 
-            vec_push(main_params, p);
+            main_params.emplace_back(p);
             --argc;
             ++argv;
         }
@@ -1111,7 +1096,7 @@ int main(int argc, char **argv) {
         prog_delete(prog);
         return 0;
     }
-    for (i = 0; i < vec_size(dis_list); ++i) {
+    for (i = 0; i < dis_list.size(); ++i) {
         size_t k;
         printf("Looking for `%s`\n", dis_list[i]);
         for (k = 1; k < prog->functions.size(); ++k) {
@@ -1282,7 +1267,7 @@ while (prog->vmerror == 0) {
     switch (st->opcode)
     {
         default:
-            qcvmerror(prog, "Illegal instruction in %s\n", prog->filename);
+            qcvmerror(prog, "Illegal instruction in %s\n", prog->filename.c_str());
             goto cleanup;
 
         case INSTR_DONE:
@@ -1293,7 +1278,7 @@ while (prog->vmerror == 0) {
             GLOBAL(OFS_RETURN)->ivector[2] = OPA->ivector[2];
 
             st = &prog->code[0] + prog_leavefunction(prog);
-            if (!vec_size(prog->stack))
+            if (prog->stack.empty())
                 goto cleanup;
 
             break;
@@ -1402,12 +1387,12 @@ while (prog->vmerror == 0) {
         case INSTR_LOAD_ENT:
         case INSTR_LOAD_FNC:
             if (OPA->edict < 0 || OPA->edict >= prog->entities) {
-                qcvmerror(prog, "progs `%s` attempted to read an out of bounds entity", prog->filename);
+                qcvmerror(prog, "progs `%s` attempted to read an out of bounds entity", prog->filename.c_str());
                 goto cleanup;
             }
             if ((unsigned int)(OPB->_int) >= (unsigned int)(prog->entityfields)) {
                 qcvmerror(prog, "prog `%s` attempted to read an invalid field from entity (%i)",
-                          prog->filename,
+                          prog->filename.c_str(),
                           OPB->_int);
                 goto cleanup;
             }
@@ -1416,13 +1401,13 @@ while (prog->vmerror == 0) {
             break;
         case INSTR_LOAD_V:
             if (OPA->edict < 0 || OPA->edict >= prog->entities) {
-                qcvmerror(prog, "progs `%s` attempted to read an out of bounds entity", prog->filename);
+                qcvmerror(prog, "progs `%s` attempted to read an out of bounds entity", prog->filename.c_str());
                 goto cleanup;
             }
             if (OPB->_int < 0 || OPB->_int + 3 > (qcint_t)prog->entityfields)
             {
                 qcvmerror(prog, "prog `%s` attempted to read an invalid field from entity (%i)",
-                          prog->filename,
+                          prog->filename.c_str(),
                           OPB->_int + 2);
                 goto cleanup;
             }
@@ -1435,19 +1420,19 @@ while (prog->vmerror == 0) {
 
         case INSTR_ADDRESS:
             if (OPA->edict < 0 || OPA->edict >= prog->entities) {
-                qcvmerror(prog, "prog `%s` attempted to address an out of bounds entity %i", prog->filename, OPA->edict);
+                qcvmerror(prog, "prog `%s` attempted to address an out of bounds entity %i", prog->filename.c_str(), OPA->edict);
                 goto cleanup;
             }
             if ((unsigned int)(OPB->_int) >= (unsigned int)(prog->entityfields))
             {
                 qcvmerror(prog, "prog `%s` attempted to read an invalid field from entity (%i)",
-                          prog->filename,
+                          prog->filename.c_str(),
                           OPB->_int);
                 goto cleanup;
             }
 
             ed = prog_getedict(prog, OPA->edict);
-            OPC->_int = ((qcint_t*)ed) - prog->entitydata + OPB->_int;
+            OPC->_int = ((qcint_t*)ed) - prog->entitydata.data() + OPB->_int;
             break;
 
         case INSTR_STORE_F:
@@ -1468,29 +1453,29 @@ while (prog->vmerror == 0) {
         case INSTR_STOREP_ENT:
         case INSTR_STOREP_FLD:
         case INSTR_STOREP_FNC:
-            if (OPB->_int < 0 || OPB->_int >= (qcint_t)vec_size(prog->entitydata)) {
-                qcvmerror(prog, "`%s` attempted to write to an out of bounds edict (%i)", prog->filename, OPB->_int);
+            if (OPB->_int < 0 || OPB->_int >= (qcint_t)prog->entitydata.size()) {
+                qcvmerror(prog, "`%s` attempted to write to an out of bounds edict (%i)", prog->filename.c_str(), OPB->_int);
                 goto cleanup;
             }
             if (OPB->_int < (qcint_t)prog->entityfields && !prog->allowworldwrites)
                 qcvmerror(prog, "`%s` tried to assign to world.%s (field %i)\n",
-                          prog->filename,
+                          prog->filename.c_str(),
                           prog_getstring(prog, prog_entfield(prog, OPB->_int)->name),
                           OPB->_int);
-            ptr = (qcany_t*)(prog->entitydata + OPB->_int);
+            ptr = (qcany_t*)&prog->entitydata[OPB->_int];
             ptr->_int = OPA->_int;
             break;
         case INSTR_STOREP_V:
-            if (OPB->_int < 0 || OPB->_int + 2 >= (qcint_t)vec_size(prog->entitydata)) {
-                qcvmerror(prog, "`%s` attempted to write to an out of bounds edict (%i)", prog->filename, OPB->_int);
+            if (OPB->_int < 0 || OPB->_int + 2 >= (qcint_t)prog->entitydata.size()) {
+                qcvmerror(prog, "`%s` attempted to write to an out of bounds edict (%i)", prog->filename.c_str(), OPB->_int);
                 goto cleanup;
             }
             if (OPB->_int < (qcint_t)prog->entityfields && !prog->allowworldwrites)
                 qcvmerror(prog, "`%s` tried to assign to world.%s (field %i)\n",
-                          prog->filename,
+                          prog->filename.c_str(),
                           prog_getstring(prog, prog_entfield(prog, OPB->_int)->name),
                           OPB->_int);
-            ptr = (qcany_t*)(prog->entitydata + OPB->_int);
+            ptr = (qcany_t*)&prog->entitydata[OPB->_int];
             ptr->ivector[0] = OPA->ivector[0];
             ptr->ivector[1] = OPA->ivector[1];
             ptr->ivector[2] = OPA->ivector[2];
@@ -1521,7 +1506,7 @@ while (prog->vmerror == 0) {
             {
                 st += st->o2.s1 - 1;    /* offset the s++ */
                 if (++jumpcount >= maxjumps)
-                    qcvmerror(prog, "`%s` hit the runaway loop counter limit of %li jumps", prog->filename, jumpcount);
+                    qcvmerror(prog, "`%s` hit the runaway loop counter limit of %li jumps", prog->filename.c_str(), jumpcount);
             }
             break;
         case INSTR_IFNOT:
@@ -1529,7 +1514,7 @@ while (prog->vmerror == 0) {
             {
                 st += st->o2.s1 - 1;    /* offset the s++ */
                 if (++jumpcount >= maxjumps)
-                    qcvmerror(prog, "`%s` hit the runaway loop counter limit of %li jumps", prog->filename, jumpcount);
+                    qcvmerror(prog, "`%s` hit the runaway loop counter limit of %li jumps", prog->filename.c_str(), jumpcount);
             }
             break;
 
@@ -1544,11 +1529,11 @@ while (prog->vmerror == 0) {
         case INSTR_CALL8:
             prog->argc = st->opcode - INSTR_CALL0;
             if (!OPA->function)
-                qcvmerror(prog, "nullptr function in `%s`", prog->filename);
+                qcvmerror(prog, "nullptr function in `%s`", prog->filename.c_str());
 
             if(!OPA->function || OPA->function >= (qcint_t)prog->functions.size())
             {
-                qcvmerror(prog, "CALL outside the program in `%s`", prog->filename);
+                qcvmerror(prog, "CALL outside the program in `%s`", prog->filename.c_str());
                 goto cleanup;
             }
 
@@ -1565,7 +1550,7 @@ while (prog->vmerror == 0) {
                     prog->builtins[builtinnumber](prog);
                 else
                     qcvmerror(prog, "No such builtin #%i in %s! Try updating your gmqcc sources",
-                              builtinnumber, prog->filename);
+                              builtinnumber, prog->filename.c_str());
             }
             else
                 st = &prog->code[0] + prog_enterfunction(prog, newf) - 1; /* offset st++ */
@@ -1579,7 +1564,7 @@ while (prog->vmerror == 0) {
             qcfloat_t *time;
             qcfloat_t *frame;
             if (!prog->supports_state) {
-                qcvmerror(prog, "`%s` tried to execute a STATE operation but misses its defs!", prog->filename);
+                qcvmerror(prog, "`%s` tried to execute a STATE operation but misses its defs!", prog->filename.c_str());
                 goto cleanup;
             }
             ed = prog_getedict(prog, prog->globals[prog->cached_globals.self]);
@@ -1596,7 +1581,7 @@ while (prog->vmerror == 0) {
         case INSTR_GOTO:
             st += st->o1.s1 - 1;    /* offset the s++ */
             if (++jumpcount == 10000000)
-                qcvmerror(prog, "`%s` hit the runaway loop counter limit of %li jumps", prog->filename, jumpcount);
+                qcvmerror(prog, "`%s` hit the runaway loop counter limit of %li jumps", prog->filename.c_str(), jumpcount);
             break;
 
         case INSTR_AND:
