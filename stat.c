@@ -429,8 +429,10 @@ GMQCC_INLINE size_t util_hthash(hash_table_t *ht, const char *key) {
     switch (len & 3) {
         case 3:
             k ^= tail[2] << 16;
+            GMQCC_FALLTHROUGH;
         case 2:
             k ^= tail[1] << 8;
+            GMQCC_FALLTHROUGH;
         case 1:
             k ^= tail[0];
             k *= mask1;

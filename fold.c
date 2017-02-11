@@ -643,8 +643,14 @@ ast_expression *fold_op(fold_t *fold, const oper_info *info, ast_expression **op
         return NULL;
 
     switch(info->operands) {
-        case 3: if(!c) return NULL;
-        case 2: if(!b) return NULL;
+        case 3:
+            if (!c)
+                return NULL;
+            GMQCC_FALLTHROUGH;
+        case 2:
+            if (!b)
+                return NULL;
+            GMQCC_FALLTHROUGH;
         case 1:
         if(!a) {
             compile_error(fold_ctx(fold), "internal error: fold_op no operands to fold\n");
@@ -790,6 +796,7 @@ static ast_expression *fold_superfluous(ast_expression *left, ast_expression *ri
         case INSTR_DIV_F:
             if (swapped)
                 return NULL;
+            GMQCC_FALLTHROUGH;
         case INSTR_MUL_F:
             if (fold_immvalue_float(load) == 1.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];

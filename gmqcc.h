@@ -103,6 +103,11 @@ GMQCC_IND_STRING(GMQCC_VERSION_PATCH) \
 #if defined(__GNUC__) || defined(__CLANG__)
 #   define GMQCC_WARN __attribute__((warn_unused_result))
 #   define GMQCC_USED __attribute__((used))
+#   if __GNUC__ >= 7
+#       define GMQCC_FALLTHROUGH __attribute__((fallthrough))
+#   else
+#       define GMQCC_FALLTHROUGH
+#   endif
 #   define GMQCC_FUNCTION __func__
 #else
 #   define GMQCC_WARN
