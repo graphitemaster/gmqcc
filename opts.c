@@ -170,9 +170,9 @@ void opts_set(uint32_t *flags, size_t idx, bool on) {
     LONGBIT_SET(lb, idx);
 
     if (on)
-        flags[lb.idx] |= (1<<(lb.bit));
+        flags[lb.idx] |= (1u<<(lb.bit));
     else
-        flags[lb.idx] &= ~(1<<(lb.bit));
+        flags[lb.idx] &= ~(1u<<(lb.bit));
 }
 
 void opts_setoptimlevel(unsigned int level) {
