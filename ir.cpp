@@ -1449,6 +1449,7 @@ ir_instr* ir_block_create_call(ir_block *self, lex_ctx_t ctx, const char *label,
         !ir_instr_op(in, 1, func, false))
     {
         delete in;
+        delete out;
         return nullptr;
     }
     vec_push(self->m_instr, in);
