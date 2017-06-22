@@ -668,6 +668,19 @@ static int qc_stof(qc_program_t *prog) {
     return 0;
 }
 
+static int qc_stov(qc_program_t *prog) {
+    qcany_t *str;
+    qcany_t num;
+    CheckArgs(1);
+    str = GetArg(0);
+    (void)util_sscanf(prog_getstring(prog, str->string), " ' %f %f %f ' ",
+                      &num.vector[0],
+                      &num.vector[1],
+                      &num.vector[2]);
+    Return(num);
+    return 0;
+}
+
 static int qc_vtos(qc_program_t *prog) {
     char buffer[512];
     qcany_t *num;
@@ -833,7 +846,8 @@ static prog_builtin_t qc_builtins[] = {
     &qc_normalize,   /*   12  */
     &qc_sqrt,        /*   13  */
     &qc_floor,       /*   14  */
-    &qc_pow          /*   15  */
+    &qc_pow,         /*   15  */
+    &qc_stov         /*   16  */
 };
 
 static const char *arg0 = nullptr;

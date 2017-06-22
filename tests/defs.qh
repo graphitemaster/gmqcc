@@ -18,3 +18,4 @@ vector (vector vec)               normalize = #12;
 float  (float val)                sqrt      = #13;
 float  (float val)                floor     = #14;
 float  (float val1, float val2)   pow       = #15;
+vector (string str)               stov      = #16;
