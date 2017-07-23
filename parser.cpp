@@ -728,6 +728,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid2('|','|'):
             generated_op += 1; /* INSTR_OR */
+            [[fallthrough]];
         case opid2('&','&'):
             generated_op += INSTR_AND;
             if (!(out = parser->m_fold.op(op, exprs))) {
@@ -857,10 +858,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
         case opid1('>'):
             generated_op += 1; /* INSTR_GT */
+            [[fallthrough]];
         case opid1('<'):
             generated_op += 1; /* INSTR_LT */
+            [[fallthrough]];
         case opid2('>', '='):
             generated_op += 1; /* INSTR_GE */
+            [[fallthrough]];
         case opid2('<', '='):
             generated_op += INSTR_LE;
             if (NotSameType(TYPE_FLOAT)) {

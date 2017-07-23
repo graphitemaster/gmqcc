@@ -1392,8 +1392,8 @@ ast_expression *fold::op(const oper_info *info, ast_expression **opexprs) {
         return nullptr;
 
     switch(info->operands) {
-        case 3: if(!c) return nullptr;
-        case 2: if(!b) return nullptr;
+        case 3: if(!c) return nullptr; [[fallthrough]];
+        case 2: if(!b) return nullptr; [[fallthrough]];
         case 1:
         if(!a) {
             compile_error(ctx(), "internal error: fold_op no operands to fold\n");
@@ -1560,6 +1560,7 @@ ast_expression *fold::superfluous(ast_expression *left, ast_expression *right, i
         case INSTR_DIV_F:
             if (swapped)
                 return nullptr;
+            [[fallthrough]];
         case INSTR_MUL_F:
             if (immvalue_float(load) == 1.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
@@ -1572,6 +1573,7 @@ ast_expression *fold::superfluous(ast_expression *left, ast_expression *right, i
         case INSTR_SUB_F:
             if (swapped)
                 return nullptr;
+            [[fallthrough]];
         case INSTR_ADD_F:
             if (immvalue_float(load) == 0.0f) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
@@ -1591,6 +1593,7 @@ ast_expression *fold::superfluous(ast_expression *left, ast_expression *right, i
         case INSTR_SUB_V:
             if (swapped)
                 return nullptr;
+            [[fallthrough]];
         case INSTR_ADD_V:
             if (vec3_cmp(immvalue_vector(load), vec3_create(0, 0, 0))) {
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
