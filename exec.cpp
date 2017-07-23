@@ -113,7 +113,8 @@ qc_program_t* prog_load(const char *filename, bool skipversion)
     /* spawn the world entity */
     prog->entitypool.emplace_back(true);
     prog->entitydata.resize(prog->entityfields);
-    memset(prog->entitydata.data(), 0, sizeof(prog->entitydata[0]) * prog->entityfields);
+    if (prog->entitydata.size())
+        memset(prog->entitydata.data(), 0, sizeof(prog->entitydata[0]) * prog->entityfields);
     prog->entities = 1;
 
     /* cache some globals and fields from names */
@@ -517,8 +518,10 @@ static qcint_t prog_leavefunction(qc_program_t *prog) {
     oldsp = prog->stack[prog->stack.size()-1].localsp;
 #endif
     if (prev) {
-        qcint_t *globals = &prog->globals[0] + prev->firstlocal;
-        memcpy(globals, &prog->localstack[oldsp], prev->locals * sizeof(prog->localstack[0]));
+        if (prev->locals) {
+            qcint_t *globals = &prog->globals[0] + prev->firstlocal;
+            memcpy(globals, &prog->localstack[oldsp], prev->locals * sizeof(prog->localstack[0]));
+        }
         prog->localstack.resize(oldsp);
     }
 
