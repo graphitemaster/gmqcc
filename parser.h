@@ -2,7 +2,7 @@
 #define GMQCC_PARSER_HDR
 #include "gmqcc.h"
 #include "lexer.h"
-//#include "ast.h"
+#include "ast.h"
 
 #include "intrin.h"
 #include "fold.h"
@@ -12,7 +12,10 @@ struct parser_t;
 #define parser_ctx(p) ((p)->lex->tok.ctx)
 
 struct parser_t {
-    parser_t() { }
+    parser_t();
+    ~parser_t();
+
+    void remove_ast();
 
     lex_file *lex;
     int tok;
@@ -45,17 +48,17 @@ struct parser_t {
     std::vector<const char *> continues;
 
     /* A list of hashtables for each scope */
-    ht *variables;
+    std::vector<ht> variables;
     ht htfields;
     ht htglobals;
-    ht *typedefs;
+    std::vector<ht> typedefs;
 
     /* not to be used directly, we use the hash table */
-    ast_expression **_locals;
-    size_t *_blocklocals;
-    ast_value **_typedefs;
-    size_t *_blocktypedefs;
-    lex_ctx_t *_block_ctx;
+    std::vector<ast_expression*> _locals;
+    std::vector<size_t> _blocklocals;
+    std::vector<std::unique_ptr<ast_value>> _typedefs;
+    std::vector<size_t> _blocktypedefs;
+    std::vector<lex_ctx_t> _block_ctx;
 
     /* we store the '=' operator info */
     const oper_info *assign_op;

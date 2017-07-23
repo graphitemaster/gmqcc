@@ -3,6 +3,7 @@
 
 #include "gmqcc.h"
 #include "lexer.h"
+#include "parser.h"
 
 /* TODO: cleanup this whole file .. it's a fuckign mess */
 
@@ -736,7 +737,7 @@ cleanup:
     vec_free(ppems);
 
     if (!OPTS_OPTION_BOOL(OPTION_PP_ONLY))
-        if(parser) parser_cleanup(parser);
+        delete parser;
 
     /* free allocated option strings */
     for (itr = 0; itr < OPTION_COUNT; itr++)

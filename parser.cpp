@@ -139,7 +139,7 @@ static ast_expression* parser_find_local(parser_t *parser, const char *name, siz
     hash = util_hthash(parser->htglobals, name);
 
     *isparam = false;
-    for (i = vec_size(parser->variables); i > upto;) {
+    for (i = parser->variables.size(); i > upto;) {
         --i;
         if ( (e = (ast_expression*)util_htgeth(parser->variables[i], name, hash)) )
             return e;
@@ -171,7 +171,7 @@ static ast_value* parser_find_typedef(parser_t *parser, const char *name, size_t
     ast_value *e;
     hash = util_hthash(parser->typedefs[0], name);
 
-    for (i = vec_size(parser->typedefs); i > upto;) {
+    for (i = parser->typedefs.size(); i > upto;) {
         --i;
         if ( (e = (ast_value*)util_htgeth(parser->typedefs[i], name, hash)) )
             return e;
@@ -1267,14 +1267,14 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
      * intrinsic call and just evaluate it i.e constant fold it.
      */
     if (fold && ast_istype(fun, ast_value) && ((ast_value*)fun)->m_intrinsic) {
-        ast_expression **exprs  = nullptr;
+        std::vector<ast_expression*> exprs;
         ast_expression *foldval = nullptr;
 
+        exprs.reserve(paramcount);
         for (i = 0; i < paramcount; i++)
-            vec_push(exprs, sy->out[fid+1 + i].out);
+            exprs.push_back(sy->out[fid+1 + i].out);
 
-        if (!(foldval = parser->m_intrin.do_fold((ast_value*)fun, exprs))) {
-            vec_free(exprs);
+        if (!(foldval = parser->m_intrin.do_fold((ast_value*)fun, exprs.data()))) {
             goto fold_leave;
         }
 
@@ -1284,7 +1284,6 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
          */
         sy->out[fid] = syexp(foldval->m_context, foldval);
         sy->out.erase(sy->out.end() - paramcount, sy->out.end());
-        vec_free(exprs);
 
         return true;
     }
@@ -2000,11 +1999,11 @@ static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool
 
 static void parser_enterblock(parser_t *parser)
 {
-    vec_push(parser->variables, util_htnew(PARSER_HT_SIZE));
-    vec_push(parser->_blocklocals, vec_size(parser->_locals));
-    vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
-    vec_push(parser->_blocktypedefs, vec_size(parser->_typedefs));
-    vec_push(parser->_block_ctx, parser_ctx(parser));
+    parser->variables.push_back(util_htnew(PARSER_HT_SIZE));
+    parser->_blocklocals.push_back(parser->_locals.size());
+    parser->typedefs.push_back(util_htnew(TYPEDEF_HT_SIZE));
+    parser->_blocktypedefs.push_back(parser->_typedefs.size());
+    parser->_block_ctx.push_back(parser_ctx(parser));
 }
 
 static bool parser_leaveblock(parser_t *parser)
@@ -2012,41 +2011,37 @@ static bool parser_leaveblock(parser_t *parser)
     bool   rv = true;
     size_t locals, typedefs;
 
-    if (vec_size(parser->variables) <= PARSER_HT_LOCALS) {
+    if (parser->variables.size() <= PARSER_HT_LOCALS) {
         parseerror(parser, "internal error: parser_leaveblock with no block");
         return false;
     }
 
-    util_htdel(vec_last(parser->variables));
+    util_htdel(parser->variables.back());
 
-    vec_pop(parser->variables);
-    if (!vec_size(parser->_blocklocals)) {
+    parser->variables.pop_back();
+    if (!parser->_blocklocals.size()) {
         parseerror(parser, "internal error: parser_leaveblock with no block (2)");
         return false;
     }
 
-    locals = vec_last(parser->_blocklocals);
-    vec_pop(parser->_blocklocals);
-    while (vec_size(parser->_locals) != locals)
-        vec_pop(parser->_locals);
+    locals = parser->_blocklocals.back();
+    parser->_blocklocals.pop_back();
+    parser->_locals.resize(locals);
 
-    typedefs = vec_last(parser->_blocktypedefs);
-    while (vec_size(parser->_typedefs) != typedefs) {
-        delete vec_last(parser->_typedefs);
-        vec_pop(parser->_typedefs);
-    }
-    util_htdel(vec_last(parser->typedefs));
-    vec_pop(parser->typedefs);
+    typedefs = parser->_blocktypedefs.back();
+    parser->_typedefs.resize(typedefs);
+    util_htdel(parser->typedefs.back());
+    parser->typedefs.pop_back();
 
-    vec_pop(parser->_block_ctx);
+    parser->_block_ctx.pop_back();
 
     return rv;
 }
 
 static void parser_addlocal(parser_t *parser, const char *name, ast_expression *e)
 {
-    vec_push(parser->_locals, e);
-    util_htset(vec_last(parser->variables), name, (void*)e);
+    parser->_locals.push_back(e);
+    util_htset(parser->variables.back(), name, (void*)e);
 }
 static void parser_addlocal(parser_t *parser, const std::string &name, ast_expression *e) {
     return parser_addlocal(parser, name.c_str(), e);
@@ -3627,9 +3622,9 @@ static bool parse_enum(parser_t *parser)
     bool        flag = false;
     bool        reverse = false;
     qcfloat_t     num = 0;
-    ast_value **values = nullptr;
     ast_value  *var = nullptr;
     ast_value  *asvalue;
+    std::vector<ast_value*> values;
 
     ast_expression *old;
 
@@ -3671,7 +3666,7 @@ static bool parse_enum(parser_t *parser)
                 break;
             }
             parseerror(parser, "expected identifier or `}`");
-            goto onerror;
+            return false;
         }
 
         old = parser_find_field(parser, parser_tokval(parser));
@@ -3680,11 +3675,11 @@ static bool parse_enum(parser_t *parser)
         if (old) {
             parseerror(parser, "value `%s` has already been declared here: %s:%i",
                        parser_tokval(parser), old->m_context.file, old->m_context.line);
-            goto onerror;
+            return false;
         }
 
         var = new ast_value(parser_ctx(parser), parser_tokval(parser), TYPE_FLOAT);
-        vec_push(values, var);
+        values.push_back(var);
         var->m_cvq             = CV_CONST;
         var->m_hasvalue        = true;
 
@@ -3694,7 +3689,7 @@ static bool parse_enum(parser_t *parser)
 
         if (!parser_next(parser)) {
             parseerror(parser, "expected `=`, `}` or comma after identifier");
-            goto onerror;
+            return false;
         }
 
         if (parser->tok == ',')
@@ -3703,12 +3698,12 @@ static bool parse_enum(parser_t *parser)
             break;
         if (parser->tok != '=') {
             parseerror(parser, "expected `=`, `}` or comma after identifier");
-            goto onerror;
+            return false;
         }
 
         if (!parser_next(parser)) {
             parseerror(parser, "expected expression after `=`");
-            goto onerror;
+            return false;
         }
 
         /* We got a value! */
@@ -3716,7 +3711,7 @@ static bool parse_enum(parser_t *parser)
         asvalue = (ast_value*)old;
         if (!ast_istype(old, ast_value) || asvalue->m_cvq != CV_CONST || !asvalue->m_hasvalue) {
             compile_error(var->m_context, "constant value or expression expected");
-            goto onerror;
+            return false;
         }
         num = (var->m_constval.vfloat = asvalue->m_constval.vfloat) + 1;
 
@@ -3724,38 +3719,33 @@ static bool parse_enum(parser_t *parser)
             break;
         if (parser->tok != ',') {
             parseerror(parser, "expected `}` or comma after expression");
-            goto onerror;
+            return false;
         }
     }
 
     /* patch them all (for reversed attribute) */
     if (reverse) {
         size_t i;
-        for (i = 0; i < vec_size(values); i++)
-            values[i]->m_constval.vfloat = vec_size(values) - i - 1;
+        for (i = 0; i < values.size(); i++)
+            values[i]->m_constval.vfloat = values.size() - i - 1;
     }
 
     if (parser->tok != '}') {
         parseerror(parser, "internal error: breaking without `}`");
-        goto onerror;
+        return false;
     }
 
     if (!parser_next(parser) || parser->tok != ';') {
         parseerror(parser, "expected semicolon after enumeration");
-        goto onerror;
+        return false;
     }
 
     if (!parser_next(parser)) {
         parseerror(parser, "parse error after enumeration");
-        goto onerror;
+        return false;
     }
 
-    vec_free(values);
     return true;
-
-onerror:
-    vec_free(values);
-    return false;
 }
 
 static bool parse_block_into(parser_t *parser, ast_block *block)
@@ -4174,7 +4164,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
     parser->function = old;
     if (!parser_leaveblock(parser))
         retval = false;
-    if (vec_size(parser->variables) != PARSER_HT_LOCALS) {
+    if (parser->variables.size() != PARSER_HT_LOCALS) {
         parseerror(parser, "internal error: local scopes left");
         retval = false;
     }
@@ -4993,15 +4983,15 @@ static bool parse_typedef(parser_t *parser)
         return false;
     }
 
-    if ( (oldtype = parser_find_typedef(parser, typevar->m_name, vec_last(parser->_blocktypedefs))) ) {
+    if ( (oldtype = parser_find_typedef(parser, typevar->m_name, parser->_blocktypedefs.back())) ) {
         parseerror(parser, "type `%s` has already been declared here: %s:%i",
                    typevar->m_name, oldtype->m_context.file, oldtype->m_context.line);
         delete typevar;
         return false;
     }
 
-    vec_push(parser->_typedefs, typevar);
-    util_htset(vec_last(parser->typedefs), typevar->m_name.c_str(), typevar);
+    parser->_typedefs.emplace_back(typevar);
+    util_htset(parser->typedefs.back(), typevar->m_name.c_str(), typevar);
 
     if (parser->tok != ';') {
         parseerror(parser, "expected semicolon after typedef");
@@ -5368,7 +5358,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
         }
         else /* it's not a global */
         {
-            old = parser_find_local(parser, var->m_name, vec_size(parser->variables)-1, &isparam);
+            old = parser_find_local(parser, var->m_name, parser->variables.size()-1, &isparam);
             if (old && !isparam) {
                 parseerror(parser, "local `%s` already declared here: %s:%i",
                            var->m_name, old->m_context.file, (int)old->m_context.line);
@@ -5495,7 +5485,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     prefix_len = defname.length();
 
                     // Add it to the local scope
-                    util_htset(vec_last(parser->variables), var->m_name.c_str(), (void*)var);
+                    util_htset(parser->variables.back(), var->m_name.c_str(), (void*)var);
 
                     // now rename the global
                     defname.append(var->m_name);
@@ -5525,7 +5515,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                     if (isvector) {
                         defname.erase(prefix_len);
                         for (i = 0; i < 3; ++i) {
-                            util_htset(vec_last(parser->variables), me[i]->m_name.c_str(), (void*)(me[i]));
+                            util_htset(parser->variables.back(), me[i]->m_name.c_str(), (void*)(me[i]));
                             me[i]->m_name = move(defname + me[i]->m_name);
                             parser->globals.push_back(me[i]);
                         }
@@ -5763,15 +5753,15 @@ skipvar:
                 /* remove it from the current locals */
                 if (isvector) {
                     for (i = 0; i < 3; ++i) {
-                        vec_pop(parser->_locals);
+                        parser->_locals.pop_back();
                         localblock->m_collect.pop_back();
                     }
                 }
                 /* do sanity checking, this function really needs refactoring */
-                if (vec_last(parser->_locals) != var)
+                if (parser->_locals.back() != var)
                     parseerror(parser, "internal error: unexpected change in local variable handling");
                 else
-                    vec_pop(parser->_locals);
+                    parser->_locals.pop_back();
                 if (localblock->m_locals.back() != var)
                     parseerror(parser, "internal error: unexpected change in local variable handling (2)");
                 else
@@ -6025,20 +6015,71 @@ static void generate_checksum(parser_t *parser, ir_builder *ir)
     ir->m_code->crc = crc;
 }
 
+parser_t::parser_t()
+    : lex(nullptr)
+    , tok(0)
+    , ast_cleaned(false)
+    , translated(0)
+    , crc_globals(0)
+    , crc_fields(0)
+    , function(nullptr)
+    , aliases(util_htnew(PARSER_HT_SIZE))
+    , htfields(util_htnew(PARSER_HT_SIZE))
+    , htglobals(util_htnew(PARSER_HT_SIZE))
+    , assign_op(nullptr)
+    , noref(false)
+    , max_param_count(1)
+    // finish initializing the rest of the parser before initializing
+    // m_fold and m_intrin with the parser passed along
+    , m_fold()
+    , m_intrin()
+{
+    variables.push_back(htfields);
+    variables.push_back(htglobals);
+    typedefs.push_back(util_htnew(TYPEDEF_HT_SIZE));
+    _blocktypedefs.push_back(0);
+
+    lex_ctx_t empty_ctx;
+    empty_ctx.file   = "<internal>";
+    empty_ctx.line   = 0;
+    empty_ctx.column = 0;
+    nil = new ast_value(empty_ctx, "nil", TYPE_NIL);
+    nil->m_cvq = CV_CONST;
+    if (OPTS_FLAG(UNTYPED_NIL))
+        util_htset(htglobals, "nil", (void*)nil);
+
+    const_vec[0] = new ast_value(empty_ctx, "<vector.x>", TYPE_NOEXPR);
+    const_vec[1] = new ast_value(empty_ctx, "<vector.y>", TYPE_NOEXPR);
+    const_vec[2] = new ast_value(empty_ctx, "<vector.z>", TYPE_NOEXPR);
+
+    if (OPTS_OPTION_BOOL(OPTION_ADD_INFO)) {
+        reserved_version = new ast_value(empty_ctx, "reserved:version", TYPE_STRING);
+        reserved_version->m_cvq = CV_CONST;
+        reserved_version->m_hasvalue = true;
+        reserved_version->m_flags |= AST_FLAG_INCLUDE_DEF;
+        reserved_version->m_flags |= AST_FLAG_NOREF;
+        reserved_version->m_constval.vstring = util_strdup(GMQCC_FULL_VERSION_STRING);
+    } else {
+        reserved_version = nullptr;
+    }
+
+    m_fold = fold(this);
+    m_intrin = intrin(this);
+}
+
+parser_t::~parser_t()
+{
+    remove_ast();
+}
+
 parser_t *parser_create()
 {
     parser_t *parser;
-    lex_ctx_t empty_ctx;
     size_t i;
 
-    parser = (parser_t*)mem_a(sizeof(parser_t));
+    parser = new parser_t;
     if (!parser)
         return nullptr;
-
-    memset(parser, 0, sizeof(*parser));
-
-    // TODO: remove
-    new (parser) parser_t();
 
     for (i = 0; i < operator_count; ++i) {
         if (operators[i].id == opid1('=')) {
@@ -6048,44 +6089,10 @@ parser_t *parser_create()
     }
     if (!parser->assign_op) {
         con_err("internal error: initializing parser: failed to find assign operator\n");
-        mem_d(parser);
+        delete parser;
         return nullptr;
     }
 
-    vec_push(parser->variables, parser->htfields  = util_htnew(PARSER_HT_SIZE));
-    vec_push(parser->variables, parser->htglobals = util_htnew(PARSER_HT_SIZE));
-    vec_push(parser->typedefs, util_htnew(TYPEDEF_HT_SIZE));
-    vec_push(parser->_blocktypedefs, 0);
-
-    parser->aliases = util_htnew(PARSER_HT_SIZE);
-
-    empty_ctx.file   = "<internal>";
-    empty_ctx.line   = 0;
-    empty_ctx.column = 0;
-    parser->nil = new ast_value(empty_ctx, "nil", TYPE_NIL);
-    parser->nil->m_cvq = CV_CONST;
-    if (OPTS_FLAG(UNTYPED_NIL))
-        util_htset(parser->htglobals, "nil", (void*)parser->nil);
-
-    parser->max_param_count = 1;
-
-    parser->const_vec[0] = new ast_value(empty_ctx, "<vector.x>", TYPE_NOEXPR);
-    parser->const_vec[1] = new ast_value(empty_ctx, "<vector.y>", TYPE_NOEXPR);
-    parser->const_vec[2] = new ast_value(empty_ctx, "<vector.z>", TYPE_NOEXPR);
-
-    if (OPTS_OPTION_BOOL(OPTION_ADD_INFO)) {
-        parser->reserved_version = new ast_value(empty_ctx, "reserved:version", TYPE_STRING);
-        parser->reserved_version->m_cvq = CV_CONST;
-        parser->reserved_version->m_hasvalue = true;
-        parser->reserved_version->m_flags |= AST_FLAG_INCLUDE_DEF;
-        parser->reserved_version->m_flags |= AST_FLAG_NOREF;
-        parser->reserved_version->m_constval.vstring = util_strdup(GMQCC_FULL_VERSION_STRING);
-    } else {
-        parser->reserved_version = nullptr;
-    }
-
-    parser->m_fold = fold(parser);
-    parser->m_intrin = intrin(parser);
     return parser;
 }
 
@@ -6141,54 +6148,42 @@ bool parser_compile_string(parser_t *parser, const char *name, const char *str, 
     return parser_compile(parser);
 }
 
-static void parser_remove_ast(parser_t *parser)
+void parser_t::remove_ast()
 {
-    size_t i;
-    if (parser->ast_cleaned)
+    if (ast_cleaned)
         return;
-    parser->ast_cleaned = true;
-    for (auto &it : parser->accessors) {
+    ast_cleaned = true;
+    for (auto &it : accessors) {
         delete it->m_constval.vfunc;
         it->m_constval.vfunc = nullptr;
         delete it;
     }
-    for (auto &it : parser->functions) delete it;
-    for (auto &it : parser->globals) delete it;
-    for (auto &it : parser->fields) delete it;
+    for (auto &it : functions) delete it;
+    for (auto &it : globals) delete it;
+    for (auto &it : fields) delete it;
 
-    for (i = 0; i < vec_size(parser->variables); ++i)
-        util_htdel(parser->variables[i]);
-    vec_free(parser->variables);
-    vec_free(parser->_blocklocals);
-    vec_free(parser->_locals);
+    for (auto &it : variables) util_htdel(it);
+    variables.clear();
+    _blocklocals.clear();
+    _locals.clear();
 
-    for (i = 0; i < vec_size(parser->_typedefs); ++i)
-        delete parser->_typedefs[i];
-    vec_free(parser->_typedefs);
-    for (i = 0; i < vec_size(parser->typedefs); ++i)
-        util_htdel(parser->typedefs[i]);
-    vec_free(parser->typedefs);
-    vec_free(parser->_blocktypedefs);
+    _typedefs.clear();
+    for (auto &it : typedefs) util_htdel(it);
+    typedefs.clear();
+    _blocktypedefs.clear();
 
-    vec_free(parser->_block_ctx);
+    _block_ctx.clear();
 
-    delete parser->nil;
+    delete nil;
 
-    delete parser->const_vec[0];
-    delete parser->const_vec[1];
-    delete parser->const_vec[2];
+    delete const_vec[0];
+    delete const_vec[1];
+    delete const_vec[2];
 
-    if (parser->reserved_version)
-        delete parser->reserved_version;
+    if (reserved_version)
+        delete reserved_version;
 
-    util_htdel(parser->aliases);
-}
-
-void parser_cleanup(parser_t *parser)
-{
-    parser_remove_ast(parser);
-    parser->~parser_t();
-    mem_d(parser);
+    util_htdel(aliases);
 }
 
 static bool parser_set_coverage_func(parser_t *parser, ir_builder *ir) {
@@ -6372,7 +6367,7 @@ bool parser_finish(parser_t *parser, const char *output)
             return false;
         }
     }
-    parser_remove_ast(parser);
+    parser->remove_ast();
 
     auto fnCheckWErrors = [&retval]() {
         if (compile_Werrors) {
