@@ -5516,7 +5516,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
                         defname.erase(prefix_len);
                         for (i = 0; i < 3; ++i) {
                             util_htset(parser->variables.back(), me[i]->m_name.c_str(), (void*)(me[i]));
-                            me[i]->m_name = move(defname + me[i]->m_name);
+                            me[i]->m_name = defname + me[i]->m_name;
                             parser->globals.push_back(me[i]);
                         }
                     }
