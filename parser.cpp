@@ -293,6 +293,23 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
     return true;
 }
 
+static int store_op_for(ast_expression* expr)
+{
+    if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) && expr->m_vtype == TYPE_FIELD && expr->m_next->m_vtype == TYPE_VECTOR) {
+        return type_storep_instr[TYPE_VECTOR];
+    }
+
+    if (ast_istype(expr, ast_member) && ast_istype(((ast_member*)expr)->m_owner, ast_entfield)) {
+        return type_storep_instr[expr->m_vtype];
+    }
+
+    if (ast_istype(expr, ast_entfield)) {
+        return type_storep_instr[expr->m_vtype];
+    }
+
+    return type_store_instr[expr->m_vtype];
+}
+
 static bool check_write_to(lex_ctx_t ctx, ast_expression *expr)
 {
     if (ast_istype(expr, ast_value)) {
@@ -900,14 +917,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
         case opid1('='):
             if (ast_istype(exprs[0], ast_entfield)) {
                 ast_expression *field = ((ast_entfield*)exprs[0])->m_field;
-                if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) &&
-                    exprs[0]->m_vtype == TYPE_FIELD &&
-                    exprs[0]->m_next->m_vtype == TYPE_VECTOR)
-                {
-                    assignop = type_storep_instr[TYPE_VECTOR];
-                }
-                else
-                    assignop = type_storep_instr[exprs[0]->m_vtype];
+                assignop = store_op_for(exprs[0]);
                 if (assignop == VINSTR_END || !field->m_next->compareType(*exprs[1]))
                 {
                     ast_type_to_string(field->m_next, ty1, sizeof(ty1));
@@ -925,15 +935,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             }
             else
             {
-                if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) &&
-                    exprs[0]->m_vtype == TYPE_FIELD &&
-                    exprs[0]->m_next->m_vtype == TYPE_VECTOR)
-                {
-                    assignop = type_store_instr[TYPE_VECTOR];
-                }
-                else {
-                    assignop = type_store_instr[exprs[0]->m_vtype];
-                }
+                assignop = store_op_for(exprs[0]);
 
                 if (assignop == VINSTR_END) {
                     ast_type_to_string(exprs[0], ty1, sizeof(ty1));
@@ -1028,10 +1030,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             (void)check_write_to(ctx, exprs[0]);
-            if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->m_vtype];
-            else
-                assignop = type_store_instr[exprs[0]->m_vtype];
+            assignop = store_op_for(exprs[0]);
             switch (exprs[0]->m_vtype) {
                 case TYPE_FLOAT:
                     out = new ast_binstore(ctx, assignop,
@@ -1063,10 +1062,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             (void)check_write_to(ctx, exprs[0]);
-            if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->m_vtype];
-            else
-                assignop = type_store_instr[exprs[0]->m_vtype];
+            assignop = store_op_for(exprs[0]);
             switch (exprs[0]->m_vtype) {
                 case TYPE_FLOAT:
                     out = new ast_binstore(ctx, assignop,
@@ -1107,10 +1103,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 return false;
             }
             (void)check_write_to(ctx, exprs[0]);
-            if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->m_vtype];
-            else
-                assignop = type_store_instr[exprs[0]->m_vtype];
+            assignop = store_op_for(exprs[0]);
             if (exprs[0]->m_vtype == TYPE_FLOAT)
                 out = new ast_binstore(ctx, assignop,
                                        (op->id == opid2('^','=') ? VINSTR_BITXOR : op->id == opid2('&','=') ? INSTR_BITAND : INSTR_BITOR),
@@ -1132,10 +1125,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                               ty1, ty2);
                 return false;
             }
-            if (ast_istype(exprs[0], ast_entfield))
-                assignop = type_storep_instr[exprs[0]->m_vtype];
-            else
-                assignop = type_store_instr[exprs[0]->m_vtype];
+            assignop = store_op_for(exprs[0]);
             if (exprs[0]->m_vtype == TYPE_FLOAT)
                 out = fold::binary(ctx, INSTR_BITAND, exprs[0], exprs[1]);
             else
