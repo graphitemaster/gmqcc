@@ -670,6 +670,7 @@ bool util_isatty(FILE *file) {
 }
 #else
 bool util_isatty(FILE *file) {
+    (void)file;
     return false;
 }
 #endif
