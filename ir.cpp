@@ -3239,7 +3239,7 @@ bool ir_builder::generateGlobalFunctionCode(ir_value *global)
     return true;
 }
 
-static void gen_vector_defs(code_t *code, prog_section_def_t def, const char *name)
+static void gen_vector_defs(code_t *code, prog_section_def_t def, const char *name, int type)
 {
     char  *component;
     size_t len, i;
@@ -3247,7 +3247,7 @@ static void gen_vector_defs(code_t *code, prog_section_def_t def, const char *na
     if (!name || name[0] == '#' || OPTS_FLAG(SINGLE_VECTOR_DEFS))
         return;
 
-    def.type = TYPE_FLOAT;
+    def.type = type;
 
     len = strlen(name);
 
@@ -3347,9 +3347,9 @@ bool ir_builder::generateGlobal(ir_value *global, bool islocal)
             def.offset = global->codeAddress();
             m_code->defs.push_back(def);
             if (global->m_vtype == TYPE_VECTOR)
-                gen_vector_defs(m_code.get(), def, global->m_name.c_str());
+                gen_vector_defs(m_code.get(), def, global->m_name.c_str(), TYPE_FLOAT);
             else if (global->m_vtype == TYPE_FIELD && global->m_fieldtype == TYPE_VECTOR)
-                gen_vector_defs(m_code.get(), def, global->m_name.c_str());
+                gen_vector_defs(m_code.get(), def, global->m_name.c_str(), TYPE_FIELD);
             return true;
         }
     }
@@ -3391,7 +3391,7 @@ bool ir_builder::generateGlobal(ir_value *global, bool islocal)
         if (pushdef) {
             m_code->defs.push_back(def);
             if (global->m_fieldtype == TYPE_VECTOR)
-                gen_vector_defs(m_code.get(), def, global->m_name.c_str());
+                gen_vector_defs(m_code.get(), def, global->m_name.c_str(), TYPE_FIELD);
         }
         return gen_global_field(m_code.get(), global);
     case TYPE_ENTITY:
@@ -3457,7 +3457,7 @@ bool ir_builder::generateGlobal(ir_value *global, bool islocal)
         if (pushdef) {
             m_code->defs.push_back(def);
             def.type &= ~DEF_SAVEGLOBAL;
-            gen_vector_defs(m_code.get(), def, global->m_name.c_str());
+            gen_vector_defs(m_code.get(), def, global->m_name.c_str(), TYPE_FLOAT);
         }
         return global->m_code.globaladdr >= 0;
     }
@@ -3560,7 +3560,7 @@ static bool ir_builder_gen_field(ir_builder *self, ir_value *field)
     }
 
     if (field->m_fieldtype == TYPE_VECTOR) {
-        gen_vector_defs  (self->m_code.get(), def, field->m_name.c_str());
+        gen_vector_defs  (self->m_code.get(), def, field->m_name.c_str(), TYPE_FIELD);
         gen_vector_fields(self->m_code.get(), fld, field->m_name.c_str());
     }
 
