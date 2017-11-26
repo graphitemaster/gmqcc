@@ -3163,6 +3163,7 @@ static bool parse_switch_go(parser_t *parser, ast_block *block, ast_expression *
             }
             if (!OPTS_FLAG(RELAXED_SWITCH)) {
                 if (!ast_istype(swcase.m_value, ast_value)) { /* || ((ast_value*)swcase.m_value)->m_cvq != CV_CONST) { */
+                    delete switchnode;
                     parseerror(parser, "case on non-constant values need to be explicitly enabled via -frelaxed-switch");
                     ast_unref(operand);
                     return false;
