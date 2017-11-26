@@ -296,7 +296,11 @@ static bool rotate_entfield_array_index_nodes(ast_expression **out)
 static int store_op_for(ast_expression* expr)
 {
     if (OPTS_FLAG(ADJUST_VECTOR_FIELDS) && expr->m_vtype == TYPE_FIELD && expr->m_next->m_vtype == TYPE_VECTOR) {
-        return type_storep_instr[TYPE_VECTOR];
+        if (ast_istype(expr, ast_entfield)) {
+            return type_storep_instr[TYPE_VECTOR];
+        } else {
+            return type_store_instr[TYPE_VECTOR];
+        }
     }
 
     if (ast_istype(expr, ast_member) && ast_istype(((ast_member*)expr)->m_owner, ast_entfield)) {
