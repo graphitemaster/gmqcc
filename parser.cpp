@@ -347,7 +347,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     const oper_info *op;
     lex_ctx_t ctx;
     ast_expression *out = nullptr;
-    ast_expression *exprs[3];
+    ast_expression *exprs[3] = { 0, 0, 0 };
     ast_block      *blocks[3];
     ast_binstore   *asbinstore;
     size_t i, assignop, addop, subop;

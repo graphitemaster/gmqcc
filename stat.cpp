@@ -28,11 +28,12 @@ char *stat_mem_strdup(const char *src, bool empty) {
  * The reallocate function for resizing vectors.
  */
 void _util_vec_grow(void **a, size_t i, size_t s) {
-    vector_t *d = vec_meta(*a);
+    vector_t *d = nullptr;
     size_t m = 0;
     void *p = nullptr;
 
     if (*a) {
+        d = vec_meta(*a);
         m = 2 * d->allocated + i;
         p = mem_r(d, s * m + sizeof(vector_t));
     } else {
