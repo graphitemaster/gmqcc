@@ -135,22 +135,17 @@ static ast_expression* parser_find_local(parser_t *parser, const char *name, siz
 {
     size_t          i, hash;
     ast_expression *e;
-    ast_expression *p;
 
     hash = util_hthash(parser->htglobals, name);
 
     *isparam = false;
-    p = parser_find_param(parser, name);
-    if (p) {
-        *isparam = true;
-        return p;
-    }
     for (i = parser->variables.size(); i > upto;) {
         --i;
         if ( (e = (ast_expression*)util_htgeth(parser->variables[i], name, hash)) )
             return e;
     }
-    return NULL;
+    *isparam = true;
+    return parser_find_param(parser, name);
 }
 
 static ast_expression* parser_find_local(parser_t *parser, const std::string &name, size_t upto, bool *isparam) {
