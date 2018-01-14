@@ -1932,6 +1932,7 @@ bool ast_binstore::codegen(ast_function *func, bool lvalue, ir_value **out)
         if (!idx->codegen(func, false, &iridx))
             return false;
     }
+
     if (!m_dest->codegen(func, false, &leftr))
         return false;
 
@@ -2153,19 +2154,28 @@ bool ast_member::codegen(ast_function *func, bool lvalue, ir_value **out)
         else
             m_outr = *out;
         return (*out != nullptr);
-    } else {
-        if (!m_owner->codegen(func, false, &vec))
-            return false;
     }
+
+    // Vector member access
+    if (!m_owner->codegen(func, lvalue, &vec))
+        return false;
 
     if (vec->m_vtype != TYPE_VECTOR &&
         !(vec->m_vtype == TYPE_FIELD && m_owner->m_next->m_vtype == TYPE_VECTOR))
     {
+        compile_error(m_context, "vector member produced neither vector nor field");
         return false;
     }
 
     *out = vec->vectorMember(m_field);
-    m_outl = *out;
+    if (!*out) {
+        compile_error(m_context, "internal error: failed to create vector member access");
+        return false;
+    }
+    if (lvalue)
+        m_outl = *out;
+    else
+        m_outr = *out;
 
     return (*out != nullptr);
 }

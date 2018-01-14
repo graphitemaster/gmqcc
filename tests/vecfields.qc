@@ -10,4 +10,8 @@ void main() {
 	e.v1 = '1 2 3';
 	print(ftos(set(e, 42)), " => ");
 	print(vtos(e.v1), "\n");
+
+#ifdef BROKEN_ACCESS
+	(e.v1 = '0 0 0').x += 1;
+#endif
 }
