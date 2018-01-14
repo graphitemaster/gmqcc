@@ -156,7 +156,7 @@ static ast_expression* parser_find_var(parser_t *parser, const char *name)
 {
     bool dummy;
     ast_expression *v;
-    v         = parser_find_local(parser, name, 0, &dummy);
+    v         = parser_find_local(parser, name, PARSER_HT_LOCALS, &dummy);
     if (!v) v = parser_find_global(parser, name);
     return v;
 }
