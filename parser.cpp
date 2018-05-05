@@ -1188,6 +1188,12 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
 
 static bool parser_close_call(parser_t *parser, shunt *sy)
 {
+    if (!parser->function)
+    {
+        parseerror(parser, "cannot call functions from global scope");
+        return false;
+    }
+
     /* was a function call */
     ast_expression *fun;
     ast_value      *funval = nullptr;
