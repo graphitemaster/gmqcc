@@ -628,6 +628,13 @@ after all limited to 64k. There's at least one known codebase where this
 lowers the number of globals from over 80k down to around 3k. In other code
 bases it doesn't reduce the globals at all but only increases code size.
 Just try it and see whether it helps you.
+.It Fl f Ns Cm default-eraseable
+Force all expressions to be "eraseable" which permits the compiler to
+remove unused functions, variables and statements. This is equivlant to
+putting [[eraseable]] on all definitions. This is dangerous as it breaks
+auto cvars, definitions for functions the engine may be looking for and
+translatable strings. Instead, you can mark a definition with [[noerase]]
+to prevent this from happening.
 .El
 .Sh OPTIMIZATIONS
 .Bl -tag -width Ds

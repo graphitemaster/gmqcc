@@ -346,6 +346,14 @@
     #expense of additional instructions.
     SPLIT_VECTOR_PARAMETERS = false
 
+    #Force all expressions to be "eraseable" which permits the compiler
+    #to remove unused functions, variables and statements. This is
+    #equivlant to putting [[eraseable]] on all definitions. This is
+    #dangerous as it breaks auto cvars, definitions for functions the
+    #engine may be looking for and translatable strings. Instead, you
+    #can mark a definition with [[noerase]] to prevent this from happening.
+    DEFAULT_ERASEABLE = false
+
 [warnings]
     #Generate a warning about variables which are declared but never
     #used. This can be avoided by adding the ‘noref’ keyword in front

@@ -2763,6 +2763,7 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
         { "noreturn",   AST_FLAG_NORETURN   },
         { "inline",     AST_FLAG_INLINE     },
         { "eraseable",  AST_FLAG_ERASEABLE  },
+        { "noerase",    AST_FLAG_NOERASE    },
         { "accumulate", AST_FLAG_ACCUMULATE },
         { "last",       AST_FLAG_FINAL_DECL }
     };
@@ -2795,7 +2796,6 @@ static bool parse_qualifiers(parser_t *parser, bool with_local, int *cvq, bool *
 
             if (i != GMQCC_ARRAY_COUNT(attributes))
                 goto leave;
-
 
             if (!strcmp(parser_tokval(parser), "noref")) {
                 had_noref = true;
@@ -5197,8 +5197,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
          * store the vstring back to var for alias and
          * deprecation messages.
          */
-        if (var->m_flags & AST_FLAG_DEPRECATED ||
-            var->m_flags & AST_FLAG_ALIAS)
+        if (var->m_flags & AST_FLAG_DEPRECATED || var->m_flags & AST_FLAG_ALIAS)
             var->m_desc = vstring;
 
         if (parser_find_global(parser, var->m_name) && var->m_flags & AST_FLAG_ALIAS) {

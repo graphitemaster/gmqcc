@@ -43,14 +43,15 @@ enum {
     AST_FLAG_IS_VARARG      = 1 << 6,
     AST_FLAG_ALIAS          = 1 << 7,
     AST_FLAG_ERASEABLE      = 1 << 8,
-    AST_FLAG_ACCUMULATE     = 1 << 9,
+    AST_FLAG_NOERASE        = 1 << 9, /* Never allow it to be erased, even if ERASEABLE is present */
+    AST_FLAG_ACCUMULATE     = 1 << 10,
 
     /* An array declared as []
      * so that the size is taken from the initializer
      */
-    AST_FLAG_ARRAY_INIT     = 1 << 10,
+    AST_FLAG_ARRAY_INIT     = 1 << 11,
 
-    AST_FLAG_FINAL_DECL     = 1 << 11,
+    AST_FLAG_FINAL_DECL     = 1 << 12,
 
     /* Several coverage options
      * AST_FLAG_COVERAGE means there was an explicit [[coverage]] attribute,
@@ -59,14 +60,14 @@ enum {
      * In the future there might be more options like tracking variable access
      * by creating get/set wrapper functions.
      */
-    AST_FLAG_COVERAGE       = 1 << 12,
-    AST_FLAG_BLOCK_COVERAGE = 1 << 13,
+    AST_FLAG_COVERAGE       = 1 << 13,
+    AST_FLAG_BLOCK_COVERAGE = 1 << 14,
 
     /*
      * Propagates norefness to the IR so the unused (read/write) check can be
      * more intelligently done.
      */
-    AST_FLAG_NOREF          = 1 << 14,
+    AST_FLAG_NOREF          = 1 << 15,
 
     AST_FLAG_LAST,
     AST_FLAG_TYPE_MASK      = (AST_FLAG_VARIADIC | AST_FLAG_NORETURN),

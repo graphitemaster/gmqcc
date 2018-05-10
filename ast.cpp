@@ -37,6 +37,8 @@ ast_expression::ast_expression(lex_ctx_t ctx, int nodetype, qc_type type)
 {
     if (OPTS_OPTION_BOOL(OPTION_COVERAGE))
         m_flags |= AST_FLAG_BLOCK_COVERAGE;
+    if (OPTS_FLAG(DEFAULT_ERASEABLE))
+        m_flags |= AST_FLAG_ERASEABLE;
 }
 ast_expression::ast_expression(lex_ctx_t ctx, int nodetype)
     : ast_expression(ctx, nodetype, TYPE_VOID)
@@ -1130,7 +1132,7 @@ bool ast_value::generateGlobal(ir_builder *ir, bool isfield)
 
     if (m_flags & AST_FLAG_INCLUDE_DEF)
         m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
-    if (m_flags & AST_FLAG_ERASEABLE)
+    if (m_flags & AST_FLAG_ERASEABLE && !(m_flags & AST_FLAG_NOERASE))
         m_ir_v->m_flags |= IR_FLAG_ERASABLE;
     if (m_flags & AST_FLAG_NOREF)
         m_ir_v->m_flags |= IR_FLAG_NOREF;
@@ -1194,7 +1196,7 @@ bool ast_value::generateGlobalFunction(ir_builder *ir)
     m_ir_v = func->m_value;
     if (m_flags & AST_FLAG_INCLUDE_DEF)
         m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
-    if (m_flags & AST_FLAG_ERASEABLE)
+    if (m_flags & AST_FLAG_ERASEABLE && !(m_flags & AST_FLAG_NOERASE))
         m_ir_v->m_flags |= IR_FLAG_ERASABLE;
     if (m_flags & AST_FLAG_BLOCK_COVERAGE)
         func->m_flags |= IR_FLAG_BLOCK_COVERAGE;
@@ -1236,7 +1238,7 @@ bool ast_value::generateGlobalField(ir_builder *ir)
 
         if (m_flags & AST_FLAG_INCLUDE_DEF)
             m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
-        if (m_flags & AST_FLAG_ERASEABLE)
+        if (m_flags & AST_FLAG_ERASEABLE && !(m_flags & AST_FLAG_NOERASE))
             m_ir_v->m_flags |= IR_FLAG_ERASABLE;
         if (m_flags & AST_FLAG_NOREF)
             m_ir_v->m_flags |= IR_FLAG_NOREF;
@@ -1272,7 +1274,7 @@ bool ast_value::generateGlobalField(ir_builder *ir)
         m_ir_v = v;
         if (m_flags & AST_FLAG_INCLUDE_DEF)
             m_ir_v->m_flags |= IR_FLAG_INCLUDE_DEF;
-        if (m_flags & AST_FLAG_ERASEABLE)
+        if (m_flags & AST_FLAG_ERASEABLE && !(m_flags & AST_FLAG_NOERASE))
             m_ir_v->m_flags |= IR_FLAG_ERASABLE;
         if (m_flags & AST_FLAG_NOREF)
             m_ir_v->m_flags |= IR_FLAG_NOREF;
@@ -1305,7 +1307,7 @@ ir_value *ast_value::prepareGlobalArray(ir_builder *ir)
 
     if (m_flags & AST_FLAG_INCLUDE_DEF)
         v->m_flags |= IR_FLAG_INCLUDE_DEF;
-    if (m_flags & AST_FLAG_ERASEABLE)
+    if (m_flags & AST_FLAG_ERASEABLE && !(m_flags & AST_FLAG_NOERASE))
         v->m_flags |= IR_FLAG_ERASABLE;
     if (m_flags & AST_FLAG_NOREF)
         v->m_flags |= IR_FLAG_NOREF;
