@@ -117,7 +117,7 @@ static bool options_long_gcc(const char *optname, int *argc_, char ***argv_, cha
     return options_long_witharg_all(optname, argc_, argv_, out, 1, false);
 }
 
-static bool options_parse(int argc, char **argv) {
+static bool options_parse(int argc, char **argv, bool *has_progs_src) {
     bool argend = false;
     size_t itr;
     char buffer[1024];
@@ -202,6 +202,7 @@ static bool options_parse(int argc, char **argv) {
             }
             if (options_long_gcc("progsrc", &argc, &argv, &argarg)) {
                 OPTS_OPTION_STR(OPTION_PROGSRC) = argarg;
+                *has_progs_src = true;
                 continue;
             }
 
@@ -434,6 +435,9 @@ static bool options_parse(int argc, char **argv) {
                     }
                     item.filename = argarg;
                     vec_push(items, item);
+                    if (item.type == TYPE_SRC) {
+                        *has_progs_src = true;
+                    }
                     break;
 
                 case '-':
@@ -515,13 +519,13 @@ static bool progs_nextline(char **out, size_t *alen, FILE *src) {
 }
 
 int main(int argc, char **argv) {
-    size_t          itr;
-    int             retval           = 0;
-    bool            operators_free   = false;
-    bool            progs_src        = false;
-    FILE       *outfile         = nullptr;
-    parser_t *parser          = nullptr;
-    ftepp_t  *ftepp           = nullptr;
+    size_t itr;
+    int retval = 0;
+    bool operators_free = false;
+    bool has_progs_src = false;
+    FILE *outfile = nullptr;
+    parser_t *parser = nullptr;
+    ftepp_t *ftepp = nullptr;
 
     app_name = argv[0];
     con_init ();
@@ -529,7 +533,7 @@ int main(int argc, char **argv) {
 
     util_seed(time(0));
 
-    if (!options_parse(argc, argv)) {
+    if (!options_parse(argc, argv, &has_progs_src)) {
         return usage();
     }
 
@@ -623,13 +627,19 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!vec_size(items)) {
-        FILE *src;
-        char      *line    = nullptr;
-        size_t     linelen = 0;
-        bool       hasline = false;
+    if (!vec_size(items) && !has_progs_src) {
+      FILE *fp = fopen(OPTS_OPTION_STR(OPTION_PROGSRC), "rb");
+      if (fp) {
+        has_progs_src = true;
+      }
+      fclose(fp);
+    }
 
-        progs_src = true;
+    if (has_progs_src) {
+        FILE *src;
+        char *line = nullptr;
+        size_t linelen = 0;
+        bool has_first_line = false;
 
         src = fopen(OPTS_OPTION_STR(OPTION_PROGSRC), "rb");
         if (!src) {
@@ -641,16 +651,19 @@ int main(int argc, char **argv) {
         while (progs_nextline(&line, &linelen, src)) {
             argitem item;
 
-            if (!line[0] || (line[0] == '/' && line[1] == '/'))
+            if (!line[0] || (line[0] == '/' && line[1] == '/')) {
                 continue;
+            }
 
-            if (hasline) {
+            if (has_first_line) {
                 item.filename = util_strdup(line);
-                item.type     = TYPE_QC;
+                item.type = TYPE_QC;
                 vec_push(items, item);
-            } else if (!opts_output_wasset) {
-                OPTS_OPTION_DUP(OPTION_OUTPUT) = util_strdup(line);
-                hasline                        = true;
+            } else {
+                if (!opts_output_wasset) {
+                    OPTS_OPTION_DUP(OPTION_OUTPUT) = util_strdup(line);
+                }
+                has_first_line = true;
             }
         }
 
@@ -662,7 +675,7 @@ int main(int argc, char **argv) {
         if (!OPTS_OPTION_BOOL(OPTION_QUIET) &&
             !OPTS_OPTION_BOOL(OPTION_PP_ONLY))
         {
-            con_out("Mode: %s\n", (progs_src ? "progs.src" : "manual"));
+            con_out("Mode: %s\n", (has_progs_src ? "progs.src" : "manual"));
             con_out("There are %lu items to compile:\n", (unsigned long)vec_size(items));
         }
 
@@ -676,6 +689,10 @@ int main(int argc, char **argv) {
                          (items[itr].type == TYPE_ASM ? "asm" :
                          (items[itr].type == TYPE_SRC ? "progs.src" :
                          ("unknown"))))));
+            }
+
+            if (items[itr].type == TYPE_SRC) {
+                continue;
             }
 
             if (OPTS_OPTION_BOOL(OPTION_PP_ONLY)) {
@@ -713,7 +730,7 @@ int main(int argc, char **argv) {
                 }
             }
 
-            if (progs_src) {
+            if (has_progs_src) {
                 mem_d(items[itr].filename);
                 items[itr].filename = nullptr;
             }

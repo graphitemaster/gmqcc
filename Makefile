@@ -14,6 +14,8 @@ CXXFLAGS = \
 	-std=c++11 \
 	-Wall \
 	-Wextra \
+	-Wno-parentheses \
+	-Wno-class-memaccess \
 	-fno-exceptions \
 	-fno-rtti \
 	-MD \
