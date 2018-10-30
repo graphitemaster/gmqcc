@@ -831,6 +831,7 @@ static int GMQCC_WARN lex_finish_string(lex_file *lex, int quote)
 static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
 {
     bool ishex = false;
+    bool isoct = false;
 
     int  ch = lastch;
 
@@ -843,7 +844,16 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
     lex_tokench(lex, ch);
 
     ch = lex_getch(lex);
-    if (ch != '.' && !util_isdigit(ch))
+
+    if (lastch == '0' && util_isdigit(ch)) {
+      if (ch < '0' || ch > '7') {
+        lexerror(lex, "invalid octal constant");
+        return (lex->tok.ttype = TOKEN_ERROR);
+      }
+      isoct = true;
+    }
+
+    if (!isoct && ch != '.' && !util_isdigit(ch))
     {
         if (lastch != '0' || ch != 'x')
         {
@@ -898,10 +908,15 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
     lex_ungetch(lex, ch);
 
     lex_endtoken(lex);
-    if (lex->tok.ttype == TOKEN_FLOATCONST)
+    if (lex->tok.ttype == TOKEN_FLOATCONST) {
         lex->tok.constval.f = strtod(lex->tok.value, nullptr);
-    else
-        lex->tok.constval.i = strtol(lex->tok.value, nullptr, 0);
+    } else {
+      /* determine base for strtol */
+      int base = 10;
+      if (ishex) base = 16;
+      if (isoct) base = 8;
+      lex->tok.constval.i = strtol(lex->tok.value, nullptr, base);
+    }
     return lex->tok.ttype;
 }
 
