@@ -1486,29 +1486,54 @@ ast_expression *fold::intrinsic_pow(ast_value *lhs, ast_value *rhs) {
 ast_expression *fold::intrinsic_fabs(ast_value *a) {
     return constgen_float(fabsf(immvalue_float(a)), false);
 }
+ast_expression* fold::intrinsic_nan(void) {
+    return constgen_float(0.0f / 0.0f, false);
+}
+ast_expression* fold::intrinsic_epsilon(void) {
+  static bool calculated = false;
+  static float eps = 1.0f;
+  if (!calculated) {
+    do {
+      eps /= 2.0f;
+    } while ((1.0f + (eps / 2.0f)) != 1.0f);
+    calculated = true;
+  }
+  return constgen_float(eps, false);
+}
 
-ast_expression *fold::intrinsic(const char *intrinsic, ast_expression **arg) {
+ast_expression* fold::intrinsic_inf(void) {
+  return constgen_float(1.0f / 0.0f, false);
+}
+
+ast_expression *fold::intrinsic(const char *intrinsic, size_t n_args, ast_expression **args) {
     ast_expression *ret = nullptr;
-    ast_value *a = (ast_value*)arg[0];
-    ast_value *b = (ast_value*)arg[1];
 
-    if (!strcmp(intrinsic, "isfinite")) ret = intrinsic_isfinite(a);
-    if (!strcmp(intrinsic, "isinf"))    ret = intrinsic_isinf(a);
-    if (!strcmp(intrinsic, "isnan"))    ret = intrinsic_isnan(a);
-    if (!strcmp(intrinsic, "isnormal")) ret = intrinsic_isnormal(a);
-    if (!strcmp(intrinsic, "signbit"))  ret = intrinsic_signbit(a);
-    if (!strcmp(intrinsic, "acosh"))    ret = intrinsic_acosh(a);
-    if (!strcmp(intrinsic, "asinh"))    ret = intrinsic_asinh(a);
-    if (!strcmp(intrinsic, "atanh"))    ret = intrinsic_atanh(a);
-    if (!strcmp(intrinsic, "exp"))      ret = intrinsic_exp(a);
-    if (!strcmp(intrinsic, "exp2"))     ret = intrinsic_exp2(a);
-    if (!strcmp(intrinsic, "expm1"))    ret = intrinsic_expm1(a);
-    if (!strcmp(intrinsic, "mod"))      ret = intrinsic_mod(a, b);
-    if (!strcmp(intrinsic, "pow"))      ret = intrinsic_pow(a, b);
-    if (!strcmp(intrinsic, "fabs"))     ret = intrinsic_fabs(a);
+    if (n_args) {
+      ast_value *a = (ast_value*)args[0];
+      ast_value *b = (ast_value*)args[1];
+      if (!strcmp(intrinsic, "isfinite")) ret = intrinsic_isfinite(a);
+      if (!strcmp(intrinsic, "isinf"))    ret = intrinsic_isinf(a);
+      if (!strcmp(intrinsic, "isnan"))    ret = intrinsic_isnan(a);
+      if (!strcmp(intrinsic, "isnormal")) ret = intrinsic_isnormal(a);
+      if (!strcmp(intrinsic, "signbit"))  ret = intrinsic_signbit(a);
+      if (!strcmp(intrinsic, "acosh"))    ret = intrinsic_acosh(a);
+      if (!strcmp(intrinsic, "asinh"))    ret = intrinsic_asinh(a);
+      if (!strcmp(intrinsic, "atanh"))    ret = intrinsic_atanh(a);
+      if (!strcmp(intrinsic, "exp"))      ret = intrinsic_exp(a);
+      if (!strcmp(intrinsic, "exp2"))     ret = intrinsic_exp2(a);
+      if (!strcmp(intrinsic, "expm1"))    ret = intrinsic_expm1(a);
+      if (!strcmp(intrinsic, "mod"))      ret = intrinsic_mod(a, b);
+      if (!strcmp(intrinsic, "pow"))      ret = intrinsic_pow(a, b);
+      if (!strcmp(intrinsic, "fabs"))     ret = intrinsic_fabs(a);
+    } else {
+      if (!strcmp(intrinsic, "nan"))      ret = intrinsic_nan();
+      if (!strcmp(intrinsic, "epsilon"))  ret = intrinsic_epsilon();
+      if (!strcmp(intrinsic, "inf"))      ret = intrinsic_inf();
+    }
 
-    if (ret)
+    if (ret) {
         ++opts_optimizationcount[OPTIM_CONST_FOLD];
+    }
 
     return ret;
 }

@@ -32,8 +32,6 @@ void intrin::reg(ast_value *const value, ast_function *const func) {
     m_parser->globals.push_back(value);
 }
 
-#define QC_POW_EPSILON 0.00001f
-
 ast_expression *intrin::nullfunc() {
     ast_value *val = nullptr;
     ast_function *func = value(&val, nullptr, TYPE_VOID);
@@ -575,6 +573,8 @@ ast_expression *intrin::expm1_() {
 }
 
 ast_expression *intrin::pow_() {
+		#define QC_POW_EPSILON 0.00001f
+
     /*
      *
      * float pow(float base, float exp) {
@@ -2005,7 +2005,7 @@ ast_expression *intrin::do_fold(ast_value *val, ast_expression **exprs) {
         if (val->m_name == it.name)
             return (vec_size(exprs) != it.args)
                         ? nullptr
-                        : m_fold->intrinsic(val->m_name.c_str() + kPrefixLength, exprs);
+                        : m_fold->intrinsic(val->m_name.c_str() + kPrefixLength, it.args, exprs);
     }
     return nullptr;
 }

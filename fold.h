@@ -21,7 +21,7 @@ struct fold {
 
     bool generate(ir_builder *ir);
     ast_expression *op(const oper_info *info, ast_expression **opexprs);
-    ast_expression *intrinsic(const char *intrinsic, ast_expression **arg);
+    ast_expression *intrinsic(const char *intrinsic, size_t n_args, ast_expression **args);
 
     static int cond_ternary(ir_value *condval, ast_function *func, ast_ternary *branch);
     static int cond_ifthen(ir_value *condval, ast_function *func, ast_ifthen *branch);
@@ -83,9 +83,13 @@ protected:
     ast_expression *intrinsic_exp(ast_value *a);
     ast_expression *intrinsic_exp2(ast_value *a);
     ast_expression *intrinsic_expm1(ast_value *a);
-    ast_expression *intrinsic_mod(ast_value *lhs, ast_value *rhs);
     ast_expression *intrinsic_pow(ast_value *lhs, ast_value *rhs);
+    ast_expression *intrinsic_mod(ast_value *lhs, ast_value *rhs);
     ast_expression *intrinsic_fabs(ast_value *a);
+
+    ast_expression* intrinsic_nan(void);
+    ast_expression* intrinsic_epsilon(void);
+    ast_expression* intrinsic_inf(void);
 
     static qcfloat_t immvalue_float(ir_value *value);
     static vec3_t immvalue_vector(ir_value *value);
