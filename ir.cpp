@@ -4054,10 +4054,11 @@ void ir_value::dump(int (*oprintf)(const char*, ...)) const
                 oprintf("fn:%s", m_name.c_str());
                 break;
             case TYPE_FLOAT:
-                oprintf("%g", m_constval.vfloat);
+                // %.9g is lossless for IEEE single precision.
+                oprintf("%.9g", m_constval.vfloat);
                 break;
             case TYPE_VECTOR:
-                oprintf("'%g %g %g'",
+                oprintf("'%.9g %.9g %.9g'",
                         m_constval.vvec.x,
                         m_constval.vvec.y,
                         m_constval.vvec.z);
