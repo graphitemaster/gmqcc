@@ -2515,7 +2515,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.opcode = INSTR_BITOR;
             stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
             stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
-            stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o3.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             stmt.opcode = INSTR_BITAND;
             stmt.o1.s1 = instr->_m_ops[1]->codeAddress();
@@ -2523,7 +2523,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             stmt.o3.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
             stmt.opcode = INSTR_SUB_F;
-            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o1.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress();
             stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
             stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
@@ -2575,7 +2575,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.opcode = INSTR_BITOR;
                 stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
                 stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + j;
-                stmt.o3.s1 = instr->_m_ops[0]->codeAddress() + j;
+                stmt.o3.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
                 stmt.opcode = INSTR_BITAND;
                 stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
@@ -2584,7 +2584,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o1.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress();
             stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
             stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
@@ -2632,7 +2632,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 stmt.opcode = INSTR_BITOR;
                 stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
                 stmt.o2.s1 = instr->_m_ops[2]->codeAddress();
-                stmt.o3.s1 = instr->_m_ops[0]->codeAddress() + j;
+                stmt.o3.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
                 stmt.opcode = INSTR_BITAND;
                 stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + j;
@@ -2641,7 +2641,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o1.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress();
             stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
             stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
@@ -2655,7 +2655,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
             for (j = 0; j < 3; ++j) {
                 stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + (j + 1) % 3;
                 stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + (j + 2) % 3;
-                stmt.o3.s1 = instr->_m_ops[0]->codeAddress() + j;
+                stmt.o3.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress() + j;
                 code_push_statement(code, &stmt, instr->m_context);
                 stmt.o1.s1 = instr->_m_ops[1]->codeAddress() + (j + 2) % 3;
                 stmt.o2.s1 = instr->_m_ops[2]->codeAddress() + (j + 1) % 3;
@@ -2663,7 +2663,7 @@ static bool gen_blocks_recursive(code_t *code, ir_function *func, ir_block *bloc
                 code_push_statement(code, &stmt, instr->m_context);
             }
             stmt.opcode = INSTR_SUB_V;
-            stmt.o1.s1 = instr->_m_ops[0]->codeAddress();
+            stmt.o1.s1 = func->m_owner->m_vinstr_temp[1]->codeAddress();
             stmt.o2.s1 = func->m_owner->m_vinstr_temp[0]->codeAddress();
             stmt.o3.s1 = instr->_m_ops[0]->codeAddress();
             code_push_statement(code, &stmt, instr->m_context);
