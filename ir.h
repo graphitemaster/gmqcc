@@ -249,7 +249,7 @@ ir_block*       ir_function_create_block(lex_ctx_t ctx, ir_function*, const char
 
 /* builder */
 #define IR_HT_SIZE          1024
-#define IR_MAX_VINSTR_TEMPS 1
+#define IR_MAX_VINSTR_TEMPS 2
 
 struct ir_builder {
     ir_builder(const std::string& modulename);
