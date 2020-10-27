@@ -149,7 +149,7 @@ ifeq ($(UBSAN),1)
 endif
 
 # Strip the binaries when not a debug build
-ifneq (,$(findstring, -g,$(CXXFLAGS)))
+ifneq (,$(findstring -g,$(CXXFLAGS)))
 	STRIP := true
 else
 	STRIP := strip

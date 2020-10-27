@@ -4178,8 +4178,18 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
 enderrfn:
     (void)!parser_leaveblock(parser);
-    parser->functions.pop_back();
+
     delete func;
+
+    // Remove |func| from |parser->functions|. It may not actually be at the
+    // back of the vector for accumulated functions.
+    for (auto it = parser->functions.begin(); it != parser->functions.end(); it++) {
+        if (*it == func) {
+            parser->functions.erase(it, it + 1);
+            break;
+        }
+    }
+
     var->m_constval.vfunc = nullptr;
 
 enderr:
