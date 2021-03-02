@@ -20,7 +20,7 @@ static bool parse_typedef(parser_t *parser);
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring);
 static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
-static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
+static bool parse_statement_or_block(parser_t *parser, ast_block* parent_block, ast_expression **out);
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels);
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
@@ -2162,7 +2162,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         ast_unref(cond);
         return false;
     }
-    if (!parse_statement_or_block(parser, &ontrue)) {
+    if (!parse_statement_or_block(parser, block, &ontrue)) {
         ast_unref(cond);
         return false;
     }
@@ -2177,7 +2177,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
             ast_unref(cond);
             return false;
         }
-        if (!parse_statement_or_block(parser, &onfalse)) {
+        if (!parse_statement_or_block(parser, block, &onfalse)) {
             delete ontrue;
             ast_unref(cond);
             return false;
@@ -2285,7 +2285,7 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
         ast_unref(cond);
         return false;
     }
-    if (!parse_statement_or_block(parser, &ontrue)) {
+    if (!parse_statement_or_block(parser, block, &ontrue)) {
         ast_unref(cond);
         return false;
     }
@@ -2360,7 +2360,7 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
 
     (void)block; /* not touching */
 
-    if (!parse_statement_or_block(parser, &ontrue))
+    if (!parse_statement_or_block(parser, block, &ontrue))
         return false;
 
     /* expect the "while" */
@@ -2561,7 +2561,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         parseerror(parser, "expected for-loop body");
         goto onerr;
     }
-    if (!parse_statement_or_block(parser, &ontrue))
+    if (!parse_statement_or_block(parser, block, &ontrue))
         goto onerr;
 
     if (cond) {
@@ -3805,13 +3805,13 @@ static ast_block* parse_block(parser_t *parser)
     return block;
 }
 
-static bool parse_statement_or_block(parser_t *parser, ast_expression **out)
+static bool parse_statement_or_block(parser_t *parser, ast_block* parent_block, ast_expression **out)
 {
     if (parser->tok == '{') {
         *out = parse_block(parser);
         return !!*out;
     }
-    return parse_statement(parser, nullptr, out, false);
+    return parse_statement(parser, parent_block, out, false);
 }
 
 static bool create_vector_members(ast_value *var, ast_member **me)
