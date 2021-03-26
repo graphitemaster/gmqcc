@@ -631,8 +631,8 @@ int main(int argc, char **argv) {
       FILE *fp = fopen(OPTS_OPTION_STR(OPTION_PROGSRC), "rb");
       if (fp) {
         has_progs_src = true;
+        fclose(fp);
       }
-      fclose(fp);
     }
 
     if (has_progs_src) {
