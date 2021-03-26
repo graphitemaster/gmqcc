@@ -301,11 +301,11 @@ ast_binary::ast_binary(lex_ctx_t ctx, int op,
         /* make a-(-b) => a + b */
         if (unary->m_op == VINSTR_NEG_F || unary->m_op == VINSTR_NEG_V) {
             if (op == INSTR_SUB_F) {
-                op = INSTR_ADD_F;
+                op = m_op = INSTR_ADD_F;
                 right = normal;
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
             } else if (op == INSTR_SUB_V) {
-                op = INSTR_ADD_V;
+                op = m_op = INSTR_ADD_V;
                 right = normal;
                 ++opts_optimizationcount[OPTIM_PEEPHOLE];
             }
