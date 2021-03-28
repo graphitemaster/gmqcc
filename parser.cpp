@@ -4987,7 +4987,7 @@ static bool parse_typedef(parser_t *parser)
     }
 
     if ( (old = parser_find_var(parser, typevar->m_name)) ) {
-        parseerror(parser, "cannot define a type with the same name as a variable: %s\n"
+        parseerror(parser, "cannot define a type with the same name as a variable:\n"
                    " -> `%s` has been declared here: %s:%i",
                    typevar->m_name, old->m_context.file, old->m_context.line);
         delete typevar;
