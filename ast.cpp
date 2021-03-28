@@ -2293,7 +2293,6 @@ bool ast_ifthen::codegen(ast_function *func, bool lvalue, ir_value **out)
     ir_block *ontrue_endblock = nullptr;
     ir_block *onfalse_endblock = nullptr;
     ir_block *merge = nullptr;
-    int folded = 0;
 
     /* We don't output any value, thus also don't care about r/lvalue */
     (void)out;
@@ -2305,15 +2304,21 @@ bool ast_ifthen::codegen(ast_function *func, bool lvalue, ir_value **out)
     }
     m_outr = (ir_value*)1;
 
+    /* try constant folding away the condition */
+    switch (fold::cond_ifthen((ast_value*)m_cond, this)) {
+    case 0:
+        return true;
+    case fold::ON_TRUE:
+        return m_on_true->codegen(func, false, out);
+    case fold::ON_FALSE:
+        return m_on_false->codegen(func, false, out);
+    }
+
     /* generate the condition */
     if (!m_cond->codegen(func, false, &condval))
         return false;
     /* update the block which will get the jump - because short-logic or ternaries may have changed this */
     cond = func->m_curblock;
-
-    /* try constant folding away the condition */
-    if ((folded = fold::cond_ifthen(condval, func, this)) != -1)
-        return folded;
 
     if (m_on_true) {
         /* create on-true block */
@@ -2391,7 +2396,6 @@ bool ast_ternary::codegen(ast_function *func, bool lvalue, ir_value **out)
     ir_block *ontrue, *ontrue_out = nullptr;
     ir_block *onfalse, *onfalse_out = nullptr;
     ir_block *merge;
-    int folded = 0;
 
     /* Ternary can never create an lvalue... */
     if (lvalue)
@@ -2407,6 +2411,16 @@ bool ast_ternary::codegen(ast_function *func, bool lvalue, ir_value **out)
         return true;
     }
 
+    /* try constant folding away the condition */
+    switch (fold::cond_ternary((ast_value*)m_cond, this)) {
+    case 0:
+        return true;
+    case fold::ON_TRUE:
+        return m_on_true->codegen(func, false, out);
+    case fold::ON_FALSE:
+        return m_on_false->codegen(func, false, out);
+    }
+
     /* In the following, contraty to ast_ifthen, we assume both paths exist. */
 
     /* generate the condition */
@@ -2414,10 +2428,6 @@ bool ast_ternary::codegen(ast_function *func, bool lvalue, ir_value **out)
     if (!m_cond->codegen(func, false, &condval))
         return false;
     cond_out = func->m_curblock;
-
-    /* try constant folding away the condition */
-    if ((folded = fold::cond_ternary(condval, func, this)) != -1)
-        return folded;
 
     /* create on-true block */
     ontrue = ir_function_create_block(m_context, func->m_ir_func, func->makeLabel("tern_T"));

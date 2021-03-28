@@ -19,12 +19,22 @@ struct fold {
     fold(parser_t *parser);
     ~fold();
 
+    // Bitmask describing which branches of a conditional to take after folding.
+    // Zero indicates all the branches can be removed.
+    // ON_TRUE means ON_FALSE can be removed.
+    // ON_FALSE means ON_TRUE can be removed.
+    // ON_TRUE | ON_FALSE means nothing can be removed.
+    enum {
+        ON_TRUE  = 1 << 0,
+        ON_FALSE = 1 << 1,
+    };
+
     bool generate(ir_builder *ir);
     ast_expression *op(const oper_info *info, ast_expression **opexprs);
     ast_expression *intrinsic(const char *intrinsic, size_t n_args, ast_expression **args);
 
-    static int cond_ternary(ir_value *condval, ast_function *func, ast_ternary *branch);
-    static int cond_ifthen(ir_value *condval, ast_function *func, ast_ifthen *branch);
+    static uint32_t cond_ternary(ast_value *condval, ast_ternary *branch);
+    static uint32_t cond_ifthen(ast_value *condval, ast_ifthen *branch);
 
     static ast_expression *superfluous(ast_expression *left, ast_expression *right, int op);
     static ast_expression *binary(lex_ctx_t ctx, int op, ast_expression *left, ast_expression *right);
@@ -94,7 +104,7 @@ protected:
     static qcfloat_t immvalue_float(ir_value *value);
     static vec3_t immvalue_vector(ir_value *value);
 
-    static int cond(ir_value *condval, ast_function *func, ast_ifthen *branch);
+    static uint32_t cond(ast_value *condval, ast_ifthen *branch);
 
 private:
     friend struct intrin;

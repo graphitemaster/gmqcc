@@ -1066,6 +1066,47 @@ bool fold::check_inexact_float(ast_value *a, ast_value *b) {
     return compile_warning(ctx(), WARN_INEXACT_COMPARES, "inexact value in comparison");
 }
 
+uint32_t fold::cond(ast_value* condval, ast_ifthen *branch) {
+    // Optimization is disabled.
+    if (!OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
+        // Generate code for both.
+        return ON_TRUE | ON_FALSE;
+    }
+
+    // Only float literals can be DCE in conditions.
+    if (!isfloat(condval) || !fold_can_1(condval)) {
+        // Generate code for both.
+        return ON_TRUE | ON_FALSE;
+    }
+
+    qcfloat_t value = immvalue_float(condval);
+
+    bool is_true = value != 0.0f && branch->m_on_true;
+    bool is_false = value == 0.0f && branch->m_on_false;
+
+    ++opts_optimizationcount[OPTIM_CONST_FOLD_DCE];
+
+    // Determine which path we want to take based on constant fold.
+    if (is_true) {
+        // Generate code only for true path.
+        return ON_TRUE;
+    } else if (is_false) {
+        // Generate code only for false path.
+        return ON_FALSE;
+    }
+
+    // Generate code for no paths.
+    return 0;
+}
+
+uint32_t fold::cond_ternary(ast_value *condval, ast_ternary *branch) {
+    return cond(condval, (ast_ifthen*)branch);
+}
+
+uint32_t fold::cond_ifthen(ast_value *condval, ast_ifthen *branch) {
+    return cond(condval, branch);
+}
+
 ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
     qcfloat_t x = (&vec.x)[set[0]-'x'];
     qcfloat_t y = (&vec.x)[set[1]-'x'];
@@ -1081,7 +1122,6 @@ ast_expression *fold::op_mul_vec(vec3_t vec, ast_value *sel, const char *set) {
     }
     return nullptr;
 }
-
 
 ast_expression *fold::op_neg(ast_value *a) {
     if (isfloat(a)) {
@@ -1636,46 +1676,4 @@ ast_expression *fold::binary(lex_ctx_t ctx, int op, ast_expression *left, ast_ex
     if (ret)
         return ret;
     return new ast_binary(ctx, op, left, right);
-}
-
-int fold::cond(ir_value *condval, ast_function *func, ast_ifthen *branch) {
-    if (isfloat(condval) && fold_can_1(condval) && OPTS_OPTIMIZATION(OPTIM_CONST_FOLD_DCE)) {
-        ir_block               *elide;
-        ir_value               *dummy;
-        bool                    istrue  = (immvalue_float(condval) != 0.0f && branch->m_on_true);
-        bool                    isfalse = (immvalue_float(condval) == 0.0f && branch->m_on_false);
-        ast_expression         *path    = (istrue)  ? branch->m_on_true  :
-                                          (isfalse) ? branch->m_on_false : nullptr;
-        if (!path) {
-            /*
-             * no path to take implies that the evaluation is if(0) and there
-             * is no else block. so eliminate all the code.
-             */
-            ++opts_optimizationcount[OPTIM_CONST_FOLD_DCE];
-            return true;
-        }
-
-        if (!(elide = ir_function_create_block(branch->m_context, func->m_ir_func, func->makeLabel((istrue) ? "ontrue" : "onfalse"))))
-            return false;
-        if (!path->codegen(func, false, &dummy))
-            return false;
-        if (!ir_block_create_jump(func->m_curblock, branch->m_context, elide))
-            return false;
-        /*
-         * now the branch has been eliminated and the correct block for the constant evaluation
-         * is expanded into the current block for the function.
-         */
-        func->m_curblock = elide;
-        ++opts_optimizationcount[OPTIM_CONST_FOLD_DCE];
-        return true;
-    }
-    return -1; /* nothing done */
-}
-
-int fold::cond_ternary(ir_value *condval, ast_function *func, ast_ternary *branch) {
-    return cond(condval, func, (ast_ifthen*)branch);
-}
-
-int fold::cond_ifthen(ir_value *condval, ast_function *func, ast_ifthen *branch) {
-    return cond(condval, func, branch);
 }
