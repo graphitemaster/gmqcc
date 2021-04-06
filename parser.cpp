@@ -18,9 +18,8 @@ static void parser_addglobal(parser_t *parser, const char *name, ast_expression 
 static void parser_addglobal(parser_t *parser, const std::string &name, ast_expression *e);
 static bool parse_typedef(parser_t *parser);
 static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofields, int qualifier, ast_value *cached_typedef, bool noref, bool is_static, uint32_t qflags, char *vstring);
-static ast_block* parse_block(parser_t *parser);
 static bool parse_block_into(parser_t *parser, ast_block *block);
-static bool parse_statement_or_block(parser_t *parser, ast_block* parent_block, ast_expression **out);
+static bool parse_statement_or_block(parser_t *parser, ast_expression **out);
 static bool parse_statement(parser_t *parser, ast_block *block, ast_expression **out, bool allow_cases);
 static ast_expression* parse_expression_leave(parser_t *parser, bool stopatcomma, bool truthvalue, bool with_labels);
 static ast_expression* parse_expression(parser_t *parser, bool stopatcomma, bool with_labels);
@@ -2162,7 +2161,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
         ast_unref(cond);
         return false;
     }
-    if (!parse_statement_or_block(parser, block, &ontrue)) {
+    if (!parse_statement_or_block(parser, &ontrue)) {
         ast_unref(cond);
         return false;
     }
@@ -2177,7 +2176,7 @@ static bool parse_if(parser_t *parser, ast_block *block, ast_expression **out)
             ast_unref(cond);
             return false;
         }
-        if (!parse_statement_or_block(parser, block, &onfalse)) {
+        if (!parse_statement_or_block(parser, &onfalse)) {
             delete ontrue;
             ast_unref(cond);
             return false;
@@ -2285,7 +2284,7 @@ static bool parse_while_go(parser_t *parser, ast_block *block, ast_expression **
         ast_unref(cond);
         return false;
     }
-    if (!parse_statement_or_block(parser, block, &ontrue)) {
+    if (!parse_statement_or_block(parser, &ontrue)) {
         ast_unref(cond);
         return false;
     }
@@ -2360,7 +2359,7 @@ static bool parse_dowhile_go(parser_t *parser, ast_block *block, ast_expression 
 
     (void)block; /* not touching */
 
-    if (!parse_statement_or_block(parser, block, &ontrue))
+    if (!parse_statement_or_block(parser, &ontrue))
         return false;
 
     /* expect the "while" */
@@ -2561,7 +2560,7 @@ static bool parse_for_go(parser_t *parser, ast_block *block, ast_expression **ou
         parseerror(parser, "expected for-loop body");
         goto onerr;
     }
-    if (!parse_statement_or_block(parser, block, &ontrue))
+    if (!parse_statement_or_block(parser, &ontrue))
         goto onerr;
 
     if (cond) {
@@ -3550,12 +3549,7 @@ static bool parse_statement(parser_t *parser, ast_block *block, ast_expression *
     }
     else if (parser->tok == '{')
     {
-        ast_block *inner;
-        inner = parse_block(parser);
-        if (!inner)
-            return false;
-        *out = inner;
-        return true;
+        return parse_statement_or_block(parser, out);
     }
     else if (parser->tok == ':')
     {
@@ -3792,26 +3786,37 @@ cleanup:
     return retval && !!block;
 }
 
-static ast_block* parse_block(parser_t *parser)
+static bool parse_statement_or_block(parser_t *parser, ast_expression **out)
 {
-    ast_block *block;
-    block = new ast_block(parser_ctx(parser));
-    if (!block)
-        return nullptr;
-    if (!parse_block_into(parser, block)) {
-        delete block;
-        return nullptr;
-    }
-    return block;
-}
-
-static bool parse_statement_or_block(parser_t *parser, ast_block* parent_block, ast_expression **out)
-{
+    bool result = true;
+    std::unique_ptr<ast_block> block(new ast_block(parser_ctx(parser)));
     if (parser->tok == '{') {
-        *out = parse_block(parser);
-        return !!*out;
+        if (!parse_block_into(parser, block.get())) {
+            return false;
+        }
+    } else {
+        parser_enterblock(parser);
+
+        ast_expression* expression = nullptr;
+        if (!parse_statement(parser, block.get(), &expression, false)) {
+            result = false;
+        }
+
+        if (expression && !block->addExpr(expression)) {
+            result = false;
+        }
+
+        if (!parser_leaveblock(parser)) {
+            return false;
+        }
     }
-    return parse_statement(parser, parent_block, out, false);
+
+    if (result) {
+        *out = block.release();
+        return true;
+    }
+
+    return false;
 }
 
 static bool create_vector_members(ast_value *var, ast_member **me)
