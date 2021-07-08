@@ -897,7 +897,11 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = fold::binary(ctx, generated_op, exprs[0], exprs[1]);
             break;
         case opid2('!', '='):
-            if (exprs[0]->m_vtype != exprs[1]->m_vtype) {
+            #define NotComparable \
+                exprs[0]->m_vtype != TYPE_NIL && \
+                exprs[1]->m_vtype != TYPE_NIL && \
+                exprs[0]->m_vtype != exprs[1]->m_vtype
+            if (NotComparable) {
                 compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
                               type_name[exprs[0]->m_vtype],
                               type_name[exprs[1]->m_vtype]);
@@ -907,7 +911,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                 out = fold::binary(ctx, type_ne_instr[exprs[0]->m_vtype], exprs[0], exprs[1]);
             break;
         case opid2('=', '='):
-            if (exprs[0]->m_vtype != exprs[1]->m_vtype) {
+            if (NotComparable) {
                 compile_error(ctx, "invalid types used in expression: cannot perform comparison between types %s and %s",
                               type_name[exprs[0]->m_vtype],
                               type_name[exprs[1]->m_vtype]);
