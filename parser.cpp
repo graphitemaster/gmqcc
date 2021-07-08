@@ -5180,7 +5180,7 @@ static bool parse_variable(parser_t *parser, ast_block *localblock, bool nofield
             }
         }
         /* we only allow 1-dimensional arrays */
-        if (parser->tok == '[') {
+        if (var->m_vtype != TYPE_FUNCTION && parser->tok == '[') {
             wasarray = true;
             var = parse_arraysize(parser, var);
             if (!var) {
@@ -5618,7 +5618,7 @@ skipvar:
             }
         }
 
-        if (parser->tok != '{' || var->m_vtype != TYPE_FUNCTION) {
+        if (var->m_vtype != TYPE_FUNCTION || (parser->tok != '{' && parser->tok != '[')) {
             if (parser->tok != '=') {
                 parseerror(parser, "missing semicolon or initializer, got: `%s`", parser_tokval(parser));
                 break;
