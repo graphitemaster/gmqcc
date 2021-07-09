@@ -80,7 +80,7 @@ void code_push_statement(code_t *code, prog_section_statement_t *stmt_in, lex_ct
             case INSTR_MUL_FV: pair = INSTR_MUL_VF; goto case_pair_gen;
             case INSTR_LT:     pair = INSTR_GT;     goto case_pair_gen;
             case INSTR_GT:     pair = INSTR_LT;     goto case_pair_gen;
-            case INSTR_LE:     pair = INSTR_GT;     goto case_pair_gen;
+            case INSTR_LE:     pair = INSTR_GE;     goto case_pair_gen;
             case INSTR_GE:     pair = INSTR_LE;
 
             case_pair_gen:
