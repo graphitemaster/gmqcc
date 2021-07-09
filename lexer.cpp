@@ -392,6 +392,7 @@ static bool lex_try_pragma(lex_file *lex)
             goto unroll;
     }
     else if (!strcmp(command, "file")) {
+        lex->framevalue = 0;
         lex->name = util_strdup(param);
         vec_push(lex_filenames, lex->name);
     }
