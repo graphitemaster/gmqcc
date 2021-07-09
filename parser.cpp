@@ -3913,7 +3913,7 @@ static bool parse_function_body(parser_t *parser, ast_value *var)
 
         framenum = parse_expression_leave(parser, true, false, false);
         if (!framenum) {
-            parseerror(parser, "expected a framenumber constant in[frame,think] notation");
+            parseerror(parser, "expected a framenumber constant in [frame,think] notation");
             return false;
         }
         if (!ast_istype(framenum, ast_value) || !( (ast_value*)framenum )->m_hasvalue) {

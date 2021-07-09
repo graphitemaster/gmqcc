@@ -300,9 +300,9 @@ static bool isident_start(int ch)
     return util_isalpha(ch) || ch == '_';
 }
 
-static bool isident(int ch)
+static bool isident(int ch, bool allow_dot)
 {
-    return isident_start(ch) || util_isdigit(ch);
+    return isident_start(ch) || util_isdigit(ch) || (allow_dot && ch == '.');
 }
 
 /* isxdigit_only is used when we already know it's not a digit
@@ -579,12 +579,12 @@ static int lex_skipwhite(lex_file *lex, bool hadwhite)
 }
 
 /* Get a token */
-static bool GMQCC_WARN lex_finish_ident(lex_file *lex)
+static bool GMQCC_WARN lex_finish_ident(lex_file *lex, bool allow_dot)
 {
     int ch;
 
     ch = lex_getch(lex);
-    while (ch != EOF && isident(ch))
+    while (ch != EOF && isident(ch, allow_dot))
     {
         lex_tokench(lex, ch);
         ch = lex_getch(lex);
@@ -611,12 +611,12 @@ static int lex_parse_frame(lex_file *lex)
         return 1;
 
     if (!isident_start(ch)) {
-        lexerror(lex, "invalid framename, must start with one of a-z or _, got %c", ch);
+        lexerror(lex, "invalid framename, must start with one of a-z, or _, got %c", ch);
         return -1;
     }
 
     lex_tokench(lex, ch);
-    if (!lex_finish_ident(lex))
+    if (!lex_finish_ident(lex, true))
         return -1;
     lex_endtoken(lex);
     return 0;
@@ -901,7 +901,7 @@ static int GMQCC_WARN lex_finish_digit(lex_file *lex, int lastch)
         ch = lex_getch(lex);
 
     /* generally we don't want words to follow numbers: */
-    if (isident(ch)) {
+    if (isident(ch, false)) {
         lexerror(lex, "unexpected trailing characters after number");
         return (lex->tok.ttype = TOKEN_ERROR);
     }
@@ -972,7 +972,7 @@ int lex_do(lex_file *lex)
             return lex_do(lex);
         }
         lex_tokench(lex, ch);
-        if (!lex_finish_ident(lex))
+        if (!lex_finish_ident(lex, true))
             return (lex->tok.ttype = TOKEN_ERROR);
         lex_endtoken(lex);
         /* skip the known commands */
@@ -1306,7 +1306,7 @@ int lex_do(lex_file *lex)
         const char *v;
 
         lex_tokench(lex, ch);
-        if (!lex_finish_ident(lex)) {
+        if (!lex_finish_ident(lex, false)) {
             /* error? */
             return (lex->tok.ttype = TOKEN_ERROR);
         }
