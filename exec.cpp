@@ -212,7 +212,7 @@ static qcint_t prog_spawn_entity(qc_program_t *prog) {
     size_t sz = prog->entitydata.size();
     prog->entitydata.resize(sz + prog->entityfields);
     data = (char*)&prog->entitydata[sz];
-    memset(data, 0, sz * sizeof(qcint_t));
+    memset(data, 0, prog->entityfields * sizeof(qcint_t));
 
     return e;
 }
