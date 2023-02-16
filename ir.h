@@ -273,6 +273,7 @@ struct ir_builder {
     std::vector<std::unique_ptr<ir_value>>    m_fields;
     // for reusing them in vector-splits, TODO: sort this or use a radix-tree
     std::vector<ir_value*>                    m_const_floats;
+    std::map<int32_t, ir_value*>              m_reusable_const_floats;
 
     ht            m_htfunctions;
     ht            m_htglobals;
@@ -313,6 +314,7 @@ private:
     bool generateGlobalFunction(ir_value*);
     bool generateGlobalFunctionCode(ir_value*);
     bool generateFunctionLocals(ir_value*);
+    bool generateMergedFloat(ir_value*, bool register_only);
 };
 
 /*
