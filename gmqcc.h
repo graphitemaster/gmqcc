@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <memory>
+#include <map>
 using std::move;
 #include <stdarg.h>
 #include <stddef.h>

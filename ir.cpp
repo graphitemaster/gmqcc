@@ -3300,6 +3300,41 @@ static void gen_vector_fields(code_t *code, prog_section_field_t fld, const char
     mem_d(component);
 }
 
+// Check if the value can be reused from a previous value. If so, copy the
+// `m_code` segment and return `true`. Othrewise return false and, if the value
+// is eligable to be reused later, record it in `m_reusable_const_floats`.
+bool ir_builder::generateMergedFloat(ir_value *global, bool register_only)
+{
+    if ((global->m_flags & IR_FLAG_INCLUDE_DEF)
+        || global->m_callparam || global->m_locked || global->m_unique_life
+        || global->m_memberof
+        || global->m_members[0]
+        || global->m_members[1]
+        || global->m_members[2]
+        || global->m_store != store_global
+        )
+    {
+        return false;
+    }
+
+    if (!global->m_writes.empty()) {
+        irerror(global->m_context, "writing to a global const");
+        return false;
+    }
+
+    auto old = m_reusable_const_floats.find(global->m_constval.vint);
+    if (old == m_reusable_const_floats.end()) {
+        auto iptr = (int32_t*)&global->m_constval.ivec[0];
+        m_reusable_const_floats[*iptr] = global;
+        return false;
+    } else if (register_only) {
+        return false;
+    } else {
+        global->m_code = old->second->m_code;
+        return true;
+    }
+}
+
 bool ir_builder::generateGlobal(ir_value *global, bool islocal)
 {
     size_t             i;
@@ -3401,8 +3436,13 @@ bool ir_builder::generateGlobal(ir_value *global, bool islocal)
     {
         global->setCodeAddress(m_code->globals.size());
         if (global->m_hasvalue) {
-            if (global->m_cvq == CV_CONST && global->m_reads.empty())
-                return true;
+            if (global->m_cvq == CV_CONST) {
+                if (global->m_reads.empty())
+                    return true;
+
+                if (!islocal && generateMergedFloat(global, pushdef))
+                    return global->m_code.globaladdr >= 0;
+            }
             iptr = (int32_t*)&global->m_constval.ivec[0];
             m_code->globals.push_back(*iptr);
         } else {
