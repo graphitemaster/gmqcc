@@ -27,6 +27,9 @@ endif
 # C++ compiler
 CXX ?= clang++
 
+# OS detection
+SYS := $(shell $(CXX) -dumpmachine)
+
 # Build artifact directories
 OBJDIR := .build/objs
 DEPDIR := .build/deps
@@ -132,7 +135,11 @@ LDFLAGS :=
 
 # Remove unreferenced sections
 ifeq ($(UNUSED),1)
-	LDFLAGS += -Wl,--gc-sections
+	ifneq (,$(findstring darwin,$(SYS)))
+		LDFLAGS += -Wl,-dead_strip
+	else
+		LDFLAGS += -Wl,--gc-sections
+	endif
 endif
 
 # Enable link-time optimizations if request.
