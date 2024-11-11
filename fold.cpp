@@ -1224,7 +1224,7 @@ ast_expression *fold::op_div(ast_value *a, ast_value *b) {
         if (fold_can_2(a, b)) {
             bool inexact = check_except_float(&sfloat_div, a, b);
             return constgen_float(immvalue_float(a) / immvalue_float(b), inexact);
-        } else if (fold_can_1(b)) {
+        } else if (OPTS_OPTIMIZATION(OPTIM_RECIPROCAL_DIVISION) && fold_can_1(b)) {
             return new ast_binary(
                 ctx(),
                 INSTR_MUL_F,
@@ -1233,9 +1233,9 @@ ast_expression *fold::op_div(ast_value *a, ast_value *b) {
             );
         }
     } else if (isvector(a)) {
-        if (fold_can_2(a, b)) {
+        if (fold_can_2(a, b) && OPTS_OPTIMIZATION(OPTIM_RECIPROCAL_DIVISION)) {
             return constgen_vector(vec3_mulvf(ctx(), immvalue_vector(a), 1.0f / immvalue_float(b)));
-        } else {
+        } else if (OPTS_OPTIMIZATION(OPTIM_RECIPROCAL_DIVISION)) {
             return new ast_binary(
                 ctx(),
                 INSTR_MUL_VF,
@@ -1248,6 +1248,17 @@ ast_expression *fold::op_div(ast_value *a, ast_value *b) {
                                      b
                     )
             );
+        } else {
+            auto block = new ast_block(ctx());
+            auto out = new ast_value(ctx(), "", TYPE_VECTOR);
+            block->m_locals.push_back(out);
+            for (size_t i = 0; i != 3; ++i) {
+                auto division = new ast_binary(ctx(), INSTR_DIV_F, ast_member::make(ctx(), a, i, ""), b);
+                auto store = new ast_store(ctx(), INSTR_STORE_F, ast_member::make(ctx(), out, i, ""), division);
+                (void)!block->addExpr(store);
+            }
+            (void)!block->addExpr(out);
+            return block;
         }
     }
     return nullptr;

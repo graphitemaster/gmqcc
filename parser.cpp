@@ -1080,7 +1080,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                     if (op->id == opid2('*','=')) {
                         out = new ast_binstore(ctx, assignop, INSTR_MUL_VF,
                                                exprs[0], exprs[1]);
-                    } else {
+                    } else if (OPTS_OPTIMIZATION(OPTIM_RECIPROCAL_DIVISION)) {
                         out = fold::binary(ctx, INSTR_DIV_F,
                                          parser->m_fold.imm_float(1),
                                          exprs[1]);
@@ -1090,6 +1090,13 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
                         }
                         out = new ast_binstore(ctx, assignop, INSTR_MUL_VF,
                                                exprs[0], out);
+                    } else {
+                        auto block = new ast_block(ctx);
+                        for (size_t i = 0; i != 3; ++i) {
+                            (void)!block->addExpr(new ast_binstore(ctx, INSTR_STORE_F, INSTR_DIV_F, ast_member::make(ctx, exprs[0], i, ""), exprs[1]));
+                        }
+                        (void)!block->addExpr(exprs[0]);
+                        out = block;
                     }
                     break;
                 default:
