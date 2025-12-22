@@ -377,10 +377,10 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
     if (!op->operands)
         return true;
 
-    sy->out.erase(sy->out.end() - op->operands, sy->out.end());
+    size_t start_offset = sy->out.size() - op->operands;
     for (i = 0; i < op->operands; ++i) {
-        exprs[i]  = sy->out[sy->out.size()+i].out;
-        blocks[i] = sy->out[sy->out.size()+i].block;
+        exprs[i]  = sy->out[start_offset+i].out;
+        blocks[i] = sy->out[start_offset+i].block;
 
         if (exprs[i]->m_vtype == TYPE_NOEXPR &&
             !(i != 0 && op->id == opid2('?',':')) &&
@@ -393,6 +393,7 @@ static bool parser_sy_apply_operator(parser_t *parser, shunt *sy)
             (void)!compile_warning(exprs[i]->m_context, WARN_DEBUG, "expression %u\n", (unsigned int)i);
         }
     }
+    sy->out.erase(sy->out.end() - op->operands, sy->out.end());
 
     if (blocks[0] && blocks[0]->m_exprs.empty() && op->id != opid1(',')) {
         compile_error(ctx, "internal error: operator cannot be applied on empty blocks");
@@ -1205,8 +1206,10 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     size_t          fid;
     size_t          paramcount, i;
     bool            fold = true;
+    lex_ctx_t       ctx;
 
     fid = sy->ops.back().off;
+    ctx = sy->ops.back().ctx;
     sy->ops.pop_back();
 
     /* out[fid] is the function
@@ -1292,7 +1295,7 @@ static bool parser_close_call(parser_t *parser, shunt *sy)
     }
 
     fold_leave:
-    call = ast_call::make(sy->ops[sy->ops.size()].ctx, fun);
+    call = ast_call::make(ctx, fun);
 
     if (!call)
         return false;
