@@ -3682,8 +3682,12 @@ static bool parse_enum(parser_t *parser)
         var->m_cvq             = CV_CONST;
         var->m_hasvalue        = true;
 
+        var->m_constval.vfloat = num;
         /* for flagged enumerations increment in POTs of TWO */
-        var->m_constval.vfloat = (flag) ? (num *= 2) : (num ++);
+        if (flag)
+            num *= 2;
+        else
+            ++num;
         parser_addglobal(parser, var->m_name, var);
 
         if (!parser_next(parser)) {
