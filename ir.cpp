@@ -2978,7 +2978,7 @@ qcint_t ir_builder::filestring(const char *filename)
 
     for (size_t i = 0; i != m_filenames.size(); ++i) {
         if (!strcmp(m_filenames[i], filename))
-            return i;
+            return m_filestrings[i];
     }
 
     str = code_genstring(m_code.get(), filename);
